@@ -73,7 +73,11 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   protected PsiClass getEnum() {
-    final PsiElement field = getDeclaration();
+    final PsiClass aClass = getPropertyClass(getDeclaration());
+    return aClass != null && aClass.isEnum() ? aClass : null;
+  }
+
+  public static PsiClass getPropertyClass(PsiElement field) {
     if (field instanceof PsiField) {
       final PsiType type = ((PsiField)field).getType();
       if (type instanceof PsiClassType) {
@@ -83,14 +87,12 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
           final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
             .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
           if (objectProperty != null) {
-            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
+            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
+              .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
             if (superClassSubstitutor != null) {
               final PsiType propertyType = superClassSubstitutor.substitute(objectProperty.getTypeParameters()[0]);
               if (propertyType instanceof PsiClassType) {
-                final PsiClass psiClass = ((PsiClassType)propertyType).resolve();
-                if (psiClass != null && psiClass.isEnum()) {
-                  return psiClass;
-                }
+                return ((PsiClassType)propertyType).resolve();
               }
             }
           }
@@ -99,7 +101,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     }
     return null;
   }
-  
+
   @Nullable
   @Override
   public String validateValue(XmlElement context, String value) {

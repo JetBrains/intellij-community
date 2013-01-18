@@ -16,11 +16,13 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,6 +38,23 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
                                                   ProcessingContext context) {
     final String attValueString = xmlAttributeValue.getValue();
     LOG.assertTrue(attValueString.startsWith("#"));
+
+    final XmlAttribute attribute = (XmlAttribute)xmlAttributeValue.getContext();
+    if (attribute == null) return PsiReference.EMPTY_ARRAY;
+    final String attributeName = attribute.getName();
+    final XmlTag xmlTag = attribute.getParent();
+    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+    if (descriptor == null) return PsiReference.EMPTY_ARRAY;
+    final PsiElement currentTagClass = descriptor.getDeclaration();
+    if (!(currentTagClass instanceof PsiClass)) return PsiReference.EMPTY_ARRAY;
+    final PsiField handlerField = ((PsiClass)currentTagClass).findFieldByName(attributeName, true);
+    if (handlerField == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final PsiClass objectPropertyClass = JavaFxPropertyAttributeDescriptor.getPropertyClass(handlerField);
+    if (objectPropertyClass == null || !InheritanceUtil.isInheritor(objectPropertyClass, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     final String eventHandlerName = attValueString.substring(1);
     final PsiMethod[] methods = controllerClass.findMethodsByName(eventHandlerName, true);
 
