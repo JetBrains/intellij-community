@@ -199,7 +199,7 @@ public class MediatorImpl implements Mediator {
           }
         }));
       filters.setUseOnlyHashes(true);
-      myLoader.loadSkeleton(myTicket.copy(), rootsHolder, Collections.<String>emptyList(), filters, myController, false);
+      myLoader.loadSkeleton(myTicket.copy(), rootsHolder, Collections.<String>emptyList(), filters, myController, true);
     } else {
       myUIRefresh.finished();
       myTableWrapper.finished();
