@@ -128,7 +128,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.configureByText('a.groovy', '''\
 class A {
   def foo(int... x){}
-  def foo(<error descr="Ellipsis type is not allowed here">int...</error> x, double y) {}
+  def foo(int<error descr="Ellipsis type is not allowed here">...</error> x, double y) {}
 }
 ''')
     myFixture.checkHighlighting(true, false, false)
