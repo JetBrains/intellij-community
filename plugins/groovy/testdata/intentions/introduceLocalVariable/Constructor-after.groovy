@@ -1,0 +1,1 @@
+def varName = new Hoge()
