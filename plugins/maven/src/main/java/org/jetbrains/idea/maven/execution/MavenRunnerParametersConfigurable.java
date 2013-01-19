@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
@@ -34,12 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,7 +50,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private JBLabel myFakeLabel;
   private JComponent anchor;
 
-  public MavenRunnerParametersConfigurable(@NotNull Project project) {
+  public MavenRunnerParametersConfigurable(@NotNull final Project project) {
     workingDirComponent.getComponent().addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", project,
       new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -65,7 +62,15 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
       });
 
     if (!project.isDefault()) {
-      MyCompletionProvider profilesCompletionProvider = new MyCompletionProvider(project) {
+      TextFieldCompletionProvider profilesCompletionProvider = new TextFieldCompletionProvider(true) {
+        @Override
+        protected final void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+          MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+          for (String profile : manager.getAvailableProfiles()) {
+            result.addElement(LookupElementBuilder.create(profile));
+          }
+        }
+
         @NotNull
         @Override
         protected String getPrefix(@NotNull String currentTextPrefix) {
@@ -75,35 +80,11 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
           }
           return prefix;
         }
-
-        @Override
-        protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
-          for (String profile : manager.getAvailableProfiles()) {
-            result.addElement(LookupElementBuilder.create(profile));
-          }
-        }
       };
 
       profilesComponent.setComponent(profilesCompletionProvider.createEditor(project));
 
-      MyCompletionProvider goalsCompletionProvider = new MyCompletionProvider(project) {
-
-        private volatile List<LookupElement> myCachedElements;
-
-        @Override
-        protected void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager) {
-          List<LookupElement> cachedElements = myCachedElements;
-          if (cachedElements == null) {
-            cachedElements = MavenUtil.getPhaseVariants(manager);
-
-            myCachedElements = cachedElements;
-          }
-
-          result.addAllElements(cachedElements);
-        }
-      };
-
-      goalsComponent.setComponent(goalsCompletionProvider.createEditor(project));
+      goalsComponent.setComponent(new MavenArgumentsCompletionProvider(project).createEditor(project));
     }
 
     setAnchor(profilesComponent.getLabel());
@@ -194,27 +175,4 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
     profilesComponent.setAnchor(anchor);
     myFakeLabel.setAnchor(anchor);
   }
-  
-  private abstract class MyCompletionProvider extends TextFieldCompletionProvider {
-    private final Project myProject;
-
-    protected MyCompletionProvider(Project project) {
-      myProject = project;
-    }
-
-    @NotNull
-    @Override
-    protected String getPrefix(@NotNull String currentTextPrefix) {
-      return currentTextPrefix.substring(currentTextPrefix.lastIndexOf(' ') + 1);
-    }
-    
-    @Override
-    protected final void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
-      MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
-      addVariants(result, manager);
-    }
-    
-    protected abstract void addVariants(@NotNull CompletionResultSet result, MavenProjectsManager manager);
-  }
-  
 }
