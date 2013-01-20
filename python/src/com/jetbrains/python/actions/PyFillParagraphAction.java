@@ -109,15 +109,16 @@ public class PyFillParagraphAction extends AnAction {
       final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
                                                             document.getLineEndOffset(lineNumber)));
       if (StringUtil.isEmptyOrSpaces(text)) {
-        final int lineStartOffset = document.getLineStartOffset(lineNumber + 1);
-        final String lineText = document
-          .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber + 1)));
-        int shift = StringUtil.findFirst(lineText, CharFilter.NOT_WHITESPACE_FILTER);
-        return lineStartOffset + shift;
+        break;
       }
       lineNumber -= 1;
     }
-    return elementTextOffset;
+    final int lineStartOffset = document.getLineStartOffset(lineNumber + 1);
+    final String lineText = document
+      .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber + 1)));
+    int shift = StringUtil.findFirst(lineText, CharFilter.NOT_WHITESPACE_FILTER);
+
+    return lineStartOffset + shift;
   }
 
   private static int getEndOffset(PsiElement element, Editor editor) {
@@ -126,14 +127,14 @@ public class PyFillParagraphAction extends AnAction {
     final Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(offset);
 
-    while (lineNumber != document.getLineNumber(elementTextOffset)) {
+    while (lineNumber != document.getLineNumber(elementTextOffset) - 1) {
       final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
                                                             document.getLineEndOffset(lineNumber)));
       if (StringUtil.isEmptyOrSpaces(text))
-        return document.getLineEndOffset(lineNumber - 1);
+        break;
       lineNumber += 1;
     }
-    return element.getTextRange().getEndOffset();
+    return document.getLineEndOffset(lineNumber - 1);
   }
 
   private static PsiElement getFirstElement(final PsiElement element) {
