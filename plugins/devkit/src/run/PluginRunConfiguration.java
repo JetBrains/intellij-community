@@ -33,6 +33,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -144,25 +145,30 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
           }
         }
 
-        String buildNumber = IdeaJdk.getBuildNumber(usedIdeaJdk.getHomePath());
-        if (buildNumber != null) {
-          if (buildNumber.startsWith("IC")) {
-            vm.defineProperty("idea.platform.prefix", "Idea");
-          }
-          else if (buildNumber.startsWith("PY")) {
-            vm.defineProperty("idea.platform.prefix", "Python");
-          }
-          else if (buildNumber.startsWith("RM")) {
-            vm.defineProperty("idea.platform.prefix", "Ruby");
-          }
-          else if (buildNumber.startsWith("PS")) {
-            vm.defineProperty("idea.platform.prefix", "PhpStorm");
-          }
-          else if (buildNumber.startsWith("WS")) {
-            vm.defineProperty("idea.platform.prefix", "WebStorm");
-          }
-          else if (buildNumber.startsWith("OC")) {
-            vm.defineProperty("idea.platform.prefix", "AppCode");
+        if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
+          String buildNumber = IdeaJdk.getBuildNumber(usedIdeaJdk.getHomePath());
+          if (buildNumber != null) {
+            String prefix = null;
+
+            if (buildNumber.startsWith("IC")) {
+              prefix = PlatformUtils.COMMUNITY_PREFIX;
+            }
+            else if (buildNumber.startsWith("PY")) {
+              prefix = PlatformUtils.PYCHARM_PREFIX;
+            }
+            else if (buildNumber.startsWith("RM")) {
+              prefix = PlatformUtils.RUBY_PREFIX;
+            }
+            else if (buildNumber.startsWith("PS")) {
+              prefix = PlatformUtils.PHP_PREFIX;
+            }
+            else if (buildNumber.startsWith("WS")) {
+              prefix = PlatformUtils.WEB_PREFIX;
+            }
+            else if (buildNumber.startsWith("OC")) {
+              prefix = buildNumber.contains("121") ? "CIDR" : PlatformUtils.APPCODE_PREFIX;
+            }
+            if (prefix != null) vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
           }
         }
 
