@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package org.jetbrains.generate.tostring.inspection;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ui.CheckBox;
@@ -43,8 +41,6 @@ import java.awt.*;
  * does not have a toString method.
  */
 public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
-
-    private final LocalQuickFix fix = new GenerateToStringQuickFix();
 
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization
@@ -161,7 +157,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
                 if (log.isDebugEnabled()) log.debug("Class does not override toString() method: " + clazz.getQualifiedName());
 
-                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
             }
         };
     }
