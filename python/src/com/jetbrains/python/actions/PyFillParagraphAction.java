@@ -14,11 +14,11 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.List;
 
@@ -65,10 +65,11 @@ public class PyFillParagraphAction extends AnAction {
           public void run() {
             document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
                                    getPrefix(element) + newText);
-            CodeStyleManager.getInstance(element.getProject()).reformatText(
-              element.getContainingFile(),
-              textRange.getStartOffset(),
-              textRange.getStartOffset() + newText.length() + 1);
+            final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
+              CodeStyleSettingsManager.getSettings(element.getProject()));
+            codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
+                                                   textRange.getStartOffset(),
+                                                   textRange.getStartOffset() + newText.length() + 1);
           }
         });
       }
@@ -127,7 +128,7 @@ public class PyFillParagraphAction extends AnAction {
     final Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(offset);
 
-    while (lineNumber != document.getLineNumber(elementTextOffset) - 1) {
+    while (lineNumber != document.getLineNumber(elementTextOffset)) {
       final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
                                                             document.getLineEndOffset(lineNumber)));
       if (StringUtil.isEmptyOrSpaces(text))
@@ -174,7 +175,7 @@ public class PyFillParagraphAction extends AnAction {
   public void update(AnActionEvent e) {
     PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
     final PsiElement file = e.getData(LangDataKeys.PSI_FILE);
-    if (!(file instanceof PyFile)) {
+    if (!(file instanceof PyFile) && !(file instanceof PsiPlainTextFile)) {
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -185,12 +186,14 @@ public class PyFillParagraphAction extends AnAction {
         element = file.findElementAt(offset);
       }
     }
-    if (element != null) {
-      final PyStringLiteralExpression stringLiteral = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
-      e.getPresentation().setEnabled(stringLiteral != null || element instanceof PsiComment);
-    }
-    else {
-      e.getPresentation().setEnabled(false);
-    }
+    e.getPresentation().setEnabled(element != null);
+    //if (element != null) {
+    //  e.getPresentation().setEnabled(true);
+      //final PyStringLiteralExpression stringLiteral = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
+      //e.getPresentation().setEnabled(stringLiteral != null || element instanceof PsiComment);
+    //}
+    //else {
+    //  e.getPresentation().setEnabled(false);
+    //}
   }
 }
