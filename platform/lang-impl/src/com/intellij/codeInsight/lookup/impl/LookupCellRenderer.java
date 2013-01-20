@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,23 +123,22 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myIsSelected = isSelected;
     final LookupElement item = (LookupElement)value;
-    final boolean dark = UIUtil.isUnderDarcula();
     final Color foreground = getForegroundColor(isSelected);
-    final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : dark ? BACKGROUND_COLOR_DARK_VARIANT : BACKGROUND_COLOR;
+    final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : new JBColor(BACKGROUND_COLOR, BACKGROUND_COLOR_DARK_VARIANT);
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
     if (item.isValid()) {
       item.renderElement(presentation);
     } else {
-      presentation.setItemTextForeground(Color.RED);
+      presentation.setItemTextForeground(JBColor.RED);
       presentation.setItemText("Invalid");
     }
 
     myNameComponent.clear();
     myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
-    allowedWidth -= setItemTextLabel(item, dark ? foreground : isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), isSelected, presentation, allowedWidth);
+    allowedWidth -= setItemTextLabel(item, new JBColor(isSelected ? SELECTED_FOREGROUND_COLOR : presentation.getItemTextForeground(), foreground), isSelected, presentation, allowedWidth);
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
