@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ public class ParagraphFillHandler {
     final Document document = editor.getDocument();
 
     final TextRange textRange = getTextRange(element, editor);
+    if (textRange.isEmpty()) return;
     final String text = textRange.substring(element.getContainingFile().getText());
 
     final List<String> subStrings = StringUtil.split(text, "\n", true);
@@ -56,8 +58,8 @@ public class ParagraphFillHandler {
   }
 
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
-    if (element instanceof PsiComment) {
-      final PsiElement firstCommentElement = getFirstCommentElement(element);
+    if (isBunchOfElement(element)) {
+      final PsiElement firstCommentElement = getFirstElement(element);
       return firstCommentElement != null? firstCommentElement.getTextRange().getStartOffset()
                                         : element.getTextRange().getStartOffset();
     }
@@ -70,21 +72,26 @@ public class ParagraphFillHandler {
       final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
                                                             document.getLineEndOffset(lineNumber)));
       if (StringUtil.isEmptyOrSpaces(text)) {
+        lineNumber += 1;
         break;
       }
       lineNumber -= 1;
     }
-    final int lineStartOffset = document.getLineStartOffset(lineNumber + 1);
+    final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final String lineText = document
-      .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber + 1)));
+      .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber)));
     int shift = StringUtil.findFirst(lineText, CharFilter.NOT_WHITESPACE_FILTER);
 
     return lineStartOffset + shift;
   }
 
+  protected boolean isBunchOfElement(PsiElement element) {
+    return element instanceof PsiComment;
+  }
+
   private int getEndOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
-    if (element instanceof PsiComment) {
-      final PsiElement next = getLastCommentElement(element);
+    if (isBunchOfElement(element)) {
+      final PsiElement next = getLastElement(element);
       return next != null? next.getTextRange().getEndOffset()
                          : element.getTextRange().getEndOffset();
     }
@@ -96,25 +103,29 @@ public class ParagraphFillHandler {
     while (lineNumber != document.getLineNumber(elementTextOffset)) {
       final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
                                                             document.getLineEndOffset(lineNumber)));
-      if (StringUtil.isEmptyOrSpaces(text))
+      if (StringUtil.isEmptyOrSpaces(text)) {
+        lineNumber -= 1;
         break;
+      }
       lineNumber += 1;
     }
-    return document.getLineEndOffset(lineNumber - 1);
+    return document.getLineEndOffset(lineNumber);
   }
 
   @Nullable
-  private PsiElement getFirstCommentElement(@NotNull final PsiElement element) {
+  private PsiElement getFirstElement(@NotNull final PsiElement element) {
+    final IElementType elementType = element.getNode().getElementType();
     PsiElement prevSibling = element.getPrevSibling();
     PsiElement result = element;
-    while (prevSibling instanceof PsiComment || (prevSibling instanceof PsiWhiteSpace &&
-                                                 StringUtil.countChars(prevSibling.getText(), '\n') <= 1)) {
+    while (prevSibling != null && (prevSibling.getNode().getElementType().equals(elementType) ||
+                                   (prevSibling instanceof PsiWhiteSpace &&
+                                   StringUtil.countChars(prevSibling.getText(), '\n') <= 1))) {
       final String text = prevSibling.getText();
-      if (prevSibling instanceof PsiComment && StringUtil.isEmptyOrSpaces(
+      if (prevSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
         StringUtil.trimStart(text.trim(), getPrefix(element)))) {
         break;
       }
-      if (prevSibling instanceof PsiComment)
+      if (prevSibling.getNode().getElementType().equals(elementType))
         result = prevSibling;
       prevSibling = prevSibling.getPrevSibling();
     }
@@ -122,17 +133,19 @@ public class ParagraphFillHandler {
   }
 
   @Nullable
-  private PsiElement getLastCommentElement(@NotNull final PsiElement element) {
+  private PsiElement getLastElement(@NotNull final PsiElement element) {
+    final IElementType elementType = element.getNode().getElementType();
     PsiElement nextSibling = element.getNextSibling();
     PsiElement result = element;
-    while (nextSibling instanceof PsiComment || (nextSibling instanceof PsiWhiteSpace &&
-                                                 StringUtil.countChars(nextSibling.getText(), '\n') <= 1)) {
+    while (nextSibling != null && (nextSibling.getNode().getElementType().equals(elementType) ||
+                                   (nextSibling instanceof PsiWhiteSpace &&
+                                   StringUtil.countChars(nextSibling.getText(), '\n') <= 1))) {
       final String text = nextSibling.getText();
-      if (nextSibling instanceof PsiComment && StringUtil.isEmptyOrSpaces(
+      if (nextSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
         StringUtil.trimStart(text.trim(), getPrefix(element)))) {
         break;
       }
-      if (nextSibling instanceof PsiComment)
+      if (nextSibling.getNode().getElementType().equals(elementType))
         result = nextSibling;
       nextSibling = nextSibling.getNextSibling();
     }
