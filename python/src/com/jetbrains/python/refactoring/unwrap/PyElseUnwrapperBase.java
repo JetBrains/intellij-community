@@ -15,7 +15,7 @@ public abstract class PyElseUnwrapperBase extends PyUnwrapper {
   }
 
   @Override
-    public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(PsiElement e) {
       return (e instanceof PyElsePart);
   }
   @Override
