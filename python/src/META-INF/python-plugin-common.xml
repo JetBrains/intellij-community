@@ -43,6 +43,7 @@
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
+    <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
     <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyLiteralSelectionHandler"/>
@@ -1002,10 +1003,7 @@
       <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
     </action>
 
-    <action id="PyFillParagraph" class="com.jetbrains.python.actions.PyFillParagraphAction" text="Fill paragraph"
-            description="Reformat string literal or comment to fit maximum width (usually 80)">
-      <add-to-group group-id="RefactoringMenu"/>
-    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
