@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.generate.tostring.config;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
@@ -35,7 +34,7 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
         return instance;
     }
 
-    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
         PsiMethod methodHashCode = PsiAdapter.findHashCodeMethod(clazz);
         PsiMethod methodEquals = PsiAdapter.findEqualsMethod(clazz);
 
