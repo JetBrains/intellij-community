@@ -1002,9 +1002,9 @@
       <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
     </action>
 
-    <action id="PyFillParagraph" class="com.jetbrains.python.actions.PyFillParagraphAction" text="Fill paragraph action"
+    <action id="PyFillParagraph" class="com.jetbrains.python.actions.PyFillParagraphAction" text="Fill paragraph"
             description="Reformat string literal or comment to fit maximum width (usually 80)">
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CompareClipboardWithSelection"/>
+      <add-to-group group-id="RefactoringMenu"/>
     </action>
   </actions>
 

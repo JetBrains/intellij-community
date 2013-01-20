@@ -235,7 +235,6 @@ target(name: "compile", description: "Compile module python") {
       include(name: "JavaScriptDebugger.jar")
     }
     fileset(dir: "${ideaPlugins}/webDeployment/lib") {
-      include(name: "jsch*.jar")
       include(name: "webDeployment.jar")
       include(name: "commons-vfs*.jar")
     }

@@ -1,22 +1,24 @@
 package com.jetbrains.python.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.List;
 
@@ -40,88 +42,107 @@ public class PyFillParagraphAction extends AnAction {
       }
     }
 
-    if (element instanceof PsiComment) {
-      processComment(element, editor.getDocument());
-    }
-    else {
-      element = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
-
-      if (element != null) {
-        final String text = element.getText();
-        final List<String> substrings = StringUtil.split(text, "\n", true);
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String string : substrings) {
-          stringBuilder.append(StringUtil.trimStart(string.trim(), getCommentPrefix())).append(" ");
-        }
-        String replacementString = stringBuilder.toString();
-        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-        final PsiElement docstring = elementGenerator.createFromText(
-                                                    LanguageLevel.forElement(element), PyExpressionStatement.class,
-                                                    replacementString).getExpression();
-        final PsiElement finalElement = element;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            PsiElement replacementElement = finalElement.replace(docstring);
-            replacementElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(replacementElement);
-
-            final TextRange textRange = getTextRange(replacementElement);
-            CodeStyleManager.getInstance(project).reformatText(
-              replacementElement.getContainingFile(), textRange.getStartOffset(),
-                                                      textRange.getEndOffset());
-          }
-        });
-
-      }
-    }
+    performOnElement(element, editor);
   }
 
-  protected void processComment(final PsiElement element, final Document document) {
-    final TextRange textRange = getTextRange(element);
+  protected void performOnElement(final PsiElement element, final Editor editor) {
+    final Document document = editor.getDocument();
+
+    final TextRange textRange = getTextRange(element, editor);
     final String text = textRange.substring(element.getContainingFile().getText());
 
     final List<String> strings = StringUtil.split(text, "\n", true);
     StringBuilder stringBuilder = new StringBuilder();
     for (String string : strings) {
-      stringBuilder.append(StringUtil.trimStart(string.trim(), getCommentPrefix())).append(" ");
+      stringBuilder.append(StringUtil.trimStart(string.trim(), getPrefix(element))).append(" ");
     }
     final String newText = stringBuilder.toString();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
+    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
       public void run() {
-        document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), getCommentPrefix() + newText);
-        CodeStyleManager.getInstance(element.getProject()).reformatText(
-          element.getContainingFile(),
-          textRange.getStartOffset(),
-          textRange.getStartOffset() + newText.length() + 1);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
+                                   getPrefix(element) + newText);
+            CodeStyleManager.getInstance(element.getProject()).reformatText(
+              element.getContainingFile(),
+              textRange.getStartOffset(),
+              textRange.getStartOffset() + newText.length() + 1);
+          }
+        });
       }
-    });
+    }, null, document);
 
   }
 
-  protected String getCommentPrefix() {
-    return "#";
+  protected String getPrefix(PsiElement element) {
+    return element instanceof PsiComment? "#" : "";
   }
 
-  private static TextRange getTextRange(PsiElement element) {
-    if (element instanceof PyStringLiteralExpression)
-      return element.getTextRange();
+  private static TextRange getTextRange(PsiElement element, Editor editor) {
 
-    PsiElement prev = getFirstElement(element);
-    PsiElement next = getLastElement(element);
+    if (element instanceof PsiComment) {
+      PsiElement prev = getFirstElement(element);
+      PsiElement next = getLastElement(element);
 
-    final int startOffset = prev != null? prev.getTextRange().getStartOffset()
-                                        : element.getTextRange().getStartOffset();
-    final int endOffset = next != null? next.getTextRange().getEndOffset()
-                                      : element.getTextRange().getEndOffset();
-    return TextRange.create(startOffset, endOffset);
+      final int startOffset = prev != null? prev.getTextRange().getStartOffset()
+                                          : element.getTextRange().getStartOffset();
+      final int endOffset = next != null? next.getTextRange().getEndOffset()
+                                        : element.getTextRange().getEndOffset();
+      return TextRange.create(startOffset, endOffset);
+    }
+    else {
+      int startOffset = getStartOffset(element, editor);
+      int endOffset = getEndOffset(element, editor);
+      return TextRange.create(startOffset, endOffset);
+    }
+  }
+
+  private static int getStartOffset(PsiElement element, Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    final int elementTextOffset = element.getTextOffset();
+    final Document document = editor.getDocument();
+    int lineNumber = document.getLineNumber(offset);
+
+    while (lineNumber != document.getLineNumber(elementTextOffset)) {
+      final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
+                                                            document.getLineEndOffset(lineNumber)));
+      if (StringUtil.isEmptyOrSpaces(text)) {
+        final int lineStartOffset = document.getLineStartOffset(lineNumber + 1);
+        final String lineText = document
+          .getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber + 1)));
+        int shift = StringUtil.findFirst(lineText, CharFilter.NOT_WHITESPACE_FILTER);
+        return lineStartOffset + shift;
+      }
+      lineNumber -= 1;
+    }
+    return elementTextOffset;
+  }
+
+  private static int getEndOffset(PsiElement element, Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    final int elementTextOffset = element.getTextRange().getEndOffset();
+    final Document document = editor.getDocument();
+    int lineNumber = document.getLineNumber(offset);
+
+    while (lineNumber != document.getLineNumber(elementTextOffset)) {
+      final String text = document.getText(TextRange.create(document.getLineStartOffset(lineNumber),
+                                                            document.getLineEndOffset(lineNumber)));
+      if (StringUtil.isEmptyOrSpaces(text))
+        return document.getLineEndOffset(lineNumber - 1);
+      lineNumber += 1;
+    }
+    return element.getTextRange().getEndOffset();
   }
 
   private static PsiElement getFirstElement(final PsiElement element) {
     PsiElement e = element.getPrevSibling();
     PsiElement result = element;
     while (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
+      final String text = e.getText();
+      if (StringUtil.countChars(text, '\n') > 1)
+        break;
       if (e instanceof PsiComment)
         result = e;
       e = e.getPrevSibling();
@@ -133,6 +154,9 @@ public class PyFillParagraphAction extends AnAction {
     PsiElement e = element.getNextSibling();
     PsiElement result = element;
     while (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
+      final String text = e.getText();
+      if (StringUtil.countChars(text, '\n') > 1)
+        break;
       if (e instanceof PsiComment)
         result = e;
       e = e.getNextSibling();

@@ -285,8 +285,10 @@ public class ManagePackagesDialog extends DialogWrapper {
         try {
           List<Pair> packages = new ArrayList<Pair>();
           final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
+          final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+          String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
           for (String name : packageNames) {
-            packages.add(new ComparablePair(name, PyPIPackageUtil.PYPI_URL));
+            packages.add(new ComparablePair(name, url));
           }
           packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
           myPackagesModel = new PackagesModel(packages);

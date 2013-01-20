@@ -35,10 +35,14 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.host = host
         self.interpreter = PyDevFrontEnd()
         self._input_error_printed = False
+        self.notification_succeeded = False
+        self.notification_tries = 0;
+        self.notification_max_tries = 3
+
         self.notify_about_magic()
 
-
     def doAddExec(self, line):
+        self.notify_about_magic()
         if (line.rstrip().endswith('??')):
             print('IPython-->')
         try:
@@ -111,13 +115,22 @@ class InterpreterInterface(BaseInterpreterInterface):
             return server.IPythonEditor(os.path.realpath(file), line)
 
     def notify_about_magic(self):
-        completions = self.getCompletions("%", "%")
-        magic_commands = [x[0] for x in completions]
+        if not self.notification_succeeded:
+            self.notification_tries+=1
+            if self.notification_tries>self.notification_max_tries:
+                return
+            completions = self.getCompletions("%", "%")
+            magic_commands = [x[0] for x in completions]
 
-        server = self.get_server()
+            server = self.get_server()
 
-        if server is not None:
-            server.NotifyAboutMagic(magic_commands, self.interpreter.is_automagic())
+            if server is not None:
+                try:
+                    server.NotifyAboutMagic(magic_commands, self.interpreter.is_automagic())
+                    self.notification_succeeded = True
+                except :
+                    self.notification_succeeded = False
+
 
 
 
