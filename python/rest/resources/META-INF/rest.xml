@@ -15,7 +15,7 @@
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
     <lang.formatter language="ReST" implementationClass="com.jetbrains.rest.formatter.RestFormattingModelBuilder"/>
-    
+    <codeInsight.fillParagraph language="ReST" implementationClass="com.jetbrains.rest.actions.RestFillParagraphHandler"/>
 
   </extensions>
 
