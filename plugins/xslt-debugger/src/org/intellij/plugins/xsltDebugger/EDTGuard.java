@@ -209,7 +209,7 @@ class EDTGuard implements InvocationHandler {
     });
 
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, d);
-    final Alarm alarm2 = new Alarm(Alarm.ThreadToUse.OWN_THREAD, alarm);
+    final Alarm alarm2 = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, alarm);
 
     final Runnable watchdog = new Runnable() {
       @Override

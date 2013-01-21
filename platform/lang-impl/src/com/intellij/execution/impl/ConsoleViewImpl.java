@@ -233,7 +233,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private String myHelpId;
 
-  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();

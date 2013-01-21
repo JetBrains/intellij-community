@@ -87,7 +87,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
                             @Nullable JComponent activationComponent,
                             boolean executeInDispatchThread) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, activationComponent,
-         executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.OWN_THREAD);
+         executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   public MergingUpdateQueue(@NonNls String name,

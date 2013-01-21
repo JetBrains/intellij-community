@@ -576,7 +576,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, LogConsoleBase.this);
+    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);
 
     public ReaderThread(@Nullable Reader reader) {
       myReader = reader != null ? new BufferedReader(reader) : null;

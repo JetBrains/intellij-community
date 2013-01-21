@@ -161,7 +161,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     };
     myActionManagerEx.addAnActionListener(actionListener, project);
-    myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,myProject);
+    myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
   }
 
   private void closeDocHint() {

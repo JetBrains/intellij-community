@@ -112,7 +112,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     myFileEditorManager = fileEditorManager;
 
     myToolWindowUpdateQueue = new MergingUpdateQueue("android.layout.preview", 300, true, null, project);
-    myRenderingQueue = new MergingUpdateQueue("android.layout.rendering", 300, true, null, project, null, Alarm.ThreadToUse.SINGLE_THREAD);
+    myRenderingQueue = new MergingUpdateQueue("android.layout.rendering", 300, true, null, project, null, Alarm.ThreadToUse.OWN_THREAD);
     mySaveAndRenderQueue = new MergingUpdateQueue("android.layout.preview.save.and.render", 1000, true, null, project, null, true);
 
     final MessageBusConnection connection = project.getMessageBus().connect(project);

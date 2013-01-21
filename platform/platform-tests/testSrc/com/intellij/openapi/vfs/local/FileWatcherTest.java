@@ -93,7 +93,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     myWatcher.startup(myNotifier);
     assertTrue(myWatcher.isOperational());
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getProject());
     myTimeout = NATIVE_PROCESS_DELAY;
 
     myConnection = ApplicationManager.getApplication().getMessageBus().connect();

@@ -127,7 +127,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   }
 
   private Alarm createAlarm(@NotNull final AndroidAutogeneratorMode mode) {
-    final Alarm alarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+    final Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {

@@ -74,7 +74,7 @@ public class RootsToWorkingCopies implements VcsListener {
         }
       }
     };
-    myZipperUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.OWN_THREAD, myProject);
+    myZipperUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
   private void addRoot(final VirtualFile root) {
