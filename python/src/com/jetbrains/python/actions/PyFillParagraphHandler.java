@@ -26,7 +26,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
         PythonStringUtil.getQuotes(stringLiteralExpression.getText());
       return quotes != null? quotes.getFirst()+"\n" : "\"\n";
     }
-    return element instanceof PsiComment? "#" : "";
+    return element instanceof PsiComment? "# " : "";
   }
 
   @NotNull
