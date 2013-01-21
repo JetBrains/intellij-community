@@ -762,12 +762,12 @@ string
   }
 
   public void "test inner java class references with incremental recompilation"() {
-    def bar1 = myFixture.addFileToProject('Bar1.groovy', 'class Bar1 extends Bar2 { } ')
-    myFixture.addFileToProject('Bar2.java', 'class Bar2 extends Bar3 { } ')
-    def bar3 = myFixture.addFileToProject('Bar3.groovy', 'class Bar3 { Bar1 property } ')
+    def bar1 = myFixture.addFileToProject('bar/Bar1.groovy', 'package bar; class Bar1 extends Bar2 { } ')
+    myFixture.addFileToProject('bar/Bar2.java', 'package bar; class Bar2 extends Bar3 { } ')
+    def bar3 = myFixture.addFileToProject('bar/Bar3.groovy', 'package bar; class Bar3 { Bar1 property } ')
 
-    myFixture.addClass("package foo; public class Outer { public static class Inner { } }")
-    def using = myFixture.addFileToProject('UsingInner.groovy', 'import foo.Outer; class UsingInner extends Bar1 { Outer.Inner property } ')
+    myFixture.addClass("package foo; public class Outer { public static class Inner extends bar.Bar1 { } }")
+    def using = myFixture.addFileToProject('UsingInner.groovy', 'import foo.Outer; class UsingInner extends bar.Bar1 { Outer.Inner property } ')
 
     assertEmpty make()
 
