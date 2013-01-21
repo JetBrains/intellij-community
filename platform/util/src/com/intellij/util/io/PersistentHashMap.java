@@ -315,8 +315,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final int enumerate(Key name) throws IOException {
     synchronized (myEnumerator) {
-      myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
-      return super.enumerate(name);
+      try {
+        myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
+        return super.enumerate(name);
+      } catch (AssertionError ae) {
+        LOG.info("Size:"+myValueStorage.getSize() + "," + myIntAddressForNewRecord + "," + myLargeIndexWatermarkId + "," + name);
+        throw ae;
+      }
     }
   }
 
