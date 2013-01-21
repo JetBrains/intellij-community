@@ -1494,4 +1494,18 @@ def 'a\\'bc'(){}
 "a'b<caret>c"()
 ''', GrMethod)
   }
+
+  void testValueOf() {
+    final valueof = resolveByText('''\
+enum MyEnum {
+    FOO, BAR
+}
+
+
+MyEnum myEnum
+myEnum = MyEnum.va<caret>lueOf('FOO')
+''', PsiMethod)
+
+    assertEquals(valueof.parameterList.parametersCount, 1)
+  }
 }
