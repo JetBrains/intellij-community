@@ -118,7 +118,7 @@ public class ParagraphFillHandler {
     PsiElement prevSibling = element.getPrevSibling();
     PsiElement result = element;
     while (prevSibling != null && (prevSibling.getNode().getElementType().equals(elementType) ||
-                                   (prevSibling instanceof PsiWhiteSpace &&
+                                   (atWhitespaceToken(prevSibling) &&
                                    StringUtil.countChars(prevSibling.getText(), '\n') <= 1))) {
       final String text = prevSibling.getText();
       if (prevSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
@@ -138,7 +138,7 @@ public class ParagraphFillHandler {
     PsiElement nextSibling = element.getNextSibling();
     PsiElement result = element;
     while (nextSibling != null && (nextSibling.getNode().getElementType().equals(elementType) ||
-                                   (nextSibling instanceof PsiWhiteSpace &&
+                                   (atWhitespaceToken(nextSibling) &&
                                    StringUtil.countChars(nextSibling.getText(), '\n') <= 1))) {
       final String text = nextSibling.getText();
       if (nextSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
@@ -150,6 +150,10 @@ public class ParagraphFillHandler {
       nextSibling = nextSibling.getNextSibling();
     }
     return result;
+  }
+
+  protected boolean atWhitespaceToken(@Nullable final PsiElement element) {
+    return element instanceof PsiWhiteSpace;
   }
 
   protected boolean isAvailableForElement(@Nullable final PsiElement element) {
