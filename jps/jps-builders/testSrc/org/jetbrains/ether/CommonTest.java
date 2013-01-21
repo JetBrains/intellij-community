@@ -101,4 +101,8 @@ public class CommonTest extends IncrementalTestCase {
   public void testAddClass() throws Exception {
       doTest();
   }
+
+  public void testAddDuplicateClass() throws Exception {
+      doTest();
+  }
 }
