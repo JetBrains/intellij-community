@@ -120,7 +120,7 @@ public class RenderUtil {
     boolean incorrectRClassFormat = false;
     String rClassName = null;
 
-    final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
+    final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet, projectResources);
 
     try {
       callback.loadAndParseRClass();
