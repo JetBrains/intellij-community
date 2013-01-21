@@ -74,7 +74,7 @@ public class GitTestImpl implements Git {
   public GitCommandResult clone(@NotNull Project project,
                                 @NotNull File parentDirectory,
                                 @NotNull String url,
-                                @NotNull String clonedDirectoryName) {
+                                @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... progressListeners) {
     throw new UnsupportedOperationException();
   }
 

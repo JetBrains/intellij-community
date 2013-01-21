@@ -15,6 +15,8 @@
  */
 package git4idea.commands;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Key;
 import gnu.trove.TObjectDoubleHashMap;
 import gnu.trove.TObjectDoubleProcedure;
 
@@ -31,6 +33,19 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
   // progress of each operation is stored here. this is an overhead since operations go one by one,
   // but it looks simpler than storing current operation, checking that ther was no skipped, etc.
   private TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<Operation>(4);
+
+  public static GitLineHandlerListener createListener(final ProgressIndicator indicator) {
+    final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
+    return new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        final double fraction = progressAnalyzer.analyzeProgress(line);
+        if (fraction >= 0) {
+          indicator.setFraction(fraction);
+        }
+      }
+    };
+  }
 
   /**
    * A long git command usually consists of the operations in this enum.
@@ -52,14 +67,14 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
       }
     },
     COMPRESSING_OBJECTS(".*Compressing objects: +(\\d{1,3})%.*", 0.1),
-    RECEVING_OBJECTS(".*Receiving objects: +(\\d{1,3})%.*", 0.8),
+    RECEIVING_OR_WRITING_OBJECTS(".*(?:Receiving|Writing) objects: +(\\d{1,3})%.*", 0.8), // receiving on fetch, writing on push
     RESOLVING_DELTAS(".*Resolving deltas: +(\\d{1,3})%.*", 0.05);
 
     private Pattern myPattern;
     private double myFractionInTotal;
 
     Operation(String pattern, double fractionInTotal) {
-      myPattern = Pattern.compile(pattern);
+      myPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
       myFractionInTotal = fractionInTotal;
     }
 
