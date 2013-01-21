@@ -7,12 +7,9 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -20,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformUtils;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonNames;
 import com.jetbrains.cython.psi.CythonFile;
@@ -125,23 +121,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, List<String> ignoredIdentifiers) {
       super(holder, session);
       myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
-    }
-
-    @Override
-    public void visitPyFile(PyFile node) {
-      super.visitPyFile(node);
-      if (PlatformUtils.isPyCharm()) {
-        final Module module = ModuleUtil.findModuleForPsiElement(node);
-        if (module != null) {
-          final Sdk sdk = PythonSdkType.findPythonSdk(module);
-          if (sdk == null) {
-            registerProblem(node, "No Python interpreter configured for the project", new ConfigureInterpreterFix());
-          }
-          else if (PythonSdkType.isInvalid(sdk)) {
-            registerProblem(node, "Invalid Python interpreter selected for the project", new ConfigureInterpreterFix());
-          }
-        }
-      }
     }
 
     @Override
@@ -977,28 +956,4 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
   }
 
-  private static class ConfigureInterpreterFix implements LocalQuickFix {
-    @NotNull
-    @Override
-    public String getName() {
-      return "Configure Python Interpreter";
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Configure Python Interpreter";
-    }
-
-    @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          // outside of read action
-          ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
-        }
-      });
-    }
-  }
 }
