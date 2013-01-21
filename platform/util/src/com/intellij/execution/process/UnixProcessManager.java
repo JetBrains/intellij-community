@@ -54,6 +54,8 @@ public class UnixProcessManager {
     }
   }
 
+  private static Map<String, String> ourCachedConsoleEnv;
+
   private UnixProcessManager() {
   }
 
@@ -187,17 +189,21 @@ public class UnixProcessManager {
   }
 
   public static void processPSOutput(String[] cmd, Processor<String> processor) {
+    processCommandOutput(cmd, processor, true);
+  }
+
+  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
 
-      processPSOutput(p, processor);
+      processCommandOutput(p, processor, skipFirstLine);
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  public static void processPSOutput(Process psProcess, Processor<String> processor) throws IOException {
+  private static void processCommandOutput(Process psProcess, Processor<String> processor, boolean skipFirstLine) throws IOException {
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     BufferedReader stdOutput = new BufferedReader(new
                                                   InputStreamReader(psProcess.getInputStream()));
@@ -206,7 +212,9 @@ public class UnixProcessManager {
 
     try {
       String s;
-      stdOutput.readLine(); //ps output header
+      if (skipFirstLine) {
+        stdOutput.readLine(); //ps output header
+      }
       while ((s = stdOutput.readLine()) != null) {
         processor.process(s);
       }
@@ -254,6 +262,31 @@ public class UnixProcessManager {
       res.append(s).append("\n");
     }
     return res.toString();
+  }
+
+  public static Map<? extends String, ? extends String> getOrLoadConsoleEnvironment() {
+    if (ourCachedConsoleEnv == null) {
+      loadConsoleEnvironment();
+    }
+    return ourCachedConsoleEnv;
+  }
+
+  private static void loadConsoleEnvironment() {
+    final Map<String, String> env = new HashMap<String, String>();
+    final String shell = System.getenv("SHELL");
+    if (shell != null && (shell.contains("bash") || shell.contains("zsh"))) {
+      processCommandOutput(new String[] {shell, "--login", "-c", "printenv"}, new Processor<String>() {
+        @Override
+        public boolean process(String s) {
+          final String[] split = s.split("=", 2);
+          if (split.length > 1) {
+            env.put(split[0], split[1]);
+          }
+          return false;
+        }
+      }, false);
+    }
+    ourCachedConsoleEnv = !env.isEmpty() ? Collections.unmodifiableMap(env) : System.getenv();
   }
 
 
