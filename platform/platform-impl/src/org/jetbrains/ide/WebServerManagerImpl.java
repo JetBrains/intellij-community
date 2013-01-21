@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Computable;
@@ -67,8 +68,10 @@ class WebServerManagerImpl extends WebServerManager {
           LOG.info(e);
           String groupDisplayId = "Web Server";
           Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
-          new Notification(groupDisplayId, "Internal web server disabled",
-                           "Cannot start web server, check firewall settings (Git integration, JS Debugger, LiveEdit will be broken)", NotificationType.ERROR).notify(null);
+          new Notification(groupDisplayId, "Internal HTTP server disabled",
+                           "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
+                           "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().getFullProductName(),
+                           NotificationType.ERROR).notify(null);
           return;
         }
 
