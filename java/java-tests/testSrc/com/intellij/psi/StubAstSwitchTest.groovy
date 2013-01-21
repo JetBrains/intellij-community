@@ -61,10 +61,10 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void "test traversing PSI and switching concurrently"() {
-    int count = 1000
+    int count = 100
     List<PsiClass> classList = (0..<count).collect {
       myFixture.addClass("class Foo$it { " +
-                         (0..<10).collect { "void foo$it(int i, boolean b, Object o) {}" }.join("\n") +
+                         (0..<100).collect { "void foo$it(int i, boolean b, Object o) {}" }.join("\n") +
                          " }")
     }
     CountDownLatch latch = new CountDownLatch(count)
