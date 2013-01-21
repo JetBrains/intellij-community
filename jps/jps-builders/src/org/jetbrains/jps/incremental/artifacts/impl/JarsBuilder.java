@@ -329,7 +329,7 @@ public class JarsBuilder {
                                        List<String> packedFilePaths,
                                        int rootIndex) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    if (!filter.accept(filePath, myContext.getProjectDescriptor())) {
+    if (!filter.accept(filePath) || !filter.shouldBeCopied(filePath, myContext.getProjectDescriptor())) {
       return;
     }
 

@@ -16,12 +16,10 @@
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
 import org.codehaus.plexus.util.SelectorUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -66,8 +64,9 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     return myTarget;
   }
 
+  @NotNull
   @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+  public FileFilter createFileFilter() {
     return new FileFilter() {
       @Override
       public boolean accept(File pathname) {

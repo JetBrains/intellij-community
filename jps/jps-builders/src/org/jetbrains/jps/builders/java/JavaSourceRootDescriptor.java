@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
@@ -90,8 +89,9 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
     return target;
   }
 
+  @NotNull
   @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+  public FileFilter createFileFilter() {
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     return new FileFilter() {
       @Override

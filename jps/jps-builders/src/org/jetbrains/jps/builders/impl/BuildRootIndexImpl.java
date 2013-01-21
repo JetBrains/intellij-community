@@ -265,10 +265,10 @@ public class BuildRootIndexImpl implements BuildRootIndex {
 
   @NotNull
   @Override
-  public FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor, @NotNull ProjectDescriptor projectDescriptor) {
+  public FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor) {
     FileFilter filter = myFileFilters.get(descriptor);
     if (filter == null) {
-      filter = descriptor.createFileFilter(projectDescriptor);
+      filter = descriptor.createFileFilter();
       myFileFilters.put(descriptor, filter);
     }
     return filter;

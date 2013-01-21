@@ -33,7 +33,22 @@ public abstract class BuildRootDescriptor {
 
   public abstract BuildTarget<?> getTarget();
 
-  public abstract FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor);
+  /**
+   * @deprecated override {@link #createFileFilter()} instead
+   */
+  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+    return null;
+  }
+
+  @NotNull
+  public FileFilter createFileFilter() {
+    return new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        return true;
+      }
+    };
+  }
 
   /**
    * @return the set of excluded directories under this root
