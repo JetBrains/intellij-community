@@ -313,7 +313,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrTopStatement createTopElementFromText(String text) {
     GroovyFile dummyFile = createGroovyFileChecked(text);
     final GrTopStatement[] topStatements = dummyFile.getTopStatements();
-    LOG.assertTrue(topStatements.length == 1);
+    if (topStatements.length != 1) throw new IncorrectOperationException("text = '" + text + "'");
     return topStatements[0];
   }
 
