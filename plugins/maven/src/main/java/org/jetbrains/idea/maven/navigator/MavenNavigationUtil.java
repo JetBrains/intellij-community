@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -25,7 +26,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -37,9 +44,7 @@ import java.io.File;
  * @author Konstantin Bulenkov
  */
 public class MavenNavigationUtil {
-  private static final String DEPENDENCIES = "dependencies";
   private static final String ARTIFACT_ID = "artifactId";
-  private static final String DEPENDENCY = "dependency";
 
   private MavenNavigationUtil() {
   }
@@ -74,13 +79,16 @@ public class MavenNavigationUtil {
       public void navigate(boolean requestFocus) {
         if (!file.isValid()) return;
 
-        final PsiFile pom = PsiManager.getInstance(project).findFile(file);
-        if (pom instanceof XmlFile) {
-          final XmlTag id = findDependency((XmlFile)pom, artifact.getArtifactId());
-          if (id != null) {
-            navigate(project, file, id.getTextOffset() + id.getName().length() + 2, requestFocus);
-          }
-        }
+        MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
+        if (projectModel == null) return;
+
+        MavenDomDependency dependency = findDependency(projectModel, artifact);
+        if (dependency == null) return;
+
+        XmlTag artifactId = dependency.getArtifactId().getXmlTag();
+        if (artifactId == null) return;
+
+        navigate(project, artifactId.getContainingFile().getVirtualFile(), artifactId.getTextOffset() + artifactId.getName().length() + 2, requestFocus);
       }
     };
     //final File pom = MavenArtifactUtil.getArtifactFile(myProjectsManager.getLocalRepository(), artifact.getMavenId());
@@ -127,38 +135,24 @@ public class MavenNavigationUtil {
   }
 
   @Nullable
-  public static XmlTag findArtifactId(XmlFile xml, String artifactId) {
-    final XmlDocument document = xml.getDocument();
-    if (document != null) {
-      final XmlTag root = document.getRootTag();
-      if (root != null) {
-        final XmlTag[] tags = root.findSubTags(ARTIFACT_ID, root.getNamespace());
-        if (tags.length > 0) {
-          return tags[0];
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static XmlTag findDependency(XmlFile xml, String artifactId) {
-    final XmlDocument document = xml.getDocument();
-    if (document != null) {
-      final XmlTag root = document.getRootTag();
-      if (root != null) {
-        final String namespace = root.getNamespace();
-        final XmlTag[] tags = root.findSubTags(DEPENDENCIES, namespace);
-        if (tags.length > 0) {
-          for (XmlTag dep : tags[0].findSubTags(DEPENDENCY, namespace)) {
-            final XmlTag[] ids = dep.findSubTags(ARTIFACT_ID, root.getNamespace());
-            if (ids.length > 0 && artifactId.equals(ids[0].getValue().getTrimmedText())) {
-              return ids[0];
-            }
+  public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, @NotNull final MavenArtifact artifact) {
+    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
+      @Nullable
+      @Override
+      protected MavenDomDependency find(MavenDomDependencies element) {
+        for (MavenDomDependency dependency : element.getDependencies()) {
+          if (Comparing.equal(artifact.getGroupId(), dependency.getGroupId().getStringValue())
+              && Comparing.equal(artifact.getArtifactId(), dependency.getArtifactId().getStringValue())) {
+            return dependency;
           }
         }
+
+        return null;
       }
-    }
-    return null;
+    };
+
+    MavenDomProjectProcessorUtils.processDependencies(projectDom, processor);
+
+    return processor.getResult();
   }
 }

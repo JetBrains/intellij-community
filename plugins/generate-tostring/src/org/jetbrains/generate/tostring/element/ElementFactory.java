@@ -119,7 +119,7 @@ public class ElementFactory {
 
     // modifiers
     if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) me.setModifierAbstract(true);
-    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronzied(true);
+    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronized(true);
 
     return me;
   }

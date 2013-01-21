@@ -212,6 +212,9 @@ public class Patch {
       if (cancelled) throw new OperationCancelledException();
     }
 
+    // on OS X we need to update bundle timestamp to reset Info.plist caches.
+    toDir.setLastModified(System.currentTimeMillis());
+
     return new ApplicationResult(appliedActions);
   }
 

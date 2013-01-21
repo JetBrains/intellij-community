@@ -22,11 +22,9 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
@@ -59,7 +57,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   }
 
   private boolean isEnabled(final DataContext dc) {
-    final Iterable<VirtualFilePointer> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
+    final Iterable<Pair<VirtualFilePointer,FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     return iterable != null;
   }
 
@@ -68,7 +66,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     if ((! isVisible(dc)) || (! isEnabled(dc))) return;
 
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
-    final Iterable<VirtualFilePointer> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
+    final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     final Label before = (Label) VcsDataKeys.LABEL_BEFORE.getData(dc);
     final Label after = (Label) VcsDataKeys.LABEL_AFTER.getData(dc);
 
@@ -94,17 +92,18 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
         }
         return false;
       }
-      final String url = ((MyCheckpointContentRevision)change.getBeforeRevision()).getUrl();
+      final MyCheckpointContentRevision revision = (MyCheckpointContentRevision)(change.getBeforeRevision() == null ? change.getAfterRevision() : change.getBeforeRevision());
+      final String url = revision.getUrl();
       return mySelectedPath.equals(url);
     }
   }
 
   private static class MyIterableWrapper implements Iterable<Change> {
-    private final Iterator<VirtualFilePointer> myVfIterator;
+    private final Iterator<Pair<VirtualFilePointer, FileStatus>> myVfIterator;
     private final Label myBefore;
     private final Label myAfter;
 
-    private MyIterableWrapper(Iterator<VirtualFilePointer> vfIterator, final Label before, final Label after) {
+    private MyIterableWrapper(Iterator<Pair<VirtualFilePointer, FileStatus>> vfIterator, final Label before, final Label after) {
       myVfIterator = vfIterator;
       myBefore = before;
       myAfter = after;
@@ -195,9 +194,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   private static class MyIteratorWrapper implements Iterator<Change> {
     private final MyLoader myBeforeLoader;
     private final MyLoader myAfterLoader;
-    private final Iterator<VirtualFilePointer> myVfIterator;
+    private final Iterator<Pair<VirtualFilePointer, FileStatus>> myVfIterator;
 
-    public MyIteratorWrapper(final Iterator<VirtualFilePointer> vfIterator, final Label before, final Label after) {
+    public MyIteratorWrapper(final Iterator<Pair<VirtualFilePointer, FileStatus>> vfIterator, final Label before, final Label after) {
       myVfIterator = vfIterator;
       myBeforeLoader = new MyLoader(before);
       myAfterLoader = new MyLoader(after);
@@ -208,10 +207,17 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     }
 
     public Change next() {
-      final VirtualFilePointer pointer = myVfIterator.next();
+      final Pair<VirtualFilePointer, FileStatus> pair = myVfIterator.next();
+      final VirtualFilePointer pointer = pair.getFirst();
 
-      return new Change(new MyCheckpointContentRevision(pointer, myBeforeLoader, true),
-                        new MyCheckpointContentRevision(pointer, myAfterLoader, false));
+      MyCheckpointContentRevision before = new MyCheckpointContentRevision(pointer, myBeforeLoader, true);
+      MyCheckpointContentRevision after = new MyCheckpointContentRevision(pointer, myAfterLoader, false);
+      if (FileStatus.ADDED.equals(pair.getSecond())) {
+        before = null;
+      } else if (FileStatus.DELETED.equals(pair.getSecond())) {
+        after = null;
+      }
+      return new Change(before, after, pair.getSecond());
     }
 
     public void remove() {

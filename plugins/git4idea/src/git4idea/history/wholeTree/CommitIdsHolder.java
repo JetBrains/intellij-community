@@ -15,7 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.util.containers.CompositeIterator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 
 import java.util.*;
@@ -74,7 +74,7 @@ public class CommitIdsHolder<Item> {
       final List<Iterator<Key>> iterators = new ArrayList<Iterator<Key>>(2);
       iterators.add(myProbationalQueue.keySet().iterator());
       iterators.add(myProtectedQueue.keySet().iterator());
-      return new CompositeIterator<Key>(iterators);
+      return ContainerUtil.concatIterators(iterators);
     }
   }
 }

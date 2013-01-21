@@ -68,6 +68,7 @@ import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import com.intellij.util.ui.UIUtil;
@@ -813,7 +814,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static void setPlatformPrefix(String prefix) {
-    System.setProperty("idea.platform.prefix", prefix);
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
   }
 
   @Retention(RetentionPolicy.RUNTIME)

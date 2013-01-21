@@ -32,6 +32,8 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
+  private boolean myEnforcedDefaults = false;
+
   /**
    * Merges (layers) the two given text attributes.
    *
@@ -175,6 +177,10 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
   }
 
+  public boolean isFallbackEnabled() {
+    return isEmpty() && !myEnforcedDefaults;
+  }
+
   public void reset() {
     setForegroundColor(null);
     setBackgroundColor(null);
@@ -251,6 +257,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public TextAttributes clone() {
     TextAttributes cloned = new TextAttributes();
     cloned.myAttrs = myAttrs;
+    cloned.myEnforcedDefaults = myEnforcedDefaults;
     return cloned;
   }
 
@@ -276,6 +283,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
                                          ext.EFFECT_COLOR,
                                          ext.getEffectType(),
                                          ext.ERROR_STRIPE_COLOR);
+    if (isEmpty()) myEnforcedDefaults = true;
   }
 
   @Override

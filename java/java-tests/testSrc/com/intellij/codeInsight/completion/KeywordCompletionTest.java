@@ -114,6 +114,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInClassArray() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray2() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray3() throws Throwable { doTest(2, "int", "char", "final"); }
+  public void testArrayClass() throws Throwable { doTest(1, "class", "interface"); }
   public void testIntInGenerics() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() throws Throwable { doTest(2, "int", "char", "final"); }
 

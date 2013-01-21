@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,10 +53,10 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testClos_arg2() throws Throwable { doTest(); }
   public void testClos_arg3() throws Throwable { doTest(); }
   public void testCond() throws Throwable { doTest(); }
-  public void testExpr1() throws Throwable { doTest(); }
+  public void _testExpr1() throws Throwable { doTest(); }
   public void testExpr2() throws Throwable { doTest(); }
   public void testExpr3() throws Throwable { doTest(); }
-  public void testExpr4() throws Throwable { doTest(); }
+  public void _testExpr4() throws Throwable { doTest(); }
   public void testFact() throws Throwable { doTest(); }
   public void testFact2() throws Throwable { doTest(); }
   public void testInit1() throws Throwable { doTest(); }

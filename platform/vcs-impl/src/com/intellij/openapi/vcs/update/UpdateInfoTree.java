@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -248,9 +249,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     return super.getData(dataId);
   }
 
-  private class MyTreeIterator implements Iterator<VirtualFilePointer> {
+  private class MyTreeIterator implements Iterator<Pair<VirtualFilePointer, FileStatus>> {
     private final Enumeration myEnum;
     private VirtualFilePointer myNext;
+    private FileStatus myStatus;
 
     private MyTreeIterator() {
       myEnum = myRoot.depthFirstEnumeration();
@@ -261,10 +263,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       return myNext != null;
     }
 
-    public VirtualFilePointer next() {
+    public Pair<VirtualFilePointer, FileStatus> next() {
       final VirtualFilePointer result = myNext;
+      final FileStatus status = myStatus;
       step();
-      return result;
+      return new Pair<VirtualFilePointer, FileStatus>(result, status);
     }
 
     private void step() {
@@ -272,7 +275,19 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       while (myEnum.hasMoreElements()) {
         final Object o = myEnum.nextElement();
         if (o instanceof FileTreeNode) {
-          myNext = ((FileTreeNode) o).getFilePointer();
+          final FileTreeNode treeNode = (FileTreeNode)o;
+          myNext = treeNode.getFilePointer();
+          myStatus = FileStatus.MODIFIED;
+
+          final TreeNode parent = treeNode.getParent();
+          if (parent instanceof GroupTreeNode) {
+            final String id = ((GroupTreeNode)parent).getFileGroupId();
+            if (FileGroup.CREATED_ID.equals(id)) {
+              myStatus = FileStatus.ADDED;
+            } else if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(id)) {
+              myStatus = FileStatus.DELETED;
+            }
+          }
           break;
         }
       }
@@ -283,8 +298,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
   }
 
-  private class MyTreeIterable implements Iterable<VirtualFilePointer> {
-    public Iterator<VirtualFilePointer> iterator() {
+  private class MyTreeIterable implements Iterable<Pair<VirtualFilePointer, FileStatus>> {
+    public Iterator<Pair<VirtualFilePointer, FileStatus>> iterator() {
       return new MyTreeIterator();
     }
   }

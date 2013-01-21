@@ -22,9 +22,13 @@ import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.GlobalContextKey;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -35,6 +39,7 @@ public class BuildTargetConfiguration {
   private final BuildTargetsState myTargetsState;
   private String myConfiguration;
   private volatile String myCurrentState;
+  private static final GlobalContextKey<Set<File>> ALL_DELETED_ROOTS_KEY = GlobalContextKey.create("_all_deleted_output_roots_");
 
   public BuildTargetConfiguration(BuildTarget<?> target, BuildTargetsState targetsState) {
     myTarget = target;
@@ -121,9 +126,7 @@ public class BuildTargetConfiguration {
     }
     File file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
-      if (file.exists()) {
-        FileUtil.delete(file);
-      }
+      file.delete();
     }
     else {
       FileUtil.writeToFile(file, StringUtil.join(nonexistentOutputRoots, "\n"));
@@ -132,12 +135,31 @@ public class BuildTargetConfiguration {
 
   public boolean outputRootWasDeleted(CompileContext context) throws IOException {
     List<String> nonexistentOutputRoots = new SmartList<String>();
-    for (File outputRoot : myTarget.getOutputRoots(context)) {
-      if (!outputRoot.exists()) {
-        nonexistentOutputRoots.add(outputRoot.getAbsolutePath());
+
+    final Collection<File> targetRoots = myTarget.getOutputRoots(context);
+    synchronized (ALL_DELETED_ROOTS_KEY) {
+      Set<File> allDeletedRoots = ALL_DELETED_ROOTS_KEY.get(context);
+      for (File outputRoot : targetRoots) {
+        boolean wasDeleted = allDeletedRoots != null && allDeletedRoots.contains(outputRoot);
+        if (!wasDeleted) {
+          wasDeleted = !outputRoot.exists();
+          if (wasDeleted) {
+            if (allDeletedRoots == null) { // lazy init
+              allDeletedRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+              ALL_DELETED_ROOTS_KEY.set(context, allDeletedRoots);
+            }
+            allDeletedRoots.add(outputRoot);
+          }
+        }
+        if (wasDeleted) {
+          nonexistentOutputRoots.add(outputRoot.getAbsolutePath());
+        }
       }
     }
-    if (nonexistentOutputRoots.isEmpty()) return false;
+
+    if (nonexistentOutputRoots.isEmpty()) {
+      return false;
+    }
     
     Set<String> storedNonExistentOutputs;
     File file = getNonexistentOutputsFile();

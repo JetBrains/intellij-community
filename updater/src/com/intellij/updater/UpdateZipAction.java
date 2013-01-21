@@ -188,7 +188,7 @@ public class UpdateZipAction extends BaseUpdateAction {
       out.close();
     }
 
-    Utils.copy(temp, toFile);
+    replaceUpdated(temp, toFile);
   }
 
   private static void processZipFile(File file, Processor processor) throws IOException {

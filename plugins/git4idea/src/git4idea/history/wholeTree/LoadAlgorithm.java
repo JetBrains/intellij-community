@@ -12,12 +12,15 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,18 +32,20 @@ public class LoadAlgorithm {
   private final Project myProject;
   private final List<LoaderAndRefresher<CommitHashPlusParents>> myLoaders;
   private final List<ByRootLoader> myShortLoaders;
-  private final Continuation myContinuation;
+  private Continuation myContinuation;
   private final GitCommitsSequentially myGitCommitsSequentially;
 
   public LoadAlgorithm(final Project project,
                        final List<LoaderAndRefresher<CommitHashPlusParents>> loaders,
-                       final List<ByRootLoader> shortLoaders,
-                       Continuation continuation, final GitCommitsSequentially gitCommitsSequentially) {
+                       final List<ByRootLoader> shortLoaders, final GitCommitsSequentially gitCommitsSequentially) {
     myProject = project;
     myLoaders = loaders;
     myShortLoaders = shortLoaders;
-    myContinuation = continuation;
     myGitCommitsSequentially = gitCommitsSequentially;
+  }
+
+  public void setContinuation(Continuation continuation) {
+    myContinuation = continuation;
   }
 
   public void fillContinuation() {
@@ -72,19 +77,22 @@ public class LoadAlgorithm {
   }
 
   public void resume() {
-    myContinuation.resume();
+    myContinuation.clearQueue();
+    for (LoaderAndRefresher<CommitHashPlusParents> loader : myLoaders) {
+      final LoaderFactory factory = new LoaderFactory(loader);
+      myContinuation.add(Collections.<TaskDescriptor>singletonList(factory.convert(new State(factory))));
+    }
+    myContinuation.resumeOnNewIndicator(myProject, true, ProgressManager.getInstance().getProgressIndicator().getText());
   }
 
-  private static class LoadTaskDescriptor extends TaskDescriptor {
+  private class LoadTaskDescriptor extends TaskDescriptor {
     protected final State myState;
     private final LoaderAndRefresher<CommitHashPlusParents> myLoader;
-    private final RefreshTaskDescriptor myRefreshTaskDescriptor;
 
-    protected LoadTaskDescriptor(final State state, final LoaderAndRefresher<CommitHashPlusParents> loader, final RefreshTaskDescriptor refreshTaskDescriptor) {
+    protected LoadTaskDescriptor(final State state, final LoaderAndRefresher<CommitHashPlusParents> loader) {
       super("Load git tree skeleton", Where.POOLED);
       myState = state;
       myLoader = loader;
-      myRefreshTaskDescriptor = refreshTaskDescriptor;
     }
 
     protected void processResult(final Result result) {
@@ -92,6 +100,7 @@ public class LoadAlgorithm {
 
     @Override
     public void run(final ContinuationContext context) {
+      ProgressManager.progress(getName());
       final Result<CommitHashPlusParents> result = myLoader.load(myState.myValue, myState.getContinuationTs());
       processResult(result);
       myState.setContinuationTs(result.getLast() == null ? -1 : result.getLast().getTime());
@@ -101,18 +110,27 @@ public class LoadAlgorithm {
         if (! myLoader.isInterrupted()) {
           myState.scheduleSelf(context);
         }
-        context.next(myRefreshTaskDescriptor);
-      } else {
-        context.next(myRefreshTaskDescriptor);
+      }
+      flushIntoUiCalledFromBackground(context, myLoader);
+    }
+  }
+
+  private void flushIntoUiCalledFromBackground(final ContinuationContext context, LoaderAndRefresher<CommitHashPlusParents> uiRefresh) {
+    final StepType stepType = uiRefresh.flushIntoUI();
+    if (StepType.STOP.equals(stepType)) {
+      context.cancelEverything();
+    } else if (StepType.PAUSE.equals(stepType)) {
+      context.cancelCurrent();
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.cancel();
       }
     }
   }
 
-  private static class TestLoadTaskDescriptor extends LoadTaskDescriptor {
-    private TestLoadTaskDescriptor(final State state,
-                                   final LoaderAndRefresher loader,
-                                   final RefreshTaskDescriptor refreshTaskDescriptor) {
-      super(state, loader, refreshTaskDescriptor);
+  private class TestLoadTaskDescriptor extends LoadTaskDescriptor {
+    private TestLoadTaskDescriptor(final State state, final LoaderAndRefresher<CommitHashPlusParents> loader) {
+      super(state, loader);
     }
 
     @Override
@@ -120,25 +138,6 @@ public class LoadAlgorithm {
       assert LoadType.TEST.equals(myState.myValue);
 
       myState.takeDecision(false);
-    }
-  }
-
-  private static class RefreshTaskDescriptor extends TaskDescriptor {
-    private final LoaderAndRefresher myUiRefresh;
-
-    private RefreshTaskDescriptor(final LoaderAndRefresher uiRefresh) {
-      super("", Where.AWT);
-      myUiRefresh = uiRefresh;
-    }
-
-    @Override
-    public void run(final ContinuationContext context) {
-      final StepType stepType = myUiRefresh.flushIntoUI();
-      if (StepType.STOP.equals(stepType)) {
-        context.cancelEverything();
-      } else if (StepType.PAUSE.equals(stepType)) {
-        context.suspend();
-      }
     }
   }
 
@@ -191,21 +190,19 @@ public class LoadAlgorithm {
     }
   }
 
-  private static class LoaderFactory implements Convertor<State, LoadTaskDescriptor> {
+  private class LoaderFactory implements Convertor<State, LoadTaskDescriptor> {
     private final LoaderAndRefresher<CommitHashPlusParents> myLoader;
-    private final RefreshTaskDescriptor myRefreshTaskDescriptor;
 
     private LoaderFactory(final LoaderAndRefresher<CommitHashPlusParents> loader) {
       myLoader = loader;
-      myRefreshTaskDescriptor = new RefreshTaskDescriptor(loader);
     }
 
     @Override
     public LoadTaskDescriptor convert(final State state) {
       if (LoadType.TEST.equals(state.myValue)) {
-        return new TestLoadTaskDescriptor(state, myLoader, myRefreshTaskDescriptor);
+        return new TestLoadTaskDescriptor(state, myLoader);
       }
-      return new LoadTaskDescriptor(state, myLoader, myRefreshTaskDescriptor);
+      return new LoadTaskDescriptor(state, myLoader);
     }
   }
 

@@ -23,10 +23,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -71,36 +71,32 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (node == null) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
-      synchronized (file.getStubLock()) {
-        node = myNode;
-        if (node == null) {
-          NonCancelableSection criticalSection = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
-          try {
-            if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
-            FileElement treeElement = file.getTreeElement();
-            StubTree stubTree = file.getStubTree();
-            if (treeElement != null) {
-              return notBoundInExistingAst(file, treeElement, stubTree);
-            }
-            final FileElement fileElement = file.calcTreeElement();
-            node = myNode;
-            if (node == null) {
-              @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
-                                       (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()) +
-                                       "\nFile stub tree:\n" +
-                                       (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
-                                       "\nLoaded file AST:\n" + StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
-              throw new IllegalArgumentException(message);
-            }
-          }
-          finally {
-            criticalSection.done();
-          }
-        }
+      if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
+
+      FileElement treeElement = file.getTreeElement();
+      StubTree stubTree = file.getStubTree();
+      if (treeElement != null && myNode == null) {
+        return notBoundInExistingAst(file, treeElement, stubTree);
+      }
+
+      final FileElement fileElement = file.calcTreeElement();
+      node = myNode;
+      if (node == null) {
+        return failedToBindStubToAst(file, stubTree, fileElement);
       }
     }
 
     return node;
+  }
+
+  private ASTNode failedToBindStubToAst(PsiFileImpl file, StubTree stubTree, FileElement fileElement) {
+    VirtualFile vFile = file.getVirtualFile();
+    @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
+                             (vFile == null ? "<unknown file>" : vFile.getPath()) +
+                             "\nFile stub tree:\n" +
+                             (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
+                             "\nLoaded file AST:\n" + StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
+    throw new IllegalArgumentException(message);
   }
 
   private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
@@ -119,7 +115,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     throw new AssertionError(message);
   }
 
-  public void setNode(final ASTNode node) {
+  public final void setNode(final ASTNode node) {
     myNode = node;
   }
 
@@ -241,7 +237,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return myStub;
   }
 
-  public void setStub(@Nullable T stub) {
+  public final void setStub(@Nullable T stub) {
     myStub = stub;
   }
 

@@ -111,12 +111,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
                                                                     ApplicationNamesInfo.getInstance().getFullProductName()),
                                                   IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
       if (ret == 0) {
-        if (ApplicationManager.getApplication().isRestartCapable()) {
-          ApplicationManager.getApplication().restart();
-        }
-        else {
-          ApplicationManager.getApplication().exit();
-        }
+        ApplicationManager.getApplication().restart();
       }
     }
     catch (ZipException e1) {

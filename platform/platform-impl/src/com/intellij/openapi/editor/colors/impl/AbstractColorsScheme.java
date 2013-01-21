@@ -442,13 +442,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttribute) {
-    if (key.getFallbackAttributeKey() != null && value.isEmpty()) return false;
+    if (key.getFallbackAttributeKey() != null && value.isFallbackEnabled()) return false;
     boolean hasDefaultValue = value.equals(defaultAttribute);
     if (myParentScheme == null) return !hasDefaultValue;
-    if (EditorColorsManager.getInstance().getGlobalScheme() == this
-        && myParentScheme instanceof AbstractColorsScheme
-        && !((AbstractColorsScheme)myParentScheme).myAttributesMap.containsKey(key)) return !value.isEmpty();
-    return !value.equals(myParentScheme.getAttributes(key));
+    return true;
   }
 
   private void writeAttributes(Element attrElements) throws WriteExternalException {
@@ -562,7 +559,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if (fallbackKey == null) return null;
     if (myAttributesMap.containsKey(fallbackKey)) {
       TextAttributes fallbackAttributes = myAttributesMap.get(fallbackKey);
-      if (fallbackAttributes != null && (!fallbackAttributes.isEmpty() || fallbackKey.getFallbackAttributeKey() == null)) {
+      if (fallbackAttributes != null && (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null)) {
         return fallbackAttributes;
       }
     }

@@ -14,9 +14,9 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleJarPresenceChange extends GradleAbstractEntityPresenceChange<GradleJarId> {
 
   public GradleJarPresenceChange(@Nullable GradleJarId gradleEntity,
-                                 @Nullable GradleJarId intellijEntity) throws IllegalArgumentException
+                                 @Nullable GradleJarId ideEntity) throws IllegalArgumentException
   {
-    super(GradleBundle.message("gradle.sync.change.entity.type.jar"), gradleEntity, intellijEntity);
+    super(GradleBundle.message("gradle.sync.change.entity.type.jar"), gradleEntity, ideEntity);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,74 @@ import java.util.List;
  */
 public class GrReferenceHighlighter extends TextEditorHighlightingPass {
   @NotNull private final GroovyFileBase myFile;
-  @Nullable private List<HighlightInfo> myInfos = null;
+  private List<HighlightInfo> myInfos = null;
+
+  private final GroovyRecursiveElementVisitor myDeclarationHighlighter = new GroovyRecursiveElementVisitor() {
+    @Override
+    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      super.visitReferenceExpression(referenceExpression);
+      visit(referenceExpression);
+    }
+
+    @Override
+    public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      super.visitCodeReferenceElement(refElement);
+      visit(refElement);
+    }
+
+    @Override
+    public void visitVariable(GrVariable variable) {
+      super.visitVariable(variable);
+
+      if (GroovyRefactoringUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
+        final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable, null);
+        if (attribute != null) {
+          final PsiElement nameElement = variable.getNameIdentifierGroovy();
+          assert myInfos != null;
+          myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, nameElement, null, attribute));
+        }
+      }
+    }
+
+
+    private void visit(GrReferenceElement element) {
+      final PsiElement resolved = element.resolve();
+      final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved, element);
+      if (attribute != null) {
+        final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
+        assert myInfos != null;
+        myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, attribute));
+      }
+    }
+  };
+
+  private final GroovyRecursiveElementVisitor myResolveHighlighter = new GroovyRecursiveElementVisitor() {
+    @Override
+    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      final int size = myInfos.size();
+      super.visitReferenceExpression(referenceExpression);
+      if (size == myInfos.size()) {
+        HighlightInfo info = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
+        if (info != null) {
+          assert myInfos != null;
+          myInfos.add(info);
+        }
+      }
+    }
+
+    @Override
+    public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+      final int size = myInfos.size();
+      super.visitCodeReferenceElement(refElement);
+      if (size == myInfos.size()) {
+        HighlightInfo info = GrUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
+        if (info != null) {
+          assert myInfos != null;
+          myInfos.add(info);
+        }
+      }
+    }
+  };
 
   public GrReferenceHighlighter(@Nullable Document document, @NotNull GroovyFileBase file) {
     super(file.getProject(), document);
@@ -53,53 +120,8 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     myInfos = new ArrayList<HighlightInfo>();
-    myFile.accept(new GroovyRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-        super.visitReferenceExpression(referenceExpression);
-
-        visit(referenceExpression);
-        HighlightInfo info = GrUnresolvedAccessInspection.checkReferenceExpression(referenceExpression);
-        if (info != null) {
-          myInfos.add(info);
-        }
-      }
-
-      @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        super.visitCodeReferenceElement(refElement);
-
-        visit(refElement);
-
-        HighlightInfo info = GrUnresolvedAccessInspection.checkCodeReferenceElement(refElement);
-        if (info != null) {
-          myInfos.add(info);
-        }
-      }
-
-      @Override
-      public void visitVariable(GrVariable variable) {
-        super.visitVariable(variable);
-
-        if (GroovyRefactoringUtil.isLocalVariable(variable) || variable instanceof GrParameter) {
-          final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(variable, null);
-          if (attribute != null) {
-            final PsiElement nameElement = variable.getNameIdentifierGroovy();
-            myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, nameElement, null, attribute));
-          }
-        }
-      }
-
-
-      private void visit(GrReferenceElement element) {
-        final PsiElement resolved = element.resolve();
-        final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved, element);
-        if (attribute != null) {
-          final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
-          myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, attribute));
-        }
-      }
-    });
+    myFile.accept(myDeclarationHighlighter);
+    myFile.accept(myResolveHighlighter);
   }
 
   @Override

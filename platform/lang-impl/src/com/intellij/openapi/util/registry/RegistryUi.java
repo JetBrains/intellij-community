@@ -316,11 +316,7 @@ public class RegistryUi implements Disposable {
         LaterInvocator.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (app.isRestartCapable()) {
-              app.restart();
-            } else {
-              app.exit(true);
-            }
+              app.restart(true);
           }
         }, ModalityState.NON_MODAL);
       }

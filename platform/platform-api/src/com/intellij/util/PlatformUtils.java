@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class PlatformUtils {
+  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
+
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";
@@ -40,7 +42,7 @@ public class PlatformUtils {
   }
 
   public static String getPlatformPrefix(String defaultPrefix) {
-    return System.getProperty("idea.platform.prefix", defaultPrefix);
+    return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
 
   public static boolean isIdea() {

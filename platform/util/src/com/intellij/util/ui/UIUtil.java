@@ -1529,7 +1529,6 @@ public class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
-  @TestOnly
   public static void dispatchAllInvocationEvents() {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();

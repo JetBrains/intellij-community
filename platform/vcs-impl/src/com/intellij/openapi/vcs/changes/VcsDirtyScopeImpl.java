@@ -29,7 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CompositeIterator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -72,7 +72,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         for (THashSet<FilePath> paths : myDirtyFiles.values()) {
           iteratorList.add(paths.iterator());
         }
-        return new CompositeIterator<FilePath>(iteratorList);
+        return ContainerUtil.concatIterators(iteratorList);
       }
 
       @Nullable

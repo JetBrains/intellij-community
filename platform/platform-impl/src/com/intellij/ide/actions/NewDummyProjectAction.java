@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.util.PlatformUtils;
 
 /**
  * @author yole
@@ -35,6 +36,6 @@ public class NewDummyProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setVisible("Platform".equals(System.getProperty("idea.platform.prefix")));
+    e.getPresentation().setVisible("Platform".equals(System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)));
   }
 }

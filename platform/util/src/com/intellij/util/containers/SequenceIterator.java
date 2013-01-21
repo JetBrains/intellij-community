@@ -17,44 +17,48 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class SequenceIterator<T> implements Iterator<T> {
-  private final Iterator[] myIterators;
+  private final Iterator<T>[] myIterators;
   private int myCurrentIndex;
 
-  public SequenceIterator(@NotNull Iterator... iterators){
+  public SequenceIterator(@NotNull Iterator<T>... iterators){
     myIterators = new Iterator[iterators.length];
     System.arraycopy(iterators, 0, myIterators, 0, iterators.length);
   }
-
-  public boolean hasNext(){
-    if(myCurrentIndex >= myIterators.length){
-      return false;
-    }
-    else if(myIterators[myCurrentIndex] == null){
-      myCurrentIndex++;
-      return hasNext();
-    }
-    else if(myIterators[myCurrentIndex].hasNext()){
-      return true;
-    }
-    else{
-      myCurrentIndex++;
-      return hasNext();
-    }
+  public SequenceIterator(@NotNull Collection<Iterator<T>> iterators) {
+    this(iterators.toArray(new Iterator[iterators.size()]));
   }
 
+  @Override
+  public boolean hasNext(){
+    for (int index = myCurrentIndex; index < myIterators.length; index++) {
+      Iterator iterator = myIterators[index];
+      if (iterator != null && iterator.hasNext()) {
+        myCurrentIndex = index;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public T next(){
-    if(hasNext()){
-      return (T)myIterators[myCurrentIndex].next();
+    if(hasNext()) {
+      return myIterators[myCurrentIndex].next();
     }
     throw new NoSuchElementException("Iterator has no more elements");
   }
 
+  @Override
   public void remove(){
-    throw new UnsupportedOperationException("Remove not supported");
+    if(myCurrentIndex >= myIterators.length){
+      throw new IllegalStateException();
+    }
+    myIterators[myCurrentIndex].remove();
   }
 
   public static <T> SequenceIterator<T> create(Iterator<T> first, Iterator<T> second) {

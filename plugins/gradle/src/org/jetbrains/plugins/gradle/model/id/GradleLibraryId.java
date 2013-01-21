@@ -27,7 +27,7 @@ public class GradleLibraryId extends GradleAbstractEntityId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getProjectStructureHelper().findGradleLibrary(myLibraryName);
-      case INTELLIJ: return context.getProjectStructureHelper().findIntellijLibrary(myLibraryName);
+      case IDE: return context.getProjectStructureHelper().findIdeLibrary(myLibraryName);
     }
     throw new IllegalStateException(String.format(
       "Can't map library id to the target library. Id owner: %s, name: '%s'", getOwner(), myLibraryName

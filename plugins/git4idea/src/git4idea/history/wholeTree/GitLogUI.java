@@ -1616,19 +1616,6 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       rootsChanged(myRootsUnderVcs);
-      updateRefs();
-    }
-
-    private void updateRefs() {
-      for (VirtualFile root : myRootsUnderVcs) {
-        try {
-          CachedRefs cachedRefs = new LowLevelAccessImpl(myProject, root).getRefs();
-          myUIRefresh.reportSymbolicRefs(root, cachedRefs);
-        }
-        catch (VcsException e) {
-          LOG.warn("Couldn't update references in repository " + root, e);
-        }
-      }
     }
 
     @Override

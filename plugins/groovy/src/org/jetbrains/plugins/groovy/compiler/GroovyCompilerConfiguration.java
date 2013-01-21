@@ -21,27 +21,35 @@ import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Element;
+import org.jetbrains.jps.incremental.groovy.JpsGroovySettings;
 
 /**
  * @author peter
  */
 @State(
-  name = "GroovyCompilerConfiguration",
+  name = "GroovyCompilerProjectConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.WORKSPACE_FILE),
+    @Storage( file = StoragePathMacros.PROJECT_FILE),
     @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/groovyc.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {
-  private String myHeapSize = "400";
-  private boolean myInvokeDynamic = false;
-  public boolean transformsOk = false;
+public class GroovyCompilerConfiguration implements PersistentStateComponent<JpsGroovySettings>, Disposable {
+  private String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
+  private boolean myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
+  public boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
-  public MyStateBean getState() {
-    final MyStateBean bean = new MyStateBean();
+  public GroovyCompilerConfiguration(Project project) {
+    GroovyCompilerWorkspaceConfiguration workspaceConfiguration = ServiceManager.getService(project, GroovyCompilerWorkspaceConfiguration.class);
+    loadState(workspaceConfiguration.getState());
+    workspaceConfiguration.myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
+    workspaceConfiguration.transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
+    workspaceConfiguration.myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
+    workspaceConfiguration.myExcludeFromStubGeneration.removeAllExcludeEntryDescriptions();
+  }
+
+  public JpsGroovySettings getState() {
+    final JpsGroovySettings bean = new JpsGroovySettings();
     bean.heapSize = myHeapSize;
     bean.invokeDynamic = myInvokeDynamic;
     bean.transformsOk = transformsOk;
@@ -57,7 +65,7 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
     return myExcludeFromStubGeneration;
   }
 
-  public void loadState(MyStateBean state) {
+  public void loadState(JpsGroovySettings state) {
     myHeapSize = state.heapSize;
     myInvokeDynamic = state.invokeDynamic;
     transformsOk = state.transformsOk;
@@ -89,13 +97,4 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
     Disposer.dispose(myExcludeFromStubGeneration);
   }
 
-  public static class MyStateBean {
-    public String heapSize = "400";
-    public boolean invokeDynamic = false;
-
-    @Tag("excludes") public Element excludes = new Element("aaa");
-
-    public boolean transformsOk = false;
-
-  }
 }

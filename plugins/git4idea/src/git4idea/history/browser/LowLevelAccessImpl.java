@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
@@ -35,6 +34,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryImpl;
@@ -127,14 +127,22 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     final GitBranch current = repository.getCurrentBranch();
     refs.setCurrentBranch(current);
     if (current != null) {
-      GitBranch tracked = GitBranchUtil.tracked(myProject, myRoot, current.getName());
-      String fullName = tracked == null ? null : tracked.getFullName();
-      fullName = fullName != null && fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
-      refs.setTrackedRemoteName(fullName);
+      final Collection<GitBranchTrackInfo> infos = repository.getBranchTrackInfos();
+      for (GitBranchTrackInfo info : infos) {
+        if (info.getLocalBranch().equals(current)) {
+          String fullName = info.getRemoteBranch().getFullName();
+          fullName = fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX)
+                     ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
+          refs.setTrackedRemoteName(fullName);
+          break;
+        }
+      }
     }
     refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
-    final VcsRevisionNumber head = GitHistoryUtils.getCurrentRevision(myProject, new FilePathImpl(myRoot), "HEAD", true);
-    refs.setHeadHash(AbstractHash.create(head.asString()));
+    final String head = repository.getCurrentRevision();
+    if (head != null) {
+      refs.setHeadHash(AbstractHash.create(head));
+    }
     return refs;
   }
 

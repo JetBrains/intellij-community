@@ -135,21 +135,13 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
     if (myPluginManagerMain.isRequireShutdown()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (app.isRestartCapable()) {
-        if (showRestartIDEADialog() == 0) {
-          app.restart();
-        }
-        else {
-          myPluginManagerMain.ignoreChanges();
-        }
+
+      int response = app.isRestartCapable() ? showRestartIDEADialog() : showShutDownIDEADialog();
+      if (response == 0) {
+        app.restart(true);
       }
       else {
-        if (showShutDownIDEADialog() == 0) {
-          app.exit(true);
-        }
-        else {
-          myPluginManagerMain.ignoreChanges();
-        }
+        myPluginManagerMain.ignoreChanges();
       }
     }
   }
@@ -181,16 +173,8 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public static void shutdownOrRestartApp(String title) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    if (app.isRestartCapable()) {
-      if (showRestartIDEADialog(title) == 0) {
-        app.restart();
-      }
-    }
-    else {
-      if (showShutDownIDEADialog(title) == 0) {
-        app.exit(true);
-      }
-    }
+    int response = app.isRestartCapable() ? showRestartIDEADialog(title) : showShutDownIDEADialog(title);
+    if (response == 0) app.restart(true);
   }
 
   public boolean isModified() {

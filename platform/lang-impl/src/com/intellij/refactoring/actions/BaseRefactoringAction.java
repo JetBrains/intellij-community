@@ -96,18 +96,20 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
 
-    final LookupEx lookup = LookupManager.getActiveLookup(editor);
-    if (lookup instanceof LookupImpl) {
-      Runnable command = new Runnable() {
-        @Override
-        public void run() {
-          ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-        }
-      };
-      assert editor != null;
-      Document doc = editor.getDocument();
-      DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-      CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+    if (InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+      final LookupEx lookup = LookupManager.getActiveLookup(editor);
+      if (lookup instanceof LookupImpl) {
+        Runnable command = new Runnable() {
+          @Override
+          public void run() {
+            ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+          }
+        };
+        assert editor != null;
+        Document doc = editor.getDocument();
+        DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+      }
     }
 
 

@@ -606,27 +606,41 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
 
-    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable) ? GrScriptField.createScriptFieldFrom(variable) : variable;
-    PsiNamedElement duplicate = ResolveUtil
-      .resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
-    if (duplicate == null) {
-      if (variable instanceof GrParameter) {
-        @SuppressWarnings({"ConstantConditions"})
-        final PsiElement context = variable.getContext().getContext();
-        if (context instanceof GrClosableBlock) {
-          duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context, new DuplicateVariablesProcessor(variable),
-                                                         GrVariable.class, GrReferenceExpression.class);
+    PsiNamedElement duplicate;
+    if (ResolveUtil.isScriptField(variable)) {
+      final String name = variable.getName();
+
+      int count = 0;
+      final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
+      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
+        if (name.equals(field.getName())) count++;
+      }
+
+      duplicate = count > 1 ? GrScriptField.getScriptField(variable) : null;
+    }
+    else {
+      duplicate = ResolveUtil
+        .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrReferenceExpression.class, GrVariable.class);
+      if (duplicate == null) {
+        if (variable instanceof GrParameter) {
+          @SuppressWarnings({"ConstantConditions"})
+          final PsiElement context = variable.getContext().getContext();
+          if (context instanceof GrClosableBlock) {
+            duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context, new DuplicateVariablesProcessor(variable),
+                                                           GrVariable.class, GrReferenceExpression.class);
+          }
+          else if (context instanceof GrMethod && !(context.getParent() instanceof GroovyFile)) {
+            duplicate =
+              ResolveUtil.resolveExistingElement(((GroovyPsiElement)context.getParent()), new DuplicateVariablesProcessor(variable),
+                                                 GrVariable.class, GrReferenceExpression.class);
+          }
         }
-        else if (context instanceof GrMethod && !(context.getParent() instanceof GroovyFile)) {
-          duplicate = ResolveUtil.resolveExistingElement(((GroovyPsiElement)context.getParent()), new DuplicateVariablesProcessor(variable),
-                                                         GrVariable.class, GrReferenceExpression.class);
-        }
+      }
+      if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
+        duplicate = null;
       }
     }
 
-    if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
-      duplicate = null;
-    }
 
     if (duplicate instanceof GrVariable) {
       if ((variable instanceof GrField || ResolveUtil.isScriptField(variable)) /*&& duplicate instanceof PsiField*/ ||
@@ -638,10 +652,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     PsiType type = variable.getDeclaredType();
     if (type instanceof PsiEllipsisType && !isLastParameter(variable)) {
-      TextRange range = getTypeRange(variable);
-      LOG.assertTrue(range != null, variable.getText());
-      myHolder.createErrorAnnotation(range, GroovyBundle.message("ellipsis.type.is.not.allowed.here"));
+      TextRange range = getEllipsisRange(variable);
+      if (range == null) {
+        range = getTypeRange(variable);
+      }
+      if (range != null) {
+        myHolder.createErrorAnnotation(range, GroovyBundle.message("ellipsis.type.is.not.allowed.here"));
+      }
     }
+  }
+
+  @Nullable
+  private static TextRange getEllipsisRange(GrVariable variable) {
+    if (variable instanceof GrParameter) {
+      final PsiElement dots = ((GrParameter)variable).getEllipsisDots();
+      if (dots != null) {
+        return dots.getTextRange();
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -1970,12 +1999,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
-      final PsiModifierList modifierList = variable.getModifierList();
-      if (modifierList instanceof GrModifierList) return ((GrModifierList)modifierList).hasExplicitVisibilityModifiers();
-      if (modifierList == null) return false;
-      return modifierList.hasExplicitModifier(PUBLIC) ||
-             modifierList.hasExplicitModifier(PROTECTED) ||
-             modifierList.hasExplicitModifier(PRIVATE);
+      final GrModifierList modifierList = variable.getModifierList();
+      return modifierList != null && modifierList.hasExplicitVisibilityModifiers();
     }
 
     @Override

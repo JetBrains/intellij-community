@@ -1,5 +1,5 @@
-public String toString() {
-final StringBuffer sb = new StringBuffer("$classname{");
+public java.lang.String toString() {
+final java.lang.StringBuffer sb = new java.lang.StringBuffer("$classname{");
 #set ($i = 0)
 #foreach ($member in $members)
 #if ($i == 0)
@@ -14,7 +14,7 @@ $member.name=")##
 #end
 #if ($member.primitiveArray)
 ;
-if ($member.name == null)
+if ($member.name == null) ##
 sb.append("null");
 else {
 sb.append('[');
@@ -23,7 +23,7 @@ sb.append(i == 0 ? "" : ", ").append($member.name [i]);
 sb.append(']');
 }
 #elseif ($member.objectArray)
-.append($member.name == null ? "null" : Arrays.asList($member.name).toString());
+.append($member.name == null ? "null" : java.util.Arrays.asList($member.name).toString());
 #elseif ($member.string)
 .append($member.accessor).append('\'');
 #else

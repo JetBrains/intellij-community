@@ -16,7 +16,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
-import com.intellij.openapi.util.Key;
+import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.javac.JavacServerClient;
 
 /**
@@ -24,7 +24,7 @@ import org.jetbrains.jps.javac.JavacServerClient;
  *         Date: 1/24/12
  */
 public class ExternalJavacDescriptor {
-  public static final Key<ExternalJavacDescriptor> KEY = Key.create("_external_javac_descriptor_");
+  public static final GlobalContextKey<ExternalJavacDescriptor> KEY = GlobalContextKey.create("_external_javac_descriptor_");
 
   public final BaseOSProcessHandler process;
   public final JavacServerClient client;

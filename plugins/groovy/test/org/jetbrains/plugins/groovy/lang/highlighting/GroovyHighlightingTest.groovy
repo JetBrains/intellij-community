@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.configureByText('a.groovy', '''\
 class A {
   def foo(int... x){}
-  def foo(<error descr="Ellipsis type is not allowed here">int...</error> x, double y) {}
+  def foo(int<error descr="Ellipsis type is not allowed here">...</error> x, double y) {}
 }
 ''')
     myFixture.checkHighlighting(true, false, false)
@@ -1052,6 +1052,18 @@ class A {
 class B extends A {
     <error descr="Method 'getFoo()' cannot override method 'getFoo()' in 'A'; overridden method is final">def getFoo()</error>{5}
 }
+''')
+  }
+
+  void testUnresolvedQualifierHighlighting() {
+    testHighlighting('''\
+<error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
+''')
+  }
+
+  void testVarargParameterWithoutTypeElement() {
+    testHighlighting('''\
+def foo(def <error descr="Ellipsis type is not allowed here">...</error> vararg, def last) {}
 ''')
   }
 }

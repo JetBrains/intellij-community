@@ -2,7 +2,6 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -29,13 +28,16 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final String name = tag.getName();
 
-    if (StringUtil.isCapitalized(name)) {
+    if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, tag);
     }
     else {
-      XmlTag parentTag = tag.getParentTag();
+      final XmlTag parentTag = tag.getParentTag();
       if (parentTag != null) {
-        return new JavaFxClassBackedElementDescriptor(parentTag.getName(), parentTag).getElementDescriptor(tag, parentTag);
+        final XmlElementDescriptor descriptor = parentTag.getDescriptor();
+        if (descriptor != null) {
+          return descriptor.getElementDescriptor(tag, parentTag);
+        }
       }
     }
     return null;

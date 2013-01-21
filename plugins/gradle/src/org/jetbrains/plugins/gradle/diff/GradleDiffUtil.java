@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresen
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
+import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -89,7 +89,7 @@ public class GradleDiffUtil {
   /**
    * Performs argument type-based dispatch and delegates to one of strongly typed <code>'buildLocalChanges()'</code> methods.
    *
-   * @param entity   target intellij-local entity that doesn't present at the gradle side
+   * @param entity   target ide-local entity that doesn't present at the gradle side
    * @param context  changes calculation context to use
    */
   public static void buildLocalChanges(@NotNull Object entity, @NotNull final GradleChangesCalculationContext context) {
@@ -97,7 +97,7 @@ public class GradleDiffUtil {
       buildLocalChanges((GradleEntity)entity, context);
     }
     else {
-      GradleUtil.dispatch(entity, new IntellijEntityVisitor() {
+      GradleUtil.dispatch(entity, new IdeEntityVisitor() {
         @Override
         public void visit(@NotNull Project project) {
         }
@@ -140,39 +140,39 @@ public class GradleDiffUtil {
 
   /**
    * Utility method for comparing entity collections. For example, it may be provided with the collection of gradle modules and
-   * collection of intellij modules. Matched entities are found and the comparison is delegated to the given <code>'calculator'</code>.
+   * collection of ide modules. Matched entities are found and the comparison is delegated to the given <code>'calculator'</code>.
    * Corresponding changes are generated for the non-matched (local) changes (e.g. particular library dependency presents
-   * at the intellij side but not at the gradle).
+   * at the ide side but not at the gradle).
    * 
    * @param calculator        comparison strategy that works with the single entities (not collection of entities)
    * @param gradleEntities    entities available at the gradle side
-   * @param intellijEntities  entities available at the intellij side
+   * @param ideEntities       entities available at the ide side
    * @param context           changes calculation context
-   * @param <I>               target intellij entity type
+   * @param <I>               target ide entity type
    * @param <G>               target gradle entity type
    */
   public static <I, G extends GradleEntity> void calculate(
     @NotNull GradleStructureChangesCalculator<G, I> calculator,
     @NotNull Iterable<? extends G> gradleEntities,
-    @NotNull Iterable<? extends I> intellijEntities,
+    @NotNull Iterable<? extends I> ideEntities,
     @NotNull GradleChangesCalculationContext context)
   {
-    Map<Object, I> intellijEntitiesByKeys = new HashMap<Object, I>();
-    for (I entity : intellijEntities) {
-      final I previous = intellijEntitiesByKeys.put(calculator.getIntellijKey(entity), entity);
+    Map<Object, I> ideEntitiesByKeys = new HashMap<Object, I>();
+    for (I entity : ideEntities) {
+      final I previous = ideEntitiesByKeys.put(calculator.getIdeKey(entity), entity);
       assert previous == null;
     }
     for (G gradleEntity: gradleEntities) {
-      I intellijEntity = intellijEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));
-      if (intellijEntity == null) {
+      I ideEntity = ideEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));
+      if (ideEntity == null) {
         buildLocalChanges(gradleEntity, context);
       }
       else {
-        calculator.calculate(gradleEntity, intellijEntity, context);
+        calculator.calculate(gradleEntity, ideEntity, context);
       }
     }
 
-    for (I entity : intellijEntitiesByKeys.values()) {
+    for (I entity : ideEntitiesByKeys.values()) {
       buildLocalChanges(entity, context);
     }
   }

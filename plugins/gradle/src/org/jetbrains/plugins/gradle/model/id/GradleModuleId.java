@@ -22,7 +22,7 @@ public class GradleModuleId extends GradleAbstractEntityId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getProjectStructureHelper().findGradleModule(myModuleName);
-      case INTELLIJ: return context.getProjectStructureHelper().findIntellijModule(myModuleName);
+      case IDE: return context.getProjectStructureHelper().findIdeModule(myModuleName);
     }
     throw new IllegalStateException(String.format(
       "Can't map module id to the target module. Id owner: %s, name: '%s'", getOwner(), myModuleName

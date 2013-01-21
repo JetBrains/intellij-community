@@ -60,6 +60,10 @@ public class HtmlStructureViewElementProvider implements XmlStructureViewElement
       return text.isEmpty() ? null : shortenTextIfLong(text);
     }
 
+    public boolean isSearchInLocationString() {
+      return true;
+    }
+
     private static String normalizeSpaces(final String text) {
       final StringBuilder buf = new StringBuilder();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -469,6 +469,22 @@ def _Boolean(Boolean x) {}
 _int<warning descr="'_int' in '_' cannot be applied to '(null)'">(null)</warning>
 _boolean<warning descr="'_boolean' in '_' cannot be applied to '(null)'">(null)</warning>
 _Boolean(null)
+''')
+  }
+
+  void testInnerWarning() {
+    testHighlighting('''\
+public static void main(String[] args) {
+    bar (foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))
+}
+
+static def <T extends Number> T foo(T abc) {
+    abc
+}
+
+static bar(String s) {
+
+}
 ''')
   }
 }

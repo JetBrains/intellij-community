@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ public class BrowserUtil {
   @NonNls
   private static List<String> getDefaultBrowserCommand() {
     if (SystemInfo.isWindows) {
-      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"");
+      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""));
     }
     else if (SystemInfo.isMac) {
       return newSmartList(ExecUtil.getOpenCommandPath());
@@ -221,11 +221,8 @@ public class BrowserUtil {
 
   private static void launchBrowserByCommand(@NotNull final URI uri, @NotNull final List<String> command) {
     try {
-      final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-      commandLine.addParameter(escapeUrl(uri.toString()));
-      if (SystemInfo.isWindows) {
-        commandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
-      }
+      GeneralCommandLine commandLine = new GeneralCommandLine(command);
+      commandLine.addParameter(uri.toString());
       commandLine.createProcess();
 
       if (LOG.isDebugEnabled()) {
@@ -237,6 +234,7 @@ public class BrowserUtil {
     }
   }
 
+  /** @deprecated unneeded and misleading (to remove in IDEA 13) */
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
     return SystemInfo.isWindows ? '"' + url + '"' : url;
@@ -251,7 +249,7 @@ public class BrowserUtil {
       return newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
     }
     else if (SystemInfo.isWindows) {
-      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", "\"\"", browserPathOrName);
+      return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
     }
     else {
       return newSmartList(browserPathOrName);

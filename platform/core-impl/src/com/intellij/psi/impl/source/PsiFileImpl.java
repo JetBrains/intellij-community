@@ -30,6 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.NonCancelableSection;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
@@ -79,7 +81,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   protected PsiFile myOriginalFile = null;
   private final FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
-  private final Object myStubLock = new Object();
   private volatile SoftReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
   private volatile Object myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
@@ -124,12 +125,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement node = derefTreeElement();
     if (node != null) return node;
 
-    synchronized (myStubLock) {
-      node = derefTreeElement();
-      if (node == null && !getViewProvider().isPhysical()) {
-        return loadTreeElementUnderLock();
-      }
-      return node;
+    if (!getViewProvider().isPhysical()) {
+      return loadTreeElement();
+    }
+
+    synchronized (PsiLock.LOCK) {
+      return derefTreeElement();
     }
   }
 
@@ -142,7 +143,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       FileElement treeElement = (FileElement)((Reference)pointer).get();
       if (treeElement != null) return treeElement;
 
-      synchronized (myStubLock) {
+      synchronized (PsiLock.LOCK) {
         if (myTreeElementPointer == pointer) {
           myTreeElementPointer = null;
         }
@@ -186,11 +187,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return derefTreeElement() != null;
   }
 
-  private FileElement loadTreeElementUnderLock() {
-    FileElement treeElement = derefTreeElement();
-    if (treeElement != null) {
-      return treeElement;
-    }
+  private FileElement loadTreeElement() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical() && myManager.isAssertOnFileLoading(viewProvider.getVirtualFile())) {
@@ -198,34 +196,39 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     final Document document = viewProvider.isEventSystemEnabled() ? viewProvider.getDocument() : null;
-    treeElement = createFileElement(viewProvider.getContents());
+    FileElement treeElement = createFileElement(viewProvider.getContents());
     if (document != null) {
       treeElement.putUserData(HARD_REFERENCE_TO_DOCUMENT, document);
     }
     treeElement.setPsi(this);
 
-    StubTree stub = derefStub();
-
-    if (stub != null) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      final Iterator<StubElement<?>> stubs = stub.getPlainList().iterator();
-      stubs.next(); // Skip file stub;
-      synchronized (PsiLock.LOCK) {
-        switchFromStubToAST(treeElement, stubs);
+    synchronized (PsiLock.LOCK) {
+      FileElement existing = derefTreeElement();
+      if (existing != null) {
+        return existing;
       }
-      myStub = null;
-    }
 
-    myTreeElementPointer = createTreeElementPointer(treeElement);
+      NonCancelableSection section = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
+      try {
+        switchFromStubToAST(treeElement);
 
-    if (LOG.isDebugEnabled() && getViewProvider().isPhysical()) {
-      LOG.debug("Loaded text for file " + getViewProvider().getVirtualFile().getPresentableUrl());
-    }
+        myStub = null;
+        myTreeElementPointer = createTreeElementPointer(treeElement);
 
-    if (document != null && isPhysical()) {
-      TextBlock.get(this).clear();
+        if (document != null && isPhysical()) {
+          TextBlock.get(this).clear();
+        }
+
+        if (LOG.isDebugEnabled() && viewProvider.isPhysical()) {
+          LOG.debug("Loaded text for file " + viewProvider.getVirtualFile().getPresentableUrl());
+        }
+
+        return treeElement;
+      }
+      finally {
+        section.done();
+      }
     }
-    return treeElement;
   }
 
   @Override
@@ -255,13 +258,20 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
+  private void switchFromStubToAST(final ASTNode root) {
+    StubTree stubTree = derefStub();
+    if (stubTree == null) {
+      return;
+    }
+
+    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
+    stubs.next(); // Skip file stub;
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       final VirtualFile vFile = getVirtualFile();
-      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + (vFile != null? vFile.isValid() : "null") +
-                               " type: "+contentElementType+"; content:<<<\n"+
-                               StringUtil.first(getViewProvider().getContents(),200,true)+
+      throw new AssertionError("A stub in a non-stub file '" + vFile + "'; isValid()=" + (vFile != null ? vFile.isValid() : "null") +
+                               " type: " + contentElementType + "; content:<<<\n" +
+                               StringUtil.first(getViewProvider().getContents(), 200, true) +
                                "\n>>>; stubs=" + ContainerUtil.collect(stubs));
     }
     final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
@@ -329,7 +339,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     LOG.assertTrue(getTreeElement() != null);
     clearCaches();
     myViewProvider.beforeContentsSynchronized();
-    synchronized (myStubLock) {
+    synchronized (PsiLock.LOCK) {
       myTreeElementPointer = null;
       clearStub();
     }
@@ -393,7 +403,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       tree.clearCaches();
     }
 
-    synchronized (myStubLock) {
+    synchronized (PsiLock.LOCK) {
       clearStub();
       if (tree != null) {
         tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
@@ -672,7 +682,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
                                "\n>>>; stubs=" + stubHolder.getPlainList());
     }
 
-    synchronized (myStubLock) {
+    synchronized (PsiLock.LOCK) {
       if (getTreeElement() != null) return null;
 
       final StubTree derefdOnLock = derefStub();
@@ -689,7 +699,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private StubTree derefStub() {
     if (myStub == null) return  null;
 
-    synchronized (myStubLock) {
+    synchronized (PsiLock.LOCK) {
       return myStub != null ? myStub.get() : null;
     }
   }
@@ -714,10 +724,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
                  : new PatchedSoftReference<ASTNode>(treeElement);
   }
 
-  public Object getStubLock() {
-    return myStubLock;
-  }
-
   @Override
   public PsiManager getManager() {
     return myManager;
@@ -738,9 +744,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     FileElement treeElement = getTreeElement();
     if (treeElement != null) return treeElement;
 
-    synchronized (myStubLock) {
-      return loadTreeElementUnderLock();
-    }
+    return loadTreeElement();
   }
 
   @Override
@@ -955,8 +959,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private static final Key<StubTree> STUB_TREE_IN_PARSED_TREE = new Key<StubTree>("STUB_TREE_IN_PARSED_TREE");
 
   public StubTree calcStubTree() {
-    synchronized (myStubLock) {
-      final FileElement fileElement = calcTreeElement();
+    final FileElement fileElement = calcTreeElement();
+    synchronized (PsiLock.LOCK) {
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
       if (tree == null) {
         IElementType contentElementType = getContentElementType();

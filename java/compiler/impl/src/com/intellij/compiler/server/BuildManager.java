@@ -115,6 +115,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  */
 public class BuildManager implements ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
+  private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
@@ -123,7 +124,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
   private static final String IDEA_PROJECT_DIR_PATTERN = "/.idea/";
-  private static final Function<String, Boolean> PATH_FILTER = 
+  private static final Function<String, Boolean> PATH_FILTER =
     SystemInfo.isFileSystemCaseSensitive?
     new Function<String, Boolean>() {
       @Override
@@ -173,7 +174,7 @@ public class BuildManager implements ApplicationComponent{
     mySystemDirectory = system;
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
-    
+
     final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
@@ -193,7 +194,7 @@ public class BuildManager implements ApplicationComponent{
           if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
-          
+
           if (activeProjects == null) {
             activeProjects = getActiveProjects();
             if (activeProjects.isEmpty()) {
@@ -684,72 +685,83 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
-    // choosing sdk with which the build process should be run
-    Sdk projectJdk = null;
+    final String compilerPath;
+    final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
-    int sdkMinorVersion = 0;
 
-    final Set<Sdk> candidates = new HashSet<Sdk>();
-    final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdk) {
-      candidates.add(defaultSdk);
-    }
+    final String forcedCompiledJdkHome = Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
 
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        candidates.add(sdk);
+    if (StringUtil.isEmptyOrSpaces(forcedCompiledJdkHome)) {
+      // choosing sdk with which the build process should be run
+      Sdk projectJdk = null;
+      int sdkMinorVersion = 0;
+
+      final Set<Sdk> candidates = new HashSet<Sdk>();
+      final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdk) {
+        candidates.add(defaultSdk);
       }
-    }
 
-    // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
-    for (Sdk candidate : candidates) {
-      final String vs = candidate.getVersionString();
-      if (vs != null) {
-        final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
-        if (candidateVersion != null) {
-          final int candidateMinorVersion = getMinorVersion(vs);
-          if (projectJdk == null) {
-            sdkVersion = candidateVersion;
-            sdkMinorVersion = candidateMinorVersion;
-            projectJdk = candidate;
-          }
-          else {
-            final int result = candidateVersion.compareTo(sdkVersion);
-            if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+          candidates.add(sdk);
+        }
+      }
+
+      // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+      for (Sdk candidate : candidates) {
+        final String vs = candidate.getVersionString();
+        if (vs != null) {
+          final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
+          if (candidateVersion != null) {
+            final int candidateMinorVersion = getMinorVersion(vs);
+            if (projectJdk == null) {
               sdkVersion = candidateVersion;
               sdkMinorVersion = candidateMinorVersion;
               projectJdk = candidate;
             }
+            else {
+              final int result = candidateVersion.compareTo(sdkVersion);
+              if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
+                sdkVersion = candidateVersion;
+                sdkMinorVersion = candidateMinorVersion;
+                projectJdk = candidate;
+              }
+            }
           }
         }
       }
-    }
 
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
-      projectJdk = internalJdk;
-    }
-
-    // validate tools.jar presence
-    final String compilerPath;
-    if (projectJdk.equals(internalJdk)) {
-      final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-      if (systemCompiler == null) {
-        throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+        projectJdk = internalJdk;
       }
-      compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
+
+      // validate tools.jar presence
+      if (projectJdk.equals(internalJdk)) {
+        final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+        if (systemCompiler == null) {
+          throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
+        }
+        compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
+      }
+      else {
+        compilerPath = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
+        if (compilerPath == null) {
+          throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
+        }
+      }
+
+      vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     }
     else {
-      compilerPath = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
-      if (compilerPath == null) {
-        throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
-      }
+      compilerPath = new File(forcedCompiledJdkHome, "lib/tools.jar").getAbsolutePath();
+      vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
     }
 
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
-    final String vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");

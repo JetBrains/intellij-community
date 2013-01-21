@@ -2059,7 +2059,7 @@
     </option>
     <option name="RUBY_EXPR_IN_STRING">
       <value>
-        <option name="FOREGROUND" value="519f50" />
+        <option name="FOREGROUND" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
         <option name="EFFECT_COLOR" />
@@ -2297,29 +2297,15 @@
         <option name="ERROR_STRIPE_COLOR" />
       </value>
     </option>
-    <option name="RUBY_STRING">
+    <option name="RUBY_INTERPOLATED_STRING">
       <value>
-        <option name="FOREGROUND" value="a5c261" />
-        <option name="BACKGROUND" />
-        <option name="FONT_TYPE" value="0" />
-        <option name="EFFECT_COLOR" />
-        <option name="EFFECT_TYPE" value="0" />
-        <option name="ERROR_STRIPE_COLOR" />
+        <option name="FOREGROUND" value="52A12E"/>
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="RUBY_SYMBOL">
       <value>
         <option name="FOREGROUND" value="6e9cbe" />
-        <option name="BACKGROUND" />
-        <option name="FONT_TYPE" value="0" />
-        <option name="EFFECT_COLOR" />
-        <option name="EFFECT_TYPE" value="0" />
-        <option name="ERROR_STRIPE_COLOR" />
-      </value>
-    </option>
-    <option name="RUBY_WORDS">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="0" />
         <option name="EFFECT_COLOR" />

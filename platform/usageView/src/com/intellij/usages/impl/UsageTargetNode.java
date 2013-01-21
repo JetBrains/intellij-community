@@ -54,7 +54,7 @@ public class UsageTargetNode extends Node {
   }
 
   @Override
-  protected String getText(final UsageView view) {
+  protected String getText(@NotNull final UsageView view) {
     return myTarget.getPresentation().getPresentableText();
   }
 

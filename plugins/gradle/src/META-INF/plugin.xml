@@ -45,12 +45,15 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
-    <!--Import services-->
+    <!--Project structure management services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleJarManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleContentRootManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleDependencyManager"/>
+    
+    <!--Auto-import stuff-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
@@ -59,6 +62,8 @@
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.config.PlatformFacade"
                         serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper"
+                        serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapperImpl"/>
     
     <!--Conflict UI components-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>

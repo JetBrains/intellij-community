@@ -19,7 +19,7 @@ public class GradleProjectId extends GradleAbstractEntityId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getChangesModel().getGradleProject();
-      case INTELLIJ: return context.getProjectStructureHelper().getProject();
+      case IDE: return context.getProjectStructureHelper().getProject();
     }
     throw new IllegalStateException(String.format("Can't map project id to the target project. Id owner: %s", getOwner()));
   }

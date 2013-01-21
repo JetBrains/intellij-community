@@ -44,7 +44,155 @@ import java.util.Set;
 
 public class MavenDomGutterAnnotator implements Annotator {
 
-  private static final PsiElementListCellRenderer<XmlTag> RENDERER = new PsiElementListCellRenderer<XmlTag>() {
+  private static void annotateDependencyUsages(@NotNull MavenDomDependency dependency, AnnotationHolder holder) {
+    final XmlTag tag = dependency.getXmlTag();
+    if (tag == null) return;
+
+    final Set<MavenDomDependency> children = MavenDomProjectProcessorUtils.searchDependencyUsages(dependency);
+    if (children.size() > 0) {
+      final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, DependencyConverter.INSTANCE);
+      iconBuilder.
+        setTargets(children).
+        setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
+        setCellRenderer(MyListCellRenderer.INSTANCE).
+        setTooltipText(MavenDomBundle.message("overriding.dependency.title")).
+        install(holder, dependency.getXmlTag());
+    }
+  }
+
+  private static void annotateManagedDependency(MavenDomDependency dependency, AnnotationHolder holder) {
+    final XmlTag tag = dependency.getXmlTag();
+    if (tag == null) return;
+
+    final List<MavenDomDependency> children = getManagingDependencies(dependency);
+    if (children.size() > 0) {
+
+      final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, DependencyConverter.INSTANCE);
+      iconBuilder.
+        setTargets(children).
+        setTooltipText(MavenDomBundle.message("overriden.dependency.title")).
+        install(holder, tag);
+    }
+  }
+
+  private static List<MavenDomDependency> getManagingDependencies(@NotNull MavenDomDependency dependency) {
+    Project project = dependency.getManager().getProject();
+    MavenDomDependency parentDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project);
+
+    if (parentDependency != null) {
+      return Collections.singletonList(parentDependency);
+    }
+    return Collections.emptyList();
+  }
+
+  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+    if (psiElement instanceof XmlTag) {
+      final DomElement element = DomManager.getDomManager(psiElement.getProject()).getDomElement((XmlTag)psiElement);
+      if (element instanceof MavenDomDependency) {
+        if (element.getParentOfType(MavenDomPlugin.class, true) != null) return;
+
+        MavenDomDependency dependency = (MavenDomDependency)element;
+        if (isDependencyManagementSection(dependency)) {
+          annotateDependencyUsages(dependency, holder);
+        }
+        else {
+          annotateManagedDependency(dependency, holder);
+        }
+      }
+      else if (element instanceof MavenDomParent) {
+        annotateMavenDomParent((MavenDomParent)element, holder);
+      }
+      else if (element instanceof MavenDomProjectModel) {
+        annotateMavenDomProjectChildren((MavenDomProjectModel)element, holder);
+      }
+      else if (element instanceof MavenDomPlugin) {
+        annotateMavenDomPlugin((MavenDomPlugin)element, holder);
+      }
+    }
+  }
+
+  private static void annotateMavenDomPlugin(@NotNull MavenDomPlugin plugin, @NotNull AnnotationHolder holder) {
+    XmlTag xmlTag = plugin.getArtifactId().getXmlTag();
+    if (xmlTag == null) return;
+
+    DomElement plugins = plugin.getParent();
+    if (plugins == null) return;
+
+    DomElement parent = plugins.getParent();
+    if (parent instanceof MavenDomPluginManagement) {
+      annotateMavenDomPluginInManagement(plugin, holder);
+      return;
+    }
+
+    MavenDomPlugin managingPlugin = MavenDomProjectProcessorUtils.searchManagingPlugin(plugin);
+
+    if (managingPlugin != null) {
+      NavigationGutterIconBuilder<MavenDomPlugin> iconBuilder =
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, PluginConverter.INSTANCE);
+
+      iconBuilder.
+        setTargets(Collections.singletonList(managingPlugin)).
+        setTooltipText(MavenDomBundle.message("overriden.plugin.title")).
+        install(holder, xmlTag);
+    }
+  }
+
+  private static void annotateMavenDomPluginInManagement(@NotNull MavenDomPlugin plugin, @NotNull AnnotationHolder holder) {
+    XmlTag xmlTag = plugin.getArtifactId().getXmlTag();
+    if (xmlTag == null) return;
+
+    Collection<MavenDomPlugin> children = MavenDomProjectProcessorUtils.searchManagedPluginUsages(plugin);
+
+    if (children.size() > 0) {
+      NavigationGutterIconBuilder<MavenDomPlugin> iconBuilder =
+        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, PluginConverter.INSTANCE);
+
+      iconBuilder.
+        setTargets(children).
+        setPopupTitle(MavenDomBundle.message("navigate.parent.plugin.title")).
+        setCellRenderer(MyListCellRenderer.INSTANCE).
+        setTooltipText(MavenDomBundle.message("overriding.plugin.title")).
+        install(holder, xmlTag);
+    }
+  }
+
+
+  private static void annotateMavenDomParent(@NotNull MavenDomParent mavenDomParent, @NotNull AnnotationHolder holder) {
+    MavenDomProjectModel parent = MavenDomProjectProcessorUtils.findParent(mavenDomParent, mavenDomParent.getManager().getProject());
+
+    if (parent != null) {
+      NavigationGutterIconBuilder.create(icons.MavenIcons.ParentProject, MavenProjectConverter.INSTANCE).
+        setTargets(parent).
+        setTooltipText(MavenDomBundle.message("parent.pom.title")).
+        install(holder, mavenDomParent.getXmlElement());
+    }
+  }
+
+  private static void annotateMavenDomProjectChildren(MavenDomProjectModel model, AnnotationHolder holder) {
+    MavenProject mavenProject = MavenDomUtil.findProject(model);
+    if (mavenProject != null) {
+      Set<MavenDomProjectModel> children = MavenDomProjectProcessorUtils.getChildrenProjects(model);
+
+      if (children.size() > 0) {
+        NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MavenProjectConverter.INSTANCE).
+          setTargets(children).
+          setCellRenderer(MyListCellRenderer.INSTANCE).
+          setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).
+          setTooltipText(MavenDomBundle.message("children.poms.title")).
+          install(holder, model.getXmlElement());
+      }
+    }
+  }
+
+  private static boolean isDependencyManagementSection(@NotNull MavenDomDependency dependency) {
+    return dependency.getParentOfType(MavenDomDependencyManagement.class, false) != null;
+  }
+
+  private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {
+    public static final MyListCellRenderer INSTANCE = new MyListCellRenderer();
+
     @Override
     public String getElementText(XmlTag tag) {
       DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
@@ -78,126 +226,32 @@ public class MavenDomGutterAnnotator implements Annotator {
     protected int getIconFlags() {
       return 0;
     }
-  };
+  }
 
-  private static final NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> CONVERTER =
-    new NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>>() {
+  private static class DependencyConverter implements NotNullFunction<MavenDomDependency, Collection<? extends PsiElement>> {
+    public static final DependencyConverter INSTANCE = new DependencyConverter();
 
-      @NotNull
-      public Collection<? extends PsiElement> fun(final MavenDomDependency pointer) {
-        return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
-      }
-    };
-
-  private static final NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> MAVEN_PROJECT_CONVERTER =
-    new NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>>() {
-
-      @NotNull
-      public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
-        return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
-      }
-    };
-
-
-  private static void annotateDependencyUsages(@NotNull MavenDomDependency dependency, AnnotationHolder holder) {
-    final XmlTag tag = dependency.getXmlTag();
-    if (tag == null) return;
-
-    final Set<MavenDomDependency> children = getDependencyUsages(dependency);
-    if (children.size() > 0) {
-      final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, CONVERTER);
-      iconBuilder.
-        setTargets(children).
-        setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
-        setCellRenderer(RENDERER).
-        setTooltipText(MavenDomBundle.message("overriding.dependency.title")).
-        install(holder, dependency.getXmlTag());
+    @NotNull
+    public Collection<? extends PsiElement> fun(final MavenDomDependency pointer) {
+      return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
     }
   }
 
-  private static void annotateManagedDependency(MavenDomDependency dependency, AnnotationHolder holder) {
-    final XmlTag tag = dependency.getXmlTag();
-    if (tag == null) return;
+  private static class PluginConverter implements NotNullFunction<MavenDomPlugin, Collection<? extends PsiElement>> {
+    public static final PluginConverter INSTANCE = new PluginConverter();
 
-    final List<MavenDomDependency> children = getManagingDependencies(dependency);
-    if (children.size() > 0) {
-
-      final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, CONVERTER);
-      iconBuilder.
-        setTargets(children).
-        setTooltipText(MavenDomBundle.message("overriden.dependency.title")).
-        install(holder, dependency.getXmlTag());
+    @NotNull
+    public Collection<? extends PsiElement> fun(final MavenDomPlugin pointer) {
+      return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
     }
   }
 
-  private static List<MavenDomDependency> getManagingDependencies(@NotNull MavenDomDependency dependency) {
-    Project project = dependency.getManager().getProject();
-    MavenDomDependency parentDependency = MavenDomProjectProcessorUtils.searchManagingDependency(dependency, project);
+  private static class MavenProjectConverter implements NotNullFunction<MavenDomProjectModel, Collection<? extends PsiElement>> {
+    public static final MavenProjectConverter INSTANCE = new MavenProjectConverter();
 
-    if (parentDependency != null) {
-      return Collections.singletonList(parentDependency);
+    @NotNull
+    public Collection<? extends PsiElement> fun(final MavenDomProjectModel pointer) {
+      return ContainerUtil.createMaybeSingletonList(pointer.getXmlTag());
     }
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  private static Set<MavenDomDependency> getDependencyUsages(@NotNull MavenDomDependency dependency) {
-    return MavenDomProjectProcessorUtils.searchDependencyUsages(dependency, dependency.getManager().getProject());
-  }
-
-  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (psiElement instanceof XmlTag) {
-      final DomElement element = DomManager.getDomManager(psiElement.getProject()).getDomElement((XmlTag)psiElement);
-      if (element instanceof MavenDomDependency) {
-        if (element.getParentOfType(MavenDomPlugin.class, true) != null) return;
-
-        MavenDomDependency dependency = (MavenDomDependency)element;
-        if (isDependencyManagementSection(dependency)) {
-          annotateDependencyUsages(dependency, holder);
-        }
-        else {
-          annotateManagedDependency(dependency, holder);
-        }
-      }
-      else if (element instanceof MavenDomParent) {
-        annotateMavenDomParent((MavenDomParent)element, holder);
-      }
-      else if (element instanceof MavenDomProjectModel) {
-        annotateMavenDomProjectChildren((MavenDomProjectModel)element, holder);
-      }
-    }
-  }
-
-  private static void annotateMavenDomParent(@NotNull MavenDomParent mavenDomParent, @NotNull AnnotationHolder holder) {
-    MavenDomProjectModel parent = MavenDomProjectProcessorUtils.findParent(mavenDomParent, mavenDomParent.getManager().getProject());
-
-    if (parent != null) {
-      NavigationGutterIconBuilder.create(icons.MavenIcons.ParentProject, MAVEN_PROJECT_CONVERTER).
-        setTargets(parent).
-        setTooltipText(MavenDomBundle.message("parent.pom.title")).
-        install(holder, mavenDomParent.getXmlElement());
-    }
-  }
-
-  private static void annotateMavenDomProjectChildren(MavenDomProjectModel model, AnnotationHolder holder) {
-    MavenProject mavenProject = MavenDomUtil.findProject(model);
-    if (mavenProject != null) {
-      Set<MavenDomProjectModel> children = MavenDomProjectProcessorUtils.getChildrenProjects(model);
-
-      if (children.size() > 0) {
-        NavigationGutterIconBuilder.create(icons.MavenIcons.ChildrenProjects, MAVEN_PROJECT_CONVERTER).
-          setTargets(children).
-          setCellRenderer(RENDERER).
-          setPopupTitle(MavenDomBundle.message("navigate.children.poms.title")).
-          setTooltipText(MavenDomBundle.message("children.poms.title")).
-          install(holder, model.getXmlElement());
-      }
-    }
-  }
-
-  private static boolean isDependencyManagementSection(@NotNull MavenDomDependency dependency) {
-    return dependency.getParentOfType(MavenDomDependencyManagement.class, false) != null;
   }
 }

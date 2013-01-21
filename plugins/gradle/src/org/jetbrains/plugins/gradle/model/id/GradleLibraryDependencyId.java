@@ -19,7 +19,7 @@ public class GradleLibraryDependencyId extends GradleAbstractDependencyId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getProjectStructureHelper().findGradleLibraryDependency(getOwnerModuleName(), getDependencyName());
-      case INTELLIJ: return context.getProjectStructureHelper().findIntellijLibraryDependency(getOwnerModuleName(), getDependencyName());
+      case IDE: return context.getProjectStructureHelper().findIdeLibraryDependency(getOwnerModuleName(), getDependencyName());
     }
     throw new IllegalStateException(String.format(
       "Can't map id to the target library dependency. Owner: %s, module: '%s', library: '%s'",

@@ -16,30 +16,25 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import java.util.List;
-
 public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisitor {
   private BaseInspection inspection = null;
   private ProblemsHolder problemsHolder = null;
   private boolean onTheFly = false;
-  private final List<ProblemDescriptor> errors = null;
 
   public void setInspection(BaseInspection inspection) {
     this.inspection = inspection;
@@ -63,33 +58,13 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     registerError(statementToken, args);
   }
 
-
-  protected void registerVariableError(GrVariable variable) {
-    final PsiElement nameIdentifier = variable.getNameIdentifierGroovy();
-    registerError(nameIdentifier);
-  }
-
-  protected void registerModifierError(String modifier,
-                                       PsiModifierListOwner parameter) {
-    final PsiModifierList modifiers = parameter.getModifierList();
-    if (modifiers == null) {
-      return;
-    }
-    final PsiElement[] children = modifiers.getChildren();
-    for (final PsiElement child : children) {
-      final String text = child.getText();
-      if (modifier.equals(text)) {
-        registerError(child);
-      }
-    }
-  }
-
   protected void registerError(PsiElement location) {
     if (location == null) {
       return;
     }
     final LocalQuickFix[] fix = createFixes(location);
-    final String description = inspection.buildErrorString(location);
+    String description = StringUtil.notNullize(inspection.buildErrorString(location));
+
     registerError(location, description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
@@ -97,9 +72,10 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     if (method == null) {
       return;
     }
-    final LocalQuickFix[] fix = createFixes(method);
-    final String description = inspection.buildErrorString(args);
-    registerError(method.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    final LocalQuickFix[] fixes = createFixes(method);
+    String description = StringUtil.notNullize(inspection.buildErrorString(args));
+
+    registerError(method.getNameIdentifierGroovy(), description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   protected void registerVariableError(GrVariable variable, Object... args) {
@@ -107,7 +83,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
       return;
     }
     final LocalQuickFix[] fix = createFixes(variable);
-    final String description = inspection.buildErrorString(args);
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
     registerError(variable.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
@@ -115,15 +91,19 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     if (method == null) {
       return;
     }
-    final LocalQuickFix[] fix = createFixes(method);
-    final String description = inspection.buildErrorString(args);
-    registerError(((GrReferenceExpression) method.getInvokedExpression()).getReferenceNameElement(), description, fix,
-                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    final LocalQuickFix[] fixes = createFixes(method);
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
+
+    final GrExpression invoked = method.getInvokedExpression();
+    assert invoked != null;
+    final PsiElement nameElement = ((GrReferenceExpression)invoked).getReferenceNameElement();
+    assert nameElement != null;
+    registerError(nameElement, description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   protected void registerError(@NotNull PsiElement location,
-                               String description,
-                               LocalQuickFix[] fixes,
+                               @NotNull String description,
+                               @Nullable LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType) {
     problemsHolder.registerProblem(location, description, highlightType, fixes);
   }
@@ -136,12 +116,12 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
                                ProblemHighlightType highlightType,
                                Object... args) {
     final LocalQuickFix[] fix = createFixes(location);
-    final String description = inspection.buildErrorString(args);
+    final String description = StringUtil.notNullize(inspection.buildErrorString(args));
     registerError(location, description, fix, highlightType);
   }
 
   @Nullable
-  private LocalQuickFix[] createFixes(PsiElement location) {
+  private LocalQuickFix[] createFixes(@NotNull PsiElement location) {
     if (!onTheFly &&
         inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return null;
@@ -157,18 +137,7 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
     return new GroovyFix[]{fix};
   }
 
-  @Nullable
-  public ProblemDescriptor[] getErrors() {
-    if (errors == null) {
-      return null;
-    } else {
-      final int numErrors = errors.size();
-      return errors.toArray(new ProblemDescriptor[numErrors]);
-    }
-  }
-
-  public void visitWhiteSpace(PsiWhiteSpace space) {
-    // none of our inspections need to do anything with white space,
-    // so this is a performance optimization
+  public int getErrorCount() {
+    return problemsHolder.getResultCount();
   }
 }

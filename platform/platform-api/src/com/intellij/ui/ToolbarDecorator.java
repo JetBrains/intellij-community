@@ -306,6 +306,9 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  /**
+   * @return panel that contains wrapped component (with added scrollpane) and toolbar panel.
+   */
   public JPanel createPanel() {
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();

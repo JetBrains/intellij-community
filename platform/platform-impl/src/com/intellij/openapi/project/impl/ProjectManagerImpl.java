@@ -662,12 +662,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               ((XmlElementStorage)stateStorage).disableSaving();
             }
           }
-          if (canRestart) {
-            ApplicationManagerEx.getApplicationEx().restart();
-          }
-          else {
-            ApplicationManagerEx.getApplicationEx().exit(true);
-          }
+          ApplicationManagerEx.getApplicationEx().restart(true);
         }
       }
 

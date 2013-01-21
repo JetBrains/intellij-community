@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -15,6 +16,7 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
 

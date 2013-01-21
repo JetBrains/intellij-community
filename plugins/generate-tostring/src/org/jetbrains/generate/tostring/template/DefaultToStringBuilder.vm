@@ -1,8 +1,7 @@
-public String toString() {
-#set ($autoImportPackages = "org.apache.commons.lang.builder.ToStringBuilder")
-   return new ToStringBuilder(this).
+public java.lang.String toString() {
+   return new org.apache.commons.lang.builder.ToStringBuilder(this)
 #foreach ($member in $members)
-   append("$member.name", $member.accessor).
+   .append("$member.name", $member.accessor)
 #end
-   toString();
+   .toString();
 }

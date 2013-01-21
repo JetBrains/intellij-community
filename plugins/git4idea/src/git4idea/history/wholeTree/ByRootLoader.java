@@ -72,15 +72,14 @@ public class ByRootLoader extends TaskDescriptor {
 
   @Override
   public void run(ContinuationContext context) {
-    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
     /*progress(pi, "Load stashed");
     loadStash();*/
     reportStashHead();
-    progress(pi, "Try to load by reference");
     loadByHashesAside(context);
   }
 
   private void reportStashHead() {
+    progress("Getting stash head");
     try {
       myMediator.acceptStashHead(myTicket, myRootHolder.getRoot(), GitHistoryUtils.getStashTop(myProject, myRootHolder.getRoot()));
     }
@@ -89,7 +88,8 @@ public class ByRootLoader extends TaskDescriptor {
     }
   }
 
-  private void progress(final ProgressIndicator pi, final String progress) {
+  private void progress(final String progress) {
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
       pi.setText(progress);
@@ -149,6 +149,7 @@ public class ByRootLoader extends TaskDescriptor {
 
     final List<String> hashes = myGitLogFilters.getPossibleReferencies();
     if (hashes == null) return;
+    progress("Try to load by reference");
     myGitLogFilters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
       @Override
       public void consume(List<ChangesFilter.Filter> filters) {

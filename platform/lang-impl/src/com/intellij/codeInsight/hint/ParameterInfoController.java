@@ -20,12 +20,15 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -178,32 +181,8 @@ public class ParameterInfoController {
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        if (!myHandler.tracksParameterIndex()) {
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-          return;
-        }
-
-        int oldOffset = e.getEditor().logicalPositionToOffset(e.getOldPosition());
-        int newOffset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
-        if (newOffset <= myLbraceMarker.getStartOffset()){
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-          return;
-        }
-        int offset1 = Math.min(oldOffset, newOffset);
-        int offset2 = Math.max(oldOffset, newOffset);
-        CharSequence chars = e.getEditor().getDocument().getCharsSequence();
-        int offset = CharArrayUtil.shiftForwardUntil(chars, offset1, myParameterCloseChars);
-        if (offset < offset2){
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-        }
-        else{
-          if (myAlarm.cancelAllRequests() > 0){
-            addAlarmRequest();
-          }
-        }
+        myAlarm.cancelAllRequests();
+        addAlarmRequest();
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -211,27 +190,8 @@ public class ParameterInfoController {
     myEditorDocumentListener = new DocumentAdapter(){
       @Override
       public void documentChanged(DocumentEvent e) {
-        if (!myHandler.tracksParameterIndex()) {
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-          return;
-        }
-
-        CharSequence oldS = e.getOldFragment();
-        if (CharArrayUtil.shiftForwardUntil(oldS, 0, myParameterCloseChars) < oldS.length()){
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-          return;
-        }
-        CharSequence newS = e.getNewFragment();
-        if (CharArrayUtil.shiftForwardUntil(newS, 0, myParameterCloseChars) < newS.length()){
-          myAlarm.cancelAllRequests();
-          addAlarmRequest();
-          return;
-        }
-        if (myAlarm.cancelAllRequests() > 0){
-          addAlarmRequest();
-        }
+        myAlarm.cancelAllRequests();
+        addAlarmRequest();
       }
     };
     myEditor.getDocument().addDocumentListener(myEditorDocumentListener);
@@ -250,6 +210,14 @@ public class ParameterInfoController {
     LookupManager.getInstance(project).addPropertyChangeListener(myLookupListener);
 
     updateComponent();
+    if (myEditor instanceof EditorImpl) {
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          ParameterInfoController.this.dispose();
+        }
+      });
+    }
   }
 
   private void dispose(){

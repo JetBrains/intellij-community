@@ -66,6 +66,11 @@
     <option name="CLASS_NAME_ATTRIBUTES">
       <value />
     </option>
+    <option name="CLASS_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
+      </value>
+    </option>
     <option name="COFFEESCRIPT.BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6e3b3b" />
@@ -235,6 +240,11 @@
     </option>
     <option name="COFFEESCRIPT.THIS">
       <value />
+    </option>
+    <option name="CONDITIONALLY_NOT_COMPILED">
+      <value>
+        <option name="FOREGROUND" value="AEAEAE" />
+      </value>
     </option>
     <option name="CONSOLE_BLUE_OUTPUT">
       <value>
@@ -511,6 +521,11 @@
         <option name="BACKGROUND" value="30322b" />
       </value>
     </option>
+    <option name="ENUM_CONST">
+      <value>
+        <option name="FOREGROUND" value="D8FA3C" />
+      </value>
+    </option>
     <option name="ERRORS_ATTRIBUTES">
       <value>
         <option name="EFFECT_TYPE" value="2" />
@@ -743,6 +758,9 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="IVAR">
+      <value />
+    </option>
     <option name="JAVA_BLOCK_COMMENT">
       <value>
         <option name="FOREGROUND" value="AEAEAE" />
@@ -949,6 +967,11 @@
         <option name="FOREGROUND" value="D8FA3C" />
       </value>
     </option>
+    <option name="LABEL">
+      <value>
+        <option name="FOREGROUND" value="FBDE2D" />
+      </value>
+    </option>
     <option name="LESS_INJECTED_CODE">
       <value />
     </option>
@@ -996,14 +1019,124 @@
     <option name="LOCAL_VARIABLE_ATTRIBUTES">
       <value />
     </option>
+    <option name="MACRONAME">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
+      </value>
+    </option>
+    <option name="MACRO_PARAMETER">
+      <value />
+    </option>
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
+    <option name="MESSAGE_ARGUMENT">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
+      </value>
+    </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="80807f" />
+      </value>
+    </option>
+    <option name="OC.BADCHARACTER">
+      <value />
+    </option>
+    <option name="OC.BLOCK_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="AEAEAE" />
+      </value>
+    </option>
+    <option name="OC.BRACES">
+      <value />
+    </option>
+    <option name="OC.BRACKETS">
+      <value />
+    </option>
+    <option name="OC.COMMA">
+      <value />
+    </option>
+    <option name="OC.CPP_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FBDE2D" />
+      </value>
+    </option>
+    <option name="OC.DIRECTIVE">
+      <value>
+        <option name="FOREGROUND" value="FBDE2D" />
+      </value>
+    </option>
+    <option name="OC.DOT">
+      <value />
+    </option>
+    <option name="OC.EXTERN_VARIABLE">
+      <value />
+    </option>
+    <option name="OC.FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
+      </value>
+    </option>
+    <option name="OC.FUNCTION">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
+      </value>
+    </option>
+    <option name="OC.GLOBAL_VARIABLE">
+      <value />
+    </option>
+    <option name="OC.KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="FBDE2D" />
+      </value>
+    </option>
+    <option name="OC.LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="AEAEAE" />
+      </value>
+    </option>
+    <option name="OC.LOCAL_VARIABLE">
+      <value />
+    </option>
+    <option name="OC.NUMBER">
+      <value>
+        <option name="FOREGROUND" value="D8FA3C" />
+      </value>
+    </option>
+    <option name="OC.OPERATION_SIGN">
+      <value />
+    </option>
+    <option name="OC.PARAMETER">
+      <value />
+    </option>
+    <option name="OC.PARENTHS">
+      <value />
+    </option>
+    <option name="OC.PROPERTY">
+      <value />
+    </option>
+    <option name="OC.SELFSUPERTHIS">
+      <value />
+    </option>
+    <option name="OC.SEMICOLON">
+      <value />
+    </option>
+    <option name="OC.STRING">
+      <value>
+        <option name="FOREGROUND" value="61CE3C" />
+      </value>
+    </option>
+    <option name="OC.STRUCT_FIELD">
+      <value>
+        <option name="FOREGROUND" value="D8FA3C" />
+      </value>
+    </option>
+    <option name="OC_FORMAT_TOKEN">
+      <value>
+        <option name="FOREGROUND" value="61CE3C" />
       </value>
     </option>
     <option name="PARAMETER_ATTRIBUTES">
@@ -1107,6 +1240,11 @@
     <option name="PHP_VAR">
       <value>
         <option name="FOREGROUND" value="FBDE2D" />
+      </value>
+    </option>
+    <option name="PROTOCOL_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="FF6400" />
       </value>
     </option>
     <option name="PUPPET_BAD_CHARACTER">
@@ -1885,6 +2023,11 @@
     <option name="TWIG_STRING">
       <value>
         <option name="FOREGROUND" value="61CE3C" />
+      </value>
+    </option>
+    <option name="TYPEDEF">
+      <value>
+        <option name="FOREGROUND" value="FBDE2D" />
       </value>
     </option>
     <option name="UNMATCHED_BRACE_ATTRIBUTES">

@@ -42,7 +42,7 @@ import java.util.*;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final class JarFileSystemImplLock { }
-  private static final Object LOCK = new JarFileSystemImplLock();
+  private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
   private final Set<String> myNoCopyJarPaths =
     SystemProperties.getBooleanProperty("idea.jars.nocopy", false) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
@@ -252,7 +252,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
     throws IOException {
-    return getHandler(file).getOutputStream(file, requestor, modStamp, timeStamp);
+    throw new IOException("Read-only: "+file.getPresentableUrl());
   }
 
   public boolean isMakeCopyOfJar(File originalJar) {
@@ -284,12 +284,12 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
   @Override
   public void setTimeStamp(@NotNull final VirtualFile file, final long modStamp) throws IOException {
-    getHandler(file).setTimeStamp(file, modStamp);
+    throw new IOException("Read-only: "+file.getPresentableUrl());
   }
 
   @Override
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-    getHandler(file).setWritable(file, writableFlag);
+    throw new IOException("Read-only: "+file.getPresentableUrl());
   }
 
   @Override

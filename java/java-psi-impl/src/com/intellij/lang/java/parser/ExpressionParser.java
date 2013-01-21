@@ -549,10 +549,13 @@ public class ExpressionParser {
       final PsiBuilder.Marker mark = builder.mark();
 
       final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, 0);
-      if (typeInfo != null && (typeInfo.isPrimitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
-        final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, typeInfo.isPrimitive);
-        if (result != null) {
-          return result;
+      if (typeInfo != null) {
+        boolean optionalClassKeyword = typeInfo.isPrimitive || typeInfo.isArray;
+        if (optionalClassKeyword || !typeInfo.hasErrors && typeInfo.isParameterized) {
+          final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, optionalClassKeyword);
+          if (result != null) {
+            return result;
+          }
         }
       }
 
@@ -776,10 +779,10 @@ public class ExpressionParser {
   @Nullable
   private PsiBuilder.Marker continueClassAccessOrMethodReference(final PsiBuilder builder,
                                                                  final PsiBuilder.Marker expr,
-                                                                 final boolean primitive) {
+                                                                 final boolean optionalClassKeyword) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT) {
-      return parseClassObjectAccess(builder, expr, primitive);
+      return parseClassObjectAccess(builder, expr, optionalClassKeyword);
     }
     else if (tokenType == JavaTokenType.DOUBLE_COLON) {
       return parseMethodReference(builder, expr);
@@ -789,7 +792,7 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean primitive) {
+  private static PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
     final PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
 
@@ -798,7 +801,7 @@ public class ExpressionParser {
       builder.advanceLexer();
     }
     else {
-      if (!primitive) return null;
+      if (!optionalClassKeyword) return null;
       mark.rollbackTo();
       builder.error(".class expected");
     }

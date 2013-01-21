@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
-  private static final Logger LOG = Logger.getInstance("#" + StateStorageManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
 
   private static final boolean ourHeadlessEnvironment;
   static {
@@ -58,6 +60,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Lock myStorageLock = new ReentrantLock();
   private final Map<String, StateStorage> myStorages = new THashMap<String, StateStorage>();
   private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
   private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
@@ -73,8 +76,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
   private boolean isDirty;
 
-  public StateStorageManagerImpl(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                                 final String rootTagName,
+  public StateStorageManagerImpl(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
+                                 String rootTagName,
                                  @Nullable Disposable parentDisposable,
                                  PicoContainer picoContainer) {
     myPicoContainer = picoContainer;
@@ -96,32 +99,46 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Nullable
   public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
-    final String key = getStorageSpecId(storageSpec);
-    return getStateStorage(storageSpec, key);
-  }
+    String key = getStorageSpecId(storageSpec);
 
-  @Nullable
-  private StateStorage getStateStorage(final Storage storageSpec, final String key) throws StateStorageException {
-    if (myStorages.get(key) == null) {
-      final StateStorage stateStorage = createStateStorage(storageSpec);
-      putStorageToMap(key, stateStorage);
+    myStorageLock.lock();
+    try {
+      StateStorage stateStorage = myStorages.get(key);
+      if (stateStorage == null) {
+        stateStorage = createStateStorage(storageSpec);
+        putStorageToMap(key, stateStorage);
+      }
+      return stateStorage;
     }
-
-    return myStorages.get(key);
+    finally {
+      myStorageLock.unlock();
+    }
   }
 
   @Nullable
   public StateStorage getFileStateStorage(final String fileName) {
-    if (myStorages.get(fileName) == null) {
-      final StateStorage stateStorage = createFileStateStorage(fileName);
-      putStorageToMap(fileName, stateStorage);
+    myStorageLock.lock();
+    try {
+      StateStorage stateStorage = myStorages.get(fileName);
+      if (stateStorage == null) {
+        stateStorage = createFileStateStorage(fileName);
+        putStorageToMap(fileName, stateStorage);
+      }
+      return stateStorage;
     }
-
-    return myStorages.get(fileName);
+    finally {
+      myStorageLock.unlock();
+    }
   }
 
   public Collection<String> getStorageFileNames() {
-    return Collections.unmodifiableCollection(new HashSet<String>(myStorages.keySet()));
+    myStorageLock.lock();
+    try {
+      return Collections.unmodifiableCollection(myStorages.keySet());
+    }
+    finally {
+      myStorageLock.unlock();
+    }
   }
 
   private void putStorageToMap(final String key, final StateStorage stateStorage) {
@@ -144,6 +161,84 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Nullable
+  private StateStorage createStateStorage(Storage storageSpec) throws StateStorageException {
+    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+      String key = UUID.randomUUID().toString();
+      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
+      return (StateStorage)myPicoContainer.getComponentInstance(key);
+    }
+    else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+      return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
+    }
+    else {
+      return createFileStateStorage(storageSpec.file());
+    }
+  }
+
+  private static String getStorageSpecId(Storage storageSpec) {
+    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
+      return storageSpec.storageClass().getName();
+    }
+    else {
+      return storageSpec.file();
+    }
+  }
+
+  public void clearStateStorage(@NotNull String file) {
+    myStorageLock.lock();
+    try {
+      myStorages.remove(file);
+    }
+    finally {
+      myStorageLock.unlock();
+    }
+  }
+
+  @Nullable
+  private StateStorage createDirectoryStateStorage(String file, Class<? extends StateSplitter> splitterClass) throws StateStorageException {
+    String expandedFile = expandMacros(file);
+    if (expandedFile == null) {
+      myStorages.put(file, null);
+      return null;
+    }
+
+    final StateSplitter splitter;
+    try {
+      splitter = splitterClass.newInstance();
+    }
+    catch (InstantiationException e) {
+      throw new StateStorageException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new StateStorageException(e);
+    }
+
+    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
+  }
+
+  @Nullable
+  private StateStorage createFileStateStorage(@NotNull final String fileSpec) {
+    String expandedFile = expandMacros(fileSpec);
+    if (expandedFile == null) {
+      myStorages.put(fileSpec, null);
+      return null;
+    }
+
+    String extension = FileUtil.getExtension(new File(expandedFile).getName());
+    if (!ourHeadlessEnvironment && extension.length() == 0) {
+      throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
+    }
+
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, myRootTagName, this,
+                                myPicoContainer, ComponentRoamingManager.getInstance(), this) {
+      @NotNull
+      protected StorageData createStorageData() {
+        return StateStorageManagerImpl.this.createStorageData(fileSpec);
+      }
+    };
+  }
+
   public long getVersion(String name) {
     Map<String, Long> versions = getComponentVersions();
     return versions.containsKey(name) ? versions.get(name).longValue() : 0;
@@ -155,7 +250,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     synchronized (myComponentVersionsLock) {
       myComponentVersions = null;
     }
-    isDirty=false;
+    isDirty = false;
   }
 
   private Map<String, Long> loadVersions() {
@@ -209,86 +304,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public void changeVersion(String name, long version) {
     getComponentVersions().put(name, version);
     isDirty = true;
-  }
-
-  @Nullable
-  private StateStorage createStateStorage(final Storage storageSpec) throws StateStorageException {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
-      final String key = UUID.randomUUID().toString();
-      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
-
-      return (StateStorage)myPicoContainer.getComponentInstance(key);
-    }
-    else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
-      return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
-    }
-    else {
-      return createFileStateStorage(storageSpec.file());
-    }
-  }
-
-  private static String getStorageSpecId(final Storage storageSpec) {
-    if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
-      return storageSpec.storageClass().getName();
-    }
-    else {
-      return storageSpec.file();
-    }
-  }
-
-  public void clearStateStorage(@NotNull final String file) {
-    myStorages.remove(file);
-  }
-
-  @Nullable
-  private StateStorage createDirectoryStateStorage(final String file, final Class<? extends StateSplitter> splitterClass)
-    throws StateStorageException {
-    final String expandedFile = expandMacros(file);
-    if (expandedFile == null) {
-      myStorages.put(file, null);
-      return null;
-    }
-
-    final StateSplitter splitter;
-
-    try {
-      splitter = splitterClass.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new StateStorageException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new StateStorageException(e);
-    }
-
-    return new DirectoryBasedStorage(myPathMacroSubstitutor, expandedFile, splitter, this, myPicoContainer);
-  }
-
-  @Nullable
-  StateStorage createFileStateStorage(@NotNull final String fileSpec) {
-    String expandedFile = expandMacros(fileSpec);
-    if (expandedFile == null) {
-      myStorages.put(fileSpec, null);
-      return null;
-    }
-
-    final String extension = FileUtil.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.length() == 0) {
-      throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
-    }
-
-    return createFileStateStorage(fileSpec, expandedFile, myRootTagName, myPicoContainer);
-  }
-
-  protected StateStorage createFileStateStorage(final String fileSpec, final String expandedFile, final String rootTagName,
-                                                final PicoContainer picoContainer) {
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, rootTagName, this, picoContainer,
-                                ComponentRoamingManager.getInstance(), this) {
-      @NotNull
-      protected StorageData createStorageData() {
-        return StateStorageManagerImpl.this.createStorageData(fileSpec);
-      }
-    };
   }
 
   public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
@@ -403,20 +418,20 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return session;
   }
 
-  public SaveSession startSave(final ExternalizationSession externalizationSession)  {
+  public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
     SaveSession session = createSaveSession(externalizationSession);
     mySession = session;
     return session;
   }
 
-  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession)  {
+  protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
     return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
   public void finishSave(final SaveSession saveSession) {
     try {
-      assert mySession == saveSession: "mySession=" + mySession + " saveSession=" + saveSession;
+      assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
       ((MySaveSession)saveSession).finishSave();
     }
     finally {
@@ -425,7 +440,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  public void reset(){
+  public void reset() {
     mySession = null;
   }
 
@@ -497,7 +512,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       Set<String> result = new HashSet<String>();
 
-      nextStorage: for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+      nextStorage:
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
         final StateStorage stateStorage = pair.second;
         final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(stateStorage);
         if (saveSession == null) continue nextStorage;
@@ -566,7 +582,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
         element.setAttribute("name", name);
         element.setAttribute("version", String.valueOf(version));
       }
-
     }
     return root;
   }
