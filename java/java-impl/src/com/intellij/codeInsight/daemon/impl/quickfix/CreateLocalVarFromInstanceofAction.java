@@ -316,7 +316,6 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch == null) {
           anchorAfter = ifStatement;
-          CodeEditUtil.markToReformatBefore(PsiTreeUtil.getDeepestFirst(toInsert).getNode(), true);
         }
         else if (!(elseBranch instanceof PsiBlockStatement)) {
           emptyBlockStatement.getCodeBlock().add(elseBranch);
