@@ -84,3 +84,7 @@ contributor(ctype: 'groovy.lang.MetaClass') {
   property name: 'static'
 }
 
+contributor(ctype: 'java.lang.Enum') {
+  method(type: psiClass.qualName, name: 'valueOf', params: [name: 'java.lang.String'], isStatic: true)
+}
+

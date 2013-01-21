@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -783,8 +783,7 @@ print new B().f<caret>oo()
 """)
 
     def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.physical)
+    assertInstanceOf(resolved, PsiMethod)
   }
 
   void testTwoMixinsInModifierList() {
@@ -812,8 +811,7 @@ class OtherPersonMixin {
 """)
 
     def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertTrue(resolved.physical)
+    assertInstanceOf(resolved, PsiMethod)
   }
 
 
@@ -1446,5 +1444,19 @@ b<caret>ar {
 ''', PsiMethod)
 
     assertTrue(method.parameterList.parameters[0].type.equalsToText('java.lang.Runnable'))
+  }
+
+  void testValueOf() {
+    final valueof = resolveByText('''\
+enum MyEnum {
+    FOO, BAR
+}
+
+
+MyEnum myEnum
+myEnum = MyEnum.va<caret>lueOf('FOO')
+''', PsiMethod)
+
+    assertEquals(valueof.parameterList.parametersCount, 1)
   }
 }
