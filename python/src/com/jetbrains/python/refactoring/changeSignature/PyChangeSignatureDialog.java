@@ -123,7 +123,8 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
     int parametersLength = parameters.size();
 
-    for (PyParameterTableModelItem info : parameters) {
+    for (int index = 0; index != parametersLength; ++index) {
+      PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
       if (parameterNames.contains(name)) {
@@ -133,7 +134,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
       if (name.equals("*")) {
         hadSingleStar = true;
-        if (parametersLength == 1) {
+        if (index == parametersLength-1) {
           return PyBundle.message("ANN.named.arguments.after.star");
         }
       }
