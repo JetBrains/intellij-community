@@ -285,11 +285,9 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       for (int i = 0; i != parameters.length; ++i) {
         PyParameterInfo paramInfo = parameters[i];
         final PyParameter[] oldParameters = function.getParameterList().getParameters();
-        if (paramInfo.getOldIndex() == i && i < oldParameters.length) {
-          final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[i], paramInfo.getName(), true, false, null);
-          for (UsageInfo info : usages) {
-            RenameUtil.rename(info, paramInfo.getName());
-          }
+        final UsageInfo[] usages = RenameUtil.findUsages(oldParameters[paramInfo.getOldIndex()], paramInfo.getName(), true, false, null);
+        for (UsageInfo info : usages) {
+          RenameUtil.rename(info, paramInfo.getName());
         }
       }
     }
