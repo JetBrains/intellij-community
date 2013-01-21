@@ -29,4 +29,8 @@ public class PyFunctionNameIndex extends StringStubIndexExtension<PyFunction> {
   public static Collection<PyFunction> find(String name, Project project) {
     return StubIndex.getInstance().get(KEY, name, project, ProjectScope.getAllScope(project));
   }
+
+  public static Collection<String> allKeys(Project project) {
+    return StubIndex.getInstance().getAllKeys(KEY, project);
+  }
 }

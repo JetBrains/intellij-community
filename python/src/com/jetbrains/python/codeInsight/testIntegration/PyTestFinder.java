@@ -41,14 +41,30 @@ public class PyTestFinder implements TestFinder {
     Pattern pattern = Pattern.compile(".*" + klassName + ".*");
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-    Collection<String> names = PyClassNameIndex.allKeys(element.getProject());
 
-    for (String eachName : names) {
-      if (pattern.matcher(eachName).matches()) {
-        for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-          if (PythonUnitTestUtil.isTestCaseClass(eachClass) || PythonDocTestUtil.isDocTestClass(eachClass)) {
-            classesWithProximities.add(
-                new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+    if (source instanceof PyClass) {
+      Collection<String> names = PyClassNameIndex.allKeys(element.getProject());
+      for (String eachName : names) {
+        if (pattern.matcher(eachName).matches()) {
+          for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
+            if (PythonUnitTestUtil.isTestCaseClass(eachClass) || PythonDocTestUtil.isDocTestClass(eachClass)) {
+              classesWithProximities.add(
+                  new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+            }
+          }
+        }
+      }
+    }
+    else {
+      Collection<String> names = PyFunctionNameIndex.allKeys(element.getProject());
+      for (String eachName : names) {
+        if (pattern.matcher(eachName).matches()) {
+          for (PyFunction eachFunction : PyFunctionNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
+            if (PythonUnitTestUtil.isTestCaseFunction(
+              eachFunction) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
+              classesWithProximities.add(
+                new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+            }
           }
         }
       }
@@ -59,11 +75,18 @@ public class PyTestFinder implements TestFinder {
   @NotNull
   @Override
   public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
-    PyClass source = PsiTreeUtil.getParentOfType(element, PyClass.class);
-    if (source == null) return Collections.emptySet();
+    final PyFunction sourceFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    final PyClass source = PsiTreeUtil.getParentOfType(element, PyClass.class);
+    if (sourceFunction == null && source == null) return Collections.emptySet();
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
-    for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(source.getName())) {
+    final List<Pair<String, Integer>> possibleNames = new ArrayList<Pair<String, Integer>>();
+    if (source != null)
+      possibleNames.addAll(TestFinderHelper.collectPossibleClassNamesWithWeights(source.getName()));
+    if (sourceFunction != null)
+      possibleNames.addAll(TestFinderHelper.collectPossibleClassNamesWithWeights(sourceFunction.getName()));
+
+    for (Pair<String, Integer> eachNameWithWeight : possibleNames) {
       for (PyClass eachClass : PyClassNameIndex.find(eachNameWithWeight.first, element.getProject(),
                                                      GlobalSearchScope.projectScope(element.getProject()))) {
         if (!PyTestUtil.isPyTestClass(eachClass))
