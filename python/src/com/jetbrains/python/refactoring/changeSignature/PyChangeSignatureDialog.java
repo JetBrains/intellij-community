@@ -175,18 +175,14 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           }
         }
       }
-    }
-
-    if (!getTableComponent().isEditing()) {
-      for (final ParameterTableModelItemBase<PyParameterInfo> item : myParametersTableModel.getItems()) {
-        if (item.parameter.getOldIndex() < 0 && !item.parameter.getName().startsWith("*")) {
-          if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
-            return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
-          if (StringUtil.isEmptyOrSpaces(item.parameter.getName()))
-            return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
-        }
+      if (info.parameter.getOldIndex() < 0 && !info.parameter.getName().startsWith("*")) {
+        if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText()))
+          return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+        if (StringUtil.isEmptyOrSpaces(info.parameter.getName()))
+          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
       }
     }
+
 
     return null;
   }
