@@ -79,7 +79,14 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                           REFACTORING_NAME, REFACTORING_NAME);
       return;
     }
-    if (!(element instanceof PyFunction)) return;
+    if (!(element instanceof PyFunction)) {
+      String message =
+        RefactoringBundle.getCannotRefactorMessage(
+          PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                          REFACTORING_NAME, REFACTORING_NAME);
+      return;
+    }
 
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return;
