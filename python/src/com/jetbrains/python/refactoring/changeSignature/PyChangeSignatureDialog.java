@@ -166,7 +166,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         else if (hadKeywordContainer) {
           return PyBundle.message("ANN.regular.param.after.keyword");
         }
-        final String defaultValue = parameter.getDefaultValue();
+        final String defaultValue = info.getDefaultValue();
         if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue) && parameter.getDefaultInSignature()) {
           hadDefaultValue = true;
         }
@@ -176,10 +176,10 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           }
         }
       }
-      if (info.parameter.getOldIndex() < 0 && !info.parameter.getName().startsWith("*")) {
+      if (parameter.getOldIndex() < 0 && !parameter.getName().startsWith("*")) {
         if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText()))
           return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
-        if (StringUtil.isEmptyOrSpaces(info.parameter.getName()))
+        if (StringUtil.isEmptyOrSpaces(parameter.getName()))
           return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
       }
     }
