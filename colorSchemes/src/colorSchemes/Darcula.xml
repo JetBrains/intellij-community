@@ -2313,6 +2313,16 @@
         <option name="ERROR_STRIPE_COLOR" />
       </value>
     </option>
+    <option name="SASS_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="6d9cbe" />
+        <option name="BACKGROUND" />
+        <option name="FONT_TYPE" value="0" />
+        <option name="EFFECT_COLOR" />
+        <option name="EFFECT_TYPE" value="0" />
+        <option name="ERROR_STRIPE_COLOR" />
+      </value>
+    </option>
     <option name="SASS_ATTRIBUTE">
       <value>
         <option name="FOREGROUND" value="6d9cbe" />
