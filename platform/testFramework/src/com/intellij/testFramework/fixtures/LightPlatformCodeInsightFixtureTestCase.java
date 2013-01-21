@@ -79,7 +79,8 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
   }
 
    /**
-    * Return absolute path to the test data. Not intended to be overridden.
+    * Return absolute path to the test data. Not intended to be overridden in tests written as part of the IntelliJ IDEA codebase;
+    * must be overridden in plugins which use the test framework.
     *
     * @return absolute path to the test data.
     */
