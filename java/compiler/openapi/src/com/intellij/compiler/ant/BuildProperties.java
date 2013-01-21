@@ -57,6 +57,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   public static final @NonNls String PROPERTY_IDEA_HOME = "idea.home";
   public static final @NonNls String PROPERTY_JAVAC2_HOME = "javac2.home";
   public static final @NonNls String PROPERTY_JAVAC2_CLASSPATH_ID = "javac2.classpath";
+  public static final @NonNls String PROPERTY_INCLUDE_JAVA_RUNTIME_FOR_INSTRUMENTATION = "javac2.instrumentation.includeJavaRuntime";
 
   protected abstract void createJdkGenerators(Project project);
 
