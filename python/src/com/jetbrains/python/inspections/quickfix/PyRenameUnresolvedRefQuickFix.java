@@ -6,11 +6,15 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -69,9 +73,8 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
       }
     }
 
-    Editor editor = getEditor(project, element.getContainingFile());
+    Editor editor = getEditor(project, element.getContainingFile(), parentScope.getTextRange().getStartOffset());
     if (editor != null) {
-      editor.getCaretModel().moveToOffset(parentScope.getTextRange().getStartOffset());
       Template template = builder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
     }
@@ -107,14 +110,12 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file) {
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document != null) {
-      final EditorFactory instance = EditorFactory.getInstance();
-      if (instance == null) return null;
-      Editor[] editors = instance.getEditors(document);
-      if (editors.length > 0)
-        return editors[0];
+  private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file, int offset) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+    return FileEditorManager.getInstance(project).openTextEditor(
+      new OpenFileDescriptor(project, virtualFile, offset), true
+    );
     }
     return null;
   }
