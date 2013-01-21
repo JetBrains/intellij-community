@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 
@@ -81,6 +83,13 @@ public class GroovyCompilerWrapper {
           final String topLevel = classNode.getName();
           final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
           String fileName = source.getName();
+          if (fileName.startsWith("file:")) {
+            try {
+              fileName = new URL(fileName).getFile();
+            }
+            catch (MalformedURLException ignored) {
+            }
+          }
           if (new File(stubPath).exists()) {
             compiledFiles.add(new OutputItem(stubPath, fileName));
           }
