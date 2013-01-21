@@ -45,8 +45,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (callExpression != null) {
       return callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
     }
-    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    return function;
+    return PsiTreeUtil.getParentOfType(element, PyFunction.class);
   }
 
   @Override
@@ -88,8 +87,36 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       return;
     }
 
-    final PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) return;
+    if (isNotUnderSourceRoot(project, element.getContainingFile(), editor)) return;
+
+    final PyFunction superMethod = getSuperMethod((PyFunction)element);
+    if (superMethod == null) return;
+    if (!superMethod.equals(element)) {
+      element = superMethod;
+      if (isNotUnderSourceRoot(project, superMethod.getContainingFile(), editor)) return;
+    }
+
+    final PyFunction function = (PyFunction)element;
+    final PyParameter[] parameters = function.getParameterList().getParameters();
+    for (PyParameter p : parameters) {
+      if (p instanceof PyTupleParameter) {
+        String message =
+          RefactoringBundle.getCannotRefactorMessage("Function contains tuple parameters");
+        CommonRefactoringUtil.showErrorHint(project, editor, message,
+                                            REFACTORING_NAME, REFACTORING_NAME);
+        return;
+      }
+    }
+
+    final PyMethodDescriptor method = new PyMethodDescriptor((PyFunction)element);
+    PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, method);
+    dialog.show();
+  }
+
+  private static boolean isNotUnderSourceRoot(@NotNull final Project project,
+                                              @Nullable final PsiFile psiFile,
+                                              @NotNull final Editor editor) {
+    if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {
       if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
@@ -97,32 +124,10 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
             RefactoringBundle.getCannotRefactorMessage("Function is not under the source root");
           CommonRefactoringUtil.showErrorHint(project, editor, message,
                                               REFACTORING_NAME, REFACTORING_NAME);
-          return;
+        return true;
       }
     }
-
-    final PyFunction newFunction = getSuperMethod((PyFunction)element);
-    if (newFunction == null) return;
-    if (!newFunction.equals(element)) {
-      invokeOnElement(project, newFunction, editor);
-    }
-    else {
-      final PyFunction function = (PyFunction)element;
-      final PyParameter[] parameters = function.getParameterList().getParameters();
-      for (PyParameter p : parameters) {
-        if (p instanceof PyTupleParameter) {
-          String message =
-            RefactoringBundle.getCannotRefactorMessage("Function contains tuple parameters");
-          CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                              REFACTORING_NAME, REFACTORING_NAME);
-          return;
-        }
-      }
-
-      final PyMethodDescriptor method = new PyMethodDescriptor((PyFunction)element);
-      PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, method);
-      dialog.show();
-    }
+    return false;
   }
 
   @Nullable
