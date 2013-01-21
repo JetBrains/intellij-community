@@ -378,7 +378,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     try {
-      assert page <= MAX_PAGES_COUNT;
+      assert page >= 0 && page <= MAX_PAGES_COUNT:page;
 
       if (myStorageIndex == -1) {
         LOG.info(Thread.currentThread() + ":Reinit:"+myFile);
