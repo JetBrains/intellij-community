@@ -52,6 +52,7 @@ import java.util.List;
 /**
  *
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
+ * @see http://confluence.jetbrains.net/display/IDEADEV/Testing+IntelliJ+IDEA+Plugins
  *
  * @author Dmitry Avdeev
  */
@@ -71,10 +72,25 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NonNls String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
 
+  /**
+   * Returns the in-memory editor instance.
+   *
+   * @return the in-memory editor instance.
+   */
   Editor getEditor();
 
+  /**
+   * Returns the offset of the caret in the in-memory editor instance.
+   *
+   * @return the offset of the caret in the in-memory editor instance.
+   */
   int getCaretOffset();
 
+  /**
+   * Returns the file currently loaded into the in-memory editor.
+   *
+   * @return the file currently loaded into the in-memory editor.
+   */
   PsiFile getFile();
 
   void setTestDataPath(@NonNls String dataPath);
@@ -85,11 +101,119 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   TempDirTestFixture getTempDirFixture();
 
-  VirtualFile copyFileToProject(@NonNls String sourceFilePath, @NonNls String targetPath);
+  /**
+   * Copies a file from the testdata directory to the specified path in the test project directory.
+   *
+   * @param sourceFilePath path to the source file, relative to the testdata path.
+   * @param targetPath path to the destination, relative to the source root of the test project.
+   * @return the VirtualFile for the copied file in the test project directory.
+   */
+  VirtualFile copyFileToProject(@TestDataFile @NonNls String sourceFilePath, @NonNls String targetPath);
 
+  /**
+   * Copies a directory from the testdata directory to the specified path in the test project directory.
+   *
+   * @param sourceFilePath path to the source directory, relative to the testdata path.
+   * @param targetPath path to the destination, relative to the source root of the test project.
+   * @return the VirtualFile for the copied directory in the test project directory.
+   */
   VirtualFile copyDirectoryToProject(@NonNls String sourceFilePath, @NonNls String targetPath);
 
+  /**
+   * Copies a file from the testdata directory to the same relative path in the test project directory.
+   *
+   * @return the VirtualFile for the copied file in the test project directory.
+   */
   VirtualFile copyFileToProject(@TestDataFile @NonNls String sourceFilePath);
+
+  /**
+   * Copies a file from the testdata directory to the same relative path in the test project directory
+   * and opens it in the in-memory editor.
+   *
+   * @param file path to the file, relative to the testdata path.
+   * @return the PSI file for the copied and opened file.
+   */
+  PsiFile configureByFile(@TestDataFile @NonNls String file);
+
+  /**
+   * Copies multiple files from the testdata directory to the same relative paths in the test project directory
+   * and opens the first of them in the in-memory editor.
+   *
+   * @param files path to the files, relative to the testdata path.
+   * @return the PSI files for the copied files.
+   */
+  PsiFile[] configureByFiles(@TestDataFile @NonNls String... files);
+
+  /**
+   * Loads the specified text, treated as the contents of a file with the specified file type, into the in-memory
+   * editor.
+   *
+   * @param fileType the file type according to which which the text is interpreted.
+   * @param text the text to load into the in-memory editor.
+   * @return the PSI file created from the specified text.
+   */
+  PsiFile configureByText(FileType fileType, @NonNls String text);
+
+  /**
+   * Loads the specified text, treated as the contents of a file with the specified name, into the in-memory
+   * editor.
+   *
+   * @param fileName the name of the file (which is used to determine the file type based on the registered filename patterns).
+   * @param text the text to load into the in-memory editor.
+   * @return the PSI file created from the specified text.
+   */
+  PsiFile configureByText(String fileName, @NonNls String text);
+
+  /**
+   * Loads the specified file from the test project directory into the in-memory editor.
+   *
+   * @param filePath the path of the file to load, relative to the test project source root.
+   * @return the PSI file for the loaded file.
+   */
+  PsiFile configureFromTempProjectFile(String filePath);
+
+  /**
+   * Loads the specified virtual file from the test project directory into the in-memory editor.
+   *
+   * @param f the file to load.
+   * @return the PSI file for the loaded file.
+   */
+  void configureFromExistingVirtualFile(VirtualFile f);
+
+  /**
+   * Creates a file with the specified path and contents in the test project directory.
+   *
+   * @param relativePath the path for the file to create, relative to the test project source root.
+   * @param fileText the text to put into the created file.
+   *
+   * @return the PSI file for the created file.
+   */
+  PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText);
+
+  /**
+   * Compares the contents of the in-memory editor with the specified file. The trailing whitespaces are not ignored
+   * by the comparison.
+   *
+   * @param expectedFile path to file to check against, relative to the testdata path.
+   */
+  void checkResultByFile(@TestDataFile @NonNls String expectedFile);
+
+  /**
+   * Compares the contents of the in-memory editor with the specified file, optionally ignoring trailing whitespaces.
+   *
+   * @param expectedFile path to file to check against, relative to the testdata path.
+   * @param ignoreTrailingWhitespaces whether trailing whitespaces should be ignored by the comparison.
+   */
+  void checkResultByFile(@TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
+
+  /**
+   * Compares a file in the test project with a file in the testdata directory.
+   *
+   * @param filePath path to file to be checked, relative to the source root of the test project.
+   * @param expectedFile path to file to check against, relative to the testdata path.
+   * @param ignoreTrailingWhitespaces whether trailing whitespaces should be ignored by the comparison.
+   */
+  void checkResultByFile(@NonNls String filePath, @TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
 
   /**
    * Enables inspections for highlighting tests.
@@ -220,32 +344,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action);
 
-  PsiFile configureByFile(@TestDataFile @NonNls String file);
-
-  PsiFile[] configureByFiles(@TestDataFile @NonNls String... files);
-
-  PsiFile configureByText(FileType fileType, @NonNls String text);
-
-  PsiFile configureByText(String fileName, @NonNls String text);
-
-  /**
-   * Compares current file against the given one.
-   *
-   * @param expectedFile file to check against.
-   */
-  void checkResultByFile(@TestDataFile @NonNls String expectedFile);
-
-  void checkResultByFile(@TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
-
-  /**
-   * Compares two files.
-   *
-   * @param filePath file to be checked.
-   * @param expectedFile file to check against.
-   * @param ignoreTrailingWhitespaces set to true to ignore differences in whitespaces.
-   */
-  void checkResultByFile(@NonNls String filePath, @TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
-
   void testCompletion(@NonNls String[] filesBefore, @TestDataFile @NonNls String fileAfter);
 
   void testCompletionTyping(@NonNls String[] filesBefore, String toType, @TestDataFile @NonNls String fileAfter);
@@ -339,12 +437,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return updated action's presentation
    */
   Presentation testAction(AnAction action);
-
-  PsiFile configureFromTempProjectFile(String filePath);
-
-  void configureFromExistingVirtualFile(VirtualFile f);
-
-  PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText);
 
   @Nullable
   List<String> getCompletionVariants(String... filesBefore);
