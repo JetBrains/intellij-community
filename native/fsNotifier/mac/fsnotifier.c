@@ -24,7 +24,7 @@ static void reportEvent(char *event, char *path) {
     int len = 0;
     if (path != NULL) {
         len = strlen(path);
-        for (char* p = path; *p != '\0'; p++){
+        for (char* p = path; *p != '\0'; p++) {
             if (*p == '\n') {
                 *p = '\0';
             }

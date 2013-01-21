@@ -104,7 +104,6 @@ int main(int argc, char** argv) {
   }
 
   setvbuf(stdin, NULL, _IONBF, 0);
-  setvbuf(stdout, NULL, _IONBF, 0);
 
   roots = array_create(20);
   if (init_inotify() && roots != NULL) {
@@ -120,7 +119,7 @@ int main(int argc, char** argv) {
     unregister_roots();
   }
   else {
-    printf("GIVEUP\n");
+    output("GIVEUP\n");
   }
   close_inotify();
   array_delete(roots);
@@ -430,7 +429,7 @@ static void report_event(char* event, char* path) {
   userlog(LOG_DEBUG, "%s: %s", event, path);
 
   int len = strlen(path);
-  for (char* p = path; *p != '\0'; p++){
+  for (char* p = path; *p != '\0'; p++) {
     if (*p == '\n') {
       *p = '\0';
     }
@@ -440,6 +439,8 @@ static void report_event(char* event, char* path) {
   fputc('\n', stdout);
   fwrite(path, len, 1, stdout);
   fputc('\n', stdout);
+
+  fflush(stdout);
 }
 
 
@@ -452,4 +453,6 @@ static void output(const char* format, ...) {
   va_start(ap, format);
   vprintf(format, ap);
   va_end(ap);
+
+  fflush(stdout);
 }

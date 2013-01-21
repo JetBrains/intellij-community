@@ -528,12 +528,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   }
 
   @TestOnly
-  public static void setNeedToCheckCancel(boolean needToCheckCancel) {
-    ourNeedToCheckCancel = needToCheckCancel;
-    ProgressIndicatorProvider.ourNeedToCheckCancel = true;
-  }
-
-  @TestOnly
   @SuppressWarnings({"UnusedDeclaration"})
   public static String isCanceledThread(Thread thread) {
     try {

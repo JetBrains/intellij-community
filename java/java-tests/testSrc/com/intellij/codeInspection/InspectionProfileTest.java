@@ -263,6 +263,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     else {
       profile.enableTool(id);
     }
+    assertEquals(0, countInitializedTools(profile));
     profile.writeExternal(new Element("profile"));
     List<InspectionProfileEntry> initializedTools = getInitializedTools(profile);
     if (initializedTools.size() != 1) {

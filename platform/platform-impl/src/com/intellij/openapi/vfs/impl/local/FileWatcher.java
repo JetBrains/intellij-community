@@ -176,9 +176,9 @@ public class FileWatcher {
   private static boolean isUpToDate(File executable) {
     long length = SystemInfo.isWindows ? 70216 :
                   SystemInfo.isMac ? 13924 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29296 : 22793 :
+                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29308 : 22809 :
                   -1;
-    return length > 0 && length == executable.length();
+    return length < 0 || length == executable.length();
   }
 
   private void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
@@ -474,7 +474,8 @@ public class FileWatcher {
         }
       }
       else {
-        processChange(line.replace('\0', '\n'), myLastOp);
+        String path = line.replace('\0', '\n');  // unescape
+        processChange(path, myLastOp);
         myLastOp = null;
       }
     }

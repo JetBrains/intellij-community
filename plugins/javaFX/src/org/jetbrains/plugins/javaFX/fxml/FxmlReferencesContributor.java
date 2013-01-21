@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.XmlAttributeValuePattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -34,17 +35,21 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
+    final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().with(inFxmlCondition());
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER))
-                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
+                                          .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
-                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
+                                          .and(attributeValueInFxml),
                                         new JavaFxFieldIdReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
-                                          .and(XmlPatterns.xmlAttributeValue().with(inFxmlCondition())),
+                                          .and(attributeValueInFxml),
                                         new JavaFxEventHandlerReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
+                                        new JavaFxLocationReferenceProvider());
   }
 
   private static PatternCondition<XmlAttributeValue> inFxmlCondition() {

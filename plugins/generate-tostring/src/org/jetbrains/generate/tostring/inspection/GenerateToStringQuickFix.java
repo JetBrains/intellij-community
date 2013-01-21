@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,16 @@ import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
  */
 public class GenerateToStringQuickFix implements LocalQuickFix {
 
+  public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
+
+  private final GenerateToStringActionHandler myHandler = new GenerateToStringActionHandlerImpl();
+
+  private GenerateToStringQuickFix() {}
+
+  public static GenerateToStringQuickFix getInstance() {
+    return INSTANCE;
+  }
+
   @NotNull
   public String getName() {
     return "Generate toString()";
@@ -40,15 +50,10 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
-
-    // find the class
-    PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
+    final PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
     if (clazz == null) {
-      return; // no class to fix, so return
+      return; // no class to fix
     }
-
-    // execute the action
-    GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-    handler.executeActionQuickFix(project, clazz);
+    myHandler.executeActionQuickFix(project, clazz);
   }
 }
