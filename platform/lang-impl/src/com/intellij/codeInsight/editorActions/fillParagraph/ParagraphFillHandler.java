@@ -31,16 +31,25 @@ public class ParagraphFillHandler {
     final String text = textRange.substring(element.getContainingFile().getText());
 
     final List<String> subStrings = StringUtil.split(text, "\n", true);
+    final String prefix = getPrefix(element);
+    final String postfix = getPostfix(element);
+
     final StringBuilder stringBuilder = new StringBuilder();
+    appendPrefix(element, text, stringBuilder);
+
     for (String string : subStrings) {
-      stringBuilder.append(StringUtil.trimStart(string.trim(), getPrefix(element))).append(" ");
+      final String startTrimmed = StringUtil.trimStart(string.trim(), prefix.trim());
+      final String str = StringUtil.trimEnd(startTrimmed, postfix.trim());
+      stringBuilder.append(str).append(" ");
     }
+    appendPostfix(element, text, stringBuilder);
+
     final String replacementText = stringBuilder.toString();
 
     CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
       public void run() {
         document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
-                               getPrefix(element) + replacementText);
+                               replacementText);
         final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(
                                         CodeStyleSettingsManager.getSettings(element.getProject()));
         codeFormatter.doWrapLongLinesIfNecessary(editor, element.getProject(), document,
@@ -51,6 +60,22 @@ public class ParagraphFillHandler {
 
   }
 
+  protected void appendPostfix(@NotNull final PsiElement element,
+                               @NotNull final String text,
+                               @NotNull final StringBuilder stringBuilder) {
+    final String postfix = getPostfix(element);
+    if (text.endsWith(postfix.trim()))
+      stringBuilder.append(postfix);
+  }
+
+  protected void appendPrefix(@NotNull final PsiElement element,
+                              @NotNull final String text,
+                              @NotNull final StringBuilder stringBuilder) {
+    final String prefix = getPrefix(element);
+    if (text.startsWith(prefix.trim()))
+      stringBuilder.append(prefix);
+  }
+
   private TextRange getTextRange(@NotNull final PsiElement element, @NotNull final Editor editor) {
     int startOffset = getStartOffset(element, editor);
     int endOffset = getEndOffset(element, editor);
@@ -59,8 +84,8 @@ public class ParagraphFillHandler {
 
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
-      final PsiElement firstCommentElement = getFirstElement(element);
-      return firstCommentElement != null? firstCommentElement.getTextRange().getStartOffset()
+      final PsiElement firstElement = getFirstElement(element);
+      return firstElement != null? firstElement.getTextRange().getStartOffset()
                                         : element.getTextRange().getStartOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
@@ -120,9 +145,14 @@ public class ParagraphFillHandler {
     while (prevSibling != null && (prevSibling.getNode().getElementType().equals(elementType) ||
                                    (atWhitespaceToken(prevSibling) &&
                                    StringUtil.countChars(prevSibling.getText(), '\n') <= 1))) {
-      final String text = prevSibling.getText();
-      if (prevSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
-        StringUtil.trimStart(text.trim(), getPrefix(element)))) {
+      String text = prevSibling.getText();
+      final String prefix = getPrefix(element);
+      final String postfix = getPostfix(element);
+      text = StringUtil.trimStart(text.trim(), prefix.trim());
+      text = StringUtil.trimEnd(text, postfix);
+
+      if (prevSibling.getNode().getElementType().equals(elementType) &&
+          StringUtil.isEmptyOrSpaces(text)) {
         break;
       }
       if (prevSibling.getNode().getElementType().equals(elementType))
@@ -140,9 +170,14 @@ public class ParagraphFillHandler {
     while (nextSibling != null && (nextSibling.getNode().getElementType().equals(elementType) ||
                                    (atWhitespaceToken(nextSibling) &&
                                    StringUtil.countChars(nextSibling.getText(), '\n') <= 1))) {
-      final String text = nextSibling.getText();
-      if (nextSibling.getNode().getElementType().equals(elementType) && StringUtil.isEmptyOrSpaces(
-        StringUtil.trimStart(text.trim(), getPrefix(element)))) {
+      String text = nextSibling.getText();
+      final String prefix = getPrefix(element);
+      final String postfix = getPostfix(element);
+      text = StringUtil.trimStart(text.trim(), prefix.trim());
+      text = StringUtil.trimEnd(text, postfix);
+
+      if (nextSibling.getNode().getElementType().equals(elementType) &&
+          StringUtil.isEmptyOrSpaces(text)) {
         break;
       }
       if (nextSibling.getNode().getElementType().equals(elementType))
@@ -166,6 +201,11 @@ public class ParagraphFillHandler {
 
   @NotNull
   protected String getPrefix(@NotNull final PsiElement element) {
+    return "";
+  }
+
+  @NotNull
+  protected String getPostfix(@NotNull final PsiElement element) {
     return "";
   }
 
