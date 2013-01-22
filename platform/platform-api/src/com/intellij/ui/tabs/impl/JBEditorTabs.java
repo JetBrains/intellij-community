@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -76,7 +77,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useSmallLabels() {
-    return SystemInfo.isMac;
+    return UISettings.getInstance().USE_SMALL_LABELS_ON_TABS;
   }
 
   @Override
