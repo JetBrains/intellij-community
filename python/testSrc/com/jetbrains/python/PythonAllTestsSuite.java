@@ -87,6 +87,7 @@ public class PythonAllTestsSuite {
     EpydocStringTest.class,
     PyEmacsTabTest.class,
     PyTypeParserTest.class,
+    PyRequirementTest.class,
     PyOverrideTest.class,
     PyBinaryModuleCompletionTest.class,
     PyCompletionPatternsTest.class,
