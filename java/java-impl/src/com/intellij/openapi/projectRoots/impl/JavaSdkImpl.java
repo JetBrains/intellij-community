@@ -294,6 +294,13 @@ public class JavaSdkImpl extends JavaSdk {
       if (appleDocs != null) {
         sdkModificator.addRoot(appleDocs, JavadocOrderRootType.getInstance());
       }
+
+      if (commonDocs == null && appleDocs == null && sources == null) {
+        String url = getDefaultDocumentationUrl(sdk);
+        if (url != null) {
+          sdkModificator.addRoot(VirtualFileManager.getInstance().findFileByUrl(url), JavadocOrderRootType.getInstance());
+        }
+      }
     }
     attachJdkAnnotations(sdkModificator);
     sdkModificator.commitChanges();
