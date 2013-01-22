@@ -51,8 +51,12 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     else
       next = whiteSpace;
 
+    RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
     if (next != null) {
-      stringBuilder.append(next.getText());
+      final String text = next.getText();
+      stringBuilder.append(text);
+      if (text.endsWith(","))
+        stringBuilder.append(" end=' '");
       next.delete();
     }
     stringBuilder.append(")");

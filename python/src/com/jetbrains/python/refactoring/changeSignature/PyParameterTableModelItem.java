@@ -26,4 +26,8 @@ class PyParameterTableModelItem extends ParameterTableModelItemBase<PyParameterI
   public boolean isDefaultInSignature() {
     return parameter.getDefaultInSignature();
   }
+
+  public String getDefaultValue() {
+    return defaultValueCodeFragment.getText();
+  }
 }

@@ -29,6 +29,8 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testElseInIfUnwrap()                    throws Throwable {doTest(1);}
   public void testElseInIfDelete()                    throws Throwable {doTest();}
 
+  public void testElIfUnwrap()                        throws Throwable {doTest();}
+
   public void testTryUnwrap()                         throws Throwable {doTest();}
 
   private void doTest() {
