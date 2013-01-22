@@ -27,15 +27,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -66,6 +64,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -149,8 +149,10 @@ public class BuildManager implements ApplicationComponent{
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myMakeScheduleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
+  private final Alarm myProjectsSaveAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final AtomicBoolean myProjectsSaveInProgress = new AtomicBoolean(false);
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
@@ -160,7 +162,8 @@ public class BuildManager implements ApplicationComponent{
   private final Charset mySystemCharset;
 
   public BuildManager(final ProjectManager projectManager) {
-    IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+    final Application application = ApplicationManager.getApplication();
+    IS_UNIT_TEST_MODE = application.isUnitTestMode();
     myProjectManager = projectManager;
     mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
     final String systemPath = PathManager.getSystemPath();
@@ -175,7 +178,7 @@ public class BuildManager implements ApplicationComponent{
 
     projectManager.addProjectManagerListener(new ProjectWatcher());
 
-    final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
+    final MessageBusConnection conn = application.getMessageBus().connect();
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -201,9 +204,9 @@ public class BuildManager implements ApplicationComponent{
               return false;
             }
           }
-          // todo: probably we do not need this excessive filtering
+
           for (Project project : activeProjects) {
-            if (!project.isInitialized() || ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
+            if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
               return true;
             }
           }
@@ -211,19 +214,12 @@ public class BuildManager implements ApplicationComponent{
         return false;
       }
 
-      private List<Project> getActiveProjects() {
-        final Project[] projects = myProjectManager.getOpenProjects();
-        if (projects.length == 0) {
-          return Collections.emptyList();
-        }
-        final List<Project> projectList = new ArrayList<Project>();
-        for (Project project : projects) {
-          if (project.isDefault() || project.isDisposed()) {
-            continue;
-          }
-          projectList.add(project);
-        }
-        return projectList;
+    });
+
+    application.addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void writeActionFinished(Object action) {
+        scheduleProjectSave();
       }
     });
 
@@ -233,6 +229,21 @@ public class BuildManager implements ApplicationComponent{
         stopListening();
       }
     });
+  }
+
+  private List<Project> getActiveProjects() {
+    final Project[] projects = myProjectManager.getOpenProjects();
+    if (projects.length == 0) {
+      return Collections.emptyList();
+    }
+    final List<Project> projectList = new SmartList<Project>();
+    for (Project project : projects) {
+      if (project.isDefault() || project.isDisposed() || !project.isInitialized()) {
+        continue;
+      }
+      projectList.add(project);
+    }
+    return projectList;
   }
 
   public static BuildManager getInstance() {
@@ -347,97 +358,136 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void scheduleAutoMake() {
-    if (IS_UNIT_TEST_MODE || PowerSaveMode.isEnabled()) {
-      return;
+    if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
+      scheduleTask(myMakeScheduleAlarm, myAutoMakeInProgress, new Runnable() {
+        @Override
+        public void run() {
+          runAutoMake();
+        }
+      });
     }
-    addMakeRequest(new Runnable() {
+  }
+
+  private void scheduleProjectSave() {
+    if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
+      scheduleTask(myProjectsSaveAlarm, myProjectsSaveInProgress, new Runnable() {
+        @Override
+        public void run() {
+          boolean shouldSave = false;
+          for (final Project project : getActiveProjects()) {
+            if (canStartAutoMake(project)) {
+              shouldSave = true;
+              break;
+            }
+          }
+          if (shouldSave) {
+            final Semaphore semaphore = new Semaphore();
+            semaphore.down();
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  FileDocumentManager.getInstance().saveAllDocuments();
+                }
+                finally {
+                  semaphore.up();
+                }
+              }
+            }, ModalityState.NON_MODAL);
+            semaphore.waitFor();
+          }
+        }
+      });
+    }
+  }
+
+  private static void scheduleTask(final Alarm alarm, final AtomicBoolean taskLatch, final Runnable task) {
+    alarm.cancelAllRequests();
+    final int delay = Math.max(50, Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY));
+    alarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning() && !myAutoMakeInProgress.getAndSet(true)) {
+        if (!HeavyProcessLatch.INSTANCE.isRunning() && !taskLatch.getAndSet(true)) {
           try {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
                 try {
-                  runAutoMake();
+                  task.run();
                 }
                 finally {
-                  myAutoMakeInProgress.set(false);
+                  taskLatch.set(false);
                 }
               }
             });
           }
           catch (RejectedExecutionException ignored) {
             // we were shut down
-            myAutoMakeInProgress.set(false);
+            taskLatch.set(false);
           }
           catch (Throwable e) {
-            myAutoMakeInProgress.set(false);
+            taskLatch.set(false);
             throw new RuntimeException(e);
           }
         }
         else {
-          addMakeRequest(this);
+          scheduleTask(alarm, taskLatch, this);
         }
       }
-    });
-  }
-
-  private void addMakeRequest(Runnable runnable) {
-    myAlarm.cancelAllRequests();
-    final int delay = Math.max(50, Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY));
-    myAlarm.addRequest(runnable, delay);
+    }, delay);
   }
 
   private void runAutoMake() {
-    final Project[] openProjects = myProjectManager.getOpenProjects();
-    if (openProjects.length > 0) {
-      final List<RequestFuture> futures = new ArrayList<RequestFuture>();
-      for (final Project project : openProjects) {
-        if (project.isDefault() || project.isDisposed()) {
-          continue;
-        }
-        final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-        if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
-          continue;
-        }
-        if (!config.allowAutoMakeWhileRunningApplication()) {
-          final RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
-          boolean hasRunningProcesses = false;
-          for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
-            final ProcessHandler handler = descriptor.getProcessHandler();
-            if (handler != null && !handler.isProcessTerminated()) { // active process
-              hasRunningProcesses = true;
-              break;
-            }
-          }
-          if (hasRunningProcesses) {
-            continue;
-          }
-        }
-
-        final List<String> emptyList = Collections.emptyList();
-        final RequestFuture future = scheduleBuild(
-          project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
-        );
-        if (future != null) {
-          futures.add(future);
-          synchronized (myAutomakeFutures) {
-            myAutomakeFutures.put(future, project);
-          }
-        }
+    final List<RequestFuture> futures = new ArrayList<RequestFuture>();
+    for (final Project project : getActiveProjects()) {
+      if (!canStartAutoMake(project)) {
+        continue;
       }
-      try {
-        for (RequestFuture future : futures) {
-          future.waitFor();
-        }
-      }
-      finally {
+      final List<String> emptyList = Collections.emptyList();
+      final RequestFuture future = scheduleBuild(
+        project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
+      );
+      if (future != null) {
+        futures.add(future);
         synchronized (myAutomakeFutures) {
-          myAutomakeFutures.keySet().removeAll(futures);
+          myAutomakeFutures.put(future, project);
         }
       }
     }
+    try {
+      for (RequestFuture future : futures) {
+        future.waitFor();
+      }
+    }
+    finally {
+      synchronized (myAutomakeFutures) {
+        myAutomakeFutures.keySet().removeAll(futures);
+      }
+    }
+  }
+
+  private static boolean canStartAutoMake(Project project) {
+    if (project.isDisposed()) {
+      return false;
+    }
+    final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
+    if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
+      return false;
+    }
+    if (!config.allowAutoMakeWhileRunningApplication() && hasRunningProcess(project)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean hasRunningProcess(Project project) {
+    for (RunContentDescriptor descriptor : ExecutionManager.getInstance(project).getContentManager().getAllDescriptors()) {
+      final ProcessHandler handler = descriptor.getProcessHandler();
+      if (handler != null && !handler.isProcessTerminated()) { // active process
+        return true;
+      }
+    }
+    return false;
   }
 
   public Collection<RequestFuture> cancelAutoMakeTasks(Project project) {
