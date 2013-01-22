@@ -487,4 +487,20 @@ static bar(String s) {
 }
 ''')
   }
+
+  void testLiteralConstructorWithNamedArgs() {
+    addLinkedHashMap()
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable class Money {
+    String currency
+    int amount
+}
+
+Money d = [amount: 100, currency:'USA']
+
+''')
+  }
+
 }

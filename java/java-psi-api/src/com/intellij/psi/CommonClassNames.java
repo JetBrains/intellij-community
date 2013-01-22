@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,4 +93,5 @@ public interface CommonClassNames {
   String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
   @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
   @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
+  @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
 }

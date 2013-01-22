@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -49,8 +50,8 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     final boolean immutable = modifierList.findAnnotation(GROOVY_LANG_IMMUTABLE) != null ||
                               modifierList.findAnnotation(GROOVY_TRANSFORM_IMMUTABLE) != null;
-    final PsiAnnotation canonical = modifierList.findAnnotation(GROOVY_TRANSFORM_CANONICAL);
-    if (!immutable && canonical == null && tupleConstructor == null) {
+    final boolean canonical = modifierList.findAnnotation(GROOVY_TRANSFORM_CANONICAL) != null;
+    if (!immutable && !canonical && tupleConstructor == null) {
       return;
     }
 
@@ -60,8 +61,31 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
       return;
     }
 
+    final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(typeDefinition, tupleConstructor, immutable, canonical);
+    final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
+
+    collector.add(fieldsConstructor);
+    collector.add(mapConstructor);
+  }
+
+  @NotNull
+  private static GrLightMethodBuilder generateMapConstructor(@NotNull GrTypeDefinition typeDefinition) {
+    final GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
+    mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP, false);
+    mapConstructor.setConstructor(true);
+    mapConstructor.setContainingClass(typeDefinition);
+    return mapConstructor;
+  }
+
+  @NotNull
+  private static GrLightMethodBuilder generateFieldConstructor(@NotNull GrTypeDefinition typeDefinition,
+                                                               @Nullable PsiAnnotation tupleConstructor,
+                                                               boolean immutable,
+                                                               boolean canonical) {
     final GrLightMethodBuilder fieldsConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
-    fieldsConstructor.setConstructor(true).setNavigationElement(typeDefinition);
+    fieldsConstructor.setConstructor(true);
+    fieldsConstructor.setNavigationElement(typeDefinition);
+    fieldsConstructor.setContainingClass(typeDefinition);
 
     Set<String> excludes = new HashSet<String>();
     if (tupleConstructor != null) {
@@ -84,7 +108,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
 
     addParameters(typeDefinition, fieldsConstructor,
                   tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true),
-                  tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : canonical == null,
+                  tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical,
                   !immutable, excludes);
 
     if (immutable) {
@@ -96,10 +120,7 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
     else /*if (canonical != null)*/ {
       fieldsConstructor.setOriginInfo("created by @Canonical");
     }
-
-    collector.add(fieldsConstructor.setContainingClass(typeDefinition));
-
-    collector.add(new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName()).addParameter("args", CommonClassNames.JAVA_UTIL_MAP, false).setConstructor(true).setContainingClass(typeDefinition));
+    return fieldsConstructor;
   }
 
   private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
@@ -114,9 +135,11 @@ public class ConstructorAnnotationsProcessor extends AstTransformContributor {
   }
 
   private static void addParameters(@NotNull PsiClass psiClass,
-                                    GrLightMethodBuilder fieldsConstructor,
+                                    @NotNull GrLightMethodBuilder fieldsConstructor,
                                     boolean includeProperties,
-                                    boolean includeFields, boolean optional, Set<String> excludes) {
+                                    boolean includeFields,
+                                    boolean optional,
+                                    @NotNull Set<String> excludes) {
 
     PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
     if (includeProperties) {

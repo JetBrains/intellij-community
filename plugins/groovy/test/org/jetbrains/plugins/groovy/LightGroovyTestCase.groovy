@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,4 +102,16 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
 }"""
   }
 
+  /*void addHashMap() {
+    myFixture.addClass('''\
+package java.util;
+
+public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneable, Serializable {
+    public HashMap(int initialCapacity, float loadFactor) {}
+    public HashMap(int initialCapacity) {}
+    public HashMap() {}
+    public HashMap(Map<? extends K, ? extends V> m) {}
+}
+''')
+  }*/
 }
