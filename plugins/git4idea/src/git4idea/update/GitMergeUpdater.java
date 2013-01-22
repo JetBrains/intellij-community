@@ -76,7 +76,8 @@ public class GitMergeUpdater extends GitUpdater {
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
     mergeHandler.addLineListener(untrackedFilesDetector);
 
-    final GitTask mergeTask = new GitTask(myProject, mergeHandler, "Merging changes");
+    String progressTitle = makeProgressTitle("Merging");
+    final GitTask mergeTask = new GitTask(myProject, mergeHandler, progressTitle);
     mergeTask.setProgressIndicator(myProgressIndicator);
     mergeTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
