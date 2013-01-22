@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -106,7 +107,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     if (myUnexpected != null) {
       replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
     }
-    if (!replacement.equals(docStringExpression.getText())) {
+    if (!replacement.equals(docStringExpression.getText()) && !StringUtil.isEmptyOrSpaces(replacement)) {
       PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
       docStringExpression.replace(str);
     }
