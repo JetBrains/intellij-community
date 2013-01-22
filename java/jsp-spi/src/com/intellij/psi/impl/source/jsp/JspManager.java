@@ -21,7 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
@@ -82,6 +81,4 @@ public abstract class JspManager implements IBaseJspManager {
 
   @NotNull
   public abstract JspVersion getJspVersion(@NotNull PsiFileSystemItem context);
-
-  public abstract boolean isElIgnored(@NotNull PsiFile file);
 }

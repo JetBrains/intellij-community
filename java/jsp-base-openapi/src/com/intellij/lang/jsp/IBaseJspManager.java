@@ -29,4 +29,6 @@ public interface IBaseJspManager {
 
   @Nullable
   XmlElementDescriptor getDirectiveDescriptorByName(String name, @NotNull PsiFile context);
+
+  boolean isElIgnored(@NotNull PsiFile file);
 }
