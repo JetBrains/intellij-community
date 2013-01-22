@@ -45,6 +45,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
 
 public class DiffSideView {
   private final JComponent MOCK_COMPONENT = new JPanel();
@@ -157,6 +158,9 @@ public class DiffSideView {
 
     private final EditorMouseAdapter myMouseListener = new EditorMouseAdapter() {
       public void mouseReleased(EditorMouseEvent e) {
+        if (e.getMouseEvent().getButton() != MouseEvent.BUTTON1) {
+          return;
+        }
         if (!isInMyArea(e)) return;
         OpenFileDescriptor descriptor = getOpenFileDescriptor(e);
         if (descriptor == null) return;
