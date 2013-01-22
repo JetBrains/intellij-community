@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.118" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.119" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1141,6 +1141,7 @@ class ModuleRedeclarator(object):
         ("bytes", "fromhex"): "classmethod",
         ("bytearray", "maketrans"): "staticmethod",
         ("bytes", "maketrans"): "staticmethod",
+        ("int", "from_bytes"): "classmethod",
     }
 
     def isSkippedInModule(self, p_module, p_value):
