@@ -1,4 +1,4 @@
-package com.siyeh.igtest.style.unnecessary_javadoc_link;
+package com.siyeh.igtest.javadoc.unnecessary_javadoc_link;
 
 public class UnnecessaryJavaDocLink {
 
@@ -21,7 +21,7 @@ public class UnnecessaryJavaDocLink {
     }
 
     /**
-     * @see com.siyeh.igtest.style.unnecessary_javadoc_link.UnnecessaryJavaDocLink
+     * @see com.siyeh.igtest.javadoc.unnecessary_javadoc_link.UnnecessaryJavaDocLink
      * something
      */
     void bar() {}
