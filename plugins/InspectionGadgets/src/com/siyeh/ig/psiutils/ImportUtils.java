@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class ImportUtils {
     if (hasOnDemandImportConflict(fqName, file, true)) {
       return false;
     }
-    if (containsReferenceToConflictingClass(file, fqName)) {
+    if (containsConflictingReference(file, fqName)) {
       return false;
     }
     if (containsConflictingClass(fqName, file)) {
@@ -266,7 +266,7 @@ public class ImportUtils {
         if (qualifiedClassName == null || fqName.equals(qualifiedClassName)) {
           continue;
         }
-        return containsReferenceToConflictingClass(file, qualifiedClassName);
+        return containsConflictingReference(file, qualifiedClassName);
       }
     }
     return hasJavaLangImportConflict(fqName, file);
@@ -565,10 +565,10 @@ public class ImportUtils {
   /**
    * @return true, if the element contains a reference to a different class than fullyQualifiedName but which has the same class name
    */
-  public static boolean containsReferenceToConflictingClass(PsiElement element, String fullyQualifiedName) {
+  public static boolean containsConflictingReference(PsiElement element, String fullyQualifiedName) {
     final ConflictingClassReferenceVisitor visitor = new ConflictingClassReferenceVisitor(fullyQualifiedName);
     element.accept(visitor);
-    return visitor.isReferenceFound();
+    return visitor.isConflictingReferenceFound();
   }
 
   private static class ConflictingClassReferenceVisitor extends JavaRecursiveElementVisitor {
@@ -588,7 +588,7 @@ public class ImportUtils {
       if (referenceFound) {
         return;
       }
-      final String text = reference.getText();
+      final String text = StringUtils.stripAngleBrackets(reference.getText());
       if (text.indexOf((int)'.') >= 0 || !name.equals(text)) {
         return;
       }
@@ -606,7 +606,7 @@ public class ImportUtils {
       referenceFound = true;
     }
 
-    public boolean isReferenceFound() {
+    public boolean isConflictingReferenceFound() {
       return referenceFound;
     }
   }
