@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import static com.intellij.util.BitUtil.notSet;
  */
 public class FileSystemUtil {
   private static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+  private static final String COARSE_TIMESTAMP = "idea.io.coarse.ts";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
@@ -384,7 +385,7 @@ public class FileSystemUtil {
 
   // thanks to SVNKit for the idea
   private static class JnaUnixMediatorImpl implements Mediator {
-    @SuppressWarnings("OctalInteger")
+    @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
     private interface LibC extends Library {
       // from stat(2)
       int S_MASK = 0177777;
@@ -404,6 +405,7 @@ public class FileSystemUtil {
     private final int myModeOffset;
     private final int mySizeOffset;
     private final int myTimeOffset;
+    private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
 
     private JnaUnixMediatorImpl() throws Exception {
       myModeOffset = SystemInfo.isLinux ? (SystemInfo.is32Bit ? 16 : 24) :
@@ -443,7 +445,7 @@ public class FileSystemUtil {
       boolean isSpecial = !isDirectory && (mode & LibC.S_IFREG) == 0;
       long size = buffer.getLong(mySizeOffset);
       long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myTimeOffset) : buffer.getLong(myTimeOffset);
-      long mTime2 = SystemInfo.is32Bit ? buffer.getInt(myTimeOffset + 4) : buffer.getLong(myTimeOffset + 8);
+      long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myTimeOffset + 4) : buffer.getLong(myTimeOffset + 8);
       long mTime = mTime1 * 1000 + mTime2 / 1000000;
       @FileAttributes.Permissions int permissions = mode & LibC.PERM_MASK;
       return new FileAttributes(isDirectory, isSpecial, isSymlink, size, mTime, permissions);
