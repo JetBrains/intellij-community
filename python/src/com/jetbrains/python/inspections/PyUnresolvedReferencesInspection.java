@@ -682,7 +682,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static boolean hasUnresolvedAncestors(PyClass cls) {
       for (PyClassRef classRef : cls.iterateAncestors()) {
-        if (classRef.getPyClass() == null) {
+        if (classRef.getPyClass() == null && classRef.getType() == null) {
           return true;
         }
       }

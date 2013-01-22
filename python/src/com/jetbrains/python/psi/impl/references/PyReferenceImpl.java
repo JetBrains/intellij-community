@@ -404,29 +404,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return null;
   }
 
-  private static PsiElement transitiveResolve(PsiElement element) {
-    PsiElement prev = null;
-    while (element != prev) {
-      prev = element;
-      PsiReference ref = element.getReference();
-      if (ref != null) {
-        PsiElement e = ref.resolve();
-        if (e != null) {
-          element = e;
-        }
-      }
-    }
-    return element;
-  }
-
-  private static boolean isGlobal(PsiElement anchor, String name) {
-    final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(anchor, name);
-    if (owner != null) {
-      return ControlFlowCache.getScope(owner).isGlobal(name);
-    }
-    return false;
-  }
-
    public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiFileSystemItem) {
       // may be import via alias, so don't check if names match, do simple resolve check instead
@@ -454,10 +431,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final String elementName = ((PsiNamedElement)element).getName();
       if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
         if (!haveQualifiers(element)) {
-          // Global elements may in fact be resolved to their outer declarations
-          if (isGlobal(element, elementName)) {
-            element = transitiveResolve(element);
-          }
           final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
           final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
           // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
@@ -468,7 +441,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
 
-          final PsiElement resolveResult = (isGlobal(getElement(), elementName)) ? transitiveResolve(getElement()) : resolve();
+          final PsiElement resolveResult = resolve();
           if (resolveResult == element) {
             return true;
           }
@@ -535,15 +508,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
                                        PsiElement resolveResult) {
     // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
-    final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
-    final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
     final PsiFile ourFile = getElement().getContainingFile();
     final PsiFile theirFile = element.getContainingFile();
-
-    if (ourIsGlobal && theirIsGlobal && ourFile == theirFile) {
-      return true;
+    if (ourFile == theirFile) {
+      final boolean ourIsGlobal = ControlFlowCache.getScope(ourScopeOwner).isGlobal(elementName);
+      final boolean theirIsGlobal = ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName);
+      if (ourIsGlobal && theirIsGlobal) {
+        return true;
+      }
     }
-    if (theirIsGlobal && ScopeUtil.getScopeOwner(resolveResult) == ourFile) {
+    if (ScopeUtil.getScopeOwner(resolveResult) == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
       return true;
     }
     return false;
