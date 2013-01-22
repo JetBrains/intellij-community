@@ -132,8 +132,10 @@ public class HgPushDialog extends DialogWrapper {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
-            myCurrentRepositoryUrl = defaultPath;
+            if (defaultPath != null) {
+              updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
+              myCurrentRepositoryUrl = defaultPath;
+            }
             updateBranchComboBox(branches);
           }
         }, ModalityState.stateForComponent(getRootPane()));
