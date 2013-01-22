@@ -57,6 +57,13 @@ public abstract class BaseOutputReader {
 
   protected void doRun() {
     try {
+      final int sleepTimeWhenRead = 1;
+      final int initialSleepTimeWhenIdle = 5;
+      final int maxSleepTimeWhenIdle = 200;
+      final int maxIterationsWithCurrentSleepTime = 50;
+      int iterationsWithCurrentTime = 0;
+      int currentSleepTime = initialSleepTimeWhenIdle;
+
       while (true) {
         boolean read = readAvailable();
 
@@ -64,7 +71,21 @@ public abstract class BaseOutputReader {
           break;
         }
 
-        TimeoutUtil.sleep(read ? 1 : 5); // give other threads a chance
+        // give other threads a chance
+        if (read) currentSleepTime = sleepTimeWhenRead;
+        else if (currentSleepTime == sleepTimeWhenRead) {
+          currentSleepTime = initialSleepTimeWhenIdle;
+          iterationsWithCurrentTime = 0;
+        }
+        else {
+          ++iterationsWithCurrentTime;
+          if (iterationsWithCurrentTime == maxIterationsWithCurrentSleepTime) {
+            iterationsWithCurrentTime = 0;
+            currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
+          }
+        }
+
+        TimeoutUtil.sleep(currentSleepTime);
       }
     }
     catch (IOException e) {
