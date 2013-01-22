@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -162,6 +163,8 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 
     if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
       updateContent();
+      // Ensure that changes detector service is loaded.
+      ServiceManager.getService(myProject, GradleProjectStructureChangesDetector.class);
     }
   }
 
