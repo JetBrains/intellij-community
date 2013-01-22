@@ -280,6 +280,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           if (type instanceof PyClassType) {
             result.add(new PyClassRef((PyClassType)type));
           }
+          else {
+            result.add(new PyClassRef((PsiElement)null));
+          }
         }
       }
     }
