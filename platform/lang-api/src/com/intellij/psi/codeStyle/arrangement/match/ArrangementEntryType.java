@@ -31,5 +31,5 @@ public enum ArrangementEntryType {
 
   CONST, VAR, PROPERTY, EVENT_HANDLER, STATIC_INIT,
 
-  NAMESPACE
+  NAMESPACE, TRAIT
 }

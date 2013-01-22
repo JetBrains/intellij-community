@@ -46,7 +46,9 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
 
       ArrangementEntryType.STATIC_INIT, ArrangementEntryType.CONST, ArrangementEntryType.VAR,
       ArrangementEntryType.PROPERTY, ArrangementEntryType.EVENT_HANDLER,
-      
+
+      ArrangementEntryType.NAMESPACE, ArrangementEntryType.TRAIT,
+
       // Visibility.
       ArrangementModifier.PUBLIC, ArrangementModifier.PROTECTED, ArrangementModifier.PACKAGE_PRIVATE, ArrangementModifier.PRIVATE,
       
