@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.manage;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -65,7 +66,8 @@ public class GradleDependencyManager {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         try {
-          final GradleProjectStructureHelper projectStructureHelper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          final GradleProjectStructureHelper projectStructureHelper
+            = ServiceManager.getService(module.getProject(), GradleProjectStructureHelper.class);
           for (GradleModuleDependency dependency : dependencies) {
             final String moduleName = dependency.getName();
             final Module intellijModule = projectStructureHelper.findIdeModule(moduleName);
@@ -110,7 +112,7 @@ public class GradleDependencyManager {
         }
 
         for (GradleLibraryDependency dependency : dependencies) {
-          GradleProjectStructureHelper helper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          GradleProjectStructureHelper helper = ServiceManager.getService(module.getProject(), GradleProjectStructureHelper.class);
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
           try {

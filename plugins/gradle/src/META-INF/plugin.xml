@@ -72,6 +72,14 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleProjectStructureContext"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
 
     <toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
@@ -84,33 +92,6 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.util.GradleProjectStructureContext</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.task.GradleTaskManager</implementation-class>
-    </component>
-  </project-components>
-  
   <actions>
     
     <!-- Tool window toolbar actions -->

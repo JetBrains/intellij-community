@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.sync;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -69,7 +70,7 @@ public class GradleMovedJarsPostProcessor implements GradleProjectStructureChang
 
   @Override
   public void processChanges(@NotNull final Collection<GradleProjectStructureChange> changes, @NotNull final Project project) {
-    final Collection<MergeInfo> toMerge = buildMergeData(changes, project.getComponent(GradleProjectStructureContext.class));
+    final Collection<MergeInfo> toMerge = buildMergeData(changes, ServiceManager.getService(project, GradleProjectStructureContext.class));
     if (toMerge == null) {
       return;
     }
