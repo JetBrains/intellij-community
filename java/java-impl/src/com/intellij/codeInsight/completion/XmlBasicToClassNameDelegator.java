@@ -37,23 +37,13 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
       return;
     }
 
-    final boolean[] empty = {true};
-    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-      @Override
-      public void consume(CompletionResult completionResult) {
-        empty[0] = false;
-        LookupElement lookupElement = completionResult.getLookupElement();
-        lookupElement
-          .putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
-        result.passResult(completionResult);
-      }
-    });
+    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
 
-    if (!empty[0] && parameters.getInvocationCount() == 0) {
+    if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
     }
 
-    if (JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) == null &&
+    if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
         parameters.isExtendedCompletion()) {
       CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
         @Override
