@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.sync;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -23,18 +22,19 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  * @author Denis Zhdanov
  * @since 2/6/12 3:28 PM
  */
-public class GradleProjectStructureHelper extends AbstractProjectComponent {
+public class GradleProjectStructureHelper {
 
   @NotNull private final GradleProjectStructureChangesModel myModel;
   @NotNull private final PlatformFacade                     myFacade;
   @NotNull private final GradleLibraryPathTypeMapper        myLibraryPathTypeMapper;
+  @NotNull private final Project                            myProject;
 
   public GradleProjectStructureHelper(@NotNull Project project,
                                       @NotNull GradleProjectStructureChangesModel model,
                                       @NotNull PlatformFacade facade,
                                       @NotNull GradleLibraryPathTypeMapper mapper)
   {
-    super(project);
+    myProject = project;
     myModel = model;
     myFacade = facade;
     myLibraryPathTypeMapper = mapper;

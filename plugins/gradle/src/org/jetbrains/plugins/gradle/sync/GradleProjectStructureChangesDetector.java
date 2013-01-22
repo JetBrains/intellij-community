@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -30,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Denis Zhdanov
  * @since 11/3/11 3:57 PM
  */
-public class GradleProjectStructureChangesDetector extends AbstractProjectComponent implements GradleProjectStructureChangeListener {
+public class GradleProjectStructureChangesDetector implements GradleProjectStructureChangeListener {
 
   private static final int REFRESH_DELAY_MILLIS = (int)500;
 
@@ -41,9 +40,10 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
   private final AtomicBoolean  myNewChangesDetected = new AtomicBoolean();
 
   @NotNull private final GradleProjectStructureChangesModel myChangesModel;
+  @NotNull private final Project                            myProject;
 
   public GradleProjectStructureChangesDetector(@NotNull Project project, @NotNull GradleProjectStructureChangesModel model) {
-    super(project);
+    myProject = project;
     myChangesModel = model;
     myChangesModel.addListener(this);
     subscribeToGradleImport(project);
