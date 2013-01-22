@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
@@ -53,24 +54,18 @@ public class CompletionLookupArranger extends LookupArranger {
   @Nullable private static StatisticsUpdate ourPendingUpdate;
   private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = new Comparator<LookupElement>() {
+    @Override
+    public int compare(LookupElement o1, LookupElement o2) {
+      String invariant = PRESENTATION_INVARIANT.get(o1);
+      assert invariant != null;
+      return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
+    }
+  };
   private static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
-  private static final Classifier<LookupElement> TAIL_CLASSIFIER = new Classifier<LookupElement>() {
-    @Override
-    public void addElement(LookupElement element) {
-    }
-
-    @Override
-    public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
-      return sortByPresentation(source);
-    }
-
-    @Override
-    public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
-    }
-  };
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
@@ -151,7 +146,7 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier(TAIL_CLASSIFIER));
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier(new AlphaClassifier(lookup)));
     }
     classifier.addElement(element);
 
@@ -164,17 +159,16 @@ public class CompletionLookupArranger extends LookupArranger {
     return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
-  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
-    ArrayList<LookupElement> result = ContainerUtil.newArrayList(source);
-    ContainerUtil.sort(result, new Comparator<LookupElement>() {
-      @Override
-      public int compare(LookupElement o1, LookupElement o2) {
-        String invariant = PRESENTATION_INVARIANT.get(o1);
-        assert invariant != null;
-        return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
-      }
-    });
-    return result;
+  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source, Lookup lookup) {
+    ArrayList<LookupElement> startMatches = ContainerUtil.newArrayList();
+    ArrayList<LookupElement> middleMatches = ContainerUtil.newArrayList();
+    for (LookupElement element : source) {
+      (CompletionServiceImpl.isStartMatch(element, lookup) ? startMatches : middleMatches).add(element);
+    }
+    ContainerUtil.sort(startMatches, BY_PRESENTATION_COMPARATOR);
+    ContainerUtil.sort(middleMatches, BY_PRESENTATION_COMPARATOR);
+    startMatches.addAll(middleMatches);
+    return startMatches;
   }
 
   private static boolean isAlphaSorted() {
@@ -188,7 +182,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     LookupElement relevantSelection = findMostRelevantItem(itemsBySorter);
     List<LookupElement> listModel = isAlphaSorted() ?
-                                    sortByPresentation(items) :
+                                    sortByPresentation(items, lookup) :
                                     fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter, relevantSelection);
 
     int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
@@ -516,6 +510,27 @@ public class CompletionLookupArranger extends LookupArranger {
       if (spared > 0) {
         mySpared += spared;
       }
+    }
+  }
+
+  private static class AlphaClassifier extends Classifier<LookupElement> {
+    private final Lookup myLookup;
+
+    private AlphaClassifier(Lookup lookup) {
+      myLookup = lookup;
+    }
+
+    @Override
+    public void addElement(LookupElement element) {
+    }
+
+    @Override
+    public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+      return sortByPresentation(source, myLookup);
+    }
+
+    @Override
+    public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
     }
   }
 }
