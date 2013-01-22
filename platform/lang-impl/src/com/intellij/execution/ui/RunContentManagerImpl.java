@@ -63,6 +63,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
+  private static final Key<Boolean> MARKED_TO_BE_REUSED = Key.create("MarkedToBeReused");
 
   private final Project myProject;
   private DockableGridContainerFactory myContentFactory;
@@ -272,21 +273,22 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     final Content content;
 
+    Content oldAttachedContent = oldDescriptor != null ? oldDescriptor.getAttachedContent() : null;
     if (oldDescriptor != null) {
-      content = oldDescriptor.getAttachedContent();
+      content = oldAttachedContent;
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
       Disposer.dispose(oldDescriptor); // is of the same category, can be reused
     }
-    else if (descriptor.getAttachedContent() == null || !descriptor.getAttachedContent().isValid() ) {
+    else if (oldAttachedContent == null || !oldAttachedContent.isValid() || oldAttachedContent.getUserData(MARKED_TO_BE_REUSED) != null ) {
       content = createNewContent(contentManager, descriptor, executor);
       final Icon icon = descriptor.getIcon();
       content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
     } else {
-      content = descriptor.getAttachedContent();
+      content = oldAttachedContent;
     }
-
     content.setComponent(descriptor.getComponent());
     content.putUserData(DESCRIPTOR_KEY, descriptor);
+    content.putUserData(MARKED_TO_BE_REUSED, Boolean.TRUE);
     final ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
@@ -304,6 +306,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
             public void run() {
               final Icon icon = descriptor.getIcon();
               content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
+              content.putUserData(MARKED_TO_BE_REUSED, null);
             }
           });
         }
@@ -383,7 +386,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       content = contentManager.getSelectedContent();
       if (content != null && content.isPinned()) content = null;
     }
-    if (content == null || !isTerminated(content)) {
+    if (content == null || !isTerminated(content) || content.getUserData(MARKED_TO_BE_REUSED) != null) {
       return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
@@ -412,7 +415,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return content;
   }
 
-  private static boolean isTerminated(final Content content) {
+  private static boolean isTerminated(@NotNull final Content content) {
     final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
     if (descriptor == null) {
       return true;
