@@ -16,13 +16,13 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -30,8 +30,8 @@ import java.util.*;
  * @author Rustam Vishnyakov
  */
 public class PersistentFileSetManager implements PersistentStateComponent<Element> {
-  private final static String FILE_ELEMENT = "file";
-  private final static String PATH_ATTR = "url";
+  private static final String FILE_ELEMENT = "file";
+  private static final String PATH_ATTR = "url";
 
   private final Set<VirtualFile> myFiles = new HashSet<VirtualFile>();
   
@@ -50,7 +50,8 @@ public class PersistentFileSetManager implements PersistentStateComponent<Elemen
     myFiles.remove(file);
     return true;
   }
-  
+
+  @NotNull
   public Collection<VirtualFile> getFiles() {
     return myFiles;
   }

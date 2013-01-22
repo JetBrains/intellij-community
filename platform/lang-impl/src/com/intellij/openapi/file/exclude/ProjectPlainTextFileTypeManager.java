@@ -21,7 +21,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -29,10 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 @State(name = "ProjectPlainTextFileTypeManager", storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)})
 public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
-  private ProjectFileIndex myIndex;
+  private final ProjectFileIndex myIndex;
 
-  public ProjectPlainTextFileTypeManager(Project project) {
-    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+  public ProjectPlainTextFileTypeManager(ProjectFileIndex projectFileIndex) {
+    myIndex = projectFileIndex;
   }
 
   public boolean hasProjectContaining(VirtualFile file) {
@@ -42,5 +41,4 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public static ProjectPlainTextFileTypeManager getInstance(Project project) {
     return ServiceManager.getService(project, ProjectPlainTextFileTypeManager.class);
   }
-
 }
