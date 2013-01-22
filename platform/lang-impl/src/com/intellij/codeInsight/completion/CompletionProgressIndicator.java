@@ -176,7 +176,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void duringCompletion(CompletionInitializationContext initContext) {
     if (isAutopopupCompletion()) {
       if (shouldFocusLookup(myParameters)) {
-        if (Registry.is("ide.completion.show.preview")) {
+        if (!CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
           myShowPreview = true;
           myLookup.setFocused(false);
           if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT, getProject())) {
@@ -503,7 +503,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
         else {
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
+          CompletionPreview preview = myLookup.uninstallPreview();
           updateLookup();
+          CompletionPreview.reinstallPreview(preview);
         }
       }
     }, myQueue.getModalityState());

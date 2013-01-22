@@ -23,6 +23,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBCheckBox;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
@@ -48,6 +49,7 @@ public class CodeCompletionPanel {
   private JComboBox myCaseSensitiveCombo;
   private JComboBox myFocusLookup;
   private JCheckBox myCbSorting;
+  private JBCheckBox myCbSelectByChars;
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.case.sensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.case.sensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.case.sensitive.first.letter");
@@ -117,6 +119,7 @@ public class CodeCompletionPanel {
     myCaseSensitiveCombo.setSelectedItem(value);
 
     myFocusLookup.setSelectedIndex(Math.min(Math.max(codeInsightSettings.AUTOPOPUP_FOCUS_POLICY - 1, 0), FOCUS_VARIANTS.length - 1));
+    myCbSelectByChars.setSelected(codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS);
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
@@ -148,6 +151,7 @@ public class CodeCompletionPanel {
     //noinspection MagicConstant
     codeInsightSettings.AUTOPOPUP_FOCUS_POLICY = getFocusLookupValue();
 
+    codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = myCbSelectByChars.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX = myCbAutocompleteCommonPrefix.isSelected();
@@ -180,6 +184,7 @@ public class CodeCompletionPanel {
     isModified |= getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY;
 
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
+    isModified |= isModified(myCbSelectByChars, codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
     isModified |= isModified(myCbAutocompleteCommonPrefix, codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
