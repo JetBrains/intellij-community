@@ -63,6 +63,22 @@ public class PyRequirementTest extends PyTestCase {
                  PyRequirement.fromString("-e git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev"));
   }
 
+  // PY-7583
+  public void testGitRequirementWithoutEggName() {
+    assertEquals(new PyRequirement("django-haystack", null, "git://github.com/toastdriven/django-haystack.git@4fb267623b58", false),
+                 PyRequirement.fromString("git://github.com/toastdriven/django-haystack.git@4fb267623b58"));
+    assertEquals(new PyRequirement("django-haystack", null, "git+git://github.com/toastdriven/django-haystack.git@4fb267623b58", false),
+                 PyRequirement.fromString("git+git://github.com/toastdriven/django-haystack.git@4fb267623b58"));
+    assertEquals(new PyRequirement("django-haystack", null, "git+git://github.com/toastdriven/django-haystack.git@4fb267623b58", true),
+                 PyRequirement.fromString("-e git+git://github.com/toastdriven/django-haystack.git@4fb267623b58"));
+    assertEquals(new PyRequirement("django-haystack", null, "git+git://github.com/toastdriven/django-haystack.git", false),
+                 PyRequirement.fromString("git+git://github.com/toastdriven/django-haystack.git"));
+    assertEquals(new PyRequirement("django-piston", null, "hg+ssh://hg@bitbucket.org/jespern/django-piston", false),
+                 PyRequirement.fromString("hg+ssh://hg@bitbucket.org/jespern/django-piston"));
+    assertEquals(new PyRequirement("django-piston", null, "hg+ssh://hg@bitbucket.org/jespern/django-piston/", false),
+                 PyRequirement.fromString("hg+ssh://hg@bitbucket.org/jespern/django-piston/"));
+  }
+
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }
