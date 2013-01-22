@@ -242,7 +242,15 @@ public class ReferenceAdjuster {
   private static void dequalifyImpl(@NotNull CompositeElement reference) {
     final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier != null) {
+      ASTNode firstChildNode = qualifier.getFirstChildNode();
+      boolean markToReformatBefore = firstChildNode instanceof TreeElement && CodeEditUtil.isMarkedToReformatBefore((TreeElement)firstChildNode);
       reference.deleteChildInternal(qualifier);
+      if (markToReformatBefore) {
+        firstChildNode = reference.getFirstChildNode();
+        if (firstChildNode != null) {
+          CodeEditUtil.markToReformatBefore(firstChildNode, true);
+        }
+      }
     }
   }
 

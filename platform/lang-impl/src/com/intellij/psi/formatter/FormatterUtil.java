@@ -181,6 +181,14 @@ public class FormatterUtil {
     return expectedTypes.contains(prevNode.getElementType());
   }
 
+  public static boolean hasPrecedingSiblingOfType(@Nullable ASTNode node, IElementType expectedSiblingType, IElementType... skipTypes) {
+    for (ASTNode prevNode = node == null ? null : node.getTreePrev(); prevNode != null; prevNode = prevNode.getTreePrev()) {
+      if (isWhitespaceOrEmpty(prevNode) || isOneOf(prevNode, skipTypes)) continue;
+      if (prevNode.getElementType() == expectedSiblingType) return true;
+    }
+    return false;
+  }
+
   public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType) {
     return isFollowedBy(node, expectedType, IElementType.EMPTY_ARRAY);
   }

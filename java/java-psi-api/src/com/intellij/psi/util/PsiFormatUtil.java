@@ -431,6 +431,20 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   public static String getPackageDisplayName(@NotNull final PsiClass psiClass) {
+    if (psiClass instanceof PsiTypeParameter) {
+      PsiTypeParameterListOwner owner = ((PsiTypeParameter)psiClass).getOwner();
+      String ownerName = null;
+      if (owner instanceof PsiClass) {
+        ownerName = ((PsiClass)owner).getQualifiedName();
+        if (ownerName == null) {
+          ownerName = owner.getName();
+        }
+      } else if (owner instanceof PsiMethod) {
+        ownerName = owner.getName();
+      }
+      return ownerName == null ? "type parameter" : "type parameter of " + ownerName;
+    }
+
     @NonNls String packageName = psiClass.getQualifiedName();
     packageName = packageName == null || packageName.lastIndexOf('.') <= 0 ? "" : packageName.substring(0, packageName.lastIndexOf('.'));
     if (packageName.isEmpty()) {

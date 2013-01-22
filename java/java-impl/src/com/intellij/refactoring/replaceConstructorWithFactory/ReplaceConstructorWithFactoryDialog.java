@@ -107,7 +107,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     @NonNls final String[] nameSuggestions = new String[]{
       "create" + myContainingClass.getName(),
       "new" + myContainingClass.getName(),
-        "getInstance"
+      "getInstance",
+      "newInstance"
       };
     myNameField = new NameSuggestionsField(nameSuggestions, getProject());
     myNameChangedListener = new NameSuggestionsField.DataChanged() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.ide.browsers.impl.DefaultUrlOpener;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.util.containers.HashMap;
@@ -205,23 +204,29 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     }
   }
 
+  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
+  @SuppressWarnings("unused")
   public static void launchBrowser(final @NotNull BrowserFamily family, @NotNull final String url, String... parameters) {
-    launchBrowser(family, url, false, parameters);
+    DefaultUrlOpener.launchBrowser(family, url, false, parameters);
   }
 
+  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
+  @SuppressWarnings("unused")
   public static void launchBrowser(final @NotNull BrowserFamily family,
                                    @Nullable final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    String... parameters) {
-    DefaultUrlOpener.launchBrowser(family, url, parameters, Conditions.<String>alwaysTrue(), forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, forceOpenNewInstanceOnMac, parameters);
   }
 
+  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
+  @SuppressWarnings("unused")
   public static void launchBrowser(final @NotNull BrowserFamily family,
                                    @NotNull final String url,
                                    final boolean forceOpenNewInstanceOnMac,
                                    final Condition<String> browserSpecificParametersFilter,
                                    String... parameters) {
-    DefaultUrlOpener.launchBrowser(family, url, parameters, browserSpecificParametersFilter, forceOpenNewInstanceOnMac);
+    DefaultUrlOpener.launchBrowser(family, url, forceOpenNewInstanceOnMac, parameters);
   }
 
   @Nullable

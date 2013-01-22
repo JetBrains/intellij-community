@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,15 +32,18 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "missing.deprecated.annotation.display.name");
+    return InspectionGadgetsBundle.message("missing.deprecated.annotation.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "missing.deprecated.annotation.problem.descriptor");
+    return InspectionGadgetsBundle.message("missing.deprecated.annotation.problem.descriptor");
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
   }
 
   @Override
@@ -49,27 +51,22 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     return new MissingDeprecatedAnnotationFix();
   }
 
-  private static class MissingDeprecatedAnnotationFix
-    extends InspectionGadgetsFix {
+  private static class MissingDeprecatedAnnotationFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "missing.deprecated.annotation.add.quickfix");
+      return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
-      final PsiModifierListOwner parent =
-        (PsiModifierListOwner)identifier.getParent();
-      assert parent != null;
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation =
-        factory.createAnnotationFromText("@java.lang.Deprecated",
-                                         parent);
+      final PsiModifierListOwner parent = (PsiModifierListOwner)identifier.getParent();
+      if (parent == null) {
+        return;
+      }
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiAnnotation annotation = factory.createAnnotationFromText("@java.lang.Deprecated", parent);
       final PsiModifierList modifierList = parent.getModifierList();
       if (modifierList == null) {
         return;
@@ -83,8 +80,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     return new MissingDeprecatedAnnotationVisitor();
   }
 
-  private static class MissingDeprecatedAnnotationVisitor
-    extends BaseInspectionVisitor {
+  private static class MissingDeprecatedAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -92,10 +88,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
         return;
       }
-      if (!hasDeprecatedComment(aClass)) {
-        return;
-      }
-      if (hasDeprecatedAnnotation(aClass)) {
+      if (!hasDeprecatedComment(aClass) || hasDeprecatedAnnotation(aClass)) {
         return;
       }
       registerClassError(aClass);
@@ -103,16 +96,13 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (method.getNameIdentifier() == null) {
-        return;
-      }
       if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
         return;
       }
-      if (!hasDeprecatedComment(method)) {
+      if (method.getNameIdentifier() == null) {
         return;
       }
-      if (hasDeprecatedAnnotation(method)) {
+      if (!hasDeprecatedComment(method) || hasDeprecatedAnnotation(method)) {
         return;
       }
       registerMethodError(method);
@@ -123,29 +113,22 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel5OrHigher(field)) {
         return;
       }
-      if (!hasDeprecatedComment(field)) {
-        return;
-      }
-      if (hasDeprecatedAnnotation(field)) {
+      if (!hasDeprecatedComment(field) || hasDeprecatedAnnotation(field)) {
         return;
       }
       registerFieldError(field);
     }
 
-    private static boolean hasDeprecatedAnnotation(
-      PsiModifierListOwner element) {
+    private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
       final PsiModifierList modifierList = element.getModifierList();
       if (modifierList == null) {
         return false;
       }
-      final PsiAnnotation annotation =
-        modifierList.findAnnotation(
-          CommonClassNames.JAVA_LANG_DEPRECATED);
+      final PsiAnnotation annotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
       return annotation != null;
     }
 
-    private static boolean hasDeprecatedComment(
-      PsiDocCommentOwner element) {
+    private static boolean hasDeprecatedComment(PsiDocCommentOwner element) {
       final PsiDocComment comment = element.getDocComment();
       if (comment == null) {
         return false;

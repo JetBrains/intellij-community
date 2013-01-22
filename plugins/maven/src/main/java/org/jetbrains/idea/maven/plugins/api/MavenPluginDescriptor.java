@@ -78,6 +78,12 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("language")
     public String language;
 
+    /**
+     * Class of type org.jetbrains.idea.maven.plugins.api.MavenParamLanguageProvider
+     */
+    @Attribute("languageProvider")
+    public String languageProvider;
+
     @Attribute("languageInjectionPrefix")
     public String languageInjectionPrefix;
 

@@ -203,7 +203,7 @@ public final class UpdateChecker {
       try {
         final String oldInstalledPlugins = FileUtil.loadFile(installedTxt);
         for (String pluginId : oldInstalledPlugins.trim().split("\n")) {
-          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId, null);
+          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId.trim(), null);
         }
       }
       catch (IOException e) {

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.action;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
 
   @Override
   protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    final GradleLocalNodeManageHelper helper = project.getComponent(GradleLocalNodeManageHelper.class);
+    final GradleLocalNodeManageHelper helper = ServiceManager.getService(project, GradleLocalNodeManageHelper.class);
     helper.importNodes(nodes); 
   }
 }

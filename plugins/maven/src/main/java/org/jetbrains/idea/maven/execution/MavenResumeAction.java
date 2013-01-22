@@ -56,6 +56,7 @@ public class MavenResumeAction extends AnAction {
 
   public static final int STATE_INITIAL = 0;
   public static final int STATE_READING_PROJECT_LIST = 1;
+  public static final int STATE_READING_PROJECT_LIST_OLD_MAVEN = 5;
   public static final int STATE_WAIT_FOR_BUILD = 2;
   public static final int STATE_WAIT_FOR______ = 3;
   public static final int STATE_WTF = -1;
@@ -126,7 +127,10 @@ public class MavenResumeAction extends AnAction {
 
         switch (myState) {
           case STATE_INITIAL: // initial state.
-            if (textWithoutInfo.equalsIgnoreCase("Reactor build order:")) {
+            if (textWithoutInfo.equals("Reactor build order:")) {
+              myState = STATE_READING_PROJECT_LIST_OLD_MAVEN;
+            }
+            else if (textWithoutInfo.equals("Reactor Build Order:")) {
               myState = STATE_READING_PROJECT_LIST;
             }
             break;
@@ -137,6 +141,17 @@ public class MavenResumeAction extends AnAction {
             }
             else if (textWithoutInfo.length() > 0) {
               myMavenProjectNames.add(textWithoutInfo);
+            }
+            break;
+
+          case STATE_READING_PROJECT_LIST_OLD_MAVEN:
+            if (textWithoutInfo.length() > 0) {
+              if (text.startsWith("[INFO]   ")) {
+                myMavenProjectNames.add(textWithoutInfo);
+              }
+              else {
+                myState = STATE_WAIT_FOR_BUILD;
+              }
             }
             break;
 

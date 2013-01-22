@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.IdeBorderFactory;
@@ -14,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -91,7 +93,8 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
         GradleUtil.refreshProject(myProject, new Consumer<String>() {
           @Override
           public void consume(String s) {
-            GradleConfigNotificationManager notificationManager = myProject.getComponent(GradleConfigNotificationManager.class);
+            GradleConfigNotificationManager notificationManager
+              = ServiceManager.getService(myProject, GradleConfigNotificationManager.class);
             notificationManager.processRefreshError(s);
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
@@ -160,6 +163,8 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 
     if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
       updateContent();
+      // Ensure that changes detector service is loaded.
+      ServiceManager.getService(myProject, GradleProjectStructureChangesDetector.class);
     }
   }
 

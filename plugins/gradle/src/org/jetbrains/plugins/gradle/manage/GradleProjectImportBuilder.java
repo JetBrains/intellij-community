@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -235,14 +236,14 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
             // Register libraries.
             myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project);
-            GradleProjectStructureHelper helper = project.getComponent(GradleProjectStructureHelper.class);
+            GradleProjectStructureHelper helper = ServiceManager.getService(project, GradleProjectStructureHelper.class);
             for (GradleModule module : projectWithResolvedLibraries.getModules()) {
               Module intellijModule = helper.findIdeModule(module);
               assert intellijModule != null;
               myDependencyManager.importDependencies(module.getDependencies(), intellijModule);
             }
 
-            GradleProjectStructureChangesModel changesModel = project.getComponent(GradleProjectStructureChangesModel.class);
+            GradleProjectStructureChangesModel changesModel = ServiceManager.getService(project, GradleProjectStructureChangesModel.class);
             changesModel.update(projectWithResolvedLibraries);
           }
         });

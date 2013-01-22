@@ -55,7 +55,7 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
   protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
     assert nodes.size() == 1;
     final GradleProjectStructureNode<?> node = nodes.iterator().next();
-    final GradleProjectStructureContext context = project.getComponent(GradleProjectStructureContext.class);
+    final GradleProjectStructureContext context = ServiceManager.getService(project, GradleProjectStructureContext.class);
     final Object entity = node.getDescriptor().getElement().mapToEntity(context);
     if (entity == null) {
       return;

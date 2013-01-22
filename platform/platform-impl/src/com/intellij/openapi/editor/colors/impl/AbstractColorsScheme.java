@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.List;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
+
+  private static final int CURR_VERSION = 124;
   
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
   
@@ -59,7 +61,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   private float myConsoleLineSpacing = -1;
 
   // version influences XML format and triggers migration
-  private int myVersion;
+  private int myVersion = CURR_VERSION;
 
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
@@ -251,13 +253,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       }
     }
     initFonts();
+    myVersion = CURR_VERSION;
   }
 
   private void readScheme(Element node) throws InvalidDataException {
     myDeprecatedBackgroundColor = null;
     if (SCHEME_ELEMENT.equals(node.getName())) {
       setName(node.getAttributeValue(NAME_ATTR));
-      myVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
+      int readVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
+      if (readVersion > CURR_VERSION) throw new InvalidDataException("Unsupported color scheme version: " + readVersion);
+      myVersion = readVersion;
       String isDefaultScheme = node.getAttributeValue(DEFAULT_SCHEME_ATTR);
       if (isDefaultScheme == null || !Boolean.parseBoolean(isDefaultScheme)) {
         String parentSchemeName = node.getAttributeValue(PARENT_SCHEME_ATTR);

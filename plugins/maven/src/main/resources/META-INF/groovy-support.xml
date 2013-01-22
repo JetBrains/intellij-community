@@ -7,11 +7,11 @@
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <pluginDescriptor mavenId="org.codehaus.groovy.maven:gmaven-plugin">
-      <param name="source" language="Groovy"/>
+      <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.codehaus.gmaven:gmaven-plugin">
-      <param name="source" language="Groovy"/>
+      <param name="source" languageProvider="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyLanguageProvider"/>
     </pluginDescriptor>
   </extensions>
 </idea-plugin>

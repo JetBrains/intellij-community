@@ -91,7 +91,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
         }
       }
 
-      relativeNamesToExtract.add(PathManager.getConfigPath() + "/" + PluginManager.INSTALLED_TXT);
+      relativeNamesToExtract.add(PluginManager.INSTALLED_TXT);
 
       final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
       FileUtil.copy(saveFile, tempFile);

@@ -135,7 +135,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           else if (entry instanceof LibraryOrderEntry) {
             final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
             final Library library = libraryOrderEntry.getLibrary();
-            if (library == null || library.getFiles(OrderRootType.CLASSES).length != library.getUrls(OrderRootType.CLASSES).length) {
+            if (library == null || library.getFiles(OrderRootType.CLASSES).length < library.getUrls(OrderRootType.CLASSES).length) {
               System.err.println(InspectionsBundle.message("offline.inspections.library.was.not.resolved",
                                                            libraryOrderEntry.getPresentableName(), module.getName()));
             }
