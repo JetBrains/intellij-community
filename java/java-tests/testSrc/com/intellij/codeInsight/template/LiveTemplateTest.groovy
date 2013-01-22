@@ -178,7 +178,7 @@ class Foo {
     assert !state
   }
 
-  public void "_test non-imported classes in className macro"() {
+  public void "test non-imported classes in className macro"() {
     myFixture.addClass('package bar; public class Bar {}')
     myFixture.configureByText 'a.java', '''
 class Foo {
