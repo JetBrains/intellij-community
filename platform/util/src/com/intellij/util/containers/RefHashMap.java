@@ -116,7 +116,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     T get();
   }
 
-  protected abstract <T> Key<T> createKey(T k, ReferenceQueue<? super T> q);
+  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q);
 
   private static class HardKey<T> implements Key<T> {
     private T myObject;

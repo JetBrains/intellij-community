@@ -16,7 +16,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.util.Map;
 
+/**
+ * Soft keys hash map.
+ * Null keys are not supported.
+ */
 public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   public SoftHashMap(int initialCapacity, float loadFactor) {
     super(initialCapacity, loadFactor);
@@ -46,7 +49,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   }
 
   @Override
-  protected <T> Key<T> createKey(T k, ReferenceQueue<? super T> q) {
+  protected <T> Key<T> createKey(@NotNull T k, ReferenceQueue<? super T> q) {
     return new SoftKey<T>(k, q);
   }
 
