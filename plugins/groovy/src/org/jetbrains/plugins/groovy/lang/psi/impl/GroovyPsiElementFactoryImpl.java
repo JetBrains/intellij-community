@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -311,9 +311,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Nullable
   public GrTopStatement createTopElementFromText(String text) {
-    PsiFile dummyFile = createDummyFile(text, false);
-    final GrTopStatement[] topStatements = ((GroovyFileBase)dummyFile).getTopStatements();
-    LOG.assertTrue(topStatements.length == 1);
+    GroovyFile dummyFile = createDummyFile(text);
+    final GrTopStatement[] topStatements = dummyFile.getTopStatements();
+    if (topStatements.length != 1) throw new IncorrectOperationException("text = '" + text + "'");
     return topStatements[0];
   }
 
