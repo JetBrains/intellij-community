@@ -92,7 +92,7 @@ public class PythonAllTestsSuite {
     PyCompletionPatternsTest.class,
     PyCompatibilityInspectionTest.class,
     PyUnresolvedReferencesInspectionTest.class,
-    PyCallingNonCallableTest.class,
+    PyCallingNonCallableInspectionTest.class,
     PyUnusedImportTest.class,
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class,

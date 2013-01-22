@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 /**
  * @author yole
  */
-public class PyCallingNonCallableTest extends PyTestCase {
+public class PyCallingNonCallableInspectionTest extends PyTestCase {
   public void testTupleNonCallable() {
     doTest();
   }
