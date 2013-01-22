@@ -312,7 +312,7 @@ public class Tool implements SchemeElement {
 
   @Nullable
   GeneralCommandLine createCommandLine(DataContext dataContext) {
-    if (getWorkingDirectory() != null && getWorkingDirectory().trim().length() == 0) {
+    if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory(null);
     }
 
