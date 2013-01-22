@@ -39,23 +39,24 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
-  @NotNull private final AbstractVcs myVcs;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private AbstractVcs myVcs;
 
   @NotNull private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
   @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public GitRepositoryManagerImpl(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
+  public GitRepositoryManagerImpl(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
+                                  @NotNull ProjectLevelVcsManager vcsManager) {
     super(project);
     myPlatformFacade = platformFacade;
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcs = platformFacade.getVcs(myProject);
+    myVcsManager = vcsManager;
   }
 
   @Override
   public void initComponent() {
+    myVcs = myPlatformFacade.getVcs(myProject);
     Disposer.register(myProject, this);
     myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     GitRootScanner rootScanner = new GitRootScanner(myProject);

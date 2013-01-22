@@ -356,7 +356,7 @@ public abstract class GitHandler {
    * @return is "--progress" parameter supported by this version of Git.
    */
   public boolean addProgressParameter() {
-    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS.existsIn(myVcs.getVersion())) {
+    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myVcs.getVersion())) {
       addParameters("--progress");
       return true;
     }

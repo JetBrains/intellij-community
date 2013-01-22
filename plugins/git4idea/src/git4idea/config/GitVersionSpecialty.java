@@ -37,11 +37,10 @@ import org.jetbrains.annotations.NotNull;
 public enum GitVersionSpecialty {
 
   /**
-   * This version of git has "--progress" parameter in long-going commands (such as clone or fetch).
-   * Note that while pull, clone and fetch received the parameter since 1.7.1.1,
-   * some other commands (like merge) might have achieved it later.
+   * This version of git has "--progress" parameter in long-going remote commands: clone, fetch, pull, push.
+   * Note that other commands (like merge) don't have this parameter in this version yet.
    */
-  ABLE_TO_USE_PROGRESS {
+  ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 1, 1));

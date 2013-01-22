@@ -31,6 +31,8 @@ import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
@@ -396,7 +398,8 @@ public final class GitPusher {
   @NotNull
   private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
+    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
+    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector, progressListener);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);
