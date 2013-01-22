@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -156,22 +157,24 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     for (PyClassRef superClass : myClass.iterateAncestors()) {
       final PyClass pyClass = superClass.getPyClass();
+      final PsiElement element = superClass.getElement();
+      final PyClassType type = superClass.getType();
       if (pyClass != null) {
         PsiElement superMember = resolveClassMember(pyClass, myIsDefinition, name, null);
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
       }
-      else {
-        final PsiElement element = superClass.getElement();
-        if (element != null) {
-          for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-            final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
-            if (refType != null) {
-              return refType.resolveMember(name, location, direction, resolveContext);
-            }
+      else if (element != null) {
+        for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
+          if (refType != null) {
+            return refType.resolveMember(name, location, direction, resolveContext);
           }
         }
+      }
+      else if (type != null) {
+        return type.resolveMember(name, location, direction, resolveContext);
       }
     }
     if (isDefinition() && myClass.isNewStyleClass()) {
@@ -209,13 +212,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private PyClassType getMetaclassType() {
     final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
     if (metaClassAttribute != null) {
-      final PyExpression metaclass = metaClassAttribute.findAssignedValue();
-      if (metaclass instanceof PyReferenceExpression) {
-        final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
-        PsiElement element = result.getElement();
-        if (element instanceof PyClass) {
-          return new PyClassTypeImpl((PyClass)element, false);
-        }
+      final PyType type = metaClassAttribute.getType(TypeEvalContext.fastStubOnly(null));
+      if (type instanceof PyClassType) {
+        return (PyClassType)type;
       }
     }
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
@@ -371,16 +370,33 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                    Set<String> namesAlready,
                                    ProcessingContext context,
                                    List<Object> ret) {
-    for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassTypeImpl(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
-      for (Object ob : ancestry) {
-        String inheritedName = ob.toString();
-        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
-          ret.add(ob);
-          namesAlready.add(inheritedName);
+    for (PyExpression expression : myClass.getSuperClassExpressions()) {
+      final PsiReference reference = expression.getReference();
+      PsiElement element = null;
+      if (reference != null) {
+        element = reference.resolve();
+      }
+      PyType type;
+      if (element instanceof PyClass) {
+        type = new PyClassTypeImpl((PyClass)element, myIsDefinition);
+      }
+      else {
+        type = expression.getType(TypeEvalContext.fastStubOnly(myClass.getContainingFile()));
+        if (type instanceof PyClassType && !myIsDefinition) {
+          type = ((PyClassType)type).toInstance();
         }
       }
-      ContainerUtil.addAll(ret, ancestry);
+      if (type != null) {
+        Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
+        for (Object ob : ancestry) {
+          String inheritedName = ob.toString();
+          if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+            ret.add(ob);
+            namesAlready.add(inheritedName);
+          }
+        }
+        ContainerUtil.addAll(ret, ancestry);
+      }
     }
   }
 

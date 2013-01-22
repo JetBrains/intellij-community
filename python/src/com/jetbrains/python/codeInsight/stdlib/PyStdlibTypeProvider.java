@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,8 @@ import java.util.Properties;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private Properties myStdlibTypes2 = new Properties();
-  private Properties myStdlibTypes3 = new Properties();
+  @NotNull private Properties myStdlibTypes2 = new Properties();
+  @NotNull private Properties myStdlibTypes3 = new Properties();
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -41,11 +42,29 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Override
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyFunction &&
-        PyNames.NAMEDTUPLE.equals(((PyFunction) referenceTarget).getName()) &&
-        PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName()) &&
-        anchor instanceof PyCallExpression) {
-      return PyNamedTupleType.fromCall((PyCallExpression)anchor);
+    if (referenceTarget instanceof PyTargetExpression) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final PyQualifiedName calleeName = target.getCalleeName();
+      if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
+        // TODO: Create stubs for namedtuple for preventing switch from stub to AST
+        final PyExpression value = target.findAssignedValue();
+        if (value instanceof PyCallExpression) {
+          final PyCallExpression call = (PyCallExpression)value;
+          final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
+          if (callee != null) {
+            final Callable callable = callee.getCallable();
+            if (PyNames.COLLECTIONS_PY.equals(callable.getContainingFile().getName())) {
+              return PyNamedTupleType.fromCall(call);
+            }
+          }
+        }
+      }
+    }
+    else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
+      if (PyNames.NAMEDTUPLE.equals(((PyFunction)referenceTarget).getName()) &&
+          PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName())) {
+        return PyNamedTupleType.fromCall((PyCallExpression)anchor);
+      }
     }
     return null;
   }
@@ -115,8 +134,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
   @Override
-  public PyType getIterationType(PyClass iterable) {
+  public PyType getIterationType(@NotNull PyClass iterable) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(iterable);
     if (builtinCache.hasInBuiltins(iterable)) {
       if ("file".equals(iterable.getName())) {
@@ -128,7 +148,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context) {
+  public PyType getContextManagerVariableType(@NotNull PyClass contextManager, @NotNull PyExpression withExpression, @NotNull TypeEvalContext context) {
     if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
       PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
       if (closee != null) {
@@ -159,18 +179,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           }
           PyType argType = entry.getKey().getType(context);
           // Special case for the 'mode' argument of the 'open()' builtin
-          if (("__builtin__.open".equals(qname) || "io.open".equals(qname) || "os.fdopen".equals(qname)) && "mode".equals(name)) {
-            final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-            final LanguageLevel level = LanguageLevel.forElement(anchor);
-            argType = cache.getUnicodeType(level);
-            final PyExpression modeExpr = entry.getKey();
-            if (modeExpr instanceof PyStringLiteralExpression) {
-              final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
-              if (literal.contains("b")) {
-                argType = cache.getBytesType(level);
-              }
-            }
-          }
+          final PyExpression modeExpr = entry.getKey();
+          argType = getOpenFunctionType(argType, qname, name, modeExpr, anchor);
           final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
           if (PyTypeChecker.match(paramType, argType, context)) {
             if (argType != null && paramType != null) {
@@ -190,7 +200,29 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable PyType getParameterTypeByQName(@NotNull String functionQName, @NotNull String name, @NotNull PsiElement anchor) {
+  @Nullable
+  private PyType getOpenFunctionType(@Nullable PyType argType,
+                                     @NotNull String callQName,
+                                     @NotNull String parameterName,
+                                     @NotNull PyExpression modeExpr,
+                                     @NotNull PsiElement anchor) {
+    if (("__builtin__.open".equals(callQName) || "io.open".equals(callQName) || "os.fdopen".equals(callQName)) &&
+        "mode".equals(parameterName)) {
+      final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
+      final LanguageLevel level = LanguageLevel.forElement(anchor);
+      argType = cache.getUnicodeType(level);
+      if (modeExpr instanceof PyStringLiteralExpression) {
+        final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
+        if (literal.contains("b")) {
+          argType = cache.getBytesType(level);
+        }
+      }
+    }
+    return argType;
+  }
+
+  @Nullable
+  private PyType getParameterTypeByQName(@NotNull String functionQName, @NotNull String name, @NotNull PsiElement anchor) {
     final LanguageLevel level = LanguageLevel.forElement(anchor);
     final String key = String.format("Python%d/%s.%s", level.getVersion(), functionQName, name);
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
@@ -212,7 +244,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private StructuredDocString getStructuredDocString(String qualifiedName, LanguageLevel level) {
+  private StructuredDocString getStructuredDocString(@NotNull String qualifiedName, @NotNull LanguageLevel level) {
     final Properties db = getStdlibTypes(level);
     final String docString = db.getProperty(qualifiedName);
     if (docString == null && level.isPy3K()) { //if we couldn't find for Py3K will search in Python2 db
@@ -246,7 +278,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return result;
   }
 
-  private Properties getStdlibTypes(LanguageLevel level) {
+  @NotNull
+  private Properties getStdlibTypes(@NotNull LanguageLevel level) {
     final Properties result = level.isPy3K() ? myStdlibTypes3 : myStdlibTypes2;
     final String name = level.isPy3K() ? "StdlibTypes3" : "StdlibTypes2";
     if (result.isEmpty()) {

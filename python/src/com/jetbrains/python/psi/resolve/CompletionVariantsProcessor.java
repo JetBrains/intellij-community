@@ -54,7 +54,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         final String params = StringUtil.join(parameterList.getParameters(), new Function<PyParameter, String>() {
           @Override
           public String fun(PyParameter pyParameter) {
-            return pyParameter.getText();
+            return pyParameter.getName();
           }
         }, ", ");
         item = item.withTailText("(" + params + ")");

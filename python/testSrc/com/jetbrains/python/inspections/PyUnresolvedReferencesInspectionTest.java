@@ -58,10 +58,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testNamedTuple() {
-    doTest();
-  }
-
   // PY-2308
   public void testTypeAssertions() {
     doTest();
@@ -228,6 +224,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-6617
   public void testAugAssignmentDefinedInOuterScope() {
+    doTest();
+  }
+
+  // PY-7301
+  public void testUnresolvedBaseClass() {
+    doTest();
+  }
+
+  // PY-5427
+  public void testBaseClassAssignment() {
     doTest();
   }
 

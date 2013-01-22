@@ -2,31 +2,41 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class PyClassRef {
-  @Nullable
-  private final PsiElement myElement;
-
-  @Nullable
-  private final String myQName;
+  @Nullable private final PsiElement myElement;
+  @Nullable private final String myQName;
+  @Nullable private final PyClassType myType;
 
   public PyClassRef(@Nullable PsiElement element) {
     myElement = element;
     myQName = null;
+    myType = null;
   }
 
   public PyClassRef(@Nullable String qName) {
     myElement = null;
     myQName = qName;
+    myType = null;
+  }
+
+  public PyClassRef(@Nullable PyClassType type) {
+    myElement = null;
+    myQName = null;
+    myType = type;
   }
 
   @Nullable
   public PyClass getPyClass() {
-    return myElement instanceof PyClass ? (PyClass) myElement : null;
+    if (myElement instanceof PyClass) {
+      return (PyClass) myElement;
+    }
+    return null;
   }
 
   @Nullable
@@ -35,25 +45,39 @@ public class PyClassRef {
   }
 
   @Nullable
+  public PyClassType getType() {
+    return myType;
+  }
+
+  @Nullable
   public String getClassName() {
     if (myElement instanceof PyClass) {
       return ((PyClass)myElement).getName();
     }
-    if (myQName != null) {
+    else if (myQName != null) {
       final PyQualifiedName qname = PyQualifiedName.fromDottedString(myQName);
       if (qname != null) {
         return qname.getLastComponent();
       }
+    }
+    else if (myType != null) {
+      return myType.getName();
     }
     return null;
   }
 
   @Nullable
   public String getQualifiedName() {
-    if (myQName != null) {
+    if (myElement instanceof PyClass) {
+      return ((PyClass)myElement).getQualifiedName();
+    }
+    else if (myQName != null) {
       return myQName;
     }
-    return myElement instanceof PyClass ? ((PyClass)myElement).getQualifiedName() : null;
+    else if (myType != null) {
+      return myType.getName();
+    }
+    return null;
   }
 
   @Override

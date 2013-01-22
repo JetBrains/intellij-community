@@ -9,7 +9,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -38,6 +37,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
@@ -437,29 +437,23 @@ public class PyUtil {
     if (!(target instanceof PyTargetExpression)) {
       return false;
     }
-    PyFunction method = PsiTreeUtil.getParentOfType(target, PyFunction.class);
-    if (method == null || method.getContainingClass() == null) {
-      return false;
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
+    if (owner instanceof PyFunction) {
+      final PyFunction method = (PyFunction)owner;
+      if (method.getContainingClass() != null) {
+        final PyParameter[] params = method.getParameterList().getParameters();
+        if (params.length > 0) {
+          final PyTargetExpression targetExpr = (PyTargetExpression)target;
+          final PyExpression qualifier = targetExpr.getQualifier();
+          return qualifier != null && qualifier.getText().equals(params[0].getName());
+        }
+      }
     }
-    final PyParameter[] params = method.getParameterList().getParameters();
-    if (params.length == 0) {
-      return false;
-    }
-    final PyTargetExpression targetExpr = (PyTargetExpression)target;
-    PyExpression qualifier = targetExpr.getQualifier();
-    return qualifier != null && qualifier.getText().equals(params[0].getName());
+    return false;
   }
 
   public static boolean isClassAttribute(PsiElement element) {
-    PyAssignmentStatement statement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
-    if (statement == null) {
-      return false;
-    }
-    PyStatementList stmtList = PsiTreeUtil.getParentOfType(statement, PyStatementList.class);
-    if (stmtList == null || !(stmtList.getParent() instanceof PyClass)) {
-      return false;
-    }
-    return PsiTreeUtil.isAncestor(statement.getLeftHandSideExpression(), element, false);
+    return element instanceof PyTargetExpression && ScopeUtil.getScopeOwner(element) instanceof PyClass;
   }
 
   public static boolean isDocString(PyExpression expression) {

@@ -33,6 +33,10 @@ public class Py3CompletionTest extends PyTestCase {
     assertTrue(strings.contains("long"));
   }
 
+  public void testNamedTupleBaseClass() {
+    doTest();
+  }
+
   private void doTest() {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     final String testName = "completion/" + getTestName(true);
