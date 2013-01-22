@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>package.html</file>
+    <line>1</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'package.html' may be converted to 'package-info.java'</problem_class>
+    <description>&lt;code&gt;package.html&lt;/code&gt; may be converted to &lt;code&gt;package-info.java&lt;/code&gt;</description>
+  </problem>
+</problems>
