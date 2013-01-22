@@ -116,7 +116,7 @@ public class MarqueeTracker extends InputTool {
     layer.repaint();
   }
 
-  private void eraseFeedback() {
+  protected void eraseFeedback() {
     if (myFeedback != null) {
       FeedbackLayer layer = myArea.getFeedbackLayer();
       layer.remove(myFeedback);
