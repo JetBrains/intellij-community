@@ -148,6 +148,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
     settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
 
+    update |= settings.USE_SMALL_LABELS_ON_TABS != myComponent.myUseSmallLabelsOnTabs.isSelected();
+    settings.USE_SMALL_LABELS_ON_TABS = myComponent.myUseSmallLabelsOnTabs.isSelected();
+
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
 
@@ -221,6 +224,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
+    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -259,6 +263,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myDisableMnemonics.isSelected() != settings.DISABLE_MNEMONICS;
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
+
+    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
@@ -332,6 +338,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myDisableMnemonicInControlsCheckBox;
     private JBCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAllowMergeButtons;
+    private JBCheckBox myUseSmallLabelsOnTabs;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
