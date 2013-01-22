@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -369,16 +370,33 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                    Set<String> namesAlready,
                                    ProcessingContext context,
                                    List<Object> ret) {
-    for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassTypeImpl(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
-      for (Object ob : ancestry) {
-        String inheritedName = ob.toString();
-        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
-          ret.add(ob);
-          namesAlready.add(inheritedName);
+    for (PyExpression expression : myClass.getSuperClassExpressions()) {
+      final PsiReference reference = expression.getReference();
+      PsiElement element = null;
+      if (reference != null) {
+        element = reference.resolve();
+      }
+      PyType type;
+      if (element instanceof PyClass) {
+        type = new PyClassTypeImpl((PyClass)element, myIsDefinition);
+      }
+      else {
+        type = expression.getType(TypeEvalContext.fastStubOnly(myClass.getContainingFile()));
+        if (type instanceof PyClassType && !myIsDefinition) {
+          type = ((PyClassType)type).toInstance();
         }
       }
-      ContainerUtil.addAll(ret, ancestry);
+      if (type != null) {
+        Object[] ancestry = type.getCompletionVariants(name, expressionHook, context);
+        for (Object ob : ancestry) {
+          String inheritedName = ob.toString();
+          if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+            ret.add(ob);
+            namesAlready.add(inheritedName);
+          }
+        }
+        ContainerUtil.addAll(ret, ancestry);
+      }
     }
   }
 
