@@ -431,7 +431,7 @@ public class BuildManager implements ApplicationComponent{
           }
         }
         else {
-          scheduleTask(alarm, taskLatch, this);
+          scheduleTask(alarm, taskLatch, task);
         }
       }
     }, delay);
