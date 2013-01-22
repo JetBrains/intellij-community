@@ -519,6 +519,7 @@ public class CharsetToolkit {
     return bom != null && charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM);
   }
 
+  @Nullable
   public static Charset forName(@Nullable String name) {
     Charset charset = null;
     if (name != null) {
