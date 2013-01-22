@@ -46,7 +46,7 @@ public abstract class OutputReader extends BaseOutputReader {
           break;
         }
 
-        Thread.sleep(read ? 1 : 5); // give other threads a chance
+        Thread.sleep(mySleepingPolicy.getTimeToSleep(read));
       }
     }
     catch (InterruptedException ignore) {

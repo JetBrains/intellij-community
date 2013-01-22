@@ -26,6 +26,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
+import static com.intellij.util.io.BaseOutputReader.AdaptiveSleepingPolicy;
+
 public class BaseOSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandlerBase");
 
@@ -55,6 +57,8 @@ public class BaseOSProcessHandler extends ProcessHandler {
     return myProcess;
   }
 
+  protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() { return false; }
+
   @Override
   public void startNotify() {
     if (myCommandLine != null) {
@@ -65,8 +69,10 @@ public class BaseOSProcessHandler extends ProcessHandler {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT);
-          final BaseOutputReader stderrReader = new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR);
+          BaseOutputReader.SleepingPolicy adaptiveSleepingPolicy =
+            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : AdaptiveSleepingPolicy.SIMPLE;
+          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, adaptiveSleepingPolicy);
+          final BaseOutputReader stderrReader = new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, adaptiveSleepingPolicy);
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -239,8 +245,8 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType) {
-      super(reader);
+    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {
+      super(reader, sleepingPolicy);
       myProcessOutputType = processOutputType;
       start();
     }

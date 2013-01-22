@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +39,15 @@ public abstract class BaseOutputReader {
   private boolean skipLF = false;
 
   private Future<?> myFinishedFuture = null;
+  protected final @NotNull SleepingPolicy mySleepingPolicy;
 
   public BaseOutputReader(@NotNull Reader reader) {
+    this(reader, null);
+  }
+
+  public BaseOutputReader(@NotNull Reader reader, SleepingPolicy sleepingPolicy) {
     myReader = reader;
+    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
   }
 
   protected void start() {
@@ -55,15 +62,50 @@ public abstract class BaseOutputReader {
 
   protected abstract Future<?> executeOnPooledThread(Runnable runnable);
 
+  public interface SleepingPolicy {
+    int sleepTimeWhenWasActive = 1;
+    int sleepTimeWhenIdle = 5;
+
+    SleepingPolicy SIMPLE = new SleepingPolicy() {
+      @Override
+      public int getTimeToSleep(boolean wasActive) {
+        return wasActive ? sleepTimeWhenWasActive : sleepTimeWhenIdle;
+      }
+    };
+
+    int getTimeToSleep(boolean wasActive);
+  }
+
+  public static class AdaptiveSleepingPolicy implements SleepingPolicy {
+    private final static int maxSleepTimeWhenIdle = 200;
+    private final static int maxIterationsWithCurrentSleepTime = 50;
+
+    private volatile int myIterationsWithCurrentTime;
+    private volatile int myCurrentSleepTime = sleepTimeWhenIdle;
+
+    @Override
+    public int getTimeToSleep(boolean wasActive) {
+      int currentSleepTime = myCurrentSleepTime; // volatile read
+      if (wasActive) currentSleepTime = sleepTimeWhenWasActive;
+      else if (currentSleepTime == sleepTimeWhenWasActive) {
+        currentSleepTime = sleepTimeWhenIdle;
+        myIterationsWithCurrentTime = 0;
+      }
+      else {
+        int iterationsWithCurrentTime = ++myIterationsWithCurrentTime;
+        if (iterationsWithCurrentTime >= maxIterationsWithCurrentSleepTime) {
+          myIterationsWithCurrentTime = 0;
+          currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
+        }
+      }
+
+      myCurrentSleepTime = currentSleepTime; // volatile write
+      return currentSleepTime;
+    }
+  }
+
   protected void doRun() {
     try {
-      final int sleepTimeWhenRead = 1;
-      final int initialSleepTimeWhenIdle = 5;
-      final int maxSleepTimeWhenIdle = 200;
-      final int maxIterationsWithCurrentSleepTime = 50;
-      int iterationsWithCurrentTime = 0;
-      int currentSleepTime = initialSleepTimeWhenIdle;
-
       while (true) {
         boolean read = readAvailable();
 
@@ -71,21 +113,7 @@ public abstract class BaseOutputReader {
           break;
         }
 
-        // give other threads a chance
-        if (read) currentSleepTime = sleepTimeWhenRead;
-        else if (currentSleepTime == sleepTimeWhenRead) {
-          currentSleepTime = initialSleepTimeWhenIdle;
-          iterationsWithCurrentTime = 0;
-        }
-        else {
-          ++iterationsWithCurrentTime;
-          if (iterationsWithCurrentTime == maxIterationsWithCurrentSleepTime) {
-            iterationsWithCurrentTime = 0;
-            currentSleepTime = Math.min(2* currentSleepTime, maxSleepTimeWhenIdle);
-          }
-        }
-
-        TimeoutUtil.sleep(currentSleepTime);
+        TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
       }
     }
     catch (IOException e) {
