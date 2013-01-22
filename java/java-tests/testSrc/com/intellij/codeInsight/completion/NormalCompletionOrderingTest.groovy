@@ -314,6 +314,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
   }
 
+  public void testAlphaSortingStartMatchesFirst() {
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    checkPreferredItems 0, 'xxbar', 'xxfoo', 'xxgoo', 'barxx', 'fooxx', 'gooxx'
+  }
+
   public void testSortSameNamedVariantsByProximity() {
     myFixture.addClass("public class Bar {}");
     for (int i = 0; i < 10; i++) {
