@@ -98,7 +98,8 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
             if (getConfiguration() instanceof DjangoTestsRunConfiguration) {
               String appName = DjangoTestUtil.getAppNameForLocation(location.getModule(), location.getPsiElement());
               String target = DjangoTestUtil.buildTargetFromLocation(appName, element);
-              specs.add(target);
+              if (target != null)
+                specs.add(target);
             }
             else {
               PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
