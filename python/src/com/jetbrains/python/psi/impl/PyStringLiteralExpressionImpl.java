@@ -210,20 +210,18 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           str = replacement;
         }
       }
-      if (unicode) {
-        String unicodeName = escMatcher.group(4);
-        String unicode32 = escMatcher.group(6);
+      String unicodeName = escMatcher.group(4);
+      String unicode32 = escMatcher.group(6);
 
-        if (unicode32 != null) {
-          str = new String(Character.toChars((int)Long.parseLong(unicode32, 16)));
-        }
-        if (unicodeName != null) {
-          //TOLATER: implement unicode character name escapes
-        }
-        String unicode16 = escMatcher.group(5);
-        if (unicode16 != null) {
-          str = new String(new char[]{(char)Integer.parseInt(unicode16, 16)});
-        }
+      if (unicode32 != null) {
+        str = unicode ? new String(Character.toChars((int)Long.parseLong(unicode32, 16))) : unicode32;
+      }
+      if (unicodeName != null) {
+        //TOLATER: implement unicode character name escapes
+      }
+      String unicode16 = escMatcher.group(5);
+      if (unicode16 != null) {
+        str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : unicode16;
       }
 
       if (str != null) {
@@ -251,7 +249,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         if (c2 == 'u' && i < undecoded.length()-5) {
           try {
             char u = (char) Integer.parseInt(undecoded.substring(i+2, i+6), 16);
-            if (!consumer.process(off, off + 6, Character.toString(u))) {
+            if (!consumer.process(off+i, off+i+ 6, Character.toString(u))) {
               return false;
             }
           }
@@ -264,7 +262,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           // note: Java has 16-bit chars, so this code will truncate characters which don't fit in 16 bits
           try {
             char u = (char) Long.parseLong(undecoded.substring(i+2, i+10), 16);
-            if (!consumer.process(off, off + 10, Character.toString(u))) {
+            if (!consumer.process(off+i, off+i+10, Character.toString(u))) {
               return false;
             }
           }
