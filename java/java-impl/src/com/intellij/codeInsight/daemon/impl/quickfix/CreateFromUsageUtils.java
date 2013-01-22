@@ -664,7 +664,7 @@ public class CreateFromUsageUtils {
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
 
-    if (expectedTypes == null || expectedTypes.length == 0) {
+    if (expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiType.VOID : PsiType.getJavaLangObject(manager, resolveScope);
       expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
     }
@@ -716,7 +716,7 @@ public class CreateFromUsageUtils {
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
 
-    if (expectedTypes == null || expectedTypes.length == 0) {
+    if (expectedTypes.length == 0) {
       return allowVoidType ? new PsiType[]{PsiType.VOID} : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
     }
     else {
