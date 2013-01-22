@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.119" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.120" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1077,6 +1077,16 @@ class ModuleRedeclarator(object):
             ("datetime", "minute"): ('r', G_INT),
             ("datetime", "second"): ('r', G_INT),
             ("datetime", "microsecond"): ('r', G_INT),
+            ("date", "day"): ('r', G_INT),
+            ("date", "month"): ('r', G_INT),
+            ("date", "year"): ('r', G_INT),
+            ("time", "hour"): ('r', G_INT),
+            ("time", "minute"): ('r', G_INT),
+            ("time", "second"): ('r', G_INT),
+            ("time", "microsecond"): ('r', G_INT),
+            ("timedelta", "days"): ('r', G_INT),
+            ("timedelta", "seconds"): ('r', G_INT),
+            ("timedelta", "microseconds"): ('r', G_INT),
         },
     }
 
