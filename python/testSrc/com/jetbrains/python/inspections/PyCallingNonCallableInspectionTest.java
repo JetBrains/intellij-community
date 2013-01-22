@@ -54,6 +54,11 @@ public class PyCallingNonCallableInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-8416
+  public void testCallAttributeAssignment() {
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
