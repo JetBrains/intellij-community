@@ -24,6 +24,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
     VirtualFile b = createFile("src2/B.java", "class B{}");
     Module module = addModule("a", a.getParent());
     make(module);
+    assertModulesUpToDate();
     assertOutput(module, fs().file("A.class"));
 
     PsiTestUtil.addSourceRoot(module, b.getParent());
@@ -41,6 +42,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
     createFile("src/b/B.java", "package b; class B{}");
     Module m = addModule("m", a.getParent().getParent());
     make(m);
+    assertModulesUpToDate();
     assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
 
     PsiTestUtil.addExcludedRoot(m, a.getParent());
@@ -52,24 +54,30 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
     assertOutput(m, fs().dir("a").file("A.class").end().dir("b").file("B.class"));
   }
 
-  public void testAddRemoveIgnoredFolder() {
-    VirtualFile src = createFile("src/A.java", "class A{}").getParent();
-    createFile("src/Ignored.java", "class Ignored{}");
-    createFile("src/IgnoredDir/B.java", "package IgnoredDir; class B{}");
-    createFile("src/IgnoredDir/p/C.java", "package IgnoredDir.p; class C{}");
-    Module m = addModule("m", src);
-    make(m);
-    TestFileSystemBuilder all = fs().file("A.class").file("Ignored.class").dir("IgnoredDir").file("B.class").dir("p").file("C.class");
-    assertOutput(m, all);
-
+  public void testAddRemoveIgnoredPattern() {
     String oldPatterns = FileTypeManager.getInstance().getIgnoredFilesList();
-    setIgnoredFiles(oldPatterns + "Ignored*;");
-    make(m);
-    assertOutput(m, fs().file("A.class"));
+    try {
+      VirtualFile src = createFile("src/A.java", "class A{}").getParent();
+      createFile("src/Ignored.java", "class Ignored{}");
+      createFile("src/IgnoredDir/B.java", "package IgnoredDir; class B{}");
+      createFile("src/IgnoredDir/p/C.java", "package IgnoredDir.p; class C{}");
+      Module m = addModule("m", src);
+      make(m);
+      assertModulesUpToDate();
+      TestFileSystemBuilder all = fs().file("A.class").file("Ignored.class").dir("IgnoredDir").file("B.class").dir("p").file("C.class");
+      assertOutput(m, all);
 
-    setIgnoredFiles(oldPatterns);
-    make(m);
-    assertOutput(m, all);
+      setIgnoredFiles(oldPatterns + "Ignored*;");
+      make(m);
+      assertOutput(m, fs().file("A.class"));
+
+      setIgnoredFiles(oldPatterns);
+      make(m);
+      assertOutput(m, all);
+    }
+    finally {
+      setIgnoredFiles(oldPatterns);
+    }
   }
 
   public void testChangeResourcePatterns() {
@@ -82,6 +90,7 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
       createFile("src/b.xml");
       Module m = addModule("m", src);
       make(m);
+      assertModulesUpToDate();
       assertOutput(m, fs().file("b.xml"));
 
       configuration.addResourceFilePattern("*.txt");
