@@ -39,7 +39,7 @@ public class GitSSHIdeaService extends GitSSHService {
   }
 
   public int getXmlRcpPort() {
-    return WebServerManager.getInstance().getPort();
+    return WebServerManager.getInstance().waitForStart().getPort();
   }
 
   @Override

@@ -90,11 +90,6 @@
     </component>
 
     <component>
-      <interface-class>org.jetbrains.ide.WebServerManager</interface-class>
-      <implementation-class>org.jetbrains.ide.WebServerManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>
       <implementation-class>com.intellij.notification.impl.NotificationsConfigurationImpl</implementation-class>
     </component>
