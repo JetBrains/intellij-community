@@ -335,8 +335,11 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
-      if (PyUtil.isDocString(myHost))
+      final PyDocStringOwner
+        docStringOwner = PsiTreeUtil.getParentOfType(myHost, PyDocStringOwner.class);
+      if (docStringOwner != null && myHost.equals(docStringOwner.getDocStringExpression())) {
         outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
+      }
       else {
         myHost.iterateCharacterRanges(new TextRangeConsumer() {
           public boolean process(int startOffset, int endOffset, String value) {
@@ -354,12 +357,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      if (!PyUtil.isDocString(myHost))
-        return myHost.valueOffsetToTextOffset(offsetInDecoded);
-      int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
-      if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
-      if (offset > rangeInsideHost.getEndOffset()) offset = rangeInsideHost.getEndOffset();
-      return offset;
+      final PyDocStringOwner
+        docStringOwner = PsiTreeUtil.getParentOfType(myHost, PyDocStringOwner.class);
+      if (docStringOwner != null && myHost.equals(docStringOwner.getDocStringExpression())) {
+        int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
+        if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
+        if (offset > rangeInsideHost.getEndOffset()) offset = rangeInsideHost.getEndOffset();
+        return offset;
+      }
+      return myHost.valueOffsetToTextOffset(offsetInDecoded);
     }
 
     @Override
