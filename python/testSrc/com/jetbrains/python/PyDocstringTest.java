@@ -31,6 +31,11 @@ public class PyDocstringTest extends PyTestCase {
                 "  ...              3:3}", "Py:SPACE", "Py:IDENTIFIER", "Py:SPACE", "Py:EQEQ", "Py:SPACE", "Py:LBRACE", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:COMMA", "Py:LINE_BREAK", "Py:DOT", "Py:SPACE", "Py:INTEGER_LITERAL", "Py:COLON", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:STATEMENT_BREAK");
   }
 
+  public void testComment() {  //PY-8505
+    doTestLexer(" >>> if True:\n" +
+                " ... #comm\n"+
+                " ...   pass", "Py:SPACE", "Py:IF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK", "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK");
+  }
   public void testFunctionName() throws Throwable {
     doCompletionTest();
   }
