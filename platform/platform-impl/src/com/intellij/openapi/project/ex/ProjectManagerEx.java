@@ -32,6 +32,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
   }
 
+  /**
+   * @param filePath path to .ipr file or directory where .idea directory is located
+   */
   @Nullable
   public abstract Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
