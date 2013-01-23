@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors;
 
-import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -33,22 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * User: Dmitry.Krasilschikov
  * Date: 05.08.2008
  */
-public class GroovyPlainEnterProcessor implements EnterProcessor {
-  public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
-    GrCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
-
-    if (block != null) {
-      PsiElement firstElement = block.getFirstChild().getNextSibling();
-
-      final int offset = firstElement != null ? firstElement.getTextRange().getStartOffset() - 1 : block.getTextRange().getEndOffset();
-      editor.getCaretModel().moveToOffset(offset);
-    }
-
-    final EditorActionHandler endterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
-    endterHandler.execute(editor, ((EditorEx)editor).getDataContext());
-    return true;
-  }
-
+public class GroovyPlainEnterProcessor extends SmartEnterProcessorWithFixers.FixEnterProcessor {
   @Nullable
   private static GrCodeBlock getControlStatementBlock(int caret, PsiElement element) {
     GrStatement body = null;
@@ -77,7 +60,21 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
       return ((GrBlockStatement)body).getBlock();
     }
 
-
     return null;
+  }
+
+  @Override
+  public boolean doEnter(PsiElement psiElement, PsiFile file, @NotNull Editor editor, boolean modified) {
+    GrCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
+
+    if (block != null) {
+      PsiElement firstElement = block.getFirstChild().getNextSibling();
+
+      final int offset = firstElement != null ? firstElement.getTextRange().getStartOffset() - 1 : block.getTextRange().getEndOffset();
+      editor.getCaretModel().moveToOffset(offset);
+    }
+
+    plainEnter(editor);
+    return true;
   }
 }

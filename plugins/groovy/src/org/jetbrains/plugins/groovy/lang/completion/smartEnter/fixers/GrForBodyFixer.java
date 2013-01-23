@@ -15,11 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
+import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
@@ -28,8 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
  * User: Dmitry.Krasilschikov
  * Date: 14.08.2008
  */
-public class GrForBodyFixer implements GrFixer{
-   public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+public class GrForBodyFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
+   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
      GrForStatement forStatement = PsiTreeUtil.getParentOfType(psiElement, GrForStatement.class);
     if (forStatement == null) return;
 
