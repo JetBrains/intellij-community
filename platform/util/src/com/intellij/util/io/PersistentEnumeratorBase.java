@@ -431,7 +431,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
       return myDataDescriptor.isEqual(valueOf(idx), value);
     } catch (AssertionError ae) {
-      LOG.info("isSameKey:"+idx + "," + addr + ","+myKeyStorage.getPagedFileStorage().myPageSize);
+      PagedFileStorage storage = myKeyStorage.getPagedFileStorage();
+      LOG.info("isSameKey:"+idx + "," + addr + ","+ storage.myPageSize + ","+storage.myValuesAreBufferAligned + "," + value);
+      try {
+        LOG.info(""+isKeyAtIndex(value, -idx - 1));
+      } catch (Throwable t) {}
       throw ae;
     }
   }

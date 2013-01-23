@@ -318,9 +318,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       try {
         myIntAddressForNewRecord = canUseIntAddressForNewRecord(myValueStorage.getSize());
         return super.enumerate(name);
-      } catch (AssertionError ae) {
-        LOG.info("Size:"+myValueStorage.getSize() + "," + myIntAddressForNewRecord + "," + myLargeIndexWatermarkId + "," + name);
-        throw ae;
+      } catch (IOException io) {
+        Throwable cause = io.getCause();
+        if (cause instanceof AssertionError) {
+          LOG.info("Size:"+myValueStorage.getSize() + "," + myIntAddressForNewRecord + "," + myLargeIndexWatermarkId + "," + name + ","+myParentValueRefOffset);
+        }
+        throw io;
       }
     }
   }
