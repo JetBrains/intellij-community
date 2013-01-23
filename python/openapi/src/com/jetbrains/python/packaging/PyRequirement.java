@@ -11,6 +11,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,8 +23,9 @@ import java.util.regex.Pattern;
 public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*(\\w(\\w|[-.])*)\\s*(.*)");
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
-  private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)#egg=(.*)");
+  private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)(#egg=(.*))?");
   private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
+  private static final Pattern VCS_PATH = Pattern.compile(".*/([^@/]+)/?(@.*)?");
 
   public enum Relation {
     LT("<"),
@@ -257,9 +260,14 @@ public class PyRequirement {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
+
     PyRequirement that = (PyRequirement)o;
+
+    if (myEditable != that.myEditable) return false;
     if (!myName.equals(that.myName)) return false;
+    if (myURL != null ? !myURL.equals(that.myURL) : that.myURL != null) return false;
     if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
+
     return true;
   }
 
@@ -267,6 +275,8 @@ public class PyRequirement {
   public int hashCode() {
     int result = myName.hashCode();
     result = 31 * result + myVersionSpecs.hashCode();
+    result = 31 * result + (myURL != null ? myURL.hashCode() : 0);
+    result = 31 * result + (myEditable ? 1 : 0);
     return result;
   }
 
@@ -390,8 +400,33 @@ public class PyRequirement {
     }
     final boolean editable = editableEggMatcher.group(1) != null;
     final String url = editableEggMatcher.group(2);
-    final String egg = editableEggMatcher.group(3);
+    String egg = editableEggMatcher.group(4);
     if (url == null) {
+      return null;
+    }
+    if (egg == null) {
+      try {
+        final URI uri = new URI(url);
+        if (uri.getScheme() != null) {
+          final String path = uri.getPath();
+          if (path != null) {
+            final Matcher vcsPathMatcher = VCS_PATH.matcher(path);
+            if (!vcsPathMatcher.matches()) {
+              return null;
+            }
+            egg = vcsPathMatcher.group(1);
+            final String gitSuffix = ".git";
+            if (egg.endsWith(gitSuffix)) {
+              egg = egg.substring(0, egg.length() - gitSuffix.length());
+            }
+          }
+        }
+      }
+      catch (URISyntaxException e) {
+        return null;
+      }
+    }
+    if (egg == null) {
       return null;
     }
     boolean isName = true;

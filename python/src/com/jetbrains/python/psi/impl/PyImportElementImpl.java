@@ -55,9 +55,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   public PyTargetExpression getAsNameElement() {
-    final ASTNode asNameNode = getNode().findChildByType(PyElementTypes.TARGET_EXPRESSION);
-    if (asNameNode == null) return null;
-    return (PyTargetExpression)asNameNode.getPsi();
+    return getStubOrPsiChild(PyElementTypes.TARGET_EXPRESSION);
   }
 
   public String getAsName() {

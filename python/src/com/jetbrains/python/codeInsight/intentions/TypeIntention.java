@@ -59,7 +59,7 @@ public abstract class TypeIntention implements IntentionAction {
   protected abstract void updateText(boolean isReturn);
 
   private static boolean isTypeUndefined(PyExpression problemElement) {
-    final PyType type = problemElement.getType(TypeEvalContext.slow());
+    final PyType type = problemElement.getType(TypeEvalContext.fastStubOnly(problemElement.getContainingFile()));
     if (type == null || type instanceof PyReturnTypeReference || type instanceof PyDynamicallyEvaluatedType) {
       PsiReference reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {
@@ -74,6 +74,9 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   private static boolean isDefinedInAnnotation(PyExpression problemElement, PsiReference reference) {
+    if (LanguageLevel.forElement(problemElement).isOlderThan(LanguageLevel.PYTHON30)) {
+      return false;
+    }
     final PsiElement resolved = reference != null? reference.resolve() : null;
     PyParameter parameter = getParameter(problemElement, resolved);
 
@@ -87,7 +90,7 @@ public abstract class TypeIntention implements IntentionAction {
           final PsiReference psiReference = callee.getReference();
           if (psiReference != null && psiReference.resolve() == null) return false;
         }
-        final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
+        final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(getResolveContext(problemElement));
 
         if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() != null) return true;
       }
@@ -129,9 +132,10 @@ public abstract class TypeIntention implements IntentionAction {
     if (callExpression != null) {
       final PyExpression callee = callExpression.getCallee();
       if (callee instanceof PyQualifiedExpression) {
-        final Callable pyFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+        final TypeEvalContext context = TypeEvalContext.fastStubOnly(callee.getContainingFile());
+        final Callable pyFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext().withTypeEvalContext(context));
         if (pyFunction instanceof PyFunction) {
-          PyType type = pyFunction.getReturnType(TypeEvalContext.slow(), (PyQualifiedExpression)callee);
+          PyType type = pyFunction.getReturnType(context, (PyQualifiedExpression)callee);
           if (type == null || type instanceof PyReturnTypeReference) {
             final PsiReference reference = callee.getReference();
             if (reference instanceof PsiPolyVariantReference) {
@@ -187,11 +191,15 @@ public abstract class TypeIntention implements IntentionAction {
   protected static Callable getCallable(PsiElement elementAt) {
     PyCallExpression callExpression = getCallExpression(elementAt);
 
-    if (callExpression != null) {
-      final Callable callable = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-      return callable == null? PsiTreeUtil.getParentOfType(elementAt, PyFunction.class) : callable;
+    if (callExpression != null && elementAt != null) {
+      final Callable callable = callExpression.resolveCalleeFunction(getResolveContext(elementAt));
+      return callable == null ? PsiTreeUtil.getParentOfType(elementAt, PyFunction.class) : callable;
     }
     return PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
+  }
+
+  private static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
+    return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.fastStubOnly(origin.getContainingFile()));
   }
 
   public boolean startInWriteAction() {

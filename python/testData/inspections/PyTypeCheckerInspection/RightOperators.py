@@ -1,5 +1,9 @@
+class C(object):
+    pass
+
+
 def test_right_operators():
-    o = object()
+    o = C()
     xs = [
-        <warning descr="Expected type 'one of (int, long)', got 'object' instead">o</warning> * [],
+        <warning descr="Expected type 'one of (int, long)', got 'C' instead">o</warning> * [],
     ]

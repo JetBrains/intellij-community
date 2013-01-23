@@ -320,9 +320,11 @@ public class PyTypeParser {
                                        int offset) {
     final List<TextRange> ranges = splitRanges(type, " or ");
     PyType result = null;
+    boolean first = true;
     for (TextRange range : ranges) {
       final PyType t = parse(anchor, range.substring(type), types, fullRanges, imports, offset + range.getStartOffset());
-      result = (result == null) ? t : PyUnionType.union(result, t);
+      result = first ? t : PyUnionType.union(result, t);
+      first = false;
     }
     return result;
   }

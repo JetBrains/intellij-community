@@ -148,7 +148,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
       if (problemElement != null) {
         final Annotation annotation;
-        final String message = "PEP8: " + problem.myDescription;
+        final String message = "PEP 8: " + problem.myDescription;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
           annotation = holder.createErrorAnnotation(problemElement, message);
         }

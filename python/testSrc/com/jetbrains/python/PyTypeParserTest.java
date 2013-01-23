@@ -87,4 +87,16 @@ public class PyTypeParserTest extends PyTestCase {
       assertClassType(type.getElementType(i), "MyObject");
     }
   }
+
+  // PY-7950
+  public void testUnionWithUnresolved() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "Unresolved or int");
+    assertNotNull(type);
+    assertInstanceOf(type, PyUnionType.class);
+    final List<PyType> members = new ArrayList<PyType>(((PyUnionType)type).getMembers());
+    assertEquals(2, members.size());
+    assertNull(members.get(0));
+    assertClassType(members.get(1), "int");
+  }
 }

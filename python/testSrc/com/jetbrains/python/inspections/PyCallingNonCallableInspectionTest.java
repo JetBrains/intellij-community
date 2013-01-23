@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 /**
  * @author yole
  */
-public class PyCallingNonCallableTest extends PyTestCase {
+public class PyCallingNonCallableInspectionTest extends PyTestCase {
   public void testTupleNonCallable() {
     doTest();
   }
@@ -51,6 +51,11 @@ public class PyCallingNonCallableTest extends PyTestCase {
 
   // PY-4608
   public void testUnionType() {
+    doTest();
+  }
+
+  // PY-8416
+  public void testCallAttributeAssignment() {
     doTest();
   }
 

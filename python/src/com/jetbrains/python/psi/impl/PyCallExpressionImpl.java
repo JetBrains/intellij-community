@@ -174,6 +174,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, this);
           if (providedType != null) {
+            if (providedType instanceof PyClassType) {
+              return ((PyClassType)providedType).toInstance();
+            }
             return providedType;
           }
           if (target instanceof Callable) {
