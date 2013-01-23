@@ -21,7 +21,7 @@ public class PyElIfUnwrapper extends PyUnwrapper {
   @Override
   protected void doUnwrap(PsiElement element, Context context)
     throws IncorrectOperationException {
-    final PsiElement parent = PsiTreeUtil.getTopmostParentOfType(element, PyStatementWithElse.class);
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PyStatementWithElse.class);
     context.extractPart(element);
     context.delete(parent);
   }
