@@ -80,14 +80,15 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       } else if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         
       }
-      if (myPsiClass != null) {
+      if (myPsiClass != null && descriptor instanceof JavaFxClassBackedElementDescriptor) {
         final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
-        collectProperties(children, new Function<PsiField, XmlElementDescriptor>() {
+        collectProperties(children, true, new Function<PsiField, XmlElementDescriptor>() {
           @Override
           public XmlElementDescriptor fun(PsiField field) {
             return new JavaFxPropertyElementDescriptor(myPsiClass, field.getName(), false);
           }
         });
+
         collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
           @Override
           public XmlElementDescriptor fun(PsiMethod method) {
@@ -157,7 +158,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
         final List<XmlAttributeDescriptor> simpleAttrs = new ArrayList<XmlAttributeDescriptor>();
-        collectProperties(simpleAttrs, new Function<PsiField, XmlAttributeDescriptor>() {
+        collectProperties(simpleAttrs, false, new Function<PsiField, XmlAttributeDescriptor>() {
           @Override
           public XmlAttributeDescriptor fun(PsiField field) {
             return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
@@ -175,7 +176,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory) {
+  private <T> void collectProperties(List<T> children, boolean includeListProperties, Function<PsiField, T> factory) {
     final PsiField[] fields = myPsiClass.getAllFields();
     if (fields.length > 0) {
       for (PsiField field : fields) {
@@ -183,7 +184,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         final PsiType fieldType = field.getType();
         if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
             InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY) || 
-            fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+            includeListProperties && GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
           children.add(factory.fun(field));
         }
       }

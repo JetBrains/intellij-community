@@ -49,6 +49,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("text");
   }
 
+  public void testListPropertyTag() throws Exception {
+    doTest("children");
+  }
+
   public void testStaticPropertiesEnumValue() throws Exception {
     doTest();
   }
