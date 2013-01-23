@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.remotesdk.RemoteInterpreterException;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSshProcess;
