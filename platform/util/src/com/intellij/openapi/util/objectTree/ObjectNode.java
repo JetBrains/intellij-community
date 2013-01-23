@@ -18,37 +18,27 @@ package com.intellij.openapi.util.objectTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ListIterator;
 
 public final class ObjectNode<T> {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
-  private static final ArrayFactory<ObjectNode> OBJECT_NODE_ARRAY_FACTORY = new ArrayFactory<ObjectNode>() {
-    @Override
-    public ObjectNode[] create(int count) {
-      return new ObjectNode[count];
-    }
-  };
 
   private final ObjectTree<T> myTree;
 
   private ObjectNode<T> myParent;
   private final T myObject;
 
-  @Nullable
-  private ObjectNode<T>[] myChildren;
-  private int myChildrenSize;
-
+  private SmartList<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
   private final long myOwnModification;
@@ -62,58 +52,35 @@ public final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private ObjectNode<T>[] getChildrenArray() {
+    synchronized (myTree.treeLock) {
+      if (myChildren == null || myChildren.isEmpty()) return EMPTY_ARRAY;
+      return myChildren.toArray(new ObjectNode[myChildren.size()]);
+    }
+  }
+
   void addChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
-      ObjectNode<T>[] children = myChildren;
-      if (children == null) {
-        //noinspection unchecked
-        children = new ObjectNode[]{child};
+      if (myChildren == null) {
+        myChildren = new SmartList<ObjectNode<T>>();
       }
-      else {
-        int capacity = children.length;
-        if (myChildrenSize >= capacity) {
-          int newSize;
-          // for small arrays do not waste memory, since most of nodes have few children.
-          if (capacity < 10) {
-            newSize = capacity + 1;
-          }
-          else {
-            newSize = capacity * 3 / 2;
-          }
-          //noinspection unchecked
-          children = ArrayUtil.realloc(children, newSize, OBJECT_NODE_ARRAY_FACTORY);
-        }
-        children[myChildrenSize] = child;
-      }
-      myChildren = children;
-      myChildrenSize++;
+      myChildren.add(child);
       child.myParent = this;
     }
   }
 
   void removeChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
-      ObjectNode<T>[] children = myChildren;
-      assert children != null: "No children to remove child: " + this + ' ' + child;
-      if (myChildrenSize == 1) {
-        if (child.equals(children[0])) {
-          myChildren = null;
+      assert myChildren != null: "No children to remove child: " + this + ' ' + child;
+      ListIterator<ObjectNode<T>> iterator = myChildren.listIterator(myChildren.size());
+      while (iterator.hasPrevious()) {
+        if (child.equals(iterator.previous())) {
+          iterator.remove();
+          return;
         }
       }
-      else {
-        // optimization: find in reverse order because execute() iterates children backwards
-        int idx;
-        for (idx = myChildrenSize - 1; idx >= 0; idx--) {
-          ObjectNode<T> node = children[idx];
-          if (node == child) break;
-        }
-        if (idx == -1) return;
-        if (idx != children.length - 1) {
-          System.arraycopy(children, idx+1, children, idx, children.length - idx - 1);
-        }
-        children[myChildrenSize-1] = null;
-      }
-      myChildrenSize--;
     }
   }
 
@@ -126,10 +93,8 @@ public final class ObjectNode<T> {
   @NotNull
   public Collection<ObjectNode<T>> getChildren() {
     synchronized (myTree.treeLock) {
-      ObjectNode<T>[] children = myChildren;
-      if (children == null) return Collections.emptyList();
-      //noinspection unchecked
-      return Arrays.asList(children);
+      if (myChildren == null) return Collections.emptyList();
+      return Collections.unmodifiableCollection(myChildren);
     }
   }
 
@@ -144,22 +109,15 @@ public final class ObjectNode<T> {
           LOG.error(t);
         }
 
-        ObjectNode<T>[] childrenArray;
-        int size;
-        synchronized (myTree.treeLock) {
-          ObjectNode<T>[] children = myChildren;
-          //noinspection unchecked
-          childrenArray = children == null ? EMPTY_ARRAY : children;
-          size = myChildrenSize;
-        }
-        for (int i = size - 1; i >= 0; i--) {
+        ObjectNode<T>[] childrenArray = getChildrenArray();
+        //todo: [kirillk] optimize
+        for (int i = childrenArray.length - 1; i >= 0; i--) {
           childrenArray[i].execute(disposeTree, action);
         }
 
         if (disposeTree) {
           synchronized (myTree.treeLock) {
             myChildren = null;
-            myChildrenSize = 0;
           }
         }
 
@@ -217,8 +175,7 @@ public final class ObjectNode<T> {
     assert getObject() != aDisposable;
     synchronized (myTree.treeLock) {
       if (myChildren != null) {
-        for (int i = 0; i < myChildrenSize; i++) {
-          ObjectNode<T> node = myChildren[i];
+        for (ObjectNode<T> node: myChildren) {
           node.assertNoReferencesKept(aDisposable);
         }
       }
@@ -239,13 +196,11 @@ public final class ObjectNode<T> {
 
   <D extends Disposable> D findChildEqualTo(@NotNull D object) {
     synchronized (myTree.treeLock) {
-      ObjectNode<T>[] children = myChildren;
+      SmartList<ObjectNode<T>> children = myChildren;
       if (children != null) {
-        for (int i = 0; i < myChildrenSize; i++) {
-          ObjectNode<T> node = children[i];
+        for (ObjectNode<T> node : children) {
           T nodeObject = node.getObject();
           if (nodeObject.equals(object)) {
-            //noinspection unchecked
             return (D)nodeObject;
           }
         }
