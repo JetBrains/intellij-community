@@ -117,6 +117,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     isStripTrailingSpacesEnabled = isEnabled;
   }
 
+  @Override
+  public boolean isStripTrailingSpacesEnabled() {
+    return isStripTrailingSpacesEnabled;
+  }
+
   @TestOnly
   public boolean stripTrailingSpaces() {
     return stripTrailingSpaces(null, false, false, -1, -1);
@@ -535,8 +540,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     boolean wasModified = caretLine >= 0 && caretLine < myLineSet.getLineCount() && myLineSet.isModified(caretLine);
     clearLineModificationFlags();
     if (wasModified) {
-      myLineSet.setModified(caretLine);
+      markLineModified(caretLine);
     }
+  }
+
+  @Override
+  public void markLineModified(int line) {
+    myLineSet.setModified(line);
   }
 
   @NotNull

@@ -43,6 +43,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -223,6 +224,26 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
     myModalityState = ModalityState.stateForComponent(getComponent());
+
+    disableTrailingSpaceStripping();
+  }
+
+  private void disableTrailingSpaceStripping() {
+    final DocumentEx document = (DocumentEx)myEditor.getDocument();
+    final boolean oldStrip = document.isStripTrailingSpacesEnabled();
+    document.setStripTrailingSpacesEnabled(false);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        document.setStripTrailingSpacesEnabled(oldStrip);
+        if (!myEditor.isDisposed()) {
+          int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+          if (caretLine < document.getLineCount()) {
+            document.markLineModified(caretLine);
+          }
+        }
+      }
+    });
   }
 
   private CollectionListModel<LookupElement> getListModel() {

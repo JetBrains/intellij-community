@@ -195,6 +195,11 @@ public class MockDocument implements DocumentEx {
   }
 
   @Override
+  public boolean isStripTrailingSpacesEnabled() {
+    return false;
+  }
+
+  @Override
   public int getLineSeparatorLength(int line) {
     return 0;
   }
@@ -310,5 +315,9 @@ public class MockDocument implements DocumentEx {
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return false;
+  }
+
+  @Override
+  public void markLineModified(int line) {
   }
 }
