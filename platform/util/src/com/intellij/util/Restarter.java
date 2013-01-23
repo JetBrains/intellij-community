@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,38 +57,49 @@ public class Restarter {
   }
 
   public static int scheduleRestart(@NotNull String... beforeRestart) throws IOException {
-    int restartCode = getRestartCode();
-    if (restartCode != 0) {
-      try {
-        Process process = Runtime.getRuntime().exec(beforeRestart);
-
-        Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
-        Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
-        outThread.start();
-        errThread.start();
-
-        try {
-          process.waitFor();
-        }
-        finally {
-          outThread.join();
-          errThread.join();
-        }
+    try {
+      int restartCode = getRestartCode();
+      if (restartCode != 0) {
+        runCommand(beforeRestart);
+        return restartCode;
       }
-      catch (InterruptedException ignore) {
+      else if (SystemInfo.isWindows) {
+        restartOnWindows(beforeRestart);
+        return 0;
       }
+      else if (SystemInfo.isMac) {
+        restartOnMac(beforeRestart);
+        return 0;
+      }
+    }
+    catch (Throwable t) {
+      throw new IOException("Cannot restart application: " + t.getMessage(), t);
+    }
 
-      return restartCode;
-    }
-    else if (SystemInfo.isWindows) {
-      restartOnWindows(beforeRestart);
-      return 0;
-    }
-    else if (SystemInfo.isMac) {
-      restartOnMac(beforeRestart);
-      return 0;
-    }
+    runCommand(beforeRestart);
     throw new IOException("Cannot restart application: not supported.");
+  }
+
+  private static void runCommand(String... beforeRestart) throws IOException {
+    if (beforeRestart.length == 0) return;
+
+    try {
+      Process process = Runtime.getRuntime().exec(beforeRestart);
+
+      Thread outThread = new Thread(new StreamRedirector(process.getInputStream(), System.out));
+      Thread errThread = new Thread(new StreamRedirector(process.getErrorStream(), System.err));
+      outThread.start();
+      errThread.start();
+
+      try {
+        process.waitFor();
+      }
+      finally {
+        outThread.join();
+        errThread.join();
+      }
+    }
+    catch (InterruptedException ignore) { }
   }
 
   private static void restartOnWindows(@NotNull final String... beforeRestart) throws IOException {
