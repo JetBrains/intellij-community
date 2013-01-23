@@ -129,4 +129,8 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   public ChannelStatus getSelectedChannelStatus() {
     return ChannelStatus.fromCode(UPDATE_CHANNEL_TYPE);
   }
+
+  public void forceCheckForUpdateAfterRestart() {
+    LAST_TIME_CHECKED = 0;
+  }
 }
