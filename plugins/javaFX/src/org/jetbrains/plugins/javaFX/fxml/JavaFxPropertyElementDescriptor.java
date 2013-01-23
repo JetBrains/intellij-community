@@ -21,10 +21,12 @@ import org.jetbrains.annotations.Nullable;
 public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
+  private final boolean myStatic;
 
-  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name) {
+  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name, boolean isStatic) {
     myPsiClass = psiClass;
     myName = name;
+    myStatic = isStatic;
   }
 
   @Override
@@ -52,7 +54,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else if (myPsiClass != null) {
-      return new JavaFxPropertyElementDescriptor(myPsiClass, name);
+      return new JavaFxPropertyElementDescriptor(myPsiClass, name, name.indexOf('.') > 0);
     }
     return null;
   }
@@ -113,7 +115,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public String getName() {
-    if (myPsiClass != null) {
+    if (myPsiClass != null && myStatic) {
       return StringUtil.getQualifiedName(myPsiClass.getName(), myName);
     }
     return myName;

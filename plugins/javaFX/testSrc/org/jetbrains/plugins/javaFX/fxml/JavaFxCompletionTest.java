@@ -45,6 +45,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("GridPane.columnIndex");
   }
 
+  public void testSimplePropertyTag() throws Exception {
+    doTest("text");
+  }
+
   public void testStaticPropertiesEnumValue() throws Exception {
     doTest();
   }

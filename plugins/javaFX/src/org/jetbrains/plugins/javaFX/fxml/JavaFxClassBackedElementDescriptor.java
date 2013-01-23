@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
@@ -83,11 +82,17 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
       if (myPsiClass != null) {
         final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
+        collectProperties(children, new Function<PsiField, XmlElementDescriptor>() {
+          @Override
+          public XmlElementDescriptor fun(PsiField field) {
+            return new JavaFxPropertyElementDescriptor(myPsiClass, field.getName(), false);
+          }
+        });
         collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
           @Override
           public XmlElementDescriptor fun(PsiMethod method) {
             final PsiClass aClass = method.getContainingClass();
-            return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()));
+            return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
           }
         });
         
@@ -132,11 +137,11 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       if (!name.equals(shortName)) { //static property
         final PsiMethod propertySetter = findPropertySetter(name, childTag);
         if (propertySetter != null) {
-          return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName);
+          return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName, true);
         }
         return null;
       }
-      return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name) : null;
+      return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }
   }
 
@@ -152,18 +157,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
         final List<XmlAttributeDescriptor> simpleAttrs = new ArrayList<XmlAttributeDescriptor>();
-        final PsiField[] fields = myPsiClass.getAllFields();
-        if (fields.length > 0) {
-          for (PsiField field : fields) {
-            if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-            final PsiType fieldType = field.getType();
-            if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
-                InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY) || 
-                fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-              simpleAttrs.add(new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass));
-            }
+        collectProperties(simpleAttrs, new Function<PsiField, XmlAttributeDescriptor>() {
+          @Override
+          public XmlAttributeDescriptor fun(PsiField field) {
+            return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
           }
-        }
+        });
         collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
           @Override
           public XmlAttributeDescriptor fun(PsiMethod method) {
@@ -174,6 +173,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
     return XmlAttributeDescriptor.EMPTY;
+  }
+
+  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory) {
+    final PsiField[] fields = myPsiClass.getAllFields();
+    if (fields.length > 0) {
+      for (PsiField field : fields) {
+        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+        final PsiType fieldType = field.getType();
+        if (PropertyUtil.findPropertyGetter(myPsiClass, field.getName(), false, true) != null && 
+            InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY) || 
+            fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          children.add(factory.fun(field));
+        }
+      }
+    }
   }
 
   @Nullable
