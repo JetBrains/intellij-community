@@ -250,6 +250,15 @@ public class CoreFormatterUtil {
     if (indent.getType() == Indent.Type.NONE) return new IndentData(0);
     if (indent.getType() == Indent.Type.SPACES) return new IndentData(0, indent.getSpaces());
     return new IndentData(options.INDENT_SIZE);
+  }
 
+  @NotNull
+  public static LeafBlockWrapper getFirstLeaf(@NotNull AbstractBlockWrapper block) {
+    if (block instanceof LeafBlockWrapper) {
+      return (LeafBlockWrapper)block;
+    }
+    else {
+      return getFirstLeaf(((CompositeBlockWrapper)block).getChildren().get(0));
+    }
   }
 }
