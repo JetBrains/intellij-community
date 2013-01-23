@@ -189,6 +189,12 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         }
 
         mySelectedElementSignPanel.setPaint(value == mySelectedNode);
+        
+        // The same component is used for rendering all nodes, that's there is a possible situation when the renderer was used
+        // for narrow node component painting at first and then we want to paint a wider node. The problem is that preferred renderer
+        // size value calculated for the narrow node component might be cached at the renderer. That's why we explicitly drop
+        // that cached value (if any).
+        myNodeRenderPanel.setPreferredSize(null);
         return myNodeRenderPanel;
       }
     });
@@ -309,8 +315,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
         }
       }
       int q = unit / 4;
-      int[] x = {0, unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0};
-      int[] y = {unit, 0, unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      int[] x = {0,    unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0   };
+      int[] y = {unit, 0,        unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
       if (yShift != 0) {
         for (int i = 0; i < y.length; i++) {
           y[i] += yShift;
