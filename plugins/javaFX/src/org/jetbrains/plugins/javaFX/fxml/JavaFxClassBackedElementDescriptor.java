@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
@@ -15,6 +16,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -79,8 +81,43 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       } else if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         
       }
+      if (myPsiClass != null) {
+        final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
+        collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
+          @Override
+          public XmlElementDescriptor fun(PsiMethod method) {
+            final PsiClass aClass = method.getContainingClass();
+            return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()));
+          }
+        });
+        
+        if (!children.isEmpty()) {
+          return children.toArray(new XmlElementDescriptor[children.size()]);
+        }
+      }
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
+    XmlTag tag = context;
+    while (tag != null) {
+      final XmlElementDescriptor descr = tag.getDescriptor();
+      if (descr instanceof JavaFxClassBackedElementDescriptor) {
+        final PsiElement element = descr.getDeclaration();
+        if (element instanceof PsiClass) {
+          for (PsiMethod method : ((PsiClass)element).getMethods()) {
+            if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
+              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              if (parameters.length == 2 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+                children.add(factory.fun(method));
+              }
+            }
+          }
+        }
+      }
+      tag = tag.getParentTag();
+    }
   }
 
   @Nullable
@@ -127,24 +164,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             }
           }
         }
-        XmlTag tag = context.getParentTag();
-        while (tag != null) {
-          final XmlElementDescriptor descriptor = tag.getDescriptor();
-          if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
-            final PsiElement element = descriptor.getDeclaration();
-            if (element instanceof PsiClass) {
-              for (PsiMethod method : ((PsiClass)element).getMethods()) {
-                if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
-                  final PsiParameter[] parameters = method.getParameterList().getParameters();
-                  if (parameters.length == 2 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
-                    simpleAttrs.add(new JavaFxSetterAttributeDescriptor(method, (PsiClass)element));
-                  }
-                }
-              }
-            }
+        collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
+          @Override
+          public XmlAttributeDescriptor fun(PsiMethod method) {
+            return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
           }
-          tag = tag.getParentTag();
-        }
+        });
         return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
     }

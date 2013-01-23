@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -112,6 +113,9 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public String getName() {
+    if (myPsiClass != null) {
+      return StringUtil.getQualifiedName(myPsiClass.getName(), myName);
+    }
     return myName;
   }
 

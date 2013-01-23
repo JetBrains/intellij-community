@@ -40,6 +40,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
   public void testStaticProperties() throws Exception {
     doTest("GridPane.columnIndex");
   }
+  
+  public void testStaticPropertiesTag() throws Exception {
+    doTest("GridPane.columnIndex");
+  }
 
   public void testStaticPropertiesEnumValue() throws Exception {
     doTest();
