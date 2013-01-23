@@ -774,7 +774,7 @@ public class GenericsHighlightUtil {
           return true;
         }
       }
-      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, false)) return true;
+      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, true)) return true;
     }
     return false;
   }
