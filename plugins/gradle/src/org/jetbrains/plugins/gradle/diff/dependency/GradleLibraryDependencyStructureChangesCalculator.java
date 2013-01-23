@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
  * @since 1/24/12 1:37 PM
  */
 public class GradleLibraryDependencyStructureChangesCalculator
-  extends GradleAbstractDependencyStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
 {
   
   private final GradleLibraryStructureChangesCalculator myLibraryCalculator;

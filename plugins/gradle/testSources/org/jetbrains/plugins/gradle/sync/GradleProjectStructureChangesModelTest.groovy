@@ -5,6 +5,7 @@ import com.intellij.testFramework.SkipInHeadlessEnvironment
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
+import org.jetbrains.plugins.gradle.testutil.AbstractProjectBuilder
 import org.junit.Before
 import org.junit.Test
 
@@ -820,6 +821,35 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
               jar3('intellij') } } } } }
   }
 
+  @Test
+  public void "gradle-local library dependency for gradle-local library"() {
+    init(
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library('lib1', bin: ['jar1', 'jar2']) } } } },
+      intellij: {
+        project {
+          module() } })
+    
+    checkChanges {
+      presence {
+        libraryDependency(gradle: gradle.modules[AbstractProjectBuilder.SAME_TOKEN].dependencies)
+        jar(gradle: [findJarId('jar1')])
+        jar(gradle: [findJarId('jar2')])
+    } }
+    
+    checkTree {
+      project {
+        module {
+          dependencies {
+            lib1('gradle') {
+              jar1('gradle')
+              jar2('gradle')
+    } } } } }
+  }
+  
   @Test
   public void "intellij-local library dependency with mixed jars state"() {
     init(

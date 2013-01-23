@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleArtifactInfo;
 import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -137,6 +138,32 @@ public class GradleProjectStructureHelper {
   public Library findIdeLibrary(@NotNull final GradleLibrary library) {
     return findIdeLibrary(library.getName());
   }
+
+  /**
+   * Gradle library names follow the following pattern: {@code '[base library name]-[library-version]'}.
+   * <p/>
+   * This methods serves as an utility which tries to find a library by it's given base name.
+   * 
+   * @param baseName  base name of the target library
+   * @return          target library for the given base name if there is one and only one library for it;
+   *                  null otherwise (if there are no libraries or more than one library for the given base name) 
+   */
+  @Nullable
+  public Library findIdeLibraryByBaseName(@NotNull String baseName) {
+    final LibraryTable libraryTable = myFacade.getProjectLibraryTable(myProject);
+    Library result = null;
+    for (Library library : libraryTable.getLibraries()) {
+      GradleArtifactInfo info = GradleUtil.parseArtifactInfo(GradleUtil.getLibraryName(library));
+      if (info == null || !baseName.equals(info.getName())) {
+        continue;
+      }
+      if (result != null) {
+        return null;
+      }
+      result = library;
+    }
+    return result;
+  }
   
   @Nullable
   public Library findIdeLibrary(@NotNull String libraryName) {
@@ -161,6 +188,11 @@ public class GradleProjectStructureHelper {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public LibraryOrderEntry findIdeLibraryDependency(@NotNull GradleLibraryDependencyId id) {
+    return findIdeLibraryDependency(id.getOwnerModuleName(), id.getLibraryId().getLibraryName());
   }
   
   @Nullable
@@ -228,6 +260,11 @@ public class GradleProjectStructureHelper {
       return null;
     }
     return library.getPaths(jarType).contains(jarPath) ? library : null;
+  }
+  
+  @Nullable
+  public GradleLibraryDependency findGradleLibraryDependency(@NotNull GradleLibraryDependencyId id) {
+    return findGradleLibraryDependency(id.getOwnerModuleName(), id.getLibraryId().getLibraryName());
   }
   
   @Nullable

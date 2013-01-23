@@ -15,4 +15,5 @@ public interface GradleEntityVisitor {
   void visit(@NotNull GradleJar jar);
   void visit(@NotNull GradleModuleDependency dependency);
   void visit(@NotNull GradleLibraryDependency dependency);
+  void visit(@NotNull GradleCompositeLibraryDependency dependency);
 }

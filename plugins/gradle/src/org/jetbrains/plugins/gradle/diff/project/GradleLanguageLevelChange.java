@@ -17,7 +17,7 @@ package org.jetbrains.plugins.gradle.diff.project;
 
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
+import org.jetbrains.plugins.gradle.diff.AbstractGradleConflictingPropertyChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.id.GradleProjectId;
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  * @author Denis Zhdanov
  * @since 11/15/11 8:05 PM
  */
-public class GradleLanguageLevelChange extends GradleAbstractConflictingPropertyChange<LanguageLevel> {
+public class GradleLanguageLevelChange extends AbstractGradleConflictingPropertyChange<LanguageLevel> {
   
   public GradleLanguageLevelChange(@NotNull LanguageLevel gradleValue, @NotNull LanguageLevel intellijValue) {
     super(new GradleProjectId(GradleEntityOwner.IDE), GradleBundle.message("gradle.sync.change.project.language.level.text"),

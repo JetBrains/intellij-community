@@ -19,7 +19,7 @@ package org.jetbrains.plugins.gradle.diff;
  * @author Denis Zhdanov
  * @since 11/15/11 1:33 PM
  */
-public abstract class GradleAbstractProjectStructureChange implements GradleProjectStructureChange {
+public abstract class AbstractGradleProjectStructureChange implements GradleProjectStructureChange {
 
   @Override
   public int hashCode() {

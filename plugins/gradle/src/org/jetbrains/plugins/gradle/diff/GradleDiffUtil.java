@@ -12,7 +12,10 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPrese
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.GradleJarId;
+import org.jetbrains.plugins.gradle.model.id.GradleLibraryId;
 import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -66,7 +69,12 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        // Don't show library nodes. 
+        for (LibraryPathType pathType : LibraryPathType.values()) {
+          for (String path : library.getPaths(pathType)) {
+            GradleJarId jarId = new GradleJarId(path, pathType, new GradleLibraryId(GradleEntityOwner.GRADLE, library.getName()));
+            context.register(new GradleJarPresenceChange(jarId, null));
+          }
+        } 
       }
 
       @Override
@@ -82,6 +90,13 @@ public class GradleDiffUtil {
       @Override
       public void visit(@NotNull GradleLibraryDependency dependency) {
         context.register(new GradleLibraryDependencyPresenceChange(dependency, null));
+      }
+
+      @Override
+      public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+        // We expect such composite entities for outdated libraries to appear as 'low-level' project structure changes processing
+        // result.
+        assert false;
       }
     });
   }

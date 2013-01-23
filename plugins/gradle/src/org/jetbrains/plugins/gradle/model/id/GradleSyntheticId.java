@@ -16,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 2/16/12 11:40 AM
  */
-public class GradleSyntheticId extends GradleAbstractEntityId {
+public class GradleSyntheticId extends AbstractGradleEntityId {
   
   @NotNull private final String myText;
 

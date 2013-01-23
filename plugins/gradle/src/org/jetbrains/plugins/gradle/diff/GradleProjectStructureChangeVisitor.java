@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.diff;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.*;
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
@@ -36,6 +37,7 @@ public interface GradleProjectStructureChangeVisitor {
   void visit(@NotNull GradleContentRootPresenceChange change);
   void visit(@NotNull GradleLibraryDependencyPresenceChange change);
   void visit(@NotNull GradleJarPresenceChange change);
+  void visit(@NotNull GradleOutdatedLibraryVersionChange change);
   void visit(@NotNull GradleModuleDependencyPresenceChange change);
   void visit(@NotNull GradleDependencyScopeChange change);
   void visit(@NotNull GradleDependencyExportedChange change);

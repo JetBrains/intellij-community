@@ -77,7 +77,10 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
     if (id.getType() == GradleEntityType.SYNTHETIC) {
       return SYNTHETIC_WEIGHT;
     }
-    final Object entity = id.mapToEntity(myContext);
+    Object entity = id.mapToEntity(myContext);
+    if (entity instanceof AbstractGradleCompositeEntity) {
+      entity = ((AbstractGradleCompositeEntity)entity).getIdeEntity();
+    }
     final Ref<Integer> result = new Ref<Integer>();
     if (entity instanceof GradleEntity) {
       ((GradleEntity)entity).invite(new GradleEntityVisitor() {
@@ -113,6 +116,11 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
+          result.set(LIBRARY_DEPENDENCY_WEIGHT);
+        }
+
+        @Override
+        public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
           result.set(LIBRARY_DEPENDENCY_WEIGHT);
         }
       });

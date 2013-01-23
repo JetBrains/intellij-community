@@ -28,9 +28,10 @@ class ProjectStructureChecker {
   ]
   
   static def COLORS = [
-    'gradle' : GradleTextAttributes.GRADLE_LOCAL_CHANGE,
+    'gradle'   : GradleTextAttributes.GRADLE_LOCAL_CHANGE,
     'intellij' : GradleTextAttributes.INTELLIJ_LOCAL_CHANGE,
-    'conflict' : GradleTextAttributes.CHANGE_CONFLICT
+    'conflict' : GradleTextAttributes.CHANGE_CONFLICT,
+    'outdated' : GradleTextAttributes.OUTDATED_ENTITY
   ]
 
   def check(Node expected, DefaultMutableTreeNode actual) {

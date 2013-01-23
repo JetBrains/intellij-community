@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 2/16/12 12:22 PM
  */
-public class GradleContentRootId extends GradleAbstractEntityId {
+public class GradleContentRootId extends AbstractGradleEntityId {
   
   @NotNull private final String myModuleName;
   @NotNull private final String myRootPath;

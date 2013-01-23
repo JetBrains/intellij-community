@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
  * @since 2/20/12 11:10 AM
  */
 public class GradleModuleDependencyStructureChangesCalculator
-  extends GradleAbstractDependencyStructureChangesCalculator<GradleModuleDependency, ModuleOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<GradleModuleDependency, ModuleOrderEntry>
 {
   
   @Override

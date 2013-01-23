@@ -15,15 +15,10 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  * @since 1/18/12 4:15 PM
  */
 public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescriptorsProvider {
-  
+
   public static final AttributesDescriptor CONFLICT = new AttributesDescriptor(
     GradleBundle.message("gradle.sync.change.type.conflict"),
     GradleTextAttributes.CHANGE_CONFLICT
-  );
-  
-  public static final AttributesDescriptor CONFIRMED = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.confirmed"),
-    GradleTextAttributes.CONFIRMED_CONFLICT
   );
 
   public static final AttributesDescriptor GRADLE_LOCAL = new AttributesDescriptor(
@@ -37,12 +32,20 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
     GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
   );
 
+  public static final AttributesDescriptor OUTDATED_ENTITY = new AttributesDescriptor(
+    GradleBundle.message("gradle.sync.change.type.changed.library.version"),
+    //GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
+    GradleTextAttributes.OUTDATED_ENTITY
+  );
+
   public static final AttributesDescriptor NO_CHANGE = new AttributesDescriptor(
     GradleBundle.message("gradle.sync.change.type.unchanged"),
     GradleTextAttributes.NO_CHANGE
   );
   
-  public static final AttributesDescriptor[] DESCRIPTORS = { CONFLICT, /*CONFIRMED,*/ GRADLE_LOCAL, INTELLIJ_LOCAL, NO_CHANGE };
+  public static final AttributesDescriptor[] DESCRIPTORS = {
+    CONFLICT, GRADLE_LOCAL, INTELLIJ_LOCAL, OUTDATED_ENTITY, NO_CHANGE
+  };
 
   @NotNull
   @Override

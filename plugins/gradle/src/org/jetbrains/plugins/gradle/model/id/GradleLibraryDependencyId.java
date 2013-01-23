@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 2/14/12 1:59 PM
  */
-public class GradleLibraryDependencyId extends GradleAbstractDependencyId {
+public class GradleLibraryDependencyId extends AbstractGradleDependencyId {
 
   public GradleLibraryDependencyId(@NotNull GradleEntityOwner owner, @NotNull String moduleName, @NotNull String libraryName) {
     super(GradleEntityType.LIBRARY_DEPENDENCY, owner, moduleName, libraryName);

@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public class GradleIcons {
 
-  public static final Icon PROJECT_ICON      = getProjectIcon();
+  public static final Icon PROJECT_ICON = getProjectIcon();
 
   private GradleIcons() {
   }

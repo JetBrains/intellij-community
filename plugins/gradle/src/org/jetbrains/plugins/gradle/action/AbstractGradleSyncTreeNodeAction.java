@@ -1,7 +1,11 @@
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +16,10 @@ import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Common super class for actions that are invoked on 'sync project structures' tree nodes.
@@ -77,6 +84,15 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
                                             @NotNull Tree tree);
   
   protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
+  }
+
+  protected static void filterNodesByAttributes(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull TextAttributesKey key) {
+    for (Iterator<GradleProjectStructureNode<?>> iterator = nodes.iterator(); iterator.hasNext(); ) {
+      GradleProjectStructureNode<?> node = iterator.next();
+      if (!key.equals(node.getDescriptor().getAttributes())) {
+        iterator.remove();
+      }
+    }
   }
   
   private interface Helper {

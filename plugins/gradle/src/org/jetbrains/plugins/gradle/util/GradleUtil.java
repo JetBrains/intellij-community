@@ -77,7 +77,7 @@ public class GradleUtil {
 
   public static final  String  PATH_SEPARATOR            = "/";
   public static final  String  SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
-  private static final Pattern ARTIFACT_PATTERN          = Pattern.compile(".*/(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
+  private static final Pattern ARTIFACT_PATTERN          = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
     new NotNullLazyValue<GradleInstallationManager>() {
@@ -584,6 +584,11 @@ public class GradleUtil {
       return null;
     }
     return new GradleArtifactInfo(matcher.group(1), null, matcher.group(2));
+  }
+
+  @NotNull
+  public static String getOutdatedEntityName(@NotNull String entityName, @NotNull String gradleVersion, @NotNull String ideVersion) {
+    return String.format("%s (%s -> %s)", entityName, ideVersion, gradleVersion);
   }
   
   private interface TaskUnderProgress {

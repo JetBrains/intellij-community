@@ -274,12 +274,16 @@ public class GradleLocalNodeManageHelper {
           assert module != null;
           myModuleDependencyManager.importDependency(dependency, module); 
         }
+
+        @Override
+        public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+          // Outdated entities are resolved not by 'import' but 'sync' action.
+        }
       });
     }
   }
 
   public void removeNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    final List<Library> libraries = ContainerUtilRt.newArrayList();
     final List<Module> modules = ContainerUtilRt.newArrayList();
     final List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
     final List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
@@ -290,7 +294,7 @@ public class GradleLocalNodeManageHelper {
       @Override public void visit(@NotNull ModuleAwareContentRoot contentRoot) { contentRoots.add(contentRoot); }
       @Override public void visit(@NotNull LibraryOrderEntry libraryDependency) { dependencies.add(libraryDependency); }
       @Override public void visit(@NotNull ModuleOrderEntry moduleDependency) { dependencies.add(moduleDependency); } 
-      @Override public void visit(@NotNull Library library) { libraries.add(library); }
+      @Override public void visit(@NotNull Library library) { }
     };
     GradleEntityVisitor gradleVisitor = new GradleEntityVisitorAdapter() {
       @Override
@@ -320,7 +324,6 @@ public class GradleLocalNodeManageHelper {
     myContentRootManager.removeContentRoots(contentRoots);
     myModuleDependencyManager.removeDependencies(dependencies);
     myModuleManager.removeModules(modules);
-    myLibraryManager.removeLibraries(libraries);
   }
   
   private class Context {
@@ -359,5 +362,6 @@ public class GradleLocalNodeManageHelper {
     @Override public void visit(@NotNull GradleModuleDependency dependency) { collectModuleDependencyEntities(dependency, myContext); }
     @Override public void visit(@NotNull GradleLibraryDependency dependency) { collectLibraryDependencyEntities(dependency, myContext); }
     @Override public void visit(@NotNull GradleJar jar) { myContext.jars.add(jar); }
+    @Override public void visit(@NotNull GradleCompositeLibraryDependency dependency) { /* Do nothing */ }
   }
 }

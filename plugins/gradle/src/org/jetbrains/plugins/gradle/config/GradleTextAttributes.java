@@ -2,7 +2,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 
@@ -14,8 +14,9 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 1/18/12 4:19 PM
  */
+// TODO den introduce fallback text attribute keys when v.12.1 is released.
 public class GradleTextAttributes {
-  
+
   /**
    * References color to use for indication of particular change that exists only at the gradle side.
    * <p/>
@@ -23,7 +24,7 @@ public class GradleTextAttributes {
    */
   public static final TextAttributesKey GRADLE_LOCAL_CHANGE = TextAttributesKey.createTextAttributesKey(
     "GRADLE_LOCAL_CHANGE",
-    new TextAttributes(new Color(130, 184, 22), null, null, null, Font.PLAIN)
+    new TextAttributes(JBColor.GREEN, null, null, null, Font.PLAIN)
   );
 
   /**
@@ -33,7 +34,7 @@ public class GradleTextAttributes {
    */
   public static final TextAttributesKey INTELLIJ_LOCAL_CHANGE = TextAttributesKey.createTextAttributesKey(
     "INTELLIJ_LOCAL_CHANGE",
-    new TextAttributes(new Color(16, 102, 248), null, null, null, Font.PLAIN)
+    new TextAttributes(JBColor.BLUE, null, null, null, Font.PLAIN)
   );
 
   /**
@@ -44,7 +45,12 @@ public class GradleTextAttributes {
    */
   public static final TextAttributesKey CHANGE_CONFLICT = TextAttributesKey.createTextAttributesKey(
     "GRADLE_CHANGE_CONFLICT",
-    new TextAttributes(new Color(238, 0, 0), null, null, null, Font.PLAIN)
+    new TextAttributes(JBColor.RED, null, null, null, Font.PLAIN)
+  );
+
+  public static final TextAttributesKey OUTDATED_ENTITY = TextAttributesKey.createTextAttributesKey(
+    "GRADLE_OUTDATED_ENTITY",
+    new TextAttributes(JBColor.ORANGE, null, null, null, Font.PLAIN)
   );
 
   /**
@@ -52,21 +58,9 @@ public class GradleTextAttributes {
    */
   public static final TextAttributesKey NO_CHANGE = TextAttributesKey.createTextAttributesKey(
     "GRADLE_NO_CHANGE",
-    new TextAttributes(Color.BLACK, null, null, null, Font.PLAIN)
+    new TextAttributes(JBColor.BLACK, null, null, null, Font.PLAIN)
   );
 
-  /**
-   * References color to use for indication that particular change should be ignored during the gradle and intellij project structures
-   * comparison.
-   * <p/>
-   * Example: particular dummy module specific to the local environment is added at the intellij side but we don't want to propagate
-   * that to the gradle side and don't want to see it during the project structures comparison.
-   */
-  public static final TextAttributesKey CONFIRMED_CONFLICT = TextAttributesKey.createTextAttributesKey(
-    "GRADLE_CONFIRMED_CONFLICT",
-    new TextAttributes(Gray._140, null, null, null, Font.PLAIN)
-  );
-  
   private GradleTextAttributes() {
   }
 }

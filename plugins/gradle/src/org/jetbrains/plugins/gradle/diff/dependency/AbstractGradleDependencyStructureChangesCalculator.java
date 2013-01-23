@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleDependency;
-import org.jetbrains.plugins.gradle.model.id.GradleAbstractDependencyId;
+import org.jetbrains.plugins.gradle.model.id.AbstractGradleDependencyId;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
 
 /**
@@ -16,12 +16,12 @@ import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
  * @author Denis Zhdanov
  * @since 2/20/12 11:17 AM
  */
-public abstract class GradleAbstractDependencyStructureChangesCalculator<G extends GradleDependency, I extends ExportableOrderEntry>
+public abstract class AbstractGradleDependencyStructureChangesCalculator<G extends GradleDependency, I extends ExportableOrderEntry>
   implements GradleStructureChangesCalculator<G, I>
 {
   @Override
   public void calculate(@NotNull G gradleEntity, @NotNull I ideEntity, @NotNull GradleChangesCalculationContext context) {
-    final GradleAbstractDependencyId id = GradleEntityIdMapper.mapEntityToId(gradleEntity);
+    final AbstractGradleDependencyId id = GradleEntityIdMapper.mapEntityToId(gradleEntity);
     if (gradleEntity.getScope() != ideEntity.getScope()) {
       context.register(new GradleDependencyScopeChange(id, gradleEntity.getScope(), ideEntity.getScope()));
     }

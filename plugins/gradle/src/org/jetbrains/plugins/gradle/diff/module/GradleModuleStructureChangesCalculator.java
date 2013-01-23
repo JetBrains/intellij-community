@@ -80,7 +80,6 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
   @NotNull
   @Override
   public Object getGradleKey(@NotNull GradleModule entity, @NotNull GradleChangesCalculationContext context) {
-    // TODO den consider the known changes
     return entity.getName();
   }
 

@@ -18,7 +18,7 @@ package org.jetbrains.plugins.gradle.diff.module;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleAbstractEntityPresenceChange;
+import org.jetbrains.plugins.gradle.diff.AbstractGradleEntityPresenceChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  * @author Denis Zhdanov
  * @since 11/17/11 12:50 PM
  */
-public class GradleModulePresenceChange extends GradleAbstractEntityPresenceChange<GradleModuleId> {
+public class GradleModulePresenceChange extends AbstractGradleEntityPresenceChange<GradleModuleId> {
 
   public GradleModulePresenceChange(@Nullable GradleModule gradleModule, @Nullable Module intellijModule)
     throws IllegalArgumentException

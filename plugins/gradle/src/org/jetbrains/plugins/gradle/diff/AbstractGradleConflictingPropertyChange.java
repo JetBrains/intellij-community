@@ -30,14 +30,14 @@ import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
  * @since 11/15/11 7:57 PM
  * @param <T>   target property value type
  */
-public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleAbstractProjectStructureChange {
+public abstract class AbstractGradleConflictingPropertyChange<T> extends AbstractGradleProjectStructureChange {
 
   @NotNull private final GradleEntityId myEntityId;
   @NotNull private final String         myPropertyDescription;
   @NotNull private final T              myGradleValue;
   @NotNull private final T              myIdeValue;
 
-  public GradleAbstractConflictingPropertyChange(@NotNull GradleEntityId id,
+  public AbstractGradleConflictingPropertyChange(@NotNull GradleEntityId id,
                                                  @NotNull String propertyDescription,
                                                  @NotNull T gradleValue,
                                                  @NotNull T ideValue)
@@ -82,7 +82,7 @@ public abstract class GradleAbstractConflictingPropertyChange<T> extends GradleA
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    GradleAbstractConflictingPropertyChange that = (GradleAbstractConflictingPropertyChange)o;
+    AbstractGradleConflictingPropertyChange that = (AbstractGradleConflictingPropertyChange)o;
 
     return myEntityId.equals(that.myEntityId) && myGradleValue.equals(that.myGradleValue) && myIdeValue.equals(that.myIdeValue);
   }

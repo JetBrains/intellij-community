@@ -4,13 +4,10 @@ import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.application.options.colors.PreviewPanel;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBColor;
@@ -20,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.GradleEntityType;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -40,17 +38,19 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
 
   private final Map<TextAttributesKey, DefaultMutableTreeNode> myNodes = new HashMap<TextAttributesKey, DefaultMutableTreeNode>();
 
-  private final List<ColorAndFontSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final JPanel myContent = new JPanel(new GridBagLayout());
-  private final JPanel myNodeRenderPanel = new JPanel(new GridBagLayout());
-  private final Ref<Boolean> myAllowTreeExpansion = new Ref<Boolean>(true);
-  private final ArrowPanel mySelectedElementSignPanel = new ArrowPanel();
+  // TODO den switch to ContainerUtil.createLockFreeCopyOnWriteList() as soon as v.12.1 is released.
+  // TODO den (we need to preserve binary compatibility with v.12.0 at the moment)
+  private final List<ColorAndFontSettingsListener> myListeners                = ContainerUtil.createEmptyCOWList();
+  private final JPanel                             myContent                  = new JPanel(new GridBagLayout());
+  private final JPanel                             myNodeRenderPanel          = new JPanel(new GridBagLayout());
+  private final Ref<Boolean>                       myAllowTreeExpansion       = new Ref<Boolean>(true);
+  private final ArrowPanel                         mySelectedElementSignPanel = new ArrowPanel();
 
-  private final Tree myTree;
+  private final Tree             myTree;
   private final DefaultTreeModel myTreeModel;
 
   private ColorAndFontOptions myOptions;
-  private TreeNode mySelectedNode;
+  private TreeNode            mySelectedNode;
 
   public GradleColorAndFontPreviewPanel(@NotNull ColorAndFontOptions options) {
     myOptions = options;
@@ -64,30 +64,30 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     String projectName = GradleBundle.message("gradle.settings.color.text.sample.conflict.node.name");
     DefaultMutableTreeNode root = createNode(
       projectName,
-      IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl()),
+      GradleEntityType.PROJECT,
       GradleTextAttributes.CHANGE_CONFLICT
     );
 
     String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode module = createNode(moduleName, AllIcons.Nodes.Module, GradleTextAttributes.NO_CHANGE);
+    DefaultMutableTreeNode module = createNode(moduleName, GradleEntityType.MODULE, GradleTextAttributes.NO_CHANGE);
 
     String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(
-      gradleLibraryName, AllIcons.Nodes.PpLib, GradleTextAttributes.GRADLE_LOCAL_CHANGE
+      gradleLibraryName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.GRADLE_LOCAL_CHANGE
     );
 
     String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
-    //ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
-      intellijLibraryName, AllIcons.Nodes.PpLib, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
+      intellijLibraryName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
 
-    //String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    //DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
+    String libraryWithChangedVersionName = GradleBundle.message("gradle.settings.color.text.sample.node.outdated.name");
+    DefaultMutableTreeNode libraryWithChangedVersion = createNode(
+      libraryWithChangedVersionName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.OUTDATED_ENTITY);
 
     module.add(gradleLibrary);
     module.add(intellijLibrary);
-    //module.add(syncLibrary);
+    module.add(libraryWithChangedVersion);
     root.add(module);
 
     mySelectedNode = root;
@@ -257,9 +257,9 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     myListeners.add(listener);
   }
 
-  private DefaultMutableTreeNode createNode(@NotNull String text, @NotNull Icon icon, @Nullable TextAttributesKey textAttributesKey) {
+  private DefaultMutableTreeNode createNode(@NotNull String text, @NotNull GradleEntityType type, @Nullable TextAttributesKey textAttributesKey) {
     final GradleProjectStructureNodeDescriptor<GradleSyntheticId> descriptor
-      = new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
+      = new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, type.getIcon());
     DefaultMutableTreeNode result = new DefaultMutableTreeNode(descriptor);
     if (textAttributesKey != null) {
       final PresentationData presentation = descriptor.getPresentation();

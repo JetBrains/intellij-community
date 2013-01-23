@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 8/23/11 1:16 PM
  */
 public abstract class GradleEntityVisitorAdapter implements GradleEntityVisitor {
+
   @Override
   public void visit(@NotNull GradleProject project) {
   }
@@ -33,5 +34,9 @@ public abstract class GradleEntityVisitorAdapter implements GradleEntityVisitor 
 
   @Override
   public void visit(@NotNull GradleLibraryDependency dependency) {
+  }
+
+  @Override
+  public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
   }
 }
