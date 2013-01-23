@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
@@ -42,12 +43,7 @@ public abstract class BuildRootDescriptor {
 
   @NotNull
   public FileFilter createFileFilter() {
-    return new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return true;
-      }
-    };
+    return FileUtilRt.ALL_FILES;
   }
 
   /**

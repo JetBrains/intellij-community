@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.Collection;
 
 /**
@@ -62,17 +61,6 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public MavenResourcesTarget getTarget() {
     return myTarget;
-  }
-
-  @NotNull
-  @Override
-  public FileFilter createFileFilter() {
-    return new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        return true;
-      }
-    };
   }
 
   public boolean isIncluded(String relativePath) {
