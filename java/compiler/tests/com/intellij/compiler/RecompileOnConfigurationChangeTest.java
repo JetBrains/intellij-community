@@ -1,6 +1,5 @@
 package com.intellij.compiler;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -30,7 +29,6 @@ public class RecompileOnConfigurationChangeTest extends BaseCompilerTestCase {
     File oldOutput = getOutputDir(m);
     File newOutput = createTempDir("new-output");
     PsiTestUtil.setCompilerOutputPath(m, VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(newOutput.getAbsolutePath())), false);
-    BuildManager.getInstance().clearState(myProject);//todo[nik] projectOpened isn't called in tests so BuildManager don't receive rootsChanged event
     make(m);
     assertOutput(m, fs().file("A.class"));
     File[] files = oldOutput.listFiles();
