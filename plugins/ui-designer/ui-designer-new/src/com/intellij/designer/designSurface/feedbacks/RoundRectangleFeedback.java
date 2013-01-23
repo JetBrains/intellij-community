@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,24 @@
  */
 package com.intellij.designer.designSurface.feedbacks;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class RectangleFeedback extends JComponent {
-  private final Color myColor;
-  protected final int myLine;
+public class RoundRectangleFeedback extends RectangleFeedback {
+  private final int myRadius;
 
-  public RectangleFeedback(Color color, int line) {
-    myColor = color;
-    myLine = line;
+  public RoundRectangleFeedback(Color color, int line, int radius) {
+    super(color, line);
+    myRadius = radius;
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    g.setColor(myColor);
-
-    paintFeedback(g);
-  }
-
   protected void paintFeedback(Graphics g) {
     Dimension size = getSize();
     for (int i = 0; i < myLine; i++) {
-      g.drawRect(i, i, size.width - i - i - 1, size.height - i - i - 1);
+      g.drawRoundRect(i, i, size.width - i - i - 1, size.height - i - i - 1, myRadius, myRadius);
     }
   }
 }
