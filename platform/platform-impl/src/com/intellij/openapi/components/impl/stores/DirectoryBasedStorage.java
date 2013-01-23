@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
@@ -168,7 +165,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   public void dispose() {
   }
 
-  private class MySaveSession implements SaveSession {
+  private class MySaveSession implements SaveSession, SafeWriteRequestor {
     private final DirectoryStorageData myStorageData;
     private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
 
