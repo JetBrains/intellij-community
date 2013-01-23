@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -33,7 +32,6 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
@@ -140,15 +138,13 @@ public class BuildFSState extends FSState {
 
   public <R extends BuildRootDescriptor, T extends BuildTarget<R>> boolean processFilesToRecompile(CompileContext context, final T target, final FileProcessor<R, T> processor) throws IOException {
     final Map<BuildRootDescriptor, Set<File>> data = getSourcesToRecompile(context, target);
-    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<BuildRootDescriptor, Set<File>> entry : data.entrySet()) {
         //noinspection unchecked
         R root = (R)entry.getKey();
-        FileFilter filter = rootIndex.getRootFilter(root);
         for (File file : entry.getValue()) {
-          if (!scope.isAffected(target, file) || !filter.accept(file)) {
+          if (!scope.isAffected(target, file)) {
             continue;
           }
           if (!processor.apply(target, file, root)) {
@@ -168,35 +164,29 @@ public class BuildFSState extends FSState {
     final FilesDelta delta = getDelta(rd.getTarget());
     final Set<File> files = delta.clearRecompile(rd);
     if (files != null) {
-      FileFilter filter = context.getProjectDescriptor().getBuildRootIndex().getRootFilter(rd);
       CompileScope scope = context.getScope();
       final long compilationStartStamp = context.getCompilationStartStamp();
       for (File file : files) {
-        if (filter.accept(file)) {
-          if (scope.isAffected(rd.getTarget(), file)) {
-            final long currentFileStamp = FileSystemUtil.lastModified(file);
-            if (!rd.isGenerated() && (currentFileStamp > compilationStartStamp || getEventRegistrationStamp(file) > compilationStartStamp)) {
-              // if the file was modified after the compilation had started,
-              // do not save the stamp considering file dirty
-              if (Utils.IS_TEST_MODE) {
-                LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
-              }
-              delta.markRecompile(rd, file);
-            }
-            else {
-              marked = true;
-              stamps.saveStamp(file, rd.getTarget(), currentFileStamp);
-            }
-          }
-          else {
+        if (scope.isAffected(rd.getTarget(), file)) {
+          final long currentFileStamp = FileSystemUtil.lastModified(file);
+          if (!rd.isGenerated() && (currentFileStamp > compilationStartStamp || getEventRegistrationStamp(file) > compilationStartStamp)) {
+            // if the file was modified after the compilation had started,
+            // do not save the stamp considering file dirty
             if (Utils.IS_TEST_MODE) {
-              LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
+              LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
             }
             delta.markRecompile(rd, file);
           }
+          else {
+            marked = true;
+            stamps.saveStamp(file, rd.getTarget(), currentFileStamp);
+          }
         }
         else {
-          stamps.removeStamp(file, rd.getTarget());
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
+          }
+          delta.markRecompile(rd, file);
         }
       }
     }

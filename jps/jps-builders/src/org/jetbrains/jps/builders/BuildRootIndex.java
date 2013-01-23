@@ -62,4 +62,8 @@ public interface BuildRootIndex {
 
   @NotNull
   FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);
+
+  boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor);
+
+  boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor);
 }

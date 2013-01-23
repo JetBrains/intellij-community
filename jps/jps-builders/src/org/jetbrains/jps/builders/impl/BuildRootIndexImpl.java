@@ -27,10 +27,8 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -47,12 +45,14 @@ import java.util.concurrent.ConcurrentMap;
 public class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
+  private final IgnoredFileIndex myIgnoredFileIndex;
   private HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
   private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
   private ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
   
   public BuildRootIndexImpl(BuildTargetIndex targetIndex, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
+    myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>>();
     myRootToDescriptors = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
     myFileFilters = new ConcurrentHashMap<BuildRootDescriptor, FileFilter>();
@@ -94,22 +94,6 @@ public class BuildRootIndexImpl implements BuildRootIndex {
       myRootToDescriptors.put(descriptor.getRootFile(), list);
     }
     list.add(descriptor);
-  }
-
-  private static Map<String, List<ModuleBuildTarget>> buildModuleNameToTargetsMap(BuildTargetIndex targetIndex) {
-    final Map<String, List<ModuleBuildTarget>> moduleNameToTargetsMap = new HashMap<String, List<ModuleBuildTarget>>();
-    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-      for (ModuleBuildTarget target : targetIndex.getAllTargets(type)) {
-        final String moduleName = target.getModule().getName();
-        List<ModuleBuildTarget> targets = moduleNameToTargetsMap.get(moduleName);
-        if (targets == null) {
-          targets = new ArrayList<ModuleBuildTarget>();
-          moduleNameToTargetsMap.put(moduleName, targets);
-        }
-        targets.add(target);
-      }
-    }
-    return moduleNameToTargetsMap;
   }
 
   @NotNull
@@ -203,17 +187,17 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public <R extends BuildRootDescriptor> R findParentDescriptor(@NotNull File file, @NotNull Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                 @Nullable CompileContext context) {
     File current = file;
+    int depth = 0;
     while (current != null) {
-      final List<R> descriptors = getRootDescriptors(current, types, context);
+      final List<R> descriptors = filterDescriptorsByFile(getRootDescriptors(current, types, context), file, depth);
       if (!descriptors.isEmpty()) {
         return descriptors.get(0);
       }
       current = FileUtilRt.getParentFile(current);
+      depth++;
     }
     return null;
   }
-
-
 
   @Override
   @NotNull
@@ -221,9 +205,10 @@ public class BuildRootIndexImpl implements BuildRootIndex {
                                                                                 @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                                                 @Nullable CompileContext context) {
     File current = file;
-    Collection<R> result = null;
+    List<R> result = null;
+    int depth = 0;
     while (current != null) {
-      List<R> descriptors = getRootDescriptors(current, types, context);
+      List<R> descriptors = filterDescriptorsByFile(getRootDescriptors(current, types, context), file, depth);
       if (!descriptors.isEmpty()) {
         if (result == null) {
           result = descriptors;
@@ -234,8 +219,40 @@ public class BuildRootIndexImpl implements BuildRootIndex {
         }
       }
       current = FileUtilRt.getParentFile(current);
+      depth++;
     }
     return result != null ? result : Collections.<R>emptyList();
+  }
+
+  @NotNull
+  private <R extends BuildRootDescriptor> List<R> filterDescriptorsByFile(@NotNull List<R> descriptors, File file, int parentsToCheck) {
+    List<R> result = descriptors;
+    for (int i = 0; i < descriptors.size(); i++) {
+      R descriptor = descriptors.get(i);
+      if (isFileAccepted(file, descriptor) && isParentDirectoriesAccepted(file, parentsToCheck, descriptor)) {
+        if (result != descriptors) {
+          result.add(descriptor);
+        }
+      }
+      else if (result == descriptors) {
+        result = new ArrayList<R>(descriptors.size() - 1);
+        for (int j = 0; j < i; j++) {
+          result.add(descriptors.get(j));
+        }
+      }
+    }
+    return result;
+  }
+
+  private boolean isParentDirectoriesAccepted(File file, int parentsToCheck, BuildRootDescriptor descriptor) {
+    File current = file;
+    while (parentsToCheck-- > 0) {
+      current = FileUtil.getParentFile(current);
+      if (!isDirectoryAccepted(current, descriptor)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull
@@ -272,5 +289,15 @@ public class BuildRootIndexImpl implements BuildRootIndex {
       myFileFilters.put(descriptor, filter);
     }
     return filter;
+  }
+
+  @Override
+  public boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor) {
+    return !myIgnoredFileIndex.isIgnored(file.getName()) && getRootFilter(descriptor).accept(file);
+  }
+
+  @Override
+  public boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor) {
+    return !myIgnoredFileIndex.isIgnored(dir.getName()) && !descriptor.getExcludedRoots().contains(dir);
   }
 }

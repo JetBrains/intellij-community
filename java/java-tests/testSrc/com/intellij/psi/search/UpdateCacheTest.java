@@ -19,13 +19,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -284,26 +284,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel1 = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content1 = rootModel1.getContentEntries();
-        contentLoop:
-        for (ContentEntry contentEntry : content1) {
-          if (root.equals(contentEntry.getFile())) {
-            final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-            for (ExcludeFolder excludeFolder : excludeFolders) {
-              if (dir.equals(excludeFolder.getFile())) {
-                contentEntry.removeExcludeFolder(excludeFolder);
-                break contentLoop;
-              }
-            }
-          }
-        }
-        rootModel1.commit();
-      }
-    });
-
+    PsiTestUtil.removeExcludedRoot(myModule, dir);
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
@@ -338,9 +319,8 @@ public class UpdateCacheTest extends PsiTestCase{
     checkTodos(new String[]{"2.java", "New.java"});
   }
 
-  public void testRemoveSourceRoot() throws Exception{
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-    final VirtualFile root = rootManager.getContentRoots()[0];
+  public void testRemoveSourceRoot() {
+    final VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
@@ -356,27 +336,9 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-        LOG.assertTrue(sourceRoots.length == 1);
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content1 = rootModel.getContentEntries();
-        contentLoop:
-        for (ContentEntry contentEntry : content1) {
-          if (root.equals(contentEntry.getFile())) {
-            final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-            for (SourceFolder sourceFolder : sourceFolders) {
-              if (sourceRoots[0].equals(sourceFolder.getFile())) {
-                contentEntry.removeSourceFolder(sourceFolder);
-                break contentLoop;
-              }
-            }
-          }
-        }
-        rootModel.commit();
-      }
-    });
+    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(myModule).getSourceRoots();
+    LOG.assertTrue(sourceRoots.length == 1);
+    PsiTestUtil.removeSourceRoot(myModule, sourceRoots[0]);
 
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
