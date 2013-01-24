@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -51,23 +52,29 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     final PsiElement declaration = getDeclaration();
     if (declaration instanceof PsiField) {
-      final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(((PsiField)declaration).getType(), declaration.getResolveScope());
-      if (collectionItemType != null) {
-        final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
-        if (aClass != null) {
-          final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
-          ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass aClass) {
-              descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
-              return true;
-            }
-          });
-          return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
-        }
-      }
+      final PsiType psiType = ((PsiField)declaration).getType();
+      final List<XmlElementDescriptor> descriptors = collectDescriptorsByCollection(psiType, declaration.getResolveScope());
+      if (!descriptors.isEmpty()) return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  public static List<XmlElementDescriptor> collectDescriptorsByCollection(PsiType psiType, GlobalSearchScope resolveScope) {
+    final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(psiType, resolveScope);
+    if (collectionItemType != null) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
+      if (aClass != null) {
+        ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass aClass) {
+            descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+            return true;
+          }
+        });
+      }
+    }
+    return descriptors;
   }
 
   @Nullable

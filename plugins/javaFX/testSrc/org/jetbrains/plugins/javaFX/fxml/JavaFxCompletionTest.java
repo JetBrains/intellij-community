@@ -57,6 +57,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("Button");
   }
 
+  public void testClassDefaultProperty() throws Exception {
+    doTest("Button");
+  }
+
   public void testStaticPropertiesEnumValue() throws Exception {
     doTest();
   }

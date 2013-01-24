@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -93,7 +95,20 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
           }
         });
-        
+
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+        if (annotation != null) {
+          final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
+          if (memberValue != null) {
+            final String propertyName = StringUtil.stripQuotesAroundValue(memberValue.getText());
+            final PsiMethod getter = findPropertyGetter(propertyName, myPsiClass);
+            if (getter != null) {
+              final PsiType returnType = getter.getReturnType();
+              children.addAll(JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope()));
+            }
+          }
+        }
+
         if (!children.isEmpty()) {
           return children.toArray(new XmlElementDescriptor[children.size()]);
         }
@@ -313,6 +328,15 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
     if (setters.length == 1) {
       return setters[0];
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
+    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
+    if (getters.length >= 1) {
+      return getters[0];
     }
     return null;
   }
