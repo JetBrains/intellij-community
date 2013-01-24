@@ -166,8 +166,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
-  // TODO: create a custom version of public PyType getType()
   public PyType getType(@NotNull TypeEvalContext context) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return PyCallExpressionImpl.getCallType(this, context);
   }
 }

@@ -97,21 +97,25 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    if (!TypeEvalStack.mayEvaluate(this)) {
+    return getCallType(this, context);
+  }
+
+  public static PyType getCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    if (!TypeEvalStack.mayEvaluate(call)) {
       return null;
     }
     try {
-      PyExpression callee = getCallee();
+      PyExpression callee = call.getCallee();
       if (callee instanceof PyReferenceExpression) {
         // hardwired special cases
         if (PyNames.SUPER.equals(callee.getText())) {
-          final Maybe<PyType> superCallType = getSuperCallType(callee, context);
+          final Maybe<PyType> superCallType = getSuperCallType(call, context);
           if (superCallType.isDefined()) {
             return superCallType.value();
           }
         }
         if ("type".equals(callee.getText())) {
-          final PyExpression[] args = getArguments();
+          final PyExpression[] args = call.getArguments();
           if (args.length == 1) {
             final PyExpression arg = args[0];
             final PyType argType = arg.getType(context);
@@ -172,7 +176,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (cls != null) {
             return new PyClassTypeImpl(cls, false);
           }
-          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, this);
+          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
           if (providedType != null) {
             if (providedType instanceof PyClassType) {
               return ((PyClassType)providedType).toInstance();
@@ -202,44 +206,47 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       }
     }
     finally {
-      TypeEvalStack.evaluated(this);
+      TypeEvalStack.evaluated(call);
     }
   }
 
   @NotNull
-  private Maybe<PyType> getSuperCallType(PyExpression callee, TypeEvalContext context) {
-    PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
-    if (must_be_super_init instanceof PyFunction) {
-      PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
-      if (must_be_super == PyBuiltinCache.getInstance(this).getClass(PyNames.SUPER)) {
-        PyArgumentList arglist = getArgumentList();
-        if (arglist != null) {
-          final PyClass containingClass = PsiTreeUtil.getParentOfType(this, PyClass.class);
-          PyExpression[] args = arglist.getArguments();
-          if (args.length > 1) {
-            PyExpression first_arg = args[0];
-            if (first_arg instanceof PyReferenceExpression) {
-              final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
-              final PyExpression qualifier = firstArgRef.getQualifier();
-              if (qualifier != null && PyNames.CLASS.equals(firstArgRef.getReferencedName())) {
-                final PsiReference qRef = qualifier.getReference();
-                final PsiElement element = qRef == null ? null : qRef.resolve();
-                if (element instanceof PyParameter) {
-                  final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
-                  if (parameterList != null && element == parameterList.getParameters()[0]) {
-                    return new Maybe<PyType>(getSuperCallType(context, containingClass, args[1]));
+  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, TypeEvalContext context) {
+    final PyExpression callee = call.getCallee();
+    if (callee instanceof PyReferenceExpression) {
+      PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
+      if (must_be_super_init instanceof PyFunction) {
+        PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
+        if (must_be_super == PyBuiltinCache.getInstance(call).getClass(PyNames.SUPER)) {
+          PyArgumentList arglist = call.getArgumentList();
+          if (arglist != null) {
+            final PyClass containingClass = PsiTreeUtil.getParentOfType(call, PyClass.class);
+            PyExpression[] args = arglist.getArguments();
+            if (args.length > 1) {
+              PyExpression first_arg = args[0];
+              if (first_arg instanceof PyReferenceExpression) {
+                final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
+                final PyExpression qualifier = firstArgRef.getQualifier();
+                if (qualifier != null && PyNames.CLASS.equals(firstArgRef.getReferencedName())) {
+                  final PsiReference qRef = qualifier.getReference();
+                  final PsiElement element = qRef == null ? null : qRef.resolve();
+                  if (element instanceof PyParameter) {
+                    final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
+                    if (parameterList != null && element == parameterList.getParameters()[0]) {
+                      return new Maybe<PyType>(getSuperCallTypeForArguments(context, containingClass, args[1]));
+                    }
                   }
                 }
-              }
-              PsiElement possible_class = firstArgRef.getReference().resolve();
-              if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
-                final PyClass first_class = (PyClass)possible_class;
-                return new Maybe<PyType>(getSuperCallType(context, first_class, args[1]));
+                PsiElement possible_class = firstArgRef.getReference().resolve();
+                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                  final PyClass first_class = (PyClass)possible_class;
+                  return new Maybe<PyType>(getSuperCallTypeForArguments(context, first_class, args[1]));
+                }
               }
             }
-          }
-          else if (((PyFile)getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
-            return new Maybe<PyType>(getSuperClassUnionType(containingClass));
+            else if (((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
+              return new Maybe<PyType>(getSuperClassUnionType(containingClass));
+            }
           }
         }
       }
@@ -248,7 +255,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Nullable
-  private static PyType getSuperCallType(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
+  private static PyType getSuperCallTypeForArguments(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
     // check 2nd argument, too; it should be an instance
     if (second_arg != null) {
       PyType second_type = context.getType(second_arg);
