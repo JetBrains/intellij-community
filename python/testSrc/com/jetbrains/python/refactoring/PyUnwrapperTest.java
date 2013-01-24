@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
@@ -37,8 +38,20 @@ public class PyUnwrapperTest extends PyTestCase {
 
   public void testForUnwrap()                         throws Throwable {doTest();}
 
+  public void testWithUnwrap()                        throws Throwable {doTest(LanguageLevel.PYTHON32);}
+
   private void doTest() {
     doTest(0);
+  }
+
+  private void doTest(LanguageLevel languageLevel) {
+    setLanguageLevel(languageLevel);
+    try {
+      doTest(0);
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   private void doTest(final int option) {
