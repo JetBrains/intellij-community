@@ -232,7 +232,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     IdeFrameImpl[] frames = getAllProjectFrames();
 
     if (frames.length > 0) return frames[0];
-    return WelcomeFrame.getInstance();
+    return (JFrame)WelcomeFrame.getInstance();
   }
 
   @Override
