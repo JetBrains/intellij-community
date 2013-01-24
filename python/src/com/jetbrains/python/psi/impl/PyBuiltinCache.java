@@ -347,7 +347,7 @@ public class PyBuiltinCache {
       return true;
     }
     else if (type instanceof PyFunctionType) {
-      return ((PyFunctionType)type).getFunction().isValid();
+      return ((PyFunctionType)type).getCallable().isValid();
     }
     return true;
   }
