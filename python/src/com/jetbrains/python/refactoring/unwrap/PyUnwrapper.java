@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
 
 import java.util.List;
@@ -43,11 +42,8 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
       if (from instanceof PyStatementWithElse) {
         extractFromConditionalBlock((PyStatementWithElse)from);
       }
-      else if (from instanceof PyElsePart) {
-        extractFromElseBlock((PyElsePart)from);
-      }
-      else if (from instanceof PyIfPartElifImpl) {
-        extractFromElseBlock((PyIfPartElifImpl)from);
+      else if (from instanceof PyStatementPart) {
+        extractFromElseBlock((PyStatementPart)from);
       }
       else if (from instanceof PyWithStatement) {
         extractFromWithBlock((PyWithStatement)from);
