@@ -30,7 +30,7 @@ public class LookupDocumentSavingVetoer implements FileDocumentSynchronizationVe
   @Override
   public boolean maySaveDocument(@NotNull Document document) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (LookupManager.getInstance(project).getActiveLookup() != null) {
+      if (!project.isDisposed() && LookupManager.getInstance(project).getActiveLookup() != null) {
         return false;
       }
     }
