@@ -269,7 +269,7 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull PyFunction function, @Nullable PyExpression receiver,
+  public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull Callable callable, @Nullable PyExpression receiver,
                                                                @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
     // Collect generic params of object type
@@ -279,7 +279,7 @@ public class PyTypeChecker {
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
-    final PyClass cls = function.getContainingClass();
+    final PyClass cls = (callable instanceof PyFunction) ? ((PyFunction)callable).getContainingClass() : null;
     if (cls != null) {
       final PyFunction init = cls.findInitOrNew(true);
       // Unify generics in constructor
@@ -346,17 +346,17 @@ public class PyTypeChecker {
           if (!(type instanceof PyFunctionType)) {
             return null;
           }
-          final PyFunction function = ((PyFunctionType)type).getFunction();
+          final Callable callable = ((PyFunctionType)type).getCallable();
           final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
           final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
           final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
-          final PyParameter[] parameters = function.getParameterList().getParameters();
+          final PyParameter[] parameters = callable.getParameterList().getParameters();
           if (parameters.length >= 2) {
             final PyNamedParameter param = parameters[1].getAsNamed();
             if (arg != null && param != null) {
               final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
               arguments.put(arg, param);
-              final AnalyzeCallResults results = new AnalyzeCallResults(function, receiver, arguments);
+              final AnalyzeCallResults results = new AnalyzeCallResults(callable, receiver, arguments);
               if (firstResults == null) {
                 firstResults = results;
               }
@@ -382,8 +382,8 @@ public class PyTypeChecker {
       if (resolved instanceof PyTypedElement) {
         final PyType type = ((PyTypedElement)resolved).getType(context);
         if (type instanceof PyFunctionType) {
-          final PyFunction function = ((PyFunctionType)type).getFunction();
-          final PyParameter[] parameters = function.getParameterList().getParameters();
+          final Callable callable = ((PyFunctionType)type).getCallable();
+          final PyParameter[] parameters = callable.getParameterList().getParameters();
           if (parameters.length == 2) {
             final PyNamedParameter param = parameters[1].getAsNamed();
             if (param != null) {
@@ -391,7 +391,7 @@ public class PyTypeChecker {
               final PyExpression arg = expr.getIndexExpression();
               if (arg != null) {
                 arguments.put(arg, param);
-                return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+                return new AnalyzeCallResults(callable, expr.getOperand(), arguments);
               }
             }
           }
@@ -423,20 +423,20 @@ public class PyTypeChecker {
   }
 
   public static class AnalyzeCallResults {
-    @NotNull private final PyFunction myFunction;
+    @NotNull private final Callable myCallable;
     @Nullable private final PyExpression myReceiver;
     @NotNull private final Map<PyExpression, PyNamedParameter> myArguments;
 
-    public AnalyzeCallResults(@NotNull PyFunction function, @Nullable PyExpression receiver,
+    public AnalyzeCallResults(@NotNull Callable callable, @Nullable PyExpression receiver,
                               @NotNull Map<PyExpression, PyNamedParameter> arguments) {
-      myFunction = function;
+      myCallable = callable;
       myReceiver = receiver;
       myArguments = arguments;
     }
 
     @NotNull
-    public PyFunction getFunction() {
-      return myFunction;
+    public Callable getCallable() {
+      return myCallable;
     }
 
     @Nullable

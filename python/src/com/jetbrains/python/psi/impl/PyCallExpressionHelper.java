@@ -1,13 +1,17 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -334,6 +338,201 @@ public class PyCallExpressionHelper {
           return kwarg.getValueExpression();
         }
       }
+    }
+    return null;
+  }
+
+  public static PyType getCallType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    if (!TypeEvalStack.mayEvaluate(call)) {
+      return null;
+    }
+    try {
+      PyExpression callee = call.getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        // hardwired special cases
+        if (PyNames.SUPER.equals(callee.getText())) {
+          final Maybe<PyType> superCallType = getSuperCallType(call, context);
+          if (superCallType.isDefined()) {
+            return superCallType.value();
+          }
+        }
+        if ("type".equals(callee.getText())) {
+          final PyExpression[] args = call.getArguments();
+          if (args.length == 1) {
+            final PyExpression arg = args[0];
+            final PyType argType = arg.getType(context);
+            if (argType instanceof PyClassType) {
+              final PyClassType classType = (PyClassType)argType;
+              if (!classType.isDefinition()) {
+                final PyClass cls = classType.getPyClass();
+                return cls.getType(context);
+              }
+            }
+            else {
+              return null;
+            }
+          }
+        }
+        // normal cases
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(resolveContext).multiResolve(false);
+        if (targets.length > 0) {
+          PsiElement target = targets[0].getElement();
+          if (target == null) {
+            return null;
+          }
+          PyClass cls = null;
+          PyFunction init = null;
+          if (target instanceof PyClass) {
+            cls = (PyClass)target;
+            init = cls.findInitOrNew(true);
+          }
+          else if (target instanceof PyFunction) {
+            final PyFunction f = (PyFunction)target;
+            if (PyNames.INIT.equals(f.getName())) {
+              init = f;
+              cls = f.getContainingClass();
+            }
+          }
+          if (init != null) {
+            final PyType t = init.getReturnType(context, (PyReferenceExpression)callee);
+            if (cls != null) {
+              if (init.getContainingClass() != cls) {
+                if (t instanceof PyCollectionType) {
+                  final PyType elementType = ((PyCollectionType)t).getElementType(context);
+                  return new PyCollectionTypeImpl(cls, false, elementType);
+                }
+                return new PyClassTypeImpl(cls, false);
+              }
+            }
+            if (t != null && !(t instanceof PyNoneType)) {
+              if (t instanceof PyTypeReference) {
+                PyType resolved = ((PyTypeReference)t).resolve(callee, context);
+                if (resolved == null && cls != null) {
+                  return PyUnionType.createWeakType(new PyClassTypeImpl(cls, false));
+                }
+              }
+              return t;
+            }
+          }
+          if (cls != null) {
+            return new PyClassTypeImpl(cls, false);
+          }
+          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
+          if (providedType != null) {
+            if (providedType instanceof PyClassType) {
+              return ((PyClassType)providedType).toInstance();
+            }
+            return providedType;
+          }
+          if (target instanceof Callable) {
+            final Callable callable = (Callable)target;
+            PyType returnType = callable.getReturnType(context, (PyReferenceExpression)callee);
+            if (returnType != null) {
+              return returnType;
+            }
+            return new PyReturnTypeReference(callable);
+          }
+        }
+      }
+      if (callee == null) {
+        return null;
+      }
+      else {
+        final PyType type = context.getType(callee);
+        if (type instanceof PyCallableType) {
+          final PyQualifiedExpression callSite = callee instanceof PyQualifiedExpression ? (PyQualifiedExpression)callee : null;
+          return ((PyCallableType) type).getCallType(context, callSite);
+        }
+        return null;
+      }
+    }
+    finally {
+      TypeEvalStack.evaluated(call);
+    }
+  }
+
+  @NotNull
+  private static Maybe<PyType> getSuperCallType(@NotNull PyCallExpression call, TypeEvalContext context) {
+    final PyExpression callee = call.getCallee();
+    if (callee instanceof PyReferenceExpression) {
+      PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
+      if (must_be_super_init instanceof PyFunction) {
+        PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
+        if (must_be_super == PyBuiltinCache.getInstance(call).getClass(PyNames.SUPER)) {
+          PyArgumentList arglist = call.getArgumentList();
+          if (arglist != null) {
+            final PyClass containingClass = PsiTreeUtil.getParentOfType(call, PyClass.class);
+            PyExpression[] args = arglist.getArguments();
+            if (args.length > 1) {
+              PyExpression first_arg = args[0];
+              if (first_arg instanceof PyReferenceExpression) {
+                final PyReferenceExpression firstArgRef = (PyReferenceExpression)first_arg;
+                final PyExpression qualifier = firstArgRef.getQualifier();
+                if (qualifier != null && PyNames.CLASS.equals(firstArgRef.getReferencedName())) {
+                  final PsiReference qRef = qualifier.getReference();
+                  final PsiElement element = qRef == null ? null : qRef.resolve();
+                  if (element instanceof PyParameter) {
+                    final PyParameterList parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList.class);
+                    if (parameterList != null && element == parameterList.getParameters()[0]) {
+                      return new Maybe<PyType>(getSuperCallTypeForArguments(context, containingClass, args[1]));
+                    }
+                  }
+                }
+                PsiElement possible_class = firstArgRef.getReference().resolve();
+                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                  final PyClass first_class = (PyClass)possible_class;
+                  return new Maybe<PyType>(getSuperCallTypeForArguments(context, first_class, args[1]));
+                }
+              }
+            }
+            else if (((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() && containingClass != null) {
+              return new Maybe<PyType>(getSuperClassUnionType(containingClass));
+            }
+          }
+        }
+      }
+    }
+    return new Maybe<PyType>();
+  }
+
+  @Nullable
+  private static PyType getSuperCallTypeForArguments(TypeEvalContext context, PyClass firstClass, PyExpression second_arg) {
+    // check 2nd argument, too; it should be an instance
+    if (second_arg != null) {
+      PyType second_type = context.getType(second_arg);
+      if (second_type instanceof PyClassType) {
+        // imitate isinstance(second_arg, possible_class)
+        PyClass secondClass = ((PyClassType)second_type).getPyClass();
+        if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
+          return getSuperClassUnionType(firstClass);
+        }
+        if (secondClass.isSubclass(firstClass)) {
+          final Iterator<PyClass> iterator = firstClass.iterateAncestorClasses().iterator();
+          if (iterator.hasNext()) {
+            return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getSuperClassUnionType(@NotNull PyClass pyClass) {
+    // TODO: this is closer to being correct than simply taking first superclass type but still not entirely correct;
+    // super can also delegate to sibling types
+    // TODO handle __mro__ here
+    final PyClass[] supers = pyClass.getSuperClasses();
+    if (supers.length > 0) {
+      if (supers.length == 1) {
+        return new PyClassTypeImpl(supers[0], false);
+      }
+      List<PyType> superTypes = new ArrayList<PyType>();
+      for (PyClass aSuper : supers) {
+        superTypes.add(new PyClassTypeImpl(aSuper, false));
+      }
+      return PyUnionType.union(superTypes);
     }
     return null;
   }

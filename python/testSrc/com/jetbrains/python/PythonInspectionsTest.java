@@ -306,4 +306,9 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyDecoratorInspection() {    //PY-3348
     doHighlightingTest(PyDecoratorInspection.class);
   }
+
+  // PY-5807
+  public void testPyShadowingBuiltinsInspection() {
+    doHighlightingTest(PyShadowingBuiltinsInspection.class);
+  }
 }
