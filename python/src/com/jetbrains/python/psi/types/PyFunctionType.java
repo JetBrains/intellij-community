@@ -1,10 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -14,23 +11,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Type of a particular function that is represented as a {@link PyFunction} in the PSI tree.
- *
- * TODO: Maybe this class should extend PyClassType and have a Python mock class for <code>type 'function'</code> in the __builtins__.
+ * Type of a particular function that is represented as a {@link Callable} in the PSI tree.
  *
  * @author vlan
  */
 public class PyFunctionType implements PyCallableType {
-  @NotNull private final PyFunction myFunction;
+  @NotNull private final Callable myCallable;
 
-  public PyFunctionType(@NotNull PyFunction function) {
-    myFunction = function;
+  public PyFunctionType(@NotNull Callable callable) {
+    myCallable = callable;
   }
 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    return myFunction.getReturnType(context, callSite);
+    return myCallable.getReturnType(context, callSite);
   }
 
   @Override
@@ -61,7 +56,7 @@ public class PyFunctionType implements PyCallableType {
   }
 
   @NotNull
-  public PyFunction getFunction() {
-    return myFunction;
+  public Callable getCallable() {
+    return myCallable;
   }
 }
