@@ -24,7 +24,7 @@ public class GradleTextAttributes {
    */
   public static final TextAttributesKey GRADLE_LOCAL_CHANGE = TextAttributesKey.createTextAttributesKey(
     "GRADLE_LOCAL_CHANGE",
-    new TextAttributes(JBColor.GREEN, null, null, null, Font.PLAIN)
+    new TextAttributes(new JBColor(new Color(130, 184, 22), JBColor.green), null, null, null, Font.PLAIN)
   );
 
   /**
