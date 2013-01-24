@@ -10,6 +10,8 @@ import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
 
+import java.util.List;
+
 /**
  * User : ktisha
  */
@@ -24,6 +26,12 @@ public class PyElIfUnwrapper extends PyUnwrapper {
     final PsiElement parent = PsiTreeUtil.getTopmostParentOfType(element, PyStatementWithElse.class);
     context.extractPart(element);
     context.delete(parent);
+  }
+
+  @Override
+  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+    super.collectAffectedElements(e, toExtract);
+    return PsiTreeUtil.getParentOfType(e, PyStatementWithElse.class);
   }
 
   @Override
