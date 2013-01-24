@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Should be implemented by an {@link com.intellij.openapi.components.ApplicationComponent}
+ * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}
  *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
