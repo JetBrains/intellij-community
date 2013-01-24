@@ -107,7 +107,7 @@ public class JavaCompletionSorting {
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
     if (reference == null) return null;
 
-    return new RecursionWeigher(position, reference, expression, expectedInfos);
+    return new RecursionWeigher(position, parameters.getCompletionType(), reference, expression, expectedInfos);
   }
 
   @Nullable
