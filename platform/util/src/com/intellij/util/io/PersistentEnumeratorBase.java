@@ -434,7 +434,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       PagedFileStorage storage = myKeyStorage.getPagedFileStorage();
       LOG.info("isSameKey:"+idx + "," + addr + ","+ storage.myPageSize + ","+storage.myValuesAreBufferAligned + "," + value);
       try {
-        if (addr < 0) LOG.info(""+isKeyAtIndex(value, -idx - 1));
+        if (addr < 0) {
+          myKeyReadStream.setup(-addr - 1, myKeyStoreFileLength);
+          Data read = myDataDescriptor.read(myKeyReadStream);
+          LOG.info(read + "," + myDataDescriptor.isEqual(read, value));
+        }
       } catch (Throwable t) {}
       throw ae;
     }
