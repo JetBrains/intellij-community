@@ -191,7 +191,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       @Override
       public void appClosing() {
         // save fullscreen window states
-        if (SystemInfo.isMacOSLion && GeneralSettings.getInstance().isReopenLastProject()) {
+        if (isFullScreenSupportedInCurrentOS() && GeneralSettings.getInstance().isReopenLastProject()) {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
           
           if (openProjects.length > 0) {
@@ -250,14 +250,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public boolean isFullScreen(@NotNull Frame frame) {
-    if (SystemInfo.isMac && SystemInfo.isMacOSLion) {
-      return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
-    }
-    if (SystemInfo.isWindows) {
-      GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
-      return (device != null && device.getDefaultConfiguration().getBounds().equals(frame.getBounds()) && frame.isUndecorated());
-    }
-    return false;
+    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
   }
 
   @Override
@@ -736,7 +729,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         extendedState = ((FramePeer)frame.getPeer()).getState();
       }
       boolean usePreviousBounds = extendedState == Frame.MAXIMIZED_BOTH ||
-                                  SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+                                  isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame);
       Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
       if (rectangle == null) { //frame is out of the screen?
         rectangle = ScreenUtil.getScreenRectangle(0, 0);
@@ -829,37 +822,44 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher;
   }
   
-  public static void toggleFullScreen(IdeFrameImpl frame) {
-    if (SystemInfo.isMac && SystemInfo.isMacOSLion) {
-      frame.getFrameDecorator().toggleFullScreen();
+  public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) {
+    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen)
       return;
-    }
 
-    if (SystemInfo.isWindows) {
-      GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
-      if (device != null) {
-        boolean isFullScreenNow = device.getDefaultConfiguration().getBounds().equals(frame.getBounds()) && frame.isUndecorated();
-        Object o = frame.getRootPane().getClientProperty("oldBounds");
-        Rectangle oldBounds = (o instanceof Rectangle) ? (Rectangle)o : null;
+    try {
+      if (SystemInfo.isMacOSLion) {
+        frame.getFrameDecorator().toggleFullScreen(fullScreen);
+        return;
+      }
+
+      if (SystemInfo.isWindows) {
+        GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
+        if (device == null) return;
         try {
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-          if (!isFullScreenNow)
+          if (fullScreen) {
             frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
+          }
           frame.dispose();
-          frame.setUndecorated(!isFullScreenNow);
-        } finally {
-          if (isFullScreenNow) {
-            if (oldBounds != null)
-              frame.setBounds(oldBounds);
+          frame.setUndecorated(fullScreen);
+        }
+        finally {
+          if (fullScreen) {
+            frame.setBounds(device.getDefaultConfiguration().getBounds());
           }
           else {
-            frame.setBounds(device.getDefaultConfiguration().getBounds());
+            Object o = frame.getRootPane().getClientProperty("oldBounds");
+            if (o instanceof Rectangle) {
+              frame.setBounds((Rectangle)o);
+            }
           }
           frame.setVisible(true);
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
         }
       }
-      return;
+    }
+    finally {
+      frame.storeFullScreenStateIfNeeded(fullScreen);
     }
   }
 }

@@ -43,14 +43,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -199,13 +198,13 @@ public class NewProjectUtil {
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
-        if (SystemInfo.isMacOSLion) {
+        if (WindowManager.isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
           if (lastFocusedFrame != null) {
             boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
             if (fullScreen) {
-              newProject.putUserData(MacMainFrameDecorator.SHOULD_OPEN_IN_FULLSCREEN, Boolean.TRUE);
+              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULLSCREEN, Boolean.TRUE);
             }
           }
         }
