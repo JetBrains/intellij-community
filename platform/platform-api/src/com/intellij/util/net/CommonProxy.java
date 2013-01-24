@@ -91,9 +91,10 @@ public class CommonProxy extends ProxySelector {
 
     for (Map.Entry<String, String> entry : props.entrySet()) {
       if (! StringUtil.isEmptyOrSpaces(entry.getValue())) {
-        PopupUtil.showBalloonForActiveComponent("You have JVM property '" + entry.getKey() + "' set to '" + entry.getValue() + "'.\n" +
-                                          "This may lead to incorrect behaviour. Proxy should be set in Settings | " + HTTPProxySettingsPanel.NAME,
-                                          MessageType.WARNING);
+        final String message = "You have JVM property '" + entry.getKey() + "' set to '" + entry.getValue() + "'.\n" +
+                               "This may lead to incorrect behaviour. Proxy should be set in Settings | " + HTTPProxySettingsPanel.NAME;
+        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+        LOG.info(message);
       }
     }
   }
@@ -104,36 +105,42 @@ public class CommonProxy extends ProxySelector {
 
   public void noProxy(@NotNull final String protocol, @NotNull final String host, final int port) {
     synchronized (myLock) {
+      LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
       myNoProxy.add(new HostInfo(protocol, host, port));
     }
   }
 
   public void removeNoProxy(@NotNull final String protocol, @NotNull final String host, final int port) {
     synchronized (myLock) {
+      LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
       myNoProxy.remove(new HostInfo(protocol, host, port));
     }
   }
 
   public void setCustom(@NotNull final String key, @NotNull final ProxySelector proxySelector) {
     synchronized (myLock) {
+      LOG.debug("custom set: " + key + ", " + proxySelector.toString());
       myCustom.put(key, proxySelector);
     }
   }
 
   public void setCustomAuth(@NotNull final String host, final int port, final NonStaticAuthenticator authenticator) {
     synchronized (myLock) {
+      LOG.debug("custom auth set: " + host + ":" + port + ", " + authenticator.toString());
       myCustomAuth.put(Pair.create(host, port), authenticator);
     }
   }
 
   public void removeCustomAuth(@NotNull final String host, final int port) {
     synchronized (myLock) {
+      LOG.debug("custom auth removed: " + host + ":" + port);
       myCustomAuth.remove(Pair.create(host, port));
     }
   }
 
   public void removeCustom(@NotNull final String key) {
     synchronized (myLock) {
+      LOG.debug("custom set: " + key);
       myCustom.remove(key);
     }
   }
@@ -144,6 +151,7 @@ public class CommonProxy extends ProxySelector {
 
   @Override
   public List<Proxy> select(URI uri) {
+    LOG.debug("CommonProxy.select called for " + uri.toString());
     isInstalledAssertion();
     myIDEAWide.resetAuthenticator();
 
@@ -154,18 +162,25 @@ public class CommonProxy extends ProxySelector {
     final HostInfo info = new HostInfo(protocol, host, port);
     final Map<String, ProxySelector> copy;
     synchronized (myLock) {
-      if (myNoProxy.contains(info)) return ourNoProxy;
+      if (myNoProxy.contains(info)) {
+        LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
+        return ourNoProxy;
+      }
       copy = new HashMap<String, ProxySelector>(myCustom);
     }
     for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
       final List<Proxy> proxies = entry.getValue().select(uri);
-      if (proxies != null && proxies.size() > 0) return proxies;
+      if (proxies != null && proxies.size() > 0) {
+        LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
+        return proxies;
+      }
     }
     // delegate to IDEA-wide behaviour
     final List<Proxy> selected = myIDEAWide.select(uri);
     if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY) {
       myIDEAWide.myHttpConfigurable.LAST_ERROR = null;
     }
+    LOG.debug("CommonProxy.select returns something after common platform check for " + uri.toString() + ", " + selected.toString());
     return selected;
   }
 
@@ -175,6 +190,7 @@ public class CommonProxy extends ProxySelector {
     myIDEAWide.myHttpConfigurable.removeGeneric(new HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
     final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
     if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY && isa != null && Comparing.equal(myIDEAWide.myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
+      LOG.debug("connection failed message passed to http configurable");
       myIDEAWide.myHttpConfigurable.LAST_ERROR = ioe.getMessage();
     }
   }
@@ -188,17 +204,26 @@ public class CommonProxy extends ProxySelector {
 
     @Override
     protected PasswordAuthentication getPasswordAuthentication() {
+      final String siteStr = getRequestingSite() == null ? null : getRequestingSite().toString();
+      LOG.debug("CommonAuthenticator.getPasswordAuthentication called for " + siteStr);
       String host = getRequestingHost();
       if (host == null) {
         final InetAddress site = getRequestingSite();
-        host = site.getHostName();
+        if (site != null) {
+          host = site.getHostName();
+        } else if (getRequestingURL() != null) {
+          host = getRequestingURL().getHost();
+        }
       }
       final int port = getRequestingPort();
 
       final Map<Pair<String, Integer>, NonStaticAuthenticator> copy;
       synchronized (myLock) {
         // for hosts defined as no proxy we will NOT pass authentication to not provoke credentials
-        if (myNoProxy.contains(new HostInfo(getRequestingProtocol(), host, port))) return null;
+        if (myNoProxy.contains(new HostInfo(getRequestingProtocol(), host, port))) {
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies list (" + siteStr + ")");
+          return null;
+        }
         copy = new HashMap<Pair<String, Integer>, NonStaticAuthenticator>(myCustomAuth);
       }
 
@@ -207,23 +232,39 @@ public class CommonProxy extends ProxySelector {
         final NonStaticAuthenticator authenticator1 = copy.get(hostInfo);
         if (authenticator1 != null) {
           prepareAuthenticator(authenticator1);
-          return authenticator1.getPasswordAuthentication();
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found custom authenticator for " + siteStr + ", " + authenticator1.toString());
+          final PasswordAuthentication authentication = authenticator1.getPasswordAuthentication();
+          logAuthentication(authentication);
+          return authentication;
         }
       }
 
       // according to idea-wide settings
       if (myHttpConfigurable.USE_HTTP_PROXY) {
-        return myHttpConfigurable.getPromptedAuthentication(getRequestingHost() + ":" + getRequestingPort(), getRequestingPrompt());
+        LOG.debug("CommonAuthenticator.getPasswordAuthentication will return common defined proxy");
+        final PasswordAuthentication authentication =
+          myHttpConfigurable.getPromptedAuthentication(getRequestingHost() + ":" + getRequestingPort(), getRequestingPrompt());
+        logAuthentication(authentication);
+        return authentication;
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
+        LOG.debug("CommonAuthenticator.getPasswordAuthentication will return autodetected proxy");
         // same but without remembering the results..
         final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(getRequestingHost(), getRequestingPort());
         if (password != null) {
+          logAuthentication(password);
           return password;
         }
 
-        return myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), true);
+        final PasswordAuthentication authentication =
+          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), true);
+        logAuthentication(authentication);
+        return authentication;
       } else {
-        return myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), false);
+        LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
+        final PasswordAuthentication authentication =
+          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), false);
+        logAuthentication(authentication);
+        return authentication;
       }
     }
 
@@ -236,6 +277,14 @@ public class CommonProxy extends ProxySelector {
       authenticator.setRequestingScheme(getRequestingScheme());//ntlm
       authenticator.setRequestingURL(getRequestingURL());
       authenticator.setRequestorType(getRequestorType());
+    }
+  }
+
+  private void logAuthentication(PasswordAuthentication authentication) {
+    if (authentication == null) {
+      LOG.debug("CommonAuthenticator.getPasswordAuthentication returned null");
+    } else {
+      LOG.debug("CommonAuthenticator.getPasswordAuthentication returned authentication pair with login: " + authentication.getUserName());
     }
   }
 
@@ -267,18 +316,26 @@ public class CommonProxy extends ProxySelector {
 
     @Override
     public List<Proxy> select(URI uri) {
+      LOG.debug("IDEA-wide proxy selector asked for " + uri.toString());
       final String scheme = uri.getScheme();
-      if (! ("http".equals(scheme) || "https".equals(scheme))) return ourNoProxy;
+      if (! ("http".equals(scheme) || "https".equals(scheme))) {
+        LOG.debug("IDEA-wide proxy selector returns no proxies: not http/https scheme: " + scheme);
+        return ourNoProxy;
+      }
       if (myHttpConfigurable.USE_HTTP_PROXY) {
         final Proxy proxy = new Proxy(myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
                                       new InetSocketAddress(myHttpConfigurable.PROXY_HOST, myHttpConfigurable.PROXY_PORT));
+        LOG.debug("IDEA-wide proxy selector returns defined proxy: " + proxy);
         return Collections.singletonList(proxy);
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
         final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
         final ProxySelector proxySelector = proxySearch.getProxySelector();
         if (proxySelector != null) {
-          return proxySelector.select(uri);
+          final List<Proxy> select = proxySelector.select(uri);
+          LOG.debug("IDEA-wide proxy selector found autodetected proxies: " + select);
+          return select;
         }
+        LOG.debug("IDEA-wide proxy selector found no autodetected proxies");
       }
       return ourNoProxy;
     }
