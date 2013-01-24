@@ -45,7 +45,7 @@ class ToolSelectDialog extends DialogWrapper {
     });
     init();
     pack();
-    if(actionIdToSelect != null){
+    if (actionIdToSelect != null) {
       myToolsPanel.selectTool(actionIdToSelect);
     }
     setTitle(ToolsBundle.message("tools.dialog.title"));

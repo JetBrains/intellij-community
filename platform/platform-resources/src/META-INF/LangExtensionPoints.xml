@@ -50,7 +50,7 @@
   <extensionPoint name="typedHandler"
                   interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"/>
   <extensionPoint name="selectionDequotingFilter"
-                    interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
+                  interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
 
   <extensionPoint name="joinLinesHandler"
                   interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate"/>
@@ -180,7 +180,7 @@
 
   <extensionPoint name="usageTargetProvider"
                   interface="com.intellij.usages.UsageTargetProvider"/>
-  <extensionPoint name="usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider" />
+  <extensionPoint name="usageToPsiElementProvider" interface="com.intellij.usages.UsageToPsiElementProvider"/>
 
   <extensionPoint name="customScopesProvider"
                   interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
@@ -248,10 +248,13 @@
 
   <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
   <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
-  <extensionPoint name="refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
+  <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
+                  interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
   <extensionPoint name="refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
-  <extensionPoint name="refactoring.moveAllClassesInFileHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler"/>
-  <extensionPoint name="refactoring.moveClassToInnerHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler"/>
+  <extensionPoint name="refactoring.moveAllClassesInFileHandler"
+                  interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler"/>
+  <extensionPoint name="refactoring.moveClassToInnerHandler"
+                  interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler"/>
   <extensionPoint name="refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
@@ -308,7 +311,8 @@
 
   <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint"/>
   <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
-  <extensionPoint name="psi.fileReferenceHelper" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
+  <extensionPoint name="psi.fileReferenceHelper"
+                  interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper"/>
 
   <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP"/>
   <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
@@ -363,7 +367,7 @@
   <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
   <extensionPoint name="vetoRenameCondition" interface="com.intellij.openapi.util.Condition"/>
   <extensionPoint name="rename.inplace.resolveSnapshotProvider"
-                  beanClass="com.intellij.lang.LanguageExtensionPoint" />
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
@@ -415,7 +419,8 @@
   <extensionPoint name="codeInsight.delegateMethods" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.gotoSuper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="codeInsight.lineMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-  <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
+  <extensionPoint name="codeInsight.surroundWithRangeAdjuster"
+                  interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster"/>
 
   <extensionPoint name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
@@ -493,7 +498,8 @@
   <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
 
-  <extensionPoint name="refactoring.elementListenerProvider" interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
+  <extensionPoint name="refactoring.elementListenerProvider"
+                  interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="fileTemplateDefaultExtension" beanClass="com.intellij.ide.fileTemplates.FileTemplateDefaultExtension"/>
@@ -561,7 +567,7 @@
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="psi.clsCustomNavigationPolicy"
-                  interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" />
+                  interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
   <extensionPoint name="psi.clsDecompiledFileProvider"
                   interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
 
@@ -574,4 +580,6 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="html.inlineScriptTokenTypesProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
 </extensionPoints>
