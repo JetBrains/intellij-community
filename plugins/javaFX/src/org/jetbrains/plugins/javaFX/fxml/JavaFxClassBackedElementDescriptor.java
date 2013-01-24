@@ -38,7 +38,11 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   private final String myName;
 
   public JavaFxClassBackedElementDescriptor(String name, XmlTag tag) {
-    this(name, findPsiClass(name, JavaFXNSDescriptor.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject()));
+    this(name, findPsiClass(name, tag));
+  }
+
+  public static PsiClass findPsiClass(String name, XmlTag tag) {
+    return findPsiClass(name, JavaFXNSDescriptor.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
   }
 
   public JavaFxClassBackedElementDescriptor(String name, PsiClass aClass) {
@@ -314,8 +318,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
     final String packageName = StringUtil.getPackageName(attributeName);
     if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
-      final PsiClass classWithStaticProperty =
-        findPsiClass(packageName, JavaFXNSDescriptor.parseImports((XmlFile)context.getContainingFile()), context, context.getProject());
+      final PsiClass classWithStaticProperty = findPsiClass(packageName, context);
       if (classWithStaticProperty != null) {
         return findPropertySetter(attributeName, classWithStaticProperty);
       }
