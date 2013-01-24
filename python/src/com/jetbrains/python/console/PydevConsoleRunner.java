@@ -277,7 +277,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
 
     RemoteSshProcess remoteProcess =
-      manager.createRemoteProcess(getProject(), data, commandLine, false);
+      manager.createRemoteProcess(getProject(), data, commandLine, true);
 
 
     Pair<Integer, Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
