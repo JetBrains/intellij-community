@@ -49,3 +49,4 @@ pycharm-flask
 pycharm-numpy
 textmate
 restClient
+puppet

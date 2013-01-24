@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
+import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +43,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
     final List<Module> validModules = data.getValidModules();
+    Collections.sort(validModules, new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModel(new CollectionComboBoxModel(validModules, selection));
     myModuleComboBox.setRenderer(new PyModuleRenderer());

@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.*;
  */
 public class PyTryUnwrapper extends PyUnwrapper {
   public PyTryUnwrapper() {
-    super(PyBundle.message("unwrap.while"));
+    super(PyBundle.message("unwrap.try"));
   }
 
   public boolean isApplicableTo(PsiElement e) {
@@ -21,6 +21,7 @@ public class PyTryUnwrapper extends PyUnwrapper {
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
     final PyTryExceptStatement statement = (PyTryExceptStatement)element;
     context.extractPart(statement);
+    context.extractPart(statement.getFinallyPart());
     context.delete(statement);
   }
 }

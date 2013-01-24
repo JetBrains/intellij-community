@@ -179,6 +179,7 @@ private layoutPlugins(layouts) {
         include(name: "joni.jar")
       }
     }
+    layouts.layoutPlugin("puppet")
   }
 
   layouts.layoutPlugins()

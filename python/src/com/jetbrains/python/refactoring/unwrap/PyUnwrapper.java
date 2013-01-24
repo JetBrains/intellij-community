@@ -1,13 +1,14 @@
 package com.jetbrains.python.refactoring.unwrap;
 
 import com.intellij.codeInsight.unwrap.AbstractUnwrapper;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
 
 import java.util.List;
@@ -41,11 +42,11 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
       if (from instanceof PyStatementWithElse) {
         extractFromConditionalBlock((PyStatementWithElse)from);
       }
-      else if (from instanceof PyElsePart) {
-        extractFromElseBlock((PyElsePart)from);
+      else if (from instanceof PyStatementPart) {
+        extractFromElseBlock((PyStatementPart)from);
       }
-      else if (from instanceof PyIfPartElifImpl) {
-        extractFromElseBlock((PyIfPartElifImpl)from);
+      else if (from instanceof PyWithStatement) {
+        extractFromWithBlock((PyWithStatement)from);
       }
     }
 
@@ -65,6 +66,10 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
         final PyTryPart part = ((PyTryExceptStatement)from).getTryPart();
         statementList = part.getStatementList();
       }
+      else if (from instanceof PyForStatement) {
+        final PyForPart part = ((PyForStatement)from).getForPart();
+        statementList = part.getStatementList();
+      }
       if (statementList != null)
         extract(statementList.getFirstChild(), statementList.getLastChild(), from);
     }
@@ -73,6 +78,15 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
       PyStatementList body = from.getStatementList();
       if (body != null)
         extract(body.getFirstChild(), body.getLastChild(), from.getParent());
+    }
+
+    public void extractFromWithBlock(PyWithStatement from) {
+      ASTNode n = from.getNode().findChildByType(PyElementTypes.STATEMENT_LISTS);
+      if (n != null) {
+        final PyStatementList body = (PyStatementList)n.getPsi();
+        if (body != null)
+          extract(body.getFirstChild(), body.getLastChild(), from);
+      }
     }
 
     @Override

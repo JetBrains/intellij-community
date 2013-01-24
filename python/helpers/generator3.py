@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.118" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.121" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1077,6 +1077,16 @@ class ModuleRedeclarator(object):
             ("datetime", "minute"): ('r', G_INT),
             ("datetime", "second"): ('r', G_INT),
             ("datetime", "microsecond"): ('r', G_INT),
+            ("date", "day"): ('r', G_INT),
+            ("date", "month"): ('r', G_INT),
+            ("date", "year"): ('r', G_INT),
+            ("time", "hour"): ('r', G_INT),
+            ("time", "minute"): ('r', G_INT),
+            ("time", "second"): ('r', G_INT),
+            ("time", "microsecond"): ('r', G_INT),
+            ("timedelta", "days"): ('r', G_INT),
+            ("timedelta", "seconds"): ('r', G_INT),
+            ("timedelta", "microseconds"): ('r', G_INT),
         },
     }
 
@@ -1141,6 +1151,7 @@ class ModuleRedeclarator(object):
         ("bytes", "fromhex"): "classmethod",
         ("bytearray", "maketrans"): "staticmethod",
         ("bytes", "maketrans"): "staticmethod",
+        ("int", "from_bytes"): "classmethod",
     }
 
     def isSkippedInModule(self, p_module, p_value):
@@ -1285,7 +1296,7 @@ class ModuleRedeclarator(object):
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % s
-                                s = "None"
+                                s = "object()"
                             else:
                                 notice = " # (!) forward: %s, real value is %r" % (found_name, s)
                         if SANE_REPR_RE.match(s):
@@ -1293,7 +1304,7 @@ class ModuleRedeclarator(object):
                         else:
                             if not found_name:
                                 notice = " # (!) real value is %r" % s
-                            out(indent, prefix, "None", postfix, notice)
+                            out(indent, prefix, "object()", postfix, notice)
 
 
     def getRetType(self, s):

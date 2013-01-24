@@ -85,6 +85,6 @@ public class PyABCUtil {
   }
 
   private static boolean hasMethod(PyClass cls, String name, boolean inherited) {
-    return cls.findMethodByName(name, inherited) != null;
+    return cls.findMethodByName(name, inherited) != null || cls.findClassAttribute(name, inherited) != null;
   }
 }

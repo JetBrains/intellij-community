@@ -36,7 +36,7 @@
         </constraints>
         <properties>
           <labelFor value="63296"/>
-          <text value="&amp;URL Pattern:"/>
+          <text value="&amp;URL/Path Pattern:"/>
         </properties>
       </component>
       <component id="63296" class="javax.swing.JTextField" binding="myURLPatternTextField" default-binding="true">

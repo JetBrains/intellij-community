@@ -1,5 +1,6 @@
 package com.jetbrains.python.documentation.doctest;
 
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
@@ -63,5 +64,13 @@ public class PyDocstringLexer extends PythonIndentingLexer {
       return 0;
     }
     return indent > 0? indent - 1 : indent;
+  }
+
+  protected void checkSignificantTokens() {
+    IElementType tokenType = getBaseTokenType();
+    if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType() &&
+      ! ourIgnoreSet.contains(tokenType)) {
+      myLineHasSignificantTokens = true;
+    }
   }
 }
