@@ -21,13 +21,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
 /**
  * @author Eugene Zhuravlev
  * @since Mar 30, 2005
  */
-class ToolProcessAdapter extends ProcessAdapter {
+public class ToolProcessAdapter extends ProcessAdapter {
   private final Project myProject;
   private final boolean mySynchronizeAfterExecution;
   private final String myName;
@@ -47,7 +48,10 @@ class ToolProcessAdapter extends ProcessAdapter {
           VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
             public void run() {
               if (ProjectManagerEx.getInstanceEx().isProjectOpened(myProject)) {
-                WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
+                StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+                if (statusBar != null) {
+                  statusBar.setInfo(message);
+                }
               }
             }
           });
@@ -55,7 +59,10 @@ class ToolProcessAdapter extends ProcessAdapter {
       });
     }
     if (ProjectManagerEx.getInstanceEx().isProjectOpened(myProject)) {
-      WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (statusBar != null) {
+        statusBar.setInfo(message);
+      }
     }
   }
 }

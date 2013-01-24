@@ -38,6 +38,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -50,7 +51,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
-class ToolEditorDialog extends DialogWrapper {
+public class ToolEditorDialog extends DialogWrapper {
   private final JTextField myNameField = new JTextField();
   private final JTextField myDescriptionField = new JTextField();
   private final ComboBox myGroupCombo = new ComboBox(-1);
@@ -78,7 +79,8 @@ class ToolEditorDialog extends DialogWrapper {
   private FilterInfo[] myOutputFilters;
   private final Project myProject;
 
-  protected JComponent createCenterPanel() {
+  @NotNull
+  protected JPanel createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints constr;
 
@@ -167,14 +169,14 @@ class ToolEditorDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("preferences.externalToolsEdit");
   }
 
-  ToolEditorDialog(JComponent parent, String title) {
+  protected ToolEditorDialog(JComponent parent, String title) {
     super(parent, true);
 
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
@@ -216,7 +218,7 @@ class ToolEditorDialog extends DialogWrapper {
               if (file != null) {
                 myTfCommand.setText(file.getPresentableUrl());
                 String workingDirectory = myTfCommandWorkingDirectory.getText();
-                if (workingDirectory == null || workingDirectory.length() == 0){
+                if (workingDirectory == null || workingDirectory.length() == 0) {
                   VirtualFile parent = file.getParent();
                   if (parent != null && parent.isDirectory()) {
                     myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
@@ -357,7 +359,7 @@ class ToolEditorDialog extends DialogWrapper {
           myTextField.getDocument().insertString(position, "$" + macro + "$", null);
           myTextField.setCaretPosition(position + macro.length() + 2);
         }
-        catch(BadLocationException ignored){
+        catch (BadLocationException ignored) {
         }
       }
       IdeFocusManager.findInstance().requestFocus(myTextField, true);
@@ -398,7 +400,7 @@ class ToolEditorDialog extends DialogWrapper {
   }
 
   public Tool getData() {
-    Tool tool = new Tool();
+    Tool tool = createTool();
 
     tool.setName(convertString(myNameField.getText()));
     tool.setDescription(convertString(myDescriptionField.getText()));
@@ -422,17 +424,21 @@ class ToolEditorDialog extends DialogWrapper {
     return tool;
   }
 
-  protected String getDimensionServiceKey(){
+  protected Tool createTool() {
+    return new Tool();
+  }
+
+  protected String getDimensionServiceKey() {
     return "#com.intellij.tools.ToolEditorDialog";
   }
 
   /**
-    * Initialize controls
-    */
-  void setData(Tool tool, String[] existingGroups) {
+   * Initialize controls
+   */
+  protected void setData(Tool tool, String[] existingGroups) {
     myNameField.setText(tool.getName());
     myDescriptionField.setText(tool.getDescription());
-    if (myGroupCombo.getItemCount() > 0){
+    if (myGroupCombo.getItemCount() > 0) {
       myGroupCombo.removeAllItems();
     }
     for (int i = 0; i < existingGroups.length; i++) {

@@ -192,8 +192,10 @@ public class Tool implements SchemeElement {
 
   public void setOutputFilters(FilterInfo[] filters) {
     myOutputFilters = new ArrayList<FilterInfo>();
-    for (int i = 0; i < filters.length; i++) {
-      myOutputFilters.add(filters[i]);
+    if (filters != null) {
+      for (int i = 0; i < filters.length; i++) {
+        myOutputFilters.add(filters[i]);
+      }
     }
   }
 
@@ -311,7 +313,7 @@ public class Tool implements SchemeElement {
   }
 
   @Nullable
-  GeneralCommandLine createCommandLine(DataContext dataContext) {
+  public GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory(null);
     }

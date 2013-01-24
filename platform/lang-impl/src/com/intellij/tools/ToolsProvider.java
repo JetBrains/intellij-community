@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.tools;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.collect.Lists;
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.List;
 
 /**
  * @author traff
  */
-public class ExternalToolsGroup extends BaseExternalToolsGroup<Tool> {
-  @Override
-  protected List<ToolsGroup<Tool>> getToolsGroups() {
-    return ToolManager.getInstance().getGroups();
-  }
+public abstract class ToolsProvider {
+  public static final ExtensionPointName<ToolsProvider> EP_NAME = ExtensionPointName.create("com.intellij.toolsProvider");
 
-  @Override
-  protected List<Tool> getToolsByGroupName(String groupName) {
-    return ToolManager.getInstance().getTools(groupName);
-  }
+  public abstract List<Tool> getTools();
 
-  @Override
-  protected ToolAction createToolAction(Tool tool) {
-    return new ToolAction(tool);
+  public static List<Tool> getAllTools() {
+    List<Tool> result = Lists.newArrayList();
+    for (ToolsProvider provider : EP_NAME.getExtensions()) {
+      result.addAll(provider.getTools());
+    }
+
+    return result;
   }
 }

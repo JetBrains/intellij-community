@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.tools;
 
-import com.intellij.openapi.options.CompoundScheme;
+import java.util.List;
 
-public class ToolsGroup<T extends Tool> extends CompoundScheme<T> {
-  public ToolsGroup(final String name) {
-    super(name);
-  }
-
-  public void moveElementUp(final T tool) {
-    int index = getElements().indexOf(tool);
-    removeElement(tool);
-    insertElement(tool, index - 1);
-  }
-
-  public void moveElementDown(final T tool) {
-    int index = getElements().indexOf(tool);
-    removeElement(tool);
-    insertElement(tool, index + 1);
+/**
+ * @author traff
+ */
+public class LocalToolsProvider extends ToolsProvider {
+  @Override
+  public List<Tool> getTools() {
+    return ToolManager.getInstance().getTools();
   }
 }
