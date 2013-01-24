@@ -39,7 +39,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
       for (ClsStubBuilderFactory factory : factories) {
         if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {
-          PsiFileStub stub = factory.buildFileStub(file, content);
+          PsiFileStub stub = factory.buildFileStub(file, content, project);
           if (stub != null) return stub;
         }
       }
