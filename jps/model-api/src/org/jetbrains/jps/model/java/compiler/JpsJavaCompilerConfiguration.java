@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -55,7 +56,7 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
 
   void addResourcePattern(String pattern);
   List<String> getResourcePatterns();
-
+  boolean isResourceFile(@NotNull File file, @NotNull File srcRoot);
 
   @Nullable
   String getByteCodeTargetLevel(String moduleName);

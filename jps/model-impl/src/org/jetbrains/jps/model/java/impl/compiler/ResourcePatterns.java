@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.incremental;
+package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 
 import java.io.File;
@@ -37,15 +34,12 @@ import java.util.regex.Pattern;
  *         Date: 10/6/11
  */
 public class ResourcePatterns {
-  public static final Key<ResourcePatterns> KEY = Key.create("_resource_patterns_");
-
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.ResourcePatterns");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns");
 
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<CompiledPattern>();
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
 
-  public ResourcePatterns(JpsProject project) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+  public ResourcePatterns(final JpsJavaCompilerConfiguration configuration) {
     final List<String> patterns = configuration.getResourcePatterns();
     for (String pattern : patterns) {
       final CompiledPattern regexp = convertToRegexp(pattern);
@@ -63,8 +57,7 @@ public class ResourcePatterns {
     final String relativePathToParent;
     final String parentPath = file.getParent();
     if (parentPath != null) {
-      relativePathToParent = "/" + FileUtil.getRelativePath(FileUtil.toSystemIndependentName(srcRoot.getAbsolutePath()),
-                                                            FileUtil.toSystemIndependentName(parentPath), '/', SystemInfo.isFileSystemCaseSensitive);
+      relativePathToParent = "/" + FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(srcRoot.getAbsolutePath()), FileUtilRt.toSystemIndependentName(parentPath), '/', SystemInfo.isFileSystemCaseSensitive);
     }
     else {
       relativePathToParent = null;
@@ -118,7 +111,7 @@ public class ResourcePatterns {
       wildcardPattern = wildcardPattern.substring(1);
     }
 
-    wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
+    wildcardPattern = FileUtilRt.toSystemIndependentName(wildcardPattern);
 
     String srcRoot = null;
     int colon = wildcardPattern.indexOf(":");

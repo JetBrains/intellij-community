@@ -22,6 +22,7 @@ import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -77,11 +78,12 @@ public final class ResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public FileFilter createFileFilter() {
     final JpsProject project = myTarget.getModule().getProject();
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
     return new FileFilter() {
       @Override
       public boolean accept(File file) {
-        return !excludes.isExcluded(file);
+        return !excludes.isExcluded(file) && configuration.isResourceFile(file, getRootFile());
       }
     };
   }

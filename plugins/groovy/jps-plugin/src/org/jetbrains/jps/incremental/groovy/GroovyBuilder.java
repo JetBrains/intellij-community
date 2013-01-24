@@ -335,13 +335,15 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private List<File> collectChangedFiles(CompileContext context,
                                                 DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, final JpsGroovySettings settings) throws IOException {
-    final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
-    assert patterns != null;
+
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    assert configuration != null;
+
     final List<File> toCompile = new ArrayList<File>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot.root)) { //todo file type check
+        if (isGroovyFile(path) && !configuration.isResourceFile(file, sourceRoot.root)) { //todo file type check
           if (myForStubs && settings.isExcludedFromStubGeneration(file)) {
             return true;
           }
