@@ -37,7 +37,7 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    runTool(myActionId, e.getDataContext());
+    runTool(myActionId, e.getDataContext(), e);
   }
 
   @Override
@@ -63,9 +63,13 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   static void runTool(String actionId, DataContext context) {
+    runTool(actionId, context, null);
+  }
+
+  static void runTool(String actionId, DataContext context, AnActionEvent e) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      tool.execute(new HackyDataContext(context));
+      tool.execute(e, new HackyDataContext(context, e));
     }
   }
 }
