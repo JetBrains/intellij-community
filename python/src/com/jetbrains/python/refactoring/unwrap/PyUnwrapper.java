@@ -65,6 +65,10 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
         final PyTryPart part = ((PyTryExceptStatement)from).getTryPart();
         statementList = part.getStatementList();
       }
+      else if (from instanceof PyForStatement) {
+        final PyForPart part = ((PyForStatement)from).getForPart();
+        statementList = part.getStatementList();
+      }
       if (statementList != null)
         extract(statementList.getFirstChild(), statementList.getLastChild(), from);
     }

@@ -16,7 +16,8 @@ public class PyUnwrapDescriptor extends UnwrapDescriptorBase{
       new PyElseUnwrapper(),
       new PyElIfUnwrapper(),
       new PyElIfRemover(),
-      new PyTryUnwrapper()
+      new PyTryUnwrapper(),
+      new PyForUnwrapper()
     };
   }
 }
