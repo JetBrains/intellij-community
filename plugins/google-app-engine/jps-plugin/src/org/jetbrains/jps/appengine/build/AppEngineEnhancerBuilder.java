@@ -59,6 +59,11 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     return doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE;
   }
 
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.emptyList();
+  }
+
   private static boolean processModule(final CompileContext context,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                        JpsAppEngineModuleExtension extension) throws IOException, ProjectBuildException {
