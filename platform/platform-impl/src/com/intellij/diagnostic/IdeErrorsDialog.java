@@ -514,7 +514,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePane(AbstractMessage message) {
-    final ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
+    final ErrorReportSubmitter submitter = message != null ? getSubmitter(message.getThrowable()) : null;
     myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && myInternalMode);
   }
 
