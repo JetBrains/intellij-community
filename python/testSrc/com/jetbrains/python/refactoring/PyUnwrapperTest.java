@@ -41,6 +41,8 @@ public class PyUnwrapperTest extends PyTestCase {
 
   public void testWithUnwrap()                        throws Throwable {doTest(LanguageLevel.PYTHON32);}
 
+  public void testEndOfStatementUnwrap()              throws Throwable {doTest();}
+
   private void doTest() {
     doTest(0);
   }
