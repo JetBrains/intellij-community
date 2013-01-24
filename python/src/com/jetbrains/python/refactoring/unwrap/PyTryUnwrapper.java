@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.*;
  */
 public class PyTryUnwrapper extends PyUnwrapper {
   public PyTryUnwrapper() {
-    super(PyBundle.message("unwrap.while"));
+    super(PyBundle.message("unwrap.try"));
   }
 
   public boolean isApplicableTo(PsiElement e) {
