@@ -4,6 +4,8 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -84,17 +86,24 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   public void handleInsert(InsertionContext context) {
     PsiVariable variable = getObject();
 
-    context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
+    Document document = context.getDocument();
+    document.replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
     context.commitDocument();
 
     if (variable instanceof PsiField) {
       if (willBeImported()) {
+        RangeMarker toDelete = JavaCompletionUtil.insertTemporary(context.getTailOffset(), document, " ");
+        context.commitDocument();
         final PsiReferenceExpression
           ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
         if (ref != null) {
           ref.bindToElementViaStaticImport(((PsiField)variable).getContainingClass());
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
+        if (toDelete.isValid()) {
+          document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+        }
+        context.commitDocument();
       }
       else if (shouldQualify((PsiField)variable, context)) {
         qualifyFieldReference(context, (PsiField)variable);
@@ -127,7 +136,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       if (ref != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
-        context.getDocument().insertString(ref.getTextRange().getStartOffset(), "!");
+        document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
   }
