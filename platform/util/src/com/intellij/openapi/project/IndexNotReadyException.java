@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,14 @@ package com.intellij.openapi.project;
  * {@link com.intellij.openapi.project.DumbService#smartInvokeLater(Runnable)}
  * <li> otherwise, add {@link DumbService#isDumb()} checks where necessary
  *
+ * @author peter
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAware
- * @author peter
  */
 public class IndexNotReadyException extends RuntimeException {
+
+  @Override
+  public String getMessage() {
+    return "Please change caller according to " + IndexNotReadyException.class.getName() + " documentation";
+  }
 }
