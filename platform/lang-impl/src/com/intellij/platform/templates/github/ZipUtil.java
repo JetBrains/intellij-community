@@ -26,6 +26,10 @@ public class ZipUtil {
 
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
+  public interface ContentProcessor {
+    byte[] processContent(byte[] content, String fileName) throws IOException;
+  }
+
   public static void unzipWithProgressSynchronously(
     @Nullable Project project,
     @NotNull String progressTitle,
@@ -39,7 +43,7 @@ public class ZipUtil {
         public Boolean call() throws IOException {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           ZipInputStream stream = new ZipInputStream(new FileInputStream(zipArchive));
-          unzip(progress, extractToDir, stream, null);
+          unzip(progress, extractToDir, stream, null, null);
           return true;
         }
       },
@@ -64,14 +68,15 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            File extractToDir,
                            ZipInputStream stream,
-                           @Nullable NullableFunction<String, String> pathConvertor) throws IOException {
+                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable ContentProcessor contentProcessor) throws IOException {
     if (progress != null) {
       progress.setText("Extracting...");
     }
     try {
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
-        unzipEntryToDir(progress, entry, extractToDir, stream, pathConvertor);
+        unzipEntryToDir(progress, entry, extractToDir, stream, pathConvertor, contentProcessor);
       }
     } finally {
       stream.close();
@@ -82,7 +87,8 @@ public class ZipUtil {
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final File extractToDir,
                                       ZipInputStream stream,
-                                      @Nullable NullableFunction<String, String> pathConvertor) throws IOException {
+                                      @Nullable NullableFunction<String, String> pathConvertor,
+                                      @Nullable ContentProcessor contentProcessor) throws IOException {
 
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
     if (pathConvertor != null) {
@@ -105,7 +111,13 @@ public class ZipUtil {
     }
     FileOutputStream fileOutputStream = new FileOutputStream(child);
     try {
-      FileUtil.copy(stream, fileOutputStream);
+      if (contentProcessor == null) {
+        FileUtil.copy(stream, fileOutputStream);
+      }
+      else {
+        byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child.getName());
+        fileOutputStream.write(content);
+      }
     } finally {
       fileOutputStream.close();
     }
