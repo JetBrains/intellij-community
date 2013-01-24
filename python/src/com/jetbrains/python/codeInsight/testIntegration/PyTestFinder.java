@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * User : catherine
@@ -37,19 +36,18 @@ public class PyTestFinder implements TestFinder {
     PyDocStringOwner source = findSourceElement(element);
     if (source == null) return Collections.emptySet();
 
-    String klassName = source.getName();
-    Pattern pattern = Pattern.compile(".*" + klassName + ".*");
+    String sourceName = source.getName();
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
 
     if (source instanceof PyClass) {
       Collection<String> names = PyClassNameIndex.allKeys(element.getProject());
       for (String eachName : names) {
-        if (pattern.matcher(eachName).matches()) {
+        if (eachName.contains(sourceName)) {
           for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
             if (PythonUnitTestUtil.isTestCaseClass(eachClass) || PythonDocTestUtil.isDocTestClass(eachClass)) {
               classesWithProximities.add(
-                  new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+                  new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
           }
         }
@@ -58,12 +56,12 @@ public class PyTestFinder implements TestFinder {
     else {
       Collection<String> names = PyFunctionNameIndex.allKeys(element.getProject());
       for (String eachName : names) {
-        if (pattern.matcher(eachName).matches()) {
+        if (eachName.contains(sourceName)) {
           for (PyFunction eachFunction : PyFunctionNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
             if (PythonUnitTestUtil.isTestCaseFunction(
               eachFunction) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
               classesWithProximities.add(
-                new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
+                new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
           }
         }
