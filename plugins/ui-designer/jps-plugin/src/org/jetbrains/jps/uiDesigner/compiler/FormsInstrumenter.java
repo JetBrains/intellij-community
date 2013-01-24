@@ -128,6 +128,11 @@ public class FormsInstrumenter extends FormsBuilder {
     return ExitCode.OK;
   }
 
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.emptyList();
+  }
+
   private Map<File, Collection<File>> instrumentForms(
     CompileContext context, ModuleChunk chunk, final Map<File, String> chunkSourcePath, final InstrumentationClassFinder finder, Collection<File> forms, OutputConsumer outConsumer
   ) throws ProjectBuildException {

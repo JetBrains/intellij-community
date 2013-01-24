@@ -67,6 +67,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
+  private static final String GROOVY_EXTENSION = "groovy";
+  private static final String GPP_EXTENSION = "gpp";
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -407,7 +409,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public static boolean isGroovyFile(String path) {
-    return path.endsWith(".groovy") || path.endsWith(".gpp");
+    return path.endsWith("." + GROOVY_EXTENSION) || path.endsWith("." + GPP_EXTENSION);
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Arrays.asList(GROOVY_EXTENSION, GPP_EXTENSION);
   }
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {
