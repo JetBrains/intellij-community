@@ -43,8 +43,9 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
-          PsiElement resolved = refExpr.resolve();
-          if (resolved instanceof PsiField) {
+          JavaResolveResult resolveResult = refExpr.advancedResolve(false);
+          final PsiElement resolved = resolveResult.getElement();
+          if (resolved instanceof PsiField && resolveResult.isStaticsScopeCorrect()) {
             SmartPsiElementPointer key = pointerManager.createSmartPsiElementPointer(refExpr);
             SmartPsiElementPointer value = pointers.get(resolved);
             if (value == null) {
