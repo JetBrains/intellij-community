@@ -22,7 +22,7 @@ public class PyElseUnwrapper extends PyElseUnwrapperBase {
   @Override
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
-    return PsiTreeUtil.getTopmostParentOfType(e, PyStatementWithElse.class);
+    return PsiTreeUtil.getParentOfType(e, PyStatementWithElse.class);
   }
 
   @Override
@@ -37,7 +37,7 @@ public class PyElseUnwrapper extends PyElseUnwrapperBase {
 
   @Override
   protected void unwrapElseBranch(PyElement branch, PsiElement parent, Context context) throws IncorrectOperationException {
-    parent = PsiTreeUtil.getTopmostParentOfType(branch, PyStatementWithElse.class);
+    parent = PsiTreeUtil.getParentOfType(branch, PyStatementWithElse.class);
     context.extractPart(branch);
     context.delete(parent);
   }

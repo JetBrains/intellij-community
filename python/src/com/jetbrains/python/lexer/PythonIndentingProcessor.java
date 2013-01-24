@@ -228,7 +228,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     }
   }
 
-  private void checkSignificantTokens() {
+  protected void checkSignificantTokens() {
     IElementType tokenType = getBaseTokenType();
     if (!PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(tokenType) && tokenType != getCommentTokenType()) {
       myLineHasSignificantTokens = true;
