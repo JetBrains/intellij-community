@@ -15,7 +15,6 @@
  */
 package com.intellij.designer.designSurface.tools;
 
-import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentTargetFilter;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;

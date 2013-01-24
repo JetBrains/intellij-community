@@ -1032,6 +1032,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   @NotNull
   public String getComponentName() {
+    return getFileTypeComponentName();
+  }
+
+  public static String getFileTypeComponentName() {
     return PlatformUtils.isCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
 

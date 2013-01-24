@@ -1,17 +1,27 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -20,10 +30,12 @@ import org.jetbrains.annotations.Nullable;
 public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
+  private final boolean myStatic;
 
-  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name) {
+  public JavaFxPropertyElementDescriptor(PsiClass psiClass, String name, boolean isStatic) {
     myPsiClass = psiClass;
     myName = name;
+    myStatic = isStatic;
   }
 
   @Override
@@ -38,9 +50,31 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    //todo
-    
+    final PsiElement declaration = getDeclaration();
+    if (declaration instanceof PsiField) {
+      final PsiType psiType = ((PsiField)declaration).getType();
+      final List<XmlElementDescriptor> descriptors = collectDescriptorsByCollection(psiType, declaration.getResolveScope());
+      if (!descriptors.isEmpty()) return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+    }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  public static List<XmlElementDescriptor> collectDescriptorsByCollection(PsiType psiType, GlobalSearchScope resolveScope) {
+    final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(psiType, resolveScope);
+    if (collectionItemType != null) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
+      if (aClass != null) {
+        ClassInheritorsSearch.search(aClass).forEach(new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass aClass) {
+            descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+            return true;
+          }
+        });
+      }
+    }
+    return descriptors;
   }
 
   @Nullable
@@ -51,7 +85,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else if (myPsiClass != null) {
-      return new JavaFxPropertyElementDescriptor(myPsiClass, name);
+      return new JavaFxPropertyElementDescriptor(myPsiClass, name, name.indexOf('.') > 0);
     }
     return null;
   }
@@ -112,6 +146,9 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   @Override
   public String getName() {
+    if (myPsiClass != null && myStatic) {
+      return StringUtil.getQualifiedName(myPsiClass.getName(), myName);
+    }
     return myName;
   }
 

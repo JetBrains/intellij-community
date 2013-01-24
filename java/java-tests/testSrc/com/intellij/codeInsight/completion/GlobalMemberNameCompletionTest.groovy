@@ -197,6 +197,44 @@ class A {
 '''
   }
 
+  public void "test static import before an identifier"() {
+    myFixture.addClass '''
+package test.t1;
+
+public enum DemoEnum
+{
+        XXONE,
+        TWO
+}'''
+    doTest """
+import test.t1.DemoEnum;
+
+public class Demo {
+
+        public static void doStuff(DemoEnum enumValue, String value) {}
+        public static void main(String[] args)
+        {
+                String val = "anyValue";
+                doStuff(XXON<caret>val);
+        }
+}
+""", true, """
+import test.t1.DemoEnum;
+
+import static test.t1.DemoEnum.XXONE;
+
+public class Demo {
+
+        public static void doStuff(DemoEnum enumValue, String value) {}
+        public static void main(String[] args)
+        {
+                String val = "anyValue";
+                doStuff(XXONE<caret>val);
+        }
+}
+"""
+  }
+
   private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 

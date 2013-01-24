@@ -132,13 +132,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     @NonNls Properties props = new Properties();
 
     Calendar calendar = Calendar.getInstance();
-    Date date = new Date(calendar.getTimeInMillis());
+    Date date = myTestDate == null ? calendar.getTime() : myTestDate;
     SimpleDateFormat sdfMonthNameShort = new SimpleDateFormat("MMM");
     SimpleDateFormat sdfMonthNameFull = new SimpleDateFormat("MMMM");
     SimpleDateFormat sdfYearFull = new SimpleDateFormat("yyyy");
 
-    props.setProperty("DATE", DateFormatUtil.formatDate(calendar.getTime()));
-    props.setProperty("TIME", DateFormatUtil.formatTime(calendar.getTime()));
+    props.setProperty("DATE", DateFormatUtil.formatDate(date));
+    props.setProperty("TIME", DateFormatUtil.formatTime(date));
     props.setProperty("YEAR", sdfYearFull.format(date));
     props.setProperty("MONTH", getCalendarValue(calendar, Calendar.MONTH));
     props.setProperty("MONTH_NAME_SHORT", sdfMonthNameShort.format(date));
@@ -454,6 +454,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
   public URL getDefaultIncludeDescription() {
     return null; // todo
+  }
+
+  private Date myTestDate;
+
+  @TestOnly
+  public void setTestDate(Date testDate) {
+    myTestDate = testDate;
   }
 
   private static class RecentTemplatesManager implements JDOMExternalizable {

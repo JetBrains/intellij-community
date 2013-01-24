@@ -84,6 +84,9 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
   }
 
+  /**
+   * Use {@link org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory#createMatcher(String)} instead of direct call to constructor
+   */
   public WildcardFileNameMatcher(@NotNull @NonNls String pattern) {
     myPattern = pattern;
     myMatcher = createMatcher(pattern);

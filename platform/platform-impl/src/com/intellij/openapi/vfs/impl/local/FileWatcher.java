@@ -343,6 +343,10 @@ public class FileWatcher {
       myWriter.newLine();
       myWriter.flush();
     }
+
+    protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
+      return true;
+    }
   }
 
   public boolean isWatched(@NotNull final VirtualFile file) {

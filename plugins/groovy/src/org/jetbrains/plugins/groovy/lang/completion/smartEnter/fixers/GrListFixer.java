@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
+import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -26,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GrListFixer implements GrFixer {
+public class GrListFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
   @Override
-  public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
     if (psiElement.getParent() instanceof GrListOrMap) {
       final PsiElement next = PsiUtil.skipWhitespacesAndComments(psiElement.getNextSibling(), true);
       if (next != null && !GroovyTokenTypes.mCOMMA.equals(next.getNode().getElementType())) {

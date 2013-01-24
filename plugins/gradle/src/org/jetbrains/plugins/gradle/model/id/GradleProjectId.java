@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 2/14/12 1:34 PM
  */
-public class GradleProjectId extends GradleAbstractEntityId {
+public class GradleProjectId extends AbstractGradleEntityId {
 
   public GradleProjectId(@NotNull GradleEntityOwner owner) {
     super(GradleEntityType.PROJECT, owner);

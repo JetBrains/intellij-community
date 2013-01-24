@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.diff;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.*;
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
@@ -35,6 +36,10 @@ public abstract class GradleProjectStructureChangeVisitorAdapter implements Grad
 
   @Override
   public void visit(@NotNull GradleJarPresenceChange change) {
+  }
+
+  @Override
+  public void visit(@NotNull GradleOutdatedLibraryVersionChange change) {
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -28,9 +29,11 @@ import java.beans.PropertyChangeListener;
  */
 class ListToolbarDecorator extends ToolbarDecorator {
   private final JList myList;
+  private EditableModel myEditableModel;
 
-  ListToolbarDecorator(JList list) {
+  ListToolbarDecorator(JList list, @Nullable EditableModel editableModel) {
     myList = list;
+    myEditableModel = editableModel;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = true;
     createActions();
     myList.addListSelectionListener(new ListSelectionListener() {
@@ -116,11 +119,11 @@ class ListToolbarDecorator extends ToolbarDecorator {
 
   @Override
   protected boolean isModelEditable() {
-    return myList.getModel() instanceof EditableModel;
+    return myEditableModel != null || myList.getModel() instanceof EditableModel;
   }
 
   @Override
   protected void installDnDSupport() {
-    RowsDnDSupport.install(myList, (EditableModel)myList.getModel());
+    RowsDnDSupport.install(myList, myEditableModel != null ? myEditableModel : (EditableModel)myList.getModel());
   }
 }

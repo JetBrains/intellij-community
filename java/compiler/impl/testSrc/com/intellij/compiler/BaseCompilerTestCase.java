@@ -1,7 +1,9 @@
 package com.intellij.compiler;
 
+import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -11,9 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,11 +60,22 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     if (useExternalCompiler()) {
+      myProject.getMessageBus().connect(myTestRootDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+        @Override
+        public void rootsChanged(ModuleRootEvent event) {
+          //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
+          forceFSRescan();
+        }
+      });
       CompilerTestUtil.enableExternalCompiler(myProject);
     }
     else {
       CompilerTestUtil.disableExternalCompiler(myProject);
     }
+  }
+
+  protected void forceFSRescan() {
+    BuildManager.getInstance().clearState(myProject);
   }
 
   @Override
@@ -249,7 +260,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
         };
         if (useExternalCompiler()) {
           myProject.save();
-          CompilerTestUtil.saveSdkTable();
+          CompilerTestUtil.saveApplicationSettings();
           CompilerTestUtil.scanSourceRootsToRecompile(myProject);
         }
         action.run(callback);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
+package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
+import org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 29.07.2008
+ * @author Denis Zhdanov
+ * @since 1/23/13 9:47 AM
  */
-public interface GrFixer {
-    void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException;
+public class GradleOutdatedSyncTreeFilterAction extends AbstractGradleSyncTreeFilterAction {
+
+  public GradleOutdatedSyncTreeFilterAction() {
+    super(GradleColorAndFontDescriptorsProvider.OUTDATED_ENTITY);
+  }
 }

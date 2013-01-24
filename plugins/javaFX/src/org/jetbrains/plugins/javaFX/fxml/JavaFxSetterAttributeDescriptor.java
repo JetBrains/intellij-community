@@ -31,9 +31,11 @@ import org.jetbrains.annotations.Nullable;
 public class JavaFxSetterAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;
+  private final PsiMethod myPsiMethod;
 
-  public JavaFxSetterAttributeDescriptor(String name, PsiClass psiClass) {
-    myName = name;
+  public JavaFxSetterAttributeDescriptor(PsiMethod psiMethod, PsiClass psiClass) {
+    myPsiMethod = psiMethod;
+    myName = psiMethod.getName();
     myPsiClass = psiClass;
   }
 
@@ -82,13 +84,7 @@ public class JavaFxSetterAttributeDescriptor implements XmlAttributeDescriptor {
 
   @Override
   public PsiElement getDeclaration() {
-    if (myPsiClass != null) {
-      final PsiMethod[] methods = myPsiClass.findMethodsByName(myName, false);
-      if (methods.length == 1) { //todo
-        return methods[0];
-      }
-    }
-    return null;
+    return myPsiMethod != null && myPsiMethod.isValid() ? myPsiMethod : null;
   }
 
   @Override

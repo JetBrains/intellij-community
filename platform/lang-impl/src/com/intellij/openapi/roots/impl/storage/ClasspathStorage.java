@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,47 +188,7 @@ public class ClasspathStorage implements StateStorage {
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
-    final SaveSession session = new SaveSession() {
-      public boolean needsSave() throws StateStorageException {
-        assert mySession == this;
-        return ClasspathStorage.this.needsSave();
-      }
-
-      @Override
-      public void save() throws StateStorageException {
-        assert mySession == this;
-        ClasspathStorage.this.save();
-      }
-
-      @Override
-      @Nullable
-      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-        return null;
-      }
-
-      @Override
-      public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
-        if (needsSave()) {
-          final List<IFile> list = new ArrayList<IFile>();
-          final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-          getFileSet().listModifiedFiles(virtualFiles);
-          convert2Io(list, virtualFiles);
-          return list;
-        }
-        else {
-          return Collections.emptyList();
-        }
-      }
-
-      @Override
-      public List<IFile> getAllStorageFiles() {
-        final List<IFile> list = new ArrayList<IFile>();
-        final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
-        getFileSet().listFiles(virtualFiles);
-        convert2Io(list, virtualFiles);
-        return list;
-      }
-    };
+    final SaveSession session = new MySaveSession();
 
     mySession = session;
     return session;
@@ -448,6 +408,48 @@ public class ClasspathStorage implements StateStorage {
     @Override
     public void modulePathChanged(Module module, String path) {
       throw new UnsupportedOperationException(getDescription());
+    }
+  }
+
+  private class MySaveSession implements SaveSession, SafeWriteRequestor {
+    public boolean needsSave() throws StateStorageException {
+      assert mySession == this;
+      return ClasspathStorage.this.needsSave();
+    }
+
+    @Override
+    public void save() throws StateStorageException {
+      assert mySession == this;
+      ClasspathStorage.this.save();
+    }
+
+    @Override
+    @Nullable
+    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      return null;
+    }
+
+    @Override
+    public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
+      if (needsSave()) {
+        final List<IFile> list = new ArrayList<IFile>();
+        final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+        getFileSet().listModifiedFiles(virtualFiles);
+        convert2Io(list, virtualFiles);
+        return list;
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
+
+    @Override
+    public List<IFile> getAllStorageFiles() {
+      final List<IFile> list = new ArrayList<IFile>();
+      final ArrayList<VirtualFile> virtualFiles = new ArrayList<VirtualFile>();
+      getFileSet().listFiles(virtualFiles);
+      convert2Io(list, virtualFiles);
+      return list;
     }
   }
 }

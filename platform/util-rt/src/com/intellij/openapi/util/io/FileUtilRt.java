@@ -42,6 +42,19 @@ public class FileUtilRt {
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
+  public static final FileFilter ALL_FILES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return true;
+    }
+  };
+  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return file.isDirectory();
+    }
+  };
+
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     @Override
     protected byte[] initialValue() {

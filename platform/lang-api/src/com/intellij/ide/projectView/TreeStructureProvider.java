@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import java.util.Collection;
 
 /**
  * Allows a plugin to modify the structure of a project as displayed in the project view.
- * Plugin implementations of this interface must be registered as project components in the
- * plugin.xml file.
  */
-
 public interface TreeStructureProvider {
   ExtensionPointName<TreeStructureProvider> EP_NAME = ExtensionPointName.create("com.intellij.treeStructureProvider");
 
@@ -39,7 +36,7 @@ public interface TreeStructureProvider {
    *                 Elements of the collection are of type {@link ProjectViewNode}.
    * @param settings the current project view settings.
    * @return the modified collection of child nodes, or <code>children</code> if no modifications
-   * are required.
+   *         are required.
    */
   Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings);
 
@@ -49,9 +46,10 @@ public interface TreeStructureProvider {
    *
    * @param selected the list of nodes currently selected in the project view.
    * @param dataName the identifier of the requested data object (for example, as defined in
-   * {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
+   *                 {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
    * @return the data object, or null if no data object can be returned by this provider.
    * @see com.intellij.openapi.actionSystem.DataProvider
    */
-  @Nullable Object getData(Collection<AbstractTreeNode> selected, String dataName);
+  @Nullable
+  Object getData(Collection<AbstractTreeNode> selected, String dataName);
 }

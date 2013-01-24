@@ -140,7 +140,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  static void autodetectPlatformPrefix() {
+  public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
     }
@@ -215,7 +215,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     File projectFile = getIprFile();
 
-    myProject = createProject(projectFile, getClass().getName() + "." + getName());
+    myProject = doCreateProject(projectFile);
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
@@ -226,6 +226,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     runStartupActivities();
+  }
+
+  protected Project doCreateProject(File projectFile) throws Exception {
+    return createProject(projectFile, getClass().getName() + "." + getName());
   }
 
   @NotNull
@@ -743,13 +747,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true), refresh);
   }
 
-  protected File createTempFile(String name, String text) throws IOException {
+  protected File createTempFile(String name, @Nullable String text) throws IOException {
     File directory = createTempDirectory();
     File file = new File(directory, name);
     if (!file.createNewFile()) {
       throw new IOException("Can't create " + file);
     }
-    FileUtil.writeToFile(file, text);
+    if (text != null) {
+      FileUtil.writeToFile(file, text);
+    }
     return file;
   }
 

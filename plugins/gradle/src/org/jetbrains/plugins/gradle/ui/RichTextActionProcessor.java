@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -29,9 +30,6 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
       return null;
     }
     final Presentation presentation = action.getTemplatePresentation();
-    if (presentation == null) {
-      return null;
-    }
     
     if (presentation.getIcon() != null) {
       return new ActionButton(action, presentation.clone(), GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE, new Dimension(0, 0)) {
@@ -49,12 +47,13 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
     JLabel result = new JLabel(text) {
       public void paint(Graphics g) {
         super.paint(g);
-        final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 1;
+        final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 2;
         final int width = getFontMetrics(getFont()).stringWidth(getText());
         g.drawLine(0, y, width, y);
       }
     };
-    result.setForeground(UIUtil.getInactiveTextColor().darker().darker().darker());
+    Color color = UIUtil.isUnderDarcula() ? Color.ORANGE : Color.BLUE;
+    result.setForeground(color);
     result.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     new ClickListener() {

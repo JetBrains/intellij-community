@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.jps.model.fileTypes;
+
+import com.intellij.openapi.fileTypes.FileNameMatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 /**
- * @author Denis Zhdanov
- * @since 11/15/11 1:33 PM
+ * @author nik
  */
-public abstract class GradleAbstractProjectStructureChange implements GradleProjectStructureChange {
-
-  @Override
-  public int hashCode() {
-    return 31;
+public abstract class FileNameMatcherFactory {
+  public static FileNameMatcherFactory getInstance() {
+    return JpsServiceManager.getInstance().getService(FileNameMatcherFactory.class);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    return o != null && getClass() == o.getClass();
-  }
+  @NotNull
+  public abstract FileNameMatcher createMatcher(@NotNull String pattern);
 }

@@ -142,6 +142,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         if (sourcePaths == null) continue;
 
         for (String sourcePath : sourcePaths) {
+          if (!descriptor.getFilter().shouldBeCopied(sourcePath, pd)) {
+            continue;
+          }
           DestinationInfo destination = descriptor.getDestinationInfo();
           if (destination instanceof ExplodedDestinationInfo) {
             descriptor.copyFromRoot(sourcePath, descriptor.getRootIndex(), destination.getOutputPath(), context,

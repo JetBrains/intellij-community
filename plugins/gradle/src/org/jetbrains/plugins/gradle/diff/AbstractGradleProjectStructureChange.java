@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.completion.smartEnter;
-
-import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
+package org.jetbrains.plugins.gradle.diff;
 
 /**
- * @author Dmitry.Krasilschikov
- * Date: 29.07.2008
+ * @author Denis Zhdanov
+ * @since 11/15/11 1:33 PM
  */
-public class GroovyCommentBreakerEnterProcessor implements EnterProcessor {
-    public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
-        return false;
-    }
+public abstract class AbstractGradleProjectStructureChange implements GradleProjectStructureChange {
+
+  @Override
+  public int hashCode() {
+    return 31;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o != null && getClass() == o.getClass();
+  }
 }

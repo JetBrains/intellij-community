@@ -213,20 +213,6 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     }
 
     if (value) {
-      if (parent instanceof PsiField && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
-        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return;
-      }
-      else if (parent instanceof PsiMethod && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
-        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
-        if (type == JavaTokenType.DEFAULT_KEYWORD && findExtensionMethodMarker((PsiMethod)parent) != null) return;
-      }
-      else if (parent instanceof PsiClass && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
-        if (type == JavaTokenType.PUBLIC_KEYWORD) return;
-      }
-      else if (parent instanceof PsiAnnotationMethod && grandParent instanceof PsiClass && ((PsiClass)grandParent).isAnnotationType()) {
-        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
-      }
-
       if (type == JavaTokenType.PUBLIC_KEYWORD ||
           type == JavaTokenType.PRIVATE_KEYWORD ||
           type == JavaTokenType.PROTECTED_KEYWORD ||
@@ -241,6 +227,20 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           setModifierProperty(PsiModifier.PROTECTED, false);
         }
         if (type == null) return;
+      }
+
+      if (parent instanceof PsiField && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.STATIC_KEYWORD || type == JavaTokenType.FINAL_KEYWORD) return;
+      }
+      else if (parent instanceof PsiMethod && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
+        if (type == JavaTokenType.DEFAULT_KEYWORD && findExtensionMethodMarker((PsiMethod)parent) != null) return;
+      }
+      else if (parent instanceof PsiClass && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD) return;
+      }
+      else if (parent instanceof PsiAnnotationMethod && grandParent instanceof PsiClass && ((PsiClass)grandParent).isAnnotationType()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
       }
 
       if (treeElement.findChildByType(type) == null) {

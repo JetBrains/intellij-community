@@ -16,6 +16,9 @@
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,12 +43,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -148,20 +152,35 @@ public class SaveProjectAsTemplateAction extends AnAction {
                         ? ProjectRootManager.getInstance(project).getFileIndex()
                         : ModuleRootManager.getInstance(moduleToSave).getFileIndex();
       final ZipOutputStream finalStream = stream;
+
+      final FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+      final String templateText = template.getText();
+      final Pattern pattern = FileHeaderChecker.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
+
       index.iterateContent(new ContentIterator() {
         @Override
-        public boolean processFile(VirtualFile file) {
-          if (!file.isDirectory()) {
-            indicator.setText2(file.getName());
+        public boolean processFile(final VirtualFile virtualFile) {
+          if (!virtualFile.isDirectory()) {
+            indicator.setText2(virtualFile.getName());
             try {
-              String relativePath = VfsUtilCore.getRelativePath(file, dir, '/');
+              String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir, '/');
               if (relativePath == null) {
-                throw new RuntimeException("Can't find relative path for " + file);
+                throw new RuntimeException("Can't find relative path for " + virtualFile);
               }
-              ZipUtil.addFileToZip(finalStream, new File(file.getPath()), dir.getName() + "/" + relativePath, null, null);
+              ZipUtil.addFileToZip(finalStream, new File(virtualFile.getPath()), dir.getName() + "/" + relativePath, null, null, new ZipUtil.FileContentProcessor() {
+                @Override
+                public InputStream getContent(File file) throws IOException {
+                  if (virtualFile.getFileType().isBinary()) return STANDARD.getContent(file);
+
+                  String s = VfsUtilCore.loadText(virtualFile);
+                  String result = convertTemplates(s, pattern, templateText);
+
+                  return new ByteArrayInputStream(result.getBytes(virtualFile.getCharset()));
+                }
+              });
             }
             catch (IOException e) {
-              throw new RuntimeException(e);
+              LOG.error(e);
             }
           }
           indicator.checkCanceled();
@@ -193,6 +212,26 @@ public class SaveProjectAsTemplateAction extends AnAction {
       assert moduleFile != null;
       return moduleFile.getParent();
     }
+  }
+
+  public static String convertTemplates(String input, Pattern pattern, String template) {
+    Matcher matcher = pattern.matcher(input);
+    int start = matcher.matches() ? matcher.start(1) : -1;
+    StringBuilder builder = new StringBuilder(input.length() + 10);
+    for (int i = 0; i < input.length(); i++) {
+      if (start == i) {
+        builder.append(template);
+        //noinspection AssignmentToForLoopParameter
+        i = matcher.end(1);
+      }
+
+      char c = input.charAt(i);
+      if (c == '$' || c == '#') {
+        builder.append('\\');
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   @Override

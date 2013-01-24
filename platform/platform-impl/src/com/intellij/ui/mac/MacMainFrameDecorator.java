@@ -24,7 +24,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -49,9 +48,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
  */
 public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
-  
-  public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
-  
+
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
   private static boolean HAS_FULLSCREEN_UTILITIES;
   static {
@@ -226,10 +223,6 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   @Override
   public void dispose() {
     myFrame = null;
-  }
-
-  public void toggleFullScreen() {
-    toggleFullScreen(!isInFullScreen());
   }
 
   public boolean isInFullScreen() {

@@ -32,6 +32,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 
@@ -102,6 +103,8 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
       // remove temp file
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
+
+      UpdateSettings.getInstance().forceCheckForUpdateAfterRestart();
 
       String key = ApplicationManager.getApplication().isRestartCapable()
                    ? "message.settings.imported.successfully.restart"

@@ -18,11 +18,11 @@ package com.intellij.cvsSupport2.application;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.Collection;
 
 public class DeletedCVSDirectoryStorage {
@@ -47,9 +47,8 @@ public class DeletedCVSDirectoryStorage {
   public void checkNeedForPurge(File file) {
     if (!file.isDirectory()) return;
 
-    File[] subdirectories = file.listFiles(DirectoryFilter.getInstance());
-    for (int i = 0; i < subdirectories.length; i++) {
-      File subdirectory = subdirectories[i];
+    File[] subdirectories = file.listFiles(FileUtilRt.ALL_DIRECTORIES);
+    for (File subdirectory : subdirectories) {
       checkNeedForPurge(subdirectory);
     }
 
@@ -106,17 +105,4 @@ public class DeletedCVSDirectoryStorage {
   public DeleteHandler createDeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
     return new DeleteHandler(project, cvsStorageComponent);
   }
-
-  private static class DirectoryFilter implements FileFilter {
-    private static final FileFilter instance = new DirectoryFilter();
-
-    public static FileFilter getInstance() {
-      return instance;
-    }
-
-    public boolean accept(File pathname) {
-      return pathname.isDirectory();
-    }
-  }
-
 }

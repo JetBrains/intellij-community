@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,6 +37,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -81,7 +83,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
       final Module module = LangDataKeys.MODULE.getData(dataContext);
       if (module != null) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
-        if (directories.length == 1) {
+        if (directories.length >= 1) {
           element = directories[0];
         }
       }
@@ -103,10 +105,11 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
+    final PsiElement nameSuggestionContext = element;
     element = adjustForRename(dataContext, element);
     LOG.assertTrue(element != null);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    doRename(element, project, element, editor);
+    doRename(element, project, nameSuggestionContext, editor);
   }
 
   private void doRename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
@@ -132,9 +135,19 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
         final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
         if (inLib) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiDirectory);
+          LOG.assertTrue(module != null);
+          PsiDirectory[] moduleDirs = null;
+          if (nameSuggestionContext instanceof PsiPackageBase) {
+            moduleDirs = aPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+            if (moduleDirs.length <= 1) {
+              moduleDirs = null;
+            }
+          }
           final String promptMessage = "Package \'" +
                                        aPackage.getName() +
-                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename current directory";
+                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename " + 
+                                       (moduleDirs == null ? "current directory" : "current module directories");
           if (projectDirectories.length > 0) {
             int ret = Messages
               .showYesNoCancelDialog(project, promptMessage + " or all directories in project?", RefactoringBundle.message("warning.title"),
@@ -143,7 +156,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           Messages.getWarningIcon());
             if (ret == 2) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
-                       ret == 0 ? new PsiDirectory[]{psiDirectory} : projectDirectories);
+                       ret == 0 ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
           }
           else {
             if (Messages.showOkCancelDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),

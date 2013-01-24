@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @since 11/17/11 12:43 PM
  * @param <T>   entity type
  */
-public abstract class GradleAbstractEntityPresenceChange<T> extends GradleAbstractProjectStructureChange {
+public abstract class AbstractGradleEntityPresenceChange<T> extends AbstractGradleProjectStructureChange {
 
   private final T      myGradleEntity;
   private final T      myIdeEntity;
@@ -43,7 +43,7 @@ public abstract class GradleAbstractEntityPresenceChange<T> extends GradleAbstra
    * @throws IllegalArgumentException    if both of the given entities are defined or undefined. Expecting this constructor to be
    *                                     called with one <code>null</code> argument and one non-<code>null</code> argument
    */
-  public GradleAbstractEntityPresenceChange(@NotNull String entityName,
+  public AbstractGradleEntityPresenceChange(@NotNull String entityName,
                                             @Nullable T gradleEntity,
                                             @Nullable T ideEntity)
     throws IllegalArgumentException
@@ -81,7 +81,7 @@ public abstract class GradleAbstractEntityPresenceChange<T> extends GradleAbstra
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    GradleAbstractEntityPresenceChange that = (GradleAbstractEntityPresenceChange)o;
+    AbstractGradleEntityPresenceChange that = (AbstractGradleEntityPresenceChange)o;
 
     if (myGradleEntity != null ? !myGradleEntity.equals(that.myGradleEntity) : that.myGradleEntity != null) return false;
     if (myIdeEntity != null ? !myIdeEntity.equals(that.myIdeEntity) : that.myIdeEntity != null) return false;

@@ -109,6 +109,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterParameterAnno2() throws Exception { doTest(2, "final", "float", "class"); }
+  public void testFinalAfterCase() throws Exception { doTest(3, "final", "float", "class"); }
   public void testFinalInTryWithResources() throws Exception { doTest(1, "final", "float", "class"); }
   public void testClassInMethod() throws Exception { doTest(2, "class", "char"); }
   public void testIntInClassArray() throws Throwable { doTest(2, "int", "char", "final"); }

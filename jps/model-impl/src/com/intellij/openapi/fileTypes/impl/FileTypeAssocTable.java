@@ -20,7 +20,7 @@ import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -188,7 +188,7 @@ public class FileTypeAssocTable<T> {
       if (mapping.getFirst().accept(fileName)) return mapping.getSecond();
     }
 
-    return myExtensionMappings.get(FileUtil.getExtension(fileName));
+    return myExtensionMappings.get(FileUtilRt.getExtension(fileName));
   }
 
   @Nullable

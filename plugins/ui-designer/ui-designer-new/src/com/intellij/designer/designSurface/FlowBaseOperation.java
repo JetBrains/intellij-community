@@ -44,11 +44,8 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       myBounds = myContainer.getBounds(layer);
 
-      myFirstInsertFeedback = new RectangleFeedback(Color.green, 2);
-      myFirstInsertFeedback.setBounds(myBounds);
-
-      myInsertFeedback = new LineInsertFeedback(Color.green, !myHorizontal);
-      myInsertFeedback.size(myBounds.width, myBounds.height);
+      createFirstInsertFeedback();
+      createInsertFeedback();
 
       if (myContainer.getChildren().isEmpty()) {
         layer.add(myFirstInsertFeedback);
@@ -58,6 +55,16 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
       layer.repaint();
     }
+  }
+
+  protected void createInsertFeedback() {
+    myInsertFeedback = new LineInsertFeedback(Color.green, !myHorizontal);
+    myInsertFeedback.size(myBounds.width, myBounds.height);
+  }
+
+  protected void createFirstInsertFeedback() {
+    myFirstInsertFeedback = new RectangleFeedback(Color.green, 2);
+    myFirstInsertFeedback.setBounds(myBounds);
   }
 
   @Override

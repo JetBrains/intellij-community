@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -35,7 +35,7 @@ public class IgnoredPatternSet {
     return Collections.unmodifiableSet(myMasks);
   }
 
-  void setIgnoreMasks(@NotNull String list) {
+  public void setIgnoreMasks(@NotNull String list) {
     clearPatterns();
 
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
@@ -51,11 +51,11 @@ public class IgnoredPatternSet {
   void addIgnoreMask(@NotNull String ignoredFile) {
     if (myIgnorePatterns.findAssociatedFileType(ignoredFile) == null) {
       myMasks.add(ignoredFile);
-      myIgnorePatterns.addAssociation(FileTypeManager.parseFromString(ignoredFile), Boolean.TRUE);
+      myIgnorePatterns.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(ignoredFile), Boolean.TRUE);
     }
   }
 
-  boolean isIgnored(@NotNull String fileName) {
+  public boolean isIgnored(@NotNull String fileName) {
     if (myIgnorePatterns.findAssociatedFileType(fileName) == Boolean.TRUE) {
       return true;
     }

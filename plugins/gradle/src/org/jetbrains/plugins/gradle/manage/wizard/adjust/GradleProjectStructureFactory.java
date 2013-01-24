@@ -69,6 +69,11 @@ public class GradleProjectStructureFactory {
       public void visit(@NotNull GradleLibraryDependency dependency) {
         visit(dependency.getTarget());
       }
+
+      @Override
+      public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+        assert false; // We don't expect outdated library during importing project.
+      }
     });
     return GradleUtil.buildDescriptor(GradleEntityIdMapper.mapEntityToId(entity), text.get());
   }
@@ -118,6 +123,11 @@ public class GradleProjectStructureFactory {
       public void visit(@NotNull GradleLibraryDependency dependency) {
         setupController(dependency, treeModel, treeNodes);
         result.set(new GradleLibraryDependencySettings(dependency));
+      }
+
+      @Override
+      public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+        assert false; // We don't expect outdated library during importing project. 
       }
     });
     return result.get();

@@ -353,7 +353,7 @@ public final class UpdateChecker {
             try {
               final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
               if (progressIndicator != null) {
-                progressIndicator.setText(finalPluginUrl);
+                progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
               if (downloader.prepareToInstall()) {

@@ -3,15 +3,19 @@ package com.intellij.compiler;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -48,18 +52,29 @@ public class CompilerTestUtil {
     TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(project), roots, roots.size(), true);
   }
 
-  public static void saveSdkTable() {
+  public static void saveApplicationSettings() {
     try {
       ProjectJdkTableImpl table = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
-      File sdkFile = table.getExportFiles()[0];
-      FileUtil.createParentDirs(sdkFile);
       Element root = new Element("application");
       root.addContent(JDomSerializationUtil.createComponentElement(JpsGlobalLoader.SDK_TABLE_COMPONENT_NAME).addContent(table.getState().cloneContent()));
-      JDOMUtil.writeDocument(new Document(root), sdkFile, SystemProperties.getLineSeparator());
+      saveApplicationComponent(root, ((ProjectJdkTableImpl)ProjectJdkTable.getInstance()).getExportFiles()[0]);
+
+      FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+      Element fileTypesComponent = JDomSerializationUtil.createComponentElement(fileTypeManager.getComponentName());
+      fileTypeManager.writeExternal(fileTypesComponent);
+      saveApplicationComponent(new Element("application").addContent(fileTypesComponent), PathManager.getOptionsFile(fileTypeManager));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+    catch (WriteExternalException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void saveApplicationComponent(Element root, final File file) throws IOException {
+    FileUtil.createParentDirs(file);
+    JDOMUtil.writeDocument(new Document(root), file, SystemProperties.getLineSeparator());
   }
 
   public static void enableExternalCompiler(final Project project) {

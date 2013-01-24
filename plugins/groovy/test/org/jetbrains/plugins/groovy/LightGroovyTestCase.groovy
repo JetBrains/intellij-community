@@ -24,11 +24,6 @@ import org.jetbrains.annotations.NotNull
  * @author peter
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown()
-    org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex.clearAllInTests();
-  }
 
   @Override
   @NotNull

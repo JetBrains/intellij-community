@@ -21,20 +21,17 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
 * @author Konstantin Bulenkov
 */
 class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
-  private static final Map<String, Icon> iconCache = new HashMap<String, Icon>();
   private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> ids;
   private final Map<ToolWindow, String> shortcuts;
@@ -81,40 +78,13 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
     config.restore();
   }
 
-  private Icon getIcon(ToolWindow toolWindow) {
-    Icon icon = iconCache.get(ids.get(toolWindow));
-    if (icon != null) return icon;
-
-    icon = toolWindow.getIcon();
+  private static Icon getIcon(ToolWindow toolWindow) {
+    Icon icon = toolWindow.getIcon();
     if (icon == null) {
       return PlatformIcons.UI_FORM_ICON;
     }
 
-    icon = to16x16(icon);
-    iconCache.put(ids.get(toolWindow), icon);
+    icon = IconUtil.toSize(icon, 16, 16);
     return icon;
-  }
-
-  private static Icon to16x16(Icon icon) {
-    if (icon.getIconHeight() == 16 && icon.getIconWidth() == 16) return icon;
-    final int w = Math.min (icon.getIconWidth(), 16);
-    final int h = Math.min(icon.getIconHeight(), 16);
-
-    final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration()
-      .createCompatibleImage(16, 16, Color.TRANSLUCENT);
-    final Graphics2D g = image.createGraphics();
-    icon.paintIcon(null, g, 0, 0);
-    g.dispose();
-
-    final BufferedImage img = UIUtil.createImage(16, 16, BufferedImage.TRANSLUCENT);
-    final int offX = Math.max((16 - w) / 2, 0);
-    final int offY = Math.max((16 - h) / 2, 0);
-    for (int col = 0; col < w; col++) {
-      for (int row = 0; row < h; row++) {
-        img.setRGB(col + offX, row + offY, image.getRGB(col, row));
-      }
-    }
-
-    return new ImageIcon(img);
   }
 }

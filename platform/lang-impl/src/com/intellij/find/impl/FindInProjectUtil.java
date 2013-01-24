@@ -49,6 +49,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
@@ -136,10 +137,12 @@ public class FindInProjectUtil {
     String path = directoryName.replace(File.separatorChar, '/');
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
-      if (!path.contains(JarFileSystem.JAR_SEPARATOR)) {
-        path += JarFileSystem.JAR_SEPARATOR;
+      for (LocalFileProvider provider : ((VirtualFileManagerEx)VirtualFileManager.getInstance()).getLocalFileProviders()) {
+        virtualFile = provider.findLocalVirtualFileByPath(path);
+        if (virtualFile != null && virtualFile.isDirectory()) {
+          break;
+        }
       }
-      virtualFile = JarFileSystem.getInstance().findFileByPath(path);
     }
     return virtualFile == null ? null : psiManager.findDirectory(virtualFile);
   }

@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
@@ -107,60 +106,40 @@ public class StorageUtil {
     return notified;
   }
 
-  static VirtualFile save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {
-    final VirtualFile[] result = new VirtualFile[1];
-    final String filePath = file.getCanonicalPath();
+  @Nullable
+  static VirtualFile save(@NotNull IFile file, Parent element, Object requestor) throws StateStorageException {
     try {
-      final Ref<IOException> refIOException = Ref.create(null);
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      Pair<String, String> pair = loadFile(vFile);
+      String text = JDOMUtil.writeParent(element, pair.second);
 
-      final Pair<String, String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
-      final String text = JDOMUtil.writeParent(element, pair.second);
       if (file.exists()) {
-        if (text.equals(pair.first)) return null;
-        IFile backupFile = deleteBackup(filePath);
-        file.renameTo(backupFile);
+        if (text.equals(pair.first)) {
+          return null;
+        }
+      }
+      else {
+        file.createParentDirs();
       }
 
       // mark this action as modifying the file which daemon analyzer should ignore
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
-        public void run() {
-          if (!file.exists()) {
-            file.createParentDirs();
-          }
-
-          try {
-            final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
-            byte[] bytes = text.getBytes(CharsetToolkit.UTF8);
-            virtualFile.setBinaryContent(bytes, -1, -1, requestor);
-            result[0] = virtualFile;
-          }
-          catch (IOException e) {
-            refIOException.set(e);
-          }
-
-          deleteBackup(filePath);
-        }
-      });
-
-      IOException exception = refIOException.get();
-      if (exception != null) {
-        throw new StateStorageException(exception);
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      try {
+        VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
+        byte[] bytes = text.getBytes(CharsetToolkit.UTF8);
+        virtualFile.setBinaryContent(bytes, -1, -1, requestor);
+        return virtualFile;
+      }
+      finally {
+        token.finish();
       }
     }
     catch (IOException e) {
       throw new StateStorageException(e);
     }
-    return result[0];
   }
 
-  static IFile deleteBackup(final String path) {
-    IFile backupFile = FileSystem.FILE_SYSTEM.createFile(path + "~");
-    if (backupFile.exists()) {
-      backupFile.delete();
-    }
-    return backupFile;
-  }
-
+  @NotNull
   static VirtualFile getOrCreateVirtualFile(final Object requestor, final IFile ioFile) throws IOException {
     VirtualFile vFile = getVirtualFile(ioFile);
 
@@ -273,12 +252,12 @@ public class StorageUtil {
     }
   }
 
-  public static void sendContent(StreamProvider streamProvider, String fileSpec, Document copy, RoamingType roamingType, boolean async) throws IOException {
+  public static void sendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {
-      if (streamProvider.isEnabled()) {
-        streamProvider.saveContent(fileSpec, in, content.length, roamingType, async);
+      if (provider.isEnabled()) {
+        provider.saveContent(fileSpec, in, content.length, type, async);
       }
     }
     finally {

@@ -18,7 +18,6 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
@@ -33,12 +32,6 @@ import java.io.PrintWriter;
  * @author nik
  */
 public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
-  private static final FileFilter ALL_FILES_FILTER = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return true;
-    }
-  };
   protected final File myRoot;
   private final SourceFileFilter myFilter;
   private final int myRootIndex;
@@ -77,17 +70,13 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
     return myTarget;
   }
 
+  @NotNull
   @Override
-  public FileFilter createFileFilter(@NotNull final ProjectDescriptor descriptor) {
+  public FileFilter createFileFilter() {
     return new FileFilter() {
       @Override
       public boolean accept(File pathname) {
-        try {
-          return myFilter.accept(pathname.getAbsolutePath(), descriptor);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        return myFilter.accept(pathname.getAbsolutePath());
       }
     };
   }

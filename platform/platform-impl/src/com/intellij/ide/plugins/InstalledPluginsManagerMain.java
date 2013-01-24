@@ -111,6 +111,10 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
                     Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
                     return;
                   }
+                  if (PluginManager.isIncompatible(pluginDescriptor)) {
+                    Messages.showErrorDialog("Plugin " + pluginDescriptor.getName() + " is incompatible with current installation", CommonBundle.getErrorTitle());
+                    return;
+                  }
                   final IdeaPluginDescriptor alreadyInstalledPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
                   if (alreadyInstalledPlugin != null) {
                     final File oldFile = alreadyInstalledPlugin.getPath();

@@ -139,7 +139,7 @@ public class GradleDependencyManager {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeDependencies(@NotNull final Collection<ExportableOrderEntry> dependencies) {
+  public void removeDependencies(@NotNull final Collection<? extends ExportableOrderEntry> dependencies) {
     if (dependencies.isEmpty()) {
       return;
     }

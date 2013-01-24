@@ -47,4 +47,13 @@ public abstract class JarFileSystem extends NewVirtualFileSystem implements JarC
   public VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile) {
     return getVirtualFileForJar(entryVFile);
   }
+
+  @Nullable
+  @Override
+  public VirtualFile findLocalVirtualFileByPath(@NotNull String path) {
+    if (!path.contains(JAR_SEPARATOR)) {
+      path += JAR_SEPARATOR;
+    }
+    return findFileByPath(path);
+  }
 }

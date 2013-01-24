@@ -291,7 +291,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         try {
           if (useJps()) {
             getProject().save();
-            CompilerTestUtil.saveSdkTable();
+            CompilerTestUtil.saveApplicationSettings();
             File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
             if (!ioFile.exists()) {
               getProject().save();

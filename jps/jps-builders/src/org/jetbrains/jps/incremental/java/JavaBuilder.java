@@ -74,7 +74,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
   public static final String BUILDER_NAME = "java";
-  private static final String JAVA_EXTENSION = ".java";
+  private static final String JAVA_EXTENSION = "java";
+  private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
@@ -91,12 +92,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     SystemInfo.isFileSystemCaseSensitive?
     new FileFilter() {
       public boolean accept(File file) {
-        return file.getPath().endsWith(JAVA_EXTENSION);
+        return file.getPath().endsWith(DOT_JAVA_EXTENSION);
       }
     } :
     new FileFilter() {
       public boolean accept(File file) {
-        return StringUtil.endsWithIgnoreCase(file.getPath(), JAVA_EXTENSION);
+        return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
       }
     };
 
@@ -144,6 +145,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       messageText = "Using eclipse compiler to compile java sources";
     }
     COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.singletonList(JAVA_EXTENSION);
   }
 
   public ExitCode build(final CompileContext context,

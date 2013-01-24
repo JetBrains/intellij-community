@@ -63,6 +63,8 @@ import java.util.Set;
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
  * In case when the dialog must be created from other threads use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
+ *
+ * See also http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+DialogWrapper.
  */
 @SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic", "UnusedDeclaration"})
 public abstract class DialogWrapper {
@@ -256,10 +258,10 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Validates a user input and returns <code>null</code> if everything is fine
-   * or returns a problem description with component where is the problem has been found.
+   * Validates user input and returns <code>null</code> if everything is fine
+   * or validation description with component where problem has been found.
    *
-   * @return <code>null</code> if everything is OK or a problem descriptor
+   * @return <code>null</code> if everything is OK or validation descriptor
    */
   @Nullable
   protected ValidationInfo doValidate() {
@@ -365,10 +367,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Factory method. It creates border for dialog's content pane. By default content
-   * pane has has empty border with <code>(8,12,8,12)</code> insets. The subclasses can
-   * return <code>null</code> in overridden methods. In this case there will be no
-   * any border in the content pane.
+   * Creates border for dialog's content pane. By default content
+   * pane has has empty border with <code>(8,12,8,12)</code> insets. Subclasses can
+   * return <code>null</code> for no border.
    *
    * @return content pane border
    */
@@ -378,7 +379,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This is factory method. It creates the panel located at the south of the content pane. By default that
+   * Creates panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
    * and <code>createJButtonForAction(Action)</code> methods to construct the panel.
    *
@@ -864,14 +865,13 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This is factory method which creates action of dialog. Each action is represented
-   * by <code>JButton</code> which is created by <code>createJButtonForAction(Action)</code>
-   * method. These buttons are places into panel which is created by <code>createButtonsPanel</code>
-   * method. Therefore you have enough ways to customise the dialog by overriding of
-   * <code>createActions()</code>, <code>createButtonsPanel()</code> and
-   * </code>createJButtonForAction(Action)</code> methods. By default the <code>createActions()</code>
-   * method returns "OK" and "Cancel" action. The help action is automatically added is if
-   * {@link #getHelpId()} returns non null value.
+   * Creates actions for dialog.
+   * <p/>
+   * By default "OK" and "Cancel" actions are returned. The "Help" action is automatically added if
+   * {@link #getHelpId()} returns non-null value.
+   * <p/>
+   * Each action is represented by <code>JButton</code> created by {@link #createJButtonForAction(javax.swing.Action)}.
+   * These buttons are then placed into {@link #createSouthPanel() south panel} of dialog.
    *
    * @return dialog actions
    *
@@ -960,9 +960,9 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This is factory method. It returns key for installation into the dimension service.
-   * If this method returns <code>null</code> then the component does not require installation
-   * into dimension service. This default implementation returns <code>null</code>.
+   * Returns key for persisting dialog dimensions.
+   * <p/>
+   * Default implementation returns <code>null</code> (no persisting).
    *
    * @return dimension service key
    */
@@ -1223,7 +1223,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * Sets horizontal alignment of dialog's the buttons.
+   * Sets horizontal alignment of dialog's buttons.
    *
    * @param alignment alignment of the buttons. Acceptable values are
    *                  <code>SwingConstants.CENTER</code> and <code>SwingConstants.RIGHT</code>.
@@ -1304,13 +1304,12 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * This method is invoked by default implementation of "Help" action.
-   * This is convenient place to override functionality of "Help" action.
+   * Invoked by default implementation of "Help" action.
    * Note that the method does nothing if "Help" action isn't enabled.
    * <p/>
    * The default implementation shows the help page with id returned
-   * by the method {@link #getHelpId()}. If that method returns null,
-   * the message box with message "no help available" is shown.
+   * by {@link #getHelpId()}. If that method returns null,
+   * a message box with message "no help available" is shown.
    */
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {

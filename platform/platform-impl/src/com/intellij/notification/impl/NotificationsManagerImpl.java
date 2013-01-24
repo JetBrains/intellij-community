@@ -243,7 +243,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     }
     if (frame == null && project == null) {
-      frame = WelcomeFrame.getInstance();
+      frame = (Window)WelcomeFrame.getInstance();
     }
     return frame;
   }

@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
+import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -27,8 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
  * User: Dmitry.Krasilschikov
  * Date: 04.08.2008
  */
-public class GrLiteralFixer implements GrFixer {
-  public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+public class GrLiteralFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
+  public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
     if (psiElement instanceof GrString) {
       String text = psiElement.getText();
       if (StringUtil.startsWith(text, "\"\"\"")) {

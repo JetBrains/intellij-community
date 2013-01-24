@@ -45,13 +45,15 @@ public class GradleProjectStructureChangesModel {
                                             @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator,
                                             @NotNull PlatformFacade platformFacade,
                                             @NotNull GradleLibraryPathTypeMapper mapper,
-                                            @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor)
+                                            @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor,
+                                            @NotNull GradleOutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor)
   {
     myProject = project;
     myChangesCalculator = changesCalculator;
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
     myPostProcessors.add(movedJarsPostProcessor);
+    myPostProcessors.add(changedLibraryVersionPostProcessor);
   }
 
   /**
@@ -75,9 +77,6 @@ public class GradleProjectStructureChangesModel {
   public void update(@NotNull GradleProject gradleProject) {
     myGradleProject.set(gradleProject);
     final GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
-    for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), myProject);
-    }
     if (!context.hasNewChanges()) {
       return;
     }
@@ -117,6 +116,9 @@ public class GradleProjectStructureChangesModel {
     GradleChangesCalculationContext context
       = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade, myLibraryPathTypeMapper);
     myChangesCalculator.calculate(gradleProject, myProject, context);
+    for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
+      processor.processChanges(context.getCurrentChanges(), myProject);
+    }
     return context;
   }
   

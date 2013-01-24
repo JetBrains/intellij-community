@@ -8,12 +8,12 @@ import org.jetbrains.plugins.gradle.model.GradleEntityType;
  * @author Denis Zhdanov
  * @since 2/20/12 12:01 PM
  */
-public abstract  class GradleAbstractDependencyId extends GradleAbstractEntityId {
+public abstract  class AbstractGradleDependencyId extends AbstractGradleEntityId {
 
   @NotNull private final String myOwnerModuleName;
   @NotNull private final String myDependencyName;
   
-  public GradleAbstractDependencyId(@NotNull GradleEntityType type,
+  public AbstractGradleDependencyId(@NotNull GradleEntityType type,
                                     @NotNull GradleEntityOwner owner,
                                     @NotNull String ownerModuleName,
                                     @NotNull String dependencyName)
@@ -49,7 +49,7 @@ public abstract  class GradleAbstractDependencyId extends GradleAbstractEntityId
     if (!super.equals(o)) {
       return false;
     }
-    GradleAbstractDependencyId that = (GradleAbstractDependencyId)o;
+    AbstractGradleDependencyId that = (AbstractGradleDependencyId)o;
     return myOwnerModuleName.equals(that.myOwnerModuleName) && myDependencyName.equals(that.myDependencyName);
   }
 }

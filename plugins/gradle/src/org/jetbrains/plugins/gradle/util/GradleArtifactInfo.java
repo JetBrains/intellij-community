@@ -45,11 +45,11 @@ public class GradleArtifactInfo {
   //public String getGroup() {
   //  return myGroup;
   //}
-  //
-  //@Nullable
-  //public String getVersion() {
-  //  return myVersion;
-  //}
+  
+  @Nullable
+  public String getVersion() {
+    return myVersion;
+  }
 
   @Override
   public int hashCode() {
