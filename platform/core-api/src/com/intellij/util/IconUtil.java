@@ -301,6 +301,10 @@ public class IconUtil {
     return result;
   }
 
+  public static Icon toSize(@NotNull Icon icon, int width, int height) {
+    return new IconSizeWrapper(icon, width, height);
+  }
+
   private static class IconSizeWrapper implements Icon {
     private final Icon myIcon;
     private final int myWidth;
