@@ -35,11 +35,20 @@ public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
 
   public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      if (moduleContainsFile(module, file, isLibraryElement)) return true;
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    if (isLibraryElement) {
+      List<OrderEntry> orders = projectRootManager.getFileIndex().getOrderEntriesForFile(file);
+      for(OrderEntry orderEntry:orders) {
+        if (orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
+            orderEntry instanceof LibraryOrderEntry) {
+          return true;
+        }
+      }
+      return false;
     }
-    return false;
+    else {
+      return projectRootManager.getFileIndex().isInContent(file);
+    }
   }
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {

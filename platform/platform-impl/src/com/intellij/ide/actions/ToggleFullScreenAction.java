@@ -24,7 +24,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +32,7 @@ import java.awt.*;
 /**
  * @author pegov
  */
-public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
+public class ToggleFullScreenAction extends AnAction implements DumbAware {
 
   private static final String TEXT_ENTER_FULLSCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
   private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
@@ -42,7 +41,7 @@ public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final Frame frame = getFrame();
     if (frame instanceof IdeFrameImpl) {
-      WindowManagerImpl.toggleFullScreen((IdeFrameImpl)frame);
+      WindowManagerEx.getInstanceEx().setFullScreen((IdeFrameImpl)frame, !((IdeFrameImpl)frame).isInFullScreen());
     }
   }
 
@@ -63,7 +62,7 @@ public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  private Frame getFrame() {
+  private static Frame getFrame() {
     final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);

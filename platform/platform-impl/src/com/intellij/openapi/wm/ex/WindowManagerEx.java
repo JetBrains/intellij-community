@@ -94,6 +94,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract boolean isFullScreen(@NotNull Frame frame);
 
+  public abstract void setFullScreen(IdeFrameImpl frame, boolean fullScreen);
   /**
    * @return bounds for the screen device for the given project frame
    */

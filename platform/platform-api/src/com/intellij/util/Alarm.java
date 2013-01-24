@@ -333,6 +333,11 @@ public class Alarm implements Disposable {
         myTask = null;
       }
     }
+
+    @Override
+    public String toString() {
+      return super.toString() + (myTask != null ? myTask.toString():null);
+    }
   }
 
   public Alarm setActivationComponent(@NotNull final JComponent component) {

@@ -119,8 +119,8 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     }
 
     @Override
-    public boolean accept(@NotNull String fullFilePath, ProjectDescriptor projectDescriptor) throws IOException {
-      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, projectDescriptor)) return false;
+    public boolean accept(@NotNull String fullFilePath) {
+      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath)) return false;
 
       if (myIgnoredFileIndex.isIgnored(PathUtilRt.getFileName(fullFilePath))) {
         return false;
@@ -133,6 +133,11 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
         }
       }
       return true;
+    }
+
+    @Override
+    public boolean shouldBeCopied(@NotNull String fullFilePath, ProjectDescriptor projectDescriptor) throws IOException {
+      return myBaseFilter == null || myBaseFilter.shouldBeCopied(fullFilePath, projectDescriptor);
     }
   }
 }

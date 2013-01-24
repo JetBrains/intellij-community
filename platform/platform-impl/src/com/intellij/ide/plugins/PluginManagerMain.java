@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
 /**
  * Created by IntelliJ IDEA.
@@ -336,66 +338,72 @@ public abstract class PluginManagerMain implements Disposable {
     requireShutdown = false;
   }
 
-  private static void setTextValue(@Nullable String val, String filter, JEditorPane pane) {
-    if (val != null) {
-      pane.setText(SearchUtil.markup(TEXT_PREFIX + val + TEXT_SUFIX, filter).trim());
+  public static void pluginInfoUpdate(Object plugin, @Nullable String filter, @NotNull JEditorPane descriptionTextArea) {
+    if (plugin instanceof IdeaPluginDescriptor) {
+      IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
+      StringBuilder sb = new StringBuilder();
+
+      String description = pluginDescriptor.getDescription();
+      if (!isEmptyOrSpaces(description)) {
+        sb.append(description);
+      }
+
+      String changeNotes = pluginDescriptor.getChangeNotes();
+      if (!isEmptyOrSpaces(changeNotes)) {
+        sb.append("<h4>Change Notes</h4>");
+        sb.append(changeNotes);
+      }
+
+      if (!pluginDescriptor.isBundled()) {
+        String vendor = pluginDescriptor.getVendor();
+        String vendorEmail = pluginDescriptor.getVendorEmail();
+        String vendorUrl = pluginDescriptor.getVendorUrl();
+        if (!isEmptyOrSpaces(vendor) || !isEmptyOrSpaces(vendorEmail) || !isEmptyOrSpaces(vendorUrl)) {
+          sb.append("<h4>Vendor</h4>");
+
+          if (!isEmptyOrSpaces(vendor)) {
+            sb.append(vendor);
+          }
+          if (!isEmptyOrSpaces(vendorUrl)) {
+            sb.append("<br>").append(composeHref(vendorUrl));
+          }
+          if (!isEmptyOrSpaces(vendorEmail)) {
+            sb.append("<br>").append(composeHref("mailto:" + vendorEmail));
+          }
+        }
+
+        String pluginDescriptorUrl = pluginDescriptor.getUrl();
+        if (!isEmptyOrSpaces(pluginDescriptorUrl)) {
+          sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
+        }
+
+        String version = pluginDescriptor.getVersion();
+        if (!isEmptyOrSpaces(version)) {
+          sb.append("<h4>Version</h4>").append(version);
+        }
+
+        String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
+        if (!isEmptyOrSpaces(size)) {
+          sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
+        }
+      }
+
+      setTextValue(sb, filter, descriptionTextArea);
+    }
+    else {
+      setTextValue(null, filter, descriptionTextArea);
+    }
+  }
+
+  private static void setTextValue(@Nullable StringBuilder text, @Nullable String filter, JEditorPane pane) {
+    if (text != null) {
+      text.insert(0, TEXT_PREFIX);
+      text.append(TEXT_SUFIX);
+      pane.setText(SearchUtil.markup(text.toString(), filter).trim());
       pane.setCaretPosition(0);
     }
     else {
       pane.setText(TEXT_PREFIX + TEXT_SUFIX);
-    }
-  }
-
-  public static void pluginInfoUpdate(Object plugin, @Nullable final String filter, final JEditorPane descriptionTextArea) {
-    if (plugin instanceof IdeaPluginDescriptor) {
-      IdeaPluginDescriptor pluginDescriptor = (IdeaPluginDescriptor)plugin;
-
-      String description = pluginDescriptor.getDescription();
-      String changeNotes = pluginDescriptor.getChangeNotes();
-      if (!StringUtil.isEmpty(changeNotes)) {
-        description += "<h4>Change Notes</h4>";
-        description += changeNotes;
-      }
-
-      if (!pluginDescriptor.isBundled()) {
-        description += "<h4>Vendor</h4>";
-        String vendor = pluginDescriptor.getVendor();
-        if (!StringUtil.isEmpty(vendor)) {
-          description += vendor;
-        }
-
-        String vendorEmail = pluginDescriptor.getVendorEmail();
-        if (!StringUtil.isEmpty(vendorEmail)) {
-          description += "<br>";
-          description += composeHref("mailto:" + vendorEmail);
-        }
-
-        String vendorUrl = pluginDescriptor.getVendorUrl();
-        if (!StringUtil.isEmpty(vendorUrl)) {
-          description += "<br>" + composeHref(vendorUrl);
-        }
-
-
-        String pluginDescriptorUrl = pluginDescriptor.getUrl();
-        if (!StringUtil.isEmpty(pluginDescriptorUrl)) {
-          description += "<br><h4>Plugin homepage</h4>" + composeHref(pluginDescriptorUrl);
-        }
-
-        String version = pluginDescriptor.getVersion();
-        if (!StringUtil.isEmpty(version)) {
-          description += "<h4>Version</h4>" + version;
-        }
-
-        String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
-        if (!StringUtil.isEmpty(size)) {
-          description += "<br>Size: " + PluginManagerColumnInfo.getFormattedSize(size);
-        }
-      }
-
-      setTextValue(description, filter, descriptionTextArea);
-    }
-    else {
-      setTextValue(null, filter, descriptionTextArea);
     }
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -31,6 +32,11 @@ public abstract class ClsStubBuilderFactory<T extends PsiFile> {
 
   @Nullable
   public abstract PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes) throws ClsFormatException;
+
+  @Nullable
+  public PsiFileStub<T> buildFileStub(final VirtualFile file, byte[]  bytes, Project project) throws ClsFormatException {
+    return buildFileStub(file, bytes);
+  }
 
   public abstract boolean canBeProcessed(final VirtualFile file, byte[] bytes);
 

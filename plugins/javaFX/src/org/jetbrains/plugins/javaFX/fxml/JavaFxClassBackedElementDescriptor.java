@@ -36,8 +36,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   private final String myName;
 
   public JavaFxClassBackedElementDescriptor(String name, XmlTag tag) {
+    this(name, findPsiClass(name, JavaFXNSDescriptor.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject()));
+  }
+
+  public JavaFxClassBackedElementDescriptor(String name, PsiClass aClass) {
     myName = name;
-    myPsiClass = findPsiClass(name, JavaFXNSDescriptor.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+    myPsiClass = aClass;
   }
 
   private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
@@ -73,14 +77,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
     if (context != null) {
-      //todo
-      XmlElementDescriptor descriptor = context.getDescriptor();
-      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
-        
-      } else if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-        
-      }
-      if (myPsiClass != null && descriptor instanceof JavaFxClassBackedElementDescriptor) {
+      if (myPsiClass != null) {
         final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
         collectProperties(children, true, new Function<PsiField, XmlElementDescriptor>() {
           @Override

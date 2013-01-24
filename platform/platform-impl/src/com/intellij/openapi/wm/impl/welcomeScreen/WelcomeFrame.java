@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -49,8 +50,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 public class WelcomeFrame extends JFrame implements IdeFrame {
+  public static final ExtensionPointName<IdeFrame> EP = ExtensionPointName.create("com.intellij.welcomeFrame");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
-  private static WelcomeFrame ourInstance;
+  private static IdeFrame ourInstance;
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
 
@@ -80,7 +82,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     myScreen.setupFrame(this);
   }
 
-  public static WelcomeFrame getInstance() {
+  public static IdeFrame getInstance() {
     return ourInstance;
   }
 
@@ -129,10 +131,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void clearRecents() {
     if (ourInstance != null) {
-      WelcomeScreen screen = ourInstance.myScreen;
+      if (ourInstance instanceof WelcomeFrame) {
+      WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
       if (screen instanceof DefaultWelcomeScreen) {
         ((DefaultWelcomeScreen)screen).hideRecentProjectsPanel();
       }
+    }
     }
   }
 
@@ -153,8 +157,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void showNow() {
     if (ourInstance == null) {
-      WelcomeFrame frame = new WelcomeFrame();
-      frame.setVisible(true);
+      IdeFrame frame = EP.getExtensions().length == 0
+                           ? new WelcomeFrame() : EP.getExtensions()[0];
+      ((JFrame)frame).setVisible(true);
       ourInstance = frame;
     }
   }

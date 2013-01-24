@@ -15,10 +15,8 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -44,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -165,18 +164,23 @@ public class PsiTestUtil {
       protected void run() throws Throwable {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final ContentEntry[] contentEntries = rootModel.getContentEntries();
-        ContentEntry entry = ContainerUtil.find(contentEntries, new Condition<ContentEntry>() {
-          @Override
-          public boolean value(final ContentEntry object) {
-            return VfsUtil.isAncestor(object.getFile(), vDir, false);
-          }
-        });
+        ContentEntry entry = findContentEntry(rootModel, vDir);
         if (entry == null) entry = rootModel.addContentEntry(vDir);
         entry.addSourceFolder(vDir, isTestSource);
         rootModel.commit();
       }
     }.execute().throwException();
+  }
+
+  @Nullable
+  private static ContentEntry findContentEntry(ModuleRootModel rootModel, final VirtualFile file) {
+    return ContainerUtil.find(rootModel.getContentEntries(), new Condition<ContentEntry>() {
+      @Override
+      public boolean value(final ContentEntry object) {
+        VirtualFile entryRoot = object.getFile();
+        return entryRoot != null && VfsUtilCore.isAncestor(entryRoot, file, false);
+      }
+    });
   }
 
   public static ContentEntry addContentRoot(final Module module, final VirtualFile vDir) {
@@ -199,31 +203,48 @@ public class PsiTestUtil {
   }
 
   public static void addExcludedRoot(Module module, VirtualFile dir) {
-    AccessToken token = WriteAction.start();
-    try {
-      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      boolean added = false;
-      for (ContentEntry entry : model.getContentEntries()) {
-        if (VfsUtil.isAncestor(entry.getFile(), dir, false)) {
-          entry.addExcludeFolder(dir);
-          added = true;
-          break;
-        }
-      }
-      if (!added) {
-        throw new RuntimeException(dir + " is not under content roots: " + Arrays.toString(model.getContentRoots()));
-      }
-      model.commit();
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
+    commitModel(model);
+  }
+
+  @NotNull
+  private static ContentEntry findContentEntryWithAssertion(ModifiableRootModel model, VirtualFile dir) {
+    ContentEntry entry = findContentEntry(model, dir);
+    if (entry == null) {
+      throw new RuntimeException(dir + " is not under content roots: " + Arrays.toString(model.getContentRoots()));
     }
-    finally {
-      token.finish();
-    }
+    return entry;
   }
 
   public static void removeContentEntry(final Module module, final ContentEntry e) {
     ModuleRootManager rootModel = ModuleRootManager.getInstance(module);
     final ModifiableRootModel model = rootModel.getModifiableModel();
     model.removeContentEntry(e);
+    commitModel(model);
+  }
+
+  public static void removeSourceRoot(Module module, VirtualFile root) {
+    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    ContentEntry entry = findContentEntryWithAssertion(rootModel, root);
+    for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+      if (root.equals(sourceFolder.getFile())) {
+        entry.removeSourceFolder(sourceFolder);
+        break;
+      }
+    }
+    commitModel(rootModel);
+  }
+
+  public static void removeExcludedRoot(Module module, VirtualFile root) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    ContentEntry entry = findContentEntryWithAssertion(model, root);
+    final ExcludeFolder[] excludeFolders = entry.getExcludeFolders();
+    for (ExcludeFolder excludeFolder : excludeFolders) {
+      if (root.equals(excludeFolder.getFile())) {
+        entry.removeExcludeFolder(excludeFolder);
+      }
+    }
     commitModel(model);
   }
 

@@ -38,7 +38,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   /**
    * Defines whether the tree has focus or not
    */
-  protected boolean myFocused;
+  private boolean myFocused;
+  private boolean myFocusedCalculated;
 
   protected JTree myTree;
 
@@ -57,12 +58,12 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     clear();
 
     mySelected = selected;
-    myFocused = isFocused();
+    myFocusedCalculated = false;
 
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
     if (UIUtil.isFullRowSelectionLAF()) {
-        setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
     else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
@@ -73,7 +74,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       if (selected) {
         setPaintFocusBorder(true);
-        if (myFocused) {
+        if (isFocused()) {
           setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
@@ -128,7 +129,15 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     return myTree;
   }
 
-  protected boolean isFocused() {
+  protected final boolean isFocused() {
+    if (!myFocusedCalculated) {
+      myFocused = calcFocusedState();
+      myFocusedCalculated = true;
+    }
+    return myFocused;
+  }
+
+  protected boolean calcFocusedState() {
     return myTree.hasFocus();
   }
 
@@ -136,13 +145,13 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
   }
-  
+
   /**
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && myFocused) {
+    if (mySelected && isFocused()) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
     else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {

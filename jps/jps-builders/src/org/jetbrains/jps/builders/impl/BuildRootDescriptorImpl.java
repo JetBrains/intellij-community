@@ -16,13 +16,10 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
-import java.io.FileFilter;
 
 public class BuildRootDescriptorImpl extends BuildRootDescriptor {
   private final File myRoot;
@@ -54,16 +51,6 @@ public class BuildRootDescriptorImpl extends BuildRootDescriptor {
   @Override
   public BuildTarget<?> getTarget() {
     return myTarget;
-  }
-
-  @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
-    return new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File pathname) {
-        return true;
-      }
-    };
   }
 
   @Override

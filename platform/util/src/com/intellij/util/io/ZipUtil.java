@@ -35,6 +35,25 @@ public class ZipUtil {
 
   private ZipUtil() {}
 
+  public interface FileContentProcessor {
+
+    FileContentProcessor STANDARD = new FileContentProcessor() {
+      @Override
+      public InputStream getContent(File file) throws IOException {
+        return new FileInputStream(file);
+      }
+    };
+
+    InputStream getContent(File file) throws IOException;
+  }
+
+  public static boolean addFileToZip(@NotNull ZipOutputStream zos,
+                                     @NotNull File file,
+                                     @NotNull String relativeName,
+                                     @Nullable Set<String> writtenItemRelativePaths,
+                                     @Nullable FileFilter fileFilter) throws IOException {
+    return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD);
+  }
 
   /*
    * Adds a new file entry to the ZIP output stream.
@@ -43,7 +62,8 @@ public class ZipUtil {
                                      @NotNull File file,
                                      @NotNull String relativeName,
                                      @Nullable Set<String> writtenItemRelativePaths,
-                                     @Nullable FileFilter fileFilter) throws IOException {
+                                     @Nullable FileFilter fileFilter,
+                                     @NotNull FileContentProcessor contentProcessor) throws IOException {
     while (relativeName.length() != 0 && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
@@ -69,7 +89,7 @@ public class ZipUtil {
     }
     zos.putNextEntry(e);
     if (!isDir) {
-      InputStream is = new BufferedInputStream(new FileInputStream(file));
+      InputStream is = contentProcessor.getContent(file);
       try {
         FileUtil.copy(is, zos);
       }

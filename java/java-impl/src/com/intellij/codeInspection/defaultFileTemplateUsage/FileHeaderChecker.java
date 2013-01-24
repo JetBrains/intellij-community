@@ -50,15 +50,12 @@ public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
   static ProblemDescriptor checkFileHeader(@NotNull final PsiFile file, final InspectionManager manager, boolean onTheFly) {
-    FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
-    String templateText = template.getText().trim();
-    String regex = templateToRegex(templateText, offsetToProperty, file.getProject());
-    regex = StringUtil.replace(regex, "with", "(?:with|by)");
-    regex = ".*("+regex+").*";
-    String fileText = file.getText();
-    Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
-    Matcher matcher = pattern.matcher(fileText);
+    Pattern pattern = getTemplatePattern(FileTemplateManager.getInstance()
+      .getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME),
+                                         file.getProject(), offsetToProperty
+    );
+    Matcher matcher = pattern.matcher(file.getText());
     if (matcher.matches()) {
       final int startOffset = matcher.start(1);
       final int endOffset = matcher.end(1);
@@ -81,6 +78,14 @@ public class FileHeaderChecker {
       return manager.createProblemDescriptor(element, description, onTheFly, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     return null;
+  }
+
+  public static Pattern getTemplatePattern(FileTemplate template, Project project, TIntObjectHashMap<String> offsetToProperty) {
+    String templateText = template.getText().trim();
+    String regex = templateToRegex(templateText, offsetToProperty, project);
+    regex = StringUtil.replace(regex, "with", "(?:with|by)");
+    regex = ".*("+regex+").*";
+    return Pattern.compile(regex, Pattern.DOTALL);
   }
 
   private static Properties computeProperties(final Matcher matcher, final TIntObjectHashMap<String> offsetToProperty) {
