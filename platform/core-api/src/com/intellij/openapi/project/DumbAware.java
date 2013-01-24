@@ -36,6 +36,7 @@ package com.intellij.openapi.project;
  *
  * @see com.intellij.openapi.project.DumbService
  * @see com.intellij.openapi.project.DumbAwareRunnable
+ * @see PossiblyDumbAware
  * @author peter
  */
 public interface DumbAware {

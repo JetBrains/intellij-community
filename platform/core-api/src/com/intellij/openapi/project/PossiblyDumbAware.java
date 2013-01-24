@@ -16,7 +16,10 @@
 package com.intellij.openapi.project;
 
 /**
+ * This interface allows to mark a distinct object as dumb-aware.
+ *
  * @author yole
+ * @see DumbAware
  */
 public interface PossiblyDumbAware {
   boolean isDumbAware();
