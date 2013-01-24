@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -56,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -204,11 +206,12 @@ public class AppEngineUploader {
       parameters.getClassPath().add(mySdk.getToolsApiJarFile().getAbsolutePath());
 
       HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-      if (httpConfigurable.USE_HTTP_PROXY) {
+      final List<KeyValue<String,String>> list = HttpConfigurable.getJvmPropertiesList(false, null);
+      if (! list.isEmpty()) {
         final ParametersList parametersList = parameters.getVMParametersList();
-        parametersList.defineProperty("proxySet", "true");
-        parametersList.defineProperty("http.proxyHost", httpConfigurable.PROXY_HOST);
-        parametersList.defineProperty("http.proxyPort", Integer.toString(httpConfigurable.PROXY_PORT));
+        for (KeyValue<String, String> value : list) {
+          parametersList.defineProperty(value.getKey(), value.getValue());
+        }
       }
 
       final ParametersList programParameters = parameters.getProgramParametersList();
