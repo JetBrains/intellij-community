@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.EventListener;
 import java.util.EventObject;
 
 public class HeavyweightHint implements Hint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.HeavyweightHint");
 
   private final JComponent myComponent;
   private final boolean myFocusableWindowState;
@@ -44,13 +44,10 @@ public class HeavyweightHint implements Hint {
   }
 
   /**
-   * Shows the hint as the window
+   * Shows the hint as the window.
    */
-  public void show(@NotNull JComponent parentComponent, int x, int y, @Nullable JComponent focusBackComponent, @Nullable HintHint hintInfo) {
-    show(parentComponent, new Point(x, y));
-  }
-
-  public void show(@NotNull JComponent parentComponent, Point p) {
+  @Override
+  public void show(@NotNull JComponent parentComponent, int x, int y, @Nullable JComponent focusBackComponent, @Nullable HintHint hh) {
     myParentComponent = parentComponent;
     LOG.assertTrue(parentComponent.isShowing());
 
@@ -64,24 +61,22 @@ public class HeavyweightHint implements Hint {
     myWindow.getContentPane().setLayout(new BorderLayout());
     myWindow.getContentPane().add(myComponent, BorderLayout.CENTER);
 
-    updateBounds(p.x, p.y);
+    updateBounds(x, y);
     myWindow.setVisible(true);
   }
 
-
-
   protected void fireHintHidden() {
-    final EventListener[] listeners = myListenerList.getListeners(HintListener.class);
-    for (EventListener listener1 : listeners) {
-      HintListener listener = (HintListener) listener1;
-      listener.hintHidden(new EventObject(this));
+    EventListener[] listeners = myListenerList.getListeners(HintListener.class);
+    for (EventListener listener : listeners) {
+      ((HintListener)listener).hintHidden(new EventObject(this));
     }
   }
 
-  public Dimension getPreferredSize(){
+  public Dimension getPreferredSize() {
     return myComponent.getPreferredSize();
   }
 
+  @Override
   public boolean isVisible() {
     return myComponent.isShowing();
   }
@@ -91,10 +86,11 @@ public class HeavyweightHint implements Hint {
   }
 
   /**
-   * Hides and disposes hint window
+   * Hides and disposes hint window.
    */
+  @Override
   public void hide() {
-    if(myWindow != null){
+    if (myWindow != null) {
       myWindow.dispose();
       myWindow = null;
     }
@@ -128,10 +124,12 @@ public class HeavyweightHint implements Hint {
     }
   }
 
+  @Override
   public void addHintListener(@NotNull HintListener listener) {
     myListenerList.add(HintListener.class, listener);
   }
 
+  @Override
   public void removeHintListener(@NotNull HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
   }
