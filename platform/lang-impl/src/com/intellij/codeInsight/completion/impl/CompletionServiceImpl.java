@@ -246,7 +246,12 @@ public class CompletionServiceImpl extends CompletionService{
         sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher(location)));
       }
       else if ("stats".equals(id)) {
-        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new StatisticsWeigher.LookupStatisticsWeigher(location)));
+        sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
+          @Override
+          public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+            return new StatisticsWeigher.LookupStatisticsWeigher(location, next);
+          }
+        });
       }
       else {
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
