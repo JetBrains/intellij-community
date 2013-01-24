@@ -101,32 +101,41 @@ public class RefreshSessionImpl extends RefreshSession {
   public void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<VirtualFile>();
-    boolean hasEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
+    boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
       LocalFileSystemImpl fs = (LocalFileSystemImpl)LocalFileSystem.getInstance();
       fs.markSuspiciousFilesDirty(workQueue);
       FileWatcher watcher = fs.getFileWatcher();
 
+      long t = 0;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("scanning " + workQueue);
+        t = System.currentTimeMillis();
+      }
+
       for (VirtualFile file : workQueue) {
         NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
+        if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) {
+          // we're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }
 
         RefreshWorker worker = new RefreshWorker(file, myIsRecursive);
-        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
-        if (t != 0) {
-          t = System.currentTimeMillis() - t;
-          LOG.debug(file + " scanned in " + t + " ms, events: " + events);
+        if (myEvents.addAll(events)) {
+          haveEventsToFire = true;
         }
-        myEvents.addAll(events);
-        if (!events.isEmpty()) hasEventsToFire = true;
+      }
+
+      if (t != 0) {
+        t = System.currentTimeMillis() - t;
+        LOG.debug(t + " ms, events " + myEvents);
       }
     }
-    iHaveEventsToFire = hasEventsToFire;
+
+    iHaveEventsToFire = haveEventsToFire;
   }
 
   public void fireEvents(boolean hasWriteAction) {
