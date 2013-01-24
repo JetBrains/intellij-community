@@ -38,7 +38,7 @@ public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffse
   private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
     PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
-      if (child instanceof PsiMethod || child instanceof PsiClass) {
+      if (child instanceof PsiMethod || child instanceof PsiClass || child instanceof PsiField) {
         array.add(child);
         addNavigationElements(array, child);
       }
