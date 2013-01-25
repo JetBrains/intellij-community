@@ -23,6 +23,8 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -106,6 +108,16 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsSdkReference<JpsDummyElement> reference = myProject.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
     assertNotNull(reference);
     assertEquals("1.6", reference.getSdkName());
+  }
+
+  public void testInvalidDependencyScope() {
+    loadProject("/jps/model-serialization/testData/invalidDependencyScope/invalidDependencyScope.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
+    assertEquals(3, dependencies.size());
+    JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependencies.get(2));
+    assertNotNull(extension);
+    assertEquals(JpsJavaDependencyScope.COMPILE, extension.getScope());
   }
 
   public void testLoadEncoding() {
