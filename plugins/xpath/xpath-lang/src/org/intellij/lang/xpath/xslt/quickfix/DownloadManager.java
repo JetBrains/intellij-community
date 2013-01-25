@@ -32,7 +32,6 @@ import com.intellij.util.net.NetUtils;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.Set;
 
@@ -65,9 +64,7 @@ public abstract class DownloadManager {
 
         File file = null;
         try {
-            final URL url = new URL(location);
-            HttpConfigurable.getInstance().prepareURL(location);
-            final URLConnection urlConnection = url.openConnection();
+            final URLConnection urlConnection = HttpConfigurable.getInstance().openConnection(location);
             urlConnection.connect();
             final InputStream in = urlConnection.getInputStream();
 

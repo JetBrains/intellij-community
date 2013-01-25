@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -246,7 +247,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   public static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
-    final String pattern = FileUtil.getExtension(file.getName());
+    final String pattern = FileUtilRt.getExtension(file.getName()).toLowerCase();
     if (context.contains(pattern)) return false;
     int rc = Messages.showOkCancelDialog(project,
                                  VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),

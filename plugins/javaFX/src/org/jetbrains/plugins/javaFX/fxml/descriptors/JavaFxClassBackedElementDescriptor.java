@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml;
+package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
@@ -24,6 +24,9 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFXNSDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 
 import java.util.ArrayList;
 import java.util.Collections;

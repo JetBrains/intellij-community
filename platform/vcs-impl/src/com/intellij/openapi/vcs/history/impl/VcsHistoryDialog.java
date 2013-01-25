@@ -29,9 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
@@ -228,8 +228,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       @Override
       public void run() {
         if (! VcsHistoryDialog.this.isShowing()) return;
-        VcsBalloonProblemNotifier.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(),
-                                                          canNoLoadMessage(e), MessageType.ERROR, true);
+        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true);
       }
     });
   }

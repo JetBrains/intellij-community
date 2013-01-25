@@ -76,7 +76,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
-      parameters.add("--all");
+      parameters.add("--branches");
+      parameters.add("--remotes");
+      parameters.add("--tags");
     }
     if (useMaxCnt > 0) {
       parameters.add("--max-count=" + useMaxCnt);
@@ -112,16 +114,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   // uses cached version
   public CachedRefs getRefs() throws VcsException {
     final CachedRefs refs = new CachedRefs();
-    GitRepository repository = myProject == null || myProject.isDefault() ? null : GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
-    if (repository == null) {
-      final File child = new File(myRoot.getPath(), GitUtil.DOT_GIT);
-      if (! child.exists()) {
-        throw new VcsException("No git repository in " + myRoot.getPath());
-      }
-      repository = GitRepositoryImpl.getLightInstance(myRoot, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject);
-      repository.update();
-      repository.getBranches();
-    }
+    GitRepository repository = getRepositoryWise(myProject, myRoot);
     GitBranchesCollection branches = repository.getBranches();
     refs.setCollection(branches);
     final GitBranch current = repository.getCurrentBranch();
@@ -146,6 +139,21 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return refs;
   }
 
+  private static GitRepository getRepositoryWise(final Project project, final VirtualFile root) throws VcsException {
+    GitRepository repository = project == null || project.isDefault() ? null : GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      final File child = new File(root.getPath(), GitUtil.DOT_GIT);
+      if (! child.exists()) {
+        throw new VcsException("No git repository in " + root.getPath());
+      }
+      repository = GitRepositoryImpl
+        .getLightInstance(root, project, ServiceManager.getService(project, GitPlatformFacade.class), project);
+      repository.update();
+      repository.getBranches();
+    }
+    return repository;
+  }
+
   public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final AsynchConsumer<GitCommit> consumer,
@@ -166,7 +174,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
-      parameters.add("--all");
+      parameters.add("--branches");
+      parameters.add("--remotes");
+      parameters.add("--tags");
     }
     if (topoOrder) {
       parameters.add("--topo-order");
@@ -284,7 +294,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       }
       GitBranch branch = null;
       if (isRemote) {
-        GitRepository repository = GitUtil.getRepositoryForRootOrLogError(project, root);
+        GitRepository repository = getRepositoryWise(project, root);
         if (repository != null) {
           branch = GitBranchUtil.parseRemoteBranch(b, GitBranch.DUMMY_HASH, repository.getRemotes());
         }

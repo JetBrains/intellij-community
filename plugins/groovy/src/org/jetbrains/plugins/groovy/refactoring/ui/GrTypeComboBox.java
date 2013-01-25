@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,13 +79,6 @@ public class GrTypeComboBox extends ComboBox {
     return new GrTypeComboBox(null, null, false, null, false);
   }
 
-  /**
-   * @param type
-   * @param min
-   * @param createDef
-   * @param manager   - must not be null if min is not null
-   * @param scope     - must not be null if min is not null
-   */
   private GrTypeComboBox(@Nullable PsiType type,
                          @Nullable PsiType min,
                          boolean createDef,

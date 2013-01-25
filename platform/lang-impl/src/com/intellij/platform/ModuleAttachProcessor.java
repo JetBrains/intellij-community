@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -75,7 +76,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     final String[] files = projectDir.list();
     if (files != null) {
       for (String file : files) {
-        if (FileUtil.getExtension(file).equals("iml")) {
+        if (FileUtilRt.extensionEquals(file, "iml")) {
           VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
           if (imlFile != null) {
             attachModule(project, imlFile, callback);

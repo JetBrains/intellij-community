@@ -16,7 +16,18 @@
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,4 +99,61 @@ public class PopupUtil {
     return -1;
   }
 
+  public static void showBalloonForActiveComponent(@NotNull final String message, final MessageType type) {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        Window[] windows = Window.getWindows();
+        Window targetWindow = null;
+        for (Window each : windows) {
+          if (each.isActive()) {
+            targetWindow = each;
+            break;
+          }
+        }
+
+        if (targetWindow == null) {
+          targetWindow = JOptionPane.getRootFrame();
+        }
+
+        if (targetWindow == null) {
+          final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+          if (frame == null) {
+            final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+            final Project project = projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
+            final JFrame jFrame = WindowManager.getInstance().getFrame(project);
+            if (jFrame != null) {
+              showBalloonForComponent(jFrame, message, type, true);
+            } else {
+              LOG.info("Can not get component to show message: " + message);
+            }
+            return;
+          }
+          showBalloonForComponent(frame.getComponent(), message, type, true);
+        } else {
+          showBalloonForComponent(targetWindow, message, type, true);
+        }
+      }
+    };
+    UIUtil.invokeLaterIfNeeded(runnable);
+  }
+
+  public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
+                                             final boolean atTop) {
+      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
+      Balloon balloon = balloonBuilder.createBalloon();
+      Dimension size = component.getSize();
+      Balloon.Position position;
+      int x;
+      int y;
+      if (size == null) {
+        x = y = 0;
+        position = Balloon.Position.above;
+      }
+      else {
+        x = Math.min(10, size.width / 2);
+        y = size.height;
+        position = Balloon.Position.below;
+      }
+      balloon.show(new RelativePoint(component, new Point(x, y)), position);
+  }
 }

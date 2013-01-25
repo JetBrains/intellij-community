@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class GrMapType extends GrLiteralClassType {
       if (myOtherEntries.size() == 0) return "[:]";
       String name = getJavaClassName();
       final PsiType[] params = getParameters();
-      return name + "<" + params[0].getInternalCanonicalText() + ", " + params[1].getInternalCanonicalText() + ">";
+      return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
     }
 
     List<String> components = new ArrayList<String>();
@@ -160,6 +160,11 @@ public class GrMapType extends GrLiteralClassType {
     boolean tooMany = components.size() > 2;
     final List<String> theFirst = components.subList(0, Math.min(2, components.size()));
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
+  }
+
+  @NotNull
+  private static String getInternalText(@Nullable PsiType param) {
+    return param == null ? "null" : param.getInternalCanonicalText();
   }
 
   public boolean isValid() {

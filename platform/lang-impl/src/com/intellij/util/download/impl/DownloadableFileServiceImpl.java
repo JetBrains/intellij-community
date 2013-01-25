@@ -19,6 +19,7 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.download.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
   @NotNull
   @Override
   public DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName) {
-    return new DownloadableFileDescriptionImpl(downloadUrl, FileUtil.getNameWithoutExtension(fileName), FileUtil.getExtension(fileName));
+    return new DownloadableFileDescriptionImpl(downloadUrl, FileUtil.getNameWithoutExtension(fileName), FileUtilRt.getExtension(fileName));
   }
 
   @NotNull

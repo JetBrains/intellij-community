@@ -27,7 +27,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,43 +34,40 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 
+import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+
 /**
- * Validates the given external executable.
- * If it is not valid, shows notification to fix it.
- * Notification balloon in the upper right corner is shown only the first time. After it is shown in the toolwindow group.
- * This is done, because it is hard to discover whether notification balloon is showing or not, and showing several balloons about a single
- * problem is a bad idea.
+ * Validates the given external executable. If it is not valid, shows notification to fix it.
+ * Notification group is registered as a {@link STICKY_BALLOON} by default.
  *
  * @author Kirill Likhodedov
  */
 public abstract class ExecutableValidator {
 
-  public static final String NOTIFICATION_ID = "External Executable Critical Failures";
-
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
 
-  private final NotificationGroup myNotificationGroup = new NotificationGroup(NOTIFICATION_ID, NotificationDisplayType.TOOL_WINDOW, true,
-                                                                              ToolWindowId.VCS);
+  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures",
+                                                                              STICKY_BALLOON, true);
+  @NotNull protected final Project myProject;
+  @NotNull private final NotificationsManager myNotificationManager;
 
-  protected final Project myProject;
-  private final String myNotificationErrorTitle;
-  private String myNotificationErrorDescription;
+  @NotNull private final String myNotificationErrorTitle;
+  @NotNull private String myNotificationErrorDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
    * @param notificationErrorTitle       title of the notification about not valid executable.
    * @param notificationErrorDescription description of this notification with a link to fix it (link action is defined by
-   *                          {@link #showSettingsAndExpireIfFixed(com.intellij.notification.Notification)}
+   *                                     {@link #showSettingsAndExpireIfFixed(com.intellij.notification.Notification)}
    */
-  public ExecutableValidator(Project project, String notificationErrorTitle, String notificationErrorDescription) {
+  public ExecutableValidator(@NotNull Project project, @NotNull String notificationErrorTitle,
+                             @NotNull String notificationErrorDescription) {
     myProject = project;
     myNotificationErrorTitle = notificationErrorTitle;
     myNotificationErrorDescription = notificationErrorDescription;
+    myNotificationManager = NotificationsManager.getNotificationsManager();
   }
 
-  /**
-   * @return path to current executable.
-   */
   protected abstract String getCurrentExecutable();
 
   /**
@@ -88,7 +84,7 @@ public abstract class ExecutableValidator {
    * @param executable Path to executable.
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */
-  protected boolean isExecutableValid(String executable) {
+  protected boolean isExecutableValid(@NotNull String executable) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
@@ -100,7 +96,7 @@ public abstract class ExecutableValidator {
     }
   }
 
-  public void setNotificationErrorDescription(String notificationErrorDescription) {
+  public void setNotificationErrorDescription(@NotNull String notificationErrorDescription) {
     myNotificationErrorDescription = notificationErrorDescription;
   }
 
@@ -115,15 +111,9 @@ public abstract class ExecutableValidator {
     }
 
     LOG.info("Git executable is not valid: " + getCurrentExecutable());
-    myNotificationGroup.createNotification("", prepareDescription(), NotificationType.ERROR,
-      new NotificationListener() {
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-            showSettingsAndExpireIfFixed(notification);
-          }
-        }
-      }
-    ).notify(myProject.isDefault() ? null : myProject);
+    if (myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject).length == 0) { // show only once
+      new ExecutableNotValidNotification().notify(myProject.isDefault() ? null : myProject);
+    }
   }
   
   @NotNull
@@ -131,7 +121,8 @@ public abstract class ExecutableValidator {
     String executable = getCurrentExecutable();
     if (executable.isEmpty()) {
       return String.format("<b>%s</b>%s <a href=''>Fix it.</a>", myNotificationErrorTitle, myNotificationErrorDescription);
-    } else {
+    }
+    else {
       return String.format("<b>%s:</b> <code>%s</code><br/>%s <a href=''>Fix it.</a>",
                            myNotificationErrorTitle, executable, myNotificationErrorDescription);
     }
@@ -205,5 +196,17 @@ public abstract class ExecutableValidator {
   public boolean isExecutableValid() {
     return isExecutableValid(getCurrentExecutable());
   }
-  
+
+  private class ExecutableNotValidNotification extends Notification {
+    private ExecutableNotValidNotification() {
+      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener() {
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
+            showSettingsAndExpireIfFixed(notification);
+          }
+        }
+      });
+    }
+  }
+
 }

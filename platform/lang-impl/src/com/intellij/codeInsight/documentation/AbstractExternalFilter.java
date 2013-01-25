@@ -171,8 +171,7 @@ public abstract class AbstractExternalFilter {
     if (url == null) {
       return null;
     }
-    httpConfigurable.prepareURL(url.toString());
-    final URLConnection urlConnection = url.openConnection();
+    final URLConnection urlConnection = httpConfigurable.openConnection(url.toString());
     final String contentEncoding = guessEncoding(url);
     final InputStream inputStream =
       pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();

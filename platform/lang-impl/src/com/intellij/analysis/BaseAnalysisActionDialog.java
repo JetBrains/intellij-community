@@ -90,7 +90,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       myAnalysisOptions.ANALYZE_TEST_SOURCES = scope.isAnalyzeTestsByDefault();
     }
     myProject = project;
-    myFileName = scope.getScopeType() == AnalysisScope.PROJECT || scope.getScopeType() == AnalysisScope.MODULE ? null : scope.getShortenName();
+    myFileName = scope.getScopeType() == AnalysisScope.PROJECT ? null : scope.getShortenName();
     myModuleName = moduleName;
     myRememberScope = rememberScope;
     myAnalysisNoon = analysisNoon;

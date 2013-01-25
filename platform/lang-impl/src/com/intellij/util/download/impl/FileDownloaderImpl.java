@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.UrlConnectionUtil;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
@@ -115,7 +114,6 @@ public class FileDownloaderImpl implements FileDownloader {
 
   @Nullable
   private List<Pair<VirtualFile,DownloadableFileDescription>> doDownload(final VirtualFile dir) {
-    HttpConfigurable.getInstance().setAuthenticator();
     final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
     final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
     final Ref<Exception> exceptionRef = Ref.create(null);

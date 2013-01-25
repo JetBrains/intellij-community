@@ -24,14 +24,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,32 +151,12 @@ public class VcsBalloonProblemNotifier implements Runnable {
                                 message, type);
             return;
           }
-          showBalloonForComponent(frame.getComponent(), message, type, true);
+          PopupUtil.showBalloonForComponent(frame.getComponent(), message, type, true);
         } else {
-          showBalloonForComponent(targetWindow, message, type, true);
+          PopupUtil.showBalloonForComponent(targetWindow, message, type, true);
         }
       }
     };
     UIUtil.invokeLaterIfNeeded(runnable);
-  }
-
-  public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
-                                             final boolean atTop) {
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
-      Balloon balloon = balloonBuilder.createBalloon();
-      Dimension size = component.getSize();
-      Balloon.Position position;
-      int x;
-      int y;
-      if (size == null) {
-        x = y = 0;
-        position = Balloon.Position.above;
-      }
-      else {
-        x = Math.min(10, size.width / 2);
-        y = size.height;
-        position = Balloon.Position.below;
-      }
-      balloon.show(new RelativePoint(component, new Point(x, y)), position);
   }
 }

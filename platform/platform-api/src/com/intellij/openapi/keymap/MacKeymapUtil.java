@@ -29,33 +29,33 @@ import java.awt.event.KeyEvent;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class MacKeymapUtil {
-  public static final String ESCAPE	 = "\u238B"; // ⎋
-  public static final String TAB	 = "\u21E5"; // ⇥
-  public static final String TAB_BACK	 = "\u21E4"; // ⇤
-  public static final String CAPS_LOCK	 = "\u21EA"; // ⇪
-  public static final String SHIFT	 = "\u21E7"; // ⇧
-  public static final String CONTROL	 = "\u2303"; // ⌃
-  public static final String OPTION      = "\u2325"; // ⌥
-  public static final String APPLE       = "\uF8FF"; // 
-  public static final String COMMAND     = "\u2318"; // ⌘
-  public static final String SPACE	 = "\u2423"; // ␣
-  public static final String RETURN	 = "\u23CE"; // ⏎
-  public static final String BACKSPACE	 = "\u232B"; // ⌫
-  public static final String DELETE	 = "\u2326"; // ⌦
-  public static final String HOME        = "\u2196"; // ↖
-  public static final String END	 = "\u2198"; // ↘
-  public static final String PAGE_UP	 = "\u21DE"; // ⇞
-  public static final String PAGE_DOWN	 = "\u21DF"; // ⇟
-  public static final String UP	         = "\u2191"; // ↑
-  public static final String DOWN	 = "\u2193"; // ↓
-  public static final String LEFT	 = "\u2190"; // ←
-  public static final String RIGHT	 = "\u2192"; // →
-  public static final String CLEAR	 = "\u2327"; // ⌧
-  public static final String NUMBER_LOCK = "\u21ED"; // ⇭
-  public static final String ENTER	 = "\u2324"; // ⌤
-  public static final String EJECT	 = "\u23CF"; // ⏏
-  public static final String POWER3	 = "\u233D"; // ⌽
-  public static final String NUM_PAD     = "\u2328"; // ⌨
+  public static final String ESCAPE	 = "\u238B";
+  public static final String TAB	 = "\u21E5";
+  public static final String TAB_BACK	 = "\u21E4";
+  public static final String CAPS_LOCK	 = "\u21EA";
+  public static final String SHIFT	 = "\u21E7";
+  public static final String CONTROL	 = "\u2303";
+  public static final String OPTION      = "\u2325";
+  public static final String APPLE       = "\uF8FF";
+  public static final String COMMAND     = "\u2318";
+  public static final String SPACE	 = "\u2423";
+  public static final String RETURN	 = "\u23CE";
+  public static final String BACKSPACE	 = "\u232B";
+  public static final String DELETE	 = "\u2326";
+  public static final String HOME        = "\u2196";
+  public static final String END	 = "\u2198";
+  public static final String PAGE_UP	 = "\u21DE";
+  public static final String PAGE_DOWN	 = "\u21DF";
+  public static final String UP	         = "\u2191";
+  public static final String DOWN	 = "\u2193";
+  public static final String LEFT	 = "\u2190";
+  public static final String RIGHT	 = "\u2192";
+  public static final String CLEAR	 = "\u2327";
+  public static final String NUMBER_LOCK = "\u21ED";
+  public static final String ENTER	 = "\u2324";
+  public static final String EJECT	 = "\u23CF";
+  public static final String POWER3	 = "\u233D";
+  public static final String NUM_PAD     = "\u2328";
 
   public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();

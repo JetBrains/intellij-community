@@ -550,23 +550,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
     myTimeout = NATIVE_PROCESS_DELAY;
   }
 
-  /*public void testUnicodePaths() throws Exception {
-    File topDir = IoTestUtil.createTestDir("topDir");
-    File testDir = IoTestUtil.createTestDir(topDir, "unicode директория");
-    File testFile = IoTestUtil.createTestFile(testDir, "unicode файл");
-    refresh(topDir);
-
-    LocalFileSystem.WatchRequest request = watch(topDir);
-    try {
-      myAccept = true;
-      FileUtil.writeToFile(testFile, "abc");
-      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
-    }
-    finally {
-      unwatch(request);
-    }
-  }*/
-
   public void testLineBreaksInName() throws Exception {
     if (!SystemInfo.isUnix) {
       System.err.println("Ignored: Unix required");

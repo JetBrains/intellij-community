@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,7 +46,7 @@ public class MoveClassToNewFileIntention extends Intention {
     final String name = psiClass.getName();
 
     final PsiFile file = psiClass.getContainingFile();
-    final String fileExtension = FileUtil.getExtension(file.getName());
+    final String fileExtension = FileUtilRt.getExtension(file.getName());
     final String newFileName = name + "." + fileExtension;
     final PsiDirectory dir = file.getParent();
     if (dir != null) {

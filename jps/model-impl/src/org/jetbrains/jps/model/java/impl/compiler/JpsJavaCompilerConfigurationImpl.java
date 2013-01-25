@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -44,6 +45,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   private Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<String, JpsJavaCompilerOptions>();
   private String myJavaCompilerId = "Javac";
   private Map<JpsModule, ProcessorConfigProfile> myAnnotationProcessingProfileMap;
+  private ResourcePatterns myCompiledPatterns;
 
   public JpsJavaCompilerConfigurationImpl() {
   }
@@ -104,6 +106,15 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public List<String> getResourcePatterns() {
     return myResourcePatterns;
+  }
+
+  @Override
+  public boolean isResourceFile(@NotNull File file, @NotNull File srcRoot) {
+    ResourcePatterns patterns = myCompiledPatterns;
+    if (patterns == null) {
+      myCompiledPatterns = patterns = new ResourcePatterns(this);
+    }
+    return patterns.isResourceFile(file, srcRoot);
   }
 
   @Override

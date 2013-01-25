@@ -54,7 +54,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Override
-  protected boolean isExecutableValid(String executable) {
+  protected boolean isExecutableValid(@NotNull String executable) {
     setNotificationErrorDescription(ourPath);
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();

@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -447,7 +448,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         String oldFileName = ArtifactUtil.suggestArtifactFileName(oldArtifactName);
         final String name = ((ArchivePackagingElement)root).getArchiveFileName();
         final String fileName = FileUtil.getNameWithoutExtension(name);
-        final String extension = FileUtil.getExtension(name);
+        final String extension = FileUtilRt.getExtension(name);
         if (fileName.equals(oldFileName) && extension.length() > 0) {
           myLayoutTreeComponent.editLayout(new Runnable() {
             @Override

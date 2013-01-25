@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
@@ -299,7 +300,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     String shelvedPath = null;
     if (afterFile != null) {
       String shelvedName = FileUtil.getNameWithoutExtension(afterFile.getName());
-      String shelvedExt = FileUtil.getExtension(afterFile.getName());
+      String shelvedExt = FileUtilRt.getExtension(afterFile.getName());
       File shelvedFile = FileUtil.findSequentNonexistentFile(myFileProcessor.getBaseIODir(), shelvedName, shelvedExt);
 
       myFileProcessor.saveFile(afterRevision.getFile().getIOFile(), shelvedFile);

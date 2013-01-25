@@ -163,4 +163,12 @@ public abstract class AbstractHash {
       return myVal != null ? myVal.hashCode() : 0;
     }
   }
+
+  public static boolean hashesEqual(@NotNull final AbstractHash hash1, @NotNull final AbstractHash hash2) {
+    if (hash1.equals(hash2)) return true;
+    final String s1 = hash1.getString();
+    final String s2 = hash2.getString();
+    if (s1.startsWith(s2) || s2.startsWith(s1)) return true;
+    return false;
+  }
 }
