@@ -45,6 +45,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -148,7 +149,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public static boolean isDumbAware(FileEditor editor) {
-    return Boolean.TRUE.equals(editor.getUserData(DUMB_AWARE));
+    return Boolean.TRUE.equals(editor.getUserData(DUMB_AWARE)) &&
+           (!(editor instanceof PossiblyDumbAware) || ((PossiblyDumbAware)editor).isDumbAware());
   }
 
   //-------------------------------------------------------------------------------
@@ -791,7 +793,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         state = editorHistoryManager.getState(file, provider);
       }
       if (state != null) {
-        editor.setState(state);
+        if (!isDumbAware(editor)) {
+          final FileEditorState finalState = state;
+          DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
+            @Override
+            public void run() {
+              editor.setState(finalState);
+            }
+          });
+        }
+        else {
+          editor.setState(state);
+        }
       }
     }
 

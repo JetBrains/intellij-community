@@ -302,13 +302,19 @@ public class GitHistoryUtils {
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
    * @param parameters        Optional parameters which will be added to the git log command just before the path.
-   * @throws VcsException     In case of git native execution error.
    */
   public static void history(final Project project, FilePath path, @Nullable VirtualFile root, final Consumer<GitFileRevision> consumer,
-                             final Consumer<VcsException> exceptionConsumer, String... parameters) throws VcsException {
+                             final Consumer<VcsException> exceptionConsumer, String... parameters) {
     // adjust path using change manager
     final FilePath filePath = getLastCommitName(project, path);
-    final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
+    final VirtualFile finalRoot;
+    try {
+      finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
+    }
+    catch (VcsException e) {
+      exceptionConsumer.consume(e);
+      return;
+    }
     final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
@@ -372,6 +378,7 @@ public class GitHistoryUtils {
       }
     };
 
+    final AtomicBoolean criticalFailure = new AtomicBoolean();
     while (currentPath.get() != null && firstCommitParent.get() != null) {
       logHandler.set(getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
@@ -392,6 +399,7 @@ public class GitHistoryUtils {
           try {
             exceptionConsumer.consume(new VcsException(exception));
           } finally {
+            criticalFailure.set(true);
             semaphore.up();
           }
         }
@@ -405,6 +413,7 @@ public class GitHistoryUtils {
               resultAdapter.consume(record);
             }
           } finally {
+            criticalFailure.set(true);
             semaphore.up();
           }
         }
@@ -412,9 +421,21 @@ public class GitHistoryUtils {
       semaphore.down();
       logHandler.get().start();
       semaphore.waitFor();
+      if (criticalFailure.get()) {
+        return;
+      }
 
-      currentPath.set(getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get()));
-      skipFurtherOutput.set(false);
+      try {
+        FilePath firstCommitRenamePath;
+        firstCommitRenamePath = getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get());
+        currentPath.set(firstCommitRenamePath);
+        skipFurtherOutput.set(false);
+      }
+      catch (VcsException e) {
+        LOG.warn("Tried to get first commit rename path", e);
+        exceptionConsumer.consume(e);
+        return;
+      }
     }
 
   }
