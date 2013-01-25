@@ -216,7 +216,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       final boolean focusOwner = editorComponent.isFocusOwner();
       int offset = -1;
       if (editorComponent instanceof EditorTextField) {
-        offset = ((EditorTextField)editorComponent).getCaretModel().getOffset();
+        final EditorTextField textField = (EditorTextField)editorComponent;
+        if (textField.getEditor() != null) {
+          offset = textField.getCaretModel().getOffset();
+        }
       }
       super.addRecent(text);
       myComboBox.insertItemAt(text, 0);
@@ -224,9 +227,9 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       editorComponent = myComboBox.getEditor().getEditorComponent();
       if (offset != -1 && editorComponent instanceof EditorTextField) {
         final EditorTextField textField = (EditorTextField)editorComponent;
-        textField.getCaretModel().moveToOffset(offset);
         final Editor editor = textField.getEditor();
         if (editor != null) {
+          textField.getCaretModel().moveToOffset(offset);
           editor.getSelectionModel().setSelection(offset, offset);
         }
       }
