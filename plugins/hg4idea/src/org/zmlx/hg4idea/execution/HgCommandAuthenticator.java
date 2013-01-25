@@ -71,8 +71,6 @@ class HgCommandAuthenticator {
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path) {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
-    // Don't use Application#invokeAndWait here, as IntelliJ 
-    // may already be showing a dialog (such as the clone dialog)
     ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
     myRunnable = runnable;
     return runnable.isOk();

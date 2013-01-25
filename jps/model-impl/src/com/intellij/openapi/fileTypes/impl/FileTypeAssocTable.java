@@ -21,10 +21,9 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,17 +43,7 @@ public class FileTypeAssocTable<T> {
   private FileTypeAssocTable(Map<String, T> extensionMappings, Map<String, T> exactFileNameMappings, Map<String, T> exactFileNameAnyCaseMappings, List<Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = new THashMap<String, T>(extensionMappings);
     myExactFileNameMappings = new THashMap<String, T>(exactFileNameMappings);
-    myExactFileNameAnyCaseMappings = new THashMap<String, T>(exactFileNameAnyCaseMappings, new TObjectHashingStrategy<String>() {
-      @Override
-      public int computeHashCode(String object) {
-        return StringUtil.stringHashCodeInsensitive(object);
-      }
-
-      @Override
-      public boolean equals(String o1, String o2) {
-        return o1.equalsIgnoreCase(o2);
-      }
-    }) {
+    myExactFileNameAnyCaseMappings = new THashMap<String, T>(exactFileNameAnyCaseMappings, CaseInsensitiveStringHashingStrategy.INSTANCE) {
       @Override
       public T remove(Object key) {
         T removed = super.remove(key);
@@ -188,7 +177,7 @@ public class FileTypeAssocTable<T> {
       if (mapping.getFirst().accept(fileName)) return mapping.getSecond();
     }
 
-    return myExtensionMappings.get(FileUtilRt.getExtension(fileName));
+    return myExtensionMappings.get(FileUtilRt.getExtension(fileName).toLowerCase());
   }
 
   @Nullable

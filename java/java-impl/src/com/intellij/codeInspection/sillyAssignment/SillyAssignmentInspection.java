@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -120,7 +121,9 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
   /**
    * @return true if both expressions resolve to the same variable/class or field in the same instance of the class
    */
-  private static boolean sameInstanceReferences(PsiReferenceExpression lRef, PsiReferenceExpression rRef, PsiManager manager) {
+  private static boolean sameInstanceReferences(@Nullable PsiJavaCodeReferenceElement lRef, @Nullable PsiJavaCodeReferenceElement rRef, PsiManager manager) {
+    if (lRef == null && rRef == null) return true;
+    if (lRef == null || rRef == null) return false;
     PsiElement lResolved = lRef.resolve();
     PsiElement rResolved = rRef.resolve();
     if (!manager.areElementsEquivalent(lResolved, rResolved)) return false;
@@ -128,15 +131,29 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
     final PsiVariable variable = (PsiVariable)lResolved;
     if (variable.hasModifierProperty(PsiModifier.STATIC)) return true;
 
-    PsiExpression lQualifier = lRef.getQualifierExpression();
-    PsiExpression rQualifier = rRef.getQualifierExpression();
-    if (lQualifier instanceof PsiReferenceExpression && rQualifier instanceof PsiReferenceExpression) {
-      return sameInstanceReferences((PsiReferenceExpression)lQualifier, (PsiReferenceExpression)rQualifier, manager);
+    final PsiElement lQualifier = lRef.getQualifier();
+    final PsiElement rQualifier = rRef.getQualifier();
+    if (lQualifier instanceof PsiJavaCodeReferenceElement && rQualifier instanceof PsiJavaCodeReferenceElement) {
+      return sameInstanceReferences((PsiJavaCodeReferenceElement)lQualifier, (PsiJavaCodeReferenceElement)rQualifier, manager);
     }
+
     if (Comparing.equal(lQualifier, rQualifier)) return true;
     boolean lThis = lQualifier == null || lQualifier instanceof PsiThisExpression || lQualifier instanceof PsiSuperExpression;
     boolean rThis = rQualifier == null || rQualifier instanceof PsiThisExpression || rQualifier instanceof PsiSuperExpression;
-    return lThis && rThis;
+    if (lThis && rThis) {
+      final PsiJavaCodeReferenceElement llQualifier = getQualifier(lQualifier);
+      final PsiJavaCodeReferenceElement rrQualifier = getQualifier(rQualifier);
+      return sameInstanceReferences(llQualifier, rrQualifier, manager);
+    }
+    return false;
   }
 
+  private static PsiJavaCodeReferenceElement getQualifier(PsiElement qualifier) {
+    if (qualifier instanceof PsiThisExpression) {
+      return ((PsiThisExpression)qualifier).getQualifier();
+    } else if (qualifier != null) {
+      return  ((PsiSuperExpression)qualifier).getQualifier();
+    }
+    return null;
+  }
 }

@@ -38,7 +38,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -157,7 +157,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null, new ZipUtil.ContentProcessor() {
         @Override
         public byte[] processContent(byte[] content, String fileName) throws IOException {
-          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtil.getExtension(fileName));
+          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
           return fileType.isBinary() ? content : processTemplates(new String(content));
         }
       });

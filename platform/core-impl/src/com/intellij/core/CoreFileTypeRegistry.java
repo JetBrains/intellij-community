@@ -19,12 +19,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,7 @@ import java.util.Map;
  * @author yole
  */
 public class CoreFileTypeRegistry extends FileTypeRegistry {
-  private final Map<String, FileType> myExtensionsMap = new HashMap<String, FileType>();
+  private final Map<String, FileType> myExtensionsMap = new THashMap<String, FileType>(FileUtil.PATH_HASHING_STRATEGY);
   private final List<FileType> myAllFileTypes = new ArrayList<FileType>();
 
   public CoreFileTypeRegistry() {
@@ -58,7 +59,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   @NotNull
   @Override
   public FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
-    final String extension = FileUtil.getExtension(fileName);
+    final String extension = FileUtilRt.getExtension(fileName);
     final FileType result = myExtensionsMap.get(extension);
     return result == null ? UnknownFileType.INSTANCE : result;
   }

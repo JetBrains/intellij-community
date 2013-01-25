@@ -99,28 +99,29 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
 
       Rectangle targetBounds = getBounds(myChildTarget, layer);
-      if (myHorizontal) {
-        myInsertBefore = location.x < targetBounds.getCenterX();
-
-        if (myInsertBefore) {
-          myInsertFeedback.setLocation(targetBounds.x, myBounds.y);
-        }
-        else {
-          myInsertFeedback.setLocation(targetBounds.x + targetBounds.width, myBounds.y);
-        }
-      }
-      else {
-        myInsertBefore = location.y < targetBounds.getCenterY();
-
-        if (myInsertBefore) {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y);
-        }
-        else {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height);
-        }
-      }
+      myInsertBefore = myHorizontal ? location.x < targetBounds.getCenterX() : location.y < targetBounds.getCenterY();
+      setInsertFeedbackBounds(targetBounds);
 
       layer.repaint();
+    }
+  }
+
+  protected void setInsertFeedbackBounds(Rectangle targetBounds) {
+    if (myHorizontal) {
+      if (myInsertBefore) {
+        myInsertFeedback.setLocation(targetBounds.x, myBounds.y);
+      }
+      else {
+        myInsertFeedback.setLocation(targetBounds.x + targetBounds.width, myBounds.y);
+      }
+    }
+    else {
+      if (myInsertBefore) {
+        myInsertFeedback.setLocation(myBounds.x, targetBounds.y);
+      }
+      else {
+        myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height);
+      }
     }
   }
 

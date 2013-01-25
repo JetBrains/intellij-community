@@ -24,7 +24,7 @@ import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -225,7 +225,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       return null;
     }
 
-    String extension = FileUtil.getExtension(new File(expandedFile).getName());
+    String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
     if (!ourHeadlessEnvironment && extension.length() == 0) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }

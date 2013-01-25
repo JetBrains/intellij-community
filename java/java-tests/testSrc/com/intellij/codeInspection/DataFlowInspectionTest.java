@@ -100,6 +100,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
   public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+  public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
   public void testAnnotatedTypeParameters() throws Throwable {
     setupCustomAnnotations();

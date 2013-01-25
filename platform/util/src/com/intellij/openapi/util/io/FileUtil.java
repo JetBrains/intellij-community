@@ -827,9 +827,14 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
+  /**
+   * @deprecated this method returns extension converted to lower case, this may not be correct for case-sensitive FS.
+   * Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
+   * If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
+   */
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return FileUtilRt.getExtension(fileName);
+    return FileUtilRt.getExtension(fileName).toLowerCase();
   }
 
   @NotNull

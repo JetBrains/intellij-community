@@ -70,6 +70,9 @@ public class HgCurrentBranchStatusUpdater implements HgUpdater {
       handleUpdate(project, null, Collections.<HgRevisionNumber>emptyList());
     }
     else {
+      if (project.isDisposed()) {
+        return;
+      }
       Document document = textEditor.get().getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
