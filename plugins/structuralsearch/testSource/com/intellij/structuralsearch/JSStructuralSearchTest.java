@@ -4,7 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.IOException;
 
@@ -339,7 +339,7 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                             int expectedOccurences,
                             FileType patternFileType,
                             String patternFileExtension) throws IOException {
-    String extension = FileUtil.getExtension(fileName);
+    String extension = FileUtilRt.getExtension(fileName);
     doTest(TestUtils.loadFile(fileName), pattern, expectedOccurences, patternFileType, patternFileExtension,
            FileTypeManager.getInstance().getFileTypeByExtension(extension), extension, true);
   }

@@ -4,7 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.IOException;
 
@@ -238,7 +238,7 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
                             String by,
                             FileType patternFileType,
                             Language patternFileDialect) throws IOException {
-    String extension = FileUtil.getExtension(fileName);
+    String extension = FileUtilRt.getExtension(fileName);
     String source = TestUtils.loadFile(fileName);
     String expected = TestUtils.loadFile(expectedFileName);
     doTest(source, what, by, expected, patternFileType, patternFileDialect, FileTypeManager.getInstance().getFileTypeByExtension(extension),

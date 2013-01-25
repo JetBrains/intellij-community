@@ -9,7 +9,7 @@ import com.intellij.lang.javascript.dialects.JSLanguageLevel;
 import com.intellij.lang.javascript.settings.JSRootConfiguration;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.IOException;
 
@@ -400,7 +400,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                             int expectedWithDefaultEquivalence,
                             FileType patternFileType,
                             String patternFileExtension) throws IOException {
-    String extension = FileUtil.getExtension(fileName);
+    String extension = FileUtilRt.getExtension(fileName);
     doTest(TestUtils.loadFile(fileName), pattern, expected, expectedWithDefaultEquivalence, patternFileType, patternFileExtension,
            FileTypeManager.getInstance().getFileTypeByExtension(extension), extension, true);
   }
