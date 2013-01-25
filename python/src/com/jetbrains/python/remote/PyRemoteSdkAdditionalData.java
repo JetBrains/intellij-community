@@ -3,6 +3,7 @@ package com.jetbrains.python.remote;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remotesdk.RemoteSdkAdditionalData;
+import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
