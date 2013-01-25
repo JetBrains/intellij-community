@@ -15,6 +15,12 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
+import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter;
+import com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,5 +77,46 @@ public class ZenCodingUtil {
   public static String getValue(String value, int numberInIteration, String surroundedText) {
     String s = replaceMarkers(value, numberInIteration, surroundedText);
     return s.replace("\"", "&quot;");
+  }
+
+  public static int parseNonNegativeInt(@NotNull String s) {
+    try {
+      return Integer.parseInt(s);
+    }
+    catch (Throwable ignored) {
+    }
+    return -1;
+  }
+
+  public static boolean isXML11ValidQName(String str) {
+    final int colon = str.indexOf(':');
+    if (colon == 0 || colon == str.length() - 1) {
+      return false;
+    }
+    if (colon > 0) {
+      final String prefix = str.substring(0, colon);
+      final String localPart = str.substring(colon + 1);
+      return XML11Char.isXML11ValidNCName(prefix) && XML11Char.isXML11ValidNCName(localPart);
+    }
+    return XML11Char.isXML11ValidNCName(str);
+  }
+
+  public static boolean isHtml(CustomTemplateCallback callback) {
+    FileType type = callback.getFileType();
+    return type == StdFileTypes.HTML || type == StdFileTypes.XHTML;
+  }
+
+  public static boolean checkFilterSuffix(@NotNull String suffix) {
+    for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
+      if (suffix.equals(generator.getSuffix())) {
+        return true;
+      }
+    }
+    for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
+      if (suffix.equals(filter.getSuffix())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
