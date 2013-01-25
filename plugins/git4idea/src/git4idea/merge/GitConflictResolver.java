@@ -208,7 +208,9 @@ public class GitConflictResolver {
         }
       }
     } catch (VcsException e) {
-      notifyException(mergeDialogInvokedFromNotification, e);
+      if (((GitVcs)myPlatformFacade.getVcs(myProject)).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        notifyException(e);
+      }
     }
     return false;
 
@@ -224,12 +226,10 @@ public class GitConflictResolver {
     });
   }
 
-  private void notifyException(boolean mergeDialogInvokedFromNotification, VcsException e) {
+  private void notifyException(VcsException e) {
     LOG.info("mergeFiles ", e);
-    final String description = mergeDialogInvokedFromNotification
-                               ? "Be sure to resolve all conflicts before update. <br/>"
-                               : "Be sure to resolve all conflicts first. ";
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
+    final String description = "Couldn't check the working tree for unmerged files because of an error.";
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(myParams.myErrorNotificationTitle,
                                                            description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
                                                            e.getLocalizedMessage(),
                                                            NotificationType.ERROR,
