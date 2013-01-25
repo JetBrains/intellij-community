@@ -30,9 +30,9 @@ public final class HgErrorUtil {
     return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
   }
 
-  public static boolean isAuthorizationError(HgCommandResult result) {
+  public static boolean isAuthorizationError(@Nullable HgCommandResult result) {
     if (result == null) {
-      return true;
+      return false;
     }
     String line = getLastErrorLine(result);
     return !StringUtil.isEmptyOrSpaces(line) && (
