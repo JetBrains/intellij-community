@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,7 +151,14 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
 
   private static PsiJavaCodeReferenceElement getQualifier(PsiElement qualifier) {
     if (qualifier instanceof PsiThisExpression) {
-      return ((PsiThisExpression)qualifier).getQualifier();
+      final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)qualifier).getQualifier();
+      if (thisQualifier != null) {
+        final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(thisQualifier, PsiClass.class);
+        if (innerMostClass == thisQualifier.resolve()) {
+          return null;
+        }
+      }
+      return thisQualifier;
     } else if (qualifier != null) {
       return  ((PsiSuperExpression)qualifier).getQualifier();
     }
