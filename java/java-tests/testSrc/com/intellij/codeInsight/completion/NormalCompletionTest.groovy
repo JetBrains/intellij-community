@@ -85,6 +85,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSimpleVariable() throws Exception { doTest('\n') }
 
+  public void testTypeParameterItemPresentation() {
+    configure()
+    LookupElementPresentation presentation = renderElement(myItems[0])
+    assert "Param" == presentation.itemText
+    assert presentation.tailText == " (type parameter of Foo)"
+    assert !presentation.typeText
+    assert !presentation.icon
+    assert !presentation.itemTextBold
+
+    presentation = renderElement(myItems[1])
+    assert "Param2" == presentation.itemText
+    assert presentation.tailText == " (type parameter of goo)"
+  }
+
   public void testMethodItemPresentation() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])

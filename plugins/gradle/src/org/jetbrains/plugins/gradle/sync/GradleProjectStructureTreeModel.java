@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChan
 import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
 import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
@@ -601,14 +602,53 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
   }
   
+  private void processNewChangedLibraryVersionChange(@NotNull GradleOutdatedLibraryVersionChange change) {
+    for (Map.Entry<String, GradleProjectStructureNode<GradleSyntheticId>> entry : myModuleDependencies.entrySet()) {
+      String moduleName = entry.getKey();
+      LibraryOrderEntry libraryDependency =
+        myProjectStructureHelper.findIdeLibraryDependency(moduleName, change.getIdeLibraryId().getLibraryName());
+      if (libraryDependency == null) {
+        // Current module doesn't have target outdated library as a dependency. 
+        continue;
+      }
+
+      GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = entry.getValue();
+
+      // Remove local dependency nodes (if any).
+      Collection<GradleProjectStructureNode<GradleLibraryDependencyId>> dependencyNodes =
+        dependenciesNode.getChildren(GradleLibraryDependencyId.class);
+      for (GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode : dependencyNodes) {
+        GradleLibraryDependencyId id = dependencyNode.getDescriptor().getElement();
+        if (id.getLibraryId().equals(change.getGradleLibraryId()) || id.getLibraryId().equals(change.getIdeLibraryId())) {
+          dependenciesNode.remove(dependencyNode);
+        }
+      }
+      
+      // Add 'changed version' nodes.
+      GradleCompositeLibraryDependencyId libraryDependencyId = new GradleCompositeLibraryDependencyId(
+        new GradleLibraryDependencyId(GradleEntityOwner.GRADLE, moduleName, change.getGradleLibraryId().getLibraryName()), 
+        new GradleLibraryDependencyId(GradleEntityOwner.IDE, moduleName, change.getIdeLibraryId().getLibraryName())
+      );
+      String libraryDependencyNodeName = GradleUtil.getOutdatedEntityName(
+        change.getBaseLibraryName(),
+        change.getGradleLibraryVersion(),
+        change.getIdeLibraryVersion()
+      );
+      GradleProjectStructureNode<GradleCompositeLibraryDependencyId> libraryDependencyNode =
+        buildNode(libraryDependencyId, libraryDependencyNodeName);
+      libraryDependencyNode.setAttributes(GradleTextAttributes.OUTDATED_ENTITY);
+      dependenciesNode.add(libraryDependencyNode);
+    }
+  }
+  
   private void processNewModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change) {
     processNewDependencyPresenceChange(change);
   }
   
   @SuppressWarnings("unchecked")
   @Nullable
-  private <I extends GradleAbstractDependencyId> GradleProjectStructureNode<I> processNewDependencyPresenceChange(
-    @NotNull GradleAbstractEntityPresenceChange<I> change)
+  private <I extends AbstractGradleDependencyId> GradleProjectStructureNode<I> processNewDependencyPresenceChange(
+    @NotNull AbstractGradleEntityPresenceChange<I> change)
   {
     I id = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
@@ -715,6 +755,38 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     processObsoleteDependencyPresenceChange(id, removeNode);
   }
 
+  private void processObsoleteChangedLibraryVersionChange(@NotNull GradleOutdatedLibraryVersionChange change) {
+    Library library = myProjectStructureHelper.findIdeLibraryByBaseName(change.getBaseLibraryName());
+    if (library == null) {
+      return;
+    }
+    for (Map.Entry<String, GradleProjectStructureNode<GradleSyntheticId>> entry : myModuleDependencies.entrySet()) {
+      String moduleName = entry.getKey();
+      GradleCompositeLibraryDependencyId outdatedEntityId = new GradleCompositeLibraryDependencyId(
+        new GradleLibraryDependencyId(GradleEntityOwner.GRADLE, moduleName, change.getGradleLibraryId().getLibraryName()),
+        new GradleLibraryDependencyId(GradleEntityOwner.IDE, moduleName, change.getIdeLibraryId().getLibraryName())
+      );
+      GradleProjectStructureNode<GradleSyntheticId> dependenciesNode = entry.getValue();
+      Collection<GradleProjectStructureNode<GradleCompositeLibraryDependencyId>> dependencyNodes =
+        dependenciesNode.getChildren(GradleCompositeLibraryDependencyId.class);
+      for (GradleProjectStructureNode<GradleCompositeLibraryDependencyId> oldDependencyNode : dependencyNodes) {
+        if (!outdatedEntityId.equals(oldDependencyNode.getDescriptor().getElement())) {
+          continue;
+        }
+        dependenciesNode.remove(oldDependencyNode);
+        LibraryOrderEntry libraryDependency =
+          myProjectStructureHelper.findIdeLibraryDependency(moduleName, GradleUtil.getLibraryName(library));
+        if (libraryDependency != null) {
+          GradleLibraryDependencyId newDependencyId = GradleEntityIdMapper.mapEntityToId(libraryDependency);
+          GradleProjectStructureNode<GradleLibraryDependencyId> newDependencyNode =
+            buildNode(newDependencyId, newDependencyId.getDependencyName());
+          populateLibraryDependencyNode(newDependencyNode, libraryDependency.getLibrary());
+          dependenciesNode.add(newDependencyNode);
+        }
+      }
+    }
+  }
+  
   private void processObsoleteModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change) {
     GradleModuleDependencyId id = change.getGradleEntity();
     boolean removeNode;
@@ -729,7 +801,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     processObsoleteDependencyPresenceChange(id, removeNode);
   }
 
-  private void processObsoleteDependencyPresenceChange(@NotNull GradleAbstractDependencyId id, boolean removeNode) {
+  private void processObsoleteDependencyPresenceChange(@NotNull AbstractGradleDependencyId id, boolean removeNode) {
     final GradleProjectStructureNode<GradleSyntheticId> holder = myModuleDependencies.get(id.getOwnerModuleName());
     if (holder == null) {
       return;
@@ -741,8 +813,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     // We should distinguish between those situations because we need to mark the node as 'synced' at one case and
     // completely removed at another one.
 
-    for (GradleProjectStructureNode<? extends GradleAbstractDependencyId> node : holder.getChildren(id.getClass())) {
-      GradleProjectStructureNodeDescriptor<? extends GradleAbstractDependencyId> descriptor = node.getDescriptor();
+    for (GradleProjectStructureNode<? extends AbstractGradleDependencyId> node : holder.getChildren(id.getClass())) {
+      GradleProjectStructureNodeDescriptor<? extends AbstractGradleDependencyId> descriptor = node.getDescriptor();
       if (!id.equals(descriptor.getElement())) {
         continue;
       }
@@ -829,7 +901,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
   }
 
-  private void processDependencyConflictChange(@NotNull GradleAbstractConflictingPropertyChange<?> change,
+  private void processDependencyConflictChange(@NotNull AbstractGradleConflictingPropertyChange<?> change,
                                                @NotNull Function<GradleEntityId, GradleEntityId> nodeIdMapper,
                                                boolean obsolete)
   {
@@ -892,6 +964,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processNewContentRootPresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleJarPresenceChange change) { processJarPresenceChange(change, false); }
+    @Override public void visit(@NotNull GradleOutdatedLibraryVersionChange change) { processNewChangedLibraryVersionChange(change); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleDependencyScopeChange change) { processNewDependencyScopeChange(change); }
     @Override public void visit(@NotNull GradleDependencyExportedChange change) { processNewDependencyExportedChange(change);
@@ -907,6 +980,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       processObsoleteLibraryDependencyPresenceChange(change); 
     }
     @Override public void visit(@NotNull GradleJarPresenceChange change) { processJarPresenceChange(change, true); }
+    @Override public void visit(@NotNull GradleOutdatedLibraryVersionChange change) { processObsoleteChangedLibraryVersionChange(change); }
+
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
       processObsoleteModuleDependencyPresenceChange(change); 
     }

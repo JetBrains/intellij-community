@@ -109,6 +109,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("r1");
   }
 
+  public void testRenameToFieldNameInStaticContext() throws Exception {
+    doTestInplaceRename("myFoo");
+  }
+
   public void testRenameInPlaceInStaticContextWithConflictingField() throws Exception {
     doTestInplaceRename("s");
   }

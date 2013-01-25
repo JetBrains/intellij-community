@@ -1,15 +1,14 @@
 package org.jetbrains.plugins.gradle.sync;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
-import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 11/3/11 7:01 PM
  */
-public class GradleProjectStructureChangesModel extends AbstractProjectComponent {
+public class GradleProjectStructureChangesModel {
 
   private final Set<GradleProjectStructureChangeListener>          myListeners =
     new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
@@ -40,18 +39,21 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
   @NotNull private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
   @NotNull private final PlatformFacade                                           myPlatformFacade;
   @NotNull private final GradleLibraryPathTypeMapper                              myLibraryPathTypeMapper;
+  @NotNull private final Project                                                  myProject;
 
   public GradleProjectStructureChangesModel(@NotNull Project project,
                                             @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator,
                                             @NotNull PlatformFacade platformFacade,
                                             @NotNull GradleLibraryPathTypeMapper mapper,
-                                            @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor)
+                                            @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor,
+                                            @NotNull GradleOutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor)
   {
-    super(project);
+    myProject = project;
     myChangesCalculator = changesCalculator;
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
     myPostProcessors.add(movedJarsPostProcessor);
+    myPostProcessors.add(changedLibraryVersionPostProcessor);
   }
 
   /**
@@ -75,9 +77,6 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
   public void update(@NotNull GradleProject gradleProject) {
     myGradleProject.set(gradleProject);
     final GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
-    for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), myProject);
-    }
     if (!context.hasNewChanges()) {
       return;
     }
@@ -117,6 +116,9 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
     GradleChangesCalculationContext context
       = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade, myLibraryPathTypeMapper);
     myChangesCalculator.calculate(gradleProject, myProject, context);
+    for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
+      processor.processChanges(context.getCurrentChanges(), myProject);
+    }
     return context;
   }
   

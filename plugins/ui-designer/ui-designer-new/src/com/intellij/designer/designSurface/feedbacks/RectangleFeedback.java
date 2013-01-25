@@ -23,7 +23,7 @@ import java.awt.*;
  */
 public class RectangleFeedback extends JComponent {
   private final Color myColor;
-  private final int myLine;
+  protected final int myLine;
 
   public RectangleFeedback(Color color, int line) {
     myColor = color;
@@ -35,6 +35,10 @@ public class RectangleFeedback extends JComponent {
     super.paintComponent(g);
     g.setColor(myColor);
 
+    paintFeedback(g);
+  }
+
+  protected void paintFeedback(Graphics g) {
     Dimension size = getSize();
     for (int i = 0; i < myLine; i++) {
       g.drawRect(i, i, size.width - i - i - 1, size.height - i - i - 1);

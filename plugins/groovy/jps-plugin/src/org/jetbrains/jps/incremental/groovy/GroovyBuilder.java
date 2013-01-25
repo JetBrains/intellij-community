@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
+  private static final String GROOVY_EXTENSION = "groovy";
+  private static final String GPP_EXTENSION = "gpp";
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -84,7 +87,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                            DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                            OutputConsumer outputConsumer) throws ProjectBuildException {
     try {
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder);
+      JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
+
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, settings);
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -115,7 +120,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       final File tempFile = GroovycOSProcessHandler.fillFileWithGroovycParameters(
         compilerOutput, toCompilePaths, finalOutput, class2Src, encoding, patchers
       );
-      final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile);
+      final GroovycOSProcessHandler handler = runGroovyc(context, chunk, tempFile, settings);
 
       Map<ModuleBuildTarget, Collection<GroovycOSProcessHandler.OutputItem>>
         compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, handler);
@@ -154,20 +159,28 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return toCompilePaths;
   }
 
-  private GroovycOSProcessHandler runGroovyc(final CompileContext context, ModuleChunk chunk, File tempFile) throws IOException {
-    //todo xmx
+  private GroovycOSProcessHandler runGroovyc(final CompileContext context,
+                                             ModuleChunk chunk,
+                                             File tempFile,
+                                             final JpsGroovySettings settings) throws IOException {
     ArrayList<String> classpath = new ArrayList<String>(generateClasspath(context, chunk));
     if (LOG.isDebugEnabled()) {
       LOG.debug("Groovyc classpath: " + classpath);
     }
+
+    List<String> programParams = ContainerUtilRt.newArrayList(myForStubs ? "stubs" : "groovyc", tempFile.getPath());
+    if (settings.invokeDynamic) {
+      programParams.add("--indy");
+    }
+
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(chunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
       Collections.<String>emptyList(), classpath,
-      Arrays.asList("-Xmx384m",
+      Arrays.asList("-Xmx" + settings.heapSize + "m",
                     "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
                     "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
-      Arrays.<String>asList(myForStubs ? "stubs" : "groovyc", tempFile.getPath())
+      programParams
     );
 
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
@@ -320,15 +333,21 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return SystemProperties.getJavaHome() + "/bin/java";
   }
 
-  private static List<File> collectChangedFiles(CompileContext context,
-                                                DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) throws IOException {
-    final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
-    assert patterns != null;
+  private List<File> collectChangedFiles(CompileContext context,
+                                                DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, final JpsGroovySettings settings) throws IOException {
+
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
+    assert configuration != null;
+
     final List<File> toCompile = new ArrayList<File>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot.root)) { //todo file type check
+        if (isGroovyFile(path) && !configuration.isResourceFile(file, sourceRoot.root)) { //todo file type check
+          if (myForStubs && settings.isExcludedFromStubGeneration(file)) {
+            return true;
+          }
+
           toCompile.add(file);
         }
         return true;
@@ -392,7 +411,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public static boolean isGroovyFile(String path) {
-    return path.endsWith(".groovy") || path.endsWith(".gpp");
+    return path.endsWith("." + GROOVY_EXTENSION) || path.endsWith("." + GPP_EXTENSION);
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Arrays.asList(GROOVY_EXTENSION, GPP_EXTENSION);
   }
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {

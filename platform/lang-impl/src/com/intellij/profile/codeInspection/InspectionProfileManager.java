@@ -40,6 +40,7 @@ import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -361,11 +362,15 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
 
   public static void onProfilesChanged() {
     //cleanup caches blindly for all projects in case ide profile was modified
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+    for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
       HighlightingSettingsPerFile.getInstance(project).cleanProfileSettings();
 
-      InspectionProjectProfileManager.getInstance(project).updateStatusBar();
-
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          InspectionProjectProfileManager.getInstance(project).updateStatusBar();
+        }
+      });
     }
   }
 }

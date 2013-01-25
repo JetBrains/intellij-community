@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -718,7 +718,7 @@ public class TypesUtil {
     GlobalSearchScope resolveScope = context.getResolveScope();
 
     PsiClass setClass = facade.findClass(JAVA_UTIL_SET, resolveScope);
-    if (setClass != null) {
+    if (setClass != null && setClass.getTypeParameters().length == 1) {
       return facade.getElementFactory().createType(setClass, type);
     }
 

@@ -277,8 +277,8 @@ public class PsiSuperMethodImplUtil {
               }
 
               if (containingClass != null) {
-                if (!containingClass.isInterface()) {
-                  return true;
+                if (containingClass.isInterface()) {
+                  return false;
                 }
 
                 if (!aClass.isInterface() && !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {

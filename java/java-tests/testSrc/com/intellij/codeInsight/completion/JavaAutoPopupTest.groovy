@@ -1258,7 +1258,14 @@ class Foo {
   }
 
   @Override
+  protected void setUp() {
+    super.setUp()
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+  }
+
+  @Override
   protected void tearDown() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     super.tearDown()
   }

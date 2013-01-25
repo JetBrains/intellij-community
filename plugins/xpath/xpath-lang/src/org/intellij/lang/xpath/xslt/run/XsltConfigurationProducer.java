@@ -24,7 +24,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
   private XmlFile myFile;
 
   public XsltConfigurationProducer() {
-    super(ConfigurationTypeUtil.findConfigurationType(XsltRunConfigType.class));
+    super(XsltRunConfigType.getInstance());
   }
 
   @Override

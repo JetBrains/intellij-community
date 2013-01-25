@@ -17,11 +17,15 @@
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="tests_bootstrap" />
     <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
-    <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="java-runtime" exported="" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="platform-resources" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="relaxng" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="images" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
   </component>
 </module>
 

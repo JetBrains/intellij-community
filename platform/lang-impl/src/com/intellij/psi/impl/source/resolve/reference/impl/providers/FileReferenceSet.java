@@ -291,7 +291,9 @@ public class FileReferenceSet {
         final Collection<PsiFileSystemItem> roots = value.fun(file);
         if (roots != null) {
           for (PsiFileSystemItem root : roots) {
-            LOG.assertTrue(root != null, "Default path evaluator " + value + " produced a null root for " + file);
+            if (root == null) {
+              LOG.error("Default path evaluator " + value + " produced a null root for " + file);
+            }
           }
           return roots;
         }

@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -192,8 +193,10 @@ public class Tool implements SchemeElement {
 
   public void setOutputFilters(FilterInfo[] filters) {
     myOutputFilters = new ArrayList<FilterInfo>();
-    for (int i = 0; i < filters.length; i++) {
-      myOutputFilters.add(filters[i]);
+    if (filters != null) {
+      for (int i = 0; i < filters.length; i++) {
+        myOutputFilters.add(filters[i]);
+      }
     }
   }
 
@@ -257,7 +260,7 @@ public class Tool implements SchemeElement {
     return name.toString();
   }
 
-  public void execute(DataContext dataContext) {
+  public void execute(AnActionEvent event, DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
@@ -311,8 +314,8 @@ public class Tool implements SchemeElement {
   }
 
   @Nullable
-  GeneralCommandLine createCommandLine(DataContext dataContext) {
-    if (getWorkingDirectory() != null && getWorkingDirectory().trim().length() == 0) {
+  public GeneralCommandLine createCommandLine(DataContext dataContext) {
+    if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory(null);
     }
 

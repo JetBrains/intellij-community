@@ -28,6 +28,20 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     return GroovyLightProjectDescriptor.INSTANCE
   }
 
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+  }
+
+  @Override
+  protected void tearDown() {
+    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    super.tearDown()
+  }
+
   public void testGenerallyFocusLookup() {
     myFixture.configureByText("a.groovy", """
         String foo(String xxxxxx) {
@@ -105,6 +119,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings == ['xxxxx']
   }
 
+
   public void testTypingNonImportedClassName() {
     setFocusLookup()
 
@@ -113,13 +128,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.configureByText "a.groovy", "<caret>"
     type 'Foo239 '
     myFixture.checkResult 'Foo239 <caret>'
-  }
-
-  @Override
-  protected void tearDown() {
-    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    super.tearDown()
   }
 
   private def setFocusLookup() {

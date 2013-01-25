@@ -18,6 +18,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -75,7 +76,17 @@ public class DomCompletionContributor extends CompletionContributor{
       final PsiElement parent = element.getParent();
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor != null && descriptor.isEnumerated()) return true;
+        if (descriptor != null && descriptor.isEnumerated()) {
+          return true;
+        }
+
+        String[] enumeratedValues = XmlAttributeValueGetter.getEnumeratedValues((XmlAttribute)parent);
+        if (enumeratedValues != null && enumeratedValues.length > 0) {
+          String value = descriptor == null ? null : descriptor.getDefaultValue();
+          if (value == null || enumeratedValues.length != 1 || !value.equals(enumeratedValues[0])) {
+            return true;
+          }
+        }
       }
     }
     return false;

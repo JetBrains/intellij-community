@@ -16,7 +16,6 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -80,7 +79,7 @@ public class IncProjectBuilder {
 
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
-  private static final Key<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = Key.create("_targets_with_cleared_output_");
+  private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   private static final int MAX_BUILDER_THREADS;
   static {
     int maxThreads = 6;
@@ -1058,14 +1057,6 @@ public class IncProjectBuilder {
     BuildOperations.markTargetsUpToDate(context, chunk);
   }
 
-  private static final Set<Key> GLOBAL_CONTEXT_KEYS = new HashSet<Key>();
-  static {
-    // keys for data that must be visible to all threads
-    GLOBAL_CONTEXT_KEYS.add(ExternalJavacDescriptor.KEY);
-    GLOBAL_CONTEXT_KEYS.add(FSOperations.ALL_OUTPUTS_KEY);
-    GLOBAL_CONTEXT_KEYS.add(TARGET_WITH_CLEARED_OUTPUT);
-  }
-
   private static CompileContext createContextWrapper(final CompileContext delegate) {
     final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
@@ -1078,8 +1069,7 @@ public class IncProjectBuilder {
         final Class<?> declaringClass = method.getDeclaringClass();
         if (dataHolderInterface.equals(declaringClass)) {
           final Object firstArgument = args[0];
-          final boolean isGlobalContextKey = firstArgument instanceof Key && GLOBAL_CONTEXT_KEYS.contains((Key)firstArgument);
-          if (!isGlobalContextKey) {
+          if (!(firstArgument instanceof GlobalContextKey)) {
             final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
             if (isWriteOperation) {
               if (args[1] == null) {

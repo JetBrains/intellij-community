@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 12/11/12 3:04 PM
  */
-public class GradleJarId extends GradleAbstractEntityId {
+public class GradleJarId extends AbstractGradleEntityId {
 
   @NotNull private final String          myPath;
   @NotNull private final GradleLibraryId myLibraryId;

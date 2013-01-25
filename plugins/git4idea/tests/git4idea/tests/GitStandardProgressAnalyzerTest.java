@@ -16,8 +16,8 @@
 package git4idea.tests;
 
 import git4idea.commands.GitStandardProgressAnalyzer;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,7 +32,7 @@ public class GitStandardProgressAnalyzerTest {
   private static final double EPS = 0.00001;
   private GitStandardProgressAnalyzer myProgressModifier;
 
-  @BeforeMethod
+  @Before
   public void setUp() {
     myProgressModifier = new GitStandardProgressAnalyzer();
   }
@@ -54,8 +54,16 @@ public class GitStandardProgressAnalyzerTest {
 
   @Test
   public void recevingObjects() {
-    assertEquals(myProgressModifier.analyzeProgress("remote: Receiving objects: 70% (595/850), 4.18 MiB | 223 KiB/s"), 0.15 + 0.8 * 0.7, EPS);
+    assertEquals(myProgressModifier.analyzeProgress("remote: Receiving objects: 70% (595/850), 4.18 MiB | 223 KiB/s"),
+                 0.15 + 0.8 * 0.7, EPS);
   }
+
+  @Test
+  public void writingObjects() {
+    assertEquals(myProgressModifier.analyzeProgress("Writing objects:  60% (3/5), 49.91 MiB | 422 KiB/s"),
+                 0.15 + 0.8 * 0.6, EPS);
+  }
+
   @Test
   public void resolvingDeltas() {
     assertEquals(myProgressModifier.analyzeProgress("remote: Resolving deltas: 34% (289/850)"), 0.95 + 0.05 * 0.34, EPS);
@@ -99,6 +107,7 @@ public class GitStandardProgressAnalyzerTest {
       }
     }
     Object resolvingDeltasOperation = null;
+    assert operationClass != null;
     for (Object enumConstant : operationClass.getEnumConstants()) {
       if (enumConstant.toString() == "RESOLVING_DELTAS") {
         resolvingDeltasOperation = enumConstant;

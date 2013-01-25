@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,8 +96,8 @@ public class MethodList extends JPanel
         MethodList list = new MethodList(psiClass);
         DialogBuilder builder = new DialogBuilder(component);
         builder.setCenterPanel(list);
-        builder.setPreferedFocusComponent(list.list);
-        builder.setTitle("Choose Test Method");
+      builder.setPreferredFocusComponent(list.list);
+      builder.setTitle("Choose Test Method");
         return builder.show() != 0 ? null : list.getSelected();
     }
 }

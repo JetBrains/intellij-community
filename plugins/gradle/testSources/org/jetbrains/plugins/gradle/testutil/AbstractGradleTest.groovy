@@ -23,15 +23,12 @@ import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
 import org.jetbrains.plugins.gradle.model.id.GradleJarId
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryId
 import org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor
+import org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter
-import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.util.TestGradleJarManager
-import org.jetbrains.plugins.gradle.util.TestGradleMovedJarsPostProcessor
+import org.jetbrains.plugins.gradle.util.*
 import org.junit.Before
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.DefaultPicoContainer
@@ -59,7 +56,19 @@ public abstract class AbstractGradleTest {
     intellij = new IntellijProjectBuilder()
     changesBuilder = new ChangeBuilder()
     treeChecker = new ProjectStructureChecker()
-    container = new DefaultPicoContainer()
+    container = new DefaultPicoContainer() {
+      @Override
+      Object getComponentInstance(Object componentKey) {
+        def result = super.getComponentInstance(componentKey)
+        if (result == null && componentKey instanceof String) {
+          def clazz = Class.forName(componentKey)
+          if (clazz != null) {
+            result = super.getComponentInstance(clazz)
+          }
+        }
+        result
+      }
+    }
     container.registerComponentInstance(Project, intellij.project)
     container.registerComponentInstance(PlatformFacade, intellij.platformFacade as PlatformFacade)
     container.registerComponentImplementation(GradleProjectStructureChangesModel)
@@ -76,9 +85,11 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(GradleLibraryPathTypeMapper, TestGradleLibraryPathTypeMapper)
     container.registerComponentImplementation(GradleJarManager, TestGradleJarManager)
     container.registerComponentImplementation(GradleMovedJarsPostProcessor, TestGradleMovedJarsPostProcessor)
+    container.registerComponentImplementation(GradleOutdatedLibraryVersionPostProcessor)
     configureContainer(container)
     
     intellij.projectStub.getComponent = { clazz -> container.getComponentInstance(clazz) }
+    intellij.projectStub.getPicoContainer = { container }
 
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
     
@@ -159,8 +170,12 @@ public abstract class AbstractGradleTest {
     }
   }
 
-  protected def applyTreeFilter(TextAttributesKey toShow) {
+  protected def applyTreeFilter(@NotNull TextAttributesKey toShow) {
     treeModel.addFilter(treeFilters[toShow])
+  }
+
+  protected def resetTreeFilter(@NotNull TextAttributesKey filterKey) {
+    treeModel.removeFilter(treeFilters[filterKey])
   }
   
   @NotNull
@@ -192,5 +207,17 @@ Can't build an id object for given jar path ($path).
 """
     
     throw new IllegalArgumentException(errorMessage)
+  }
+
+  @NotNull
+  protected GradleLibraryId findLibraryId(@NotNull String name, boolean gradleLibrary) {
+    def libraries = gradleLibrary ? gradle.libraries : intellij.libraries
+    def library = libraries[name]
+    if (library == null) {
+      def errorMessage =
+        "Can't find ${gradleLibrary ? 'gradle' : 'ide'} library with name '$name'. Available libraries: ${libraries.keySet()}"
+      throw new IllegalArgumentException(errorMessage)
+    }
+    new GradleLibraryId(gradleLibrary ? GradleEntityOwner.GRADLE : GradleEntityOwner.IDE, name)
   }
 }

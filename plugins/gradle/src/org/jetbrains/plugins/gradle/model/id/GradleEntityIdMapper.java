@@ -80,6 +80,24 @@ public class GradleEntityIdMapper {
         public void visit(@NotNull GradleJar jar) {
           result.set(jar.getId());
         }
+
+        @Override
+        public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+          Library library = dependency.getIdeEntity().getLibrary();
+          assert library != null;
+          result.set(new GradleCompositeLibraryDependencyId(
+            new GradleLibraryDependencyId(
+              GradleEntityOwner.GRADLE,
+              dependency.getGradleEntity().getOwnerModule().getName(),
+              dependency.getGradleEntity().getName()
+            ),
+            new GradleLibraryDependencyId(
+              GradleEntityOwner.IDE,
+              dependency.getIdeEntity().getOwnerModule().getName(),
+              GradleUtil.getLibraryName(library)
+            )
+          ));
+        }
       });
     }
 

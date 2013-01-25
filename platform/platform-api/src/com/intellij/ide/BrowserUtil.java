@@ -51,10 +51,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -235,18 +233,27 @@ public class BrowserUtil {
   }
 
   /** @deprecated unneeded and misleading (to remove in IDEA 13) */
-  @NotNull
+  @SuppressWarnings("unused")
   public static String escapeUrl(@NotNull @NonNls String url) {
     return SystemInfo.isWindows ? '"' + url + '"' : url;
   }
 
   @NotNull
   public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName) {
+    return getOpenBrowserCommand(browserPathOrName, false);
+  }
+
+  @NotNull
+  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName, boolean newWindowIfPossible) {
     if (new File(browserPathOrName).isFile()) {
       return newSmartList(browserPathOrName);
     }
     else if (SystemInfo.isMac) {
-      return newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
+      List<String> command = newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
+      if (newWindowIfPossible) {
+        command.add("-n");
+      }
+      return command;
     }
     else if (SystemInfo.isWindows) {
       return newArrayList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
@@ -33,7 +34,17 @@ public abstract class BuildRootDescriptor {
 
   public abstract BuildTarget<?> getTarget();
 
-  public abstract FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor);
+  /**
+   * @deprecated override {@link #createFileFilter()} instead
+   */
+  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+    return null;
+  }
+
+  @NotNull
+  public FileFilter createFileFilter() {
+    return FileUtilRt.ALL_FILES;
+  }
 
   /**
    * @return the set of excluded directories under this root

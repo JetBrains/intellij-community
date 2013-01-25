@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.File;
@@ -62,5 +61,9 @@ public interface BuildRootIndex {
   JavaSourceRootDescriptor findJavaRootDescriptor(@Nullable CompileContext context, File file);
 
   @NotNull
-  FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor, @NotNull ProjectDescriptor projectDescriptor);
+  FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);
+
+  boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor);
+
+  boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor);
 }

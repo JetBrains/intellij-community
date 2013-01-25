@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference;
 
 public class JavaFxXmlExtension extends DefaultXmlExtension {
   public boolean isAvailable(final PsiFile file) {

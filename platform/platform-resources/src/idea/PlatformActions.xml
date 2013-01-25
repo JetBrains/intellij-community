@@ -104,6 +104,7 @@
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
       <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
+      <action id="FillParagraph" class="com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction"/>
       <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.SelectLineAction"/>
       <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
       <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
@@ -219,6 +220,7 @@
         <separator/>
         <group id="EditSmartGroup">
           <reference ref="EditorJoinLines"/>
+          <reference ref="FillParagraph"/>
           <reference ref="EditorDuplicate"/>
           <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
@@ -269,7 +271,7 @@
         <!-- Mac OS Lion: In native apps toggle full screen mode is the last action in "View" menu -->
         <group id="ToggleFullScreenGroup">
           <separator/>
-          <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleMacFullScreenAction"/>
+          <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
         </group>
       </group>
 

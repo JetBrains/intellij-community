@@ -21,9 +21,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -33,6 +36,11 @@ import java.util.regex.PatternSyntaxException;
 public class FilterPattern {
 
     private static final Logger LOG = Logger.getInstance("#org.jetbrains.generate.tostring.config.FilterPattern");
+    private static final Set<String> loggerNames = new THashSet<String>();
+    static {
+      Collections.addAll(loggerNames,
+                         "org.apache.log4j.Logger", "java.util.logging.Logger", "org.apache.commons.logging.Log", "org.slf4j.Logger");
+    }
 
     private String fieldName;
     private String fieldType;
@@ -70,9 +78,7 @@ public class FilterPattern {
     if ((fieldTypePattern != null) && fieldTypePattern.matcher(typeText).matches()) {
       return true;
     }
-    if (isLoggers() && ("org.apache.log4j.Logger".equals(typeText) ||
-                        "java.util.logging.Logger".equals(typeText) ||
-                        "org.apache.commons.logging.Log".equals(typeText)) ) {
+    if (isLoggers() && loggerNames.contains(typeText)) {
       return true;
     }
     return false;

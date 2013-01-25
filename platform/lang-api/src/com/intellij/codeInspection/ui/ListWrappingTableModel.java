@@ -114,7 +114,10 @@ public class ListWrappingTableModel extends AbstractTableModel {
 
   @Override
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
-    list.get(columnIndex).set(rowIndex, String.valueOf(value));
-    fireTableCellUpdated(rowIndex, columnIndex);
+    List<String> strings = list.get(columnIndex);
+    if (rowIndex >= 0 && rowIndex < strings.size()) {
+      strings.set(rowIndex, String.valueOf(value));
+      fireTableCellUpdated(rowIndex, columnIndex);
+    }
   }
 }

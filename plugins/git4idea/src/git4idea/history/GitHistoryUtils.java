@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -105,18 +106,15 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch, final boolean shortHash) throws VcsException {
+  public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath, @Nullable String branch,
+                                                     final boolean shortHash) throws VcsException {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = shortHash ? new GitLogParser(project, SHORT_HASH, COMMIT_TIME) : new GitLogParser(project, HASH, COMMIT_TIME);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
-    if (branch != null && !branch.isEmpty()) {
-      h.addParameters(branch);
-    } else {
-      h.addParameters("--all");
-    }
+    h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = h.run();
@@ -912,7 +910,7 @@ public class GitHistoryUtils {
    * @param path    the path to check
    * @return the name of file in the last commit or argument
    */
-  public static FilePath getLastCommitName(final Project project, FilePath path) {
+  public static FilePath getLastCommitName(@NotNull Project project, FilePath path) {
     if (project.isDefault()) return path;
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final Change change = changeManager.getChange(path);

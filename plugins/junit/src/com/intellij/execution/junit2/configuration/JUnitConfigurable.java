@@ -436,7 +436,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
       myModule.setEnabled(true);
     }
     else {
@@ -486,7 +486,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   }
 
   private void onScopeChanged() {
-    myModule.setEnabled(!myWholeProjectScope.isSelected());
+    myModule.setEnabled(((Integer)myTypeChooser.getSelectedItem()) != JUnitConfigurationModel.ALL_IN_PACKAGE || !myWholeProjectScope.isSelected());
   }
 
   private class TestClassBrowser extends ClassBrowser {

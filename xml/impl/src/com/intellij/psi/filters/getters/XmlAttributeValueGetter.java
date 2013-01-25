@@ -41,6 +41,17 @@ public class XmlAttributeValueGetter implements ContextGetter {
     return getApplicableAttributeVariants(context);
   }
 
+  @Nullable
+  public static String[] getEnumeratedValues(XmlAttribute attribute) {
+    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+    if (descriptor == null) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    return descriptor instanceof BasicXmlAttributeDescriptor ?
+                      ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attribute) : descriptor.getEnumeratedValues();
+  }
+
   private Object[] getApplicableAttributeVariants(PsiElement _context) {
     if (_context instanceof XmlTokenImpl && ((XmlTokenImpl)_context).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       XmlAttribute attr = PsiTreeUtil.getParentOfType(_context, XmlAttribute.class);
@@ -53,9 +64,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
             return defaultValue == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[]{defaultValue};
           }
 
-          String[] values = descriptor instanceof BasicXmlAttributeDescriptor ?
-                            ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attr)
-                                                                              : descriptor.getEnumeratedValues();
+          String[] values = getEnumeratedValues(attr);
 
           final String[] strings = addSpecificCompletions(attr);
 

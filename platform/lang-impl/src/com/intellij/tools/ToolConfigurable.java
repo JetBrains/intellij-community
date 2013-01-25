@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private ToolsPanel myPanel;
+  private BaseToolsPanel myPanel;
 
   public String getDisplayName() {
     return ToolsBundle.message("tools.settings.title");

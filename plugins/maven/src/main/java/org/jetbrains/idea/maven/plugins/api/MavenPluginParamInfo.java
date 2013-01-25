@@ -15,6 +15,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 
 import java.util.HashMap;
@@ -173,6 +174,7 @@ public class MavenPluginParamInfo {
 
     private volatile boolean myLanguageInitialized;
     private Language myLanguageInstance;
+    private MavenParamLanguageProvider myLanguageProvider;
 
     private volatile boolean myProviderInitialized;
     private volatile MavenParamReferenceProvider myProviderInstance;
@@ -182,16 +184,36 @@ public class MavenPluginParamInfo {
       myParam = param;
     }
 
-    public Language getLanguage() {
+    private void ensureLanguageInit() {
       if (!myLanguageInitialized) {
         if (myParam.language != null) {
+          assert myParam.languageProvider == null;
+
           myLanguageInstance = Language.findLanguageByID(myParam.language);
+        }
+        else if (myParam.languageProvider != null) {
+          try {
+            myLanguageProvider = (MavenParamLanguageProvider)myClassLoader.loadClass(myParam.languageProvider).newInstance();
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Failed to create language provider instance", e);
+          }
         }
 
         myLanguageInitialized = true;
       }
+    }
 
+    @Nullable
+    public Language getLanguage() {
+      ensureLanguageInit();
       return myLanguageInstance;
+    }
+
+    @Nullable
+    public MavenParamLanguageProvider getLanguageProvider() {
+      ensureLanguageInit();
+      return myLanguageProvider;
     }
 
     public String getLanguageInjectionPrefix() {

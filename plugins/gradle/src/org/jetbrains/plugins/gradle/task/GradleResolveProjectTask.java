@@ -39,7 +39,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     GradleProjectStructureChangesModel model = null;
     final Project intellijProject = getIntellijProject();
     if (intellijProject != null && !intellijProject.isDisposed()) {
-      model = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
+      model = ServiceManager.getService(intellijProject, GradleProjectStructureChangesModel.class);
     }
     final GradleProject project;
     try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,5 +56,4 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
     public String toString() {
         return "Last";
     }
-
 }

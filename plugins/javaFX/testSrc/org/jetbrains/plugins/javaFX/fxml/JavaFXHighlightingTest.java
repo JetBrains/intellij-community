@@ -41,6 +41,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   public void testEnumValues() throws Exception {
     doTest();
   }
+  
+  public void testImageIcon() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "appIcon.png");
+    doDoTest(false, false);
+  }
 
   private void doTest() throws Exception {
     doTest(false, false, getTestName(true) + ".fxml");

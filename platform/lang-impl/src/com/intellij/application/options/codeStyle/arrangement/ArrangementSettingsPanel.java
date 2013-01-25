@@ -99,6 +99,11 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myMatchingRulesPanel.putClientProperty(AnAction.ourClientProperty, ContainerUtilRt.newArrayList(removeRuleAction));
   }
 
+  @NotNull
+  protected JPanel getGroupingRulesPanel() {
+    return myGroupingRulesPanel;
+  }
+
   @Nullable
   @Override
   public JComponent getPanel() {

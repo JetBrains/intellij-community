@@ -40,6 +40,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
     new GlobalLibrariesSerializer(), new SdkTableSerializer(), new FileTypesSerializer()
   };
+  public static final String FILE_TYPES_COMPONENT_NAME_KEY = "jps.file.types.component.name";
   private final JpsGlobal myGlobal;
 
   public JpsGlobalLoader(JpsGlobal global, Map<String, String> pathVariables) {
@@ -108,7 +109,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
 
   private static class FileTypesSerializer extends JpsGlobalExtensionSerializer {
     private FileTypesSerializer() {
-      super("filetypes.xml", "FileTypeManager");
+      super("filetypes.xml", System.getProperty(FILE_TYPES_COMPONENT_NAME_KEY, "FileTypeManager"));
     }
 
     @Override

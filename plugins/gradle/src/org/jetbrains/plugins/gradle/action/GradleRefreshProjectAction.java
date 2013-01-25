@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -40,12 +41,12 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
       if (model != null) {
         model.rebuild();
       }
-      GradleConfigNotificationManager notificationManager = project.getComponent(GradleConfigNotificationManager.class);
+      GradleConfigNotificationManager notificationManager = ServiceManager.getService(project, GradleConfigNotificationManager.class);
       notificationManager.processRefreshError(message);
       myErrorMessage.set(null);
     }
     boolean enabled = false;
-    final GradleTaskManager taskManager = project.getComponent(GradleTaskManager.class);
+    final GradleTaskManager taskManager = ServiceManager.getService(project, GradleTaskManager.class);
     if (taskManager != null) {
       enabled = !taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT);
     }
@@ -57,7 +58,7 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
     // We save all documents because there is more than one target 'build.gradle' file in case of multi-module gradle project.
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    GradleConfigNotificationManager notificationManager = project.getComponent(GradleConfigNotificationManager.class);
+    GradleConfigNotificationManager notificationManager = ServiceManager.getService(project, GradleConfigNotificationManager.class);
     if (!GradleUtil.isGradleAvailable(project)) {
       notificationManager.processUnknownGradleHome();
       return;

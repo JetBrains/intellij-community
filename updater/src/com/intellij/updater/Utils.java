@@ -6,6 +6,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
+  // keep buffer static as there may be many calls of the copyStream method.
+  private static final byte[] BUFFER = new byte[64 * 1024];
   private static File myTempDir;
 
   public static boolean isZipFile(String fileName) {
@@ -129,7 +131,6 @@ public class Utils {
   }
 
   public static void copyStream(InputStream in, OutputStream out) throws IOException {
-    final byte[] BUFFER = new byte[1024 * 1024];
     while (true) {
       int read = in.read(BUFFER);
       if (read < 0) break;

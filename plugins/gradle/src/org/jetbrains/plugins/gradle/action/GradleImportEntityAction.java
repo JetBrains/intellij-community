@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.action;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,6 @@ import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Imports target {@link GradleTextAttributes#GRADLE_LOCAL_CHANGE 'gradle local'} entity to the current intellij project.
@@ -28,17 +28,12 @@ public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
 
   @Override
   protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    for (Iterator<GradleProjectStructureNode<?>> iterator = nodes.iterator(); iterator.hasNext(); ) {
-      GradleProjectStructureNode<?> node = iterator.next();
-      if (node.getDescriptor().getAttributes() != GradleTextAttributes.GRADLE_LOCAL_CHANGE) {
-        iterator.remove();
-      }
-    }
+    filterNodesByAttributes(nodes, GradleTextAttributes.GRADLE_LOCAL_CHANGE);
   }
 
   @Override
   protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    final GradleLocalNodeManageHelper helper = project.getComponent(GradleLocalNodeManageHelper.class);
+    final GradleLocalNodeManageHelper helper = ServiceManager.getService(project, GradleLocalNodeManageHelper.class);
     helper.importNodes(nodes); 
   }
 }

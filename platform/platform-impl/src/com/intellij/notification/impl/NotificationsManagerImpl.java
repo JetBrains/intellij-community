@@ -20,6 +20,8 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -111,6 +113,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showNotification(final Notification notification, @Nullable final Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (application instanceof ApplicationEx && !((ApplicationEx)application).isLoaded()) {
+      application.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          showNotification(notification, project);
+        }
+      }, ModalityState.current());
+      return;
+    }
+
+
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
@@ -229,7 +243,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     }
     if (frame == null && project == null) {
-      frame = WelcomeFrame.getInstance();
+      frame = (Window)WelcomeFrame.getInstance();
     }
     return frame;
   }

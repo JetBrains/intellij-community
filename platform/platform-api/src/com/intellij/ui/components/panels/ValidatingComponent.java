@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -74,7 +75,7 @@ public abstract class ValidatingComponent<T extends JComponent> extends NonOpaqu
 
   protected JLabel createErrorLabel() {
     final JLabel label = new JLabel(" ");
-    label.setForeground(Color.red);
+    label.setForeground(JBColor.red);
     label.setFont(ERROR_FONT);
     return label;
   }

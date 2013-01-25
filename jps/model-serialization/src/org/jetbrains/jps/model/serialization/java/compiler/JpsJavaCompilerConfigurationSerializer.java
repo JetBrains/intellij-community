@@ -22,6 +22,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
@@ -55,16 +56,7 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
       configuration.setAddNotNullAssertions(Boolean.parseBoolean(addNotNullTag.getAttributeValue(ENABLED, "true")));
     }
 
-    Element excludeFromCompileTag = componentTag.getChild(EXCLUDE_FROM_COMPILE);
-    if (excludeFromCompileTag != null) {
-      for (Element fileTag : JDOMUtil.getChildren(excludeFromCompileTag, "file")) {
-        configuration.getCompilerExcludes().addExcludedFile(fileTag.getAttributeValue("url"));
-      }
-      for (Element directoryTag : JDOMUtil.getChildren(excludeFromCompileTag, "directory")) {
-        boolean recursively = Boolean.parseBoolean(directoryTag.getAttributeValue("includeSubdirectories"));
-        configuration.getCompilerExcludes().addExcludedDirectory(directoryTag.getAttributeValue("url"), recursively);
-      }
-    }
+    readExcludes(componentTag.getChild(EXCLUDE_FROM_COMPILE), configuration.getCompilerExcludes());
 
     Element resourcePatternsTag = componentTag.getChild(WILDCARD_RESOURCE_PATTERNS);
     for (Element entry : JDOMUtil.getChildren(resourcePatternsTag, ENTRY)) {
@@ -102,6 +94,18 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
     String compilerId = JDOMExternalizerUtil.readField(componentTag, "DEFAULT_COMPILER");
     if (compilerId != null) {
       configuration.setJavaCompilerId(compilerId);
+    }
+  }
+
+  public static void readExcludes(Element excludeFromCompileTag, JpsCompilerExcludes excludes) {
+    if (excludeFromCompileTag != null) {
+      for (Element fileTag : JDOMUtil.getChildren(excludeFromCompileTag, "file")) {
+        excludes.addExcludedFile(fileTag.getAttributeValue("url"));
+      }
+      for (Element directoryTag : JDOMUtil.getChildren(excludeFromCompileTag, "directory")) {
+        boolean recursively = Boolean.parseBoolean(directoryTag.getAttributeValue("includeSubdirectories"));
+        excludes.addExcludedDirectory(directoryTag.getAttributeValue("url"), recursively);
+      }
     }
   }
 

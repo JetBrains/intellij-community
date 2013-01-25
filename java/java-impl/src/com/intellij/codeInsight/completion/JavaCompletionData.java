@@ -416,7 +416,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       statement = PsiTreeUtil.getParentOfType(position, PsiDeclarationStatement.class);
     }
     if (statement != null && statement.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
-      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(statement)) {
+      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).afterLeaf("{").accepts(statement)) {
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
     }

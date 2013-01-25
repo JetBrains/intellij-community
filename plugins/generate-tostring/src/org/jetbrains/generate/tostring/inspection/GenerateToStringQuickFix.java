@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -26,19 +27,33 @@ import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
+public class GenerateToStringQuickFix implements LocalQuickFix {
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
+  public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 
-        // find the class
-        PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
-        if (clazz == null) {
-            return; // no class to fix, so return
-        }
+  private final GenerateToStringActionHandler myHandler = new GenerateToStringActionHandlerImpl();
 
-        // execute the action
-        GenerateToStringActionHandler handler = new GenerateToStringActionHandlerImpl();
-        handler.executeActionQuickFix(project, clazz);
+  private GenerateToStringQuickFix() {}
+
+  public static GenerateToStringQuickFix getInstance() {
+    return INSTANCE;
+  }
+
+  @NotNull
+  public String getName() {
+    return "Generate toString()";
+  }
+
+  @NotNull
+  public String getFamilyName() {
+    return "Generate";
+  }
+
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
+    final PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
+    if (clazz == null) {
+      return; // no class to fix
     }
-
+    myHandler.executeActionQuickFix(project, clazz);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,14 @@ import java.util.Collection;
 import java.util.Collections;
 
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-
   protected final ComponentType myComponent;
+
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final TipComponent myTipComponent;
 
   private boolean isEnabled = true;
   private Hint myHint;
-
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
@@ -51,6 +50,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.validate();
 
     myTipComponent = new TipComponent();
+
     myComponent.addMouseListener(
       new MouseListener() {
         @Override
@@ -146,8 +146,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         }
       }
     );
-
-
   }
 
   protected void onFocusLost() {

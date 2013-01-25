@@ -67,10 +67,18 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   protected PsiClassImpl(final PsiClassStub stub, final IStubElementType type) {
     super(stub, type);
+    addTrace();
   }
 
   public PsiClassImpl(final ASTNode node) {
     super(node);
+    addTrace();
+  }
+
+  private void addTrace() {
+    if (ourTraceStubAstBinding) {
+      putUserData(CREATION_TRACE, Thread.currentThread() + "\n" + DebugUtil.currentStackTrace());
+    }
   }
 
   @Override

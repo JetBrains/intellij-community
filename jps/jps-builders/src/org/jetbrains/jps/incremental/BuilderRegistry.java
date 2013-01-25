@@ -16,10 +16,16 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
@@ -34,6 +40,7 @@ public class BuilderRegistry {
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
   private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<TargetBuilder<?,?>>();
   private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
+  private final FileFilter myModuleBuilderFileFilter;
 
   public static BuilderRegistry getInstance() {
     return Holder.ourInstance;
@@ -44,10 +51,19 @@ public class BuilderRegistry {
       myModuleLevelBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
     }
 
+    Set<String> compilableFileExtensions = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       myTargetBuilders.addAll(service.createBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
       for (ModuleLevelBuilder builder : moduleLevelBuilders) {
+        List<String> extensions = builder.getCompilableFileExtensions();
+        if (extensions == null) {
+          LOG.info(builder.getClass().getName() + " builder returns 'null' from 'getCompilableFileExtensions' method so files for module-level builders won't be filtered");
+          compilableFileExtensions = null;
+        }
+        else if (compilableFileExtensions != null) {
+          compilableFileExtensions.addAll(extensions);
+        }
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
       }
       for (BuildTargetType<?> type : service.getTargetTypes()) {
@@ -58,11 +74,28 @@ public class BuilderRegistry {
         }
       }
     }
+    if (compilableFileExtensions == null) {
+      myModuleBuilderFileFilter = FileUtilRt.ALL_FILES;
+    }
+    else {
+      final Set<String> finalCompilableFileExtensions = compilableFileExtensions;
+      myModuleBuilderFileFilter = new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          return finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
+        }
+      };
+    }
   }
 
   @Nullable
   public BuildTargetType<?> getTargetType(String typeId) {
     return myTargetTypes.get(typeId);
+  }
+
+  @NotNull
+  public FileFilter getModuleBuilderFileFilter() {
+    return myModuleBuilderFileFilter;
   }
 
   public Collection<BuildTargetType<?>> getTargetTypes() {

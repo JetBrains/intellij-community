@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.fs.IFile;
@@ -342,7 +343,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return new Document(element);
   }
 
-  protected abstract class MySaveSession implements SaveSession {
+  protected abstract class MySaveSession implements SaveSession, SafeWriteRequestor {
     StorageData myStorageData;
     private Document myDocumentToSave;
 

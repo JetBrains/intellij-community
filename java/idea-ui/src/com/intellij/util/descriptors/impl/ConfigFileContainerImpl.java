@@ -19,6 +19,7 @@ package com.intellij.util.descriptors.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.EventDispatcher;
@@ -40,6 +41,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
   private ConfigFile[] myCachedConfigFiles;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
   private final ConfigFileInfoSetImpl myConfiguration;
+  private long myModificationCount;
 
   public ConfigFileContainerImpl(final Project project, final ConfigFileMetaDataProvider descriptorMetaDataProvider,
                                        final ConfigFileInfoSetImpl configuration) {
@@ -56,6 +58,15 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
       }
     }, this);
     myConfiguration.setContainer(this);
+  }
+
+  public void incModificationCount() {
+    myModificationCount ++;
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   private void fileChanged(final VirtualFile file) {
@@ -94,6 +105,7 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
   }
 
   public void fireDescriptorChanged(final ConfigFile descriptor) {
+    incModificationCount();
     myDispatcher.getMulticaster().configFileChanged(descriptor);
   }
 
@@ -149,9 +161,11 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
 
     myCachedConfigFiles = null;
     for (ConfigFile configFile : added) {
+      incModificationCount();
       myDispatcher.getMulticaster().configFileAdded(configFile);
     }
     for (ConfigFile configFile : toDelete) {
+      incModificationCount();
       myDispatcher.getMulticaster().configFileRemoved(configFile);
     }
   }

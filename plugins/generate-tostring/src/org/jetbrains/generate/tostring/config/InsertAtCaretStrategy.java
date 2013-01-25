@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,15 @@ public class InsertAtCaretStrategy implements InsertNewMethodStrategy {
 
   private static final InsertAtCaretStrategy instance = new InsertAtCaretStrategy();
 
-  private InsertAtCaretStrategy() {
-  }
+  private InsertAtCaretStrategy() {}
 
   public static InsertAtCaretStrategy getInstance() {
     return instance;
   }
 
-  public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-    int offset = editor != null ? editor.getCaretModel().getOffset() : clazz.getTextRange().getEndOffset() - 1;
-    final PsiGenerationInfo<PsiMethod> generationInfo = OverrideImplementUtil.createGenerationInfo(newMethod, false);
+  public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
+    int offset = (editor != null) ? editor.getCaretModel().getOffset() : (clazz.getTextRange().getEndOffset() - 1);
+    final PsiGenerationInfo<PsiMethod> generationInfo = new PsiGenerationInfo<PsiMethod>(newMethod, false);
     GenerateMembersUtil.insertMembersAtOffset(clazz.getContainingFile(), offset, Arrays.asList(generationInfo));
     return generationInfo.getPsiMember();
   }

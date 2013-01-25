@@ -288,7 +288,8 @@
 
   <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 
-  <applicationService serviceInterface="com.intellij.ide.XmlRpcServer"
-                      serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
+  <applicationService serviceInterface="org.jetbrains.ide.WebServerManager" serviceImplementation="org.jetbrains.ide.WebServerManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
   <serverPipelineConsumer implementation="org.jetbrains.ide.XmlRpcPipelineConsumer"/>
+  <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
 </extensions>

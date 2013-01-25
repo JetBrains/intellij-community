@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,7 +34,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -51,19 +49,16 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "package.dot.html.may.be.package.info.display.name");
+    return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     if (((Boolean)infos[1]).booleanValue()) {
-      return InspectionGadgetsBundle.message(
-        "package.dot.html.may.be.package.info.exists.problem.descriptor");
+      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.exists.problem.descriptor");
     }
-    return InspectionGadgetsBundle.message(
-      "package.dot.html.may.be.package.info.problem.descriptor");
+    return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.problem.descriptor");
   }
 
   @Override
@@ -80,22 +75,17 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "package.dot.html.may.be.package.info.delete.quickfix");
+      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;
       }
       final XmlFile xmlFile = (XmlFile)element;
-
-      new WriteCommandAction.Simple(project,
-                                    InspectionGadgetsBundle.message(
-                                      "package.dot.html.delete.command"), xmlFile) {
+      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.delete.command"), xmlFile) {
         @Override
         protected void run() throws Throwable {
           element.delete();
@@ -109,8 +99,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
   }
 
-  private static class PackageDotHtmlMayBePackageInfoFix
-    extends InspectionGadgetsFix {
+  private static class PackageDotHtmlMayBePackageInfoFix extends InspectionGadgetsFix {
 
     private final String aPackage;
 
@@ -120,14 +109,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "package.dot.html.may.be.package.info.convert.quickfix");
+      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.convert.quickfix");
     }
 
     @Override
-    protected void doFix(final Project project,
-                         ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(final Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;
@@ -141,24 +127,18 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       if (file != null) {
         return;
       }
-      new WriteCommandAction.Simple(project,
-                                    InspectionGadgetsBundle.message(
-                                      "package.dot.html.convert.command"), file) {
+      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.convert.command"), file) {
         @Override
         protected void run() throws Throwable {
-          final PsiJavaFile file = (PsiJavaFile)
-            directory.createFile("package-info.java");
-          CommandProcessor.getInstance().addAffectedFiles(project,
-                                                          file.getVirtualFile());
-          final PsiElementFactory elementFactory =
-            JavaPsiFacade.getElementFactory(project);
+          final PsiJavaFile file = (PsiJavaFile)directory.createFile("package-info.java");
+          CommandProcessor.getInstance().addAffectedFiles(project, file.getVirtualFile());
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           String packageInfoText = getPackageInfoText(xmlFile);
           if (packageInfoText == null) {
             packageInfoText = xmlFile.getText();
           }
           final StringBuilder commentText = new StringBuilder("/**\n");
-          final String[] lines =
-            StringUtil.splitByLines(packageInfoText);
+          final String[] lines = StringUtil.splitByLines(packageInfoText);
           boolean appended = false;
           for (String line : lines) {
             if (!appended && line.length() == 0) {
@@ -169,12 +149,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
             appended = true;
           }
           commentText.append("*/");
-          final PsiDocComment comment =
-            elementFactory.createDocCommentFromText(
-              commentText.toString());
+          final PsiDocComment comment = elementFactory.createDocCommentFromText(commentText.toString());
           if (aPackage.length() > 0) {
-            final PsiPackageStatement packageStatement =
-              elementFactory.createPackageStatement(aPackage);
+            final PsiPackageStatement packageStatement = elementFactory.createPackageStatement(aPackage);
             final PsiElement addedElement = file.add(packageStatement);
             file.addBefore(comment, addedElement);
           }
@@ -185,18 +162,16 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
           if (!isOnTheFly()) {
             return;
           }
-          final AsyncResult<DataContext> dataContextFromFocus =
-            DataManager.getInstance().getDataContextFromFocus();
+          final AsyncResult<DataContext> dataContextFromFocus = DataManager.getInstance().getDataContextFromFocus();
           dataContextFromFocus.doWhenDone(
             new AsyncResult.Handler<DataContext>() {
               public void run(DataContext dataContext) {
-                final IdeView ideView =
-                  DataKeys.IDE_VIEW.getData(
-                    dataContext);
-                if (ideView == null) {
+                final FileEditorManager editorManager = FileEditorManager.getInstance(project);
+                final VirtualFile virtualFile = file.getVirtualFile();
+                if (virtualFile == null) {
                   return;
                 }
-                ideView.selectElement(file);
+                editorManager.openFile(virtualFile, true);
               }
             }
           );
@@ -236,8 +211,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     return new PackageDotHtmlMayBePackageInfoVisitor();
   }
 
-  private static class PackageDotHtmlMayBePackageInfoVisitor
-    extends BaseInspectionVisitor {
+  private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitFile(PsiFile file) {
@@ -249,8 +223,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       if (!"package.html".equals(fileName)) {
         return;
       }
-      final PsiDirectory directory =
-        file.getContainingDirectory();
+      final PsiDirectory directory = file.getContainingDirectory();
       if (directory == null) {
         return;
       }
@@ -258,18 +231,15 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       if (aPackage == null) {
         return;
       }
-      final boolean exists =
-        directory.findFile("package-info.java") != null;
+      final boolean exists = directory.findFile("package-info.java") != null;
       registerError(file, aPackage, Boolean.valueOf(exists));
     }
 
     public static String getPackage(@NotNull PsiDirectory directory) {
       final VirtualFile virtualFile = directory.getVirtualFile();
       final Project project = directory.getProject();
-      final ProjectRootManager projectRootManager =
-        ProjectRootManager.getInstance(project);
-      final ProjectFileIndex fileIndex =
-        projectRootManager.getFileIndex();
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+      final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
       return fileIndex.getPackageNameByDirectory(virtualFile);
     }
   }

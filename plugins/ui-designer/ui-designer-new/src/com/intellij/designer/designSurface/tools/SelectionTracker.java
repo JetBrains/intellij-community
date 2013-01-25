@@ -76,32 +76,35 @@ public class SelectionTracker extends TargetingTool {
     }
   }
 
+  @Override
+  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+      myToolProvider.loadDefaultTool();
+    }
+  }
+
   private void performSelection() {
     if (mySelected || myArea.isTree()) {
       return;
     }
     mySelected = true;
-
-    if (myInputEvent.isControlDown()) {
-      if (myArea.isSelected(myComponent)) {
-        myArea.deselect(myComponent);
-      }
-      else {
-        myArea.appendSelection(myComponent);
-      }
-    }
-    else if (myInputEvent.isShiftDown()) {
-      myArea.appendSelection(myComponent);
-    }
-    else {
-      myArea.select(myComponent);
-    }
+    performSelection(this, myComponent);
   }
 
-  @Override
-  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
-    if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
-      myToolProvider.loadDefaultTool();
+  public static void performSelection(InputTool tool, RadComponent component) {
+    if (tool.myInputEvent.isControlDown()) {
+      if (tool.myArea.isSelected(component)) {
+        tool.myArea.deselect(component);
+      }
+      else {
+        tool.myArea.appendSelection(component);
+      }
+    }
+    else if (tool.myInputEvent.isShiftDown()) {
+      tool.myArea.appendSelection(component);
+    }
+    else {
+      tool.myArea.select(component);
     }
   }
 }

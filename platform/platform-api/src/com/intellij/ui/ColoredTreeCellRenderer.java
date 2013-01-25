@@ -38,7 +38,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   /**
    * Defines whether the tree has focus or not
    */
-  protected boolean myFocused;
+  private boolean myFocused;
 
   protected JTree myTree;
 
@@ -57,12 +57,12 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     clear();
 
     mySelected = selected;
-    myFocused = isFocused();
+    myFocused = hasFocus;
 
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
     if (UIUtil.isFullRowSelectionLAF()) {
-        setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
     else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
@@ -73,7 +73,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       if (selected) {
         setPaintFocusBorder(true);
-        if (myFocused) {
+        if (hasFocus) {
           setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
@@ -107,7 +107,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setIconOpaque(false);
     }
     else {
-      super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
+      super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
     }
 
     if (tree.getUI() instanceof WideSelectionTreeUI && UIUtil.isUnderAquaBasedLookAndFeel()) {
@@ -128,15 +128,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     return myTree;
   }
 
-  protected boolean isFocused() {
-    return myTree.hasFocus();
-  }
-
   public void setOpaque(boolean isOpaque) {
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
   }
-  
+
   /**
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.

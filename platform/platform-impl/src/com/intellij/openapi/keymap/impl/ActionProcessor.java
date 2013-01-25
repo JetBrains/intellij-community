@@ -16,15 +16,16 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
 
 public interface ActionProcessor {
+  @NotNull
+  AnActionEvent createEvent(InputEvent inputEvent, @NotNull DataContext context, @NotNull String place, @NotNull Presentation presentation, ActionManager manager);
 
-  AnActionEvent createEvent(InputEvent inputEvent, DataContext context, String place, Presentation presentation, ActionManager manager);
+  void onUpdatePassed(final InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent);
 
-  void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent);
-
-  void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent);
+  void performAction(final InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent);
 
 }

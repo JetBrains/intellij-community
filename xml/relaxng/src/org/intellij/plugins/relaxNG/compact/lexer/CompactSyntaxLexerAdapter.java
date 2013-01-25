@@ -199,8 +199,8 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
       LOG.error("Unsupported version of RNGOM in classpath", e,
                 "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
-                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource().getLocation(),
-                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource().getLocation());
+                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource(),
+                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource());
       throw e;
     }
   }

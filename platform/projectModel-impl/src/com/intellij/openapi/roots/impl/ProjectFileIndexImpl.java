@@ -86,7 +86,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   @Nullable
-  public static DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file, DirectoryIndex directoryIndex) {
+  static DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file, DirectoryIndex directoryIndex) {
     if (!file.isDirectory() && file.getParent() == null) return null; // e.g. LightVirtualFile in test
     DirectoryInfo info = directoryIndex.getInfoForDirectory(file);
     if (info != null) {

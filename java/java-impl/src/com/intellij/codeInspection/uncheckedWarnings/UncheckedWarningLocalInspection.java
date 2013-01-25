@@ -437,6 +437,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
           public Boolean visitClassType(PsiClassType classType) {
             PsiClass psiClass = classType.resolve();
             if (psiClass instanceof PsiTypeParameter) {
+              if (((PsiTypeParameter)psiClass).getOwner() == method) return Boolean.FALSE;
               return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
             }
             PsiType[] parameters = classType.getParameters();

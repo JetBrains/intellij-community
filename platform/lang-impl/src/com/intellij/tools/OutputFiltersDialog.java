@@ -27,7 +27,7 @@ import com.intellij.ui.components.JBList;
 import javax.swing.*;
 import java.awt.*;
 
-class OutputFiltersDialog extends DialogWrapper {
+public class OutputFiltersDialog extends DialogWrapper {
   private final DefaultListModel myFiltersModel = new DefaultListModel();
   private final JList myFiltersList = new JBList(myFiltersModel);
   private boolean myModified = false;

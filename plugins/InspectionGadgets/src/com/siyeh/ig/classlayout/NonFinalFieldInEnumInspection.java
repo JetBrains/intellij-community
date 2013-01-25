@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,11 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -43,6 +46,12 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("non.final.field.in.enum.problem.descriptor", enumClass.getName());
   }
 
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[1];
+    return MakeFieldFinalFix.buildFix(field);
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NonFinalFieldInEnumVisitor();
@@ -60,7 +69,7 @@ public class NonFinalFieldInEnumInspection extends BaseInspection {
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      registerFieldError(field, containingClass);
+      registerFieldError(field, containingClass, field);
     }
   }
 }

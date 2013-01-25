@@ -37,6 +37,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,6 +238,20 @@ public class TagNameReference implements PsiReference {
                                             final Collection<String> namespaces,
                                             @Nullable List<String> nsInfo) {
 
+    final List<String> variants = getTagNameVariants(element, namespaces, nsInfo, new Function<XmlElementDescriptor, String>() {
+      @Override
+      public String fun(XmlElementDescriptor descriptor) {
+        return descriptor.getName(element);
+      }
+    });
+    return ArrayUtil.toStringArray(variants);
+  }
+  
+  public static <T> List<T> getTagNameVariants(final XmlTag element,
+                                               final Collection<String> namespaces,
+                                               @Nullable List<String> nsInfo,
+                                               final Function<XmlElementDescriptor, T> f) {
+
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = null;
 
@@ -279,8 +294,8 @@ public class TagNameReference implements PsiReference {
     }
 
     final boolean hasPrefix = StringUtil.isNotEmpty(element.getNamespacePrefix());
-    final List<String> list = ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, String>() {
-      public String fun(XmlElementDescriptor descriptor) {
+    return ContainerUtil.mapNotNull(variants, new NullableFunction<XmlElementDescriptor, T>() {
+      public T fun(XmlElementDescriptor descriptor) {
         if (descriptor instanceof AnyXmlElementDescriptor) {
           return null;
         }
@@ -289,10 +304,9 @@ public class TagNameReference implements PsiReference {
           return null;
         }
 
-        return descriptor.getName(element);
+        return f.fun(descriptor);
       }
     });
-    return ArrayUtil.toStringArray(list);
   }
 
   private static void processVariantsInNamespace(final String namespace,

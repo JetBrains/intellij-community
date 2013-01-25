@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -60,7 +61,7 @@ public class ShowByteCodeAction extends AnAction {
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
     if (virtualFile == null) return;
 
-    if (TranslatingCompilerFilesMonitor.getInstance().isMarkedForCompilation(project, virtualFile)) {
+    if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && TranslatingCompilerFilesMonitor.getInstance().isMarkedForCompilation(project, virtualFile)) {
       Messages.showWarningDialog(project, "Unable to show byte code for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.", "Class File Out-Of-Date");
       return;
     }

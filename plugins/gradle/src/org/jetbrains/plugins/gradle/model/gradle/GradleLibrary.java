@@ -57,8 +57,7 @@ public class GradleLibrary extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     GradleLibrary that = (GradleLibrary)o;
     return super.equals(that) && myPaths.equals(that.myPaths);

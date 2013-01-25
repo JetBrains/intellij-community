@@ -156,7 +156,7 @@ public class ConflictsDialog extends DialogWrapper{
 
 
     public MyShowConflictsInUsageViewAction() {
-      super("Show in view");
+      super("Show conflicts in view");
     }
 
     public void actionPerformed(ActionEvent e) {

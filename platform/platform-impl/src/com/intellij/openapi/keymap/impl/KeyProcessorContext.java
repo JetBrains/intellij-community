@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,9 +25,10 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 public class KeyProcessorContext {
-  private final ArrayList<AnAction> myActions = new ArrayList<AnAction>();
+  private final List<AnAction> myActions = new ArrayList<AnAction>();
   private WeakReference<JComponent> myFoundComponent;
   private boolean myHasSecondStroke;
 
@@ -35,7 +37,8 @@ public class KeyProcessorContext {
   private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
 
-  public ArrayList<AnAction> getActions() {
+  @NotNull
+  public List<AnAction> getActions() {
     return myActions;
   }
 

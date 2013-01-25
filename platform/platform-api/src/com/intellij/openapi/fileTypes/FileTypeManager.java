@@ -25,6 +25,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -201,18 +202,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   public abstract void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
   public static FileNameMatcher parseFromString(String pattern) {
-    if (pattern.startsWith("*.") &&
-        pattern.indexOf('*', 2) < 0 &&
-        pattern.indexOf('.', 2) < 0 &&
-        pattern.indexOf('?', 2) < 0) {
-      return new ExtensionFileNameMatcher(pattern.substring(2).toLowerCase());
-    }
-
-    if (pattern.contains("*") || pattern.contains("?")) {
-      return new WildcardFileNameMatcher(pattern);
-    }
-
-    return new ExactFileNameMatcher(pattern);
+    return FileNameMatcherFactory.getInstance().createMatcher(pattern);
   }
 
   @NotNull

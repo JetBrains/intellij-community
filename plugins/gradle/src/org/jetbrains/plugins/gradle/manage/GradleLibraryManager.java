@@ -116,9 +116,30 @@ public class GradleLibraryManager {
     }
   }
 
-  public void removeLibraries(@NotNull List<? extends Library> libraries) {
-    // TODO den implement
-    //LibraryTable table = library.getTable();
-    //table.removeLibrary(library);
+  public void removeLibraries(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project) {
+    if (libraries.isEmpty()) {
+      return;
+    }
+    GradleUtil.executeProjectChangeAction(project, libraries, new Runnable() {
+      @Override
+      public void run() {
+        final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
+        final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
+        try {
+          for (Library library : libraries) {
+            String libraryName = library.getName();
+            if (libraryName != null) {
+              Library libraryToRemove = model.getLibraryByName(libraryName);
+              if (libraryToRemove != null) {
+                model.removeLibrary(libraryToRemove);
+              }
+            }
+          }
+        }
+        finally {
+          model.commit();
+        }
+      }
+    });
   }
 }

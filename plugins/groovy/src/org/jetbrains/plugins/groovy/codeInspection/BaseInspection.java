@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
-import java.util.List;
-
-
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
 
   private final String m_shortName = StringUtil.trimEnd(getClass().getSimpleName(), "Inspection");
@@ -54,7 +51,8 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     return m_shortName;
   }
 
-  @Nullable BaseInspectionVisitor buildGroovyVisitor(@NotNull ProblemsHolder problemsHolder, boolean onTheFly) {
+  @NotNull
+  protected BaseInspectionVisitor buildGroovyVisitor(@NotNull ProblemsHolder problemsHolder, boolean onTheFly) {
     final BaseInspectionVisitor visitor = buildVisitor();
     visitor.setProblemsHolder(problemsHolder);
     visitor.setOnTheFly(onTheFly);
@@ -73,12 +71,12 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   }
 
   @Nullable
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return null;
   }
 
   @Nullable
-  protected GroovyFix[] buildFixes(PsiElement location) {
+  protected GroovyFix[] buildFixes(@NotNull PsiElement location) {
     return null;
   }
 
@@ -92,10 +90,10 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
     final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, isOnTheFly);
     final BaseInspectionVisitor visitor = buildGroovyVisitor(problemsHolder, isOnTheFly);
     groovyFile.accept(visitor);
-    final List<ProblemDescriptor> problems = problemsHolder.getResults();
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problemsHolder.getResultsArray();
 
   }
 
+  @NotNull
   protected abstract BaseInspectionVisitor buildVisitor();
 }

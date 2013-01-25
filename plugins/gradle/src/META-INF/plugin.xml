@@ -54,6 +54,7 @@
     
     <!--Auto-import stuff-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
@@ -72,6 +73,15 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleOutdatedLibraryManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleProjectStructureContext"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
 
     <toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
@@ -84,33 +94,6 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.util.GradleProjectStructureContext</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.task.GradleTaskManager</implementation-class>
-    </component>
-  </project-components>
-  
   <actions>
     
     <!-- Tool window toolbar actions -->
@@ -128,10 +111,12 @@
     <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="GradleIcons.GradleImport"/>
     <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="AllIcons.Actions.Diff"/>
     <action id="Gradle.RemoveEntity" class="org.jetbrains.plugins.gradle.action.GradleRemoveIdeEntityAction" icon="AllIcons.General.Remove"/>
+    <action id="Gradle.SyncOutdatedLibrary" class="org.jetbrains.plugins.gradle.action.GradleSyncOutdatedLibraryAction" icon="GradleIcons.GradleSync"/>
     <group id="Gradle.SyncTreeGroup">
       <reference id="Gradle.ImportEntity"/>
       <reference id="Gradle.RemoveEntity"/>
       <reference id="Gradle.ShowConflict"/>
+      <reference id="Gradle.SyncOutdatedLibrary"/>
     </group>
 
     <!-- 'Sync project structure' tree filters -->
@@ -139,12 +124,12 @@
     <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
-    <action id="Gradle.SyncTreeFilter.Confirmed" class="org.jetbrains.plugins.gradle.action.GradleConfirmedSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.Outdated" class="org.jetbrains.plugins.gradle.action.GradleOutdatedSyncTreeFilterAction"/>
     <group id="Gradle.SyncTreeFilter">
       <reference id="Gradle.SyncTreeFilter.GradleLocal"/>
       <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
       <reference id="Gradle.SyncTreeFilter.Conflict"/>
-      <!--<reference id="Gradle.SyncTreeFilter.Confirmed"/>-->
+      <reference id="Gradle.SyncTreeFilter.Outdated"/>
       <reference id="Gradle.SyncTreeFilter.None"/>
     </group>
     

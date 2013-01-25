@@ -73,15 +73,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
 
   private final Object myLock = new Object();
-  private final THashMap<String,Object> myId2Action;
-  private final THashMap<PluginId, THashSet<String>> myPlugin2Id;
-  private final TObjectIntHashMap<String> myId2Index;
-  private final THashMap<Object,String> myAction2Id;
-  private final ArrayList<String> myNotRegisteredInternalActionIds;
+  private final Map<String,Object> myId2Action = new THashMap<String, Object>();
+  private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<PluginId, THashSet<String>>();
+  private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<String>();
+  private final Map<Object,String> myAction2Id = new THashMap<Object, String>();
+  private final List<String> myNotRegisteredInternalActionIds = new ArrayList<String>();
   private MyTimer myTimer;
 
   private int myRegisteredActionsCount;
-  private final ArrayList<AnActionListener> myActionListeners;
+  private final List<AnActionListener> myActionListeners = new ArrayList<AnActionListener>();
   private AnActionListener[] myCachedActionListeners;
   private String myLastPreformedActionId;
   private final KeymapManager myKeymapManager;
@@ -130,13 +130,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private boolean myTransparentOnlyUpdate;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
-    myId2Action = new THashMap<String, Object>();
-    myId2Index = new TObjectIntHashMap<String>();
-    myAction2Id = new THashMap<Object, String>();
-    myPlugin2Id = new THashMap<PluginId, THashSet<String>>();
-    myNotRegisteredInternalActionIds = new ArrayList<String>();
-    myActionListeners = new ArrayList<AnActionListener>();
-    myCachedActionListeners = null;
     myKeymapManager = keymapManager;
     myDataManager = dataManager;
 
@@ -235,10 +228,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
    * Converts action's stub to normal action.
    */
   private AnAction convert(ActionStub stub) {
-    LOG.assertTrue(myAction2Id.contains(stub));
+    LOG.assertTrue(myAction2Id.containsKey(stub));
     myAction2Id.remove(stub);
 
-    LOG.assertTrue(myId2Action.contains(stub.getId()));
+    LOG.assertTrue(myId2Action.containsKey(stub.getId()));
 
     AnAction action = (AnAction)myId2Action.remove(stub.getId());
     LOG.assertTrue(action != null);

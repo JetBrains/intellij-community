@@ -57,13 +57,15 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private final GradleLocalSettings mySettings;
 
-  private Tree                            myTree;
-  private GradleProjectStructureTreeModel myTreeModel;
-  private GradleProjectStructureContext   myContext;
-  private Object                          myNodeUnderMouse;
-  private boolean                         mySuppressCollapseTracking;
+  private                Tree                            myTree;
+  private                GradleProjectStructureTreeModel myTreeModel;
+  private GradleProjectStructureContext myContext;
+  private Object  myNodeUnderMouse;
+  private boolean mySuppressCollapseTracking;
 
-  public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
+  public GradleProjectStructureChangesPanel(@NotNull Project project,
+                                            @NotNull GradleProjectStructureContext context)
+  {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
     myContext = context;
     myToolbarControls.add(new GradleProjectStructureFiltersPanel());
@@ -143,7 +145,6 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   protected void updateContent() {
     myTreeModel.rebuild();
   }
-
 
   @Nullable
   @Override
