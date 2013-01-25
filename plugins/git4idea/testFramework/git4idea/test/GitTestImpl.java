@@ -85,7 +85,7 @@ public class GitTestImpl implements Git {
     String output = git("config " + join(params, " "));
     int exitCode = output.trim().isEmpty() ? 1 : 0;
     return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.<String>emptyList(),
-                                Arrays.asList(StringUtil.splitByLines(output)));
+                                Arrays.asList(StringUtil.splitByLines(output)), null);
   }
 
   @NotNull
@@ -247,7 +247,7 @@ public class GitTestImpl implements Git {
       }
     }
     boolean success = err.isEmpty();
-    return new GitCommandResult(success, 0, err, out);
+    return new GitCommandResult(success, 0, err, out, null);
   }
 
   private static boolean isError(String s) {

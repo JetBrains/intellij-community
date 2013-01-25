@@ -57,21 +57,28 @@ public class HgMergeProvider implements MergeProvider {
         final VirtualFile repo = HgUtil.getHgRootOrThrow(myProject, file);
         final HgFile hgFile = new HgFile(myProject, file);
 
-        HgRevisionNumber serverRevisionNumber, baseRevisionNumber;
+        HgRevisionNumber serverRevisionNumber, baseRevisionNumber, localRevisionNumber;
         // there are two possibilities: we have checked in local changes in the selected file or we didn't.
         if (wasFileCheckedIn(repo, file)) {
           // 1. We checked in.
           // We have a merge in progress, which means we have 2 heads (parents).
-          // the latest one is "their" revision pulled from the parent repo,
-          // the earlier parent is the local change.
-          // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of the second parent.
+          // the revision with greater revision number is "their" revision pulled from the parent repo,
+          // the revision with lesser revision number is the local change. see http://hgbook.red-bean.com/read/a-tour-of-mercurial-merging-work.html
+          // to retrieve the base version we get the parent of the local change, i.e. the [only] parent of appropriate parent - grandparent.
           final Pair<HgRevisionNumber, HgRevisionNumber> parents = command.parents(repo, file);
-          serverRevisionNumber = parents.first;
-          final HgContentRevision local = new HgContentRevision(myProject, hgFile, parents.second);
+          if (parents.first.getRevision().compareTo(parents.second.getRevision()) > 0) {
+            serverRevisionNumber = parents.first;
+            localRevisionNumber = parents.second;
+          }
+          else {
+            serverRevisionNumber = parents.second;
+            localRevisionNumber = parents.first;
+          }
+          final HgContentRevision local = new HgContentRevision(myProject, hgFile, localRevisionNumber);
           mergeData.CURRENT = local.getContentAsBytes();
           // we are sure that we have a grandparent, because otherwise we'll get "repository is unrelated" error while pulling,
           // due to different root changesets which is prohibited.
-          baseRevisionNumber = command.parents(repo, file, parents.second).first;
+          baseRevisionNumber = command.parents(repo, file, localRevisionNumber).first;
         } else {
           // 2. local changes are not checked in.
           // then there is only one parent, which is server changes.

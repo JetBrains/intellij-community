@@ -141,7 +141,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     final List<String> resultPaths = new ArrayList<String>();
 
     if (result != null && OK == result.intValue()) {
-      final ID fileNamesArray = invoke(panel, "filenames");
+      final ID fileNamesArray = invoke(panel, "URLs");
       final ID enumerator = invoke(fileNamesArray, "objectEnumerator");
 
       while (true) {
