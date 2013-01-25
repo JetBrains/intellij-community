@@ -26,13 +26,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     Project currProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
     if (currProject == null) {
@@ -50,7 +51,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement psiElement = file.findElementAt(offset);
     final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(psiElement, PsiReferenceParameterList.class);
@@ -60,7 +61,7 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
     return PsiTreeUtil.getParentOfType(psiElement, PsiTypeElement.class) != null;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new ChangeTypeSignatureHandler();
   }
 }

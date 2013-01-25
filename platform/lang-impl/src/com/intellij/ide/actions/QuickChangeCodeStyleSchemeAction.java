@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -32,7 +33,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
+  protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(project);
     if (manager.PER_PROJECT_SETTINGS != null) {
       //noinspection HardCodedStringLiteral

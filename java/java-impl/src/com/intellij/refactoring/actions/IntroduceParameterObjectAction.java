@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterObjectAction extends BaseRefactoringAction {
 
@@ -28,11 +29,11 @@ public class IntroduceParameterObjectAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isEnabledOnElements(final PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {
     return elements.length == 1 && PsiTreeUtil.getParentOfType(elements[0], PsiMethod.class, false) != null;
   }
 
-  protected RefactoringActionHandler getHandler(DataContext context) {
+  protected RefactoringActionHandler getHandler(@NotNull DataContext context) {
     return new IntroduceParameterObjectHandler();
   }
 }

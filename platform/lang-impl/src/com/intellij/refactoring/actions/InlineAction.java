@@ -51,11 +51,11 @@ public class InlineAction extends BasePlatformRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()), editor);
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && hasInlineActionHandler(elements [0], null, null);
   }
 
