@@ -78,7 +78,7 @@ public class TreeHighlighter {
     if (myInitIdx == -1) {
       for (int i = 0; i < myModel.getRowCount(); i++) {
         commitAt = myModel.getCommitAt(i);
-        if (! commitAt.holdsDecoration() && commitAt.getHash().equals(myPoint)) {
+        if (! commitAt.holdsDecoration() && AbstractHash.hashesEqual(commitAt.getHash(), myPoint)) {
           myInitIdx = i;
           break;
         }
