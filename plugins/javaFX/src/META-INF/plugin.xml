@@ -12,5 +12,6 @@
     <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXSchemaHandler"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.FxmlReferencesContributor"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxEventHandlerReference$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxTagNameReference$JavaFxUnresolvedTagRefsProvider"/>
   </extensions>
 </idea-plugin>

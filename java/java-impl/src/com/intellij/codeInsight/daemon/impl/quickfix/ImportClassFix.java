@@ -32,9 +32,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement> {
+public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
-    super(element);
+    super(element, element);
   }
 
   @Override
