@@ -45,6 +45,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
   private final AnnotationHolderImpl myAnnotationHolder;
+  private final Editor myEditor;
 
   private volatile DocumentListener myDocumentListener;
   private volatile boolean myDocumentChanged;
@@ -70,6 +71,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
                           int startOffset,
                           int endOffset) {
     super(file.getProject(), editor.getDocument(), false);
+    myEditor = editor;
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
@@ -97,7 +99,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
           externalAnnotator.annotate(psiRoot, myAnnotationHolder);
 
-          final Object collectedInfo = externalAnnotator.collectionInformation(psiRoot);
+          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
           }
