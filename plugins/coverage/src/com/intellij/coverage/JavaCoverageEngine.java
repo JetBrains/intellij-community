@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -366,7 +367,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         }
       });
       for (File child : children) {
-        if (FileUtil.getExtension(child.getName()).equals(StdFileTypes.CLASS.getDefaultExtension())) {
+        if (FileUtilRt.extensionEquals(child.getName(), StdFileTypes.CLASS.getDefaultExtension())) {
           final String childName = FileUtil.getNameWithoutExtension(child);
           if (childName.equals(className) ||  //class or inner
               childName.startsWith(className) && childName.charAt(className.length()) == '$') {
