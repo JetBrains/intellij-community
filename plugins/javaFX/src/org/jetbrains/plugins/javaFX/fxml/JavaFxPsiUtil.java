@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlProcessingInstruction;
  * User: anna
  */
 public class JavaFxPsiUtil {
-  static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
+  public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";
     final PsiElement child =
       PsiFileFactory.getInstance(project).createFileFromText("a.fxml", XMLLanguage.INSTANCE, importText).getFirstChild();

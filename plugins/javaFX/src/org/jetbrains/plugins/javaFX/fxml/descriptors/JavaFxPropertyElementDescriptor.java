@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml;
+package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.openapi.util.text.StringUtil;

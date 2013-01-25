@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml;
+package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -7,6 +7,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 
 import java.util.ArrayList;
 import java.util.List;

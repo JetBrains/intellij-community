@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.javaFX.fxml;
+package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
@@ -17,6 +17,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +70,8 @@ public class JavaFxTagNameReference extends TagNameReference{
     if (shortName != null && JavaFxClassBackedElementDescriptor.findPsiClass(shortName, xmlFile.getRootTag()) == null) {
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
-        final XmlProcessingInstruction processingInstruction = JavaFxPsiUtil.createSingleImportInstruction(qualifiedName, xmlFile.getProject());
+        final XmlProcessingInstruction processingInstruction = JavaFxPsiUtil
+          .createSingleImportInstruction(qualifiedName, xmlFile.getProject());
         final XmlProlog prolog = document.getProlog();
         if (prolog != null) {
           prolog.add(processingInstruction);
