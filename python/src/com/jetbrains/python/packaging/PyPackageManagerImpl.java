@@ -724,6 +724,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       else                 //vEnv interpreter
       {
         cmdline.add(1, helperPath);
+        LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
         return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
       }
     }
