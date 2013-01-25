@@ -116,9 +116,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     final AbstractVcs vcs = vcsRoot.getVcs();
     if (!myVcs.equals(vcs)) {
       if (vcs != null) {
-        // if null, the file is just not under version control, nothing interesting;
-        // otherwise log, because Git method is requested not for a Git-controlled file
-        LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs.getDisplayName(), filePath));
+        LOG.debug(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs.getDisplayName(), filePath));
       }
       return null;
     }
