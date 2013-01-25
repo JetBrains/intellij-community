@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -316,8 +317,8 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
           if (SystemInfo.isWindows) {
             return name.endsWith("-script.py");
           }
-          String ext = FileUtil.getExtension(name);
-          return ext.length() == 0 || ext.equals("py");
+          String ext = FileUtilRt.getExtension(name);
+          return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
         }
       });
       if (scripts != null) {

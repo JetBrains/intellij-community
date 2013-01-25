@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
@@ -45,8 +46,8 @@ public class CleanPycAction extends AnAction {
       @Override
       public boolean process(File file) {
         if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
-            FileUtil.getExtension(file.getName()).equals("pyc") ||
-            FileUtil.getExtension(file.getName()).equals("pyo")) {
+            FileUtilRt.extensionEquals(file.getName(), "pyc") ||
+            FileUtilRt.extensionEquals(file.getName(), "pyo")) {
           pycFiles.add(file);
         }
         return true;

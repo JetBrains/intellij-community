@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -218,7 +219,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   private static boolean isBinaryModule(String filename) {
-    final String ext = FileUtil.getExtension(filename);
+    final String ext = FileUtilRt.getExtension(filename);
     if (SystemInfo.isWindows) {
       return "pyd".equalsIgnoreCase(ext);
     }

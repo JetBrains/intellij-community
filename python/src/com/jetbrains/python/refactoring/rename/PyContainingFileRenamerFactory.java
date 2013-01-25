@@ -1,6 +1,7 @@
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -84,7 +85,7 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     protected String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
-      return canonicalName + "." + FileUtil.getExtension(myClass.getContainingFile().getName());
+      return canonicalName + "." + FileUtilRt.getExtension(myClass.getContainingFile().getName());
     }
 
     @Override

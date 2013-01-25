@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -598,7 +599,7 @@ public class PyUtil {
         Collections.addAll(filesToDelete, pycache.listFiles(new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            if (!FileUtil.getExtension(pathname.getName()).equals("pyc")) return false;
+            if (!FileUtilRt.extensionEquals(pathname.getName(), "pyc")) return false;
             String nameWithMagic = FileUtil.getNameWithoutExtension(pathname);
             return FileUtil.getNameWithoutExtension(nameWithMagic).equals(shortName);
           }

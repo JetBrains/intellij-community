@@ -16,7 +16,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
@@ -143,7 +143,7 @@ public class PythonSdkUpdater implements StartupActivity {
     List<String> newRoots = new ArrayList<String>();
     for (String root : sysPath) {
       if (new File(root).exists() &&
-          !"egg-info".equals(FileUtil.getExtension(root)) &&
+          !FileUtilRt.extensionEquals(root, "egg-info") &&
           (additionalData == null || !wasOldRoot(root, additionalData.getExcludedPathFiles())) &&
           !wasOldRoot(root, oldRoots)) {
         newRoots.add(root);
