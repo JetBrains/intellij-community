@@ -44,15 +44,15 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
-import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -73,7 +73,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected JpsProject myProject;
   protected JpsModel myModel;
   private JpsSdk<JpsDummyElement> myJdk;
-  private File myDataStorageRoot;
+  protected File myDataStorageRoot;
   private TestProjectBuilderLogger myLogger;
 
   @Override
@@ -215,15 +215,23 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return null;
   }
 
-  protected JpsModule addModule(String moduleName,
-                                String[] srcPaths,
-                                @Nullable String outputPath,
-                                @Nullable String testOutputPath,
-                                JpsSdk<JpsDummyElement> jdk) {
+  protected <T extends JpsElement> JpsModule addModule(String moduleName,
+                                                       String[] srcPaths,
+                                                       @Nullable String outputPath,
+                                                       @Nullable String testOutputPath,
+                                                       JpsSdk<T> sdk) {
     JpsModule module = myProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.createReference());
-    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
-    if (srcPaths.length > 0) {
+    final JpsSdkType<T> sdkType = sdk.getSdkType();
+    final JpsSdkReferencesTable sdkTable = module.getSdkReferencesTable();
+    sdkTable.setSdkReference(sdkType, sdk.createReference());
+
+    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+      final JpsSdkReference<T> wrapperRef = sdk.createReference();
+      sdkTable.setSdkReference(JpsJavaSdkType.INSTANCE, JpsJavaExtensionService.
+        getInstance().createWrappedJavaSdkReference((JpsJavaSdkTypeWrapper)sdkType, wrapperRef));
+    }
+    module.getDependenciesList().addSdkDependency(sdkType);
+    if (srcPaths.length > 0 || outputPath != null) {
       for (String srcPath : srcPaths) {
         module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
         module.addSourceRoot(JpsPathUtil.pathToUrl(srcPath), JavaSourceRootType.SOURCE);
@@ -301,7 +309,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected String copyToProject(String relativeSourcePath, String relativeTargetPath) {
-    File source = PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
+    File source = findFindUnderProjectHome(relativeSourcePath);
     String fullTargetPath = getAbsolutePath(relativeTargetPath);
     File target = new File(fullTargetPath);
     try {
@@ -316,6 +324,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       throw new RuntimeException(e);
     }
     return fullTargetPath;
+  }
+
+  protected File findFindUnderProjectHome(String relativeSourcePath) {
+    return PathManagerEx.findFileUnderProjectHome(relativeSourcePath, getClass());
   }
 
   public File getOrCreateProjectDir() {
