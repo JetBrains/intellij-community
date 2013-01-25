@@ -206,30 +206,9 @@ public class ToolEditorDialog extends DialogWrapper {
     pane.add(new JLabel(ToolsBundle.message("tools.program.label")), constr);
 
     FixedSizeButton browseCommandButton = new FixedSizeButton(myTfCommand);
-    browseCommandButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
-          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
-              if (file != null) {
-                myTfCommand.setText(file.getPresentableUrl());
-                String workingDirectory = myTfCommandWorkingDirectory.getText();
-                if (workingDirectory == null || workingDirectory.length() == 0) {
-                  VirtualFile parent = file.getParent();
-                  if (parent != null && parent.isDirectory()) {
-                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-    );
+
+    addCommandBrowseAction(pane, browseCommandButton, myTfCommand);
+
     JPanel _pane0 = new JPanel(new BorderLayout());
     _pane0.add(myTfCommand, BorderLayout.CENTER);
     _pane0.add(browseCommandButton, BorderLayout.EAST);
@@ -291,24 +270,8 @@ public class ToolEditorDialog extends DialogWrapper {
 
     FixedSizeButton browseDirectoryButton = new FixedSizeButton(myTfCommandWorkingDirectory);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseDirectoryButton, myTfCommandWorkingDirectory);
-    browseDirectoryButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+    addWorkingDirectoryBrowseAction(pane, browseDirectoryButton, myTfCommandWorkingDirectory);
 
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
-              if (file != null) {
-                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
-              }
-            }
-          });
-        }
-      }
-    );
     JPanel _pane1 = new JPanel(new BorderLayout());
     _pane1.add(myTfCommandWorkingDirectory, BorderLayout.CENTER);
     _pane1.add(browseDirectoryButton, BorderLayout.EAST);
@@ -340,6 +303,56 @@ public class ToolEditorDialog extends DialogWrapper {
     pane.add(new JLabel(), constr);
 
     return pane;
+  }
+
+  protected void addWorkingDirectoryBrowseAction(final JPanel pane,
+                                                 FixedSizeButton browseDirectoryButton,
+                                                 JTextField tfCommandWorkingDirectory) {
+    browseDirectoryButton.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
+              }
+            }
+          });
+        }
+      }
+    );
+  }
+
+  protected void addCommandBrowseAction(final JPanel pane, FixedSizeButton browseCommandButton, JTextField tfCommand) {
+    browseCommandButton.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommand.setText(file.getPresentableUrl());
+                String workingDirectory = myTfCommandWorkingDirectory.getText();
+                if (workingDirectory == null || workingDirectory.length() == 0) {
+                  VirtualFile parent = file.getParent();
+                  if (parent != null && parent.isDirectory()) {
+                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+    );
   }
 
   private class InsertMacroActionListener implements ActionListener {
@@ -506,5 +519,9 @@ public class ToolEditorDialog extends DialogWrapper {
     s = s.trim();
     if (s.length() == 0) return null;
     return s.replace('/', File.separatorChar);
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }
