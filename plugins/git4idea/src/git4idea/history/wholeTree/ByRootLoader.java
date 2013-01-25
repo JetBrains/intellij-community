@@ -74,7 +74,7 @@ public class ByRootLoader extends TaskDescriptor {
   public void run(ContinuationContext context) {
     /*progress(pi, "Load stashed");
     loadStash();*/
-    reportStashHead();
+    //reportStashHead();
     loadByHashesAside(context);
   }
 
