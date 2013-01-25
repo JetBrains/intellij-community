@@ -65,6 +65,11 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
     myFile.save();
   }
 
+  @Override
+  public void updateFromFile() {
+    myFile.updateGroups();
+  }
+
   private void processGroup(final ProxyGroup newGroup, final ProxyGroup oldGroup, final boolean groupWasAdded) {
     final String newGroupName = newGroup.getName();
     if (groupWasAdded) {

@@ -23,7 +23,10 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.Svn17TestCase;
+import org.jetbrains.idea.svn.SvnFileUrlMapping;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,7 +138,6 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     final String branchUrl = prepareBranchesStructure();
     final SubTree tree = new SubTree(myWorkingCopyDir);
 
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
     myVcs.invokeRefreshSvnRoots(false);
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);

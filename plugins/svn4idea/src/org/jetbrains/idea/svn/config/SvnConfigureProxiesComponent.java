@@ -228,6 +228,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   public void reset() {
     super.reset();
+    myManager.updateFromFile();
     
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
