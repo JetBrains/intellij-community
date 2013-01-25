@@ -14,7 +14,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ public class XslTextContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    if (file.getFileType() == StdFileTypes.XML && FileUtil.getExtension(file.getName()).equals("xsl")) {
+    if (file.getFileType() == StdFileTypes.XML && FileUtilRt.extensionEquals(file.getName(), "xsl")) {
       PsiElement element = file.findElementAt(offset);
       return element == null || HtmlTextContextType.isInContext(element);
     }

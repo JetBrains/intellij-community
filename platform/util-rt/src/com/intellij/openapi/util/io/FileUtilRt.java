@@ -68,7 +68,17 @@ public class FileUtilRt {
   public static String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
-    return fileName.substring(index + 1).toLowerCase();
+    return fileName.substring(index + 1);
+  }
+
+  public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
+    int extLen = extension.length();
+    if (extLen == 0) {
+      return fileName.indexOf('.') == -1;
+    }
+    int extStart = fileName.length() - extLen;
+    return extStart >= 1 && fileName.charAt(extStart-1) == '.'
+           && fileName.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
   @NotNull

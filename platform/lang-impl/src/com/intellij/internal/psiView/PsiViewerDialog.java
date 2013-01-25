@@ -55,7 +55,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -643,7 +643,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         myExtensionComboBox.setModel(model);
         myExtensionComboBox.setVisible(true);
         myExtensionLabel.setVisible(true);
-        String fileExt = myCurrentFile != null ? FileUtil.getExtension(myCurrentFile.getName()) : "";
+        String fileExt = myCurrentFile != null ? FileUtilRt.getExtension(myCurrentFile.getName()) : "";
         if (fileExt.length() > 0 && extensions.contains(fileExt)) {
           myExtensionComboBox.setSelectedItem(fileExt);
           return;
