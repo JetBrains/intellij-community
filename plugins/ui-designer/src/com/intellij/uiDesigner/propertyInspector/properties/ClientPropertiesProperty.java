@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,20 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.JBColor;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.clientProperties.ClientPropertiesManager;
 import com.intellij.uiDesigner.clientProperties.ConfigureClientPropertiesDialog;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -79,7 +79,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
       myTf.setText(UIDesignerBundle.message("client.properties.configure"));
       myTf.getTextField().setEditable(false);
       myTf.getTextField().setBorder(null);
-      myTf.getTextField().setForeground(Color.BLACK);
+      myTf.getTextField().setForeground(JBColor.foreground);
       myTf.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           showClientPropertiesDialog();

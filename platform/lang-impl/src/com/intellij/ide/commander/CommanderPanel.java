@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ public class CommanderPanel extends JPanel {
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
     myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myParentTitle.setForeground(Color.black);
+    myParentTitle.setForeground(JBColor.foreground);
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());
     panel1.setOpaque(false);
@@ -391,7 +391,7 @@ public class CommanderPanel extends JPanel {
       LOG.assertTrue(color != null);
       myTitlePanel.setBackground(color);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
-      myParentTitle.setForeground(Color.black);
+      myParentTitle.setForeground(JBColor.foreground);
     }
     final int[] selectedIndices = myList.getSelectedIndices();
     if (selectedIndices.length == 0 && myList.getModel().getSize() > 0) {
