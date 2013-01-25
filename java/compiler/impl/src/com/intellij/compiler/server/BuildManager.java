@@ -33,6 +33,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -121,7 +124,8 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 /*3 seconds*/;
+  private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
+  private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
@@ -153,12 +157,22 @@ public class BuildManager implements ApplicationComponent{
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
+    protected int getDelay() {
+      return Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY);
+    }
+
+    @Override
     protected void runTask() {
       runAutoMake();
     }
   };
 
   private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
+    @Override
+    protected int getDelay() {
+      return Registry.intValue("compiler.document.save.trigger.delay", DOCUMENT_SAVE_TRIGGER_DELAY);
+    }
+
     private final Semaphore mySemaphore = new Semaphore();
     private final Runnable mySaveDocsRunnable = new Runnable() {
       @Override
@@ -253,9 +267,9 @@ public class BuildManager implements ApplicationComponent{
 
     });
 
-    application.addApplicationListener(new ApplicationAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void writeActionFinished(Object action) {
+      public void documentChanged(DocumentEvent e) {
         scheduleProjectSave();
       }
     });
@@ -1050,9 +1064,11 @@ public class BuildManager implements ApplicationComponent{
 
     public final void schedule() {
       myAlarm.cancelAllRequests();
-      final int delay = Math.max(50, Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY));
+      final int delay = Math.max(100, getDelay());
       myAlarm.addRequest(this, delay);
     }
+
+    protected abstract int getDelay();
 
     protected abstract void runTask();
 
