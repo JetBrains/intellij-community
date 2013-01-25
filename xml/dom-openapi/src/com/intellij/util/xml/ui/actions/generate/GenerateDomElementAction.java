@@ -50,6 +50,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
       this(generateProvider, null);
   }
 
+  @NotNull
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -82,7 +83,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
     return true;
   }
 
-  protected boolean isValidForFile(final Project project, final Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     final DomElement element = DomUtil.getContextElement(editor);
     return element != null && myProvider.isAvailableForElement(element);
   }

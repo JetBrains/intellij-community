@@ -26,19 +26,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 
 public class SurroundWithAction extends BaseCodeInsightAction{
   public SurroundWithAction() {
     setEnabledInModalContext(true);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler(){
     return new SurroundWithHandler();
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final Language language = file.getLanguage();
     if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {
       return true;

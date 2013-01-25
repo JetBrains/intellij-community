@@ -26,7 +26,7 @@ public class MavenGenerateTemplateAction extends GenerateDomElementAction {
     getTemplatePresentation().setIcon(ElementPresentationManager.getIconForClass(childElementClass));
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return file instanceof XmlFile && MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class) != null;
   }
 }

@@ -26,8 +26,10 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodUpAction extends BaseCodeInsightAction {
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new MethodUpHandler();
@@ -39,7 +41,7 @@ public class MethodUpAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     return checkValidForFile(file);
   }
 

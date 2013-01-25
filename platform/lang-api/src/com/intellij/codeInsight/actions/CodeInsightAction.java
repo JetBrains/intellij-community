@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public abstract class CodeInsightAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -52,9 +53,11 @@ public abstract class CodeInsightAction extends AnAction {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         final CodeInsightActionHandler handler = getHandler();
         final Runnable action = new Runnable() {
+          @Override
           public void run() {
             if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
             handler.invoke(project, editor, psiFile);
@@ -70,6 +73,7 @@ public abstract class CodeInsightAction extends AnAction {
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
@@ -90,14 +94,15 @@ public abstract class CodeInsightAction extends AnAction {
     presentation.setEnabled(file != null && isValidForFile(project, editor, file));
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return true;
   }
 
+  @NotNull
   protected abstract CodeInsightActionHandler getHandler();
 
   protected String getCommandName() {
     String text = getTemplatePresentation().getText();
-    return text != null ? text : "";
+    return text == null ? "" : text;
   }
 }

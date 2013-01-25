@@ -27,15 +27,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 public class ImplementMethodsAction extends BaseCodeInsightAction {
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new ImplementMethodsHandler();
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.IMPLEMENT_METHOD.forLanguage(language);
     return codeInsightActionHandler != null && codeInsightActionHandler.isValidFor(editor, file);
