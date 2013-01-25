@@ -61,7 +61,9 @@ public class HgTagBranchCommand {
     new HgCommandExecutor(project).execute(repo, "branches", null, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        branchListConsumer.consume(tokenize(result));
+        if (result != null) {
+          branchListConsumer.consume(tokenize(result));
+        }
       }
     });
   }
@@ -70,12 +72,14 @@ public class HgTagBranchCommand {
     new HgCommandExecutor(project).execute(repo, "tags", null, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        tagListConsumer.consume(tokenize(result));
+        if (result != null) {
+          tagListConsumer.consume(tokenize(result));
+        }
       }
     });
   }
 
-  private List<HgTagBranch> tokenize(HgCommandResult result) {
+  private static List<HgTagBranch> tokenize(HgCommandResult result) {
     List<HgTagBranch> branches = new LinkedList<HgTagBranch>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);

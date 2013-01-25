@@ -91,9 +91,7 @@ public final class HgCommandExecutor {
     myShowOutput = showOutput;
   }
 
-  public void execute(@Nullable final VirtualFile repo,
-                      final String operation,
-                      final List<String> arguments,
+  public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
