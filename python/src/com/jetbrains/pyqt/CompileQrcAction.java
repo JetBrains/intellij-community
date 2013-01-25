@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -76,7 +76,7 @@ public class CompileQrcAction extends AnAction {
       return false;
     }
     for (VirtualFile vFile : vFiles) {
-      if (!"qrc".equals(FileUtil.getExtension(vFile.getName()))) {
+      if (!FileUtilRt.extensionEquals(vFile.getName(), "qrc")) {
         return false;
       }
     }

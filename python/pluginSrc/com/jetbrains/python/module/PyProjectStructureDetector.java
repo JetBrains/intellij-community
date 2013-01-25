@@ -8,7 +8,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +33,7 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
                                                @NotNull List<DetectedProjectRoot> result) {
     LOG.info("Detecting roots under "  + dir);
     for (File child : children) {
-      if (FileUtil.getExtension(child.getName()).equals("py")) {
+      if (FileUtilRt.extensionEquals(child.getName(), "py")) {
         LOG.info("Found Python file " + child.getPath());
         result.add(new DetectedProjectRoot(dir) {
           @NotNull
