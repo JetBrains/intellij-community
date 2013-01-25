@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(typeLabel, c);
 
-    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, true);
+    myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(myExpression, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     c.next().weightx(1).fillCellHorizontally();
     namePanel.add(myTypeComboBox, c);
     typeLabel.setLabelFor(myTypeComboBox);
@@ -170,10 +170,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myNameField;
   }
 
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   protected void doOKAction() {
     if (!myValidator.isOK(this)) {
       return;
@@ -181,6 +177,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     if (myCbIsFinal.isEnabled()) {
       GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
+    GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF = (myTypeComboBox.getSelectedType() == null);
     super.doOKAction();
   }
 
