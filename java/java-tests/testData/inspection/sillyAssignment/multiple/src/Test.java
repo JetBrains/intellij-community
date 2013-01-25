@@ -20,5 +20,18 @@ public class Test extends Super {
 }
 class Super {
     int h;
+    int bar;
 }
 
+
+class Outer extends Super {
+  class Inner extends Super {
+    void f() {
+      this.bar = Outer.this.bar;
+      bar = Outer.this.bar;
+      this.bar = Outer.super.bar;
+      bar = Outer.super.bar;
+      super.bar = Outer.super.bar;
+    }
+  }
+}
