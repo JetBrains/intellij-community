@@ -102,7 +102,13 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   }
 
   @Override
-  protected void readLanguageLevel(Element root, JpsModule model) throws InvalidDataException {}
+  protected void readLanguageLevel(Element root, JpsModule model) throws InvalidDataException {
+    final String languageLevel = root.getAttributeValue("LANGUAGE_LEVEL");
+    final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(model);
+    if (languageLevel != null) {
+      extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+    }
+  }
 
   @Override
   protected void expandElement(Element root, JpsModule model) {
