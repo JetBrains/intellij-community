@@ -137,6 +137,14 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
               LOG.error(e);
               continue;
             }
+            catch (NoClassDefFoundError e) {
+              LOG.error(e);
+              continue;
+            }
+            catch (UnsupportedClassVersionError e) {
+              LOG.error(e);
+              continue;
+            }
             if (result == null) result = new ArrayList<T>();
             result.add(instance);
           }
