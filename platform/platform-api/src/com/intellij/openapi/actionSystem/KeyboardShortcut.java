@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public final class KeyboardShortcut extends Shortcut {
     mySecondKeyStroke = secondKeyStroke;
   }
 
+  @NotNull
   public KeyStroke getFirstKeyStroke() {
     return myFirstKeyStroke;
   }
@@ -58,19 +60,15 @@ public final class KeyboardShortcut extends Shortcut {
       return false;
     }
     KeyboardShortcut second = (KeyboardShortcut)obj;
-    if (!Comparing.equal(myFirstKeyStroke, second.myFirstKeyStroke)) {
-      return false;
-    }
-    if (!Comparing.equal(mySecondKeyStroke, second.mySecondKeyStroke)) {
-      return false;
-    }
-    return true;
+    return Comparing.equal(myFirstKeyStroke, second.myFirstKeyStroke) && Comparing.equal(mySecondKeyStroke, second.mySecondKeyStroke);
   }
 
+  @Override
   public boolean isKeyboard() {
     return true;
   }
 
+  @Override
   public boolean startsWith(final Shortcut sc) {
     if (sc instanceof KeyboardShortcut) {
       final KeyboardShortcut other = (KeyboardShortcut)sc;
@@ -81,7 +79,7 @@ public final class KeyboardShortcut extends Shortcut {
     }
   }
 
-  public static KeyboardShortcut fromString(String s) {
+  public static KeyboardShortcut fromString(@NonNls String s) {
     final KeyStroke keyStroke = KeyStroke.getKeyStroke(s);
     assert keyStroke != null : "Can't create key stroke for " + s;
     return new KeyboardShortcut(keyStroke, null);
@@ -89,12 +87,6 @@ public final class KeyboardShortcut extends Shortcut {
 
   @Override
   public String toString() {
-    if (myFirstKeyStroke != null && mySecondKeyStroke == null) {
-      return "[" + myFirstKeyStroke + "]";
-    } else if (myFirstKeyStroke != null && mySecondKeyStroke != null) {
-      return "[" + myFirstKeyStroke + "]+["+ mySecondKeyStroke +"]";
-    } else {
-      return "[]";
-    }
+    return mySecondKeyStroke == null ? "[" + myFirstKeyStroke + "]" : "[" + myFirstKeyStroke + "]+[" + mySecondKeyStroke + "]";
   }
 }

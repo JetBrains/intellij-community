@@ -54,7 +54,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
@@ -108,13 +107,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private final Alarm mySecondStrokeTimeout = new Alarm();
   private final Runnable mySecondStrokeTimeoutRunnable = new Runnable() {
+    @Override
     public void run() {
       if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
         resetState();
-        if (myContext != null) {
-          final DataContext dataContext = myContext.getDataContext();
-          StatusBar.Info.set(null, dataContext == null ? null : PlatformDataKeys.PROJECT.getData(dataContext));
-        }
+        final DataContext dataContext = myContext.getDataContext();
+        StatusBar.Info.set(null, dataContext == null ? null : PlatformDataKeys.PROJECT.getData(dataContext));
       }
     }
   };
@@ -266,7 +264,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
     if (isPopup) {
       if (component instanceof JWindow) {
-        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(AbstractPopup.KEY);
+        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(JBPopup.KEY);
         if (popup != null) {
           return popup.isModalContext();
         }
@@ -307,10 +305,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if(getCachedStrokeMethod==null){
         throw new IllegalStateException("not found method with name getCachedStrokeMethod");
       }
-      Object[] getCachedStrokeMethodArgs=new Object[]{originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
-      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs
-      );
-    }catch(Exception exc){
+      Object[] getCachedStrokeMethodArgs=
+        {originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
+      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs);
+    }
+    catch(Exception exc){
       throw new IllegalStateException(exc.getMessage());
     }
   }
@@ -366,7 +365,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
+  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
     "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv"
   ));
 
@@ -407,7 +406,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                   keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
       boolean imEnabled = IdeEventQueue.getInstance().isInputMethodEnabled();
 
-      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || (!imEnabled && keyTyped)))  {
+      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || !imEnabled && keyTyped))  {
         setPressedWasProcessed(true);
         setState(KeyState.STATE_PROCESSED);
         return false;
@@ -546,17 +545,21 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private final ActionProcessor myActionProcessor = new ActionProcessor() {
-    public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
+    @NotNull
+    @Override
+    public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
                                      final ActionManager manager) {
       return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);
     }
 
-    public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
+    @Override
+    public void onUpdatePassed(final InputEvent inputEvent, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
       setState(KeyState.STATE_PROCESSED);
       setPressedWasProcessed(inputEvent.getID() == KeyEvent.KEY_PRESSED);
     }
 
-    public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+    @Override
+    public void performAction(final InputEvent e, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
       e.consume();
       action.actionPerformed(actionEvent);
       if (Registry.is("actionSystem.fixLostTyping")) {
@@ -570,13 +573,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   };
 
-  public boolean processAction(final InputEvent e, ActionProcessor processor) {
+  public boolean processAction(final InputEvent e, @NotNull ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
-    for (final AnAction action : myContext.getActions()) {
-      final Presentation presentation = myPresentationFactory.getPresentation(action);
+    List<AnAction> actions = myContext.getActions();
+    for (final AnAction action : actions) {
+      Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
       final AnActionEvent actionEvent =
@@ -585,11 +589,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       ActionUtil.performDumbAwareUpdate(action, actionEvent, true);
 
       if (dumb && !action.isDumbAware()) {
-        if (Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
-          continue;
+        if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
+          nonDumbAwareAction.add(actionEvent);
         }
-
-        nonDumbAwareAction.add(actionEvent);
         continue;
       }
 
@@ -621,6 +623,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static void showDumbModeWarningLaterIfNobodyConsumesEvent(final InputEvent e, final AnActionEvent... actionEvents) {
     if (ModalityState.current() == ModalityState.NON_MODAL) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (e.isConsumed()) return;
 
@@ -753,6 +756,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return myContext;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
@@ -826,7 +830,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         @Override
         public void run() {
           final AnActionEvent event =
-            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, (Presentation)action.getTemplatePresentation().clone(),
+            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                               ActionManager.getInstance(), 0);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
             action.actionPerformed(event);
@@ -845,7 +849,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         @Override
         public boolean value(Pair<AnAction, KeyStroke> pair) {
           final AnAction action = pair.getFirst();
-          final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+          final Presentation presentation = action.getTemplatePresentation().clone();
           AnActionEvent event = new AnActionEvent(null, ctx,
                                                   ActionPlaces.UNKNOWN,
                                                   presentation,

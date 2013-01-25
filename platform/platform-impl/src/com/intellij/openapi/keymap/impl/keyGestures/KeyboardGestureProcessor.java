@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -111,17 +112,18 @@ public class KeyboardGestureProcessor {
   }
 
   private class MyActionProcessor implements ActionProcessor {
-    public AnActionEvent createEvent(final InputEvent inputEvent, final DataContext context, final String place, final Presentation presentation,
+    @NotNull
+    public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
                                      final ActionManager manager) {
       myContext.actionPresentation = presentation;
       myContext.actionPlace = place;
       return myState.createActionEvent();
     }
 
-    public void onUpdatePassed(final InputEvent inputEvent, final AnAction action, final AnActionEvent actionEvent) {
+    public void onUpdatePassed(final InputEvent inputEvent, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
     }
 
-    public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
+    public void performAction(final InputEvent e, @NotNull final AnAction action, @NotNull final AnActionEvent actionEvent) {
       final boolean isGestureAction = action instanceof KeyboardGestureAction;
       actionEvent.accept(new AnActionEventVisitor() {
         @Override
