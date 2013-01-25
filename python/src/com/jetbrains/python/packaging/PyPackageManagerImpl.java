@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -627,7 +628,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteSdkData) {
+    if (sdkData instanceof RemoteCredentials) {
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
                                   helper).getPath();
@@ -644,7 +645,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                          @Nullable String workingDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteSdkData) { //remote interpreter
+    if (sdkData instanceof RemoteCredentials) { //remote interpreter
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {

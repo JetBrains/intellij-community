@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.remotesdk.RemoteSdkData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,6 +204,6 @@ public class PySdkUtil {
   }
 
   public static boolean isRemote(@Nullable Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkData;
+    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteCredentials;
   }
 }
