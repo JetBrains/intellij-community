@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.config;
+package com.intellij.util;
 
-import com.intellij.openapi.project.Project;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-public class ConfigureProxiesListener implements ActionListener {
-  private final Project myProject;
-
-  public ConfigureProxiesListener(final Project project) {
-    myProject = project;
-  }
-
-  public void actionPerformed(final ActionEvent e) {
-    final SvnConfigureProxiesDialog dialog = new SvnConfigureProxiesDialog(myProject);
-    dialog.show();
-  }
+/**
+ * @author traff
+ */
+public interface AsyncProducer<T> {
+  void produce(Consumer<T> consumer);
 }

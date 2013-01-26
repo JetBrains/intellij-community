@@ -21,15 +21,14 @@ package com.intellij.internal;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class BuildIcons {
   public static void main(String[] args) throws Exception {
@@ -66,6 +65,9 @@ public class BuildIcons {
     System.out.println("Total icons: " + total);
   }
 
+  private static final Set<String> IMAGE_EXTENSIONS = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY,
+                                                                                "png", "gif", "jpg", "jpeg");
+
   private static void walk(File root, MultiMap<Pair<Integer,Integer>, String> dimToPath, File file) throws IOException {
     if (file.isDirectory()) {
       for (File child : file.listFiles()) {
@@ -73,8 +75,7 @@ public class BuildIcons {
       }
     }
     else {
-      String extension = FileUtil.getExtension(file.getName());
-      if ("png".equals(extension) || "gif".equals(extension) || "jpg".equals(extension) || "jpeg".equals(extension)) {
+      if (IMAGE_EXTENSIONS.contains(FileUtilRt.getExtension(file.getName()))) {
         String relativePath = file.getAbsolutePath().substring(root.getAbsolutePath().length() + 1);
         Image image = loadImage(file);
         File target;

@@ -155,7 +155,7 @@ public class CommonProxy extends ProxySelector {
     isInstalledAssertion();
     myIDEAWide.resetAuthenticator();
 
-    final String host = uri.getHost();
+    final String host = uri.getHost() == null ? "" : uri.getHost();
     final int port = uri.getPort();
     final String protocol = uri.getScheme();
 
@@ -349,13 +349,14 @@ public class CommonProxy extends ProxySelector {
 
   public static class HostInfo {
     public String myProtocol;
+    @NotNull
     public String myHost;
     public int myPort;
 
     public HostInfo() {
     }
 
-    public HostInfo(String protocol, String host, int port) {
+    public HostInfo(String protocol, @NotNull String host, int port) {
       myPort = port;
       myHost = host;
       myProtocol = protocol;

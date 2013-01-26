@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -101,7 +101,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || FileUtil.getExtension(newName).length() > 0) {
+    if (getDefaultExtension() == null || FileUtilRt.getExtension(newName).length() > 0) {
       return newName;
     }
     return newName + "." + getDefaultExtension();

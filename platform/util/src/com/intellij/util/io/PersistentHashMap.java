@@ -673,14 +673,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, -(int)(value + POSITIVE_VALUE_SHIFT));
         if (newKey) ++smallKeys;
       } else {
-        if (newKey && myLargeIndexWatermarkId == 0) {
-          myLargeIndexWatermarkId = keyId;
-        }
-        if (keyId < myLargeIndexWatermarkId && (oldValue == NULL_ADDR || canUseIntAddressForNewRecord(oldValue))) {
+        if ((keyId < myLargeIndexWatermarkId || myLargeIndexWatermarkId == 0) && (newKey || canUseIntAddressForNewRecord(oldValue))) {
           // keyId is result of enumerate, if we do reenumerate then it is no longer accessible unless somebody cached it
           myIntAddressForNewRecord = false;
           keyId = myEnumerator.reenumerate(key == null ? myEnumerator.getValue(keyId, processingKey) : key);
           ++transformedKeys;
+          if (myLargeIndexWatermarkId == 0) {
+            myLargeIndexWatermarkId = keyId;
+          }
         }
       }
     }

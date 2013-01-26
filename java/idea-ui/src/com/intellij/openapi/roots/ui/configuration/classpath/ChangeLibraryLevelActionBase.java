@@ -37,8 +37,11 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChangeLibraryLe
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +128,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
         for (final File from : filesToProcess) {
           indicator.checkCanceled();
           final File to = FileUtil.findSequentNonexistentFile(targetDir, FileUtil.getNameWithoutExtension(from),
-                                                              FileUtil.getExtension(from.getName()));
+                                                              FileUtilRt.getExtension(from.getName()));
           try {
             if (from.isDirectory()) {
               if (myCopy) {

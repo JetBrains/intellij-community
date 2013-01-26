@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * Defines whether the tree has focus or not
    */
   private boolean myFocused;
+  private boolean myFocusedCalculated;
 
   protected JTree myTree;
 
@@ -57,7 +58,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     clear();
 
     mySelected = selected;
-    myFocused = hasFocus;
+    myFocusedCalculated = false;
 
     // We paint background if and only if tree path is selected and tree has focus.
     // If path is selected and tree is not focused then we just paint focused border.
@@ -73,7 +74,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else {
       if (selected) {
         setPaintFocusBorder(true);
-        if (hasFocus) {
+        if (isFocused()) {
           setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
@@ -107,7 +108,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setIconOpaque(false);
     }
     else {
-      super.setOpaque(myOpaque || selected && hasFocus); // draw selection background even for non-opaque tree
+      super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
 
     if (tree.getUI() instanceof WideSelectionTreeUI && UIUtil.isUnderAquaBasedLookAndFeel()) {
@@ -128,6 +129,18 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     return myTree;
   }
 
+  protected final boolean isFocused() {
+    if (!myFocusedCalculated) {
+      myFocused = calcFocusedState();
+      myFocusedCalculated = true;
+    }
+    return myFocused;
+  }
+
+  protected boolean calcFocusedState() {
+    return myTree.hasFocus();
+  }
+
   public void setOpaque(boolean isOpaque) {
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
@@ -138,7 +151,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * It guaranties readability of selected text in any LAF.
    */
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && myFocused) {
+    if (mySelected && isFocused()) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
     else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {

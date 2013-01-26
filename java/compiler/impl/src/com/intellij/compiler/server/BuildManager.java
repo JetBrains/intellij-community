@@ -33,6 +33,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -121,7 +124,8 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 /*3 seconds*/;
+  private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
+  private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
@@ -151,10 +155,55 @@ public class BuildManager implements ApplicationComponent{
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
 
-  private final Alarm myMakeScheduleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
-  private final Alarm myProjectsSaveAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final AtomicBoolean myProjectsSaveInProgress = new AtomicBoolean(false);
+  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
+    @Override
+    protected int getDelay() {
+      return Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY);
+    }
+
+    @Override
+    protected void runTask() {
+      runAutoMake();
+    }
+  };
+
+  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
+    @Override
+    protected int getDelay() {
+      return Registry.intValue("compiler.document.save.trigger.delay", DOCUMENT_SAVE_TRIGGER_DELAY);
+    }
+
+    private final Semaphore mySemaphore = new Semaphore();
+    private final Runnable mySaveDocsRunnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          FileDocumentManager.getInstance().saveAllDocuments();
+        }
+        finally {
+          mySemaphore.up();
+        }
+      }
+    };
+
+    @Override
+    public void runTask() {
+      if (shouldSaveDocuments()) {
+        mySemaphore.down();
+        ApplicationManager.getApplication().invokeLater(mySaveDocsRunnable, ModalityState.NON_MODAL);
+        mySemaphore.waitFor();
+      }
+    }
+
+    private boolean shouldSaveDocuments() {
+      for (final Project project : getActiveProjects()) {
+        if (canStartAutoMake(project)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
@@ -218,9 +267,9 @@ public class BuildManager implements ApplicationComponent{
 
     });
 
-    application.addApplicationListener(new ApplicationAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void writeActionFinished(Object action) {
+      public void documentChanged(DocumentEvent e) {
         scheduleProjectSave();
       }
     });
@@ -361,82 +410,14 @@ public class BuildManager implements ApplicationComponent{
 
   public void scheduleAutoMake() {
     if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
-      scheduleTask(myMakeScheduleAlarm, myAutoMakeInProgress, new Runnable() {
-        @Override
-        public void run() {
-          runAutoMake();
-        }
-      });
+      myAutoMakeTask.schedule();
     }
   }
 
   private void scheduleProjectSave() {
     if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
-      scheduleTask(myProjectsSaveAlarm, myProjectsSaveInProgress, new Runnable() {
-        @Override
-        public void run() {
-          boolean shouldSave = false;
-          for (final Project project : getActiveProjects()) {
-            if (canStartAutoMake(project)) {
-              shouldSave = true;
-              break;
-            }
-          }
-          if (shouldSave) {
-            final Semaphore semaphore = new Semaphore();
-            semaphore.down();
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  FileDocumentManager.getInstance().saveAllDocuments();
-                }
-                finally {
-                  semaphore.up();
-                }
-              }
-            }, ModalityState.NON_MODAL);
-            semaphore.waitFor();
-          }
-        }
-      });
+      myDocumentSaveTask.schedule();
     }
-  }
-
-  private static void scheduleTask(final Alarm alarm, final AtomicBoolean taskLatch, final Runnable task) {
-    alarm.cancelAllRequests();
-    final int delay = Math.max(50, Registry.intValue("compiler.automake.trigger.delay", MAKE_TRIGGER_DELAY));
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!HeavyProcessLatch.INSTANCE.isRunning() && !taskLatch.getAndSet(true)) {
-          try {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  task.run();
-                }
-                finally {
-                  taskLatch.set(false);
-                }
-              }
-            });
-          }
-          catch (RejectedExecutionException ignored) {
-            // we were shut down
-            taskLatch.set(false);
-          }
-          catch (Throwable e) {
-            taskLatch.set(false);
-            throw new RuntimeException(e);
-          }
-        }
-        else {
-          scheduleTask(alarm, taskLatch, task);
-        }
-      }
-    }, delay);
   }
 
   private void runAutoMake() {
@@ -1063,6 +1044,52 @@ public class BuildManager implements ApplicationComponent{
     @Override
     public void sessionTerminated(UUID sessionId) {
       myHandler.sessionTerminated(sessionId);
+    }
+  }
+
+  private static abstract class BuildManagerPeriodicTask implements Runnable {
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    private final AtomicBoolean myInProgress = new AtomicBoolean(false);
+    private final Runnable myTaskRunnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          runTask();
+        }
+        finally {
+          myInProgress.set(false);
+        }
+      }
+    };
+
+    public final void schedule() {
+      myAlarm.cancelAllRequests();
+      final int delay = Math.max(100, getDelay());
+      myAlarm.addRequest(this, delay);
+    }
+
+    protected abstract int getDelay();
+
+    protected abstract void runTask();
+
+    @Override
+    public final void run() {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && !myInProgress.getAndSet(true)) {
+        try {
+          ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
+        }
+        catch (RejectedExecutionException ignored) {
+          // we were shut down
+          myInProgress.set(false);
+        }
+        catch (Throwable e) {
+          myInProgress.set(false);
+          throw new RuntimeException(e);
+        }
+      }
+      else {
+        schedule();
+      }
     }
   }
 

@@ -52,7 +52,6 @@
       <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" />
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
-      <!--<action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>-->
       <separator/>
 
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>

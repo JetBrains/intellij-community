@@ -39,7 +39,7 @@ public interface DirectoryProjectGenerator<T> {
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
   void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                       @NotNull final T settings, @NotNull final Module module);
+                       @Nullable final T settings, @NotNull final Module module);
 
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);

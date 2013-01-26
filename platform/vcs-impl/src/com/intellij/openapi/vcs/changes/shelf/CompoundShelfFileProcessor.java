@@ -22,6 +22,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -192,7 +193,7 @@ public class CompoundShelfFileProcessor {
 
   private String getNewFileName(final String serverFileName, final List<String> serverFileNames, final List<String> localFileNames) {
     String name = FileUtil.getNameWithoutExtension(serverFileName);
-    String ext = FileUtil.getExtension(serverFileName);
+    String ext = FileUtilRt.getExtension(serverFileName);
     for (int i = 1; ;i++) {
       String suggestedName = name + i + "." + ext;
       if (!serverFileNames.contains(suggestedName) && !localFileNames.contains(suggestedName)) {

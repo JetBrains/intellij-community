@@ -315,11 +315,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         }
       }
 
-      if (! SvnConfiguration.getInstance(myVcs.getProject()).DETECT_NESTED_COPIES) {
-        myApplier.apply(myVcs, myTopRoots, myLonelyRoots);
-      } else {
-        addNestedRoots(clearState);
-      }
+      addNestedRoots(clearState);
     }
 
     private void addNestedRoots(final boolean clearState) {

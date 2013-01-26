@@ -64,7 +64,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private boolean mySorted = false;
   private boolean myShowClasses = true;
-  private boolean myAllowEmptySelection = false;
+  protected boolean myAllowEmptySelection = false;
   private boolean myAllowMultiSelection;
   private final Project myProject;
   private final boolean myIsInsertOverrideVisible;

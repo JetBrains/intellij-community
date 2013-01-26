@@ -21,6 +21,7 @@ import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.download.impl.FileSetVersionsFetcherBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +52,6 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
       docUrl = prependPrefix(docUrl, prefix);
     }
     final String name = item.getName();
-    return new DownloadableLibraryFileDescriptionImpl(url, FileUtil.getNameWithoutExtension(name), FileUtil.getExtension(name), sourceUrl, docUrl, item.isOptional());
+    return new DownloadableLibraryFileDescriptionImpl(url, FileUtil.getNameWithoutExtension(name), FileUtilRt.getExtension(name), sourceUrl, docUrl, item.isOptional());
   }
 }

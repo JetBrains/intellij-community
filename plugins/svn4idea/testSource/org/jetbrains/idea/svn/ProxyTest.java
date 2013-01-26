@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import org.junit.Test;
+//import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 
@@ -147,4 +147,6 @@ public class ProxyTest {
       }
     });
   }
+
+  private @interface Test {}
 }
