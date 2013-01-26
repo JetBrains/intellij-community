@@ -6,11 +6,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.Storage;
+import gnu.trove.THashSet;
 import junit.framework.TestCase;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -358,6 +357,58 @@ public class PersistentMapTest extends TestCase {
     }
     map.close();
     assertEquals(1200000000L, len);
+  }
+
+  public void test2GLimitWithAppend() throws IOException {
+    if (!DO_SLOW_TEST) return;
+    File file = FileUtil.createTempFile("persistent", "map");
+    FileUtil.createParentDirs(file);
+    EnumeratorStringDescriptor stringDescriptor = new EnumeratorStringDescriptor();
+    class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
+      public void save(DataOutput out, Collection<String> value) throws IOException {
+        for (String str : value) {
+          IOUtil.writeString(str, out);
+        }
+      }
+
+      public Collection<String> read(DataInput in) throws IOException {
+        final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        final DataInputStream stream = (DataInputStream)in;
+        while (stream.available() > 0) {
+          final String str = IOUtil.readString(stream);
+          result.add(str);
+        }
+        return result;
+      }
+    }
+    PathCollectionExternalizer externalizer = new PathCollectionExternalizer();
+    PersistentHashMap<String, Collection<String>> map = new PersistentHashMap<String, Collection<String>>(file, stringDescriptor,
+                                                                                                          externalizer);
+    for (int j = 0; j < 7; ++j) {
+      for (int i = 0; i < 2000; i++) {
+        final int finalJ = j;
+        map.appendData("abc" + i, new PersistentHashMap.ValueDataAppender() {
+          @Override
+          public void append(DataOutput out) throws IOException {
+            IOUtil.writeString(StringUtil.repeat("0123456789", 10000 + finalJ - 3), out);
+          }
+        });
+      }
+    }
+
+    map.close();
+
+    map = new PersistentHashMap<String, Collection<String>>(file, stringDescriptor, externalizer);
+
+    long len = 0;
+
+    for (String key : map.getAllKeysWithExistingMapping()) {
+      for (String k : map.get(key)) {
+        len += k.length();
+      }
+    }
+    map.close();
+    assertEquals(1400000000L, len);
   }
 
   private static String createRandomString() {
