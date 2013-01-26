@@ -234,9 +234,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
     
     int anInt = myStorage.getInt(idx);
-    if (anInt < 0 && !(myDataDescriptor instanceof InlineKeyDescriptor)) {
-      LOG.info("Unexpected "+anInt + " from " + idx);
-    }
     if (IntToIntBtree.doSanityCheck) {
       IntToIntBtree.myAssert(anInt >= 0 || myDataDescriptor instanceof InlineKeyDescriptor);
     }

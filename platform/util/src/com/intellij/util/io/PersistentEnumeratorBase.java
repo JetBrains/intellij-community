@@ -372,76 +372,63 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected boolean isKeyAtIndex(final Data value, final int idx) throws IOException {
     if (myKeyStorage == null) return false;
+
+    // check if previous serialized state is the same as for value
+    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
+    final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
     final int addr = indexToAddr(idx);
+    OutputStream comparer;
 
-    try {
-      // check if previous serialized state is the same as for value
-      // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
-      final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
-      OutputStream comparer;
-
-      if (myKeyStoreFileLength <= addr) {
-        comparer = new OutputStream() {
-          int address = addr - myKeyStoreFileLength;
-          boolean same = true;
-          @Override
-          public void write(int b) throws IOException {
-            if (same) {
-              same = address < myKeyStoreBufferPosition && myKeyStoreFileBuffer[address++] == (byte)b;
-            }
+    if (myKeyStoreFileLength <= addr) {
+      comparer = new OutputStream() {
+        int address = addr - myKeyStoreFileLength;
+        boolean same = true;
+        @Override
+        public void write(int b) throws IOException {
+          if (same) {
+            same = address < myKeyStoreBufferPosition && myKeyStoreFileBuffer[address++] == (byte)b;
           }
-          @Override
-          public void close() throws IOException {
-            sameValue[0]  = same;
-          }
-        };
-      } else {
-        comparer = new OutputStream() {
-          int base = addr;
-          int address = myKeyStorage.getPagedFileStorage().getOffsetInPage(addr);
-          boolean same = true;
-          ByteBuffer buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(addr, false);
-          final int myPageSize = myKeyStorage.getPagedFileStorage().myPageSize;
-
-          @Override
-          public void write(int b) throws IOException {
-            if (same) {
-              if (myPageSize == address && address < myKeyStoreFileLength) {    // reached end of current byte buffer
-                base += address;
-                buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(base, false);
-                address = 0;
-              }
-              same = address < myKeyStoreFileLength && buffer.get(address++) == (byte)b;
-            }
-          }
-
-          @Override
-          public void close() throws IOException {
-            sameValue[0]  = same;
-          }
-        };
-
-      }
-
-      DataOutput out = new DataOutputStream(comparer);
-      myDataDescriptor.save(out, value);
-      comparer.close();
-
-      if (sameValue[0]) return true;
-
-      return myDataDescriptor.isEqual(valueOf(idx), value);
-    } catch (AssertionError ae) {
-      PagedFileStorage storage = myKeyStorage.getPagedFileStorage();
-      LOG.info("isSameKey:"+idx + "," + addr + ","+ storage.myPageSize + ","+storage.myValuesAreBufferAligned + "," + value);
-      try {
-        if (addr < 0) {
-          myKeyReadStream.setup(-addr - 1, myKeyStoreFileLength);
-          Data read = myDataDescriptor.read(myKeyReadStream);
-          LOG.info(read + "," + myDataDescriptor.isEqual(read, value));
         }
-      } catch (Throwable t) {}
-      throw ae;
+        @Override
+        public void close() throws IOException {
+          sameValue[0]  = same;
+        }
+      };
+    } else {
+      comparer = new OutputStream() {
+        int base = addr;
+        int address = myKeyStorage.getPagedFileStorage().getOffsetInPage(addr);
+        boolean same = true;
+        ByteBuffer buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(addr, false);
+        final int myPageSize = myKeyStorage.getPagedFileStorage().myPageSize;
+
+        @Override
+        public void write(int b) throws IOException {
+          if (same) {
+            if (myPageSize == address && address < myKeyStoreFileLength) {    // reached end of current byte buffer
+              base += address;
+              buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(base, false);
+              address = 0;
+            }
+            same = address < myKeyStoreFileLength && buffer.get(address++) == (byte)b;
+          }
+        }
+
+        @Override
+        public void close() throws IOException {
+          sameValue[0]  = same;
+        }
+      };
+
     }
+
+    DataOutput out = new DataOutputStream(comparer);
+    myDataDescriptor.save(out, value);
+    comparer.close();
+
+    if (sameValue[0]) return true;
+
+    return myDataDescriptor.isEqual(valueOf(idx), value);
   }
 
   protected int writeData(final Data value, int hashCode) {

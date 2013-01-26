@@ -282,7 +282,6 @@ public class PagedFileStorage implements Forceable {
       unmapAll();
       myStorageLockContext.myStorageLock.myIndex2Storage.remove(myStorageIndex);
       myStorageIndex = -1;
-      LOG.info(Thread.currentThread() + ":Closed:"+myFile);
     }
   }
 
@@ -381,7 +380,6 @@ public class PagedFileStorage implements Forceable {
       assert page >= 0 && page <= MAX_PAGES_COUNT:page;
 
       if (myStorageIndex == -1) {
-        LOG.info(Thread.currentThread() + ":Reinit:"+myFile);
         myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
       }
       ByteBufferWrapper byteBufferWrapper = myStorageLockContext.myStorageLock.get(myStorageIndex | page);
@@ -409,9 +407,6 @@ public class PagedFileStorage implements Forceable {
     }
     catch (IOException e) {
       throw new MappingFailedException("Cannot map buffer", e);
-    } catch (AssertionError ae) {
-      LOG.info(Thread.currentThread() + ":Failed:"+myFile + "," + myStorageIndex + "," + page);
-      throw ae;
     }
   }
 
@@ -502,7 +497,6 @@ public class PagedFileStorage implements Forceable {
         assert registered <= MAX_LIVE_STORAGES_COUNT;
         value = registered << FILE_INDEX_SHIFT;
       }
-      LOG.info(Thread.currentThread() + ":Index:"+value + ":" + storage.myFile);
       return value;
     }
 
