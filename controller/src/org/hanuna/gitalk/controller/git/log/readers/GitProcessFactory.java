@@ -16,6 +16,11 @@ public class GitProcessFactory {
         return Runtime.getRuntime().exec(request);
     }
 
+    public static Process commitDatas(@NotNull String commitHashes) throws IOException {
+        String request = "git log " + commitHashes + " --no-walk " + COMMIT_DATA_LOG_FORMAT;
+        return Runtime.getRuntime().exec(request);
+    }
+
     public static Process allLog() throws IOException {
         String request = "git log --all --date-order " + COMMIT_LOG_FORMAT;
         return Runtime.getRuntime().exec(request);

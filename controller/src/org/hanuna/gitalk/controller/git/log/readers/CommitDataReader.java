@@ -6,6 +6,8 @@ import org.hanuna.gitalk.log.commit.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -36,6 +38,35 @@ public class CommitDataReader {
             throw new IllegalStateException();
         } catch (GitException e) {
             throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    @NotNull
+    public List<CommitData> readCommitsData(@NotNull String commitHashes) {
+        try {
+            final List<CommitData> commitDatas = new ArrayList<CommitData>();
+            ProcessOutputReader outputReader = new ProcessOutputReader(new Executor<String>() {
+                @Override
+                public void execute(String key) {
+                    CommitData data = CommitParser.parseCommitData(key);
+                    commitDatas.add(data);
+                }
+            });
+            Process process = GitProcessFactory.commitDatas(commitHashes);
+            outputReader.startRead(process);
+            return commitDatas;
+        } catch (IOException e) {
+            throw new IllegalStateException();
+        } catch (GitException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        List<CommitData> commitDatas = new CommitDataReader().readCommitsData("4a5d57e aab2eab 2160040 ");
+        for (int i = 0; i < commitDatas.size(); i++) {
+            CommitData commitData = commitDatas.get(i);
+            System.out.println(commitData.getAuthor() + " " + commitData.getMessage());
         }
     }
 

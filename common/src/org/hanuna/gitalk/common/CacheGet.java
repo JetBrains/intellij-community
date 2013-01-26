@@ -43,6 +43,10 @@ public class CacheGet<K, V> implements Get<K, V> {
         }
     }
 
+    public boolean containsKey(@NotNull K key) {
+        return moreMap.containsKey(key);
+    }
+
     public void addToCache(@NotNull K key, @NotNull V value) {
         moreMap.put(key, value);
         map.put(key, value);

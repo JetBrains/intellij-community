@@ -9,6 +9,8 @@ import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author erokhins
  */
@@ -26,6 +28,28 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     @Override
     public CommitData getCommitData(@NotNull Commit commit) {
         return cache.get(commit.hash());
+    }
+
+    @Override
+    public boolean wasLoadData(@NotNull Commit commit) {
+        return cache.containsKey(commit.hash());
+    }
+
+    @Override
+    public void preLoadCommitData(@NotNull List<Commit> commits) {
+        StringBuilder s = new StringBuilder();
+        for (Commit commit : commits) {
+            s.append(commit.hash().toStrHash()).append(" ");
+        }
+        List<CommitData> commitDatas = commitDataReader.readCommitsData(s.toString());
+
+        if (commits.size() != commitDatas.size()) {
+            throw new IllegalArgumentException("size commits & commitDatas not equals: "
+                    + commits.size() + ", " + commitDatas.size());
+        }
+        for (int i = 0; i < commits.size(); i++) {
+            cache.addToCache(commits.get(i).hash(), commitDatas.get(i));
+        }
     }
 
 

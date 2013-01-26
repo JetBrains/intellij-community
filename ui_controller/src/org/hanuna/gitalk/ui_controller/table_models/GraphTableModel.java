@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import java.util.List;
 * @author erokhins
 */
 public class GraphTableModel extends AbstractTableModel {
+    private final int COUNT_PRELOAD = 100;
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final RefsModel refsModel;
     private final CommitDataGetter commitDataGetter;
@@ -65,6 +67,18 @@ public class GraphTableModel extends AbstractTableModel {
         return 3;
     }
 
+    private void runPreLoadCommitData(int rowIndex) {
+        int c = rowIndex - COUNT_PRELOAD / 2;
+        if (c < 0) {
+            c = 0;
+        }
+        List<Commit> commits = new ArrayList<Commit>(COUNT_PRELOAD + 1);
+        for (int i = c; i < COUNT_PRELOAD + c && i < getRowCount(); i++) {
+            commits.add(getCommitInRow(i));
+        }
+        commitDataGetter.preLoadCommitData(commits);
+    }
+
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Commit commit = getCommitInRow(rowIndex);
@@ -72,6 +86,9 @@ public class GraphTableModel extends AbstractTableModel {
         if (commit == null) {
             data = null;
         } else {
+            if (!commitDataGetter.wasLoadData(commit)) {
+                runPreLoadCommitData(rowIndex);
+            }
             data = commitDataGetter.getCommitData(commit);
         }
         switch (columnIndex) {
