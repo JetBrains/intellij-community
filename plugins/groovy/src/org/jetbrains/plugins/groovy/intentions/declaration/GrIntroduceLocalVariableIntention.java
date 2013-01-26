@@ -9,9 +9,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 
 /**
@@ -21,9 +21,23 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVa
  */
 public class GrIntroduceLocalVariableIntention extends Intention {
 
-  protected @NotNull PsiElement getTargetExpression(@NotNull PsiElement element) {
+  protected PsiElement getTargetExpression(@NotNull PsiElement element) {
+    if (isTargetVisible(element)) {
+      return element;
+    }
     PsiElement expression = PsiTreeUtil.getParentOfType(element, GrExpression.class);
-    return expression == null ? element : getTargetExpression(expression);
+    return expression == null ? null : getTargetExpression(expression);
+  }
+
+  private static boolean isTargetVisible(PsiElement element) {
+    if (PsiUtil.isExpressionStatement(element) && element instanceof GrExpression) {
+      if (((GrExpression)element).getType() != PsiType.VOID) {
+        if (PsiTreeUtil.getParentOfType(element, GrAssignmentExpression.class) == null) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected void setSelection(Editor editor, PsiElement element) {
@@ -47,16 +61,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
         if (element == null) {
           return false;
         }
-        GrExpression expression = PsiTreeUtil.getParentOfType(element, GrExpression.class);
-        if (expression == null || expression.getType() == PsiType.VOID) {
-          return false;
-        }
-        GrVariableDeclaration statement = PsiTreeUtil.getParentOfType(expression, GrVariableDeclaration.class);
-        if (statement != null) {
-          return false;
-        }
-        GrAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(expression, GrAssignmentExpression.class);
-        return assignmentExpression == null;
+        return getTargetExpression(element) != null;
       }
     };
   }

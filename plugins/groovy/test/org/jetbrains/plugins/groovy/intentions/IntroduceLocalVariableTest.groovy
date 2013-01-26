@@ -27,6 +27,8 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
   public void testMethodCall3() {doTest()}
   public void testMethodCall4() {doTest()}
   public void testConstructor() {doTest()}
+  public void testClosure1() {doTest()}
+  public void testClosure2() {doTest()}
 
   protected void doTest() {
     myFixture.configureByFile("${getTestName(false)}.groovy")
