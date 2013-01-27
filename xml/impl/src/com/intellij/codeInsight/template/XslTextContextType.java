@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class XslTextContextType extends TemplateContextType {
-  protected XslTextContextType() {
+  public XslTextContextType() {
     super("XSL_TEXT", CodeInsightBundle.message("dialog.edit.template.checkbox.xsl.text"), XmlContextType.class);
   }
 

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class HtmlTextContextType extends TemplateContextType {
-  protected HtmlTextContextType() {
+  public HtmlTextContextType() {
     super("HTML_TEXT", CodeInsightBundle.message("dialog.edit.template.checkbox.html.text"), HtmlContextType.class);
   }
 

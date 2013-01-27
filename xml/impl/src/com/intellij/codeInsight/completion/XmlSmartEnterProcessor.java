@@ -38,10 +38,6 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
 
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
-    /*if (!completeEndTag(project, editor, psiFile)) {
-      return XmlZenCodingTemplate.startZenCoding(editor, psiFile, null);
-    }
-    return true;*/
     return completeEndTag(project, editor, psiFile);
   }
 
