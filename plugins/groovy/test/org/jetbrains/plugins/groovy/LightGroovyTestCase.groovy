@@ -102,6 +102,20 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
 }"""
   }
 
+  protected final void addAnnotationCollector() {
+    myFixture.addClass '''\
+package groovy.transform;
+
+@java.lang.annotation.Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+public @interface AnnotationCollector {
+    String processor() default "org.codehaus.groovy.transform.AnnotationCollectorTransform";
+    Class[] value() default {};
+}
+'''
+  }
+
   /*void addHashMap() {
     myFixture.addClass('''\
 package java.util;
