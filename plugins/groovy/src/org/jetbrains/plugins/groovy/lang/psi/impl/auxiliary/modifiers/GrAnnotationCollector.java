@@ -149,7 +149,7 @@ public class GrAnnotationCollector {
   }
 
   @Nullable
-  private static GrAnnotation findAnnotationCollector(PsiElement clazz) {
+  public static GrAnnotation findAnnotationCollector(PsiElement clazz) {
     if (clazz instanceof GrTypeDefinition) {
       final GrModifierList modifierList = ((GrTypeDefinition)clazz).getModifierList();
       if (modifierList != null) {

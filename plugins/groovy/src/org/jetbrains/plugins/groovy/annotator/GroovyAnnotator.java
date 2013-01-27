@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMethodBodyFix;
@@ -86,7 +85,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
@@ -1325,15 +1323,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (checker.checkApplicability(myHolder, annotation)) return;
     }
 
-    PsiElement parent = annotation.getParent();
-    PsiElement owner = parent.getParent();
-
-    final PsiElement ownerToUse = parent instanceof PsiModifierList ? owner : parent;
-
-    String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
-    if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
-      final String annotationTargetText = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
-      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), annotationTargetText);
+    String description = CustomAnnotationChecker.isAnnotationApplicable(annotation, annotation.getParent());
+    if (description != null) {
       myHolder.createErrorAnnotation(ref, description);
     }
   }

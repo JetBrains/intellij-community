@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 
 /**
  * @author Max Medvedev
@@ -29,4 +35,20 @@ public abstract class CustomAnnotationChecker {
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {return false;}
 
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {return false;}
+
+  @Nullable
+  public static String isAnnotationApplicable(@NotNull GrAnnotation annotation, final PsiElement parent) {
+    PsiElement owner = parent.getParent();
+
+    final PsiElement ownerToUse = parent instanceof PsiModifierList ? owner : parent;
+
+    String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
+    if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
+      final String annotationTargetText = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
+      GrCodeReferenceElement ref = annotation.getClassReference();
+      return JavaErrorMessages.message("annotation.not.applicable", ref.getText(), annotationTargetText);
+    }
+
+    return null;
+  }
 }
