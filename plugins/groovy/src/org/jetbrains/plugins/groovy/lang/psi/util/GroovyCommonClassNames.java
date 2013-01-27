@@ -60,6 +60,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
   @NonNls public static final String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";
   @NonNls public static final String GROOVY_TRANSFORM_ANNOTATION_COLLECTOR = "groovy.transform.AnnotationCollector";
+  @NonNls public static final String GROOVY_LANG_NEWIFY = "groovy.lang.Newify";
 
 
   private GroovyCommonClassNames() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.lang.annotation.AnnotationHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Max Medvedev
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 public class NewifyAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    return "groovy.lang.Newify".equals(annotation.getQualifiedName()) && annotation.getParameterList().getAttributes().length == 0;
+    return GroovyCommonClassNames.GROOVY_LANG_NEWIFY.equals(annotation.getQualifiedName()) &&
+           annotation.getParameterList().getAttributes().length == 0;
   }
 }
