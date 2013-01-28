@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.CompletionPreview;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
@@ -78,7 +79,7 @@ public abstract class ChooseItemAction extends EditorAction {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) return false;
       if (!lookup.isAvailableToUser()) return false;
-      if (focusedOnly && lookup.getPreview() == null && !lookup.isFocused()) return false;
+      if (focusedOnly && !CompletionPreview.hasPreview(lookup) && !lookup.isFocused()) return false;
       if (finishingChar == Lookup.NORMAL_SELECT_CHAR && hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR) ||
           finishingChar == Lookup.REPLACE_SELECT_CHAR && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
         return false;

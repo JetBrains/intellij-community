@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -26,12 +26,14 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -40,28 +42,78 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public class CompletionPreview {
+public class CompletionPreview implements Disposable {
+  private static final Key<CompletionPreview> COMPLETION_PREVIEW_KEY = Key.create("COMPLETION_PREVIEW_KEY");
   private final LookupImpl myLookup;
-  private Disposable myUninstaller;
+  private final MergingUpdateQueue myQueue;
+  private Update myUpdate = new Update("update") {
+    @Override
+    public void run() {
+      updatePreview();
+    }
+  };
 
-  private CompletionPreview(LookupImpl lookup, final String text) {
+  private CompletionPreview(LookupImpl lookup) {
     myLookup = lookup;
+    myQueue = new MergingUpdateQueue("Lookup Preview", 50, true, getEditorImpl().getContentComponent(), this);
+    myLookup.putUserData(COMPLETION_PREVIEW_KEY, this);
+
+    Disposer.register(myLookup, this);
+
+    myLookup.addLookupListener(new LookupListener() {
+      @Override
+      public void itemSelected(LookupEvent event) {
+      }
+
+      @Override
+      public void lookupCanceled(LookupEvent event) {
+      }
+
+      @Override
+      public void currentItemChanged(LookupEvent event) {
+        myQueue.queue(myUpdate);
+      }
+    });
+    myQueue.queue(myUpdate);
+  }
+
+  public static boolean hasPreview(LookupImpl lookup) {
+    return COMPLETION_PREVIEW_KEY.get(lookup) != null;
+  }
+
+  private void updatePreview() {
+    LookupElement item = myLookup.getCurrentItem();
+    if (item == null) {
+      return;
+    }
+
+    String text = getPreviewText(item);
+
+    int prefixLength = myLookup.getPrefixLength(item);
+    if (prefixLength > text.length()) {
+      return;
+    }
+    FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(myLookup.itemPattern(item).substring(0, prefixLength), text);
+    if (fragments == null) {
+      return;
+    }
+
+    if (!fragments.isEmpty()) {
+      ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
+      prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
+    }
 
     final EditorImpl editor = getEditorImpl();
-    editor.setCustomImage(Pair.create(getCaretPoint(), createPreviewImage(text)));
+    editor.setCustomImage(null);
+    BufferedImage previewImage = createPreviewImage(text.substring(prefixLength));
+    editor.setCustomImage(Pair.create(getCaretPoint(), previewImage));
     repaintCaretLine();
+  }
 
-    myUninstaller = new Disposable() {
-      @Override
-      public void dispose() {
-        myLookup.setPreview(null);
-        myUninstaller = null;
-        editor.setCustomImage(null);
-        repaintCaretLine();
-      }
-    };
-    myLookup.setPreview(this);
-    Disposer.register(myLookup, myUninstaller);
+  @Override
+  public void dispose() {
+    getEditorImpl().setCustomImage(null);
+    repaintCaretLine();
   }
 
   private EditorImpl getEditorImpl() {
@@ -118,37 +170,14 @@ public class CompletionPreview {
     return attributes;
   }
 
-  public static void reinstallPreview(@Nullable CompletionPreview oldPreview) {
-    if (oldPreview != null && !oldPreview.myLookup.isLookupDisposed()) {
-      installPreview(oldPreview.myLookup);
-    }
-  }
-  
   public static void installPreview(LookupImpl lookup) {
-    LookupElement item = lookup.getCurrentItem();
-    if (item == null || !(lookup.getEditor() instanceof EditorImpl)) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || !(lookup.getEditor() instanceof EditorImpl)) {
       return;
     }
-
-    String text = getPreviewText(lookup, item);
-
-    int prefixLength = lookup.getPrefixLength(item);
-    if (prefixLength > text.length()) {
-      return;
-    }
-    FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(lookup.itemPattern(item).substring(0, prefixLength), text);
-    if (fragments == null) {
-      return;
-    }
-
-    if (!fragments.isEmpty()) {
-      ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
-      prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
-    }
-    new CompletionPreview(lookup, text.substring(prefixLength));
+    new CompletionPreview(lookup);
   }
 
-  private static String getPreviewText(LookupImpl lookup, LookupElement item) {
+  private String getPreviewText(LookupElement item) {
     LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
     String text = presentation.getItemText();
     if (text == null) {
@@ -157,7 +186,7 @@ public class CompletionPreview {
 
     String tailText = presentation.getTailText();
     if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-      Editor editor = lookup.getEditor();
+      Editor editor = getEditorImpl();
       CharSequence seq = editor.getDocument().getCharsSequence();
       int caret = editor.getCaretModel().getOffset();
       if (caret >= seq.length() || seq.charAt(caret) != '(') {
@@ -165,13 +194,6 @@ public class CompletionPreview {
       }
     }
     return text;
-  }
-
-  public void uninstallPreview() {
-    if (myUninstaller != null) {
-      Disposer.dispose(myUninstaller);
-      assert myUninstaller == null;
-    }
   }
 
 }
