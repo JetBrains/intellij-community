@@ -49,8 +49,8 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run
- * For "lightweight" tests use LightAdvHighlightingTest
+ * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
+ * For "lightweight" tests use LightAdvHighlightingTest.
  */
 public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
