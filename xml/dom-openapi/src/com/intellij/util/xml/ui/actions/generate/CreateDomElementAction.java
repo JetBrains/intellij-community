@@ -49,7 +49,7 @@ public abstract class CreateDomElementAction<T extends DomElement> extends Simpl
   protected abstract DomElement createElement(T context, Editor editor, PsiFile file, Project project);
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return getContextElement(editor) != null;
   }
 

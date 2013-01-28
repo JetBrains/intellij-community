@@ -16,15 +16,24 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Max Medvedev
@@ -46,15 +55,14 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    final GrTypeDefinition resolved = resolveAlias(annotation);
-    if (resolved == null) {
+    final GrTypeDefinition alias = resolveAlias(annotation);
+    if (alias == null) {
       return false;
     }
 
-    final GrModifierList list = resolved.getModifierList();
+    final GrCodeReferenceElement ref = annotation.getClassReference();
+
+    final GrModifierList list = alias.getModifierList();
     assert list != null;
     for (GrAnnotation anno : list.getRawAnnotations()) {
       if (GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(anno.getQualifiedName())) continue;
@@ -69,11 +77,49 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    if (resolveAlias(annotation) != null) {
-      return true;
+    final GrTypeDefinition alias = resolveAlias(annotation);
+    if (alias == null) {
+      return false;
     }
 
+    final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
+    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(alias);
+    assert annotationCollector != null;
+    final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
-    return false;
+    final GrCodeReferenceElement ref = annotation.getClassReference();
+
+    Map<PsiElement, String> map = ContainerUtil.newHashMap();
+    for (GrAnnotation aliased : annotations) {
+      final PsiClass clazz = (PsiClass)aliased.getClassReference().resolve();
+      assert clazz != null;
+      checkAnnotationArguments(map, clazz, ref, aliased.getParameterList().getAttributes(), true);
+    }
+
+    for (Map.Entry<PsiElement, String> entry : map.entrySet()) {
+      final PsiElement key = entry.getKey();
+      final String value = entry.getValue();
+      if (PsiTreeUtil.isAncestor(annotation, key, true)) {
+        holder.createErrorAnnotation(key, value);
+      }
+      else {
+        holder.createErrorAnnotation(ref, value);
+      }
+    }
+
+    final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    final String aliasQName = annotation.getQualifiedName();
+
+    if (attributes.length == 1 && attributes[0].getNameIdentifierGroovy() == null && !usedAttributes.contains("value")) {
+      holder.createErrorAnnotation(attributes[0], GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, "value"));
+    }
+
+    for (GrAnnotationNameValuePair pair : attributes) {
+      final PsiElement nameIdentifier = pair.getNameIdentifierGroovy();
+      if (nameIdentifier != null && !usedAttributes.contains(pair.getName())) {
+        holder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("at.interface.0.does.not.contain.attribute", aliasQName, pair.getName()));
+      }
+    }
+    return true;
   }
 }

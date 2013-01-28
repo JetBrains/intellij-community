@@ -21,20 +21,21 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class InheritanceToDelegationAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 &&
            elements[0] instanceof PsiClass &&
            !((PsiClass)elements[0]).isInterface() &&
            elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new InheritanceToDelegationHandler();
   }
 }

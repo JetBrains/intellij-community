@@ -17,6 +17,7 @@ package org.jetbrains.jps.model.serialization.module;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -29,16 +30,14 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.JDOMUtil.getChildren;
 
@@ -89,7 +88,7 @@ public class JpsModuleRootModelSerializer {
     final JpsDependenciesList dependenciesList = module.getDependenciesList();
     dependenciesList.clear();
     final JpsElementFactory elementFactory = JpsElementFactory.getInstance();
-    int moduleLibraryNum = 0;
+    UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     for (Element orderEntry : getChildren(rootModelComponent, ORDER_ENTRY_TAG)) {
       String type = orderEntry.getAttributeValue(TYPE_ATTRIBUTE);
       if (SOURCE_FOLDER_TYPE.equals(type)) {
@@ -120,14 +119,14 @@ public class JpsModuleRootModelSerializer {
         final Element moduleLibraryElement = orderEntry.getChild(LIBRARY_TAG);
         String name = moduleLibraryElement.getAttributeValue(NAME_ATTRIBUTE);
         if (name == null) {
-          name = GENERATED_LIBRARY_NAME_PREFIX + (moduleLibraryNum++);
+          name = GENERATED_LIBRARY_NAME_PREFIX;
         }
-        final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, name);
+        String uniqueName = nameGenerator.generateUniqueName(name);
+        final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName);
         module.addModuleLibrary(library);
 
         final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);
         loadModuleDependencyProperties(dependency, orderEntry);
-        moduleLibraryNum++;
       }
       else if (MODULE_TYPE.equals(type)) {
         String name = orderEntry.getAttributeValue(MODULE_NAME_ATTRIBUTE);

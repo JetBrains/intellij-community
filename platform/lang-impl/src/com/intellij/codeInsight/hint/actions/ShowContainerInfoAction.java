@@ -25,9 +25,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShowContainerInfoAction extends BaseCodeInsightAction{
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new ShowContainerInfoHandler();
@@ -40,7 +42,7 @@ public class ShowContainerInfoAction extends BaseCodeInsightAction{
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     return LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file) instanceof TreeBasedStructureViewBuilder;
   }
 }

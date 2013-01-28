@@ -82,7 +82,13 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element entry) {
     boolean exported = entry.getAttributeValue(EXPORTED_ATTRIBUTE) != null;
     String scopeName = entry.getAttributeValue(SCOPE_ATTRIBUTE);
-    JpsJavaDependencyScope scope = scopeName != null ? JpsJavaDependencyScope.valueOf(scopeName) : JpsJavaDependencyScope.COMPILE;
+    JpsJavaDependencyScope scope = null;
+    try {
+      scope = scopeName != null ? JpsJavaDependencyScope.valueOf(scopeName) : JpsJavaDependencyScope.COMPILE;
+    }
+    catch (IllegalArgumentException e) {
+      scope = JpsJavaDependencyScope.COMPILE;
+    }
 
     final JpsJavaDependencyExtension extension = getService().getOrCreateDependencyExtension(dependency);
     extension.setExported(exported);

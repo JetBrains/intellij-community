@@ -84,6 +84,23 @@ class F<caret>oo {
 ''')
   }
 
+  void testAliasDeclarationWithoutParams() {
+    doTest('''\
+@interface X {}
+@interface Y {}
+
+@X @Y
+@groovy.transform.AnnotationCollector
+@interface Alias {}
+
+@Alias
+class F<caret>oo {}
+''', '''\
+@Y
+@X
+''')
+  }
+
 
   void doTest(@NotNull String text, @NotNull String expectedAnnotations) {
     addAnnotationCollector()

@@ -72,7 +72,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) return false;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();

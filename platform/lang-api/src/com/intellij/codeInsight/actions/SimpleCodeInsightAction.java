@@ -16,12 +16,14 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class SimpleCodeInsightAction extends CodeInsightAction implements CodeInsightActionHandler {
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return this;
