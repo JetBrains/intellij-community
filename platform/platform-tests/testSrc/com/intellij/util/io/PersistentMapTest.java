@@ -338,7 +338,7 @@ public class PersistentMapTest extends TestCase {
       .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + Storage.DATA_EXTENSION).length());
   }
 
-  private static final boolean DO_SLOW_TEST = true;
+  private static final boolean DO_SLOW_TEST = false;
 
   public void test2GLimit() throws IOException {
     if (!DO_SLOW_TEST) return;
