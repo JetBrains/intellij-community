@@ -269,7 +269,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     if (initializedTools.size() != 1) {
       for (InspectionProfileEntry initializedTool : initializedTools) {
         System.out.println(initializedTool.getShortName());
-        ((InspectionToolWrapper)initializedTool).instantated.printStackTrace();
       }
       fail();
     }
