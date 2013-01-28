@@ -120,7 +120,8 @@ public class GrAnnotationCollector {
 
       if (qname == null || qname.equals(GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR)) continue;
 
-      for (GrAnnotationNameValuePair pair : annotation.getParameterList().getAttributes()) {
+      final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+      for (GrAnnotationNameValuePair pair : attributes) {
         Map<String, GrAnnotationNameValuePair> map = annotations.get(qname);
         if (map == null) {
           map = ContainerUtil.newHashMap();
@@ -129,7 +130,11 @@ public class GrAnnotationCollector {
 
         map.put(pair.getName() != null ? pair.getName() : "value", pair);
       }
+      if (attributes.length == 0 && !annotations.containsKey(qname)) {
+        annotations.put(qname, ContainerUtil.<String, GrAnnotationNameValuePair>newHashMap());
+      }
     }
+
   }
 
   private static void collectAliasedAnnotationsFromAnnotationCollectorValueAttribute(GrAnnotation annotationCollector,
