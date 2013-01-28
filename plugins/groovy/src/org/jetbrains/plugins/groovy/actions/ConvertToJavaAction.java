@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaHandler;
@@ -32,7 +33,7 @@ import org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaHandl
 public class ConvertToJavaAction extends BaseRefactoringAction {
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return isEnabledOnElements(new PsiElement[]{element});
   }
 
@@ -52,7 +53,7 @@ public class ConvertToJavaAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
 
     for (PsiElement element : elements) {
         final PsiFile containingFile = element.getContainingFile();
@@ -63,7 +64,7 @@ public class ConvertToJavaAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
+  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new ConvertToJavaHandler();
   }
 }

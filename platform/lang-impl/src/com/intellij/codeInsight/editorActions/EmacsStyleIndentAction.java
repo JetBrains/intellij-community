@@ -41,13 +41,14 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.EmacsStyleIndentAction");
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new Handler();
   }
 
   @Override
-  protected boolean isValidForFile(final Project project, final Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     final PsiElement context = file.findElementAt(editor.getCaretModel().getOffset());
     return context != null && LanguageFormatting.INSTANCE.forContext(context) != null;
   }

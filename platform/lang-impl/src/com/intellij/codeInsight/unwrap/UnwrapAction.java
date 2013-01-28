@@ -21,6 +21,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnwrapAction extends BaseCodeInsightAction{
   public UnwrapAction() {
@@ -28,13 +29,14 @@ public class UnwrapAction extends BaseCodeInsightAction{
     setEnabledInModalContext(true);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler(){
     return new UnwrapHandler();
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return !LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage()).isEmpty();
   }
 }

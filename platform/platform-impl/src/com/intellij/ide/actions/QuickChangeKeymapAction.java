@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -29,7 +30,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
+  protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final KeymapManagerEx manager = (KeymapManagerEx) KeymapManager.getInstance();
     final Keymap current = manager.getActiveKeymap();
 

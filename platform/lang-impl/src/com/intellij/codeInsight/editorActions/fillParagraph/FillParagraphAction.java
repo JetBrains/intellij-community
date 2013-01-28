@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FillParagraphAction extends BaseCodeInsightAction {
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new Handler();
@@ -45,7 +46,7 @@ public class FillParagraphAction extends BaseCodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final ParagraphFillHandler handler =
       LanguageFillParagraphExtension.INSTANCE.forLanguage(file.getLanguage());
     return handler != null && handler.isAvailableForFile(file);
