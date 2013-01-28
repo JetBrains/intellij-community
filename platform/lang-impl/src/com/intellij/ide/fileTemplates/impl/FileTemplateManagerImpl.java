@@ -149,6 +149,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
     props.setProperty("USER", SystemProperties.getUserName());
     props.setProperty("PRODUCT_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
+    
+    props.setProperty("DS", "$"); // Dollar sign, strongly needed for PHP, JS, etc. See WI-8979
 
     return props;
   }
