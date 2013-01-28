@@ -16,56 +16,22 @@
 
 package com.intellij.tools;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.keymap.KeymapExtension;
-import com.intellij.openapi.keymap.KeymapGroup;
-import com.intellij.openapi.keymap.impl.ui.Group;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.HashMap;
 
-import java.util.Arrays;
+public class ToolKeymapExtension extends BaseToolKeymapExtension {
 
-public class ToolKeymapExtension implements KeymapExtension {
+  private final ToolManager myToolManager;
 
-  public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
-    Arrays.sort(ids);
-    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), AllIcons.Nodes.KeymapTools);
+  public ToolKeymapExtension() {
+    myToolManager = ToolManager.getInstance();
+  }
 
-    ToolManager toolManager = ToolManager.getInstance();
 
-    HashMap<String, Group> toolGroupNameToGroup = new HashMap<String, Group>();
+  protected String getGroupByActionId(String id) {
+    return myToolManager.getGroupByActionId(id);
+  }
 
-    for (String id : ids) {
-      if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
-      String groupName = toolManager.getGroupByActionId(id);
-
-      if (groupName != null && groupName.trim().length() == 0) {
-        groupName = null;
-      }
-
-      Group subGroup = toolGroupNameToGroup.get(groupName);
-      if (subGroup == null) {
-        subGroup = new Group(groupName, null, null);
-        toolGroupNameToGroup.put(groupName, subGroup);
-        if (groupName != null) {
-          group.addGroup(subGroup);
-        }
-      }
-
-      subGroup.addActionId(id);
-    }
-
-    Group subGroup = toolGroupNameToGroup.get(null);
-    if (subGroup != null) {
-      group.addAll(subGroup);
-    }
-
-    return group;
+  protected String getGroupName() {
+    return KeyMapBundle.message("actions.tree.external.tools.group");
   }
 }
