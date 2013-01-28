@@ -610,16 +610,14 @@ public class PagedFileStorage implements Forceable {
             mySizeLimit -= owner.myPageSize;
           }
           long newSize = mySize - owner.myPageSize;
-          if (newSize >= 0) {
-            ensureSize(newSize);
-            continue; // next try
-          }
-          else {
+          if (newSize < 0) {
+            LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
             throw new MappingFailedException(
               "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
               "new size limit: " + mySizeLimit / MB + "MB " +
               "trying to allocate " + wrapper.myLength + " block", e);
           }
+          ensureSize(newSize); // next try
         }
       }
     }
