@@ -59,6 +59,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -1347,7 +1348,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private class LookupLayeredPane extends JLayeredPane {
+  private class LookupLayeredPane extends JBLayeredPane {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {

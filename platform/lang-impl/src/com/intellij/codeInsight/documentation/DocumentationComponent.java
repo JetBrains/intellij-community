@@ -45,6 +45,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
@@ -253,7 +254,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     setLayout(new BorderLayout());
-    JLayeredPane layeredPane = new JLayeredPane() {
+    JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
       public void doLayout() {
         final Rectangle r = getBounds();

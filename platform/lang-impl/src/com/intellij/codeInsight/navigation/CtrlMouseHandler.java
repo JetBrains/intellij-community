@@ -75,6 +75,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.Alarm;
@@ -901,7 +902,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private class QuickDocInfoPane extends JLayeredPane {
+  private class QuickDocInfoPane extends JBLayeredPane {
     
     private static final int BUTTON_HGAP = 5;
     

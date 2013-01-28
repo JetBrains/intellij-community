@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
@@ -980,7 +981,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     myQuickFixManager.hideIntentionHint();
   }
 
-  private final class MyLayeredPane extends JLayeredPane implements Scrollable {
+  private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
     /**
      * All components allocate whole pane's area.
      */

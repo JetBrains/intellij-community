@@ -73,9 +73,13 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -767,7 +771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     */
 
     if (mayShowToolbar()) {
-      JLayeredPane layeredPane = new JLayeredPane() {
+      JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
         public void doLayout() {
           final Component[] components = getComponents();
