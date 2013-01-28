@@ -28,6 +28,7 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
@@ -118,6 +119,20 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependencies.get(2));
     assertNotNull(extension);
     assertEquals(JpsJavaDependencyScope.COMPILE, extension.getScope());
+  }
+
+  public void testDuplicatedModuleLibrary() {
+    loadProject("/jps/model-serialization/testData/duplicatedModuleLibrary/duplicatedModuleLibrary.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
+    assertEquals(4, dependencies.size());
+    JpsLibrary lib1 = assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class).getLibrary();
+    assertNotNull(lib1);
+    assertSameElements(lib1.getRootUrls(JpsOrderRootType.COMPILED), getUrl("data/lib1"));
+    JpsLibrary lib2 = assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class).getLibrary();
+    assertNotSame(lib1, lib2);
+    assertNotNull(lib2);
+    assertSameElements(lib2.getRootUrls(JpsOrderRootType.COMPILED), getUrl("data/lib2"));
   }
 
   public void testLoadEncoding() {
