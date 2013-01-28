@@ -46,7 +46,6 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -306,7 +305,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     verify(runSvn("copy", "-q", "-m", "coppy", mainUrl, branchUrl));
 
     clManager.forceGoInTestMode();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
     vcs.invokeRefreshSvnRoots(false);
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);
@@ -344,7 +342,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     // start change list manager again
     clManager.forceGoInTestMode();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
     vcs.invokeRefreshSvnRoots(false);
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);

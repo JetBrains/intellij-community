@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -128,6 +129,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
     if (wasUsingExternalMake != workspaceConfiguration.USE_COMPILE_SERVER) {
       myProject.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(workspaceConfiguration.USE_COMPILE_SERVER);
+    }
+    if (workspaceConfiguration.USE_COMPILE_SERVER) {
+      BuildManager.getInstance().clearState(myProject);
     }
   }
 

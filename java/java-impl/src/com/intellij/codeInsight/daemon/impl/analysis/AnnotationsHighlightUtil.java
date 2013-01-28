@@ -406,6 +406,14 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
+  public static HighlightInfo checkFunctionalInterface(PsiAnnotation annotation) {
+    final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation);
+    if (errorMessage != null) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, errorMessage);
+    }
+    return null;
+  }
+
   public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
     public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
     @Override

@@ -43,6 +43,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     setInjectedContext(true);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {

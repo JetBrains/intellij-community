@@ -20,6 +20,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +102,7 @@ public class ImageLoader implements Serializable {
       List<Pair<String, Integer>> answer = new ArrayList<Pair<String, Integer>>(4);
 
       final String name = FileUtil.getNameWithoutExtension(file);
-      final String ext = FileUtil.getExtension(file);
+      final String ext = FileUtilRt.getExtension(file);
       if (dark && retina) {
         answer.add(Pair.create(name + "@2x_dark." + ext, 2));
       }

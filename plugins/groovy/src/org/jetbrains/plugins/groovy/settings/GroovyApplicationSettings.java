@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 )
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {
 
-  public boolean SPECIFY_VAR_TYPE_EXPLICITLY = false;
   public boolean INTRODUCE_LOCAL_CREATE_FINALS = false;
+  public boolean INTRODUCE_LOCAL_SELECT_DEF = true;
   public boolean FORCE_RETURN = false;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;

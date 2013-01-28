@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,12 +84,27 @@ public class DialogBuilder implements Disposable {
     return myDialogWrapper;
   }
 
-  public void setCenterPanel(JComponent centerPanel) { myCenterPanel = centerPanel; }
-  public void setTitle(String title) { myTitle = title; }
-  @Deprecated
-  public void setPreferedFocusComponent(JComponent component) { setPreferredFocusComponent(component); }
-  public void setPreferredFocusComponent(JComponent component) { myPreferedFocusComponent = component; }
-  public void setDimensionServiceKey(@NonNls String dimensionServiceKey) { myDimensionServiceKey = dimensionServiceKey; }
+  public void setCenterPanel(JComponent centerPanel) {
+    myCenterPanel = centerPanel;
+  }
+
+  public void setTitle(String title) {
+    myTitle = title;
+  }
+
+  /** @deprecated use {@linkplain #setPreferredFocusComponent(JComponent)} (to remove in IDEA 13) */
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
+  public void setPreferedFocusComponent(JComponent component) {
+    setPreferredFocusComponent(component);
+  }
+
+  public void setPreferredFocusComponent(JComponent component) {
+    myPreferedFocusComponent = component;
+  }
+
+  public void setDimensionServiceKey(@NonNls String dimensionServiceKey) {
+    myDimensionServiceKey = dimensionServiceKey;
+  }
 
   public void addAction(Action action) {
     addActionDescriptor(new CustomActionDescriptor(action));
@@ -195,7 +210,7 @@ public class DialogBuilder implements Disposable {
   public abstract static class DialogActionDescriptor implements ActionDescriptor {
     private final String myName;
     private final Object myMnemonicChar;
-    private boolean myIsDeafult = false;
+    private boolean myIsDefault = false;
 
     protected DialogActionDescriptor(String name, int mnemonicChar) {
       myName = name;
@@ -206,12 +221,12 @@ public class DialogBuilder implements Disposable {
       Action action = createAction(dialogWrapper);
       action.putValue(Action.NAME, myName);
       if (myMnemonicChar != null) action.putValue(Action.MNEMONIC_KEY, myMnemonicChar);
-      if (myIsDeafult) action.putValue(Action.DEFAULT, Boolean.TRUE);
+      if (myIsDefault) action.putValue(Action.DEFAULT, Boolean.TRUE);
       return action;
     }
 
     public void setDefault(boolean isDefault) {
-      myIsDeafult = isDefault;
+      myIsDefault = isDefault;
     }
 
     protected abstract Action createAction(DialogWrapper dialogWrapper);
@@ -367,6 +382,7 @@ public class DialogBuilder implements Disposable {
       HelpManager.getInstance().invokeHelp(myHelpId);
     }
 
+    @NotNull
     protected Action[] createActions() {
       if (myActions == null) return super.createActions();
       ArrayList<Action> actions = new ArrayList<Action>(myActions.size());

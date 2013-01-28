@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,24 +118,32 @@ public class RefreshSessionImpl extends RefreshSession {
       fs.markSuspiciousFilesDirty(workQueue);
       FileWatcher watcher = fs.getFileWatcher();
 
+      long t = 0;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("scanning " + workQueue);
+        t = System.currentTimeMillis();
+      }
+
       for (VirtualFile file : workQueue) {
         if (myCancelled) break;
 
         NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) { // We're unable to definitely refresh synchronously by means of file watcher.
+        if (!myIsRecursive && (!myIsAsync || !watcher.isWatched(nvf))) {
+          // we're unable to definitely refresh synchronously by means of file watcher.
           nvf.markDirty();
         }
 
         RefreshWorker worker = myWorker = new RefreshWorker(file, myIsRecursive);
-        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
-        if (t != 0) {
-          t = System.currentTimeMillis() - t;
-          LOG.debug(file + " scanned in " + t + " ms, events: " + events);
+        if (myEvents.addAll(events)) {
+          haveEventsToFire = true;
         }
-        myEvents.addAll(events);
-        if (!events.isEmpty()) haveEventsToFire = true;
+      }
+
+      if (t != 0) {
+        t = System.currentTimeMillis() - t;
+        LOG.debug((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
       }
     }
 

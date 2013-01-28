@@ -343,8 +343,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       String prefix = commenter.getLineCommentPrefix();
 
       if (prefix != null) {
-        commented = CharArrayUtil.regionMatches(chars, lineStart, prefix) ||
-                    prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, lineStart, prefix.trim() + "\n");
+        commented = CharArrayUtil.regionMatches(chars, lineStart, StringUtil.trimTrailing(prefix));
       }
       else {
         prefix = commenter.getBlockCommentPrefix();
@@ -513,12 +512,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         }
       }
 
-      boolean skipNewLine = false;
+      boolean matchesTrimmed = false;
       boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
-                          (skipNewLine = prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim() + "\n"));
+                          (matchesTrimmed = prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim()));
       assert commented;
 
-      int charsToDelete = skipNewLine ? prefix.trim().length() : prefix.length();
+      int charsToDelete = matchesTrimmed ? prefix.trim().length() : prefix.length();
       int theEnd = endOffset > 0 ? endOffset : chars.length();
       // if there's exactly one space after line comment prefix and before the text that follows in the same line, delete the space too
       if (startOffset + charsToDelete < theEnd - 1 && chars.charAt(startOffset + charsToDelete) == ' ') {

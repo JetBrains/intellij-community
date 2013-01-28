@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.options.SharedScheme;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -32,7 +33,7 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
+  protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
     EditorColorsScheme current = EditorColorsManager.getInstance().getGlobalScheme();
     for (final EditorColorsScheme scheme : schemes) {

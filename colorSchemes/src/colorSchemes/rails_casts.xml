@@ -3,13 +3,14 @@
   <option name="EDITOR_FONT_SIZE" value="12" />
   <option name="EDITOR_FONT_NAME" value="Monaco" />
   <colors>
+    <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
     <option name="INDENT_GUIDE" value="404040" />
     <option name="SELECTION_BACKGROUND" value="545c73" />
     <option name="CARET_ROW_COLOR" value="333435" />
     <option name="WHITESPACES" value="404040" />
     <option name="CARET_COLOR" value="FFFFFF" />
     <option name="LINE_NUMBERS_COLOR" value="E6E1DC" />
-    <option name="CONSOLE_BACKGROUND_KEY" value="2B2B2B" />
+    <option name="SELECTED_INDENT_GUIDE" value="404040" />
     <option name="GUTTER_BACKGROUND" value="2B2B2B" />
   </colors>
   <attributes>

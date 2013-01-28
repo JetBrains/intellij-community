@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.UrlConnectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -55,7 +54,6 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   }
 
   private static void downloadContent(final String url, final File file, final DownloadingCallback callback) {
-    HttpConfigurable.getInstance().setAuthenticator();
     LOG.debug("Downloading started: " + url);
     InputStream input = null;
     OutputStream output = null;

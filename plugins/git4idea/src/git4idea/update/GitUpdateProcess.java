@@ -370,7 +370,7 @@ public class GitUpdateProcess {
   private boolean areUnmergedFiles() {
     LOG.info("areUnmergedFiles: checking if there are unmerged files...");
     GitConflictResolver.Params params = new GitConflictResolver.Params();
-    params.setErrorNotificationTitle("Can't update");
+    params.setErrorNotificationTitle("Update was not started");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, GitUtil.getRootsFromRepositories(myRepositories),
                                                    params, false).merge();

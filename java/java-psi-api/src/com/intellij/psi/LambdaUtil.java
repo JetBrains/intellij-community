@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import java.util.*;
 public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
   public static ThreadLocal<Set<PsiParameterList>> ourParams = new ThreadLocal<Set<PsiParameterList>>();
+  @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
   @Nullable
   public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
@@ -657,6 +659,20 @@ public class LambdaUtil {
     final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
     final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
     return getFunctionalInterfaceReturnType(functionalInterfaceType);
+  }
+
+  @Nullable
+  public static String checkFunctionalInterface(PsiAnnotation annotation) {
+    if (PsiUtil.isLanguageLevel8OrHigher(annotation) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+      final PsiAnnotationOwner owner = annotation.getOwner();
+      if (owner instanceof PsiModifierList) {
+        final PsiElement parent = ((PsiModifierList)owner).getParent();
+        if (parent instanceof PsiClass) {
+          return LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent);
+        }
+      }
+    }
+    return null;
   }
 
   static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

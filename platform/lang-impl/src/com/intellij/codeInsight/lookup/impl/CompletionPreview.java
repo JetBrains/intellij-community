@@ -100,7 +100,7 @@ public class CompletionPreview {
   
   public static void installPreview(LookupImpl lookup) {
     LookupElement item = lookup.getCurrentItem();
-    if (item == null) {
+    if (item == null || !(lookup.getEditor() instanceof EditorImpl)) {
       return;
     }
 

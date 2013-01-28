@@ -36,7 +36,7 @@ public class IntroduceParameterAction extends BasePlatformRefactoringAction {
     return true;
   }
 
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 

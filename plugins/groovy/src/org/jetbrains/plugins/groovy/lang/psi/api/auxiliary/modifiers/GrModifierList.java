@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,4 +48,6 @@ public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @Override
   void setModifierProperty(@GrModifier.GrModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException;
 
+  @NotNull
+  GrAnnotation[] getRawAnnotations();
 }

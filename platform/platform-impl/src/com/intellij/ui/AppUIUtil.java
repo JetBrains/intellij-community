@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
@@ -51,6 +52,10 @@ public class AppUIUtil {
     final List<Image> images = new ArrayList<Image>();
     images.add(com.intellij.util.ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getIconUrl()));
     images.add(com.intellij.util.ImageLoader.loadFromResource(ApplicationInfoImpl.getShadowInstance().getSmallIconUrl()));
+    final String bigIconUrl = ApplicationInfoImpl.getShadowInstance().getBigIconUrl();
+    if (bigIconUrl != null && SystemInfo.isXWindow) {
+      images.add(com.intellij.util.ImageLoader.loadFromResource(bigIconUrl));
+    }
     return images;
   }
 

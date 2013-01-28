@@ -27,7 +27,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.ConvertContextImpl;
+import com.intellij.util.xml.impl.ConvertContextFactory;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
       ContainerUtil
-        .addAll(result, resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element))));
+        .addAll(result, resolvingConverter.getQuickFixes(ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element))));
     }
     if (reference instanceof LocalQuickFixProvider) {
       final LocalQuickFix[] localQuickFixes = ((LocalQuickFixProvider)reference).getQuickFixes();

@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
@@ -199,7 +200,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doActionTest(AnAction action, String file, CodeInsightTestFixture fixture) {
-    String extension = FileUtil.getExtension(file);
+    String extension = FileUtilRt.getExtension(file);
     String name = FileUtil.getNameWithoutExtension(file);
     fixture.configureByFile(file);
     fixture.testAction(action);

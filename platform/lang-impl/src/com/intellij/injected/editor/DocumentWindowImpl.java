@@ -553,11 +553,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public boolean isStripTrailingSpacesEnabled() {
-    return myDelegate.isStripTrailingSpacesEnabled();
-  }
-
-  @Override
   public int getLineSeparatorLength(final int line) {
     return myDelegate.getLineSeparatorLength(injectedToHostLine(line));
   }
@@ -950,9 +945,5 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
     return myDelegate.processRangeMarkersOverlappingWith(start, end, processor);
-  }
-
-  @Override
-  public void markLineModified(int line) {
   }
 }

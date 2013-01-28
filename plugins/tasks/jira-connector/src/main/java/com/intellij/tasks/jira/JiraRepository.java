@@ -4,6 +4,7 @@ import com.atlassian.connector.commons.jira.soap.axis.JiraSoapService;
 import com.atlassian.connector.commons.jira.soap.axis.JiraSoapServiceServiceLocator;
 import com.atlassian.theplugin.jira.api.JIRAIssueBean;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
@@ -134,12 +135,11 @@ public class JiraRepository extends BaseRepositoryImpl {
       JiraSoapService soapService =
         new JiraSoapServiceServiceLocator().getJirasoapserviceV2(new URL(getUrl() + "/rpc/soap/jirasoapservice-v2"));
       if (isUseProxy()) {
-        HttpConfigurable proxy = HttpConfigurable.getInstance();
-        AxisProperties.setProperty("http.proxyHost", proxy.PROXY_HOST);
-        AxisProperties.setProperty("http.proxyPort", String.valueOf(proxy.PROXY_PORT));
-        if (proxy.PROXY_AUTHENTICATION) {
-          AxisProperties.setProperty("http.proxyUser", String.valueOf(proxy.PROXY_LOGIN));
-          AxisProperties.setProperty("http.proxyPassword", String.valueOf(proxy.getPlainProxyPassword()));
+        final List<KeyValue<String,String>> list = HttpConfigurable.getJvmPropertiesList(false, null);
+        if (! list.isEmpty()) {
+          for (KeyValue<String, String> value : list) {
+            AxisProperties.setProperty(value.getKey(), value.getValue());
+          }
         }
       }
 

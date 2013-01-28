@@ -22,6 +22,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
   @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
   private String myToolActionId;
@@ -77,7 +79,7 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
     if (myToolActionId == null) {
       return null;
     }
-    Tool[] tools = ToolManager.getInstance().getTools();
+    List<Tool> tools = ToolManager.getInstance().getTools();
     for (Tool tool : tools) {
       if (myToolActionId.equals(tool.getActionId())) {
         return tool;

@@ -307,10 +307,6 @@ public final class GitHttpAdapter {
    */
   private static GeneralResult callWithAuthRetry(@NotNull GitHttpRemoteCommand command, @NotNull Project project) throws InvalidRemoteException, IOException, URISyntaxException {
     ProxySelector defaultProxySelector = ProxySelector.getDefault();
-    if (GitHttpProxySupport.shouldUseProxy()) {
-      ProxySelector.setDefault(GitHttpProxySupport.newProxySelector(defaultProxySelector, command.getUrl()));
-      GitHttpProxySupport.init();
-    }
 
     boolean httpTransportErrorFixTried = false;
     boolean noRemoteWithoutGitErrorFixTried = false;
@@ -386,7 +382,6 @@ public final class GitHttpAdapter {
     }
     finally {
       log(command, project);
-      ProxySelector.setDefault(defaultProxySelector);
     }
   }
 

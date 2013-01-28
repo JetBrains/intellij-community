@@ -22,7 +22,7 @@ public final class HgErrorUtil {
 
   private HgErrorUtil() { }
 
-  public static boolean isAbort(HgCommandResult result) {
+  public static boolean isAbort(@Nullable HgCommandResult result) {
     if (result == null) {
       return true;
     }
@@ -30,19 +30,17 @@ public final class HgErrorUtil {
     return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
   }
 
-  public static boolean isAuthorizationError(HgCommandResult result) {
+  public static boolean isAuthorizationError(@Nullable HgCommandResult result) {
     if (result == null) {
-      return true;
+      return false;
     }
     String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && (
-      line.contains("authorization required")
-        || line.contains("authorization failed")
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("authorization required") || line.contains("authorization failed")
     );
   }
 
   @Nullable
-  private static String getLastErrorLine(HgCommandResult result) {
+  private static String getLastErrorLine(@Nullable HgCommandResult result) {
     if (result == null) {
       return null;
     }
@@ -53,7 +51,7 @@ public final class HgErrorUtil {
     return errorLines.get(errorLines.size() - 1);
   }
 
-  public static boolean hasErrorsInCommandExecution(HgCommandResult result) {
+  public static boolean hasErrorsInCommandExecution(@Nullable HgCommandResult result) {
     return isAbort(result) || result.getExitValue() != 0;
   }
 

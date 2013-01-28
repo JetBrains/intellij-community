@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
@@ -254,7 +255,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(0, countInitializedTools(profile));
     InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     assertTrue(tools.length > 0);
-    InspectionProfileEntry tool = tools[0];
+    InspectionProfileEntry tool = profile.getInspectionTool(new DataFlowInspection().getShortName());
+    assertNotNull(tool);
     String id = tool.getShortName();
     System.out.println(id);
     if (profile.isToolEnabled(HighlightDisplayKey.findById(id))) {
@@ -269,7 +271,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     if (initializedTools.size() != 1) {
       for (InspectionProfileEntry initializedTool : initializedTools) {
         System.out.println(initializedTool.getShortName());
-        ((InspectionToolWrapper)initializedTool).instantated.printStackTrace();
       }
       fail();
     }

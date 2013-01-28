@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -105,18 +106,15 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch, final boolean shortHash) throws VcsException {
+  public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath, @Nullable String branch,
+                                                     final boolean shortHash) throws VcsException {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = shortHash ? new GitLogParser(project, SHORT_HASH, COMMIT_TIME) : new GitLogParser(project, HASH, COMMIT_TIME);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
-    if (branch != null && !branch.isEmpty()) {
-      h.addParameters(branch);
-    } else {
-      h.addParameters("--all");
-    }
+    h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = h.run();
@@ -206,7 +204,7 @@ public class GitHistoryUtils {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setSilent(true);
-    h.addParameters("--all", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
+    h.addParameters("--branches", "--remotes", "--tags", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
                     "--sparse");
     h.endOptions();
 
@@ -304,13 +302,19 @@ public class GitHistoryUtils {
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
    * @param parameters        Optional parameters which will be added to the git log command just before the path.
-   * @throws VcsException     In case of git native execution error.
    */
   public static void history(final Project project, FilePath path, @Nullable VirtualFile root, final Consumer<GitFileRevision> consumer,
-                             final Consumer<VcsException> exceptionConsumer, String... parameters) throws VcsException {
+                             final Consumer<VcsException> exceptionConsumer, String... parameters) {
     // adjust path using change manager
     final FilePath filePath = getLastCommitName(project, path);
-    final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
+    final VirtualFile finalRoot;
+    try {
+      finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
+    }
+    catch (VcsException e) {
+      exceptionConsumer.consume(e);
+      return;
+    }
     final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
@@ -358,7 +362,7 @@ public class GitHistoryUtils {
             record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
           consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
-                                               new Date(record.getAuthorTimeStamp() * 1000), false, parents));
+                                               new Date(record.getAuthorTimeStamp() * 1000), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
             // can safely be empty, for example, for simple merge commits that don't change anything.
@@ -374,6 +378,7 @@ public class GitHistoryUtils {
       }
     };
 
+    final AtomicBoolean criticalFailure = new AtomicBoolean();
     while (currentPath.get() != null && firstCommitParent.get() != null) {
       logHandler.set(getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
@@ -394,6 +399,7 @@ public class GitHistoryUtils {
           try {
             exceptionConsumer.consume(new VcsException(exception));
           } finally {
+            criticalFailure.set(true);
             semaphore.up();
           }
         }
@@ -407,6 +413,7 @@ public class GitHistoryUtils {
               resultAdapter.consume(record);
             }
           } finally {
+            criticalFailure.set(true);
             semaphore.up();
           }
         }
@@ -414,9 +421,21 @@ public class GitHistoryUtils {
       semaphore.down();
       logHandler.get().start();
       semaphore.waitFor();
+      if (criticalFailure.get()) {
+        return;
+      }
 
-      currentPath.set(getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get()));
-      skipFurtherOutput.set(false);
+      try {
+        FilePath firstCommitRenamePath;
+        firstCommitRenamePath = getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get());
+        currentPath.set(firstCommitRenamePath);
+        skipFurtherOutput.set(false);
+      }
+      catch (VcsException e) {
+        LOG.warn("Tried to get first commit rename path", e);
+        exceptionConsumer.consume(e);
+        return;
+      }
     }
 
   }
@@ -912,7 +931,7 @@ public class GitHistoryUtils {
    * @param path    the path to check
    * @return the name of file in the last commit or argument
    */
-  public static FilePath getLastCommitName(final Project project, FilePath path) {
+  public static FilePath getLastCommitName(@NotNull Project project, FilePath path) {
     if (project.isDefault()) return path;
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final Change change = changeManager.getChange(path);

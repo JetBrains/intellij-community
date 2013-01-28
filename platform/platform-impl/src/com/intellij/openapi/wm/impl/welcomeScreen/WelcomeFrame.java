@@ -50,7 +50,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 public class WelcomeFrame extends JFrame implements IdeFrame {
-  public static final ExtensionPointName<IdeFrame> EP = ExtensionPointName.create("com.intellij.welcomeFrame");
+  public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
   private final WelcomeScreen myScreen;
@@ -158,7 +158,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   public static void showNow() {
     if (ourInstance == null) {
       IdeFrame frame = EP.getExtensions().length == 0
-                           ? new WelcomeFrame() : EP.getExtensions()[0];
+                           ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
       ((JFrame)frame).setVisible(true);
       ourInstance = frame;
     }
@@ -198,7 +198,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   @Nullable
   @Override
   public Project getProject() {
-    return null;
+    return ProjectManager.getInstance().getDefaultProject();
   }
 
   @Override

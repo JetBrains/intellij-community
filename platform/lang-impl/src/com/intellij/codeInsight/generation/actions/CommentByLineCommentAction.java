@@ -26,19 +26,21 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.lang.LanguageCommenters;
+import org.jetbrains.annotations.NotNull;
 
 public class CommentByLineCommentAction extends BaseCodeInsightAction implements DumbAware {
   public CommentByLineCommentAction() {
     setEnabledInModalContext(true);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CommentByLineCommentHandler();
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter() != null;

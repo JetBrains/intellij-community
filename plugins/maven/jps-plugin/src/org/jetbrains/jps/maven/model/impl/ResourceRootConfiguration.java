@@ -54,8 +54,8 @@ public class ResourceRootConfiguration {
     int result = directory.hashCode();
     result = 31 * result + (targetPath != null ? targetPath.hashCode() : 0);
     result = 31 * result + (isFiltered ? 1 : 0);
-    result = 31 * result + includes.hashCode();
-    result = 31 * result + excludes.hashCode();
+    //result = 31 * result + includes.hashCode();
+    //result = 31 * result + excludes.hashCode();
     return result;
   }
 }

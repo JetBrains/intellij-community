@@ -26,8 +26,6 @@ import java.util.List;
 public interface DocumentEx extends Document {
   void setStripTrailingSpacesEnabled(boolean isEnabled);
 
-  boolean isStripTrailingSpacesEnabled();
-
   @NotNull LineIterator createLineIterator();
 
   void setModificationStamp(long modificationStamp);
@@ -71,8 +69,6 @@ public interface DocumentEx extends Document {
 
   boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
   boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
-
-  void markLineModified(int line);
 }
 
 

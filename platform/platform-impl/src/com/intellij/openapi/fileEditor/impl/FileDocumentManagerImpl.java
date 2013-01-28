@@ -298,17 +298,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     if (myUnsavedDocuments.isEmpty()) return;
 
     final Map<Document, IOException> failedToSave = new HashMap<Document, IOException>();
+    final Set<Document> vetoed = new HashSet<Document>();
     while (true) {
       int count = 0;
 
       for (Document document : myUnsavedDocuments) {
         if (failedToSave.containsKey(document)) continue;
+        if (vetoed.contains(document)) continue;
         try {
           doSaveDocument(document);
         }
         catch (IOException e) {
           //noinspection ThrowableResultOfMethodCallIgnored
           failedToSave.put(document, e);
+        }
+        catch (SaveVetoException e) {
+          vetoed.add(document);
         }
         count++;
       }
@@ -332,6 +337,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     catch (IOException e) {
       handleErrorsOnSave(Collections.singletonMap(document, e));
     }
+    catch (SaveVetoException ignored) {
+    }
   }
 
   @Override
@@ -351,7 +358,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void doSaveDocument(@NotNull final Document document) throws IOException {
+  private static class SaveVetoException extends Exception {}
+
+  private void doSaveDocument(@NotNull final Document document) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
 
     if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
@@ -362,6 +371,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     if (file.isValid() && needsRefresh(file)) {
       file.refresh(false, false);
       if (!myUnsavedDocuments.contains(document)) return;
+    }
+
+    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
+      if (!vetoer.maySaveDocument(document)) {
+        throw new SaveVetoException();
+      }
     }
 
     final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
@@ -390,12 +405,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       removeFromUnsaved(document);
       updateModifiedProperty(file);
       return;
-    }
-
-    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
-      if (!vetoer.maySaveDocument(document)) {
-        return;
-      }
     }
 
     myMultiCaster.beforeDocumentSaving(document);

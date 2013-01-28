@@ -29,6 +29,7 @@ import sun.misc.VM;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,7 +59,9 @@ public class PagedFileStorage implements Forceable {
 
     LOG.info("lower=" + (LOWER_LIMIT / MB) +
              "; upper=" + (UPPER_LIMIT / MB) +
-             "; buffer=" + (BUFFER_SIZE / MB));
+             "; buffer=" + (BUFFER_SIZE / MB) +
+             "; max=" + max
+            );
   }
 
   // It is important to have ourLock after previous static constants as it depends on them
@@ -373,7 +376,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     try {
-      assert page <= MAX_PAGES_COUNT;
+      assert page >= 0 && page <= MAX_PAGES_COUNT:page;
 
       if (myStorageIndex == -1) {
         myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
@@ -610,16 +613,27 @@ public class PagedFileStorage implements Forceable {
             mySizeLimit -= owner.myPageSize;
           }
           long newSize = mySize - owner.myPageSize;
-          if (newSize >= 0) {
-            ensureSize(newSize);
-            continue; // next try
-          }
-          else {
+          if (newSize < 0) {
+            LOG.info("Currently allocated:"+mySize);
+            LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
+            LOG.info(oome);
+            try {
+              Class<?> aClass = Class.forName("java.nio.Bits");
+              Field reservedMemory = aClass.getDeclaredField("reservedMemory");
+              reservedMemory.setAccessible(true);
+              Field maxMemory = aClass.getDeclaredField("maxMemory");
+              maxMemory.setAccessible(true);
+              synchronized (aClass) {
+                LOG.info("Max memory:"+maxMemory.get(null) + ", reserved memory:" + reservedMemory.get(null));
+              }
+            }
+            catch (Throwable t) {}
             throw new MappingFailedException(
               "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
               "new size limit: " + mySizeLimit / MB + "MB " +
               "trying to allocate " + wrapper.myLength + " block", e);
           }
+          ensureSize(newSize); // next try
         }
       }
     }

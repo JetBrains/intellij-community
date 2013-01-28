@@ -15,10 +15,15 @@
 */
 package com.intellij.openapi.vfs.ex;
 
+import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFileManager;
+
+import java.util.List;
 
 public abstract class VirtualFileManagerEx extends VirtualFileManager {
   public abstract void fireBeforeRefreshStart(boolean asynchronous);
 
   public abstract void fireAfterRefreshFinish(boolean asynchronous);
+
+  public abstract List<LocalFileProvider> getLocalFileProviders();
 }

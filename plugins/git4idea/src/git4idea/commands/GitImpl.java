@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
 import git4idea.GitExecutionException;
@@ -37,6 +36,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Easy-to-use wrapper of common native Git commands.
@@ -431,6 +431,7 @@ public class GitImpl implements Git {
     final List<String> output = new ArrayList<String>();
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
+    final AtomicReference<Throwable> exception = new AtomicReference<Throwable>();
     
     handler.addLineListener(new GitLineHandlerListener() {
       @Override public void onLineAvailable(String line, Key outputType) {
@@ -445,10 +446,10 @@ public class GitImpl implements Git {
         exitCode.set(code);
       }
 
-      @Override public void startFailed(Throwable exception) {
+      @Override public void startFailed(Throwable t) {
         startFailed.set(true);
         errorOutput.add("Failed to start Git process");
-        errorOutput.add(ExceptionUtil.getThrowableText(exception));
+        exception.set(t);
       }
     });
     
@@ -458,8 +459,9 @@ public class GitImpl implements Git {
       errorOutput.add("Authentication failed");
     }
 
-    final boolean success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
-    return new GitCommandResult(success, exitCode.get(), errorOutput, output);
+    final boolean success = !startFailed.get() && errorOutput.isEmpty() &&
+                            (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
+    return new GitCommandResult(success, exitCode.get(), errorOutput, output, null);
   }
   
   /**

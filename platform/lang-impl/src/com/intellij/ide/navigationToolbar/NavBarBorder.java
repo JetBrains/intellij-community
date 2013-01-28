@@ -24,7 +24,7 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-class NavBarBorder implements Border {
+public class NavBarBorder implements Border {
   private final boolean myDocked;
   private final int myRightOffset;
 

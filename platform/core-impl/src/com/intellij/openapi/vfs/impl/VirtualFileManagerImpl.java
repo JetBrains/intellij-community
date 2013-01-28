@@ -250,6 +250,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     return 0;
   }
 
+  @Override
+  public List<LocalFileProvider> getLocalFileProviders(){
+    return ContainerUtil.findAll(myPhysicalFileSystems, LocalFileProvider.class);
+  }
+
   private static class LoggingListener implements VirtualFileListener {
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
