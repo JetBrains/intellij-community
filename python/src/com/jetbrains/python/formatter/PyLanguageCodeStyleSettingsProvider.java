@@ -73,6 +73,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS", "Align when multiline",
+                                "Collections and Comprehensions");
     }
   }
 
@@ -115,7 +117,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
                                                 "xyzzy('long_string_constant1',\n" +
-                                                "    'long_string_constant2')";
+                                                "    'long_string_constant2')\n" +
+                                                "attrs = [e.attr for e in\n" +
+                                                "    items]";
   @SuppressWarnings("FieldCanBeLocal")
   private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
                                                   "    print 'bar'\n\n" +

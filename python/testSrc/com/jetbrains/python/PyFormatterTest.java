@@ -255,6 +255,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentInComprehensions() {  // PY-8516
+    settings().getCustomSettings(PyCodeStyleSettings.class).ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+  }
+
   public void testContinuationIndentForCallInStatementPart() {  // PY-8577
     doTest();
   }

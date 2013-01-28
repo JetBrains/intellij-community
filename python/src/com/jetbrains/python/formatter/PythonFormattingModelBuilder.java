@@ -35,8 +35,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       System.out.println("AST tree for " + element.getContainingFile().getName() + ":");
       printAST(fileNode, 0);
     }
-    final CommonCodeStyleSettings codeStyleSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    final PyBlockContext context = new PyBlockContext(codeStyleSettings, createSpacingBuilder(settings), mode);
+    final PyBlockContext context = new PyBlockContext(settings, createSpacingBuilder(settings), mode);
     final PyBlock block = new PyBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);

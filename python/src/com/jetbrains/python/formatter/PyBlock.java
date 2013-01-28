@@ -149,7 +149,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
+    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
@@ -167,7 +167,8 @@ public class PyBlock implements ASTBlock {
                       : Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
+      parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
@@ -192,7 +193,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION)) {
+    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION) {
       if (childType == PyTokenTypes.RPAR || !hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
@@ -295,7 +296,7 @@ public class PyBlock implements ASTBlock {
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
     }
-    return true;
+    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS;
   }
 
   @Nullable
