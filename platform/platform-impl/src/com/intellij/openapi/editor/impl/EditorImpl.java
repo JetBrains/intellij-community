@@ -1800,6 +1800,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, image);
   }
 
+  private static final Key<Pair<Point, BufferedImage>> CUSTOM_IMAGE = Key.create("CUSTOM_IMAGE");
+
+  public void setCustomImage(Pair<Point, BufferedImage> customImage) {
+    putUserData(CUSTOM_IMAGE, customImage);
+  }
+
   void paint(@NotNull Graphics2D g) {
     Rectangle clip = g.getClipBounds();
 
@@ -1849,6 +1855,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     borderEffect.paintHighlighters(getHighlighter());
     borderEffect.paintHighlighters(docMarkup);
     borderEffect.paintHighlighters(myMarkupModel);
+
+    Pair<Point, BufferedImage> pair = getUserData(CUSTOM_IMAGE);
+    if (pair != null) {
+      g.drawImage(pair.second, pair.first.x, pair.first.y, null);
+    }
+
     paintCaretCursor(g);
 
     paintComposedTextDecoration(g);
@@ -1952,7 +1964,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
       VisualPosition visStart =
         offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getStartOffset(), myDocument.getTextLength()));
-      int y = visibleLineToY(visStart.line) + getLineHeight() - getDescent() + 1;
+      int y = visibleLineToY(visStart.line) + getAscent() + 1;
       Point p1 = visualPositionToXY(visStart);
       Point p2 = logicalPositionToXY(
         offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getEndOffset(), myDocument.getTextLength())));
@@ -2025,7 +2037,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.fillRect(end.x, end.y, charWidth, lineHeight);
       }
       if (attributes != null && attributes.getEffectColor() != null) {
-        int y = visibleLineToY(visibleStartLine) + getLineHeight() - getDescent() + 1;
+        int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
           drawWave(g, end.x, end.x + charWidth - 1, y);
@@ -3014,9 +3026,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!isInClip) return position.x;
 
-    int y = getLineHeight() - getDescent() + position.y;
+    int y = getAscent() + position.y;
     int x = position.x;
     return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip);
+  }
+
+  public int getAscent() {
+    return getLineHeight() - getDescent();
   }
 
   private int drawString(@NotNull Graphics g,
@@ -3031,7 +3047,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!isInClip) return position.x;
 
-    int y = getLineHeight() - getDescent() + position.y;
+    int y = getAscent() + position.y;
     int x = position.x;
 
     return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType, fontColor, clip);
@@ -4356,7 +4372,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
             //solves the problem, but still looks weird because it leaves colored pixels at right.
             g.setColor(CURSOR_FOREGROUND);
-            g.drawChars(new char[]{ch}, 0, 1, x, y + getLineHeight() - getDescent());
+            g.drawChars(new char[]{ch}, 0, 1, x, y + getAscent());
           }
           finally {
             if (state != null) state.dispose();
