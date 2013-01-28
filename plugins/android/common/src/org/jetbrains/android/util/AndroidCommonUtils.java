@@ -15,11 +15,11 @@
  */
 package org.jetbrains.android.util;
 
+import com.android.SdkConstants;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.android.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.android.sdklib.internal.project.ProjectProperties;
 import com.android.utils.ILogger;
@@ -676,8 +676,15 @@ public class AndroidCommonUtils {
       tmpDir = FileUtil.createTempDirectory("android_artifact", "tmp");
       final File tmpArtifact = new File(tmpDir, "tmpArtifact.apk");
 
+      signApk(artifactFile, tmpArtifact, pair.getFirst(), pair.getSecond());
+
+      if (!FileUtil.delete(artifactFile)) {
+        messages.get(AndroidCompilerMessageKind.ERROR).add("Cannot delete file " + artifactFile.getPath());
+        return messages;
+      }
+
       if (runZipAlign) {
-        final String errorMessage = executeZipAlign(zipAlignPath, artifactFile, tmpArtifact);
+        final String errorMessage = executeZipAlign(zipAlignPath, tmpArtifact, artifactFile);
         if (errorMessage != null) {
           messages.get(AndroidCompilerMessageKind.ERROR).add(messagePrefix + "zip-align: " + errorMessage);
           return messages;
@@ -686,14 +693,8 @@ public class AndroidCommonUtils {
       else {
         messages.get(AndroidCompilerMessageKind.WARNING).add(messagePrefix + AndroidCommonBundle.message(
           "android.artifact.building.cannot.find.zip.align.error"));
-        FileUtil.copy(artifactFile, tmpArtifact);
+        FileUtil.copy(tmpArtifact, artifactFile);
       }
-
-      if (!FileUtil.delete(artifactFile)) {
-        messages.get(AndroidCompilerMessageKind.ERROR).add("Cannot delete file " + artifactFile.getPath());
-        return messages;
-      }
-      signApk(tmpArtifact, artifactFile, pair.getFirst(), pair.getSecond());
     }
     finally {
       if (tmpDir != null) {
