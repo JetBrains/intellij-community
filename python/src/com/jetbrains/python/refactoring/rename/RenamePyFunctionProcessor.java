@@ -6,10 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.toolbox.Maybe;
@@ -78,6 +75,14 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
       }
       return null;
     }
+    final Property property = containingClass.findPropertyByCallable(function);
+    final PyTargetExpression site;
+    if (property != null) {
+      site = property.getDefinitionSite();
+      if (site != null) {
+        return site;
+      }
+    }
     return function;
   }
 
@@ -93,7 +98,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     });
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {
-      final Property property = containingClass.findPropertyByFunction(function);
+      final Property property = containingClass.findPropertyByCallable(function);
       if (property != null) {
         addRename(allRenames, newName, property.getGetter());
         addRename(allRenames, newName, property.getSetter());

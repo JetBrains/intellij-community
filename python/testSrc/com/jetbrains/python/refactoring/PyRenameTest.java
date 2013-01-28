@@ -137,6 +137,16 @@ public class PyRenameTest extends PyTestCase {
     doRenameConflictTest("foo", "A variable named 'foo' is already defined in variableNameConflict.py");
   }
 
+  // PY-8315
+  public void testRenamePropertyWithLambda() {
+    doTest("bar");
+  }
+
+  // PY-8315
+  public void testRenameOldStyleProperty() {
+    doTest("bar");
+  }
+
   private void doRenameConflictTest(String newName, String expectedConflict) {
     myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
     try {
