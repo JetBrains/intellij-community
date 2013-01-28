@@ -87,7 +87,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private static final Icon BG = IconLoader.getIcon("/frame_background.png");
 
-  IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
+  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
               final Application application, IdeFrame frame){
     myActionManager = actionManager;
     myUISettings = uiSettings;
@@ -317,5 +317,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public boolean isOptimizedDrawingEnabled() {
     return !myGlassPane.hasPainters() && myGlassPane.getComponentCount() == 0;
+  }
+
+  public ToolWindowsPane getToolWindowsPane() {
+    return myToolWindowsPane;
   }
 }

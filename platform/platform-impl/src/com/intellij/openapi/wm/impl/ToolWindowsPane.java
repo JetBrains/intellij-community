@@ -49,7 +49,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ToolWindowsPane extends JLayeredPane implements Disposable {
+public final class ToolWindowsPane extends JLayeredPane implements Disposable {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
   private final IdeFrameImpl myFrame;
@@ -369,7 +369,7 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
     return null;
   }
 
-  private void setDocumentComponent(final JComponent component){
+  public void setDocumentComponent(final JComponent component){
     myHorizontalSplitter.setInnerComponent(component);
   }
 
