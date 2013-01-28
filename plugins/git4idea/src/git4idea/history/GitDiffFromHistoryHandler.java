@@ -344,7 +344,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   @NotNull
   private GitFileRevision makeRevisionFromHash(@NotNull FilePath filePath, @NotNull String hash) {
-    return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash), false);
+    return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash), true);
   }
 
   private boolean wasFileTouched(@NotNull GitRepository repository, @NotNull GitFileRevision rev) throws VcsException {
