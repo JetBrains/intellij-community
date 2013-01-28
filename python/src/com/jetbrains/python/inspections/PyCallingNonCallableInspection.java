@@ -2,7 +2,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -55,7 +54,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     private void checkCallable(@NotNull PyElement node, @Nullable PyExpression callee, @Nullable PyType type) {
-      final Boolean callable = callee != null ? isCallable(callee, myTypeEvalContext) : isCallable(type, node);
+      final Boolean callable = callee != null ? isCallable(callee, myTypeEvalContext) : isCallable(type);
       if (callable == null) {
         return;
       }
@@ -79,10 +78,11 @@ public class PyCallingNonCallableInspection extends PyInspection {
     if (element instanceof PyQualifiedExpression && PyNames.CLASS.equals(element.getName())) {
       return true;
     }
-    return isCallable(element.getType(context), element);
+    return isCallable(element.getType(context));
   }
 
-  @Nullable static Boolean isCallable(@Nullable PyType type, @Nullable PsiElement anchor) {
+  @Nullable
+  static Boolean isCallable(@Nullable PyType type) {
     if (type == null || type instanceof PyTypeReference) {
       return null;
     }
@@ -91,7 +91,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
       if (classType.isDefinition()) {
         return true;
       }
-      if (isMethodType(classType, anchor)) {
+      if (isMethodType(classType)) {
         return true;
       }
       final PyClass cls = classType.getPyClass();
@@ -101,7 +101,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
     else if (type instanceof PyUnionType) {
       for (PyType member : ((PyUnionType)type).getMembers()) {
-        final Boolean result = isCallable(member, anchor);
+        final Boolean result = isCallable(member);
         if (result == null) {
           return null;
         }
@@ -117,8 +117,8 @@ public class PyCallingNonCallableInspection extends PyInspection {
     return false;
   }
 
-  private static boolean isMethodType(PyClassType type, @Nullable PsiElement anchor) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
+  private static boolean isMethodType(@NotNull PyClassType type) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
     return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
   }
 }
