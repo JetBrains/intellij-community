@@ -33,6 +33,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
@@ -97,8 +99,10 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -922,6 +926,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
+    private final static long ourMaxFrequency = 10000;
+    private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
       myLoggingEnabled = loggingEnabled;
@@ -935,6 +941,15 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @Override
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
+      if (th instanceof SSLHandshakeException) {
+        if (th.getCause() instanceof CertificateException) {
+          final long time = System.currentTimeMillis();
+          if ((time - myPreviousTime) > ourMaxFrequency) {
+            myPreviousTime = time;
+            PopupUtil.showBalloonForActiveComponent("Subversion: " + th.getCause().getMessage(), MessageType.ERROR);
+          }
+        }
+      }
       if (shouldLog(logType)) {
         myLog.info(th);
       }
