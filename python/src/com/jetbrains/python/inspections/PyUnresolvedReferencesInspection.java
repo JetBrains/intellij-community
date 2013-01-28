@@ -736,13 +736,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         for (PyStatement statement : containedClass.getStatementList().getStatements()) {
           if (statement instanceof PyAssignmentStatement) {
-            if (((PyAssignmentStatement)statement).getLeftHandSideExpression().getText().equals(refex.getText())) {
+            PyExpression lhsExpression = ((PyAssignmentStatement)statement).getLeftHandSideExpression();
+            if (lhsExpression != null && lhsExpression.getText().equals(refex.getText())) {
               PyExpression callexpr = ((PyAssignmentStatement)statement).getAssignedValue();
               if (callexpr instanceof PyCallExpression) {
                 PyType type = myTypeEvalContext.getType(callexpr);
                 if (type != null && type instanceof PyClassTypeImpl) {
-                  String name = ((PyCallExpression)callexpr).getCallee().getText();
-                  if (name != null && name.equals("property")) {
+                  if (((PyCallExpression)callexpr).isCalleeText(PyNames.PROPERTY)) {
                     actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
                   }
                 }
