@@ -268,6 +268,12 @@ public class GeneralCommandLine implements UserDataHolder {
     if (!myPassParentEnvironment) {
       environment.clear();
     }
+    else if (SystemInfo.isMac) {
+      String pathEnvVarValue = PathEnvironmentVariableUtil.getFixedPathEnvVarValueOnMac();
+      if (pathEnvVarValue != null) {
+        environment.put(PathEnvironmentVariableUtil.PATH_ENV_VAR_NAME, pathEnvVarValue);
+      }
+    }
     if (myEnvParams != null) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
