@@ -79,6 +79,12 @@ public class PyRequirementTest extends PyTestCase {
                  PyRequirement.fromString("hg+ssh://hg@bitbucket.org/jespern/django-piston/"));
   }
 
+  // PY-8623
+  public void testGitRevisionWithSlash() {
+    assertEquals(new PyRequirement("django", null, "git+git://github.com/django/django.git@stable/1.5.x", false),
+                 PyRequirement.fromString("git+git://github.com/django/django.git@stable/1.5.x"));
+  }
+
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
   }
