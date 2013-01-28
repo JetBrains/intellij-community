@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
@@ -376,17 +373,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (isLocalScope(element)) {
       return false;
     }
-    PsiElement resolveResult = resolve();
-    if (resolveResult instanceof PyImportedModule) {
-      resolveResult = resolveResult.getNavigationElement();
-    }
-    if (element instanceof PsiDirectory && resolveResult instanceof PyFile &&
-        PyNames.INIT_DOT_PY.equals(((PyFile)resolveResult).getName()) && ((PyFile)resolveResult).getContainingDirectory() == element) {
-      return true;
-    }
-    if (resolveResult == element) {
-      return true;
-    }
     final String referencedName = myElement.getReferencedName();
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
         ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
@@ -398,6 +384,30 @@ public class PyQualifiedReference extends PyReferenceImpl {
           return true;
         }
       }
+    }
+    for (ResolveResult result : multiResolve(false)) {
+      if (result instanceof ImplicitResolveResult) {
+        continue;
+      }
+      PsiElement resolveResult = result.getElement();
+      if (isResolvedToResult(element, resolveResult)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private boolean isResolvedToResult(PsiElement element, PsiElement resolveResult) {
+    if (resolveResult instanceof PyImportedModule) {
+      resolveResult = resolveResult.getNavigationElement();
+    }
+    if (element instanceof PsiDirectory && resolveResult instanceof PyFile &&
+        PyNames.INIT_DOT_PY.equals(((PyFile)resolveResult).getName()) && ((PyFile)resolveResult).getContainingDirectory() == element) {
+      return true;
+    }
+    if (resolveResult == element) {
+      return true;
     }
     if (resolveResult instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)resolveResult) &&
         element instanceof PyTargetExpression && isInstanceOrClassAttribute((PyTargetExpression)element) && Comparing.equal(
@@ -415,7 +425,6 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (resolvesToWrapper(element, resolveResult)) {
       return true;
     }
-
     return false;
   }
 

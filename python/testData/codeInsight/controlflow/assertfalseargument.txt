@@ -1,0 +1,7 @@
+0(1) element: null
+1(6) READ ACCESS: False
+2(3) element: PyPrintStatement
+3(4) READ ACCESS: False
+4(6) READ ACCESS: f
+5(6) element: PyPrintStatement
+6() element: null

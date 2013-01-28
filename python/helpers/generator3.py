@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.121" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.122" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -817,8 +817,14 @@ class ModuleRedeclarator(object):
         PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
         PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value='', encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("str", "format")] = "(*args, **kwargs)"
         PREDEFINED_BUILTIN_SIGS[("bytes", "__init__")] = "(self, value=b'', encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("bytes", "format")] = "(*args, **kwargs)"
         PREDEFINED_BUILTIN_SIGS[(None, "print")] = "(*args, sep=' ', end='\\n', file=None)" # proper signature
+
+    if version >= (2, 6) and version < (3, 0):
+        PREDEFINED_BUILTIN_SIGS[("unicode", "format")] = "(*args, **kwargs)"
+        PREDEFINED_BUILTIN_SIGS[("str", "format")] = "(*args, **kwargs)"
 
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there

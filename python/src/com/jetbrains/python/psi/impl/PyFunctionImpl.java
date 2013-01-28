@@ -493,7 +493,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   public Property getProperty() {
     final PyClass containingClass = getContainingClass();
     if (containingClass != null) {
-      return containingClass.findPropertyByFunction(this);
+      return containingClass.findPropertyByCallable(this);
     }
     return null;
   }
