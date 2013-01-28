@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,15 +59,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public static final int CLASS_FQ_OR_PACKAGE_NAME_KIND = 5;
   public static final int CLASS_IN_QUALIFIED_NEW_KIND = 6;
 
-  private final int myHC = CompositePsiElement.ourHC++;
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod") private final int myHC = ourHC++;
+
+  public PsiJavaCodeReferenceElementImpl() {
+    super(JavaElementType.JAVA_CODE_REFERENCE);
+  }
 
   @Override
   public final int hashCode() {
     return myHC;
-  }
-
-  public PsiJavaCodeReferenceElementImpl() {
-    super(JavaElementType.JAVA_CODE_REFERENCE);
   }
 
   @Override
@@ -128,36 +128,22 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
-      final boolean isOnDemand = ((PsiImportStatement)SourceTreeToPsiMap.treeElementToPsi(treeParent)).isOnDemand();
+      boolean isOnDemand = SourceTreeToPsiMap.<PsiImportStatement>treeToPsiNotNull(treeParent).isOnDemand();
       return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
-      final int parentKind = ((PsiJavaCodeReferenceElementImpl)treeParent).getKind();
-      switch (parentKind) {
-        case CLASS_NAME_KIND:
-          return CLASS_OR_PACKAGE_NAME_KIND;
-
-        case PACKAGE_NAME_KIND:
-          return PACKAGE_NAME_KIND;
-
-        case CLASS_OR_PACKAGE_NAME_KIND:
-          return CLASS_OR_PACKAGE_NAME_KIND;
-
-        case CLASS_FQ_NAME_KIND:
-          return CLASS_FQ_OR_PACKAGE_NAME_KIND;
-
-        case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-          return CLASS_FQ_OR_PACKAGE_NAME_KIND;
-
-        case CLASS_IN_QUALIFIED_NEW_KIND:
-          return CLASS_IN_QUALIFIED_NEW_KIND; //??
-
-        default:
-          LOG.assertTrue(false);
-          return -1;
+      int parentKind = ((PsiJavaCodeReferenceElementImpl)treeParent).getKind();
+      if (parentKind == CLASS_NAME_KIND) {
+        return CLASS_OR_PACKAGE_NAME_KIND;
+      }
+      else if (parentKind == CLASS_FQ_NAME_KIND) {
+        return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+      }
+      else {
+        return parentKind;
       }
     }
     if (i == JavaElementType.CLASS || i == JavaElementType.PARAMETER_LIST || i == TokenType.ERROR_ELEMENT) {
@@ -202,9 +188,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @Override
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
-      final ASTNode dot = findChildByRole(ChildRole.DOT);
-      /*super.deleteChildInternal(child);
-      deleteChildInternal(dot);*/
+      ASTNode dot = findChildByRole(ChildRole.DOT);
+      assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
     }
     else {
@@ -369,7 +354,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
           final PsiClass aClass = (PsiClass)resolveResult.getElement();
           assert aClass != null;
-          newResult[i] = !aClass.hasTypeParameters() ? resolveResult : new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll(aClass, parameters));
+          newResult[i] = !aClass.hasTypeParameters() ?
+                         resolveResult : new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll(aClass, parameters));
         }
         return newResult;
       }
@@ -409,7 +395,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private JavaResolveResult[] resolve(final int kind) {
     switch (kind) {
-      case CLASS_FQ_NAME_KIND:
+      case CLASS_FQ_NAME_KIND: {
         // TODO: support type parameters in FQ names
         final String textSkipWhiteSpaceAndComments = getTextSkipWhiteSpaceAndComments();
         if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return JavaResolveResult.EMPTY_ARRAY;
@@ -417,7 +403,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           JavaPsiFacade.getInstance(getProject()).findClass(textSkipWhiteSpaceAndComments, getResolveScope());
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
         return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
-
+      }
       case CLASS_IN_QUALIFIED_NEW_KIND: {
         PsiElement parent = getParent();
         if (parent instanceof JavaDummyHolder) {
@@ -444,13 +430,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         if (qualifierType == null) return JavaResolveResult.EMPTY_ARRAY;
         if (!(qualifierType instanceof PsiClassType)) return JavaResolveResult.EMPTY_ARRAY;
         final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(qualifierType);
-        if (result.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
+        final PsiElement resultElement = result.getElement();
+        if (resultElement == null) return JavaResolveResult.EMPTY_ARRAY;
         final PsiElement classNameElement = getReferenceNameElement();
         if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
         final String className = classNameElement.getText();
 
         final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
-        result.getElement().processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), this, this);
+        resultElement.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), this, this);
         return processor.getResult();
       }
       case CLASS_NAME_KIND: {
@@ -463,8 +450,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
         return processor.getResult();
       }
-
-      case PACKAGE_NAME_KIND:
+      case PACKAGE_NAME_KIND: {
         final String packageName = getTextSkipWhiteSpaceAndComments();
         final PsiManager manager = getManager();
         final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
@@ -474,7 +460,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
                  : JavaResolveResult.EMPTY_ARRAY;
         }
         return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
-
+      }
       case CLASS_FQ_OR_PACKAGE_NAME_KIND: {
         final JavaResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
         if (result.length == 0) {
@@ -482,7 +468,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return result;
       }
-      case CLASS_OR_PACKAGE_NAME_KIND:
+      case CLASS_OR_PACKAGE_NAME_KIND: {
         final JavaResolveResult[] classResolveResult = resolve(CLASS_NAME_KIND);
         // [dsl]todo[ik]: review this change I guess ResolveInfo should be merged if both
         // class and package resolve failed.
@@ -491,6 +477,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           if (packageResolveResult.length > 0) return packageResolveResult;
         }
         return classResolveResult;
+      }
       default:
         LOG.assertTrue(false);
     }
@@ -507,7 +494,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     oldIdentifier.replace(identifier);
     return this;
   }
-
 
   @Override
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
@@ -615,10 +601,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (qualifier == null) return false;
 
     LOG.assertTrue(qualifier.getElementType() == JavaElementType.JAVA_CODE_REFERENCE);
-    final PsiElement refElement = ((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(qualifier)).resolve();
+    final PsiElement refElement = SourceTreeToPsiMap.<PsiJavaCodeReferenceElement>treeToPsiNotNull(qualifier).resolve();
     if (refElement instanceof PsiPackage) return true;
 
-    return ((PsiJavaCodeReferenceElementImpl)SourceTreeToPsiMap.treeElementToPsi(qualifier)).isFullyQualified();
+    return SourceTreeToPsiMap.<PsiJavaCodeReferenceElementImpl>treeToPsiNotNull(qualifier).isFullyQualified();
   }
 
   private PsiElement bindToPackage(final PsiPackage aPackage) throws IncorrectOperationException {
@@ -784,47 +770,42 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       filter.addFilter(ElementClassFilter.VARIABLE);
     }
     switch (getKind()) {
-    case CLASS_OR_PACKAGE_NAME_KIND:
-      addClassFilter(filter);
-      filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-           break;
-    case CLASS_NAME_KIND:
-      addClassFilter(filter);
-      if (isQualified()) {
+      case CLASS_OR_PACKAGE_NAME_KIND:
+        addClassFilter(filter);
         filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-      }
-      break;
-    case PACKAGE_NAME_KIND:
-           filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-           break;
-    case CLASS_FQ_NAME_KIND:
-    case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-           filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-           if (isQualified()) {
-             filter.addFilter(ElementClassFilter.CLASS);
-           }
-           break;
-    case CLASS_IN_QUALIFIED_NEW_KIND:
-           final PsiElement parent = getParent();
-           if (parent instanceof PsiNewExpression) {
-             final PsiNewExpression newExpr = (PsiNewExpression)parent;
-             final PsiType type = newExpr.getQualifier().getType();
-             final PsiClass aClass = PsiUtil.resolveClassInType(type);
-             if (aClass != null) {
-               aClass.processDeclarations(new FilterScopeProcessor(new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false)),
-                                                                   processor), ResolveState.initial(), null, this);
-             }
-             //          else{
-             //            throw new RuntimeException("Qualified new is not allowed for primitives");
-             //          }
-           }
-           //        else{
-           //          throw new RuntimeException("Reference type is qualified new, but parent expression is: " + getParent());
-           //        }
-
-           return;
-    default:
-           throw new RuntimeException("Unknown reference type");
+        break;
+      case CLASS_NAME_KIND:
+        addClassFilter(filter);
+        if (isQualified()) {
+          filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        }
+        break;
+      case PACKAGE_NAME_KIND:
+        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        break;
+      case CLASS_FQ_NAME_KIND:
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
+        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        if (isQualified()) {
+          filter.addFilter(ElementClassFilter.CLASS);
+        }
+        break;
+      case CLASS_IN_QUALIFIED_NEW_KIND:
+        final PsiElement parent = getParent();
+        if (parent instanceof PsiNewExpression) {
+          PsiExpression qualifier = ((PsiNewExpression)parent).getQualifier();
+          assert qualifier != null : parent;
+          PsiType type = qualifier.getType();
+          PsiClass aClass = PsiUtil.resolveClassInType(type);
+          if (aClass != null) {
+            aClass.processDeclarations(
+              new FilterScopeProcessor(new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false)),
+                                       processor), ResolveState.initial(), null, this);
+          }
+        }
+        return;
+      default:
+        throw new RuntimeException("Unknown reference type");
     }
     final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);

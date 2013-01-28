@@ -41,7 +41,6 @@ public class SvnCommittedViewTest extends Svn17TestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = false;
   }
 
   @Test

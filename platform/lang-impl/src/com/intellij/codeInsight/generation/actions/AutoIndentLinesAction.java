@@ -26,8 +26,10 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
@@ -38,7 +40,7 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction implements Dumb
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     final FileType fileType = file.getFileType();
     return fileType instanceof LanguageFileType &&
            LanguageFormatting.INSTANCE.forContext(((LanguageFileType)fileType).getLanguage(), file) != null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,30 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePair, PsiReference {
+public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePair, PsiPolyVariantReference {
   public GrAnnotationNameValuePairImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -108,24 +115,14 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiElement resolve() {
-    GrAnnotation anno = getAnnotation();
-    if (anno != null) {
-      GrCodeReferenceElement ref = anno.getClassReference();
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
-        String declaredName = getName();
-        String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
-        PsiMethod[] methods = ((PsiClass) resolved).findMethodsByName(name, false);
-        return methods.length == 1 ? methods[0] : null;
-      }
-    }
-    return null;
+    final GroovyResolveResult[] results = multiResolve(false);
+    return results.length == 1 ? results[0].getElement() : null;
   }
 
   @Nullable
   private GrAnnotation getAnnotation() {
     PsiElement pParent = getParent().getParent();
-    if (pParent instanceof GrAnnotation) return (GrAnnotation) pParent;
+    if (pParent instanceof GrAnnotation) return (GrAnnotation)pParent;
     PsiElement ppParent = pParent.getParent();
     return ppParent instanceof GrAnnotation ? (GrAnnotation)ppParent : null;
   }
@@ -168,5 +165,59 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   public boolean isSoft() {
     return false;
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    GrAnnotation annotation = getAnnotation();
+    if (annotation != null) {
+      GrCodeReferenceElement ref = annotation.getClassReference();
+      PsiElement resolved = ref.resolve();
+
+      String declaredName = getName();
+      String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
+
+      final GrAnnotation collector = GrAnnotationCollector.findAnnotationCollector(resolved);
+      if (collector != null) {
+        return multiResolveFromAlias(annotation, name, collector);
+      }
+
+      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+        return multiResolveFromAnnotationType((PsiClass)resolved, name);
+      }
+    }
+    return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  private static GroovyResolveResult[] multiResolveFromAnnotationType(@NotNull PsiClass resolved, @NotNull String name) {
+    PsiMethod[] methods = resolved.findMethodsByName(name, false);
+    if (methods.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
+
+    final GroovyResolveResult[] results = new GroovyResolveResult[methods.length];
+    for (int i = 0; i < methods.length; i++) {
+      PsiMethod method = methods[i];
+      results[i] = new GroovyResolveResultImpl(method, true);
+    }
+    return results;
+  }
+
+  private static GroovyResolveResult[] multiResolveFromAlias(@NotNull GrAnnotation alias, @NotNull String name, @NotNull GrAnnotation annotationCollector) {
+    List<GroovyResolveResult> result = ContainerUtilRt.newArrayList();
+
+    List<GrAnnotation> annotations = ContainerUtilRt.newArrayList();
+    GrAnnotationCollector.collectAnnotations(annotations, alias, annotationCollector);
+
+    for (GrAnnotation annotation : annotations) {
+      final PsiElement clazz = annotation.getClassReference().resolve();
+      if (clazz instanceof PsiClass && ((PsiClass)clazz).isAnnotationType()) {
+        if (GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(((PsiClass)clazz).getQualifiedName())) continue;
+        for (PsiMethod method : ((PsiClass)clazz).findMethodsByName(name, false)) {
+          result.add(new GroovyResolveResultImpl(method, true));
+        }
+      }
+    }
+
+    return result.toArray(new GroovyResolveResult[result.size()]);
   }
 }

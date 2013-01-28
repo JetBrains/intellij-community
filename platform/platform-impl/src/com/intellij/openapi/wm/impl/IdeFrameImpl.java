@@ -94,7 +94,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application) {
     super(applicationInfoEx.getFullApplicationName());
-    myRootPane = new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
+    myRootPane = createRootPane(actionManager, uiSettings, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateFrameIcon(this);
@@ -120,6 +120,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (SystemInfo.isMacOSLion && MacMainFrameDecorator.FULL_SCREEN_AVAILABLE) FullScreenUtilities.setWindowCanFullScreen(this, true);
     
     MouseGestureManager.getInstance().add(this);
+  }
+
+  protected IdeRootPane createRootPane(ActionManagerEx actionManager,
+                                     UISettings uiSettings,
+                                     DataManager dataManager,
+                                     Application application) {
+    return new IdeRootPane(actionManager, uiSettings, dataManager, application, this);
   }
 
   @Override
@@ -308,9 +315,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       ProjectFrameBounds.getInstance(project);   // make sure the service is initialized and its state will be saved
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
+        project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, myRootPane.getStatusBar());
       }
 
-      project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, myRootPane.getStatusBar());
       installDefaultProjectStatusBarWidgets(myProject);
     }
     else {

@@ -243,7 +243,7 @@ public class PsiMethodReferenceUtil {
 
     final int min = Math.min(signatureParameterTypes2.length, signatureParameterTypes1.length);
     for (int i = 0; i < min; i++) {
-      final PsiType type1 = psiSubstitutor.substitute(GenericsUtil.eliminateWildcards(signatureParameterTypes1[offset + i]));
+      final PsiType type1 = GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(signatureParameterTypes1[offset + i]));
       if (isVarargs && i == min - 1) {
         if (!TypeConversionUtil.isAssignable(((PsiArrayType)signatureParameterTypes2[i]).getComponentType(), type1) && 
             !TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1)) {
@@ -251,7 +251,7 @@ public class PsiMethodReferenceUtil {
         }
       }
       else {
-        if (!TypeConversionUtil.isAssignable(signatureParameterTypes2[i], psiSubstitutor.substitute(GenericsUtil.eliminateWildcards(type1)))) {
+        if (!TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1)) {
           return false;
         }
       }

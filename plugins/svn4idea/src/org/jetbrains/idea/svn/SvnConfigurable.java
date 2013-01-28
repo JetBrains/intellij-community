@@ -18,7 +18,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -32,12 +31,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.config.ConfigureProxiesListener;
+import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,15 +60,13 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
   private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
   private JCheckBox myShowMergeSourceInAnnotate;
+  private JBCheckBox myWithCommandLineClient;
   private JSpinner myNumRevsInAnnotations;
   private JCheckBox myMaximumNumberOfRevisionsCheckBox;
   private JSpinner mySSHConnectionTimeout;
   private JSpinner mySSHReadTimeout;
-  private JRadioButton myJavaHLAcceleration;
-  private JRadioButton myNoAcceleration;
-  private JLabel myJavaHLInfo;
-  private JRadioButton myWithCommandLineClient;
   private TextFieldWithBrowseButton myCommandLineClient;
+  private JSpinner myHttpTimeout;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -118,7 +115,14 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
 
     myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
-    myEditProxiesButton.addActionListener(new ConfigureProxiesListener(myProject));
+    myEditProxiesButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final SvnConfigureProxiesDialog dialog = new SvnConfigureProxiesDialog(myProject);
+        dialog.show();
+        myHttpTimeout.setValue(Long.valueOf(SvnConfiguration.getInstance(myProject).getHttpTimeout() / 1000));
+      }
+    });
 
     myMaximumNumberOfRevisionsCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -126,15 +130,6 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
-
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myNoAcceleration);
-    bg.add(myJavaHLAcceleration);
-    bg.add(myWithCommandLineClient);
-    final boolean internal = ApplicationManager.getApplication().isInternal();
-    myJavaHLAcceleration.setEnabled(internal);
-    myJavaHLAcceleration.setVisible(internal);
-    myJavaHLInfo.setVisible(internal);
   }
 
   public static void selectConfigirationDirectory(@NotNull String path, @NotNull final Consumer<String> dirConsumer,
@@ -209,9 +204,6 @@ public class SvnConfigurable implements Configurable {
     if (configuration.UPDATE_LOCK_ON_DEMAND != myLockOnDemand.isSelected()) {
       return true;
     }
-    if (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected()) {
-      return true;
-    }
     if (configuration.CHECK_NESTED_FOR_QUICK_MERGE != myCheckNestedInQuickMerge.isSelected()) {
       return true;
     }
@@ -238,41 +230,21 @@ public class SvnConfigurable implements Configurable {
     if (configuration.mySSHReadTimeout/1000 != ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
+    if (configuration.getHttpTimeout()/1000 != ((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue()) {
+      return true;
+    }
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     if (! Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
   
   private SvnConfiguration.UseAcceleration acceleration() {
-    if (myNoAcceleration.isSelected()) return SvnConfiguration.UseAcceleration.nothing;
-    if (myJavaHLAcceleration.isSelected()) return SvnConfiguration.UseAcceleration.javaHL;
     if (myWithCommandLineClient.isSelected()) return SvnConfiguration.UseAcceleration.commandLine;
     return SvnConfiguration.UseAcceleration.nothing;
   }
 
   private void setAcceleration(SvnConfiguration.UseAcceleration acceleration) {
-    if (! CheckJavaHL.isPresent()) {
-      myJavaHLInfo.setText(CheckJavaHL.getProblemDescription());
-      myJavaHLInfo.setForeground(Color.red);
-      myJavaHLInfo.setEnabled(true);
-      myJavaHLAcceleration.setEnabled(false);
-      /*myJavaHLAcceleration.setText(myJavaHLAcceleration.getText() + ". " + CheckJavaHL.getProblemDescription());
-      myJavaHLAcceleration.setEnabled(false);
-      myJavaHLAcceleration.setForeground(Color.red);*/
-    } else {
-      myJavaHLInfo.setText("You need to have JavaHL 1.7.2");
-      myJavaHLInfo.setForeground(UIUtil.getInactiveTextColor());
-      myJavaHLAcceleration.setEnabled(true);
-    }
-
-    if (SvnConfiguration.UseAcceleration.javaHL.equals(acceleration)) {
-      myJavaHLAcceleration.setSelected(true);
-      return;
-    } else if (SvnConfiguration.UseAcceleration.commandLine.equals(acceleration)) {
-      myWithCommandLineClient.setSelected(true);
-      return;
-    }
-    myNoAcceleration.setSelected(true);
+    myWithCommandLineClient.setSelected(SvnConfiguration.UseAcceleration.commandLine.equals(acceleration));
   }
 
   public void apply() throws ConfigurationException {
@@ -281,10 +253,6 @@ public class SvnConfigurable implements Configurable {
 
     configuration.setIsUseDefaultProxy(myUseCommonProxy.isSelected());
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);
-    if ((! configuration.DETECT_NESTED_COPIES) && (configuration.DETECT_NESTED_COPIES != myDetectNestedWorkingCopiesCheckBox.isSelected())) {
-      vcs17.invokeRefreshSvnRoots(true);
-    }
-    configuration.DETECT_NESTED_COPIES = myDetectNestedWorkingCopiesCheckBox.isSelected();
     configuration.CHECK_NESTED_FOR_QUICK_MERGE = myCheckNestedInQuickMerge.isSelected();
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
@@ -303,6 +271,7 @@ public class SvnConfigurable implements Configurable {
     if (SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration)) {
       vcs17.checkCommandLineVersion();
     }
+    configuration.setHttpTimeout(((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue() * 1000);
   }
 
   public void reset() {
@@ -314,7 +283,6 @@ public class SvnConfigurable implements Configurable {
     myConfigurationDirectoryText.setText(path);
     myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
     myUseCommonProxy.setSelected(configuration.isIsUseDefaultProxy());
-    myDetectNestedWorkingCopiesCheckBox.setSelected(configuration.DETECT_NESTED_COPIES);
     myCheckNestedInQuickMerge.setSelected(configuration.CHECK_NESTED_FOR_QUICK_MERGE);
 
     boolean enabled = !myUseDefaultCheckBox.isSelected();
@@ -335,6 +303,7 @@ public class SvnConfigurable implements Configurable {
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
     mySSHConnectionTimeout.setValue(Long.valueOf(configuration.mySSHConnectionTimeout / 1000));
     mySSHReadTimeout.setValue(Long.valueOf(configuration.mySSHReadTimeout / 1000));
+    myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
     setAcceleration(configuration.myUseAcceleration);
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
@@ -365,6 +334,7 @@ public class SvnConfigurable implements Configurable {
     final long read = configuration.mySSHReadTimeout <= maximum ? configuration.mySSHReadTimeout : maximum;
     mySSHConnectionTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
     mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+    myHttpTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
   }
 }
 

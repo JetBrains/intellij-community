@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
   @NonNls public static final String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
   @NonNls public static final String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";
+  @NonNls public static final String GROOVY_TRANSFORM_ANNOTATION_COLLECTOR = "groovy.transform.AnnotationCollector";
+  @NonNls public static final String GROOVY_LANG_NEWIFY = "groovy.lang.Newify";
 
 
   private GroovyCommonClassNames() {

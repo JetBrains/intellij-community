@@ -405,14 +405,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
-
-    FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
-    final JComponent editorComponent = editorManager.getComponent();
+    JComponent editorComponent = createEditorComponent(myProject);
     myEditorComponentFocusWatcher.install(editorComponent);
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
-    if (myEditorWasActive) {
-      activateEditorComponentImpl(editorManager.getSplitters(), commandsList, true);
+    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
+      activateEditorComponentImpl(FileEditorManagerEx.getInstanceEx(myProject).getSplitters(), commandsList, true);
     }
     execute(commandsList);
 
@@ -457,6 +455,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return false;
       }
     }, myProject);
+  }
+
+  private JComponent createEditorComponent(Project project) {
+    return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
   private void registerToolWindowsFromBeans() {
@@ -1779,7 +1781,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   /**
    * @see com.intellij.openapi.wm.impl.ToolWindowsPane#createSetEditorComponentCmd
    */
-  private void appendSetEditorComponentCmd(@Nullable final JComponent component, final List<FinalizableCommand> commandsList) {
+  public void appendSetEditorComponentCmd(@Nullable final JComponent component, final List<FinalizableCommand> commandsList) {
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final FinalizableCommand command = myToolWindowsPane.createSetEditorComponentCmd(component, commandProcessor);
     commandsList.add(command);

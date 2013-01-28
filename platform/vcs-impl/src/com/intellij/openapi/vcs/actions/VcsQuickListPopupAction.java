@@ -28,8 +28,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
   }
 
   protected void fillActions(@Nullable final Project project,
-                             final DefaultActionGroup group,
-                             @Nullable final DataContext dataContext) {
+                             @NotNull final DefaultActionGroup group,
+                             @NotNull final DataContext dataContext) {
 
     if (project == null) {
       return;

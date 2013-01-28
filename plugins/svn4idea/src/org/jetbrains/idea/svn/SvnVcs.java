@@ -1063,7 +1063,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean allowsNestedRoots() {
-    return SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES;
+    return true;
   }
 
   @Override

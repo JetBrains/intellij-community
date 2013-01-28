@@ -18,8 +18,10 @@ package com.intellij.codeInsight.folding.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.folding.impl.CollapseExpandDocCommentsHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandDocCommentsAction extends BaseCodeInsightAction{
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler(){
     return new CollapseExpandDocCommentsHandler(true);

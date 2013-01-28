@@ -17,6 +17,7 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -24,6 +25,7 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 public class SliceBackwardAction extends CodeInsightAction{
   private final SliceHandler myHandler = new SliceHandler(true);
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return myHandler;

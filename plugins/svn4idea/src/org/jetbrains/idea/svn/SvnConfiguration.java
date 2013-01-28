@@ -29,6 +29,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -101,7 +102,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public boolean MERGE_DIFF_USE_ANCESTRY = true;
   public boolean UPDATE_LOCK_ON_DEMAND = false;
   public boolean IGNORE_SPACES_IN_MERGE = false;
-  public boolean DETECT_NESTED_COPIES = true;
+  //public boolean DETECT_NESTED_COPIES = true;
   public boolean CHECK_NESTED_FOR_QUICK_MERGE = false;
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
@@ -114,6 +115,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
+  private IdeaSVNConfigFile myConfigFile;
 
   @Override
   public Element getState() {
@@ -135,6 +137,31 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  public long getHttpTimeout() {
+    initServers();
+    final String timeout = myConfigFile.getDefaultGroup().getTimeout();
+    try {
+      return Long.parseLong(timeout) * 1000;
+    } catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
+  private void initServers() {
+    if (myConfigFile == null) {
+      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME));
+    }
+    myConfigFile.updateGroups();
+  }
+
+  // uses configuration directory property - it should be saved first
+  public void setHttpTimeout(final long value) {
+    initServers();
+    long cut = value / 1000;
+    myConfigFile.setValue("global", SvnServerFileKeys.TIMEOUT, String.valueOf(cut));
+    myConfigFile.save();
   }
 
   public static SvnConfiguration getInstance(final Project project) {
@@ -313,10 +340,14 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
     // created only if does not exist
-    SVNConfigFile.createDefaultConfiguration(new File(getConfigurationDirectory()));
+    final File dir = new File(getConfigurationDirectory());
+    if (! dir.exists()) {
+      SVNConfigFile.createDefaultConfiguration(dir);
+    }
 
     systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), SERVERS_FILE_NAME))));
-    userManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME))));
+    initServers();
+    userManager.set(new SvnServerFileManagerImpl(myConfigFile));
   }
 
   public String getUpgradeMode() {
