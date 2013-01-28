@@ -50,9 +50,11 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
       @Override
       public void rootSetChanged(RootProvider wrapper) {
         clearCache();
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        for (Module module : modules) {
-          PythonModulePathCache.getInstance(module).clearCache();
+        if (!project.isDisposed()) {
+          final Module[] modules = ModuleManager.getInstance(project).getModules();
+          for (Module module : modules) {
+            PythonModulePathCache.getInstance(module).clearCache();
+          }
         }
         myBuiltins.set(null);
       }
