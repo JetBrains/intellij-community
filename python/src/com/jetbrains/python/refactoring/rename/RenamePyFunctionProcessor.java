@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.rename;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
@@ -80,7 +81,17 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     if (property != null) {
       site = property.getDefinitionSite();
       if (site != null) {
-        return site;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          return site;
+        }
+        final String message = String.format("Do you want to rename the property '%s' instead of its accessor function '%s'?",
+                                             property.getName(), function.getName());
+        final int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());
+        switch (rc) {
+          case 0: return site;
+          case 1: return function;
+          default: return null;
+        }
       }
     }
     return function;
