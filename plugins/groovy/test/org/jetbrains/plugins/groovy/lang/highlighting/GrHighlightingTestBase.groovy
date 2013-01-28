@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Max Medvedev
  */
 abstract class GrHighlightingTestBase extends LightGroovyTestCase {
-  final String basePath = TestUtils.testDataPath + 'highlighting/'
+  String getBasePath() {
+    TestUtils.testDataPath + 'highlighting/'
+  }
 
   InspectionProfileEntry[] getCustomInspections() {[]}
 

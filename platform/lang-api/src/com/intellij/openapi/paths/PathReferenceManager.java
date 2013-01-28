@@ -84,7 +84,9 @@ public abstract class PathReferenceManager {
 
 
   @Nullable
-  public abstract PathReference getPathReference(@NotNull String path, @NotNull Module module, @NotNull PsiElement element, PathReferenceProvider... additionalProviders);
+  public abstract PathReference getPathReference(@NotNull String path,
+                                                 @NotNull PsiElement element,
+                                                 PathReferenceProvider... additionalProviders);
 
   @Nullable
   public abstract PathReference getCustomPathReference(@NotNull String path, @NotNull Module module, @NotNull PsiElement element, PathReferenceProvider... providers);

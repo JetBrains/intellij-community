@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorManagerImpl {
-  private ImageEditorManagerImpl() {
-  }
+public final class ImageEditorManagerImpl {
+  private ImageEditorManagerImpl() {}
 
   /**
    * Create image viewer editor. Don't forget release editor by {@link #releaseImageEditor(ImageEditor)} method.

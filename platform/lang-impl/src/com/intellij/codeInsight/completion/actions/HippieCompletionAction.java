@@ -36,6 +36,7 @@ public class HippieCompletionAction extends BaseCodeInsightAction implements Dum
     super.actionPerformedImpl(project, editor);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new HippieWordCompletionHandler(true);

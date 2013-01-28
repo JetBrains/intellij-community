@@ -19,8 +19,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -254,6 +256,12 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
   }
 
+  @NotNull
+  @Override
+  public GrAnnotation[] getRawAnnotations() {
+    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, ARRAY_FACTORY);
+  }
+
   private void setModifierPropertyInternal(String name, boolean doSet) {
     if (doSet) {
       if (isEmptyModifierList()) {
@@ -286,7 +294,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   private boolean isEmptyModifierList() {
-    return getTextLength() == 0 || getModifiers().length == 0 && getAnnotations().length == 0;
+    return getTextLength() == 0 || getModifiers().length == 0 && getRawAnnotations().length == 0;
   }
 
   @Nullable
@@ -311,31 +319,26 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, ARRAY_FACTORY);
+    return CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrAnnotation[]>() {
+      @Nullable
+      @Override
+      public Result<GrAnnotation[]> compute() {
+        return Result.create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    }).getValue();
   }
 
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
+    //todo[medvedev]
     return getAnnotations();
   }
 
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    final GrModifierListStub stub = getStub();
-    if (stub != null) {
-      for (StubElement stubElement : stub.getChildrenStubs()) {
-        final PsiElement child = stubElement.getPsi();
-        if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
-          return (PsiAnnotation)child;
-        }
-      }
-    } else {
-      PsiElement child = getFirstChild();
-      while (child != null) {
-        if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
-          return (PsiAnnotation)child;
-        }
-        child = child.getNextSibling();
+    for (GrAnnotation annotation : getAnnotations()) {
+      if (qualifiedName.equals(annotation.getQualifiedName())) {
+        return annotation;
       }
     }
     return null;

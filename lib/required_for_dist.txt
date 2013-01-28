@@ -30,7 +30,7 @@ microba.jar
 miglayout-swing.jar
 nanoxml-2.2.3.jar
 nekohtml-1.9.14.jar
-ecj-4.2.jar
+ecj-4.2.1.jar
 oromatcher.jar
 picocontainer.jar
 resolver.jar

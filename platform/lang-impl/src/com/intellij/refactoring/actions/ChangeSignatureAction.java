@@ -40,11 +40,11 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && findTargetMember(elements[0]) != null;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     PsiElement targetMember = findTargetMember(file, editor);
     if (targetMember == null) {
       final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(file.getLanguage());
@@ -88,7 +88,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean hasAvailableHandler(DataContext dataContext) {
+  protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -105,7 +105,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return targetMember != null && getChangeSignatureHandler(targetMember.getLanguage()) != null;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language == null) {
       PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);

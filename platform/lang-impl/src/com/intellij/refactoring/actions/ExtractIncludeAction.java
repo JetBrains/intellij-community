@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.LanguageExtractInclude;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -34,7 +35,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     return true;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 
@@ -59,7 +60,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     return LanguageExtractInclude.INSTANCE.forLanguage(baseLanguage) != null;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;
     return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());

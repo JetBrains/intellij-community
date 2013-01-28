@@ -126,7 +126,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @param defaultAttributes the default text attributes associated with the key.
    * @return the new key instance, or an existing instance if the key with the same
    *         identifier was already registered.
-   * @deprecated Use createTextAttributesKey(externalName, fallbackAttributeKey...) to guarantee compatibility with generic color schemes.
+   * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} to guarantee compatibility with generic color schemes.
    */
   @NotNull
   @Deprecated

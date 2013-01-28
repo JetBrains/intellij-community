@@ -86,7 +86,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     if (Arrays.binarySearch(CanonicalPsiTypeConverterImpl.PRIMITIVES, s) >= 0) {
       return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createPrimitiveType(s);
     }
-    final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), null);
+    final PsiClass aClass1 = DomJavaUtil.findClass(s, context.getFile(), context.getModule(), context.getSearchScope());
     return aClass1 == null ? null : createType(aClass1);
   }
 

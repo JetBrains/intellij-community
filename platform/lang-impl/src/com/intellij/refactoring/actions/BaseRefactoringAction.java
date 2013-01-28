@@ -57,19 +57,20 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isAvailableInEditorOnly();
 
-  protected abstract boolean isEnabledOnElements(PsiElement[] elements);
+  protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return true;
   }
 
-  protected boolean hasAvailableHandler(DataContext dataContext) {
+  protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
     return getHandler(dataContext) != null;
   }
 
   @Nullable
-  protected abstract RefactoringActionHandler getHandler(DataContext dataContext);
+  protected abstract RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
 
+  @Override
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -129,6 +130,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(true);

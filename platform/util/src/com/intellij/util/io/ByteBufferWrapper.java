@@ -65,4 +65,9 @@ public abstract class ByteBufferWrapper {
   public static ByteBufferWrapper readOnly(final File file, final int offset) {
     return new ReadOnlyMappedBufferWrapper(file, offset);
   }
+
+  @Override
+  public String toString() {
+    return "Buffer for " + myFile + " size: " + myLength;
+  }
 }

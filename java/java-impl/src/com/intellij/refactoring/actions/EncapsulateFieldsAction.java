@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateFieldsAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
@@ -32,7 +33,7 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
     if (containingClass != null) {
@@ -44,7 +45,7 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length == 1) {
       return elements[0] instanceof PsiClass && elements[0].getLanguage().isKindOf(JavaLanguage.INSTANCE) || isAcceptedField(elements[0]);
     }
@@ -59,7 +60,7 @@ public class EncapsulateFieldsAction extends BaseRefactoringAction {
     return false;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new EncapsulateFieldsHandler();
   }
 

@@ -43,7 +43,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
 
   public static PsiClass findClass(String s, ConvertContext context) {
     final DomElement element = context.getInvocationElement();
-    final GlobalSearchScope scope = element instanceof GenericDomValue ? getSearchScope(context) : null;
+    final GlobalSearchScope scope = element instanceof GenericDomValue ? context.getSearchScope() : null;
     return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), scope);
   }
 
@@ -64,7 +64,8 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider.getReferencesByElement(element);
   }
 
-  protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue, final ConvertContext context,
+  protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue,
+                                                                    final ConvertContext context,
                                                                     ExtendClass extendClass) {
     return createJavaClassReferenceProvider(genericDomValue, extendClass, new JavaClassReferenceProvider() {
 
@@ -99,7 +100,6 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
         provider.setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
       }
       provider.setAllowEmpty(extendClass.allowEmpty());
-
     }
 
     ClassTemplate template = genericDomValue.getAnnotation(ClassTemplate.class);
@@ -114,22 +114,9 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider;
   }
 
-  public static GlobalSearchScope getSearchScope(@NotNull ConvertContext context) {
-    final Module module = context.getModule();
-    if (module == null) return null;
-    PsiFile file = context.getFile();
-    file = file.getOriginalFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
-    boolean tests = fileIndex.isInTestSourceContent(virtualFile);
-    return module.getModuleRuntimeScope(tests);
-
-  }
-
   @Nullable
-  protected  GlobalSearchScope getScope(@NotNull ConvertContext context) {
-    return getSearchScope(context);
+  protected GlobalSearchScope getScope(@NotNull ConvertContext context) {
+    return context.getSearchScope();
   }
 
   public static class AnnotationType extends PsiClassConverter {

@@ -33,6 +33,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
 
   @NonNls public static final String FEATURE_ID = "navigation.goto.super";
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return this;

@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
+  @NotNull
   protected CodeInsightActionHandler getHandler(){
     return new CodeInsightActionHandler(){
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -115,7 +116,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
     }
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file){
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
     return file instanceof XmlFile;
   }
 }

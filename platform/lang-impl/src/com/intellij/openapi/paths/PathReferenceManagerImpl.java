@@ -43,7 +43,9 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
   @Override
   @Nullable
-  public PathReference getPathReference(@NotNull String path, @NotNull final Module module, @NotNull PsiElement element, PathReferenceProvider... additionalProviders) {
+  public PathReference getPathReference(@NotNull String path,
+                                        @NotNull PsiElement element,
+                                        PathReferenceProvider... additionalProviders) {
     PathReference pathReference;
     for (PathReferenceProvider provider : getProviders()) {
       pathReference = provider.getPathReference(path, element);

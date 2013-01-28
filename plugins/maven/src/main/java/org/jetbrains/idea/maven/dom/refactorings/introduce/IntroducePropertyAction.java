@@ -54,7 +54,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 
@@ -63,7 +63,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return true;
   }
 
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
+  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MyRefactoringActionHandler();
   }
 
@@ -76,7 +76,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     if (!super.isAvailableOnElementInEditorAndFile(element, editor, file, context)) return false;
     return getSelectedElementAndTextRange(editor, file) != null;
   }
