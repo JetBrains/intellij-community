@@ -248,7 +248,13 @@ public class PyFormatterTest extends PyTestCase {
     settings().WRAP_LONG_LINES = false;
     doTest();
   }
-  
+
+  public void testIndentInSlice() {  // PY-8572
+    settings().RIGHT_MARGIN = 120;
+    settings().WRAP_LONG_LINES = false;
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

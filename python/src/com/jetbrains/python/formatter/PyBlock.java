@@ -200,6 +200,12 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
+    else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
+      PyExpression indexExpression = ((PySubscriptionExpression)_node.getPsi()).getIndexExpression();
+      if (indexExpression != null && child == indexExpression.getNode()) {
+        childIndent = Indent.getNormalIndent();
+      }
+    }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
@@ -278,6 +284,9 @@ public class PyBlock implements ASTBlock {
     }
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
       return myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
+    }
+    if (_node.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
+      return false;
     }
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
