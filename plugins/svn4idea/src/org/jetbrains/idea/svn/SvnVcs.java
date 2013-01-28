@@ -167,6 +167,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final SvnLoadedBrachesStorage myLoadedBranchesStorage;
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
+  private static boolean ourSSLProtocolsExplicitlySet = false;
   private final SvnExecutableChecker myChecker;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
@@ -215,10 +216,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     initLogFilters();
 
-    // Alexander Kitaev says it is default value (SSLv3) - since 8254
-    if (!SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") && System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) == null) {
-      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
-    }
+    ourSSLProtocolsExplicitlySet = System.getProperty(SVNKIT_HTTP_SSL_PROTOCOLS) != null;
+  }
+
+  public static boolean isSSLProtocolExplicitlySet() {
+    return ourSSLProtocolsExplicitlySet;
   }
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
@@ -239,6 +241,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     dumpFileStatus(SvnFileStatus.REPLACED);
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
+
+    refreshSSLProperty();
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
@@ -919,6 +923,17 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     catch (SVNException e) {
       return null;
+    }
+  }
+
+  public void refreshSSLProperty() {
+    if (ourSSLProtocolsExplicitlySet) return;
+    if (SvnConfiguration.SSLProtocols.all.equals(myConfiguration.SSL_PROTOCOLS)) {
+      System.clearProperty(SVNKIT_HTTP_SSL_PROTOCOLS);
+    } else if (SvnConfiguration.SSLProtocols.sslv3.equals(myConfiguration.SSL_PROTOCOLS)) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "SSLv3");
+    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(myConfiguration.SSL_PROTOCOLS)) {
+      System.setProperty(SVNKIT_HTTP_SSL_PROTOCOLS, "TLSv1");
     }
   }
 

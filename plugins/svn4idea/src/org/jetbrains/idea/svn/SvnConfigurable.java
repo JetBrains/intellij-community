@@ -28,10 +28,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +69,10 @@ public class SvnConfigurable implements Configurable {
   private JSpinner mySSHReadTimeout;
   private TextFieldWithBrowseButton myCommandLineClient;
   private JSpinner myHttpTimeout;
+  private JBRadioButton mySSLv3RadioButton;
+  private JBRadioButton myTLSv1RadioButton;
+  private JBRadioButton myAllRadioButton;
+  private JLabel mySSLExplicitly;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -130,6 +136,29 @@ public class SvnConfigurable implements Configurable {
       }
     });
     myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
+
+    final ButtonGroup bg = new ButtonGroup();
+    bg.add(mySSLv3RadioButton);
+    bg.add(myTLSv1RadioButton);
+    bg.add(myAllRadioButton);
+    if (SvnVcs.isSSLProtocolExplicitlySet()) {
+      mySSLv3RadioButton.setEnabled(false);
+      myTLSv1RadioButton.setEnabled(false);
+      myAllRadioButton.setEnabled(false);
+      mySSLExplicitly.setVisible(true);
+      mySSLExplicitly.setText("Set explicitly to: " + System.getProperty(SvnVcs.SVNKIT_HTTP_SSL_PROTOCOLS));
+    } else {
+      mySSLv3RadioButton.setEnabled(true);
+      myTLSv1RadioButton.setEnabled(true);
+      myAllRadioButton.setEnabled(true);
+      mySSLExplicitly.setVisible(false);
+      final String version = SystemInfo.JAVA_RUNTIME_VERSION;
+      final boolean jdkBugFixed = version.startsWith("1.7") || version.startsWith("1.8");
+      if (! jdkBugFixed) {
+        mySSLExplicitly.setVisible(true);
+        mySSLExplicitly.setText("Setting 'All' value in this JDK version (" + version + ") is not recommended.");
+      }
+    }
   }
 
   public static void selectConfigirationDirectory(@NotNull String path, @NotNull final Consumer<String> dirConsumer,
@@ -190,6 +219,13 @@ public class SvnConfigurable implements Configurable {
     return HELP_ID;
   }
 
+  private SvnConfiguration.SSLProtocols getSelectedSSL() {
+    if (myAllRadioButton.isSelected()) return SvnConfiguration.SSLProtocols.all;
+    if (mySSLv3RadioButton.isSelected()) return SvnConfiguration.SSLProtocols.sslv3;
+    if (myTLSv1RadioButton.isSelected()) return SvnConfiguration.SSLProtocols.tlsv1;
+    throw new IllegalStateException();
+  }
+
   public boolean isModified() {
     if (myComponent == null) {
       return false;
@@ -233,6 +269,7 @@ public class SvnConfigurable implements Configurable {
     if (configuration.getHttpTimeout()/1000 != ((SpinnerNumberModel) myHttpTimeout.getModel()).getNumber().longValue()) {
       return true;
     }
+    if (! getSelectedSSL().equals(configuration.SSL_PROTOCOLS)) return true;
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     if (! Comparing.equal(applicationSettings17.getCommandLinePath(), myCommandLineClient.getText().trim())) return true;
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
@@ -265,6 +302,8 @@ public class SvnConfigurable implements Configurable {
     configuration.mySSHConnectionTimeout = ((SpinnerNumberModel) mySSHConnectionTimeout.getModel()).getNumber().longValue() * 1000;
     configuration.mySSHReadTimeout = ((SpinnerNumberModel) mySSHReadTimeout.getModel()).getNumber().longValue() * 1000;
     configuration.myUseAcceleration = acceleration();
+    configuration.SSL_PROTOCOLS = getSelectedSSL();
+    SvnVcs.getInstance(myProject).refreshSSLProperty();
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
@@ -307,6 +346,14 @@ public class SvnConfigurable implements Configurable {
     setAcceleration(configuration.myUseAcceleration);
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
+
+    if (SvnConfiguration.SSLProtocols.sslv3.equals(configuration.SSL_PROTOCOLS)) {
+      mySSLv3RadioButton.setSelected(true);
+    } else if (SvnConfiguration.SSLProtocols.tlsv1.equals(configuration.SSL_PROTOCOLS)) {
+      myTLSv1RadioButton.setSelected(true);
+    } else {
+      myAllRadioButton.setSelected(true);
+    }
   }
 
   public void disposeUIResources() {
