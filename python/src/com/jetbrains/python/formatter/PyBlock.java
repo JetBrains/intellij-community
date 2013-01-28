@@ -132,7 +132,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA) {
+          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child)) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
@@ -206,6 +206,15 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private boolean isSliceOperand(ASTNode child) {
+    if (_node.getPsi() instanceof PySliceExpression) {
+      PySliceExpression sliceExpression = (PySliceExpression)_node.getPsi();
+      PyExpression operand = sliceExpression.getOperand();
+      return operand.getNode() == child;
+    }
+    return false;
   }
 
   private static boolean isEmptyList(PsiElement psi) {
