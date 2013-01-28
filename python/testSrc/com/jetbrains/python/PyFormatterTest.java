@@ -255,6 +255,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testContinuationIndentForCallInStatementPart() {  // PY-8577
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

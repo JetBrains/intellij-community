@@ -162,7 +162,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = parentType == PyElementTypes.PARAMETER_LIST 
+        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isCallInControlStatement()
                       ? Indent.getContinuationIndent()
                       : Indent.getNormalIndent();
       }
@@ -212,6 +212,10 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private boolean isCallInControlStatement() {
+    return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null;
   }
 
   private boolean isSliceOperand(ASTNode child) {
