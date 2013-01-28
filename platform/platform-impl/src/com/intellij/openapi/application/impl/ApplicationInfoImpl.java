@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
+  @NonNls private String myBigIconUrl = null;
   @NonNls private String myOpaqueIconUrl = "/icon.png";
   @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl = null;
@@ -116,6 +117,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
+  @NonNls private static final String ATTRIBUTE_SIZE128 = "size128";
   @NonNls private static final String ATTRIBUTE_SIZE16 = "size16";
   @NonNls private static final String ATTRIBUTE_SIZE12 = "size12";
   @NonNls private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
@@ -252,6 +254,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getSmallIconUrl() {
     return mySmallIconUrl;
+  }
+
+  @Override
+  @Nullable
+  public String getBigIconUrl() {
+    return myBigIconUrl;
   }
 
   public String getOpaqueIconUrl() {
@@ -514,6 +522,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
       myOpaqueIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32OPAQUE);
+      myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;

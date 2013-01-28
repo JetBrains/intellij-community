@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,22 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.util.ui.CheckBox;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class ConstructorCountInspection extends ClassMetricInspection {
 
   private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
+
+  public boolean ignoreDeprecatedConstructors = false;
 
   @NotNull
   public String getID() {
@@ -31,8 +40,7 @@ public class ConstructorCountInspection extends ClassMetricInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "too.many.constructors.display.name");
+    return InspectionGadgetsBundle.message("too.many.constructors.display.name");
   }
 
   protected int getDefaultLimit() {
@@ -40,15 +48,30 @@ public class ConstructorCountInspection extends ClassMetricInspection {
   }
 
   protected String getConfigurationLabel() {
-    return InspectionGadgetsBundle.message(
-      "too.many.constructors.count.limit.option");
+    return InspectionGadgetsBundle.message("too.many.constructors.count.limit.option");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JLabel label = new JLabel(getConfigurationLabel());
+    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
+    final CheckBox includeCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("too.many.constructors.ignore.deprecated.option"), this, "ignoreDeprecatedConstructors");
+
+    final GridBag bag = new GridBag();
+    bag.setDefaultInsets(0, 0, 0, UIUtil.DEFAULT_HGAP);
+    bag.setDefaultAnchor(GridBagConstraints.WEST);
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(label, bag.nextLine().next());
+    panel.add(valueField, bag.next().weightx(1.0));
+    panel.add(includeCheckBox, bag.nextLine().next().coverLine().weighty(1.0).anchor(GridBagConstraints.NORTHWEST));
+    return panel;
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
-    return InspectionGadgetsBundle.message(
-      "too.many.constructors.problem.descriptor", count);
+    return InspectionGadgetsBundle.message("too.many.constructors.problem.descriptor", count);
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -59,7 +82,6 @@ public class ConstructorCountInspection extends ClassMetricInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // note: no call to super
       final int constructorCount = calculateTotalConstructorCount(aClass);
       if (constructorCount <= getLimit()) {
         return;
@@ -68,7 +90,17 @@ public class ConstructorCountInspection extends ClassMetricInspection {
     }
 
     private int calculateTotalConstructorCount(PsiClass aClass) {
-      return aClass.getConstructors().length;
+      final PsiMethod[] constructors = aClass.getConstructors();
+      if (!ignoreDeprecatedConstructors) {
+        return constructors.length;
+      }
+      int count = 0;
+      for (PsiMethod constructor : constructors) {
+        if (!constructor.isDeprecated()) {
+          count++;
+        }
+      }
+      return count;
     }
   }
 }
