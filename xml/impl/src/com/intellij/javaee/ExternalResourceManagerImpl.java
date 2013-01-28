@@ -362,7 +362,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
     if (child != null) {
       String text = child.getText();
-      if (FileUtil.toSystemIndependentName(text).endsWith("idea.jar!/resources/html5-schema/html5.rnc")) {
+      if (FileUtil.toSystemIndependentName(text).endsWith(".jar!/resources/html5-schema/html5.rnc")) {
         text = HTML5_DOCTYPE_ELEMENT;
       }
       myDefaultHtmlDoctype = text;
