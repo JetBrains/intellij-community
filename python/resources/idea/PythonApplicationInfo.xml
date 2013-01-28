@@ -1,14 +1,17 @@
-  <component>
+<component>
+  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
   <version codename="2.7 EAP" major="2" minor="7" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_logo.png" textcolor="B7C9B5"/>
-  <about url="/pycharm_about.png"/>
+  <about url="/pycharm_about.png" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_13.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm" script="charm"/>
   <install-over minbuild="0" maxbuild="0" version="1.x"/>
 
   <welcome-screen logo-url="/pycharm_welcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
+
+  <third-party url="http://confluence.jetbrains.net/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
 
   <update-urls logo-url="/Logo_welcomeScreen.png"
                check="http://www.jetbrains.com/updates/updates.xml"
