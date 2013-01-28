@@ -1,15 +1,13 @@
 package com.jetbrains.python.refactoring.rename;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.toolbox.Maybe;
@@ -78,6 +76,24 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
       }
       return null;
     }
+    final Property property = containingClass.findPropertyByCallable(function);
+    final PyTargetExpression site;
+    if (property != null) {
+      site = property.getDefinitionSite();
+      if (site != null) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          return site;
+        }
+        final String message = String.format("Do you want to rename the property '%s' instead of its accessor function '%s'?",
+                                             property.getName(), function.getName());
+        final int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());
+        switch (rc) {
+          case 0: return site;
+          case 1: return function;
+          default: return null;
+        }
+      }
+    }
     return function;
   }
 
@@ -93,7 +109,7 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     });
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {
-      final Property property = containingClass.findPropertyByFunction(function);
+      final Property property = containingClass.findPropertyByCallable(function);
       if (property != null) {
         addRename(allRenames, newName, property.getGetter());
         addRename(allRenames, newName, property.getSetter());

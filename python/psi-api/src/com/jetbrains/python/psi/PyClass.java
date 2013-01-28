@@ -136,11 +136,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   /**
    * Non-recursively searches for a property for which the given function is a getter, setter or deleter.
    *
-   * @param function the function which may be an accessor
+   * @param callable the function which may be an accessor
    * @return the property, or null
    */
   @Nullable
-  Property findPropertyByFunction(PyFunction function);
+  Property findPropertyByCallable(Callable callable);
 
   /**
    * @param parent

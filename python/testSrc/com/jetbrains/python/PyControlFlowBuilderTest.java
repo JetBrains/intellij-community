@@ -215,6 +215,11 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTestFirstStatement();
   }
 
+  // PY-7784
+  public void testAssertFalseArgument() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");

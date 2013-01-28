@@ -688,7 +688,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False
-    if (args.length == 1 && PyConstantExpressionEvaluator.evaluate(args[0]) == Boolean.FALSE) {
+    if (args.length >= 1 && PyConstantExpressionEvaluator.evaluate(args[0]) == Boolean.FALSE) {
       abruptFlow(node);
       return;
     }
