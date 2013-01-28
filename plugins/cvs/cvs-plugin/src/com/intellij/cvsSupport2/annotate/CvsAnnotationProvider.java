@@ -199,6 +199,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       return null;
     }
 
+    @Nullable
     @Override
     public RepositoryLocation getChangedRepositoryPath() {
       return null;

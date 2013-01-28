@@ -200,6 +200,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testFunctionalInterfaceAnnotation() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

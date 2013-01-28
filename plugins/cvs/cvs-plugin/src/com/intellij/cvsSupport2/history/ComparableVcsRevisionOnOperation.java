@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
@@ -103,6 +104,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return null;
   }
 
+  @Nullable
   @Override
   public RepositoryLocation getChangedRepositoryPath() {
     return null;

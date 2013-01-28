@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,10 +237,10 @@ public class GdkMethodUtil {
         GrMethodCall call = (GrMethodCall)statement;
 
         Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(call);
-        if (original == null) return null;
+        if (original == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
         PsiClass mix = getTypeToMix(call);
-        if (mix == null) return null;
+        if (mix == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
         return Result.create(new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix),
                              PsiModificationTracker.MODIFICATION_COUNT);
