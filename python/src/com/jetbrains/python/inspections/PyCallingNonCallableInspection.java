@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     private void checkCallable(@NotNull PyElement node, @Nullable PyExpression callee, @Nullable PyType type) {
-      final Boolean callable = callee != null ? isCallable(callee, myTypeEvalContext) : isCallable(type);
+      final Boolean callable = callee != null ? isCallable(callee, myTypeEvalContext) : PyTypeChecker.isCallable(type);
       if (callable == null) {
         return;
       }
@@ -78,47 +77,6 @@ public class PyCallingNonCallableInspection extends PyInspection {
     if (element instanceof PyQualifiedExpression && PyNames.CLASS.equals(element.getName())) {
       return true;
     }
-    return isCallable(element.getType(context));
-  }
-
-  @Nullable
-  static Boolean isCallable(@Nullable PyType type) {
-    if (type == null || type instanceof PyTypeReference) {
-      return null;
-    }
-    else if (type instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)type;
-      if (classType.isDefinition()) {
-        return true;
-      }
-      if (isMethodType(classType)) {
-        return true;
-      }
-      final PyClass cls = classType.getPyClass();
-      if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
-        return true;
-      }
-    }
-    else if (type instanceof PyUnionType) {
-      for (PyType member : ((PyUnionType)type).getMembers()) {
-        final Boolean result = isCallable(member);
-        if (result == null) {
-          return null;
-        }
-        else if (!result) {
-          return false;
-        }
-      }
-      return true;
-    }
-    else if (type instanceof PyCallableType) {
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean isMethodType(@NotNull PyClassType type) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
-    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
+    return PyTypeChecker.isCallable(element.getType(context));
   }
 }
