@@ -104,7 +104,8 @@ public class PythonAllTestsSuite {
     DjangoTemplateParserTest.class,
     PyJoinLinesTest.class,
     PyStatementListTest.class,
-    PyChangeSignatureTest.class
+    PyChangeSignatureTest.class,
+    PyCommenterTest.class
   };
 
   public static TestSuite suite() {

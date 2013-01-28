@@ -1,15 +1,17 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.generation.IndentedCommenter;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class PythonCommenter implements CodeDocumentationAwareCommenter {
+public class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
   public String getLineCommentPrefix() {
-    return "#";
+    return "# ";
   }
 
   public String getBlockCommentPrefix() {
@@ -61,5 +63,11 @@ public class PythonCommenter implements CodeDocumentationAwareCommenter {
   @Override
   public boolean isDocumentationComment(PsiComment element) {
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Boolean forceIndentedLineComment() {
+    return true;
   }
 }

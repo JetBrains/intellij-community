@@ -224,7 +224,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             // TODO: Respect arguments quotation
             Collections.addAll(extraArgs, myOptionsField.getText().split(" +"));
           }
-          if (repository != null) {
+          if (!StringUtil.isEmptyOrSpaces(repository)) {
             extraArgs.add("--extra-index-url");
             extraArgs.add(repository);
           }

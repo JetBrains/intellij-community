@@ -52,6 +52,12 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     }
   }
 
+  @Override
+  public int getTextOffset() {
+    ASTNode node = getNameIdentifierNode();
+    return node == null ? super.getTextOffset() : node.getTextRange().getStartOffset();
+  }
+
   @Nullable
   protected ASTNode getNameIdentifierNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
