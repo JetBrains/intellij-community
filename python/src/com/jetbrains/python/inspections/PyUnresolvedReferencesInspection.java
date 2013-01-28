@@ -658,13 +658,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (hasUnresolvedAncestors(cls)) {
           return true;
         }
-        if (cls.getDecoratorList() != null) {
+        if (isDecoratedAsDynamic(cls, true)) {
           return true;
-        }
-        for (PyClass base : cls.iterateAncestorClasses()) {
-          if (base.getDecoratorList() != null) {
-            return true;
-          }
         }
       }
       if (qtype instanceof CythonBuiltinType ||
@@ -674,6 +669,29 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (qtype instanceof PyFunctionType) {
         final Callable callable = ((PyFunctionType)qtype).getCallable();
         if (callable instanceof PyFunction && ((PyFunction)callable).getDecoratorList() != null) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean isDecoratedAsDynamic(@NotNull PyClass cls, boolean inherited) {
+      if (inherited) {
+        if (isDecoratedAsDynamic(cls, false)) {
+          return true;
+        }
+        for (PyClass base : cls.iterateAncestorClasses()) {
+          if (base != null && isDecoratedAsDynamic(base, false)) {
+            return true;
+          }
+        }
+      }
+      else {
+        if (cls.getDecoratorList() != null) {
+          return true;
+        }
+        final String docString = cls.getDocStringValue();
+        if (docString != null && docString.indexOf("@DynamicAttrs") != -1) {
           return true;
         }
       }
