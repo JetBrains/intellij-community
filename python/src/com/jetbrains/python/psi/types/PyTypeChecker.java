@@ -7,6 +7,7 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -325,7 +326,7 @@ public class PyTypeChecker {
         if (callable instanceof PyFunction) {
           final PyExpression callee = call.getCallee();
           final PyExpression receiver = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
-          return new AnalyzeCallResults((PyFunction)callable, receiver, arguments);
+          return new AnalyzeCallResults(callable, receiver, arguments);
         }
       }
     }
@@ -335,41 +336,39 @@ public class PyTypeChecker {
   @Nullable
   public static AnalyzeCallResults analyzeCall(@NotNull PyBinaryExpression expr, @NotNull TypeEvalContext context) {
     final PsiPolyVariantReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (ref != null) {
-      final ResolveResult[] resolveResult = ref.multiResolve(false);
-      AnalyzeCallResults firstResults = null;
-      for (ResolveResult result : resolveResult) {
-        final PsiElement resolved = result.getElement();
-        if (resolved instanceof PyTypedElement) {
-          final PyTypedElement typedElement = (PyTypedElement)resolved;
-          final PyType type = typedElement.getType(context);
-          if (!(type instanceof PyFunctionType)) {
-            return null;
-          }
-          final Callable callable = ((PyFunctionType)type).getCallable();
-          final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
-          final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
-          final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
-          final PyParameter[] parameters = callable.getParameterList().getParameters();
-          if (parameters.length >= 2) {
-            final PyNamedParameter param = parameters[1].getAsNamed();
-            if (arg != null && param != null) {
-              final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
-              arguments.put(arg, param);
-              final AnalyzeCallResults results = new AnalyzeCallResults(callable, receiver, arguments);
-              if (firstResults == null) {
-                firstResults = results;
-              }
-              if (match(param.getType(context), arg.getType(context), context)) {
-                return results;
-              }
+    final ResolveResult[] resolveResult = ref.multiResolve(false);
+    AnalyzeCallResults firstResults = null;
+    for (ResolveResult result : resolveResult) {
+      final PsiElement resolved = result.getElement();
+      if (resolved instanceof PyTypedElement) {
+        final PyTypedElement typedElement = (PyTypedElement)resolved;
+        final PyType type = typedElement.getType(context);
+        if (!(type instanceof PyFunctionType)) {
+          return null;
+        }
+        final Callable callable = ((PyFunctionType)type).getCallable();
+        final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
+        final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
+        final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
+        final PyParameter[] parameters = callable.getParameterList().getParameters();
+        if (parameters.length >= 2) {
+          final PyNamedParameter param = parameters[1].getAsNamed();
+          if (arg != null && param != null) {
+            final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
+            arguments.put(arg, param);
+            final AnalyzeCallResults results = new AnalyzeCallResults(callable, receiver, arguments);
+            if (firstResults == null) {
+              firstResults = results;
+            }
+            if (match(param.getType(context), arg.getType(context), context)) {
+              return results;
             }
           }
         }
       }
-      if (firstResults != null) {
-        return firstResults;
-      }
+    }
+    if (firstResults != null) {
+      return firstResults;
     }
     return null;
   }
@@ -377,22 +376,20 @@ public class PyTypeChecker {
   @Nullable
   public static AnalyzeCallResults analyzeCall(@NotNull PySubscriptionExpression expr, @NotNull TypeEvalContext context) {
     final PsiReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-    if (ref != null) {
-      final PsiElement resolved = ref.resolve();
-      if (resolved instanceof PyTypedElement) {
-        final PyType type = ((PyTypedElement)resolved).getType(context);
-        if (type instanceof PyFunctionType) {
-          final Callable callable = ((PyFunctionType)type).getCallable();
-          final PyParameter[] parameters = callable.getParameterList().getParameters();
-          if (parameters.length == 2) {
-            final PyNamedParameter param = parameters[1].getAsNamed();
-            if (param != null) {
-              final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
-              final PyExpression arg = expr.getIndexExpression();
-              if (arg != null) {
-                arguments.put(arg, param);
-                return new AnalyzeCallResults(callable, expr.getOperand(), arguments);
-              }
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof PyTypedElement) {
+      final PyType type = ((PyTypedElement)resolved).getType(context);
+      if (type instanceof PyFunctionType) {
+        final Callable callable = ((PyFunctionType)type).getCallable();
+        final PyParameter[] parameters = callable.getParameterList().getParameters();
+        if (parameters.length == 2) {
+          final PyNamedParameter param = parameters[1].getAsNamed();
+          if (param != null) {
+            final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
+            final PyExpression arg = expr.getIndexExpression();
+            if (arg != null) {
+              arguments.put(arg, param);
+              return new AnalyzeCallResults(callable, expr.getOperand(), arguments);
             }
           }
         }
@@ -420,6 +417,47 @@ public class PyTypeChecker {
       return analyzeCall((PySubscriptionExpression)callSite, context);
     }
     return null;
+  }
+
+  @Nullable
+  public static Boolean isCallable(@Nullable PyType type) {
+    if (type == null || type instanceof PyTypeReference) {
+      return null;
+    }
+    else if (type instanceof PyClassType) {
+      final PyClassType classType = (PyClassType)type;
+      if (classType.isDefinition()) {
+        return true;
+      }
+      if (isMethodType(classType)) {
+        return true;
+      }
+      final PyClass cls = classType.getPyClass();
+      if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
+        return true;
+      }
+    }
+    else if (type instanceof PyUnionType) {
+      for (PyType member : ((PyUnionType)type).getMembers()) {
+        final Boolean result = isCallable(member);
+        if (result == null) {
+          return null;
+        }
+        else if (!result) {
+          return false;
+        }
+      }
+      return true;
+    }
+    else if (type instanceof PyCallableType) {
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isMethodType(@NotNull PyClassType type) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
+    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
   }
 
   public static class AnalyzeCallResults {

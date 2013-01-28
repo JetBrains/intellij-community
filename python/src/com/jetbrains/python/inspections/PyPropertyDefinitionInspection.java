@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,8 +136,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       Callable callable = null;
       if (argument instanceof PyReferenceExpression) {
         PsiElement resolved = ((PyReferenceExpression)argument).getReference(resolveWithoutImplicits()).resolve();
-        if (resolved instanceof PyFunction) callable = (PyFunction)resolved;
-        else if (resolved instanceof PyLambdaExpression) callable = (PyLambdaExpression)resolved;
+        if (resolved instanceof Callable) {
+          callable = (Callable)resolved;
+        }
         else {
           reportNonCallableArg(resolved, argument);
           return;
@@ -161,19 +163,19 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    private void reportNonCallableArg(PsiElement resolved, PsiElement being_checked) {
-      if (! PyUtil.instanceOf(resolved, PySubscriptionExpression.class, PyNoneLiteralExpression.class)) {
-        boolean is_not_callable = true;
-        if (resolved instanceof PyExpression) {
-          PyType expr_type = ((PyExpression)resolved).getType(myTypeEvalContext);
-          if (expr_type instanceof PyClassType) {
-            final PyClassType cls_type = (PyClassType)expr_type;
-            PyClass cls = cls_type.getPyClass();
-            if (!cls_type.isDefinition()) is_not_callable = cls.findMethodByName("__call__", true) == null;
-          }
+    private void reportNonCallableArg(PsiElement resolved, PsiElement element) {
+      if (resolved instanceof PySubscriptionExpression || resolved instanceof PyNoneLiteralExpression) {
+        return;
+      }
+      if (PyNames.NONE.equals(element.getText())) {
+        return;
+      }
+      if (resolved instanceof PyTypedElement) {
+        final PyType type = ((PyTypedElement)resolved).getType(myTypeEvalContext);
+        final Boolean isCallable = PyTypeChecker.isCallable(type);
+        if (isCallable != null && !isCallable) {
+          registerProblem(element, PyBundle.message("INSP.strange.arg.want.callable"));
         }
-        if (is_not_callable && !"None".equals(being_checked.getText()))
-          registerProblem(being_checked, PyBundle.message("INSP.strange.arg.want.callable"));
       }
     }
 

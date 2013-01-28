@@ -25,7 +25,7 @@ public class PyRequirement {
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
   private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)(#egg=(.*))?");
   private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
-  private static final Pattern VCS_PATH = Pattern.compile(".*/([^@/]+)/?(@.*)?");
+  private static final Pattern VCS_PATH = Pattern.compile(".*/([^/]+)/?");
 
   public enum Relation {
     LT("<"),
@@ -408,8 +408,10 @@ public class PyRequirement {
       try {
         final URI uri = new URI(url);
         if (uri.getScheme() != null) {
-          final String path = uri.getPath();
+          String path = uri.getPath();
           if (path != null) {
+            final String[] split = path.split("@", 2);
+            path = split[0];
             final Matcher vcsPathMatcher = VCS_PATH.matcher(path);
             if (!vcsPathMatcher.matches()) {
               return null;

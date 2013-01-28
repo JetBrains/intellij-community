@@ -273,18 +273,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     if (builder.getTokenType() == PyTokenTypes.GTGT) {
       final PsiBuilder.Marker target = builder.mark();
       builder.advanceLexer();
-      getExpressionParser().parseSingleExpression(false);
+      getExpressionParser().parseSingleExpression(false, false);
       target.done(PyElementTypes.PRINT_TARGET);
     }
     else {
-      getExpressionParser().parseSingleExpression(false);
+      getExpressionParser().parseSingleExpression(false, false);
     }
     while (builder.getTokenType() == PyTokenTypes.COMMA) {
       builder.advanceLexer();
       if (getEndOfStatementsTokens().contains(builder.getTokenType())) {
         break;
       }
-      getExpressionParser().parseSingleExpression(false);
+      getExpressionParser().parseSingleExpression(false, false);
     }
     checkEndOfStatement(scope);
     statement.done(PyElementTypes.PRINT_STATEMENT);
@@ -312,13 +312,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.DEL_KEYWORD);
     final PsiBuilder.Marker delStatement = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!getExpressionParser().parseSingleExpression(false, false)) {
       myBuilder.error("Expression expected");
     }
     while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
       myBuilder.advanceLexer();
       if (!getEndOfStatementsTokens().contains(myBuilder.getTokenType())) {
-        if (!getExpressionParser().parseSingleExpression(false)) {
+        if (!getExpressionParser().parseSingleExpression(false, false)) {
           myBuilder.error("Expression expected");
         }
       }
@@ -333,18 +333,18 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker raiseStatement = myBuilder.mark();
     myBuilder.advanceLexer();
     if (!getEndOfStatementsTokens().contains(myBuilder.getTokenType())) {
-      getExpressionParser().parseSingleExpression(false);
+      getExpressionParser().parseSingleExpression(false, false);
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(false);
+        getExpressionParser().parseSingleExpression(false, false);
         if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
           myBuilder.advanceLexer();
-          getExpressionParser().parseSingleExpression(false);
+          getExpressionParser().parseSingleExpression(false, false);
         }
       }
       else if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
         myBuilder.advanceLexer();
-        if (!getExpressionParser().parseSingleExpression(false)) {
+        if (!getExpressionParser().parseSingleExpression(false, false)) {
           myBuilder.error("Expression expected");
         }
       }
@@ -357,10 +357,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.ASSERT_KEYWORD);
     final PsiBuilder.Marker assertStatement = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (getExpressionParser().parseSingleExpression(false)) {
+    if (getExpressionParser().parseSingleExpression(false, false)) {
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
-        if (!getExpressionParser().parseSingleExpression(false)) {
+        if (!getExpressionParser().parseSingleExpression(false, false)) {
           myContext.getBuilder().error(EXPRESSION_EXPECTED);
         }
       }
@@ -557,10 +557,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     getExpressionParser().parseExpression(true, false);
     if (myBuilder.getTokenType() == PyTokenTypes.IN_KEYWORD) {
       myBuilder.advanceLexer();
-      getExpressionParser().parseSingleExpression(false);
+      getExpressionParser().parseSingleExpression(false, false);
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(false);
+        getExpressionParser().parseSingleExpression(false, false);
       }
     }
     checkEndOfStatement(inSuite);
@@ -641,7 +641,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker statement = myBuilder.mark();
     final PsiBuilder.Marker whilePart = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!getExpressionParser().parseSingleExpression(false, false)) {
       myBuilder.error(EXPRESSION_EXPECTED);
     }
     parseColonAndSuite(scope);
@@ -672,13 +672,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         final PsiBuilder.Marker exceptBlock = myBuilder.mark();
         myBuilder.advanceLexer();
         if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
-          if (!getExpressionParser().parseSingleExpression(false)) {
+          if (!getExpressionParser().parseSingleExpression(false, false)) {
             myBuilder.error(EXPRESSION_EXPECTED);
           }
           myExpectAsKeyword = true;
           if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
-            if (!getExpressionParser().parseSingleExpression(true)) {
+            if (!getExpressionParser().parseSingleExpression(true, false)) {
               myBuilder.error(EXPRESSION_EXPECTED);
             }
           }
@@ -733,7 +733,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myExpectAsKeyword = true;
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(true); // 'as' is followed by a target
+        getExpressionParser().parseSingleExpression(true, false); // 'as' is followed by a target
       }
       withItem.done(PyElementTypes.WITH_ITEM);
       if (!matchToken(PyTokenTypes.COMMA)) {

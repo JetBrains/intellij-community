@@ -73,7 +73,7 @@ gb = Ghostbusters()
 class B(object):
   x = property(gb) # pass
   y = property(Ghostbusters()) # pass
-  z = property(Ghostbusters) # fail: not callable
+  z = property(Ghostbusters) # pass
 
 class Eternal(object):
   def give(self):
