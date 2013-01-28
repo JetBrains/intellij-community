@@ -362,7 +362,7 @@ public class GitHistoryUtils {
             record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
           consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
-                                               new Date(record.getAuthorTimeStamp() * 1000), false, parents));
+                                               new Date(record.getAuthorTimeStamp() * 1000), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
             // can safely be empty, for example, for simple merge commits that don't change anything.

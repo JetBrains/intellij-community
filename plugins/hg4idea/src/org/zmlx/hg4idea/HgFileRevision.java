@@ -14,11 +14,9 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -118,14 +116,7 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   public byte[] getContent() throws IOException, VcsException {
-    return ContentRevisionCache.getOrLoadAsBytes(project, hgFile.toFilePath(), getRevisionNumber(), HgVcs.getKey(),
-                                                 ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                                                 new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                   @Override
-                                                   public byte[] compute() throws VcsException, IOException {
-                                                     return loadContent();
-                                                   }
-                                                 });
+    return loadContent();
   }
 
   @Override
