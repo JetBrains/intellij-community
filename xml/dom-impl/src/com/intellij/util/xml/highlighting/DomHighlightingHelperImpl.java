@@ -132,7 +132,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
                                      hasBadResolve(domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
           final String errorMessage = converter
-            .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
+            .getErrorMessage(element.getStringValue(), ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element)));
           if (errorMessage != null && XmlHighlightVisitor.getErrorDescription(domReference) != null) {
             list.add(holder.createResolveProblem(element, domReference));
           }
@@ -140,7 +140,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       }
       if (!hasBadResolve && psiReferences.length == 0 && element.getValue() == null && !PsiTreeUtil.hasErrorElements(valueElement)) {
         final String errorMessage = converter
-          .getErrorMessage(element.getStringValue(), new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element)));
+          .getErrorMessage(element.getStringValue(), ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element)));
         if (errorMessage != null) {
           list.add(holder.createProblem(element, errorMessage));
         }
