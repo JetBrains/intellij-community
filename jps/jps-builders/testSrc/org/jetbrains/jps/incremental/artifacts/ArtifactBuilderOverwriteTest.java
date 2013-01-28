@@ -1,7 +1,15 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.text.CharsetUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
@@ -104,6 +112,65 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
 
     delete(xFile);
     buildAllAndAssertUpToDate();
+  }
+
+  public void testOverwriteCopiedFileByExtracted() {
+    String jar = createArchive("x.jar", "x.txt", "1");
+    String file = createFile("x.txt", "2");
+    JpsArtifact a = addArtifact(root().extractedDir(jar, "").fileCopy(file));
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "1"));
+    buildAllAndAssertUpToDate();
+
+    change(file, "3");
+    buildAllAndAssertUpToDate();
+    assertOutput(a, fs().file("x.txt", "1"));
+
+    delete(jar);
+    createArchive("x.jar", "x.txt", "4");
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "4"));
+
+    delete(jar);
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "3"));
+  }
+
+  public void testOverwriteExtractedFileByCopied() {
+    String file = createFile("x.txt", "1");
+    String jar = createArchive("x.jar", "x.txt", "2");
+    JpsArtifact a = addArtifact(root().fileCopy(file).extractedDir(jar, ""));
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "1"));
+    buildAllAndAssertUpToDate();
+
+    delete(jar);
+    createArchive("x.jar", "x.txt", "3");
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "1"));
+
+    delete(file);
+    buildAll();
+    assertOutput(a, fs().file("x.txt", "3"));
+  }
+
+  private String createArchive(String relativeArchivePath, String fileNameInArchive, String text) {
+    try {
+      File file = new File(getOrCreateProjectDir(), relativeArchivePath);
+      ZipOutputStream output = new ZipOutputStream(new FileOutputStream(file));
+      try {
+        output.putNextEntry(new ZipEntry(fileNameInArchive));
+        output.write(text.getBytes(CharsetUtil.UTF8));
+        output.closeEntry();
+      }
+      finally {
+        output.close();
+      }
+      return FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void testFileOrder() {

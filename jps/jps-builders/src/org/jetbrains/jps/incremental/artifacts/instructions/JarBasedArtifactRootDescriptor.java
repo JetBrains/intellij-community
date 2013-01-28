@@ -84,7 +84,6 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
           outputFile.mkdir();
         }
         else {
-          String fullSourcePath = filePath + JarPathUtil.JAR_SEPARATOR + relativePath;
           if (outSrcMapping.getState(fullOutputPath) == null) {
             final BufferedInputStream from = new BufferedInputStream(inputStream);
             final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
@@ -97,7 +96,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }
-          outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(fullSourcePath, rootIndex)));
+          outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
         }
       }
     });
