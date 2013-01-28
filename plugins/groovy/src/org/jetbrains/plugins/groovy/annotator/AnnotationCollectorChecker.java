@@ -17,12 +17,16 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.Map;
 
 /**
  * @author Medvdedev Max
@@ -31,6 +35,26 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 public class AnnotationCollectorChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
+    return isInAliasDeclaration(annotation);
+  }
+
+  @Override
+  public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
+    if (!isInAliasDeclaration(annotation)) return false;
+
+    Map<PsiElement, String> errors = ContainerUtil.newHashMap();
+    final PsiClass clazz = (PsiClass)annotation.getClassReference().resolve();
+    if (clazz == null) return true;
+    final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    CustomAnnotationChecker.checkAnnotationArguments(errors, clazz, annotation.getClassReference(), attributes, false);
+    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
+      holder.createErrorAnnotation(entry.getKey(), entry.getValue());
+    }
+
+    return true;
+  }
+
+  private static boolean isInAliasDeclaration(GrAnnotation annotation) {
     final PsiElement parent = annotation.getParent();
     if (parent instanceof GrModifierList) {
       final GrAnnotation collector = ContainerUtil.find(((GrModifierList)parent).getRawAnnotations(), new Condition<GrAnnotation>() {

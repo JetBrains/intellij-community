@@ -54,6 +54,25 @@ class F<caret>oo {
 ''')
   }
 
+  void testAliasWithMissedProperty() {
+    testHighlighting('''\
+import groovy.transform.*
+
+@interface X {
+  String[] excludes()
+}
+
+@ToString(excludes = ['a', 'b'])
+@AnnotationCollector([X, Immutable])
+@interface Alias {}
+
+@<error descr="Missed attributes: excludes">Alias</error>
+class F<caret>oo {
+    Integer a, b
+}
+''')
+  }
+
   void testInapplicableAlias() {
     testHighlighting('''\
 import groovy.transform.*
@@ -75,6 +94,49 @@ import groovy.transform.*
 @AnnotationCollector([ToString, Immutable])
 @Field
 @interface Alias {}
+''')
+  }
+
+  void testInapplicableAttributeInAliasDeclaration() {
+    testHighlighting('''\
+import groovy.transform.*
+
+@ToString(excludes = ['a', 'b'], <error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'">foo</error> = 4)
+@AnnotationCollector([EqualsAndHashCode, Immutable])
+@interface Alias {}
+
+@Alias
+class Foo{}
+''')
+  }
+
+  void testUnknownAttributeInAliasUsage() {
+    testHighlighting('''\
+import groovy.transform.*
+
+@ToString(excludes = ['a', 'b'])
+@AnnotationCollector([EqualsAndHashCode, Immutable])
+@interface Alias {}
+
+@Alias(<error descr="@interface 'Alias' does not contain attribute 'foo'">foo</error> = 5)
+class Foo {
+    Integer a, b
+}
+''')
+  }
+
+  void testInapplicableAttributeInAliasUsage() {
+    testHighlighting('''\
+import groovy.transform.*
+
+@ToString(excludes = ['a', 'b'])
+@AnnotationCollector([EqualsAndHashCode, Immutable])
+@interface Alias {}
+
+@Alias(excludes = <error descr="Cannot assign 'Integer' to 'String[]'">5</error>)
+class Foo {
+    Integer a, b
+}
 ''')
   }
 }
