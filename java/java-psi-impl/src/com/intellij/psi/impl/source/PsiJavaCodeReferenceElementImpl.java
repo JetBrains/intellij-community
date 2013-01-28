@@ -395,8 +395,18 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         // TODO: support type parameters in FQ names
         String text = getTextSkipWhiteSpaceAndComments();
         if (StringUtil.isEmptyOrSpaces(text)) return JavaResolveResult.EMPTY_ARRAY;
+
         PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(text, getResolveScope());
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
+
+        if (!isQualified() && text.equals(aClass.getQualifiedName())) {
+          PsiFile file = getContainingFile();
+          if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+            // classes in default (unnamed) package cannot be referenced from other packages
+            return JavaResolveResult.EMPTY_ARRAY;
+          }
+        }
+
         return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
       }
       case CLASS_IN_QUALIFIED_NEW_KIND: {
