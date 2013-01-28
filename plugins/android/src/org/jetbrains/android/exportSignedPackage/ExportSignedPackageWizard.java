@@ -156,7 +156,7 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        getRootPane().setDefaultButton(getNextStep(step) != step ? getNextButton() : getFinishButton());
+        getRootPane().setDefaultButton(getNextButton());
 
         final JComponent component = currentStep.getPreferredFocusedComponent();
         if (component != null) {
