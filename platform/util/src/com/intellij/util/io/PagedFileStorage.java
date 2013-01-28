@@ -614,6 +614,7 @@ public class PagedFileStorage implements Forceable {
           }
           long newSize = mySize - owner.myPageSize;
           if (newSize < 0) {
+            LOG.info("Currently allocated:"+mySize);
             LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
             LOG.info(oome);
             try {
