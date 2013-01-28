@@ -135,7 +135,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   @Override
   public void apply(@NotNull PsiFile file, State annotationResult, @NotNull AnnotationHolder holder) {
-    if (annotationResult == null) return;
+    if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     for (Problem problem : annotationResult.problems) {
       int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
