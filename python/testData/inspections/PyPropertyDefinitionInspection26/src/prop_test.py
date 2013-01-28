@@ -59,3 +59,7 @@ class A(object):
   def xoo(self, x):
     self._x = x
     return
+
+  get_foo2 = lambda self: 'foo2'
+
+  foo2 = property(get_foo2)
