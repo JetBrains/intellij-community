@@ -613,11 +613,9 @@ public class PagedFileStorage implements Forceable {
             mySizeLimit -= owner.myPageSize;
           }
           long newSize = mySize - owner.myPageSize;
-          if (newSize >= 0) {
-            ensureSize(newSize);
-            continue; // next try
-          }
-          else {
+          if (newSize < 0) {
+            LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
+            LOG.info(oome);
             try {
               Class<?> aClass = Class.forName("java.nio.Bits");
               Field reservedMemory = aClass.getDeclaredField("reservedMemory");
@@ -625,13 +623,10 @@ public class PagedFileStorage implements Forceable {
               Field maxMemory = aClass.getDeclaredField("maxMemory");
               maxMemory.setAccessible(true);
               synchronized (aClass) {
-                LOG.debug("Max memory:"+maxMemory.get(null) + ", reserved memory:" + reservedMemory.get(null));
+                LOG.info("Max memory:"+maxMemory.get(null) + ", reserved memory:" + reservedMemory.get(null));
               }
             }
             catch (Throwable t) {}
-            LOG.info(e);
-          if (newSize < 0) {
-            LOG.info("Mapping failed due to OOME. Current buffers: " + mySegments);
             throw new MappingFailedException(
               "Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MB + "MB " +
               "new size limit: " + mySizeLimit / MB + "MB " +
