@@ -105,7 +105,7 @@ import groovy.transform.*
 @AnnotationCollector([EqualsAndHashCode, Immutable])
 @interface Alias {}
 
-@Alias
+@<error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'">Alias</error>
 class Foo{}
 ''')
   }
