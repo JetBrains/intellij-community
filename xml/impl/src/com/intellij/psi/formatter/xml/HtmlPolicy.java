@@ -32,13 +32,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlPolicy extends XmlFormattingPolicy {
-  
+
   protected final CodeStyleSettings mySettings;
 
   public HtmlPolicy(final CodeStyleSettings settings, final FormattingDocumentModel documentModel) {
     super(documentModel);
     mySettings = settings;
-
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
@@ -55,8 +54,8 @@ public class HtmlPolicy extends XmlFormattingPolicy {
       return false;
     }
 
-    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 && getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES)
-    {
+    if (mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES > 0 &&
+        getLines(parentTag) > mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES) {
       return false;
     }
     else {
@@ -85,7 +84,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
       prevNode = prevNode.getTreePrev();
     }
     if (prevNode == null) return false;
-    if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode)instanceof XmlTag)) return false;
+    if (!(SourceTreeToPsiMap.treeElementToPsi(prevNode) instanceof XmlTag)) return false;
     return checkName(xmlTag, mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
   }
 
@@ -180,7 +179,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   public boolean isTextElement(XmlTag tag) {
     return isInlineTag(tag);
-  }                               
+  }
 
   public int getTextWrap(final XmlTag tag) {
     return mySettings.HTML_TEXT_WRAP;
@@ -243,5 +242,4 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   public boolean shouldSaveSpacesBetweenTagAndText() {
     return true;
   }
-
 }
