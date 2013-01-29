@@ -290,6 +290,6 @@
 
   <applicationService serviceInterface="org.jetbrains.ide.WebServerManager" serviceImplementation="org.jetbrains.ide.WebServerManagerImpl"/>
   <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
-  <serverPipelineConsumer implementation="org.jetbrains.ide.XmlRpcPipelineConsumer"/>
+  <serverPipelineConsumer implementation="com.intellij.ide.XmlRpcServerImpl$XmlRpcPipelineConsumer"/>
   <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
 </extensions>
