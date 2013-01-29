@@ -366,7 +366,7 @@ class TabContentLayout extends ContentLayout {
       }
     }
     else {
-      g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
       g2d.fillRect(0, 0, r.width, r.height);
 
       final Color c = new Color(255, 255, 255, UIUtil.isUnderDarcula() ? 10 : 80);

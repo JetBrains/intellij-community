@@ -109,9 +109,9 @@ public class MacUIUtil {
   public static void drawToolbarDecoratorBackground(Graphics g2, int width, int height) {
     final Graphics2D g = (Graphics2D)g2;
     final int h1 = height / 2;
-    g.setPaint(new GradientPaint(0,0, Gray._247, 0, h1, Gray._240));
+    g.setPaint(UIUtil.getGradientPaint(0,0, Gray._247, 0, h1, Gray._240));
     g.fillRect(0, 0, width, h1);
-    g.setPaint(new GradientPaint(0,h1, Gray._229, 0, height, Gray._234));
+    g.setPaint(UIUtil.getGradientPaint(0,h1, Gray._229, 0, height, Gray._234));
     g.fillRect(0, h1, width, height);
   }
 

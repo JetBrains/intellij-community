@@ -308,7 +308,7 @@ public abstract class AppIcon {
         appImg.myG2d.setColor(backGround);
         appImg.myG2d.fill(rect);
         final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
-        final GradientPaint paint = new GradientPaint(xInset + 1, y + 1, color.brighter(),
+        final Paint paint = UIUtil.getGradientPaint(xInset + 1, y + 1, color.brighter(),
                                                       xInset + 1, y + progressHeight - 1, color.darker().darker());
         appImg.myG2d.setPaint(paint);
         appImg.myG2d.fill(progress);

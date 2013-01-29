@@ -103,10 +103,10 @@ public interface StatusBarWidget extends Disposable {
       if (SystemInfo.isMac) {
         final Window window = SwingUtilities.getWindowAncestor(c);
         if (window != null && window.isActive()) {
-          g2.setPaint(new GradientPaint(0, 0, LEFT1_FROM, 0, height, LEFT1_TO));
+          g2.setPaint(UIUtil.getGradientPaint(0, 0, LEFT1_FROM, 0, height, LEFT1_TO));
           g2.drawLine(x, y, x, y + height);
 
-          g2.setPaint(new GradientPaint(0, 0, LEFT2_FROM, 0, height, LEFT2_TO));
+          g2.setPaint(UIUtil.getGradientPaint(0, 0, LEFT2_FROM, 0, height, LEFT2_TO));
           g2.drawLine(x + 1, y, x + 1, y + height);
 
           g2.setColor(PIXEL);
@@ -116,7 +116,7 @@ public interface StatusBarWidget extends Disposable {
           g2.drawLine(x + 2, y, x + width - 2, y);
         }
         else {
-          g2.setPaint(new GradientPaint(0, 0, LEFT1_FROM_INACTIVE, 0, height, LEFT1_TO_INACTIVE));
+          g2.setPaint(UIUtil.getGradientPaint(0, 0, LEFT1_FROM_INACTIVE, 0, height, LEFT1_TO_INACTIVE));
           g2.drawLine(x, y, x, y + height);
         }
       } else {

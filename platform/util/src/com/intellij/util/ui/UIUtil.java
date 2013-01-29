@@ -1250,7 +1250,7 @@ public class UIUtil {
 
     final Composite oldComposite = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    g.setPaint(new GradientPaint(startX, 2, c1, startX, height - 5, c2));
+    g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
@@ -1315,8 +1315,7 @@ public class UIUtil {
 
   public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
     final Graphics2D g2d = (Graphics2D)g;
-    final GradientPaint gradientPaint = new GradientPaint(0, 0, Gray._215, 0, height, Gray._200);
-    g2d.setPaint(gradientPaint);
+    g2d.setPaint(getGradientPaint(0, 0, Gray._215, 0, height, Gray._200));
     g2d.fillRect(0, 0, width, height);
   }
 
@@ -1334,7 +1333,7 @@ public class UIUtil {
     g.setColor(getPanelBackground());
     g.fillRect(x, 0, width, height);
 
-    ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+    ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
     g.fillRect(x, 0, width, height);
 
     g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
@@ -2598,5 +2597,10 @@ public class UIUtil {
 
   public static Color getDecoratedRowColor() {
     return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
+  }
+
+  @NotNull
+  public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
+    return (Registry.is("ui.no.bangs.and.whistles", false)) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 }

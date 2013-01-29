@@ -40,7 +40,7 @@ public class EditorHeaderComponent extends JPanel {
     final Graphics2D g2d = (Graphics2D)g;
 
     if (!UIUtil.isUnderGTKLookAndFeel()) {
-      g2d.setPaint(new GradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, GRADIENT_C1, 0, getHeight(), GRADIENT_C2));
       g2d.fillRect(1, 1, getWidth(), getHeight() - 1);
       g2d.setPaint(null);
     }
