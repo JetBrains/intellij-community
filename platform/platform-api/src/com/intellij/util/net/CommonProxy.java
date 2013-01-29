@@ -37,7 +37,7 @@ import java.util.*;
  */
 public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
-  private final IdeaWideProxySelector myIDEAWide = new IdeaWideProxySelector();
+  private final IdeaWideProxySelector myIDEAWide;
   private final static List<Proxy> ourNoProxy = Collections.singletonList(Proxy.NO_PROXY);
   private volatile static ProxySelector ourWrong;
   private static final Map<String, String> ourProps = new HashMap<String, String>();
@@ -61,6 +61,7 @@ public class CommonProxy extends ProxySelector {
     myNoProxy = new HashSet<HostInfo>();
     myCustom = new HashMap<String, ProxySelector>();
     myCustomAuth = new HashMap<Pair<String, Integer>, NonStaticAuthenticator>();
+    myIDEAWide = new IdeaWideProxySelector();
   }
 
   public static void isInstalledAssertion() {
@@ -177,8 +178,9 @@ public class CommonProxy extends ProxySelector {
     }
     // delegate to IDEA-wide behaviour
     final List<Proxy> selected = myIDEAWide.select(uri);
-    if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY) {
-      myIDEAWide.myHttpConfigurable.LAST_ERROR = null;
+    final HttpConfigurable configurable = HttpConfigurable.getInstance();
+    if (configurable != null && configurable.USE_HTTP_PROXY) {
+      configurable.LAST_ERROR = null;
     }
     LOG.debug("CommonProxy.select returns something after common platform check for " + uri.toString() + ", " + selected.toString());
     return selected;
@@ -187,11 +189,13 @@ public class CommonProxy extends ProxySelector {
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     LOG.info("connect failed to " + uri.toString() + ", sa: " + sa.toString(), ioe);
-    myIDEAWide.myHttpConfigurable.removeGeneric(new HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
+    final HttpConfigurable configurable = HttpConfigurable.getInstance();
+    if (configurable == null) return;
+    configurable.removeGeneric(new HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
     final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
-    if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY && isa != null && Comparing.equal(myIDEAWide.myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
+    if (configurable.USE_HTTP_PROXY && isa != null && Comparing.equal(configurable.PROXY_HOST, isa.getHostName())) {
       LOG.debug("connection failed message passed to http configurable");
-      myIDEAWide.myHttpConfigurable.LAST_ERROR = ioe.getMessage();
+      configurable.LAST_ERROR = ioe.getMessage();
     }
   }
 
@@ -301,11 +305,9 @@ public class CommonProxy extends ProxySelector {
   }
 
   private class IdeaWideProxySelector extends ProxySelector {
-    private final HttpConfigurable myHttpConfigurable;
     private final CommonAuthenticator myAuthenticator;
 
     private IdeaWideProxySelector() {
-      myHttpConfigurable = HttpConfigurable.getInstance();
       myAuthenticator = new CommonAuthenticator();
       Authenticator.setDefault(myAuthenticator);
     }
@@ -322,12 +324,17 @@ public class CommonProxy extends ProxySelector {
         LOG.debug("IDEA-wide proxy selector returns no proxies: not http/https scheme: " + scheme);
         return ourNoProxy;
       }
-      if (myHttpConfigurable.USE_HTTP_PROXY) {
-        final Proxy proxy = new Proxy(myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                                      new InetSocketAddress(myHttpConfigurable.PROXY_HOST, myHttpConfigurable.PROXY_PORT));
+      final HttpConfigurable configurable = HttpConfigurable.getInstance();
+      if (configurable == null) {
+        LOG.error("HttpConfigurable not initialized yet", new Throwable());
+        return ourNoProxy;
+      }
+      if (configurable.USE_HTTP_PROXY) {
+        final Proxy proxy = new Proxy(configurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+                                      new InetSocketAddress(configurable.PROXY_HOST, configurable.PROXY_PORT));
         LOG.debug("IDEA-wide proxy selector returns defined proxy: " + proxy);
         return Collections.singletonList(proxy);
-      } else if (myHttpConfigurable.USE_PROXY_PAC) {
+      } else if (configurable.USE_PROXY_PAC) {
         final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
         final ProxySelector proxySelector = proxySearch.getProxySelector();
         if (proxySelector != null) {
