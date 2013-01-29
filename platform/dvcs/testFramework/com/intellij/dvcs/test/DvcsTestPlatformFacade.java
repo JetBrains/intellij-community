@@ -79,6 +79,11 @@ public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
   }
 
   @Override
+  public void executeOnPooledThread(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
   public ChangeListManagerEx getChangeListManager(@NotNull Project project) {
     return myChangeListManager;
   }

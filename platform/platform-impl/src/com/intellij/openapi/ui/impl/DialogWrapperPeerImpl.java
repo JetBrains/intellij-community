@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,14 +176,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     if (application != null && application.hasComponent(WindowManager.class)) {
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
-    if (UIUtil.hasJdk6Dialogs()) {
-      createDialog(null, canBeParent);
-      if (tryToolkitModal && !isHeadless()) {
-        UIUtil.setToolkitModal((MyDialog)myDialog);
-      }
-    }
-    else {
-      createDialog(JOptionPane.getRootFrame(), canBeParent);
+    createDialog(null, canBeParent);
+    if (tryToolkitModal && !isHeadless()) {
+      ((MyDialog)myDialog).setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     }
   }
 
@@ -304,12 +299,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     myDialog.pack();
   }
 
-  public void setIconImages(final List<Image> image) {
-    UIUtil.updateDialogIcon(myDialog.getWindow(), image);
+  @SuppressWarnings("UnusedDeclaration")
+  public void setIconImages(final List<Image> images) {
+    myDialog.getWindow().setIconImages(images);
   }
 
   public void setAppIcons() {
-    setIconImages(AppUIUtil.getAppIconImages());
+    AppUIUtil.updateWindowIcon(getWindow());
   }
 
   public Dimension getPreferredSize() {
