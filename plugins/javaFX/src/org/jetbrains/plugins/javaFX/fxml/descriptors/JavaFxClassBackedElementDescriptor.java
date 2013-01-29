@@ -116,6 +116,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           }
         }
 
+        for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
+          children.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
+        }
+
         if (!children.isEmpty()) {
           return children.toArray(new XmlElementDescriptor[children.size()]);
         }
@@ -161,8 +165,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         }
         return null;
       }
-      if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(name)) {
-        //return new ;
+      if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
+        return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
       }
       return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }
@@ -192,6 +196,9 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
           }
         });
+        for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
+          simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty));
+        }
         return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
     }
