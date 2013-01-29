@@ -17,6 +17,7 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,19 +70,21 @@ public interface WhiteSpaceFormattingStrategy {
    * This method defines a callback that allows to modify white space symbols to use for replacing particular
    * document symbols sub-sequence if necessary.
    *
+   *
    * @param whiteSpaceText    white space text to use by default for replacing sub-sequence of the given text
    * @param text              target text which region is to be replaced by the given white space symbols
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
+   * @param codeStyleSettings the code style settings
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   @NotNull
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull CharSequence text, int startOffset,
-                                           int endOffset);
+                                           int endOffset, CodeStyleSettings codeStyleSettings);
 
             
   /**
-   * PSI-based version of {@link #adjustWhiteSpaceIfNecessary(CharSequence, CharSequence, int, int)}.
+   * PSI-based version of {@link #adjustWhiteSpaceIfNecessary(CharSequence, CharSequence, int, int, com.intellij.psi.codeStyle.CodeStyleSettings)}.
    * <p/>
    * There is a possible case that particular changes are performed to PSI tree and it's not yet synchronized with the underlying
    * document. Hence, we can't directly work with document char sequence but need to traverse PSI tree instead. I.e. we start with
@@ -92,10 +95,11 @@ public interface WhiteSpaceFormattingStrategy {
    * @param startElement      PSI element that contains given start offset
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
+   * @param codeStyleSettings the code style settings
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, @NotNull PsiElement startElement, int startOffset,
-                                           int endOffset);
+                                           int endOffset, CodeStyleSettings codeStyleSettings);
 
   /**
    * Allows to customize addition of the given white space element to the AST referenced by the given node.
