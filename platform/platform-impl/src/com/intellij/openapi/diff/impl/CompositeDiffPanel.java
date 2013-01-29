@@ -104,7 +104,6 @@ public class CompositeDiffPanel implements DiffViewer {
 
     if (myMap.isEmpty()) {
       final EmptyDiffViewer emptyDiffViewer = new EmptyDiffViewer();
-      emptyDiffViewer.setMessage("Can not show");
       emptyDiffViewer.setDiffRequest(request);
       myMap.put(FICTIVE_KEY, emptyDiffViewer);
       final Content content = myUi.createContent(FICTIVE_KEY, emptyDiffViewer.getComponent(), FICTIVE_KEY, null,

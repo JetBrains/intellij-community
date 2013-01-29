@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
 import com.intellij.diagnostic.errordialog.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -29,7 +30,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
@@ -209,8 +209,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
-      super("");
-      new ShadowAction(this, ActionManager.getInstance().getAction("Forward"), getRootPane());
+      super("Next", null, AllIcons.Actions.Forward);
+      AnAction forward = ActionManager.getInstance().getAction("Forward");
+      if (forward != null) {
+        registerCustomShortcutSet(forward.getShortcutSet(), getRootPane(), getDisposable());
+      }
+
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -225,8 +229,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private class BackAction extends AnAction implements DumbAware {
     public BackAction() {
-      super("");
-      new ShadowAction(this, ActionManager.getInstance().getAction("Back"), getRootPane());
+      super("Previous", null, AllIcons.Actions.Back);
+      AnAction back = ActionManager.getInstance().getAction("Back");
+      if (back != null) {
+        registerCustomShortcutSet(back.getShortcutSet(), getRootPane(), getDisposable());
+      }
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -251,7 +258,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     DefaultActionGroup goForward = new DefaultActionGroup();
     ForwardAction forward = new ForwardAction();
-    new ShadowAction(forward, ActionManager.getInstance().getAction("Forward"), getRootPane());
     goForward.add(forward);
     ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goForward, true);
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);

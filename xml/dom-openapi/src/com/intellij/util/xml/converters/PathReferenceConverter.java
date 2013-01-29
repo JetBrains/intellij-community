@@ -36,9 +36,8 @@ public class PathReferenceConverter extends Converter<PathReference> implements 
   public final static Converter<PathReference> INSTANCE = new PathReferenceConverter();
 
   public PathReference fromString(@Nullable final String s, final ConvertContext context) {
-    Module module = context.getModule();
     final XmlElement element = context.getXmlElement();
-    return s == null || module == null || element == null ? null : PathReferenceManager.getInstance().getPathReference(s, module, element);
+    return s == null || element == null ? null : PathReferenceManager.getInstance().getPathReference(s, element);
   }
 
   public String toString(final PathReference t, final ConvertContext context) {

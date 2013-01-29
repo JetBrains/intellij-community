@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -56,6 +57,9 @@ public abstract class ConvertContext {
 
   @Nullable
   public abstract Module getModule();
+
+  @Nullable
+  public abstract GlobalSearchScope getSearchScope();
   
   public abstract PsiManager getPsiManager();
 

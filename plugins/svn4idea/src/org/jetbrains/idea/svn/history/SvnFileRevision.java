@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -115,6 +116,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return null;
   }
 
+  @Nullable
   @Override
   public RepositoryLocation getChangedRepositoryPath() {
     return new SvnRepositoryLocation(myURL);

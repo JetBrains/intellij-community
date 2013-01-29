@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
@@ -84,6 +85,7 @@ public class CurrentRevision implements VcsFileRevision {
     return null;
   }
 
+  @Nullable
   @Override
   public RepositoryLocation getChangedRepositoryPath() {
     return null;  // use initial url..

@@ -291,7 +291,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
       if (afterRevision != null && afterRevision.getFile().equals(currentRevisionPath)) {
         // if the file was renamed, taking the path how it was in the parent; otherwise the path didn't change
         FilePath path = (beforeRevision != null ? beforeRevision.getFile() : afterRevision.getFile());
-        return new GitFileRevision(myProject, path, new GitRevisionNumber(parentHash), true);
+        return new GitFileRevision(myProject, path, new GitRevisionNumber(parentHash));
       }
     }
     LOG.error(String.format("Could not find parent revision. Will use the path from parent revision. Current revision: %s, parent hash: %s",
@@ -344,7 +344,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   @NotNull
   private GitFileRevision makeRevisionFromHash(@NotNull FilePath filePath, @NotNull String hash) {
-    return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash), false);
+    return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash));
   }
 
   private boolean wasFileTouched(@NotNull GitRepository repository, @NotNull GitFileRevision rev) throws VcsException {

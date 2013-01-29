@@ -59,6 +59,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -151,7 +152,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
   private boolean myUpdating;
-  private CompletionPreview myPreview;
   private final ModalityState myModalityState;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
@@ -268,6 +268,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void setFocused(boolean focused) {
+    if (focused && !myFocused) {
+      CompletionPreview.installPreview(this);
+    }
     myFocused = focused;
   }
 
@@ -726,7 +729,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
-    uninstallPreview();
 
     myChangeGuard = true;
     boolean result;
@@ -1347,7 +1349,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private class LookupLayeredPane extends JLayeredPane {
+  private class LookupLayeredPane extends JBLayeredPane {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
@@ -1465,24 +1467,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     synchronized (myList) {
       return myPresentableArranger.getRelevanceStrings();
     }
-  }
-
-  public CompletionPreview getPreview() {
-    return myPreview;
-  }
-
-  @Nullable 
-  public CompletionPreview uninstallPreview() {
-    CompletionPreview preview = myPreview;
-    if (preview != null) {
-      preview.uninstallPreview();
-      assert myPreview == null;
-    }
-    return preview;
-  }
-
-  void setPreview(CompletionPreview preview) {
-    myPreview = preview;
   }
 
   private class ChangeLookupSorting extends ClickListener {

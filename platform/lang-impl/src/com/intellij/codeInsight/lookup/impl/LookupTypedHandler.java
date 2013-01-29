@@ -66,8 +66,6 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
-    CompletionPreview preview = lookup.uninstallPreview();
-
     if (!lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
@@ -104,7 +102,6 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       if (completion != null) {
         completion.prefixUpdated();
       }
-      CompletionPreview.reinstallPreview(preview);
       return Result.STOP;
     }
 

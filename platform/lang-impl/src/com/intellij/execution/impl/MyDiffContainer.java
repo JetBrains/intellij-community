@@ -17,6 +17,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -32,7 +33,7 @@ import java.awt.*;
 * Date: 8/8/11
 * Time: 3:13 PM
 */
-public class MyDiffContainer extends JLayeredPane implements Disposable {
+public class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
 
   private final JComponent myContent;

@@ -109,6 +109,8 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public boolean FORCE_UPDATE = false;
   public boolean IGNORE_EXTERNALS = false;
   public Boolean TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE;
+  public SSLProtocols SSL_PROTOCOLS = (SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.7") || SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.8")) ?
+    SSLProtocols.all : SSLProtocols.sslv3;
 
   public UseAcceleration myUseAcceleration = UseAcceleration.nothing;
 
@@ -434,6 +436,14 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
       myCleanupRun = Boolean.parseBoolean(cleanupRun.getValue());
     }
     final Attribute treeConflictMergeNewFilesPlace = element.getAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE");
+    final Attribute protocols = element.getAttribute("SSL_PROTOCOLS");
+    if (protocols != null) {
+      try {
+        SSL_PROTOCOLS = SSLProtocols.valueOf(protocols.getValue());
+      } catch (IllegalArgumentException e) {
+        //
+      }
+    }
     if (treeConflictMergeNewFilesPlace != null) {
       TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = Boolean.parseBoolean(treeConflictMergeNewFilesPlace.getValue());
     }
@@ -472,6 +482,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
     element.setAttribute("myAutoUpdateAfterCommit", "" + myAutoUpdateAfterCommit);
     element.setAttribute(CLEANUP_ON_START_RUN, "" + myCleanupRun);
+    element.setAttribute("SSL_PROTOCOLS", SSL_PROTOCOLS.name());
     if (TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE != null) {
       element.setAttribute("TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE", "" + TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE);
     }
@@ -610,5 +621,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public void setCleanupRun(boolean cleanupRun) {
     myCleanupRun = cleanupRun;
+  }
+
+  public static enum SSLProtocols {
+    sslv3, tlsv1, all
   }
 }

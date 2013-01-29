@@ -17,7 +17,6 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionDvcsSpecific;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.util.GitFileUtils;
@@ -33,127 +31,126 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-/**
- * Git file revision
- */
 public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision>, VcsFileRevisionDvcsSpecific {
-  /**
-   * encoding to be used for binary output
-   */
-  @SuppressWarnings({"HardCodedStringLiteral"}) private final static Charset BIN_ENCODING = Charset.forName("ISO-8859-1");
-  private final FilePath path;
-  private final GitRevisionNumber revision;
-  private final Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter;
-  private final String message;
-  private final Project project;
-  private final String branch;
-  private final Date myAuthorTime;
-  private final boolean myNoCache;
+
+  @NotNull private final Project myProject;
+  @NotNull private final FilePath myPath;
+  @NotNull private final GitRevisionNumber myRevision;
+  @Nullable private final Pair<Pair<String, String>, Pair<String, String>> myAuthorAndCommitter;
+  @Nullable private final String myMessage;
+  @Nullable private final String myBranch;
+  @Nullable private final Date myAuthorTime;
   @NotNull private final Collection<String> myParents;
 
-  public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision, boolean noCache) {
-    this(project, path, revision, null, null, null, null, noCache, Collections.<String>emptyList());
+  public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
+    this(project, path, revision, null, null, null, null, Collections.<String>emptyList());
   }
 
-  public GitFileRevision(@NotNull Project project,
-                         @NotNull FilePath path,
-                         @NotNull GitRevisionNumber revision,
-                         @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter,
-                         @Nullable String message,
-                         @Nullable String branch, @Nullable final Date authorTime, boolean noCache, @NotNull Collection<String> parents) {
-    this.project = project;
-    this.path = path;
-    this.revision = revision;
-    this.authorAndCommitter = authorAndCommitter;
-    this.message = message;
-    this.branch = branch;
+  public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
+                         @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter, @Nullable String message,
+                         @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents) {
+    myProject = project;
+    myPath = path;
+    myRevision = revision;
+    myAuthorAndCommitter = authorAndCommitter;
+    myMessage = message;
+    myBranch = branch;
     myAuthorTime = authorTime;
-    myNoCache = noCache;
     myParents = parents;
   }
 
   @Override
   @NotNull
   public FilePath getPath() {
-    return path;
+    return myPath;
   }
 
+  @Nullable
   @Override
   public RepositoryLocation getChangedRepositoryPath() {
     return null;
   }
 
   public VcsRevisionNumber getRevisionNumber() {
-    return revision;
+    return myRevision;
   }
 
   public Date getRevisionDate() {
-    return revision.getTimestamp();
+    return myRevision.getTimestamp();
   }
 
+  @Nullable
   @Override
   public Date getDateForRevisionsOrdering() {
     return myAuthorTime;
   }
 
+  @Nullable
   public String getAuthor() {
-    return authorAndCommitter.getFirst().getFirst();
+    if (myAuthorAndCommitter != null) {
+      return myAuthorAndCommitter.getFirst().getFirst();
+    }
+    return null;
   }
 
+  @Nullable
   @Override
   public String getAuthorEmail() {
-    return authorAndCommitter.getFirst().getSecond();
+    if (myAuthorAndCommitter != null) {
+      return myAuthorAndCommitter.getFirst().getSecond();
+    }
+    return null;
   }
 
+  @Nullable
   @Override
   public String getCommitterName() {
-    return authorAndCommitter.getSecond() == null ? null : authorAndCommitter.getSecond().getFirst();
+    if (myAuthorAndCommitter != null) {
+      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getFirst();
+    }
+    return null;
   }
 
+  @Nullable
   @Override
   public String getCommitterEmail() {
-    return authorAndCommitter.getSecond() == null ? null : authorAndCommitter.getSecond().getSecond();
+    if (myAuthorAndCommitter != null) {
+      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getSecond();
+    }
+    return null;
   }
 
+  @Nullable
   public String getCommitMessage() {
-    return message;
+    return myMessage;
   }
 
+  @Nullable
   public String getBranchName() {
-    return branch;
+    return myBranch;
   }
 
   public synchronized byte[] loadContent() throws IOException, VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(path);
-    return GitFileUtils.getFileContent(project, root, revision.getRev(), VcsFileUtil.relativePath(root, path));
+    VirtualFile root = GitUtil.getGitRoot(myPath);
+    return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
   }
 
   public synchronized byte[] getContent() throws IOException, VcsException {
-    if (myNoCache) {
-      return loadContent();
-    }
-    return ContentRevisionCache.getOrLoadAsBytes(project, path, revision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                                          new Throwable2Computable<byte[], VcsException, IOException>() {
-                                            @Override
-                                            public byte[] compute() throws VcsException, IOException {
-                                                return loadContent();
-                                            }
-                                          });
+    return loadContent();
   }
 
   public int compareTo(VcsFileRevision rev) {
-    if (rev instanceof GitFileRevision) return revision.compareTo(((GitFileRevision)rev).revision);
+    if (rev instanceof GitFileRevision) return myRevision.compareTo(((GitFileRevision)rev).myRevision);
     return getRevisionDate().compareTo(rev.getRevisionDate());
   }
 
   @Override
   public String toString() {
-    return path.getName() + ":" + revision.getShortRev();
+    return myPath.getName() + ":" + myRevision.getShortRev();
   }
 
   @NotNull
@@ -163,7 +160,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
 
   @NotNull
   public String getHash() {
-    return revision.getRev();
+    return myRevision.getRev();
   }
 
 }
