@@ -34,7 +34,7 @@ import org.jetbrains.io.Responses;
 import java.util.Arrays;
 
 @ChannelHandler.Sharable
-public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
+public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
   private final XmlRpcHandlerMappingImpl handlerMapping;
@@ -76,9 +76,12 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     LOG.debug("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
-  @Override
-  public void consume(ChannelPipeline pipeline) {
-    pipeline.addLast("pluggable_xmlRpc", this);
+  static final class XmlRpcPipelineConsumer implements Consumer<ChannelPipeline> {
+    @Override
+    public void consume(ChannelPipeline pipeline) {
+      XmlRpcServer xmlRpcServer = SERVICE.getInstance();
+      pipeline.addLast("pluggable_xmlRpc", (XmlRpcServerImpl)xmlRpcServer);
+    }
   }
 
   @Override
