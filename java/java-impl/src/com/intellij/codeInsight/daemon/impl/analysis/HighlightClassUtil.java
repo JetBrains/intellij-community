@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,8 +230,9 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkPublicClassInRightFile(PsiKeyword keyword, PsiModifierList psiModifierList) {
-    // todo most testcase classes located in wrong files
+    // most test case classes are located in wrong files
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+
     if (new PsiMatcherImpl(keyword)
       .dot(PsiMatchers.hasText(PsiModifier.PUBLIC))
       .parent(PsiMatchers.hasClass(PsiModifierList.class))
@@ -240,14 +241,15 @@ public class HighlightClassUtil {
       .getElement() == null) {
       return null;
     }
+
     PsiClass aClass = (PsiClass)keyword.getParent().getParent();
     PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
     VirtualFile virtualFile = file.getVirtualFile();
     HighlightInfo errorResult = null;
-    if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension()) && aClass.getNameIdentifier() != null) {
+    if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
       String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
-
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, aClass.getNameIdentifier(), message);
+      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, message);
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix);
       PsiClass[] classes = file.getClasses();
@@ -255,8 +257,9 @@ public class HighlightClassUtil {
         QuickFixAction.registerQuickFixAction(errorResult, new MoveClassToSeparateFileFix(aClass));
       }
       for (PsiClass otherClass : classes) {
-        if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) && otherClass.hasModifierProperty(PsiModifier.PUBLIC)
-            && otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+        if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) &&
+            otherClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+            otherClass.getName().equals(virtualFile.getNameWithoutExtension())) {
           return errorResult;
         }
       }
@@ -267,22 +270,49 @@ public class HighlightClassUtil {
   }
 
   @Nullable
+  static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {
+    String name = aClass.getQualifiedName();
+
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(name)) {
+      String message = JavaErrorMessages.message("class.clashes.with.package", name);
+      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, message);
+    }
+
+    PsiElement file = aClass.getParent();
+    if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+      PsiElement directory = file.getParent();
+      if (directory instanceof PsiDirectory && ((PsiDirectory)directory).findSubdirectory(aClass.getName()) != null) {
+        String message = JavaErrorMessages.message("class.clashes.with.package", name);
+        TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, message);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
   private static HighlightInfo checkStaticFieldDeclarationInInnerClass(PsiKeyword keyword) {
     if (getEnclosingStaticClass(keyword, PsiField.class) == null) {
       return null;
     }
+
     PsiField field = (PsiField)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(field)) return null;
-    // except compile time constants
-    if (PsiUtil.isCompileTimeConstant(field)) {
+    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant(field)) {
       return null;
     }
+
     String message = JavaErrorMessages.message("static.declaration.in.inner.class");
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, keyword, message);
-    IntentionAction fix1 = QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.STATIC, false, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix1);
-    IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getContainingClass(), PsiModifier.STATIC, true, false);
-    QuickFixAction.registerQuickFixAction(errorResult, fix);
+
+    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(field, PsiModifier.STATIC, false, false));
+
+    PsiClass aClass = field.getContainingClass();
+    if (aClass != null) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, true, false));
+    }
+
     return errorResult;
   }
 

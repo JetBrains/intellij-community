@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
@@ -44,7 +48,11 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
 
   @NotNull
   public GrAnnotationMemberValue[] getInitializers() {
-    return findChildrenByClass(GrAnnotationMemberValue.class);
+    List<GrAnnotationMemberValue> result = new ArrayList<GrAnnotationMemberValue>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationMemberValue) result.add((GrAnnotationMemberValue)cur);
+    }
+    return result.toArray(new GrAnnotationMemberValue[result.size()]);
   }
 
   @Override

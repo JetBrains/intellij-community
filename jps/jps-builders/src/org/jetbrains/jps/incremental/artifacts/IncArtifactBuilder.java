@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +48,7 @@ import java.util.*;
  * @author nik
  */
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
+  private static final Logger LOG = Logger.getInstance(IncArtifactBuilder.class);
   public static final String BUILDER_NAME = "Artifacts builder";
 
   public IncArtifactBuilder() {
@@ -77,7 +79,10 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     try {
       final Collection<String> deletedFiles = holder.getRemovedFiles(target);
 
-      context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
+      String messageText = "Building artifact '" + artifact.getName() + "'...";
+      context.processMessage(new ProgressMessage(messageText));
+      LOG.debug(messageText);
+
       runArtifactTasks(context, target.getArtifact(), ArtifactBuildTaskProvider.ArtifactBuildPhase.PRE_PROCESSING);
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
@@ -143,6 +148,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
         for (String sourcePath : sourcePaths) {
           if (!descriptor.getFilter().shouldBeCopied(sourcePath, pd)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("File " + sourcePath + " will be skipped because it isn't accepted by filter");
+            }
             continue;
           }
           DestinationInfo destination = descriptor.getDestinationInfo();
@@ -217,6 +225,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       }
 
       if (deleted) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Outdated output file deleted: " + filePath);
+        }
         outSrcMapping.remove(filePath);
         deletedPaths.add(filePath);
         for (String sourcePath : filesToDelete.get(filePath)) {

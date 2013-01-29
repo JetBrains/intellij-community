@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -328,37 +329,33 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    public static JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
-      final PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
-      final int kind = referenceElement.getKind();
+    @NotNull
+    @Override
+    public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
+      PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
+      int kind = referenceElement.getKind();
       JavaResolveResult[] result = referenceElement.resolve(kind);
+
       if (incompleteCode && result.length == 0 && kind != CLASS_FQ_NAME_KIND && kind != CLASS_FQ_OR_PACKAGE_NAME_KIND) {
-        final VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement);
+        VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement);
         PsiScopesUtil.resolveAndWalk(processor, referenceElement, null, incompleteCode);
         result = processor.getResult();
         if (result.length == 0 && kind == CLASS_NAME_KIND) {
-          return referenceElement.resolve(PACKAGE_NAME_KIND);
+          result = referenceElement.resolve(PACKAGE_NAME_KIND);
         }
       }
-      return result;
-    }
 
-    @NotNull
-    @Override
-    public JavaResolveResult[] resolve(@NotNull final PsiJavaReference ref, final boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
-        final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
-        final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
+        PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
         for (int i = 0; i < result.length; i++) {
-          final CandidateInfo resolveResult = (CandidateInfo)result[i];
-          final PsiClass aClass = (PsiClass)resolveResult.getElement();
-          assert aClass != null;
-          newResult[i] = !aClass.hasTypeParameters() ?
-                         resolveResult : new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll(aClass, parameters));
+          CandidateInfo resolveResult = (CandidateInfo)result[i];
+          PsiElement resultElement = resolveResult.getElement();
+          if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
+            result[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters));
+          }
         }
-        return newResult;
       }
+
       return result;
     }
   }
@@ -367,8 +364,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @NotNull
   public JavaResolveResult advancedResolve(final boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
-    if (results.length == 1) return results[0];
-    return JavaResolveResult.EMPTY;
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }
 
   @Override
@@ -397,11 +393,20 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     switch (kind) {
       case CLASS_FQ_NAME_KIND: {
         // TODO: support type parameters in FQ names
-        final String textSkipWhiteSpaceAndComments = getTextSkipWhiteSpaceAndComments();
-        if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return JavaResolveResult.EMPTY_ARRAY;
-        final PsiClass aClass =
-          JavaPsiFacade.getInstance(getProject()).findClass(textSkipWhiteSpaceAndComments, getResolveScope());
+        String text = getTextSkipWhiteSpaceAndComments();
+        if (StringUtil.isEmptyOrSpaces(text)) return JavaResolveResult.EMPTY_ARRAY;
+
+        PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(text, getResolveScope());
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
+
+        if (!isQualified() && text.equals(aClass.getQualifiedName())) {
+          PsiFile file = getContainingFile();
+          if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+            // classes in default (unnamed) package cannot be referenced from other packages
+            return JavaResolveResult.EMPTY_ARRAY;
+          }
+        }
+
         return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
       }
       case CLASS_IN_QUALIFIED_NEW_KIND: {
@@ -447,40 +452,35 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
         final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
         PsiScopesUtil.resolveAndWalk(processor, this, null);
-
         return processor.getResult();
       }
       case PACKAGE_NAME_KIND: {
-        final String packageName = getTextSkipWhiteSpaceAndComments();
-        final PsiManager manager = getManager();
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
+        String packageName = getTextSkipWhiteSpaceAndComments();
+        Project project = getManager().getProject();
+        PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
         if (aPackage == null || !aPackage.isValid()) {
-          return JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)
-                 ? CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE
-                 : JavaResolveResult.EMPTY_ARRAY;
+          return JavaPsiFacade.getInstance(project).isPartOfPackagePrefix(packageName) ?
+                 CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE : JavaResolveResult.EMPTY_ARRAY;
         }
         return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
       }
       case CLASS_FQ_OR_PACKAGE_NAME_KIND: {
-        final JavaResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
+        JavaResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
         if (result.length == 0) {
-          return resolve(PACKAGE_NAME_KIND);
+          result = resolve(PACKAGE_NAME_KIND);
         }
         return result;
       }
       case CLASS_OR_PACKAGE_NAME_KIND: {
-        final JavaResolveResult[] classResolveResult = resolve(CLASS_NAME_KIND);
-        // [dsl]todo[ik]: review this change I guess ResolveInfo should be merged if both
-        // class and package resolve failed.
-        if (classResolveResult.length == 0) {
-          final JavaResolveResult[] packageResolveResult = resolve(PACKAGE_NAME_KIND);
-          if (packageResolveResult.length > 0) return packageResolveResult;
+        JavaResolveResult[] result = resolve(CLASS_NAME_KIND);
+        if (result.length == 0) {
+          result = resolve(PACKAGE_NAME_KIND);
         }
-        return classResolveResult;
+        return result;
       }
-      default:
-        LOG.assertTrue(false);
     }
+
+    LOG.assertTrue(false, this);
     return JavaResolveResult.EMPTY_ARRAY;
   }
 

@@ -62,26 +62,36 @@ public class FormatterUtil {
 
   @Nullable
   public static ASTNode getPrevious(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    return getNextOrPrevious(node, false, typesToIgnore);
+  }
+
+  @Nullable
+  public static ASTNode getNext(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    return getNextOrPrevious(node, true, typesToIgnore);
+  }
+
+  @Nullable
+  private static ASTNode getNextOrPrevious(@Nullable ASTNode node, boolean isNext, @NotNull IElementType... typesToIgnore) {
     if (node == null) return null;
 
-    ASTNode prev = node.getTreePrev();
+    ASTNode each = isNext ? node.getTreeNext() : node.getTreePrev();
     ASTNode parent = node.getTreeParent();
-    while (prev == null && parent != null) {
-      prev = parent.getTreePrev();
+    while (each == null && parent != null) {
+      each = isNext ? parent.getTreeNext() : parent.getTreePrev();
       parent = parent.getTreeParent();
     }
 
-    if (prev == null) {
+    if (each == null) {
       return null;
     }
 
     for (IElementType type : typesToIgnore) {
-      if (prev.getElementType() == type) {
-        return getPrevious(prev, typesToIgnore);
+      if (each.getElementType() == type) {
+        return getNextOrPrevious(each, isNext, typesToIgnore);
       }
     }
 
-    return prev;
+    return each;
   }
 
   @Nullable
