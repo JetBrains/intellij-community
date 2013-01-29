@@ -268,6 +268,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentInNestedCall() {  // PY-8195
+    doTest();
+  }
+
   public void testIndentAfterBackslash() {
     doTest();
   }

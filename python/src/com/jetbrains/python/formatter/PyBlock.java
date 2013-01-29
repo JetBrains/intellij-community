@@ -171,7 +171,7 @@ public class PyBlock implements ASTBlock {
       else {
         childIndent = parentType == PyElementTypes.PARAMETER_LIST || isInControlStatement()
                       ? Indent.getContinuationIndent()
-                      : Indent.getNormalIndent();
+                      : Indent.getNormalIndent(true);
       }
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
