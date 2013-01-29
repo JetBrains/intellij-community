@@ -853,7 +853,7 @@ public class ListUtils {
     final String path = getTestName(false) + ".java";
     configureByFile(path);
     checkResultByFile(path);
-    assertStringItems("fai1", "fai2");
+    assertStringItems("fai1", "fai2", "FunctionalInterface");
   }
 
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
