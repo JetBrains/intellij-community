@@ -438,16 +438,17 @@ public class PyTypeChecker {
       }
     }
     else if (type instanceof PyUnionType) {
+      Boolean result = true;
       for (PyType member : ((PyUnionType)type).getMembers()) {
-        final Boolean result = isCallable(member);
-        if (result == null) {
+        final Boolean callable = isCallable(member);
+        if (callable == null) {
           return null;
         }
-        else if (!result) {
-          return false;
+        else if (!callable) {
+          result = false;
         }
       }
-      return true;
+      return result;
     }
     else if (type instanceof PyCallableType) {
       return true;
