@@ -126,4 +126,13 @@ public class DiffUtil {
   public static boolean isInlineWrapper(@NotNull Fragment fragment) {
     return fragment instanceof LineFragment && ((LineFragment)fragment).getChildrenIterator() != null;
   }
+
+  private static boolean isUnknownFileType(@NotNull DiffContent diffContent) {
+    return FileTypes.UNKNOWN.equals(diffContent.getContentType());
+  }
+
+  public static boolean oneIsUnknown(@Nullable DiffContent content1, @Nullable DiffContent content2) {
+    return content1 != null && isUnknownFileType(content1) || content2 != null && isUnknownFileType(content2);
+  }
+
 }
