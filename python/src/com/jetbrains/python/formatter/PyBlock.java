@@ -539,7 +539,7 @@ public class PyBlock implements ASTBlock {
     if (afterNode != null && afterNode.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION) {
       PyKeyValueExpression keyValue = (PyKeyValueExpression) afterNode.getPsi();
       if (keyValue != null && keyValue.getValue() == null) {  // incomplete
-        return Indent.getContinuationIndent(true);
+        return Indent.getContinuationIndent();
       }
     }
 
