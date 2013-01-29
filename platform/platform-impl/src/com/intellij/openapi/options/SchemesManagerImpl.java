@@ -50,8 +50,7 @@ import java.util.*;
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
 
-  @NonNls private static final String EXT = ".icls";
-  @NonNls private static final String OLD_EXT = ".xml";
+  @NonNls private static final String EXT = ".xml";
 
   private final Set<String> myDeletedNames = new LinkedHashSet<String>();
   private final Set<String> myFilesToDelete = new HashSet<String>();
@@ -432,22 +431,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     return result;
   }
 
-
-  private boolean canRead(VirtualFile file) {
-    if (!file.isDirectory()) {
-      String ext = "." + file.getExtension();
-      if (OLD_EXT.equalsIgnoreCase(ext)) {
-        if (myVFSBaseDir.findChild(file.getName() + EXT) == null) return true;
-      }
-      else if (EXT.equalsIgnoreCase(ext)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private void readSchemeFromFile(final Collection<E> result, final VirtualFile file, final boolean forceAdd) {
-    if (canRead(file)) {
+    final String name = file.getName();
+    if (!file.isDirectory() && StringUtil.endsWithIgnoreCase(name, EXT)) {
       try {
         final Document document;
         try {
@@ -555,9 +541,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private void saveFileName(String fileName, final E schemeKey) {
     if (StringUtil.endsWithIgnoreCase(fileName, EXT)) {
       fileName = fileName.substring(0, fileName.length() - EXT.length());
-    }
-    else if (StringUtil.endsWithIgnoreCase(fileName, OLD_EXT)) {
-      fileName = fileName.substring(0, fileName.length() - OLD_EXT.length());
     }
     schemeKey.getExternalInfo().setCurrentFileName(fileName);
   }
