@@ -327,8 +327,10 @@ class EmmetParser {
       myIndex++;
       token = nextToken();
       final String value = getAttributeValueByToken(token);
-      myIndex++;
-      return value != null ? Collections.singletonList(new Pair<String, String>(name, value)) : null;
+      if (!value.isEmpty()) {
+        myIndex++;
+      }
+      return Collections.singletonList(new Pair<String, String>(name, value));
     }
 
     return null;
@@ -383,16 +385,16 @@ class EmmetParser {
     do {
       token = nextToken();
       value = token != null && token == ZenCodingTokens.SHARP ? token.toString() : getAttributeValueByToken(token);
-      if (value != null) {
-        attrValueBuilder.append(value);
+      attrValueBuilder.append(value);
+      if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET && token != ZenCodingTokens.SPACE) {
         myIndex++;
       }
     }
-    while (value != null);
+    while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET && token != ZenCodingTokens.SPACE);
     return new Pair<String, String>(name, attrValueBuilder.toString());
   }
 
-  @Nullable
+  @NotNull
   private static String getAttributeValueByToken(ZenCodingToken token) {
     if (token instanceof StringLiteralToken) {
       final String text = ((StringLiteralToken)token).getText();
@@ -404,7 +406,10 @@ class EmmetParser {
     else if (token instanceof NumberToken) {
       return Integer.toString(((NumberToken)token).getNumber());
     }
-    return null;
+    else if (token == ZenCodingTokens.DOT) {
+      return token.toString();
+    }
+    return "";
   }
 
   @Nullable
