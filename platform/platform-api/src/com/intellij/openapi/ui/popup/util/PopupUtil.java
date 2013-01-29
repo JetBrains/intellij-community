@@ -99,6 +99,19 @@ public class PopupUtil {
     return -1;
   }
 
+  public static Component getActiveComponent() {
+    Window[] windows = Window.getWindows();
+    for (Window each : windows) {
+      if (each.isActive()) {
+        return each;
+      }
+    }
+
+    final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+    if (frame != null) return frame.getComponent();
+    return JOptionPane.getRootFrame();
+  }
+
   public static void showBalloonForActiveComponent(@NotNull final String message, final MessageType type) {
     Runnable runnable = new Runnable() {
       public void run() {

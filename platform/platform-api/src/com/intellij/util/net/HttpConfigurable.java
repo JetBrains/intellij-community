@@ -18,9 +18,12 @@ package com.intellij.util.net;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -37,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.*;
 
@@ -54,6 +58,7 @@ import java.util.*;
   }
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
   public boolean USE_PROXY_PAC = false;
@@ -149,7 +154,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(host, prompt, "", "", remember);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), host, prompt, "", "", remember);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
@@ -170,7 +175,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(host, prompt, "", "", KEEP_PROXY_PASSWORD);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), host, prompt, "", "", KEEP_PROXY_PASSWORD);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
@@ -181,7 +186,33 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       }
     };
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable, ModalityState.any());
+    final Runnable throughSwing = new Runnable() {
+      @Override
+      public void run() {
+        if (SwingUtilities.isEventDispatchThread()) {
+          runnable.run();
+          return;
+        }
+        try {
+          SwingUtilities.invokeAndWait(runnable);
+        }
+        catch (InterruptedException e) {
+          LOG.info(e);
+        }
+        catch (InvocationTargetException e) {
+          LOG.info(e);
+        }
+      }
+    };
+    if (ProgressManager.getInstance().getProgressIndicator() != null) {
+      if (ProgressManager.getInstance().getProgressIndicator().isModal()) {
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
+      } else {
+        throughSwing.run();
+      }
+    } else {
+      throughSwing.run();
+    }
     return value[0];
   }
 
