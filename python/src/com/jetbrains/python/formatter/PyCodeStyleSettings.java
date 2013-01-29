@@ -17,6 +17,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
 
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+  public boolean ALIGN_MULTILINE_IMPORTS = true;
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);

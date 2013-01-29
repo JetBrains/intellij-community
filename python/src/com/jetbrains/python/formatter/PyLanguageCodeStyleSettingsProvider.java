@@ -75,6 +75,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS", "Align when multiline",
                                 "Collections and Comprehensions");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS", "Align when multiline",
+                                "Import Statements");
     }
   }
 
@@ -112,7 +114,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    def foo(self):\n" +
                                                        "        pass";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
+  private static String WRAP_SETTINGS_PREVIEW = "from foo import (bar,\n" +
+                                                "    baz)\n\n" +
+                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
                                                 "def xyzzy(long_parameter_1,\n" +
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
