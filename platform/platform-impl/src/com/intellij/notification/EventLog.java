@@ -396,7 +396,11 @@ public class EventLog {
         @Override
         public void run() {
           if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
-            console.doPrintNotification(notification);
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                console.doPrintNotification(notification);
+              }
+            });
           }
         }
       });
