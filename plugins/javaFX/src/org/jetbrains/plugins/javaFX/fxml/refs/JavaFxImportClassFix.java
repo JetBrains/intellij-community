@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 /**
 * User: anna
@@ -37,12 +38,25 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
   @Nullable
   @Override
   protected String getReferenceName(@NotNull JavaFxTagNameReference reference) {
-    return getTagElement(reference).getName();
+    final XmlTag tagElement = getTagElement(reference);
+    return tagElement != null ? tagElement.getName() : null;
   }
 
   @Override
   protected PsiElement getReferenceNameElement(@NotNull JavaFxTagNameReference reference) {
-    return getTagElement(reference).getNavigationElement();
+    final XmlTag tagElement = getTagElement(reference);
+    return tagElement != null ? tagElement.getNavigationElement() : null;
+  }
+
+  @Override
+  protected void bindReference(PsiReference reference, PsiClass targetClass) {
+    final PsiFile file = reference.getElement().getContainingFile();
+    super.bindReference(reference, targetClass);
+    final String qualifiedName = targetClass.getQualifiedName();
+    if (qualifiedName != null) {
+      final String shortName = StringUtil.getShortName(qualifiedName);
+      JavaFxPsiUtil.insertImportWhenNeeded((XmlFile)file, shortName, qualifiedName);
+    }
   }
 
   @Override

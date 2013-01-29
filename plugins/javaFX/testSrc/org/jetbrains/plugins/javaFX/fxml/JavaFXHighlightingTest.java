@@ -45,7 +45,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   public void testDefaultTagProperties() throws Exception {
     doTest();
   }
-  
+
+  public void testUnresolvedImport() throws Exception {
+    doTest();
+  }
+
   public void testImageIcon() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", "appIcon.png");
     doDoTest(false, false);
