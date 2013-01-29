@@ -591,7 +591,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       });
       myCacheRefreshTimer.setInitialDelay(0);
-      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           myCacheRefreshTimer.start();
         }

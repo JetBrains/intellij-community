@@ -88,6 +88,21 @@ public class UnixProcessManager {
     C_LIB.kill(pid, signal);
   }
 
+
+  /**
+   * Adds or changes an environment variable.
+   * @param name string that contains the name of the environment variable to be added or changed
+   * @param value the value of the environment variable
+   * @param overwrite change the existing entry. If {@code name} has already been defined and exists in the environment variable table,
+   *                  its value will be updated with {@code value}. If {@code name} was previously undefined, it will be appended to the table.
+   */
+  public static void setEnv(@NotNull String name, @NotNull String value, boolean overwrite) {
+    if (C_LIB != null) {
+      checkCLib();
+      C_LIB.setenv(name, value, overwrite ? 1 : 0);
+    }
+  }
+
   private static void checkCLib() {
     if (C_LIB == null) {
       throw new IllegalStateException("System is not unix(couldn't load c library)");
@@ -189,21 +204,21 @@ public class UnixProcessManager {
   }
 
   public static void processPSOutput(String[] cmd, Processor<String> processor) {
-    processCommandOutput(cmd, processor, true);
+    processCommandOutput(cmd, processor, true, true);
   }
 
-  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine) {
+  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
 
-      processCommandOutput(p, processor, skipFirstLine);
+      processCommandOutput(p, processor, skipFirstLine, throwOnError);
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  private static void processCommandOutput(Process psProcess, Processor<String> processor, boolean skipFirstLine) throws IOException {
+  private static void processCommandOutput(Process psProcess, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     BufferedReader stdOutput = new BufferedReader(new
                                                   InputStreamReader(psProcess.getInputStream()));
@@ -223,7 +238,7 @@ public class UnixProcessManager {
       while ((s = stdError.readLine()) != null) {
         errorStr.append(s).append("\n");
       }
-      if (errorStr.length() > 0) {
+      if (throwOnError && errorStr.length() > 0) {
         throw new IOException("Error reading ps output:" + errorStr.toString());
       }
     }
@@ -284,16 +299,16 @@ public class UnixProcessManager {
           }
           return false;
         }
-      }, false);
+      }, false, false);
     }
     ourCachedConsoleEnv = !env.isEmpty() ? Collections.unmodifiableMap(env) : System.getenv();
   }
 
 
-  public interface CLib extends Library {
+  private interface CLib extends Library {
     int getpid();
-
     int kill(int pid, int signal);
+    int setenv(String name, String value, int overwrite);
   }
 
   public static class ProcessInfo {

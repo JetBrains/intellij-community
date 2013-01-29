@@ -37,7 +37,6 @@ import java.awt.*;
  */
 public class EmptyDiffViewer implements DiffViewer {
   private DiffRequest myRequest;
-  private String myMessage;
 
   @Override
   public boolean canShowRequest(DiffRequest request) {
@@ -47,10 +46,6 @@ public class EmptyDiffViewer implements DiffViewer {
   @Override
   public void setDiffRequest(DiffRequest request) {
     myRequest = request;
-  }
-
-  public void setMessage(String message) {
-    myMessage = message;
   }
 
   @Override
@@ -116,9 +111,10 @@ public class EmptyDiffViewer implements DiffViewer {
   @NotNull
   private JPanel createMessagePanel(@Nullable LineSeparator sep1, @Nullable LineSeparator sep2) {
     String message;
-    if (myMessage != null) {
-      message = myMessage;
-    } else if (LineSeparator.knownAndDifferent(sep1, sep2)) {
+    if (DiffUtil.oneIsUnknown(myRequest.getContents()[0], myRequest.getContents()[1])) {
+      message = DiffBundle.message("diff.can.not.show.unknown");
+    }
+    else if (LineSeparator.knownAndDifferent(sep1, sep2)) {
       message = DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
     }
     else {

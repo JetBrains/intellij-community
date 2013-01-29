@@ -100,6 +100,9 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
       context.processMessage(new ProgressMessage(""));
     }
+    catch(ProjectBuildException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @autor: ilyas
@@ -60,11 +63,13 @@ public class GrWhileStatementImpl extends GroovyPsiElementImpl implements GrWhil
 
   @Nullable
   public GrStatement getBody() {
-    GrStatement[] statements = findChildrenByClass(GrStatement.class);
+    List<GrStatement> statements = new ArrayList<GrStatement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrStatement) statements.add((GrStatement)cur);
+    }
 
-    if (getCondition() == null && statements.length > 0) return statements[0];
-    else if (statements.length > 1 && (statements[1] instanceof GrStatement)) return statements[1];
-
+    if (getCondition() == null && statements.size() > 0) return statements.get(0);
+    if (statements.size() > 1) return statements.get(1);
     return null;
   }
 

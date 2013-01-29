@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -982,6 +983,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         setGlassPane(new IdeGlassPaneImpl(this));
         myGlassPaneIsSet = true;
         putClientProperty("DIALOG_ROOT_PANE", true);
+      }
+
+      protected JLayeredPane createLayeredPane() {
+        JLayeredPane p = new JBLayeredPane();
+        p.setName(this.getName()+".layeredPane");
+        return p;
       }
 
       @Override

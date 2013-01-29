@@ -212,6 +212,9 @@ public final class HgCommandExecutor {
 
   // logging to the Version Control console (without extensions and configs)
   private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+    if (myProject.isDisposed()) {
+      return;
+    }
     final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);

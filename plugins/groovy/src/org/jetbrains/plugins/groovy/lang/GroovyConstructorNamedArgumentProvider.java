@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -96,14 +97,14 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
                                   @Nullable String argumentName,
                                   final Map<String, NamedArgumentDescriptor> result) {
     if (argumentName == null) {
-      final HashMap<String, Pair<PsiType, PsiElement>> map = new HashMap<String, Pair<PsiType, PsiElement>>();
+      final HashMap<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> map = ContainerUtil.newHashMap();
 
       MyPsiScopeProcessor processor = new MyPsiScopeProcessor() {
         @Override
-        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element) {
+        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element, PsiSubstitutor substitutor) {
           if (result.containsKey(propertyName)) return;
 
-          Pair<PsiType, PsiElement> pair = map.get(propertyName);
+          Trinity<PsiType, PsiElement, PsiSubstitutor> pair = map.get(propertyName);
           if (pair != null) {
             if (element instanceof PsiMethod && pair.second instanceof PsiField) {
               // methods should override fields
@@ -113,7 +114,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
             }
           }
 
-          map.put(propertyName, Pair.create(type, element));
+          map.put(propertyName, Trinity.create(type, element, substitutor));
         }
       };
 
@@ -121,16 +122,16 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
       ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), call);
 
-      for (Map.Entry<String, Pair<PsiType, PsiElement>> entry : map.entrySet()) {
-        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond()).setPriority(Priority.AS_LOCAL_VARIABLE));
+      for (Map.Entry<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> entry : map.entrySet()) {
+        result.put(entry.getKey(), new NamedArgumentDescriptor.TypeCondition(entry.getValue().first, entry.getValue().getSecond(), entry.getValue().getThird()).setPriority(Priority.AS_LOCAL_VARIABLE));
       }
     }
     else {
       MyPsiScopeProcessor processor = new MyPsiScopeProcessor() {
         @Override
-        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element) {
+        protected void addNamedArgument(String propertyName, PsiType type, PsiElement element, PsiSubstitutor substitutor) {
           if (result.containsKey(propertyName)) return;
-          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element).setPriority(Priority.AS_LOCAL_VARIABLE));
+          result.put(propertyName, new NamedArgumentDescriptor.TypeCondition(type, element, substitutor).setPriority(Priority.AS_LOCAL_VARIABLE));
         }
       };
 
@@ -205,13 +206,13 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
           type = substitutor.substitute(type);
         }
 
-        addNamedArgument(propertyName, type, element);
+        addNamedArgument(propertyName, type, element, substitutor);
       }
 
       return true;
     }
 
-    protected abstract void addNamedArgument(String propertyName, PsiType type, PsiElement element);
+    protected abstract void addNamedArgument(String propertyName, PsiType type, PsiElement element, PsiSubstitutor substitutor);
 
     @Override
     public <T> T getHint(@NotNull Key<T> hintKey) {

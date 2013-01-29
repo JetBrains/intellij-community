@@ -503,9 +503,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
         else {
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(CompletionProgressIndicator.this));
-          CompletionPreview preview = myLookup.uninstallPreview();
           updateLookup();
-          CompletionPreview.reinstallPreview(preview);
         }
       }
     }, myQueue.getModalityState());

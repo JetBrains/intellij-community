@@ -113,8 +113,18 @@ public class LambdaUtil {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    if (parent instanceof PsiExpressionList && functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
-      return false;
+    if (parent instanceof PsiExpressionList) {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethodCallExpression) {
+        final PsiExpression qualifierExpression = ((PsiMethodCallExpression)gParent).getMethodExpression().getQualifierExpression();
+        final PsiType type = qualifierExpression != null ? qualifierExpression.getType() : null;
+        if (type instanceof PsiClassType && ((PsiClassType)type).isRaw()) {
+          return true;
+        }
+      }
+      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
+        return false;
+      }
     }
     return true;
   }
@@ -607,12 +617,18 @@ public class LambdaUtil {
   }
 
   private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
-    if (returnType instanceof PsiPrimitiveType && returnType != PsiType.VOID && !(returnType1 instanceof PsiPrimitiveType)) {
-      return -1;
+    if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
+    if (returnType instanceof PsiPrimitiveType) {
+      if (!(returnType1 instanceof PsiPrimitiveType)) {
+        return -1;
+      } else {
+        return TypeConversionUtil.areTypesConvertible(returnType, returnType1) ? 1 : -1;
+      }
     }
-    if (returnType1 instanceof PsiPrimitiveType && returnType1 != PsiType.VOID && !(returnType instanceof PsiPrimitiveType)) {
+    if (returnType1 instanceof PsiPrimitiveType) {
       return 1;
     }
+
     final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
     final PsiClass rClass = r.getElement();
     final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);

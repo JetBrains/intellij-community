@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ui.components;
 
-package com.intellij.tools;
+import javax.swing.*;
+import java.awt.*;
 
-import com.intellij.openapi.keymap.KeyMapBundle;
+/**
+ * User: Vassiliy.Kudryashov
+ */
+public class JBLayeredPane extends JLayeredPane {
 
-public class ToolKeymapExtension extends BaseToolKeymapExtension {
+  private static final Dimension EMPTY = new Dimension(0, 0);
 
-  private final ToolManager myToolManager;
-
-  public ToolKeymapExtension() {
-    myToolManager = ToolManager.getInstance();
-  }
-
-
-  protected String getGroupByActionId(String id) {
-    return myToolManager.getGroupByActionId(id);
-  }
-
-  protected String getGroupName() {
-    return KeyMapBundle.message("actions.tree.external.tools.group");
+  @Override
+  public Dimension getMinimumSize() {
+    if (!isMinimumSizeSet())
+      return EMPTY;
+    return super.getMinimumSize();
   }
 }

@@ -44,29 +44,6 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
     return null;
   }
 
-  public static List<String> parseImports(XmlFile file) {
-    List<String> definedImports = new ArrayList<String>();
-    XmlDocument document = file.getDocument();
-    if (document != null) {
-      XmlProlog prolog = document.getProlog();
-
-      final Collection<XmlProcessingInstruction>
-        instructions = new ArrayList<XmlProcessingInstruction>(PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class));
-      for (Iterator<XmlProcessingInstruction> iterator = instructions.iterator(); iterator.hasNext(); ) {
-        final XmlProcessingInstruction instruction = iterator.next();
-        final ASTNode node = instruction.getNode();
-        ASTNode xmlNameNode = node.findChildByType(XmlTokenType.XML_NAME);
-        ASTNode importNode = node.findChildByType(XmlTokenType.XML_TAG_CHARACTERS);
-        if (xmlNameNode == null || !"import".equals(xmlNameNode.getText()) || importNode == null) {
-          iterator.remove();
-        } else {
-          definedImports.add(importNode.getText());
-        }
-      }
-    }
-    return definedImports;
-  }
-
   @NotNull
   @Override
   public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable XmlDocument document) {

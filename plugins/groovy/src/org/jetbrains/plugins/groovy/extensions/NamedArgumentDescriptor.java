@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -47,6 +48,7 @@ public class NamedArgumentDescriptor {
   public static final StringTypeConditionWithPriority TYPE_INTEGER = new StringTypeConditionWithPriority(CommonClassNames.JAVA_LANG_INTEGER);
 
   private final PsiElement myNavigationElement;
+  private final PsiSubstitutor mySubstitutor;
 
   private Priority myPriority = Priority.ALWAYS_ON_TOP;
 
@@ -55,7 +57,12 @@ public class NamedArgumentDescriptor {
   }
 
   public NamedArgumentDescriptor(@Nullable PsiElement navigationElement) {
-    this.myNavigationElement = navigationElement;
+    this(navigationElement, PsiSubstitutor.EMPTY);
+  }
+
+  public NamedArgumentDescriptor(@Nullable PsiElement navigationElement, PsiSubstitutor substitutor) {
+    myNavigationElement = navigationElement;
+    mySubstitutor = substitutor;
   }
 
   @NotNull
@@ -77,7 +84,7 @@ public class NamedArgumentDescriptor {
     final PsiElement navigationElement = getNavigationElement();
     if (navigationElement == null) return null;
 
-    return new NamedArgumentReference(element, navigationElement);
+    return new NamedArgumentReference(element, navigationElement, mySubstitutor);
   }
 
   @Nullable
@@ -87,10 +94,12 @@ public class NamedArgumentDescriptor {
 
   public static class NamedArgumentReference extends PsiPolyVariantReferenceBase<GrArgumentLabel> {
     private final PsiElement myNavigationElement;
+    private final PsiSubstitutor mySubstitutor;
 
-    public NamedArgumentReference(GrArgumentLabel element, @NotNull PsiElement navigationElement) {
+    public NamedArgumentReference(GrArgumentLabel element, @NotNull PsiElement navigationElement, PsiSubstitutor substitutor) {
       super(element);
       myNavigationElement = navigationElement;
+      mySubstitutor = substitutor;
     }
 
     @Override
@@ -132,12 +141,12 @@ public class NamedArgumentDescriptor {
 
     @NotNull
     @Override
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return new ResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, true)};
+    public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+      return new GroovyResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, null, null, mySubstitutor, true, true, false)};
     }
   }
 
-  public static enum Priority {
+  public enum Priority {
     ALWAYS_ON_TOP,
     AS_LOCAL_VARIABLE,
     NORMAL,
@@ -219,11 +228,15 @@ public class NamedArgumentDescriptor {
     private final PsiType myType;
 
     public TypeCondition(@NotNull PsiType type) {
-      this(type, null);
+      this(type, null, PsiSubstitutor.EMPTY);
     }
 
     public TypeCondition(@NotNull PsiType type, @Nullable PsiElement navigationElement) {
-      super(navigationElement);
+      this(type, navigationElement, PsiSubstitutor.EMPTY);
+    }
+
+    public TypeCondition(PsiType type, PsiElement navigationElement, PsiSubstitutor substitutor) {
+      super(navigationElement, substitutor);
       myType = type;
     }
 

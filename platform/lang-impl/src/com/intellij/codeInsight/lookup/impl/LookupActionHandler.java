@@ -86,7 +86,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     static void executeDown(LookupImpl lookup) {
       if (!lookup.isFocused()) {
         lookup.setFocused(true);
-        lookup.uninstallPreview();
         lookup.getList().setSelectedIndex(0);
         lookup.refreshUi(false, true);
       } else {
@@ -150,7 +149,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         }
 
         lookup.setFocused(true);
-        lookup.uninstallPreview();
         lookup.getList().setSelectedIndex(0);
       }
       lookup.markSelectionTouched();
@@ -168,7 +166,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       lookup.setFocused(true);
-      lookup.uninstallPreview();
       ListScrollingUtil.movePageDown(lookup.getList());
     }
   }
@@ -181,7 +178,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
       lookup.setFocused(true);
-      lookup.uninstallPreview();
       ListScrollingUtil.movePageUp(lookup.getList());
     }
   }
@@ -198,8 +194,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      CompletionPreview preview = lookup.uninstallPreview();
-
       if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
@@ -210,8 +204,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       }
 
       BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
-
-      CompletionPreview.reinstallPreview(preview);
     }
   }
   public static class RightHandler extends LookupActionHandler {
@@ -221,8 +213,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(LookupImpl lookup, DataContext context) {
-      CompletionPreview preview = lookup.uninstallPreview();
-
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
@@ -254,7 +244,6 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (completion != null) {
         completion.prefixUpdated();
       }
-      CompletionPreview.reinstallPreview(preview);
     }
   }
 

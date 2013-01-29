@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.ui.UI;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -141,11 +142,21 @@ public class AboutDialog extends JDialog {
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<AboutBoxLine>();
-    private int linkX;
-    private int linkY;
-    private int linkWidth;
-    private boolean inLink = false;
     private StringBuilder myInfo = new StringBuilder();
+
+    private static class Link {
+      private final Rectangle rectangle;
+      private final String url;
+
+      private Link(Rectangle rectangle, String url) {
+        this.rectangle = rectangle;
+        this.url = url;
+      }
+    }
+
+    private Link myActiveLink;
+
+    private final List<Link> myLinks = new ArrayList<Link>();
 
     public InfoSurface(Icon image) {
       myImage = image;
@@ -153,26 +164,28 @@ public class AboutDialog extends JDialog {
       setOpaque(false);
       col = Color.white;
       final ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      linkCol = info.getSplashTextColor();
+      linkCol = UI.getColor("link.foreground");
       setBackground(col);
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
-      myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, false));
+      myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, null));
       appendLast();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString())));
-      appendLast();
+
+      String buildInfo = IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString());
       String buildDate = "";
       if (ideInfo.getBuild().isSnapshot()) {
         buildDate = new SimpleDateFormat("HH:mm, ").format(cal.getTime());
       }
       buildDate += DateFormatUtil.formatAboutDialogDate(cal.getTime());
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", buildDate)));
+      buildInfo += IdeBundle.message("aboutbox.build.date", buildDate);
+      myLines.add(new AboutBoxLine(buildInfo));
       appendLast();
+
       myLines.add(new AboutBoxLine(""));
 
       LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
-        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, false));
+        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, null));
         for (String message : provider.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
         }
@@ -180,40 +193,48 @@ public class AboutDialog extends JDialog {
       myLines.add(new AboutBoxLine(""));
 
       final Properties properties = System.getProperties();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, null));
       appendLast();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
-      appendLast();
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
+      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"),
+                                                     properties.getProperty("java.vendor", "unknown"))));
       appendLast();
 
+      /*
       myLines.add(new AboutBoxLine(""));
-      myLines.add(new AboutBoxLine(info.getCompanyName(), true, false));
-      myLines.add(new AboutBoxLine(info.getCompanyURL(), true, true));
+      myLines.add(new AboutBoxLine(info.getCompanyURL(), true, info.getCompanyURL()));
+      */
+
+      String thirdParty = info.getThirdPartySoftwareURL();
+      if (thirdParty != null) {
+        myLines.add(new AboutBoxLine(""));
+        myLines.add(new AboutBoxLine(""));
+        myLines.add(new AboutBoxLine("Powered by ").keepWithNext());
+        myLines.add(new AboutBoxLine("open-source software", false, thirdParty).keepWithNext());
+      }
+
       addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent event) {
-          if (inLink) {
+          if (myActiveLink != null) {
             event.consume();
-            BrowserUtil.launchBrowser(info.getCompanyURL());
+            BrowserUtil.launchBrowser(myActiveLink.url);
           }
         }
       });
       addMouseMotionListener(new MouseMotionAdapter() {
         public void mouseMoved(MouseEvent event) {
-          if (
-            event.getPoint().x > linkX && event.getPoint().y >= linkY &&
-            event.getPoint().x < linkX + linkWidth && event.getPoint().y < linkY + 10
-            ) {
-            if (!inLink) {
-              setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-              inLink = true;
+          boolean hadLink = (myActiveLink != null);
+          myActiveLink = null;
+          for (Link link : myLinks) {
+            if (link.rectangle.contains(event.getPoint())) {
+              myActiveLink = link;
+              if (!hadLink) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+              }
+              break;
             }
           }
-          else {
-            if (inLink) {
-              setCursor(Cursor.getDefaultCursor());
-              inLink = false;
-            }
+          if (hadLink && myActiveLink == null) {
+            setCursor(Cursor.getDefaultCursor());
           }
         }
       });
@@ -231,6 +252,7 @@ public class AboutDialog extends JDialog {
 
       Font labelFont = UIUtil.getLabelFont();
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
+        myLinks.clear();
         g2.setPaint(col);
         myImage.paintIcon(this, g2, 0, 0);
 
@@ -240,11 +262,17 @@ public class AboutDialog extends JDialog {
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render(75, 0, myLines);
+          renderer.render(30, 0, myLines);
           break;
         }
         catch (TextRenderer.OverflowException ignore) {
         }
+      }
+
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      Rectangle aboutLogoRect = appInfo.getAboutLogoRect();
+      if (aboutLogoRect != null) {
+        myLinks.add(new Link(aboutLogoRect, appInfo.getCompanyURL()));
       }
     }
 
@@ -285,23 +313,19 @@ public class AboutDialog extends JDialog {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        g2.setColor(appInfo.getAboutForeground());
-        for (int i = 0; i < lines.size(); i++) {
-          AboutBoxLine line = lines.get(i);
+        for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
-          if (line.isLink()) {
+          if (line.getUrl() != null) {
             g2.setColor(linkCol);
-            linkX = x;
-            linkY = yBase + y - fontAscent;
             FontMetrics metrics = g2.getFontMetrics(font);
-            linkWidth = metrics.stringWidth(s);
+            myLinks.add(new Link(new Rectangle(x, yBase + y - fontAscent, metrics.stringWidth(s), fontHeight), line.getUrl()));
+          }
+          else {
+            g2.setColor(appInfo.getAboutForeground());
           }
           renderString(s, indentX);
-          if (i == lines.size() - 2) {
-            x += 50;
-          }
-          else if (i < lines.size() - 1) {
+          if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
             lineFeed(indentX, s);
           }
         }
@@ -364,20 +388,20 @@ public class AboutDialog extends JDialog {
   private static class AboutBoxLine {
     private final String myText;
     private final boolean myBold;
-    private final boolean myLink;
+    private final String myUrl;
+    private boolean myKeepWithNext;
 
-    public AboutBoxLine(final String text, final boolean bold, final boolean link) {
-      myLink = link;
+    public AboutBoxLine(final String text, final boolean bold, final String url) {
       myText = text;
       myBold = bold;
+      myUrl = url;
     }
 
     public AboutBoxLine(final String text) {
       myText = text;
       myBold = false;
-      myLink = false;
+      myUrl = null;
     }
-
 
     public String getText() {
       return myText;
@@ -387,8 +411,17 @@ public class AboutDialog extends JDialog {
       return myBold;
     }
 
-    public boolean isLink() {
-      return myLink;
+    public String getUrl() {
+      return myUrl;
+    }
+
+    public boolean isKeepWithNext() {
+      return myKeepWithNext;
+    }
+
+    public AboutBoxLine keepWithNext() {
+      myKeepWithNext = true;
+      return this;
     }
   }
 }

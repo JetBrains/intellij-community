@@ -1501,7 +1501,7 @@ public class UIUtil {
       if (rect == null) rect = new Rectangle(size);
 
       //noinspection UndesirableClassUsage
-      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_ARGB);
+      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
 
       imageGraphics.scale(2, 2);

@@ -67,7 +67,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JBLabel mySystemProxyDefined;
   private JBRadioButton myNoProxyRb;
   private JBRadioButton myHTTP;
-  private JRadioButton mySocks;
+  private JBRadioButton mySocks;
   private JButton myClearPasswordsButton;
   private JLabel myErrorLabel;
   private JButton myCheckButton;
