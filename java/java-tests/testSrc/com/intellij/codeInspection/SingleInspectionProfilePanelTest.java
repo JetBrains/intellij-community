@@ -62,6 +62,61 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     assertEquals("foo", tool.myAdditionalJavadocTags);
   }
 
+  public void testModifyInstantiatedTool() throws Exception {
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
+    profile.initInspectionTools(project);
+    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
+
+    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    assert original != null;
+    JavaDocLocalInspection originalTool = (JavaDocLocalInspection)original.getTool();
+    originalTool.myAdditionalJavadocTags = "foo";
+
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    panel.setVisible(true);
+    panel.reset();
+    assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1, InspectionProfileTest.countInitializedTools(model));
+
+    LocalInspectionToolWrapper copy = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
+    assert copy != null;
+    JavaDocLocalInspection copyTool = (JavaDocLocalInspection)copy.getTool();
+    copyTool.myAdditionalJavadocTags = "bar";
+
+    model.setModified(true);
+    panel.apply();
+    assertEquals(1, InspectionProfileTest.countInitializedTools(model));
+
+    LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    assertNotNull(wrapper);
+    assertEquals("bar", ((JavaDocLocalInspection)wrapper.getTool()).myAdditionalJavadocTags);
+  }
+
+  public void testDoNotChangeSettingsOnCancel() throws Exception {
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
+    profile.initInspectionTools(project);
+    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
+
+    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    assert original != null;
+    JavaDocLocalInspection originalTool = (JavaDocLocalInspection)original.getTool();
+    assertEquals("", originalTool.myAdditionalJavadocTags);
+
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    LocalInspectionToolWrapper copy = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
+    assert copy != null;
+    JavaDocLocalInspection copyTool = (JavaDocLocalInspection)copy.getTool();
+    copyTool.myAdditionalJavadocTags = "foo";
+    // this change IS NOT COMMITTED
+
+    assertEquals("", originalTool.myAdditionalJavadocTags);
+  }
+
   @Override
   public void setUp() throws Exception {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
