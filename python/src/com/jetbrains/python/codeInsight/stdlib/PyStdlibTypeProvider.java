@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author yole
@@ -29,6 +31,8 @@ import java.util.Properties;
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @NotNull private Properties myStdlibTypes2 = new Properties();
   @NotNull private Properties myStdlibTypes3 = new Properties();
+
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen");
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -155,6 +159,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         return closee.getType(context);
       }
     }
+    final String name = contextManager.getName();
+    if ("FileIO".equals(name) || "TextIOWrapper".equals(name) || "IOBase".equals(name) || "_IOBase".equals(name)) {
+      return withExpression.getType(context);
+    }
     return null;
   }
 
@@ -171,24 +179,28 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (rtype != null) {
         boolean matched = true;
         boolean notNullParameterMatch = false;
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
-          final PyNamedParameter p = entry.getValue();
-          final String name = p.getName();
-          if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
-            continue;
-          }
-          PyType argType = entry.getKey().getType(context);
-          // Special case for the 'mode' argument of the 'open()' builtin
-          final PyExpression modeExpr = entry.getKey();
-          argType = getOpenFunctionType(argType, qname, name, modeExpr, anchor);
-          final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
-          if (PyTypeChecker.match(paramType, argType, context)) {
-            if (argType != null && paramType != null) {
-              notNullParameterMatch = true;
+        // Special case for the 'mode' argument of the '*open()' functions
+        if (OPEN_FUNCTIONS.contains(qname)) {
+          matched = matchOpenFunctionType(qname, overloadedQName, arguments, anchor, context);
+          notNullParameterMatch = true;
+        }
+        else {
+          for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
+            final PyNamedParameter p = entry.getValue();
+            final String name = p.getName();
+            if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
+              continue;
             }
-          }
-          else {
-            matched = false;
+            final PyType argType = entry.getKey().getType(context);
+            final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
+            if (PyTypeChecker.match(paramType, argType, context)) {
+              if (argType != null && paramType != null) {
+                notNullParameterMatch = true;
+              }
+            }
+            else {
+              matched = false;
+            }
           }
         }
         if (matched && notNullParameterMatch) {
@@ -200,25 +212,39 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  private PyType getOpenFunctionType(@Nullable PyType argType,
-                                     @NotNull String callQName,
-                                     @NotNull String parameterName,
-                                     @NotNull PyExpression modeExpr,
-                                     @NotNull PsiElement anchor) {
-    if (("__builtin__.open".equals(callQName) || "io.open".equals(callQName) || "os.fdopen".equals(callQName)) &&
-        "mode".equals(parameterName)) {
-      final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
-      final LanguageLevel level = LanguageLevel.forElement(anchor);
-      argType = cache.getUnicodeType(level);
-      if (modeExpr instanceof PyStringLiteralExpression) {
-        final String literal = ((PyStringLiteralExpression)modeExpr).getStringValue();
-        if (literal.contains("b")) {
-          argType = cache.getBytesType(level);
+  private boolean matchOpenFunctionType(@NotNull String callQName,
+                                        @NotNull String overloadedQName,
+                                        @NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                        @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+    String mode = "r";
+    for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
+      final PyNamedParameter parameter = entry.getValue();
+      if ("mode".equals(parameter.getName())) {
+        final PyExpression argument = entry.getKey();
+        if (argument instanceof PyStringLiteralExpression) {
+          mode = ((PyStringLiteralExpression)argument).getStringValue();
+          break;
         }
       }
     }
-    return argType;
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
+    final LanguageLevel level = LanguageLevel.forElement(anchor);
+    final PyType paramType = getParameterTypeByQName(overloadedQName, "mode", anchor);
+    final PyType argType;
+    // Binary mode
+    if (mode.contains("b")) {
+      argType = cache.getBytesType(level);
+    }
+    // Text mode
+    else {
+      if (level.isPy3K() || "io.open".equals(callQName)) {
+        argType = cache.getUnicodeType(level);
+      }
+      else {
+        argType = cache.getBytesType(level);
+      }
+    }
+    return PyTypeChecker.match(paramType, argType, context);
   }
 
   @Nullable
