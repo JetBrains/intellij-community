@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,7 +118,10 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     if (!(type instanceof PsiClassType)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return null;
-
+    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return null;
+    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) return null;
+    final PsiType erased = TypeConversionUtil.erasure(type);
+    if (erased == null || erased.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     return (PsiClassType)type;
   }
 
