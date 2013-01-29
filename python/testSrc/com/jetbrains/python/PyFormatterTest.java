@@ -281,6 +281,15 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testNewLineAfterColon() {
+    settings().getCustomSettings(PyCodeStyleSettings.class).NEW_LINE_AFTER_COLON = true;
+    doTest();
+  }
+
+  public void testNewLineAfterColonMultiClause() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

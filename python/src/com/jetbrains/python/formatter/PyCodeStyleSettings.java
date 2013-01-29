@@ -20,6 +20,9 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
   public boolean ALIGN_MULTILINE_IMPORTS = true;
 
+  public boolean NEW_LINE_AFTER_COLON = false;
+  public boolean NEW_LINE_AFTER_COLON_MULTI_CLAUSE = true;
+
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }

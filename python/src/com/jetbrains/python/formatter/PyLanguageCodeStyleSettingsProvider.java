@@ -74,6 +74,10 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON", "Single-clause statements",
+                                "Force new line after colon");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON_MULTI_CLAUSE", "Multi-clause statements",
+                                "Force new line after colon");
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS", "Align when multiline",
                                 "Collections and Comprehensions");
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS", "Align when multiline",
@@ -126,7 +130,10 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                 "xyzzy('long_string_constant1',\n" +
                                                 "    'long_string_constant2')\n" +
                                                 "attrs = [e.attr for e in\n" +
-                                                "    items]";
+                                                "    items]\n\n" +
+                                                "if True: pass\n\n" +
+                                                "try: pass\n" +
+                                                "finally: pass\n";
   @SuppressWarnings("FieldCanBeLocal")
   private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
                                                   "    print 'bar'\n\n" +

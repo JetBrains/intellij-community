@@ -1,6 +1,8 @@
 def bar(base_new, self_new):
-    try: base_new.__init__(self_new)
-    except AttributeError: pass
+    try:
+        base_new.__init__(self_new)
+    except AttributeError:
+        pass
 
 
 def __init__(self):

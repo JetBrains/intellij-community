@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -124,10 +125,13 @@ public class PyBlock implements ASTBlock {
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
-    if (childType == PyElementTypes.STATEMENT_LIST || childType == PyElementTypes.IMPORT_ELEMENT) {
-      if (hasLineBreaksBefore(child, 1)) {
+    if (childType == PyElementTypes.STATEMENT_LIST) {
+      if (hasLineBreaksBefore(child, 1) || needLineBreakInStatement()) {
         childIndent = Indent.getNormalIndent();
       }
+    }
+    else if (childType == PyElementTypes.IMPORT_ELEMENT && hasLineBreaksBefore(child, 1)) {
+      childIndent = Indent.getNormalIndent();
     }
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
@@ -383,14 +387,33 @@ public class PyBlock implements ASTBlock {
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
-      final PsiElement psi1 = ((ASTBlock)child1).getNode().getPsi();
+      ASTNode node1 = ((ASTBlock)child1).getNode();
+      final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
       if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
           psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
         return Spacing.createSpacing(0, 0, 2, true, 1);
       }
+
+      if (node1.getElementType() == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
+        if (needLineBreakInStatement()) {
+          return Spacing.createSpacing(0, 0, 1, true, myContext.getSettings().KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
+  }
+
+  private boolean needLineBreakInStatement() {
+    PyStatement statement = PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatement.class);
+    if (statement != null) {
+      Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
+      if ((parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+          (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
