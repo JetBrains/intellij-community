@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,6 +53,12 @@ public class MoreOperationNode extends ZenCodingNode {
         addChildrenToAllLeafs(child, children);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public List<ZenCodingNode> getChildren() {
+    return ContainerUtil.newLinkedList(myLeftOperand, myRightOperand);
   }
 
   @NotNull
@@ -94,5 +101,10 @@ public class MoreOperationNode extends ZenCodingNode {
       addChildrenToAllLeafs(leftGenNode, rightGenNodes);
     }
     return leftGenNodes;
+  }
+
+  @Override
+  public String toString() {
+    return ">";
   }
 }

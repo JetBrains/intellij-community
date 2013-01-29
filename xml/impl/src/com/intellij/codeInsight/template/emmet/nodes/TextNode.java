@@ -45,4 +45,9 @@ public class TextNode extends ZenCodingNode {
                                                    containsSurroundedTextMarker ? null : surroundedText, insertSurroundedTextAtTheEnd);
     return Collections.singletonList(node);
   }
+
+  @Override
+  public String toString() {
+    return "Text(" + myText + ")";
+  }
 }

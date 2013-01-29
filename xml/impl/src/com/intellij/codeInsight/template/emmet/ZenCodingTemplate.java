@@ -89,7 +89,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
+  public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
     for (ZenCodingGenerator generator : ZenCodingGenerator.getInstances()) {
       if (generator.isMyContext(context, wrapping) && generator.isAppliedByDefault(context)) {
         return generator;

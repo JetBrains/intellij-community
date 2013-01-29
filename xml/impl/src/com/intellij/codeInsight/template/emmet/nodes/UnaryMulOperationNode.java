@@ -52,4 +52,9 @@ public class UnaryMulOperationNode extends ZenCodingNode {
     }
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "*";
+  }
 }

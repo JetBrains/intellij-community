@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet.nodes;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,4 +30,9 @@ public abstract class ZenCodingNode {
                                               String surroundedText,
                                               CustomTemplateCallback callback,
                                               boolean insertSurroundedTextAtTheEnd);
+
+  @NotNull
+  public List<ZenCodingNode> getChildren() {
+    return Collections.emptyList();
+  }
 }

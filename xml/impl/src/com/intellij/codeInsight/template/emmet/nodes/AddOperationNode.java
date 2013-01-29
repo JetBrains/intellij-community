@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,6 +44,12 @@ public class AddOperationNode extends ZenCodingNode {
 
   @NotNull
   @Override
+  public List<ZenCodingNode> getChildren() {
+    return ContainerUtil.newLinkedList(myLeftOperand, myRightOperand);
+  }
+
+  @NotNull
+  @Override
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
@@ -52,5 +59,10 @@ public class AddOperationNode extends ZenCodingNode {
     result.addAll(leftNodes);
     result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd));
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "+";
   }
 }

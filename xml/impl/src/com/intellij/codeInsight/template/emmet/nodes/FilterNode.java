@@ -48,4 +48,9 @@ public class FilterNode extends ZenCodingNode {
                                      boolean insertSurroundedTextAtTheEnd) {
     return myNode.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd);
   }
+
+  @Override
+  public String toString() {
+    return "Filter(" + myFilter + ")";
+  }
 }
