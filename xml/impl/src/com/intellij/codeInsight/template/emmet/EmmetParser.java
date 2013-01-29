@@ -386,11 +386,13 @@ class EmmetParser {
       token = nextToken();
       value = token != null && token == ZenCodingTokens.SHARP ? token.toString() : getAttributeValueByToken(token);
       attrValueBuilder.append(value);
-      if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET && token != ZenCodingTokens.SPACE) {
+      if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
+          && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA) {
         myIndex++;
       }
     }
-    while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET && token != ZenCodingTokens.SPACE);
+    while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
+           && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA);
     return new Pair<String, String>(name, attrValueBuilder.toString());
   }
 
