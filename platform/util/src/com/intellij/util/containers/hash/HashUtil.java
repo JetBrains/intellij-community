@@ -35,6 +35,12 @@ class HashUtil {
 
   }
 
+  public static int hash(Object key, HashingStrategy hashingStrategy) {
+
+    return key == null ? 0 : hashingStrategy.computeHashCode(key) & 0x7fffffff;
+
+  }
+
 
   public static int adjustTableSize(int size) {
 
