@@ -72,9 +72,15 @@ public class XBreakpointUtil {
     DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport debuggerSupport : debuggerSupports) {
       final BreakpointPanelProvider<?> provider = debuggerSupport.getBreakpointPanelProvider();
+
+      final int textLength = editor.getDocument().getTextLength();
+      if (offset > textLength) {
+        offset = textLength;
+      }
+
       Object breakpoint = provider.findBreakpoint(project, editorDocument, offset);
-      final GutterIconRenderer iconRenderer = provider.getBreakpointGutterIconRenderer(breakpoint);
       if (breakpoint != null) {
+        final GutterIconRenderer iconRenderer = provider.getBreakpointGutterIconRenderer(breakpoint);
         return Pair.create(iconRenderer, breakpoint);
       }
     }
