@@ -141,11 +141,18 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.BINARY_EXPRESSION &&
              (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType) || PyTokenTypes.OPERATIONS.contains(childType))) {
-      if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
-        childAlignment = myParent.getAlignmentForChildren();
+      if (isInControlStatement() ) {
+        PyParenthesizedExpression parens = PsiTreeUtil.getParentOfType(_node.getPsi(), PyParenthesizedExpression.class, true,
+                                                                       PyStatementPart.class);
+        childIndent = parens != null ? Indent.getNormalIndent() : Indent.getContinuationIndent();
       }
       else {
-        childAlignment = getAlignmentForChildren();
+        if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
+          childAlignment = myParent.getAlignmentForChildren();
+        }
+        else {
+          childAlignment = getAlignmentForChildren();
+        }
       }
     }
 
@@ -162,7 +169,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isCallInControlStatement()
+        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isInControlStatement()
                       ? Indent.getContinuationIndent()
                       : Indent.getNormalIndent();
       }
@@ -219,7 +226,8 @@ public class PyBlock implements ASTBlock {
 
     ASTNode prev = child.getTreePrev();
     while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
-      if (prev.getText().contains("\\")) {
+      if (prev.getText().contains("\\") && !childIndent.equals(Indent.getContinuationIndent()) &&
+          !childIndent.equals(Indent.getContinuationIndent(true))) {
         childIndent = Indent.getNormalIndent();
         break;
       }
@@ -229,7 +237,7 @@ public class PyBlock implements ASTBlock {
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
-  private boolean isCallInControlStatement() {
+  private boolean isInControlStatement() {
     return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null;
   }
 
@@ -472,6 +480,9 @@ public class PyBlock implements ASTBlock {
   @Nullable
   private Alignment getChildAlignment() {
     if (ourListElementTypes.contains(_node.getElementType())) {
+      if (isInControlStatement()) {
+        return null;
+      }
       if (_node.getPsi() instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
         return null;
       }
@@ -480,7 +491,7 @@ public class PyBlock implements ASTBlock {
         if (elements.length == 0) {
           return null;
         }
-        PyKeyValueExpression last = elements[elements.length-1];
+        PyKeyValueExpression last = elements[elements.length - 1];
         if (last.getValue() == null) { // incomplete
           return null;
         }

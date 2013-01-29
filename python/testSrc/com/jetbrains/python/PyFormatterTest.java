@@ -264,6 +264,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIfConditionContinuation() {  // PY-8195
+    doTest();
+  }
+
   public void testIndentAfterBackslash() {
     doTest();
   }
