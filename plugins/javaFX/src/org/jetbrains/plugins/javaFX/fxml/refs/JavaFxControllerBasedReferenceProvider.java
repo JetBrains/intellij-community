@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -41,10 +42,13 @@ public abstract class JavaFxControllerBasedReferenceProvider extends PsiReferenc
     if (rootTag != null) {
       final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
       if (attribute != null) {
-        final PsiClass controllerClass =
-          JavaPsiFacade.getInstance(xmlAttrVal.getProject()).findClass(attribute.getValue(), xmlAttrVal.getResolveScope());
-        if (controllerClass != null) {
-          return getReferencesByElement(controllerClass, xmlAttrVal, context);
+        final String attributeValue = attribute.getValue();
+        if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
+          final PsiClass controllerClass =
+            JavaPsiFacade.getInstance(xmlAttrVal.getProject()).findClass(attributeValue, xmlAttrVal.getResolveScope());
+          if (controllerClass != null) {
+            return getReferencesByElement(controllerClass, xmlAttrVal, context);
+          }
         }
       }
     }
