@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,13 +234,13 @@ public class Bookmark {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.setColor(LightColors.YELLOW);
+      g.setColor(new JBColor(LightColors.YELLOW, new Color(103, 81, 51)));
       g.fillRect(x, y, getIconWidth(), getIconHeight());
 
       g.setColor(JBColor.GRAY);
       g.drawRect(x, y, getIconWidth(), getIconHeight());
 
-      g.setColor(Color.black);
+      g.setColor(JBColor.foreground);
       final Font oldFont = g.getFont();
       g.setFont(MNEMONIC_FONT);
 
