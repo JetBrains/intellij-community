@@ -268,7 +268,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void testIndentInNestedCall() {  // PY-8195
+  public void _testIndentInNestedCall() {  // PY-8195
     doTest();
   }
 
