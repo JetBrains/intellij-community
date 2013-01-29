@@ -326,7 +326,8 @@ public class CommonProxy extends ProxySelector {
       }
       final HttpConfigurable configurable = HttpConfigurable.getInstance();
       if (configurable == null) {
-        LOG.error("HttpConfigurable not initialized yet", new Throwable());
+        // error removed since license server can ok do it
+        //LOG.error("HttpConfigurable not initialized yet", new Throwable());
         return ourNoProxy;
       }
       if (configurable.USE_HTTP_PROXY) {
