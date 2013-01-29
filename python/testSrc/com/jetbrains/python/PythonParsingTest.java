@@ -360,6 +360,16 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-8606
+  public void testEllipsisInSliceList() {
+    doTest();
+  }
+
+  // PY-8606
+  public void testEllipsisInSliceListTail() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

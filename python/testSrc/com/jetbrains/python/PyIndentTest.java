@@ -321,14 +321,11 @@ public class PyIndentTest extends PyTestCase {
            "    <caret>");
   }
 
-  /*
-  TODO: formatter core problem?
-  public void testAlignListBeforeEquals() throws Exception {
+  public void testAlignListBeforeEquals() {
       doTest("__all__ <caret>= [a,\n" +
              "           b]",
-             "__all__ \n" +
+             "__all__ \\\n" +
              "<caret>= [a,\n" +
              "           b]");
   }
-  */
 }

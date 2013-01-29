@@ -132,7 +132,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA) {
+          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child)) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
@@ -149,7 +149,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
+    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
       }
@@ -162,12 +162,13 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = parentType == PyElementTypes.PARAMETER_LIST 
+        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isCallInControlStatement()
                       ? Indent.getContinuationIndent()
                       : Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
+    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
+      parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
@@ -192,11 +193,17 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION)) {
+    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION) {
       if (childType == PyTokenTypes.RPAR || !hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
+        childIndent = Indent.getNormalIndent();
+      }
+    }
+    else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
+      PyExpression indexExpression = ((PySubscriptionExpression)_node.getPsi()).getIndexExpression();
+      if (indexExpression != null && child == indexExpression.getNode()) {
         childIndent = Indent.getNormalIndent();
       }
     }
@@ -206,6 +213,19 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private boolean isCallInControlStatement() {
+    return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null;
+  }
+
+  private boolean isSliceOperand(ASTNode child) {
+    if (_node.getPsi() instanceof PySliceExpression) {
+      PySliceExpression sliceExpression = (PySliceExpression)_node.getPsi();
+      PyExpression operand = sliceExpression.getOperand();
+      return operand.getNode() == child;
+    }
+    return false;
   }
 
   private static boolean isEmptyList(PsiElement psi) {
@@ -270,10 +290,13 @@ public class PyBlock implements ASTBlock {
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
       return myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
     }
+    if (_node.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
+      return false;
+    }
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
     }
-    return true;
+    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS;
   }
 
   @Nullable

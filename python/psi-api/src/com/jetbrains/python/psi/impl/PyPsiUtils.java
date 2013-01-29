@@ -216,7 +216,9 @@ public class PyPsiUtils {
       toDelete.add(prev);
       prev = prev.getTreeNext();
     }
-    statement.deleteChildRange(toDelete.get(0).getPsi(), toDelete.get(toDelete.size() - 1).getPsi());
+    if (toDelete.size() > 0) {
+      statement.deleteChildRange(toDelete.get(0).getPsi(), toDelete.get(toDelete.size() - 1).getPsi());
+    }
   }
 
   static <T, U extends PsiElement> List<T> collectStubChildren(U e,

@@ -242,7 +242,28 @@ public class PyFormatterTest extends PyTestCase {
     settings().WRAP_LONG_LINES = true;
     doTest();
   }
-  
+
+  public void testWrapAssignment() {  // PY-8572
+    settings().RIGHT_MARGIN = 120;
+    settings().WRAP_LONG_LINES = false;
+    doTest();
+  }
+
+  public void testIndentInSlice() {  // PY-8572
+    settings().RIGHT_MARGIN = 120;
+    settings().WRAP_LONG_LINES = false;
+    doTest();
+  }
+
+  public void testIndentInComprehensions() {  // PY-8516
+    settings().getCustomSettings(PyCodeStyleSettings.class).ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+  }
+
+  public void testContinuationIndentForCallInStatementPart() {  // PY-8577
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
