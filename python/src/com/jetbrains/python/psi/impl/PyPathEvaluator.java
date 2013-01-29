@@ -68,7 +68,13 @@ public class PyPathEvaluator {
       }
     }
     else if (expr instanceof PyReferenceExpression) {
-      if (((PyReferenceExpression)expr).getQualifier() == null) {
+      if (PyNames.PARDIR.equals(expr.getName())) {
+        return "..";
+      }
+      else if (PyNames.CURDIR.equals(expr.getName())) {
+        return ".";
+      }
+      else if (((PyReferenceExpression)expr).getQualifier() == null) {
         final String refName = ((PyReferenceExpression)expr).getReferencedName();
         if (PyNames.FILE.equals(refName)) {
           return containingFilePath;
@@ -90,14 +96,15 @@ public class PyPathEvaluator {
 
   public static String evaluatePathInJoin(String containingFilePath, PyExpression[] args, int endElement) {
     String result = null;
-    for (int i = 0; i< endElement; i++) {
+    for (int i = 0; i < endElement; i++) {
       String arg = evaluate(args[i], containingFilePath);
       if (arg == null) {
         return null;
       }
       if (result == null) {
         result = arg;
-      } else {
+      }
+      else {
         result = new File(result, arg).getPath();
       }
     }

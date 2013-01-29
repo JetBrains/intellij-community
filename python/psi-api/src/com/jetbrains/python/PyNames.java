@@ -67,6 +67,8 @@ public class PyNames {
   public static final String JOIN = "join";
   public static final String REPLACE = "replace";
   public static final String FILE = "__file__";
+  public static final String PARDIR = "pardir";
+  public static final String CURDIR = "curdir";
 
   public static final String WARN = "warn";
   public static final String DEPRECATION_WARNING = "DeprecationWarning";

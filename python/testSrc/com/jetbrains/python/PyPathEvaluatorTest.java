@@ -33,6 +33,10 @@ public class PyPathEvaluatorTest extends PyTestCase {
     assertEquals(result, "/foo/templates");
   }
 
+  public void testParDir() {
+    assertEquals("/foo/subfolder/../bar.py", doEvaluate("os.path.abspath(os.path.join(os.path.join('/foo/subfolder',  os.path.pardir, 'bar.py')))", "/foo/bar.py"));
+  }
+
   private String doEvaluate(final String text, final String file) {
     final PyExpression expression = PyElementGenerator.getInstance(myFixture.getProject()).createExpressionFromText(text);
     return FileUtil.toSystemIndependentName(PyPathEvaluator.evaluate(expression, file));
