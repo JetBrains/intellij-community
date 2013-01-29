@@ -169,8 +169,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
-    if (PROXY_AUTHENTICATION && KEEP_PROXY_PASSWORD) {
-      return new PasswordAuthentication(PROXY_LOGIN, getPlainProxyPassword().toCharArray());
+    final String password = getPlainProxyPassword();
+    if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
+      return new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
     }
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
