@@ -93,6 +93,12 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
         if (expected != null) return (PsiClassType)expected;
       }
     }
+    else if (parent instanceof GrNamedArgument) {  //possible default constructor named arg
+      for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
+        expected = filterOutTrashTypes(expected);
+        if (expected != null) return (PsiClassType)expected;
+      }
+    }
     else {
       final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
