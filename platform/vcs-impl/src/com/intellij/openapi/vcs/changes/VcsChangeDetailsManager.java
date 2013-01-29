@@ -24,9 +24,9 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -206,7 +206,9 @@ public class VcsChangeDetailsManager {
       try {
         contents = value.get();
         if (contents == null) throw new VcsException("Can not load content");
-        if (isUnknownType(contents)) return UIVcsUtil.errorPanel("Can not show", false);
+        if (isUnknownType(contents)) {
+          return UIVcsUtil.errorPanel(DiffBundle.message("diff.can.not.show.unknown"), false);
+        }
         if (isEmpty(contents)) throw new VcsException("Can not load content");
       }
       catch (VcsException e) {
@@ -234,10 +236,11 @@ public class VcsChangeDetailsManager {
       return wholeWrapper;
     }
 
-    private boolean isUnknownType(List<BeforeAfter<DiffContent>> contents) {
+    private static boolean isUnknownType(List<BeforeAfter<DiffContent>> contents) {
       for (BeforeAfter<DiffContent> content : contents) {
-        if (content.getBefore() != null && FileTypes.UNKNOWN.equals(content.getBefore().getContentType())) return true;
-        if (content.getAfter() != null && FileTypes.UNKNOWN.equals(content.getAfter().getContentType())) return true;
+        if (DiffUtil.oneIsUnknown(content.getBefore(), content.getAfter())) {
+          return true;
+        }
       }
       return false;
     }
