@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1796,37 +1796,21 @@ public class UIUtil {
     }
   }
 
+  /** @deprecated use {@linkplain Dialog#setModalityType(Dialog.ModalityType)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void setToolkitModal(final JDialog dialog) {
-    try {
-      final Class<?> modalityType = dialog.getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
-      final Field field = modalityType.getField("TOOLKIT_MODAL");
-      final Object value = field.get(null);
-
-      final Method method = dialog.getClass().getMethod("setModalityType", modalityType);
-      method.invoke(dialog, value);
-    }
-    catch (Exception e) {
-      // ignore - no JDK 6
-    }
+    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
   }
 
+  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void updateDialogIcon(final JDialog dialog, final List<Image> images) {
-    try {
-      final Method method = dialog.getClass().getMethod("setIconImages", List.class);
-      method.invoke(dialog, images);
-    }
-    catch (Exception e) {
-      // ignore - no JDK 6
-    }
+    dialog.setIconImages(images);
   }
 
+  /** @deprecated outdated (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean hasJdk6Dialogs() {
-    try {
-      UIUtil.class.getClassLoader().loadClass("java.awt.Dialog$ModalityType");
-    }
-    catch (Throwable e) {
-      return false;
-    }
     return true;
   }
 
