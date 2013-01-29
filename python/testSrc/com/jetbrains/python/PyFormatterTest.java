@@ -264,6 +264,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentAfterBackslash() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

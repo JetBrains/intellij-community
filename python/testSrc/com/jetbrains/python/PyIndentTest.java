@@ -318,14 +318,14 @@ public class PyIndentTest extends PyTestCase {
            "    return 'some string' + \\<caret>",
            "def index():\n" +
            "    return 'some string' + \\\n" +
-           "    <caret>");
+           "        <caret>");
   }
 
   public void testAlignListBeforeEquals() {
       doTest("__all__ <caret>= [a,\n" +
              "           b]",
              "__all__ \\\n" +
-             "<caret>= [a,\n" +
+             "    <caret>= [a,\n" +
              "           b]");
   }
 }

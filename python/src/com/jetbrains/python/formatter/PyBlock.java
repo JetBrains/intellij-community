@@ -212,6 +212,15 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
+    ASTNode prev = child.getTreePrev();
+    while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
+      if (prev.getText().contains("\\")) {
+        childIndent = Indent.getNormalIndent();
+        break;
+      }
+      prev = prev.getTreePrev();
+    }
+
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
@@ -551,6 +560,12 @@ public class PyBlock implements ASTBlock {
       return Indent.getNormalIndent();
     }
 
+    if (afterNode != null) {
+      ASTNode wsAfter = afterNode.getTreeNext();
+      if (wsAfter != null && wsAfter.getElementType() == TokenType.WHITE_SPACE && wsAfter.getText().indexOf('\\') > 0) {
+        return Indent.getNormalIndent();
+      }
+    }
     return Indent.getNoneIndent();
   }
 
