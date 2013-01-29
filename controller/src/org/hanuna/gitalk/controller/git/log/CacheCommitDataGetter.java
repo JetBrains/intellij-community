@@ -21,7 +21,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
         public CommitData get(@NotNull Hash key) {
             return readCommitData(key);
         }
-    }, 1000);
+    }, 5000);
     private final CommitDataReader commitDataReader = new CommitDataReader();
 
     @NotNull
@@ -39,6 +39,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     public void preLoadCommitData(@NotNull List<Commit> commits) {
         StringBuilder s = new StringBuilder();
         for (Commit commit : commits) {
+            assert commit != null : "null commit in preLoad List";
             s.append(commit.hash().toStrHash()).append(" ");
         }
         List<CommitData> commitDatas = commitDataReader.readCommitsData(s.toString());

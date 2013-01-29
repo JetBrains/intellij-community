@@ -74,7 +74,10 @@ public class GraphTableModel extends AbstractTableModel {
         }
         List<Commit> commits = new ArrayList<Commit>(COUNT_PRELOAD + 1);
         for (int i = c; i < COUNT_PRELOAD + c && i < getRowCount(); i++) {
-            commits.add(getCommitInRow(i));
+            Commit commit = getCommitInRow(i);
+            if (commit != null) {
+                commits.add(getCommitInRow(i));
+            }
         }
         commitDataGetter.preLoadCommitData(commits);
     }
