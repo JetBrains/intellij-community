@@ -58,7 +58,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Braces", SPACES_WITHIN);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_PY_COLON", ApplicationBundle.message("checkbox.spaces.before.colon"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_PY_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"), SPACES_OTHER);
-      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_BACKSLASH", "Before \\", SPACES_OTHER);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_BACKSLASH", "Before '\\'", SPACES_OTHER);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("BLANK_LINES_AROUND_CLASS",
@@ -106,7 +106,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                    "    x = dict[1]\n" +
                                                    "    expr = (1+2)*3 << 4 & 16\n" +
                                                    "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
-                                                   "    settings_preview(key=1)";
+                                                   "    settings_preview(key=1)\n\n" +
+                                                   "foo =\\\n" +
+                                                   "    bar";
 
   @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
