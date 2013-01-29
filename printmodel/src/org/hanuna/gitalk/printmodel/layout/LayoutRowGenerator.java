@@ -89,7 +89,7 @@ class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> 
             }
         }
         NodeRow nextGraphRow = graph.getNodeRows().get(newRowIndex);
-        for (Node node : nextGraphRow.getVisibleNodes()) {
+        for (Node node : nextGraphRow.getNodes()) {
             if (node.getUpEdges().isEmpty()) {
                 layoutRow.add(node);
             }

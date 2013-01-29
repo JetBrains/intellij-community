@@ -58,7 +58,7 @@ public class MutableNodeRow implements NodeRow {
 
     @NotNull
     @Override
-    public List<Node> getVisibleNodes() {
+    public List<Node> getNodes() {
         return Collections.<Node>unmodifiableList(visibleNodes);
     }
 

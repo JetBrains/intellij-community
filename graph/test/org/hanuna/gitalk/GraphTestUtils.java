@@ -45,7 +45,7 @@ public class GraphTestUtils {
     }
     public static String toStr(NodeRow row) {
         StringBuilder s = new StringBuilder();
-        List<Node> nodes = row.getVisibleNodes();
+        List<Node> nodes = row.getNodes();
         if (nodes.size() > 0) {
             s.append(toStr(nodes.get(0)));
         }
@@ -70,7 +70,7 @@ public class GraphTestUtils {
     @NotNull
     public static Node getNode(Graph graph, int rowIndex) {
         NodeRow row = graph.getNodeRows().get(rowIndex);
-        for (Node node : row.getVisibleNodes()) {
+        for (Node node : row.getNodes()) {
             if (node.getType() == Node.Type.COMMIT_NODE) {
                 return node;
             }

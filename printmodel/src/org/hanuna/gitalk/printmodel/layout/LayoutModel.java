@@ -35,7 +35,7 @@ public class LayoutModel {
         MutableLayoutRow firstCellRow = new MutableLayoutRow();
         firstCellRow.setNodeRow(firstRow);
         List<GraphElement> editableLayoutRow = firstCellRow.getModifiableOrderedGraphElements();
-        for (Node node : firstRow.getVisibleNodes()) {
+        for (Node node : firstRow.getNodes()) {
             editableLayoutRow.add(node);
         }
         layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size(), 100);

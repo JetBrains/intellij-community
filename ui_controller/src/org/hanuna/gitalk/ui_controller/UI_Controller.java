@@ -109,7 +109,7 @@ public class UI_Controller {
     private Node mainNodeInRow(int rowIndex) {
         List<NodeRow> nodeRows = dataPack.getGraph().getNodeRows();
         assert rowIndex < nodeRows.size();
-        for (Node node : nodeRows.get(rowIndex).getVisibleNodes()) {
+        for (Node node : nodeRows.get(rowIndex).getNodes()) {
             if (node.getType() == Node.Type.COMMIT_NODE) {
                 return node;
             }
