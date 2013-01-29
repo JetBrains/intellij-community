@@ -131,6 +131,18 @@ boolean bar(def list) {
 ''', MissingReturnInspection)
   }
 
+  void testMissingReturnInBinary() {
+    testHighlighting('''\
+boolean foo(def list) {
+  !list && list
+}
+
+boolean bar(def list) {
+  if (list) !list && list
+<warning descr="Not all execution paths return a value">}</warning>
+''', MissingReturnInspection)
+  }
+
   void testReassignedVarInClosureInspection() {
     addCompileStatic()
     testHighlighting("""\

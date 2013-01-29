@@ -568,16 +568,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     visitCall(expression);
 
     if (opType == mLAND) {
-      for (GotoInstruction negation : negations) {
-        addPendingEdge(expression, negation);
-      }
+      InstructionImpl head = myHead;
       if (negations.isEmpty()) {
-        InstructionImpl head = myHead;
         addNode(new NegatingGotoInstruction(expression, condition));
         handlePossibleReturn(expression);
         addPendingEdge(expression, myHead);
-        myHead = head;
       }
+      else {
+        for (GotoInstruction negation : negations) {
+          myHead = negation;
+          handlePossibleReturn(expression);
+          addPendingEdge(expression, myHead);
+        }
+      }
+      myHead = head;
     }
     else /*if (opType == mLOR)*/ {
       final InstructionImpl instruction =
