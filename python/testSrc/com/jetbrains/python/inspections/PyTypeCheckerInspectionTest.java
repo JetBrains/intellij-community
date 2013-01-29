@@ -145,4 +145,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testGenericArguments() {
     doTest();
   }
+
+  // PY-7757
+  public void testOpenRead2K() {
+    doTest();
+  }
 }
