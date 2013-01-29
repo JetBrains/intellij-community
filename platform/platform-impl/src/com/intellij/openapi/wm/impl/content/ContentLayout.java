@@ -61,6 +61,8 @@ abstract class ContentLayout {
 
   public abstract void rebuild();
 
+  public abstract int getMinimumWidth();
+
   public abstract void contentAdded(ContentManagerEvent event);
 
   public abstract void contentRemoved(ContentManagerEvent event);
