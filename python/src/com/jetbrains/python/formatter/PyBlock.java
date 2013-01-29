@@ -562,8 +562,11 @@ public class PyBlock implements ASTBlock {
 
     if (afterNode != null) {
       ASTNode wsAfter = afterNode.getTreeNext();
-      if (wsAfter != null && wsAfter.getElementType() == TokenType.WHITE_SPACE && wsAfter.getText().indexOf('\\') > 0) {
-        return Indent.getNormalIndent();
+      while (wsAfter != null && wsAfter.getElementType() == TokenType.WHITE_SPACE) {
+        if (wsAfter.getText().indexOf('\\') >= 0) {
+          return Indent.getNormalIndent();
+        }
+        wsAfter = wsAfter.getTreeNext();
       }
     }
     return Indent.getNoneIndent();

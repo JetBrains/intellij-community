@@ -321,6 +321,11 @@ public class PyIndentTest extends PyTestCase {
            "        <caret>");
   }
 
+  public void testIndentOnBackslash2() {  // PY-6359
+    doTest("a = b\\<caret>",
+           "a = b\\\n    <caret>");
+  }
+
   public void testAlignListBeforeEquals() {
       doTest("__all__ <caret>= [a,\n" +
              "           b]",
