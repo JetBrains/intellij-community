@@ -49,7 +49,6 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
     Future<?> serverStartFuture = startServerInPooledThread();
     if (serverStartFuture != null) {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-      ApplicationManager.getApplication().assertIsDispatchThread();
       try {
         serverStartFuture.get();
       }
