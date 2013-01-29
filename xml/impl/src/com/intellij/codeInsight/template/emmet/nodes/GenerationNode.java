@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet.nodes;
 
+import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
@@ -125,8 +126,7 @@ public class GenerationNode {
       TemplateToken xmlTemplateToken = myTemplateToken;
       List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
       parentTemplate = invokeXmlTemplate(xmlTemplateToken, callback, generator, hasChildren, attr2value);
-      predefinedValues =
-        buildPredefinedValues(attr2value, (XmlZenCodingGenerator)generator, hasChildren);
+      predefinedValues = buildPredefinedValues(attr2value, (XmlZenCodingGenerator)generator, hasChildren);
     }
     else {
       parentTemplate = invokeTemplate(myTemplateToken, hasChildren, callback, generator);
@@ -229,6 +229,11 @@ public class GenerationNode {
     XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
+      for (Pair<String, String> pair : attr2value) {
+        if (Strings.isNullOrEmpty(pair.second) && template.getSegmentsCount() > template.getVariableCount()) {
+          template.addVariable(pair.first, "", "", true);
+        }
+      }
       if (tag != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
@@ -239,8 +244,8 @@ public class GenerationNode {
         });
       }
     }
-    template =
-      (generator != null ? generator : XmlZenCodingGeneratorImpl.INSTANCE).generateTemplate(token, hasChildren, callback.getContext());
+    ZenCodingGenerator zenCodingGenerator = generator != null ? generator : XmlZenCodingGeneratorImpl.INSTANCE;
+    template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);
     return template;
   }
@@ -359,7 +364,10 @@ public class GenerationNode {
         if (ZenCodingUtil.containsSurroundedTextMarker(pair.second)) {
           myContainsSurroundedTextMarker = true;
         }
-        tag.setAttribute(pair.first, ZenCodingUtil.getValue(pair.second, myNumberInIteration, mySurroundedText));
+        tag.setAttribute(pair.first,
+                         Strings.isNullOrEmpty(pair.second)
+                         ? "$" + pair.first + "$"
+                         : ZenCodingUtil.getValue(pair.second, myNumberInIteration, mySurroundedText));
         iterator.remove();
       }
     }
