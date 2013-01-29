@@ -285,4 +285,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
     doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
   }
+
+  public void testPackageAndClassConflict1() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub/Test.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict2() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict3() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/java/lang.java", false, false);
+  }
 }
