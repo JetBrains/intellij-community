@@ -268,6 +268,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testSpaceBeforeBackslash() {
+    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_BEFORE_BACKSLASH = false;
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

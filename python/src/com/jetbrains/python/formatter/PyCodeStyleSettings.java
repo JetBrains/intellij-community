@@ -13,6 +13,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_LBRACKET = false;
   public boolean SPACE_AROUND_EQ_IN_NAMED_PARAMETER = false;
   public boolean SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = false;
+  public boolean SPACE_BEFORE_BACKSLASH = true;
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
 
