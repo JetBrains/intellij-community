@@ -15,18 +15,19 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
+import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.Stack;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: zolotov
@@ -39,6 +40,25 @@ class EmmetParser {
   private final List<ZenCodingToken> myTokens;
   private final CustomTemplateCallback myCallback;
   private final ZenCodingGenerator myGenerator;
+  private final Stack<String> tagLevel = new Stack<String>();
+
+  private static Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
+    put("p", "span");
+    put("ul", "li");
+    put("ol", "li");
+    put("table", "tr");
+    put("tr", "td");
+    put("tbody", "tr");
+    put("thead", "tr");
+    put("tfoot", "tr");
+    put("colgroup", "col");
+    put("select", "option");
+    put("optgroup", "option");
+    put("audio", "source");
+    put("video", "source");
+    put("object", "param");
+    put("map", "area");
+  }};
 
   private int myIndex = 0;
 
@@ -104,11 +124,33 @@ class EmmetParser {
     }
     else if (sign == '>') {
       myIndex++;
+      String parentTag = getParentTag(mul);
+      boolean hasParent = false;
+      if(!Strings.isNullOrEmpty(parentTag)) {
+        hasParent = true;
+        tagLevel.push(parentTag);
+      }
       ZenCodingNode more2 = parseAddOrMore();
       if (more2 == null) {
         return null;
       }
+      if(hasParent) {
+        tagLevel.pop();
+      }
       return new MoreOperationNode(mul, more2);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getParentTag(ZenCodingNode node) {
+    if(node instanceof TemplateNode) {
+      return ((TemplateNode)node).getTemplateToken().getKey();
+    } else if(node instanceof MulOperationNode) {
+      ZenCodingNode leftOperand = ((MulOperationNode)node).getLeftOperand();
+      if(leftOperand instanceof TemplateNode) {
+        return ((TemplateNode)leftOperand).getTemplateToken().getKey();
+      }
     }
     return null;
   }
@@ -172,7 +214,7 @@ class EmmetParser {
   @Nullable
   private ZenCodingNode parseTemplate() {
     final ZenCodingToken token = nextToken();
-    String templateKey = ZenCodingUtil.isHtml(myCallback) ? DEFAULT_TAG : null;
+    String templateKey = ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
     boolean mustHaveSelector = true;
 
     if (token instanceof IdentifierToken) {
@@ -201,6 +243,19 @@ class EmmetParser {
       return null;
     }
     return new TemplateNode(templateToken);
+  }
+
+  private String suggestTagName() {
+    if(!tagLevel.empty()) {
+      String parentTag = tagLevel.peek();
+      if (parentChildTagMapping.containsKey(parentTag)) {
+        return parentChildTagMapping.get(parentTag);
+      }
+      if (HtmlUtil.isPossiblyInlineTag(parentTag)) {
+        return "span";
+      }
+    }
+    return DEFAULT_TAG;
   }
 
   @SuppressWarnings("unchecked")
