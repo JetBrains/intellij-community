@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,6 +27,12 @@ public class Layers extends JLayeredPane {
 
   public Layers() {
     setLayout(new Layout());
+  }
+  @Override
+  public Dimension getMinimumSize() {
+    if (!isMinimumSizeSet())
+      return new Dimension(0, 0);
+    return super.getMinimumSize();
   }
 
   private class Layout implements LayoutManager2 {

@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFXNSDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   public static PsiClass findPsiClass(String name, XmlTag tag) {
-    return findPsiClass(name, JavaFXNSDescriptor.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+    return findPsiClass(name, JavaFxPsiUtil.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
   }
 
   public JavaFxClassBackedElementDescriptor(String name, PsiClass aClass) {
@@ -160,6 +160,9 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName, true);
         }
         return null;
+      }
+      if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(name)) {
+        //return new ;
       }
       return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }

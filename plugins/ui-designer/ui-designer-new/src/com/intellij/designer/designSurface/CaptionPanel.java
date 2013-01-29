@@ -24,6 +24,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JLayeredPane implements DataProvider, DeleteProvider {
+public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteProvider {
   private static final int SIZE = 16;
 
   private final boolean myHorizontal;

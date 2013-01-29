@@ -16,8 +16,8 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.popup.StackingPopupDispatcherImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -655,6 +656,12 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       myDialog = dialog;
     }
 
+    protected JLayeredPane createLayeredPane() {
+      JLayeredPane p = new JBLayeredPane();
+      p.setName(this.getName()+".layeredPane");
+      return p;
+    }
+
     @Override
     public void dispose() {
       myDialog = null;
@@ -682,7 +689,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   public static class GlasspanePeerUnavailableException extends Exception {
   }
 
-  public static class TransparentLayeredPane extends JLayeredPane {
+  public static class TransparentLayeredPane extends JBLayeredPane {
     private TransparentLayeredPane() {
       setLayout(new BorderLayout());
       setOpaque(false);

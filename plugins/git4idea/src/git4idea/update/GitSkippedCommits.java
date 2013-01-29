@@ -165,7 +165,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
         return c.root;
       }
       if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-        return new GitFileRevision(myProject, VcsUtil.getFilePath(c.root.getPath()), c.commitInfo.revision, false);
+        return new GitFileRevision(myProject, VcsUtil.getFilePath(c.root.getPath()), c.commitInfo.revision);
       }
     }
     return super.getData(dataId);

@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.Animator;
@@ -224,7 +225,7 @@ public class LoadingDecorator {
     }
   }
 
-  private static class MyLayeredPane extends JLayeredPane {
+  private static class MyLayeredPane extends JBLayeredPane {
     @Override
     public void doLayout() {
       super.doLayout();

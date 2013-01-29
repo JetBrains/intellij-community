@@ -1066,4 +1066,23 @@ class B extends A {
 def foo(def <error descr="Ellipsis type is not allowed here">...</error> vararg, def last) {}
 ''')
   }
+
+  void testTupleInstanceCreatingInDefaultConstructor() {
+    testHighlighting('''
+class Book {
+    String title
+    Author author
+
+    String toString() { "$title by $author.name" }
+}
+
+class Author {
+    String name
+}
+
+def book = new Book(title: "Other Title", author: [name: "Other Name"])
+
+assert book.toString() == 'Other Title by Other Name'
+''')
+  }
 }

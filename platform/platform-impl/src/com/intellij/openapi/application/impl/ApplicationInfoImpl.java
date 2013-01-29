@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
+  @NonNls private String myBigIconUrl = null;
   @NonNls private String myOpaqueIconUrl = "/icon.png";
   @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl = null;
@@ -91,6 +92,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
+  private String myThirdPartySoftwareUrl;
+
+  private Rectangle myAboutLogoRect;
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -113,6 +117,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
+  @NonNls private static final String ATTRIBUTE_SIZE128 = "size128";
   @NonNls private static final String ATTRIBUTE_SIZE16 = "size16";
   @NonNls private static final String ATTRIBUTE_SIZE12 = "size12";
   @NonNls private static final String ATTRIBUTE_SIZE32OPAQUE = "size32opaque";
@@ -154,6 +159,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_STATISTICS = "statistics";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
+
+  @NonNls private static final String ELEMENT_THIRD_PARTY = "third-party";
 
 
   public void initComponent() { }
@@ -247,6 +254,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getSmallIconUrl() {
     return mySmallIconUrl;
+  }
+
+  @Override
+  @Nullable
+  public String getBigIconUrl() {
+    return myBigIconUrl;
   }
 
   public String getOpaqueIconUrl() {
@@ -377,6 +390,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myStatisticsServiceUrl;
   }
 
+  @Override
+  public String getThirdPartySoftwareURL() {
+    return myThirdPartySoftwareUrl;
+  }
+
+  @Override
+  public Rectangle getAboutLogoRect() {
+    return myAboutLogoRect;
+  }
+
   private static ApplicationInfoImpl ourShadowInstance;
 
   public boolean isBetaOrRC() {
@@ -475,9 +498,23 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
       
       String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
-        if (v != null) {
-          myAboutForeground = parseColor(v);
+      if (v != null) {
+        myAboutForeground = parseColor(v);
+      }
+
+      String logoX = aboutLogoElement.getAttributeValue("logoX");
+      String logoY = aboutLogoElement.getAttributeValue("logoY");
+      String logoW = aboutLogoElement.getAttributeValue("logoW");
+      String logoH = aboutLogoElement.getAttributeValue("logoH");
+      if (logoX != null && logoY != null && logoW != null && logoH != null) {
+        try {
+          myAboutLogoRect =
+            new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
+        catch (NumberFormatException nfe) {
+          // ignore
+        }
+      }
     }
 
     Element iconElement = parentNode.getChild(ELEMENT_ICON);
@@ -485,6 +522,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
       myOpaqueIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32OPAQUE);
+      myBigIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE128, (String)null);
       final String toolWindowIcon = iconElement.getAttributeValue(ATTRIBUTE_SIZE12);
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
@@ -608,6 +646,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     else {
       myStatisticsSettingsUrl = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
       myStatisticsServiceUrl = "http://jetbrains.com/idea/statistics/index.jsp";
+    }
+
+    Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
+    if (thirdPartyElement != null) {
+      myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
     }
   }
 

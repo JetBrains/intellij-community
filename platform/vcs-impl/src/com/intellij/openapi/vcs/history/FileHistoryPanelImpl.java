@@ -1349,6 +1349,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
 
+    @Nullable
     @Override
     public RepositoryLocation getChangedRepositoryPath() {
       return myRevision.getChangedRepositoryPath();

@@ -15,102 +15,85 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.FList;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
  * @author peter
  */
-public class CompletionPreview {
+public class CompletionPreview implements Disposable {
+  private static final Key<CompletionPreview> COMPLETION_PREVIEW_KEY = Key.create("COMPLETION_PREVIEW_KEY");
   private final LookupImpl myLookup;
-  private Disposable myUninstaller;
-
-  private CompletionPreview(LookupImpl lookup, final String text, final int prefixLength) {
-    myLookup = lookup;
-
-    final EditorImpl editor = (EditorImpl)myLookup.getEditor();
-
-    myLookup.performGuardedChange(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            AccessToken token = WriteAction.start();
-            try {
-              String preview = text.substring(prefixLength);
-              int caret = editor.getCaretModel().getOffset();
-              int previewEnd = caret + preview.length();
-
-              editor.getDocument().insertString(caret, preview);
-              final RangeHighlighter highlighter = editor.getMarkupModel()
-                .addRangeHighlighter(caret, previewEnd, HighlighterLayer.LAST,
-                                     new TextAttributes(JBColor.GRAY, null, null, null, Font.PLAIN),
-                                     HighlighterTargetArea.EXACT_RANGE);
-
-              editor.startDumb();
-
-              editor.getMarkupModel().removeHighlighter(highlighter);
-              editor.getDocument().deleteString(caret, previewEnd);
-            }
-            finally {
-              token.finish();
-            }
-          }
-        });
-      }
-    }, "preview");
-
-
-    myUninstaller = new Disposable() {
-      @Override
-      public void dispose() {
-        myLookup.setPreview(null);
-        myUninstaller = null;
-        editor.stopDumb();
-        editor.getContentComponent().repaintEditorComponent();
-      }
-    };
-    myLookup.setPreview(this);
-    Disposer.register(myLookup, myUninstaller);
-  }
-
-  public static void reinstallPreview(@Nullable CompletionPreview oldPreview) {
-    if (oldPreview != null && !oldPreview.myLookup.isLookupDisposed()) {
-      installPreview(oldPreview.myLookup);
+  private final MergingUpdateQueue myQueue;
+  private Update myUpdate = new Update("update") {
+    @Override
+    public void run() {
+      updatePreview();
     }
+  };
+
+  private CompletionPreview(LookupImpl lookup) {
+    myLookup = lookup;
+    myQueue = new MergingUpdateQueue("Lookup Preview", 50, true, getEditorImpl().getContentComponent(), this);
+    myLookup.putUserData(COMPLETION_PREVIEW_KEY, this);
+
+    Disposer.register(myLookup, this);
+
+    myLookup.addLookupListener(new LookupListener() {
+      @Override
+      public void itemSelected(LookupEvent event) {
+      }
+
+      @Override
+      public void lookupCanceled(LookupEvent event) {
+      }
+
+      @Override
+      public void currentItemChanged(LookupEvent event) {
+        myQueue.queue(myUpdate);
+      }
+    });
+    myQueue.queue(myUpdate);
   }
-  
-  public static void installPreview(LookupImpl lookup) {
-    LookupElement item = lookup.getCurrentItem();
-    if (item == null || !(lookup.getEditor() instanceof EditorImpl)) {
+
+  public static boolean hasPreview(LookupImpl lookup) {
+    return COMPLETION_PREVIEW_KEY.get(lookup) != null;
+  }
+
+  private void updatePreview() {
+    LookupElement item = myLookup.getCurrentItem();
+    if (item == null) {
       return;
     }
 
-    String text = getPreviewText(lookup, item);
+    String text = getPreviewText(item);
 
-    int prefixLength = lookup.getPrefixLength(item);
+    int prefixLength = myLookup.getPrefixLength(item);
     if (prefixLength > text.length()) {
       return;
     }
-    FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(lookup.itemPattern(item).substring(0, prefixLength), text);
+    FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(myLookup.itemPattern(item).substring(0, prefixLength), text);
     if (fragments == null) {
       return;
     }
@@ -119,10 +102,82 @@ public class CompletionPreview {
       ArrayList<TextRange> arrayList = new ArrayList<TextRange>(fragments);
       prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
     }
-    new CompletionPreview(lookup, text, prefixLength);
+
+    final EditorImpl editor = getEditorImpl();
+    editor.setCustomImage(null);
+    BufferedImage previewImage = createPreviewImage(text.substring(prefixLength));
+    editor.setCustomImage(Pair.create(getCaretPoint(), previewImage));
+    repaintCaretLine();
   }
 
-  private static String getPreviewText(LookupImpl lookup, LookupElement item) {
+  @Override
+  public void dispose() {
+    getEditorImpl().setCustomImage(null);
+    repaintCaretLine();
+  }
+
+  private EditorImpl getEditorImpl() {
+    return (EditorImpl)myLookup.getEditor();
+  }
+
+  private void repaintCaretLine() {
+    EditorImpl editor = getEditorImpl();
+    int caretTop = getCaretPoint().y;
+    editor.getContentComponent().repaintEditorComponent(0, caretTop, editor.getContentComponent().getWidth(), caretTop + editor.getLineHeight());
+  }
+
+  private Point getCaretPoint() {
+    final Editor editor = getEditorImpl();
+    return editor.logicalPositionToXY(editor.getCaretModel().getLogicalPosition());
+  }
+
+  private BufferedImage createPreviewImage(final String previewText) {
+    Point caretTop = getCaretPoint();
+    EditorImpl editor = getEditorImpl();
+    TextAttributes attributes = getPreviewTextAttributes();
+    Font font = EditorUtil.fontForChar('W', attributes.getFontType(), editor).getFont();
+
+    int previewWidth = editor.getComponent().getFontMetrics(font).stringWidth(previewText);
+    int restLineWidth = editor.getContentComponent().getWidth() - caretTop.x;
+    int lineHeight = editor.getLineHeight();
+
+    BufferedImage textImage = UIUtil.createImage(previewWidth + restLineWidth, lineHeight, BufferedImage.TYPE_INT_RGB);
+    Graphics g = textImage.getGraphics();
+    UISettings.setupAntialiasing(g);
+
+    g.setColor(attributes.getBackgroundColor());
+    g.setFont(font);
+    g.fillRect(0, 0, previewWidth, lineHeight);
+
+    g.setColor(JBColor.gray);
+    g.drawString(previewText, 0, editor.getAscent());
+
+    g.translate(-caretTop.x + previewWidth, -caretTop.y);
+    g.setClip(caretTop.x, caretTop.y, restLineWidth, lineHeight);
+    editor.setRendererMode(true);
+    editor.getContentComponent().paint(g);
+    editor.setRendererMode(false);
+
+    return textImage;
+  }
+
+  private TextAttributes getPreviewTextAttributes() {
+    EditorEx editor = getEditorImpl();
+    int caret = editor.getCaretModel().getOffset();
+    IterationState state = new IterationState(editor, caret, caret, false);
+    TextAttributes attributes = state.getMergedAttributes();
+    state.dispose();
+    return attributes;
+  }
+
+  public static void installPreview(LookupImpl lookup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || !(lookup.getEditor() instanceof EditorImpl)) {
+      return;
+    }
+    new CompletionPreview(lookup);
+  }
+
+  private String getPreviewText(LookupElement item) {
     LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
     String text = presentation.getItemText();
     if (text == null) {
@@ -131,7 +186,7 @@ public class CompletionPreview {
 
     String tailText = presentation.getTailText();
     if (tailText != null && tailText.startsWith("(") && tailText.contains(")")) {
-      Editor editor = lookup.getEditor();
+      Editor editor = getEditorImpl();
       CharSequence seq = editor.getDocument().getCharsSequence();
       int caret = editor.getCaretModel().getOffset();
       if (caret >= seq.length() || seq.charAt(caret) != '(') {
@@ -139,13 +194,6 @@ public class CompletionPreview {
       }
     }
     return text;
-  }
-
-  public void uninstallPreview() {
-    if (myUninstaller != null) {
-      Disposer.dispose(myUninstaller);
-      assert myUninstaller == null;
-    }
   }
 
 }
