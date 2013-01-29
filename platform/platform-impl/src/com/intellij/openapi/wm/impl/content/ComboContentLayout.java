@@ -74,6 +74,11 @@ class ComboContentLayout extends ContentLayout {
   }
 
   @Override
+  public int getMinimumWidth() {
+    return myIdLabel != null ? myIdLabel.getPreferredSize().width : 0;
+  }
+
+  @Override
   public void paintComponent(Graphics g) {
     if (!isToDrawCombo()) return;
 

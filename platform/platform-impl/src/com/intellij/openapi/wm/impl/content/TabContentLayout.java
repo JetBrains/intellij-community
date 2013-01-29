@@ -253,6 +253,23 @@ class TabContentLayout extends ContentLayout {
     myLastLayout = data;
   }
 
+  @Override
+  public int getMinimumWidth() {
+    int result = 0;
+    if (myIdLabel != null) {
+      result += myIdLabel.getPreferredSize().width;
+      Insets insets = myIdLabel.getInsets();
+      if (insets != null) {
+        result += insets.left + insets.right;
+      }
+    }
+    if (myLastLayout != null) {
+      result += myLastLayout.moreRectWidth + myLastLayout.requiredWidth;
+      result -= myLastLayout.toLayout.size() > 1 ? myLastLayout.moreRectWidth + 1 : -14;
+    }
+    return result;
+  }
+
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);
