@@ -231,6 +231,7 @@ public class CommonProxy extends ProxySelector {
           host = getRequestingURL().getHost();
         }
       }
+      host = host == null ? "" : host;
       final int port = getRequestingPort();
 
       final Map<Pair<String, Integer>, NonStaticAuthenticator> copy;
@@ -244,7 +245,7 @@ public class CommonProxy extends ProxySelector {
       }
 
       if (! copy.isEmpty()) {
-        final Pair<String, Integer> hostInfo = Pair.create(getRequestingHost(), getRequestingPort());
+        final Pair<String, Integer> hostInfo = Pair.create(host, getRequestingPort());
         final NonStaticAuthenticator authenticator1 = copy.get(hostInfo);
         if (authenticator1 != null) {
           prepareAuthenticator(authenticator1);
@@ -259,7 +260,7 @@ public class CommonProxy extends ProxySelector {
       if (myHttpConfigurable.USE_HTTP_PROXY) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return common defined proxy");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getPromptedAuthentication(getRequestingHost() + ":" + getRequestingPort(), getRequestingPrompt());
+          myHttpConfigurable.getPromptedAuthentication(host + ":" + getRequestingPort(), getRequestingPrompt());
         logAuthentication(authentication);
         return authentication;
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
@@ -272,13 +273,13 @@ public class CommonProxy extends ProxySelector {
         }
 
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), true);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), true);
         logAuthentication(authentication);
         return authentication;
       } else {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), false);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), false);
         logAuthentication(authentication);
         return authentication;
       }
