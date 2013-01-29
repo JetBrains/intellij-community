@@ -601,12 +601,14 @@ public class PyBlock implements ASTBlock {
 
   public boolean isIncomplete() {
     // if there's something following us, we're not incomplete
-    PsiElement element = _node.getPsi().getNextSibling();
-    while (element instanceof PsiWhiteSpace) {
-      element = element.getNextSibling();
-    }
-    if (element != null) {
-      return false;
+    if (!PsiTreeUtil.hasErrorElements(_node.getPsi())) {
+      PsiElement element = _node.getPsi().getNextSibling();
+      while (element instanceof PsiWhiteSpace) {
+        element = element.getNextSibling();
+      }
+      if (element != null) {
+        return false;
+      }
     }
 
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
@@ -619,18 +621,33 @@ public class PyBlock implements ASTBlock {
         }
       }
       if (lastChild.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression) lastChild.getPsi();
+        PyBinaryExpression binaryExpression = (PyBinaryExpression)lastChild.getPsi();
         if (binaryExpression.getRightExpression() == null) {
           return true;
         }
       }
+      if (isIncompleteCall(lastChild)) return true;
     }
 
     if (_node.getPsi() instanceof PyArgumentList) {
       final PyArgumentList argumentList = (PyArgumentList)_node.getPsi();
       return argumentList.getClosingParen() == null;
     }
+    if (isIncompleteCall(_node)) {
+      return true;
+    }
 
+    return false;
+  }
+
+  private static boolean isIncompleteCall(ASTNode node) {
+    if (node.getElementType() == PyElementTypes.CALL_EXPRESSION) {
+      PyCallExpression callExpression = (PyCallExpression)node.getPsi();
+      PyArgumentList argumentList = callExpression.getArgumentList();
+      if (argumentList == null || argumentList.getClosingParen() == null) {
+        return true;
+      }
+    }
     return false;
   }
 

@@ -333,4 +333,16 @@ public class PyIndentTest extends PyTestCase {
              "    <caret>= [a,\n" +
              "           b]");
   }
+
+  public void testAlignInIncompleteCall() {  // PY-6360
+    doTest("q = query.Nested(query.Term(\"type\", \"class\"),<caret>\n" +
+           "\n" +
+           "def bar():\n" +
+           "    print('hello')",
+           "q = query.Nested(query.Term(\"type\", \"class\"),\n" +
+           "                 <caret>\n" +
+           "\n" +
+           "def bar():\n" +
+           "    print('hello')");
+  }
 }
