@@ -35,6 +35,10 @@ public class MutableNodeRow implements NodeRow {
         return graph;
     }
 
+    public boolean hasVisibleNodes() {
+        return !getNodes().isEmpty();
+    }
+
     @NotNull
     @Override
     public List<Node> getNodes() {

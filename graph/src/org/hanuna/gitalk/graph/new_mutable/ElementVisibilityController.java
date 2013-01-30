@@ -13,7 +13,6 @@ import java.util.Set;
 public class ElementVisibilityController {
     private final Set<GraphElement> hiddenElements = new HashSet<GraphElement>();
 
-
     public boolean isVisible(@NotNull GraphElement graphElement) {
         return hiddenElements.contains(graphElement);
     }
@@ -21,7 +20,6 @@ public class ElementVisibilityController {
     public void hide(@NotNull Collection<GraphElement> graphElements) {
         hiddenElements.addAll(graphElements);
     }
-
 
     public void show(@NotNull Collection<GraphElement> graphElements) {
         hiddenElements.removeAll(graphElements);
