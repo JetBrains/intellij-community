@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
@@ -391,7 +390,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         return text;
       }
     });
-    treeSpeedSearch.setComparator(new SpeedSearchComparator(false));
+    treeSpeedSearch.setComparator(getSpeedSearchComparator());
 
     treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
       @Override
@@ -399,6 +398,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         myTree.repaint(); // to update match highlighting
       }
     });
+  }
+
+  protected SpeedSearchComparator getSpeedSearchComparator() {
+    return new SpeedSearchComparator(false);
   }
 
   protected void fillToolbarActions(DefaultActionGroup group) {
