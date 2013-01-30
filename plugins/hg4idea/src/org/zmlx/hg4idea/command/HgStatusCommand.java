@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgChange;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileStatusEnum;
-import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -50,9 +48,15 @@ public class HgStatusCommand {
   private boolean includeCopySource = true;
   @Nullable private HgRevisionNumber baseRevision;
   @Nullable private HgRevisionNumber targetRevision;
+  private HgPlatformFacade myPlatformFacade;
 
   public HgStatusCommand(Project project) {
+    this(project, ServiceManager.getService(project, HgPlatformFacade.class));
+  }
+
+  public HgStatusCommand(Project project, HgPlatformFacade facade) {
     this.project = project;
+    myPlatformFacade = facade;
   }
 
   public void setIncludeAdded(boolean includeAdded) {
@@ -100,7 +104,7 @@ public class HgStatusCommand {
       return Collections.emptySet();
     }
 
-    HgCommandExecutor executor = new HgCommandExecutor(project);
+    HgCommandExecutor executor = new HgCommandExecutor(project, null, myPlatformFacade);
     executor.setSilent(true);
 
     List<String> options = new LinkedList<String>();

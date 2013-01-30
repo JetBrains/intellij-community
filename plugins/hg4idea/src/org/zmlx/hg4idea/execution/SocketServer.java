@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.zmlx.hg4idea.HgPlatformFacade;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.concurrent.Future;
 
 /**
  * Common server class that contains the boiler-plate code to set up a server socket.
@@ -30,17 +29,18 @@ import java.util.concurrent.Future;
 public class SocketServer {
   protected ServerSocket myServerSocket;
   private final Protocol myProtocol;
-  private Future<?> myExecutingFuture;
+  private HgPlatformFacade myPlatformFacade;
 
-  public SocketServer(Protocol protocol) {
+  public SocketServer(Protocol protocol,HgPlatformFacade facade) {
     myProtocol = protocol;
+    myPlatformFacade = facade;
   }
 
   public int start() throws IOException {
     myServerSocket = new ServerSocket(0);
     int port = myServerSocket.getLocalPort();
 
-    myExecutingFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    myPlatformFacade.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -68,9 +68,6 @@ public class SocketServer {
   }
 
   public void stop() {
-    if (myExecutingFuture != null) {
-      myExecutingFuture.cancel(true);
-    }
     try {
       if (myServerSocket != null) {
         myServerSocket.close();
