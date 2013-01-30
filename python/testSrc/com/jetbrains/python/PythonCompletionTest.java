@@ -603,4 +603,14 @@ public class PythonCompletionTest extends PyTestCase {
                             "    pass\n" +
                             "el<caret>").contains("else"));
   }
+
+  public void testArgs() {  // PY-7208
+    doTestByText("def foo(*<caret>)");
+    myFixture.checkResult("def foo(*args)");
+  }
+
+  public void testKwArgs() {  // PY-7208
+    doTestByText("def foo(**<caret>)");
+    myFixture.checkResult("def foo(**kwargs)");
+  }
 }
