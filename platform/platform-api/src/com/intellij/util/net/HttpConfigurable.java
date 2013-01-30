@@ -28,7 +28,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -71,8 +70,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
   public transient String LAST_ERROR;
-  public Map<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> myGenericPasswords = new HashMap<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>>();
-  public Set<Pair<String, Integer>> myGenericCancelled = new HashSet<Pair<String, Integer>>();
+  public Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
+  public Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<CommonProxy.HostInfo>();
   private transient final Object myLock = new Object();
 
   public static HttpConfigurable getInstance() {
@@ -89,19 +88,16 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     XmlSerializerUtil.copyBean(this, state);
     if (!KEEP_PROXY_PASSWORD) {
       state.PROXY_PASSWORD_CRYPT = "";
-      correctPasswords(this, state);
     }
+    correctPasswords(this, state);
     return state;
   }
 
   private void correctPasswords(HttpConfigurable from, HttpConfigurable to) {
     synchronized (myLock) {
-      to.myGenericPasswords = new HashMap<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>>();
-      for (Map.Entry<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> entry : from.myGenericPasswords.entrySet()) {
-        if (! Boolean.TRUE.equals(entry.getValue().getSecond())) {
-          to.myGenericPasswords.put(entry.getKey(), Pair.create(new PasswordAuthentication(entry.getValue().getFirst().getUserName(),
-                                                                                           ArrayUtil.EMPTY_CHAR_ARRAY), false));
-        } else {
+      to.myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
+      for (Map.Entry<CommonProxy.HostInfo, ProxyInfo> entry : from.myGenericPasswords.entrySet()) {
+        if (Boolean.TRUE.equals(entry.getValue().isStore())) {
           to.myGenericPasswords.put(entry.getKey(), entry.getValue());
         }
       }
@@ -113,8 +109,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     XmlSerializerUtil.copyBean(state, this);
     if (!KEEP_PROXY_PASSWORD) {
       PROXY_PASSWORD_CRYPT = "";
-      correctPasswords(state, this);
     }
+    correctPasswords(state, this);
   }
 
   public boolean isGenericPasswordCanceled(final String host, final int port) {
@@ -125,24 +121,24 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   public void setGenericPasswordCanceled(final String host, final int port) {
     synchronized (myLock) {
-      myGenericCancelled.add(Pair.create(host, port));
+      myGenericCancelled.add(new CommonProxy.HostInfo("", host, port));
     }
   }
 
   public PasswordAuthentication getGenericPassword(final String host, final int port) {
-    final Pair<PasswordAuthentication, Boolean> pair;
+    final ProxyInfo proxyInfo;
     synchronized (myLock) {
-      pair = myGenericPasswords.get(Pair.create(host, port));
+      proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo("", host, port));
     }
-    if (pair == null) return null;
-    final PasswordAuthentication first = pair.getFirst();
-    return new PasswordAuthentication(first.getUserName(), decode(String.valueOf(first.getPassword())).toCharArray());
+    if (proxyInfo == null) return null;
+    return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
   public void putGenericPassword(final String host, final int port, final PasswordAuthentication authentication, final boolean remember) {
     final PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
     synchronized (myLock) {
-      myGenericPasswords.put(Pair.create(host, port), Pair.create(coded, remember));
+      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(
+        coded.getPassword())));
     }
   }
 
@@ -415,6 +411,45 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void removeGeneric(CommonProxy.HostInfo info) {
     synchronized (myLock) {
       myGenericPasswords.remove(info);
+    }
+  }
+
+  public static class ProxyInfo {
+    public boolean myStore;
+    public String myUsername;
+    public String myPasswordCrypt;
+
+    public ProxyInfo() {
+    }
+
+    public ProxyInfo(boolean store, String username, String passwordCrypt) {
+      myStore = store;
+      myUsername = username;
+      myPasswordCrypt = passwordCrypt;
+    }
+
+    public boolean isStore() {
+      return myStore;
+    }
+
+    public void setStore(boolean store) {
+      myStore = store;
+    }
+
+    public String getUsername() {
+      return myUsername;
+    }
+
+    public void setUsername(String username) {
+      myUsername = username;
+    }
+
+    public String getPasswordCrypt() {
+      return myPasswordCrypt;
+    }
+
+    public void setPasswordCrypt(String passwordCrypt) {
+      myPasswordCrypt = passwordCrypt;
     }
   }
 }
