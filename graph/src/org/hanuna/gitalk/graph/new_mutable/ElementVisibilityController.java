@@ -14,7 +14,7 @@ public class ElementVisibilityController {
     private final Set<GraphElement> hiddenElements = new HashSet<GraphElement>();
 
     public boolean isVisible(@NotNull GraphElement graphElement) {
-        return hiddenElements.contains(graphElement);
+        return !hiddenElements.contains(graphElement);
     }
 
     public void hide(@NotNull Collection<GraphElement> graphElements) {
