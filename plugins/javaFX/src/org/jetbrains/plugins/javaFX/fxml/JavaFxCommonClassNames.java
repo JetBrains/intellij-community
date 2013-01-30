@@ -29,5 +29,6 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_FXML_ANNOTATION = "javafx.fxml.FXML";
   @NonNls public static final String JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY = "javafx.beans.property.ObjectProperty";
   @NonNls public static final String JAVAFX_EVENT_EVENT_HANDLER = "javafx.event.EventHandler";
-  public static final String JAVAFX_SCENE_NODE = "javafx.scene.Node";
+  @NonNls public static final String JAVAFX_SCENE_NODE = "javafx.scene.Node";
+  @NonNls public static final String JAVAFX_SCENE_PAINT = "javafx.scene.paint.Paint";
 }

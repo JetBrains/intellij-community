@@ -18,6 +18,8 @@ package com.intellij.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -56,12 +58,11 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
-    invokeForLiteral(editor.getComponent(), element);
+    chooseColor(editor.getComponent(), element, getText(), false);
   }
 
-  private void invokeForLiteral(JComponent editorComponent, PsiElement element) {
-    final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
+  public static void chooseColor(JComponent editorComponent, PsiElement element, String caption, boolean startInWriteAction) {
+    final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class, false);
     if (literal == null) return;
     final String text = StringUtil.unquoteString(literal.getValue());
     final String hexPrefix = text.startsWith("#") ? "#" : "";
@@ -73,13 +74,28 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     catch (NumberFormatException e) {
       oldColor = Color.GRAY;
     }
-    Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor, true);
+    Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
       final String newText =  hexPrefix + ColorUtil.toHex(color);
       final PsiManager manager = literal.getManager();
       final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createXmlAttribute("name", newText);
-      literal.replace(newAttribute.getValueElement());
+      final Runnable replaceRunnable = new Runnable() {
+        public void run() {
+          literal.replace(newAttribute.getValueElement());
+        }
+      };
+      if (startInWriteAction) {
+        new WriteCommandAction(element.getProject(), caption) {
+          @Override
+          protected void run(Result result) throws Throwable {
+            replaceRunnable.run();
+          }
+        }.execute();
+      } else {
+        replaceRunnable.run();
+      }
     }
   }
 }
