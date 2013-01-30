@@ -72,6 +72,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean KEEP_PROXY_PASSWORD = false;
   public transient String LAST_ERROR;
   public Map<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> myGenericPasswords = new HashMap<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>>();
+  public Set<Pair<String, Integer>> myGenericCancelled = new HashSet<Pair<String, Integer>>();
   private transient final Object myLock = new Object();
 
   public static HttpConfigurable getInstance() {
@@ -117,16 +118,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   public boolean isGenericPasswordCanceled(final String host, final int port) {
-    final Pair<PasswordAuthentication, Boolean> pair;
     synchronized (myLock) {
-      pair = myGenericPasswords.get(Pair.create(host, port));
-      return pair != null && pair.getFirst() == null;
+      return myGenericCancelled.contains(Pair.create(host, port));
     }
   }
 
   public void setGenericPasswordCanceled(final String host, final int port) {
     synchronized (myLock) {
-      myGenericPasswords.put(Pair.create(host, port), null);
+      myGenericCancelled.add(Pair.create(host, port));
     }
   }
 
@@ -409,6 +408,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void clearGenericPasswords() {
     synchronized (myLock) {
       myGenericPasswords.clear();
+      myGenericCancelled.clear();
     }
   }
 
