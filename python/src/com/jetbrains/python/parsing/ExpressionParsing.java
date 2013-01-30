@@ -325,7 +325,7 @@ public class ExpressionParsing extends Parsing {
             parseSliceEnd(expr, sliceItemStart);
           }
           else {
-            parseSingleExpression(false, true);
+            boolean hadExpression = parseSingleExpression(false, true);
             if (atToken(PyTokenTypes.COLON)) {
               sliceOrTupleStart.drop();
               parseSliceEnd(expr, sliceItemStart);
@@ -342,6 +342,9 @@ public class ExpressionParsing extends Parsing {
               }
             }
             else {
+              if (!hadExpression) {
+                myBuilder.error("expression expected");
+              }
               sliceOrTupleStart.drop();
               sliceItemStart.drop();
               checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
