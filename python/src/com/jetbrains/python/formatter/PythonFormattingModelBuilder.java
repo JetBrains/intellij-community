@@ -14,6 +14,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyElementTypes.*;
 import static com.jetbrains.python.PyTokenTypes.*;
@@ -41,6 +42,15 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
+  }
+
+  @Nullable
+  @Override
+  public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
+                                                                     @NotNull FormatTextRanges ranges,
+                                                                     @NotNull CodeStyleSettings settings)
+  {
+    return null;
   }
 
   @NotNull
