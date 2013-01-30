@@ -15,7 +15,9 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -108,7 +110,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     }
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
 
-    NotNullFunction<String,String> escaper = StringUtil.escaper(false, null);
+    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<String>();
     Pair<String, String> quotes = new Pair<String, String>("\"", "\"");
