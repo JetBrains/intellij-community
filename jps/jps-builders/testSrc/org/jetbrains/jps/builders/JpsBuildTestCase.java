@@ -76,6 +76,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected File myDataStorageRoot;
   private TestProjectBuilderLogger myLogger;
 
+  protected Map<String, String> myBuildParams = new HashMap<String, String>();
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -281,7 +283,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
-    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL, null);
+    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, null);
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {
