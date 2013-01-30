@@ -6,6 +6,8 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,16 +21,22 @@ public class GraphTestUtils {
         s.append(edge.getUpNode().getCommit().hash().toStrHash()).append(":");
         s.append(edge.getDownNode().getCommit().hash().toStrHash()).append(":");
         s.append(edge.getType()).append(":");
-        s.append(edge.getBranch().getBranchNumber());
+        s.append(edge.getBranch());
         return s.toString();
     }
     public static String toShortStr(List<Edge> edges) {
         StringBuilder s = new StringBuilder();
-        if (edges.size() > 0) {
-            s.append(toShortStr(edges.get(0)));
+        List<String> edgeStrs = new ArrayList<String>();
+        for (Edge edge : edges) {
+            edgeStrs.add(toShortStr(edge));
+        }
+
+        Collections.sort(edgeStrs);
+        if (edgeStrs.size() > 0) {
+            s.append(edgeStrs.get(0));
         }
         for (int i = 1; i < edges.size(); i++) {
-            s.append(" ").append(toShortStr(edges.get(i)));
+            s.append(" ").append(edgeStrs.get(i));
         }
         return s.toString();
     }
@@ -39,7 +47,7 @@ public class GraphTestUtils {
         s.append(toShortStr(node.getUpEdges())).append("|-");
         s.append(toShortStr(node.getDownEdges())).append("|-");
         s.append(node.getType()).append("|-");
-        s.append(node.getBranch().getBranchNumber()).append("|-");
+        s.append(node.getBranch()).append("|-");
         s.append(node.getRowIndex());
         return s.toString();
     }
