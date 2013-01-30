@@ -88,14 +88,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     XmlSerializerUtil.copyBean(this, state);
     if (!KEEP_PROXY_PASSWORD) {
       state.PROXY_PASSWORD_CRYPT = "";
+      correctPasswords(this, state);
     }
-    correctPasswords(this, state);
     return state;
   }
 
   private void correctPasswords(HttpConfigurable from, HttpConfigurable to) {
     synchronized (myLock) {
-      to.myGenericPasswords.clear();
+      to.myGenericPasswords = new HashMap<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>>();
       for (Map.Entry<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> entry : from.myGenericPasswords.entrySet()) {
         if (! Boolean.TRUE.equals(entry.getValue().getSecond())) {
           to.myGenericPasswords.put(entry.getKey(), Pair.create(new PasswordAuthentication(entry.getValue().getFirst().getUserName(),
@@ -112,8 +112,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     XmlSerializerUtil.copyBean(state, this);
     if (!KEEP_PROXY_PASSWORD) {
       PROXY_PASSWORD_CRYPT = "";
+      correctPasswords(state, this);
     }
-    correctPasswords(state, this);
   }
 
   public boolean isGenericPasswordCanceled(final String host, final int port) {
