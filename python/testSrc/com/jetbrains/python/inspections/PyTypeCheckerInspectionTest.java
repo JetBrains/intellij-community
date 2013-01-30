@@ -150,4 +150,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testOpenRead2K() {
     doTest();
   }
+
+  // PY-8182
+  public void testUnionWithSameMethods() {
+    doTest();
+  }
 }

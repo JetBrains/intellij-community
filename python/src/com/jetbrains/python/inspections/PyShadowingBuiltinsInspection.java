@@ -50,7 +50,9 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
-      processElement(node);
+      if (node.getQualifier() == null) {
+        processElement(node);
+      }
     }
 
     private void processElement(@NotNull PsiNameIdentifierOwner element) {

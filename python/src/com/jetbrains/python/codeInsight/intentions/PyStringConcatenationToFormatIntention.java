@@ -15,7 +15,9 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -107,8 +109,9 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       element = element.getParent();
     }
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
+    final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 
-    NotNullFunction<String,String> escaper = StringUtil.escaper(false, null);
+    NotNullFunction<String,String> escaper = StringUtil.escaper(false, "\"\'\\");
     StringBuilder stringLiteral = new StringBuilder();
     List<String> parameters = new ArrayList<String>();
     Pair<String, String> quotes = new Pair<String, String>("\"", "\"");
@@ -120,7 +123,11 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
           quotes = PythonStringUtil.getQuotes(expression.getText());
           quotesDetected = true;
         }
-        stringLiteral.append(escaper.fun(((PyStringLiteralExpression)expression).getStringValue()));
+        String value = ((PyStringLiteralExpression)expression).getStringValue();
+        if (!useFormatMethod) {
+          value = value.replace("%", "%%");
+        }
+        stringLiteral.append(escaper.fun(value));
       } else {
         addParamToString(stringLiteral, paramCount, languageLevel);
         parameters.add(expression.getText());
@@ -135,7 +142,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     if (!parameters.isEmpty()) {
-      if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON27)) {
+      if (useFormatMethod) {
         stringLiteral.append(".format(").append(StringUtil.join(parameters, ",")).append(")");
 
       }

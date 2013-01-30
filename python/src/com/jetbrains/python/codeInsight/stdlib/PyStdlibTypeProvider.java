@@ -194,12 +194,13 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             final PyType argType = entry.getKey().getType(context);
             final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
             if (PyTypeChecker.match(paramType, argType, context)) {
-              if (argType != null && paramType != null) {
+              if (paramType != null && !PyTypeChecker.isUnknown(argType)) {
                 notNullParameterMatch = true;
               }
             }
             else {
               matched = false;
+              break;
             }
           }
         }
