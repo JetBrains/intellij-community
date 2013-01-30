@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -183,14 +182,8 @@ public class CommonProxy extends ProxySelector {
     final List<Proxy> selected = myIDEAWide.select(uri);
     final HttpConfigurable configurable;
     final Application application = ApplicationManager.getApplication();
-    if (application != null && ! application.isDisposed()) {
-      configurable = application.runReadAction(new Computable<HttpConfigurable>() {
-        @Override
-        public HttpConfigurable compute() {
-          if (application.isDisposeInProgress() || application.isDisposed()) return null;
-          return HttpConfigurable.getInstance();
-        }
-      });
+    if (application != null && !application.isDisposed() && !application.isDisposeInProgress()) {
+      configurable = HttpConfigurable.getInstance();
       if (configurable != null && configurable.USE_HTTP_PROXY) {
         configurable.LAST_ERROR = null;
       }
