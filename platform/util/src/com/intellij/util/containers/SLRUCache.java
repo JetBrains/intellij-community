@@ -19,7 +19,7 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.util.containers.hash.HashingStrategy;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K,V> {
     super(protectedQueueSize, probationalQueueSize);
   }
 
-  protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize, HashingStrategy<K> hashingStrategy) {
+  protected SLRUCache(final int protectedQueueSize, final int probationalQueueSize, EqualityPolicy<K> hashingStrategy) {
     super(protectedQueueSize, probationalQueueSize, hashingStrategy);
   }
 

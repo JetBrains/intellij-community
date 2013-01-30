@@ -35,9 +35,9 @@ class HashUtil {
 
   }
 
-  public static int hash(Object key, HashingStrategy hashingStrategy) {
+  public static int hash(Object key, EqualityPolicy hashingStrategy) {
 
-    return key == null ? 0 : hashingStrategy.computeHashCode(key) & 0x7fffffff;
+    return key == null ? 0 : hashingStrategy.getHashCode(key) & 0x7fffffff;
 
   }
 

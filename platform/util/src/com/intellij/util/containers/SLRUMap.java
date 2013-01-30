@@ -20,7 +20,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.hash.HashingStrategy;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +41,10 @@ public class SLRUMap<K,V> {
   private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
-    this(protectedQueueSize, probationalQueueSize, (HashingStrategy<K>)HashingStrategy.CANONICAL);
+    this(protectedQueueSize, probationalQueueSize, (EqualityPolicy)EqualityPolicy.CANONICAL);
   }
 
-  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, HashingStrategy<K> hashingStrategy) {
+  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, EqualityPolicy hashingStrategy) {
     myProtectedQueueSize = protectedQueueSize * FACTOR;
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 

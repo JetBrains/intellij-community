@@ -15,34 +15,35 @@
  */
 package com.intellij.util.containers.hash;
 
-public interface HashingStrategy<T> {
-  HashingStrategy<?> IDENTITY = new HashingStrategy() {
+
+public interface EqualityPolicy<T> {
+  EqualityPolicy<?> IDENTITY = new EqualityPolicy() {
+
     @Override
-    public int computeHashCode(Object object) {
-      return System.identityHashCode(object);
+    public int getHashCode(Object value) {
+      return System.identityHashCode(value);
     }
 
     @Override
-    public boolean equals(Object o1, Object o2) {
-      return o1 == o2;
-    }
-  };
-
-  HashingStrategy<?> CANONICAL = new HashingStrategy() {
-    @Override
-    public int computeHashCode(Object object) {
-      return object != null ? object.hashCode() : 0;
-    }
-
-    @Override
-    public boolean equals(Object o1, Object o2) {
-      return o1 != null ? o1.equals(o2) : o2 == null;
+    public boolean isEqual(Object val1, Object val2) {
+      return val1 == val2;
     }
   };
 
+  EqualityPolicy<?> CANONICAL = new EqualityPolicy() {
 
-  int computeHashCode(T object);
+    @Override
+    public int getHashCode(Object value) {
+      return value != null ? value.hashCode() : 0;
+    }
 
-  boolean equals(T o1, T o2);
+    @Override
+    public boolean isEqual(Object val1, Object val2) {
+      return val1 != null ? val1.equals(val2) : val2 == null;
+    }
+  };
 
+  int getHashCode(T value);
+
+  boolean isEqual(T val1, T val2);
 }

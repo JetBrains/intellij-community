@@ -28,7 +28,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   private int capacity;
   private int size;
   private final float loadFactor;
-  private final HashingStrategy<K> hashingStrategy;
+  private final EqualityPolicy<K> hashingStrategy;
 
 
   public LinkedHashMap() {
@@ -40,14 +40,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   public LinkedHashMap(int capacity, float loadFactor) {
-    this(capacity, loadFactor, (HashingStrategy<K>)HashingStrategy.CANONICAL);
+    this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL);
   }
 
-  public LinkedHashMap(HashingStrategy<K> hashingStrategy) {
+  public LinkedHashMap(EqualityPolicy hashingStrategy) {
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 
-  public LinkedHashMap(int capacity, float loadFactor, HashingStrategy<K> hashingStrategy) {
+  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<K> hashingStrategy) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
     clear(capacity);
@@ -72,7 +72,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
     for (Entry<K, V> e = table[index]; e != null; e = e.hashNext) {
       final K entryKey;
-      if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.equals(entryKey, (K)key))) {
+      if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.isEqual(entryKey, (K)key))) {
         moveToTop(e);
         return e.value;
 
@@ -87,7 +87,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     final int index = hash % table.length;
     for (Entry<K, V> e = table[index]; e != null; e = e.hashNext) {
       final K entryKey;
-      if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.equals(entryKey, key))) {
+      if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.isEqual(entryKey, key))) {
         moveToTop(e);
         return e.setValue(value);
       }
@@ -132,7 +132,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
       return null;
     }
     K entryKey;
-    if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.equals(entryKey, (K)key))) {
+    if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.isEqual(entryKey, (K)key))) {
       table[index] = e.hashNext;
     }
     else {
@@ -142,7 +142,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
         if (e == null) {
           return null;
         }
-        if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.equals(entryKey, (K)key))) {
+        if (e.keyHash == hash && ((entryKey = e.key) == key || hashingStrategy.isEqual(entryKey, (K)key))) {
           last.hashNext = e.hashNext;
           break;
         }
@@ -271,8 +271,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private abstract class LinkedHashIterator<T> implements Iterator<T> {
 
-    private Entry<K, V> e = top;
-    private Entry<K, V> last;
+    private LinkedHashMap.Entry<K, V> e = top;
+    private LinkedHashMap.Entry<K, V> last;
 
     public boolean hasNext() {
       return e != null;
