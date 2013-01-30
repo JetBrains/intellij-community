@@ -358,6 +358,11 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
   }
 
+  // PY-8588
+  public void testStringConcatToFormatEscaping() {
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
+
   private void doDocStubTest(LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
