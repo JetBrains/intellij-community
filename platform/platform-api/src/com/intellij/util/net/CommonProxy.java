@@ -265,8 +265,9 @@ public class CommonProxy extends ProxySelector {
         return authentication;
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return autodetected proxy");
+        if (myHttpConfigurable.isGenericPasswordCanceled(host, getRequestingPort())) return null;
         // same but without remembering the results..
-        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(getRequestingHost(), getRequestingPort());
+        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(host, getRequestingPort());
         if (password != null) {
           logAuthentication(password);
           return password;

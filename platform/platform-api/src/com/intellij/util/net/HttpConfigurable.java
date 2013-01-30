@@ -62,6 +62,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
   public boolean USE_PROXY_PAC = false;
+  public transient boolean AUTHENTICATION_CANCELLED = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
 
@@ -115,6 +116,20 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     correctPasswords(state, this);
   }
 
+  public boolean isGenericPasswordCanceled(final String host, final int port) {
+    final Pair<PasswordAuthentication, Boolean> pair;
+    synchronized (myLock) {
+      pair = myGenericPasswords.get(Pair.create(host, port));
+      return pair != null && pair.getFirst() == null;
+    }
+  }
+
+  public void setGenericPasswordCanceled(final String host, final int port) {
+    synchronized (myLock) {
+      myGenericPasswords.put(Pair.create(host, port), null);
+    }
+  }
+
   public PasswordAuthentication getGenericPassword(final String host, final int port) {
     final Pair<PasswordAuthentication, Boolean> pair;
     synchronized (myLock) {
@@ -161,6 +176,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
           final boolean remember1 = remember && panel.isRememberPassword();
           value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
           putGenericPassword(host, port, value[0], remember1);
+        } else {
+          setGenericPasswordCanceled(host, port);
         }
       }
     };
@@ -169,6 +186,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
+    if (AUTHENTICATION_CANCELLED) return null;
     final String password = getPlainProxyPassword();
     if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
       return new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
@@ -189,6 +207,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
           PROXY_LOGIN = panel.getLogin();
           setPlainProxyPassword(String.valueOf(panel.getPassword()));
           value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
+        } else {
+          AUTHENTICATION_CANCELLED = true;
         }
       }
     };
