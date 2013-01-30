@@ -62,6 +62,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   public void testControllerIdRef() throws Exception {
     doTestIdController();
   }
+
+  public void testPackageLocalController() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doDoTest(false, false);
+  }
   
   private void doTestIdController() throws Exception {
     final String controllerClassName = getTestName(false) + "Controller";
