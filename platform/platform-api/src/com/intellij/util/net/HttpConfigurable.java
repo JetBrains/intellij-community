@@ -177,7 +177,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       }
     };
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable, ModalityState.any());
+    runAboveAll(runnable);
     return value[0];
   }
 
@@ -210,6 +210,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         }
       }
     };
+    runAboveAll(runnable);
+    return value[0];
+  }
+
+  private void runAboveAll(final Runnable runnable) {
     final Runnable throughSwing = new Runnable() {
       @Override
       public void run() {
@@ -237,7 +242,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     } else {
       throughSwing.run();
     }
-    return value[0];
   }
 
   //these methods are preserved for compatibility
