@@ -94,14 +94,14 @@ public class HgPusher {
 
   @NotNull
   public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
-    final List<HgTagBranch> branches = new ArrayList<HgTagBranch>();
+    final List<HgTagBranch> branchesList = new ArrayList<HgTagBranch>();
     new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
       @Override
       public void consume(final List<HgTagBranch> branches) {
-        branches.addAll(branches);
+        branchesList.addAll(branches);
       }
     });
-    return branches;
+    return branchesList;
   }
 
   private static void push(final Project project, HgPushCommand command) {
