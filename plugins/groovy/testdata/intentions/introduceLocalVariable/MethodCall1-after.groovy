@@ -1,0 +1,1 @@
+def varName = Calendar.getInstance()
