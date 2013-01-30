@@ -104,9 +104,10 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
       final XmlAttributeValue element = ref.getElement();
       String canonicalText = JavaFxCommonClassNames.JAVAFX_EVENT;
-      final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
-      final Project project = element.getProject();
-      if (xmlAttribute != null) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlAttribute xmlAttribute = (XmlAttribute)parent;
+        final Project project = element.getProject();
         final PsiField handlerField = ref.myCurrentTagClass.findFieldByName(xmlAttribute.getName(), true);
         if (handlerField != null) {
           final PsiClassType classType = JavaFxPsiUtil.getPropertyClassType(handlerField);
