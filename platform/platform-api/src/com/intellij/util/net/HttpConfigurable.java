@@ -164,7 +164,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), host, prompt, "", "", remember);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+                                                                  "Please enter credentials for: " + prompt, "", "", remember);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
@@ -191,10 +192,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
         ApplicationManager.getApplication().isDisposed()) return null;
 
+    final String login = PROXY_LOGIN == null ? "" : PROXY_LOGIN;
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), host, prompt, "", "", KEEP_PROXY_PASSWORD);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+                                                                  "Please enter credentials for: " + prompt, login, "", KEEP_PROXY_PASSWORD);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
