@@ -293,4 +293,6 @@
   <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
   <serverPipelineConsumer implementation="org.jetbrains.ide.XmlRpcPipelineConsumer"/>
   <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
+
+  <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
 </extensions>
