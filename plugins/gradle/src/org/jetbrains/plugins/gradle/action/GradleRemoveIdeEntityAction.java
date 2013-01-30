@@ -35,6 +35,7 @@ public class GradleRemoveIdeEntityAction extends AbstractGradleSyncTreeNodeActio
       GradleProjectStructureNode<?> node = iterator.next();
       GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
       if (descriptor.getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE
+          || descriptor.getAttributes() == GradleTextAttributes.OUTDATED_ENTITY
           || descriptor.getElement().getType() == GradleEntityType.SYNTHETIC
           || node.getParent() == null /* is root, i.e. is a project*/)
       {

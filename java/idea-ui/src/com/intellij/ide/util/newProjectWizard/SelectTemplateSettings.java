@@ -59,6 +59,7 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
   @Override
   public void loadState(SelectTemplateSettings state) {
     EXPERT_MODE = state.EXPERT_MODE;
+    LAST_TEMPLATE = state.LAST_TEMPLATE;
   }
 
   public boolean EXPERT_MODE = false;

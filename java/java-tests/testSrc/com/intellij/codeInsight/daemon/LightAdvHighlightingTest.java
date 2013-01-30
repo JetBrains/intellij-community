@@ -361,4 +361,5 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testThisBeforeSuper() throws Exception { doTest(false, false); }
   public void testExplicitConstructorInvocation() throws Exception { doTest(false, false); }
   public void testThisInInterface() throws Exception { doTest(false, false); }
+  public void testInnerClassConstantReference() throws Exception { doTest(false, false); }
 }

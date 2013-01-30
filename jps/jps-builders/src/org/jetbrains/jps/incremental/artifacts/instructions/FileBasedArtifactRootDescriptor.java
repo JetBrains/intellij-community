@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -34,6 +35,7 @@ import java.util.Collections;
  * @author nik
  */
 public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+  private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   public FileBasedArtifactRootDescriptor(@NotNull File file,
                                          @NotNull SourceFileFilter filter,
                                          int index,
@@ -79,6 +81,9 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       FileUtil.copyContent(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
-    outSrcMapping.appendData(targetPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug("Target path " + targetPath + " is already registered so " + filePath + " won't be copied");
+    }
+    outSrcMapping.appendData(targetPath, rootIndex, filePath);
   }
 }

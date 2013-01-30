@@ -135,73 +135,78 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
       @Override
       public void actionPerformed(ActionEvent e) {
         myHttpConfigurable.clearGenericPasswords();
+        Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected proxy", Messages.getInformationIcon());
       }
     });
 
-    myCheckButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final String title = "Check Proxy Settings";
-        final String answer = Messages
-          .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:", title, Messages.getQuestionIcon());
-        if (! StringUtil.isEmptyOrSpaces(answer)) {
-          apply();
-          final HttpConfigurable instance = HttpConfigurable.getInstance();
-          final IOException exc[] = new IOException[1];
-          myCheckButton.setEnabled(false);
-          myCheckButton.setText("Check connection (in progress...)");
-          myConnectionCheckInProgress = true;
-          final Application application = ApplicationManager.getApplication();
-          application.executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              HttpURLConnection connection = null;
-              try {
-                connection = instance.openHttpConnection(answer);
-                connection.setReadTimeout(3 * 1000);
-                connection.setConnectTimeout(3 * 1000);
-                connection.connect();
-              }
-              catch (IOException e1) {
-                exc[0] = e1;
-              }
-              finally {
-                if (connection != null) {
-                  connection.disconnect();
+    if (HttpConfigurable.getInstance() != null) {
+      myCheckButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          final String title = "Check Proxy Settings";
+          final String answer = Messages
+            .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:", title, Messages.getQuestionIcon());
+          if (! StringUtil.isEmptyOrSpaces(answer)) {
+            apply();
+            final HttpConfigurable instance = HttpConfigurable.getInstance();
+            final IOException exc[] = new IOException[1];
+            myCheckButton.setEnabled(false);
+            myCheckButton.setText("Check connection (in progress...)");
+            myConnectionCheckInProgress = true;
+            final Application application = ApplicationManager.getApplication();
+            application.executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                HttpURLConnection connection = null;
+                try {
+                  connection = instance.openHttpConnection(answer);
+                  connection.setReadTimeout(3 * 1000);
+                  connection.setConnectTimeout(3 * 1000);
+                  connection.connect();
                 }
-              }
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  myConnectionCheckInProgress = false;
-                  Component parent = null;
-                  if (myMainPanel.isShowing()) {
-                    parent = myMainPanel;
-                    myCheckButton.setText("Check connection");
-                    myCheckButton.setEnabled(canEnableConnectionCheck());
-                  } else {
-                    final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-                    if (frame == null) {
-                      return;
-                    }
-                    parent = frame.getComponent();
-                  }
-                  if (exc[0] == null) {
-                    Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
-                  }
-                  else {
-                    if (instance.USE_HTTP_PROXY) {
-                      instance.LAST_ERROR = exc[0].getMessage();
-                    }
-                    Messages.showErrorDialog(parent, errorText(exc[0].getMessage()));
+                catch (IOException e1) {
+                  exc[0] = e1;
+                }
+                finally {
+                  if (connection != null) {
+                    connection.disconnect();
                   }
                 }
-              });
-            }
-          });
+                SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    myConnectionCheckInProgress = false;
+                    Component parent = null;
+                    if (myMainPanel.isShowing()) {
+                      parent = myMainPanel;
+                      myCheckButton.setText("Check connection");
+                      myCheckButton.setEnabled(canEnableConnectionCheck());
+                    } else {
+                      final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+                      if (frame == null) {
+                        return;
+                      }
+                      parent = frame.getComponent();
+                    }
+                    if (exc[0] == null) {
+                      Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
+                    }
+                    else {
+                      if (instance.USE_HTTP_PROXY) {
+                        instance.LAST_ERROR = exc[0].getMessage();
+                      }
+                      Messages.showErrorDialog(parent, errorText(exc[0].getMessage()));
+                    }
+                  }
+                });
+              }
+            });
+          }
         }
-      }
-    });
+      });
+    } else {
+      myCheckButton.setVisible(false);
+    }
   }
 
   private boolean canEnableConnectionCheck() {

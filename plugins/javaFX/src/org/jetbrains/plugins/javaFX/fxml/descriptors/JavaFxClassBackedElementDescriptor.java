@@ -4,7 +4,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -13,7 +12,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -41,36 +39,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   private final String myName;
 
   public JavaFxClassBackedElementDescriptor(String name, XmlTag tag) {
-    this(name, findPsiClass(name, tag));
-  }
-
-  public static PsiClass findPsiClass(String name, XmlTag tag) {
-    return findPsiClass(name, JavaFxPsiUtil.parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+    this(name, JavaFxPsiUtil.findPsiClass(name, tag));
   }
 
   public JavaFxClassBackedElementDescriptor(String name, PsiClass aClass) {
     myName = name;
     myPsiClass = aClass;
-  }
-
-  private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
-    PsiClass psiClass = null;
-    if (imports != null) {
-      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-
-      PsiFile file = tag.getContainingFile();
-      for (String anImport : imports) {
-        if (StringUtil.endsWith(anImport, "." + name)) {
-          psiClass = psiFacade.findClass(anImport, file.getResolveScope()); 
-        } else if (StringUtil.endsWith(anImport, ".*")) {
-          psiClass = psiFacade.findClass(StringUtil.trimEnd(anImport, "*") + name, file.getResolveScope());
-        }
-        if (psiClass != null) {
-          return psiClass;
-        }
-      }
-    }
-    return psiClass;
   }
 
   @Override
@@ -111,9 +85,13 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             final PsiMethod getter = findPropertyGetter(propertyName, myPsiClass);
             if (getter != null) {
               final PsiType returnType = getter.getReturnType();
-              children.addAll(JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope()));
+              JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
             }
           }
+        }
+
+        for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
+          children.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
         }
 
         if (!children.isEmpty()) {
@@ -161,8 +139,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         }
         return null;
       }
-      if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(name)) {
-        //return new ;
+      if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
+        return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
       }
       return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }
@@ -192,6 +170,9 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
           }
         });
+        for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
+          simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty));
+        }
         return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
     }
@@ -324,7 +305,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
     final String packageName = StringUtil.getPackageName(attributeName);
     if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
-      final PsiClass classWithStaticProperty = findPsiClass(packageName, context);
+      final PsiClass classWithStaticProperty = JavaFxPsiUtil.findPsiClass(packageName, context);
       if (classWithStaticProperty != null) {
         return findPropertySetter(attributeName, classWithStaticProperty);
       }

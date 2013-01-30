@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
@@ -54,8 +53,8 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
       myTree.setForeground(table.getForeground());
     }
 
-    TableModel model = myTreeTable.getModel();
-    myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);
+    //TableModel model = myTreeTable.getModel();
+    //myTree.setTreeTableTreeBorder(hasFocus && model.getColumnClass(column).equals(TreeTableModel.class) ? myDefaultBorder : null);
     myTree.setVisibleRow(modelRow);
 
     final Object treeObject = myTree.getPathForRow(modelRow).getLastPathComponent();
@@ -66,7 +65,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
       table.setToolTipText(((JComponent)component).getToolTipText());
     }
 
-    myTree.setCellFocused(hasFocus);
+    //myTree.setCellFocused(false);
 
     return myTree;
   }

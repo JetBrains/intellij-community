@@ -74,6 +74,11 @@ class ComboContentLayout extends ContentLayout {
   }
 
   @Override
+  public int getMinimumWidth() {
+    return myIdLabel != null ? myIdLabel.getPreferredSize().width : 0;
+  }
+
+  @Override
   public void paintComponent(Graphics g) {
     if (!isToDrawCombo()) return;
 
@@ -91,7 +96,7 @@ class ComboContentLayout extends ContentLayout {
       final GraphicsConfig c = new GraphicsConfig(g);
       c.setAntialiasing(true);
   
-      g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
       g2d.fillRect(0, 0, r.width, r.height);
   
       g2d.setColor(new Color(0, 0, 0, 60));

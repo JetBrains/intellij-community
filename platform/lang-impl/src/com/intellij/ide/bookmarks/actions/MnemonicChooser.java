@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
@@ -34,8 +36,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MnemonicChooser extends JPanel {
-  private static final Color OCCUPIED_CELL_COLOR = new Color(250, 250, 139);
-  private static final Color FREE_CELL_COLOR = LightColors.SLIGHTLY_GRAY;
+  private static final Color OCCUPIED_CELL_COLOR = new JBColor(new Color(250, 250, 139), new Color(103, 81, 51));
+  private static final Color FREE_CELL_COLOR = new JBColor(LightColors.SLIGHTLY_GRAY, Gray._80);
 
   public MnemonicChooser() {
     super(new VerticalFlowLayout());
@@ -87,14 +89,14 @@ public class MnemonicChooser extends JPanel {
   }
 
   private Color backgroundForMnemonic(char c) {
-    return isOccupied(c) ? OCCUPIED_CELL_COLOR : FREE_CELL_COLOR;
+    return isOccupied(c) ? OCCUPIED_CELL_COLOR  : FREE_CELL_COLOR;
   }
 
   private class MnemonicLabel extends JLabel {
     private MnemonicLabel(final char c) {
       setOpaque(true);
       setText(Character.toString(c));
-      setBorder(new LineBorder(Color.lightGray, 1));
+      setBorder(new LineBorder(new JBColor(Gray._192, Gray._150), 1));
       setHorizontalAlignment(CENTER);
 
       setBackground(backgroundForMnemonic(c));

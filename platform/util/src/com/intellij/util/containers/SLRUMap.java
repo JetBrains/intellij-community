@@ -20,6 +20,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,10 +41,14 @@ public class SLRUMap<K,V> {
   private static final int FACTOR = Integer.getInteger("idea.slru.factor", 1);
 
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
+    this(protectedQueueSize, probationalQueueSize, (EqualityPolicy)EqualityPolicy.CANONICAL);
+  }
+
+  public SLRUMap(final int protectedQueueSize, final int probationalQueueSize, EqualityPolicy hashingStrategy) {
     myProtectedQueueSize = protectedQueueSize * FACTOR;
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 
-    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f) {
+    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProtectedQueueSize) {
@@ -55,7 +60,7 @@ public class SLRUMap<K,V> {
       }
     };
 
-    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f) {
+    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProbationalQueueSize) {
           onDropFromCache(key, value);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public class TreeTableTree extends Tree {
   }
 
   public void paint(Graphics g) {
+    putClientProperty("JTree.lineStyle", "None");
     Graphics g1 = g.create();
     g1.translate(0, -myVisibleRow * getRowHeight());
     super.paint(g1);

@@ -69,6 +69,9 @@ public class XmlFilterLexer extends BaseFilterLexer {
     else if (tokenType == XmlElementType.XML_TEXT) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
     }
+    else if (tokenType == XmlTokenType.XML_TAG_CHARACTERS) {
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
+    }
     else if (!ourNoWordsTokenSet.contains(tokenType)) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT, false, false);
     }

@@ -16,6 +16,8 @@
 package com.intellij.util.net;
 
 import com.btr.proxy.search.ProxySearch;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
@@ -37,7 +39,7 @@ import java.util.*;
  */
 public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
-  private final IdeaWideProxySelector myIDEAWide = new IdeaWideProxySelector();
+  private final IdeaWideProxySelector myIDEAWide;
   private final static List<Proxy> ourNoProxy = Collections.singletonList(Proxy.NO_PROXY);
   private volatile static ProxySelector ourWrong;
   private static final Map<String, String> ourProps = new HashMap<String, String>();
@@ -61,6 +63,7 @@ public class CommonProxy extends ProxySelector {
     myNoProxy = new HashSet<HostInfo>();
     myCustom = new HashMap<String, ProxySelector>();
     myCustomAuth = new HashMap<Pair<String, Integer>, NonStaticAuthenticator>();
+    myIDEAWide = new IdeaWideProxySelector();
   }
 
   public static void isInstalledAssertion() {
@@ -177,8 +180,13 @@ public class CommonProxy extends ProxySelector {
     }
     // delegate to IDEA-wide behaviour
     final List<Proxy> selected = myIDEAWide.select(uri);
-    if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY) {
-      myIDEAWide.myHttpConfigurable.LAST_ERROR = null;
+    final HttpConfigurable configurable;
+    final Application application = ApplicationManager.getApplication();
+    if (application != null && !application.isDisposed() && !application.isDisposeInProgress()) {
+      configurable = HttpConfigurable.getInstance();
+      if (configurable != null && configurable.USE_HTTP_PROXY) {
+        configurable.LAST_ERROR = null;
+      }
     }
     LOG.debug("CommonProxy.select returns something after common platform check for " + uri.toString() + ", " + selected.toString());
     return selected;
@@ -187,11 +195,13 @@ public class CommonProxy extends ProxySelector {
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     LOG.info("connect failed to " + uri.toString() + ", sa: " + sa.toString(), ioe);
-    myIDEAWide.myHttpConfigurable.removeGeneric(new HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
+    final HttpConfigurable configurable = HttpConfigurable.getInstance();
+    if (configurable == null) return;
+    configurable.removeGeneric(new HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
     final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
-    if (myIDEAWide.myHttpConfigurable.USE_HTTP_PROXY && isa != null && Comparing.equal(myIDEAWide.myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
+    if (configurable.USE_HTTP_PROXY && isa != null && Comparing.equal(configurable.PROXY_HOST, isa.getHostName())) {
       LOG.debug("connection failed message passed to http configurable");
-      myIDEAWide.myHttpConfigurable.LAST_ERROR = ioe.getMessage();
+      configurable.LAST_ERROR = ioe.getMessage();
     }
   }
 
@@ -215,6 +225,7 @@ public class CommonProxy extends ProxySelector {
           host = getRequestingURL().getHost();
         }
       }
+      host = host == null ? "" : host;
       final int port = getRequestingPort();
 
       final Map<Pair<String, Integer>, NonStaticAuthenticator> copy;
@@ -228,7 +239,7 @@ public class CommonProxy extends ProxySelector {
       }
 
       if (! copy.isEmpty()) {
-        final Pair<String, Integer> hostInfo = Pair.create(getRequestingHost(), getRequestingPort());
+        final Pair<String, Integer> hostInfo = Pair.create(host, getRequestingPort());
         final NonStaticAuthenticator authenticator1 = copy.get(hostInfo);
         if (authenticator1 != null) {
           prepareAuthenticator(authenticator1);
@@ -243,26 +254,34 @@ public class CommonProxy extends ProxySelector {
       if (myHttpConfigurable.USE_HTTP_PROXY) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return common defined proxy");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getPromptedAuthentication(getRequestingHost() + ":" + getRequestingPort(), getRequestingPrompt());
+          myHttpConfigurable.getPromptedAuthentication(host + ":" + getRequestingPort(), getRequestingPrompt());
         logAuthentication(authentication);
         return authentication;
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return autodetected proxy");
+        if (myHttpConfigurable.isGenericPasswordCanceled(host, getRequestingPort())) return null;
         // same but without remembering the results..
-        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(getRequestingHost(), getRequestingPort());
+        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(host, getRequestingPort());
         if (password != null) {
           logAuthentication(password);
           return password;
         }
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
 
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), true);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), true);
         logAuthentication(authentication);
         return authentication;
       } else {
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
+
         LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), false);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), false);
         logAuthentication(authentication);
         return authentication;
       }
@@ -301,11 +320,9 @@ public class CommonProxy extends ProxySelector {
   }
 
   private class IdeaWideProxySelector extends ProxySelector {
-    private final HttpConfigurable myHttpConfigurable;
     private final CommonAuthenticator myAuthenticator;
 
     private IdeaWideProxySelector() {
-      myHttpConfigurable = HttpConfigurable.getInstance();
       myAuthenticator = new CommonAuthenticator();
       Authenticator.setDefault(myAuthenticator);
     }
@@ -322,12 +339,18 @@ public class CommonProxy extends ProxySelector {
         LOG.debug("IDEA-wide proxy selector returns no proxies: not http/https scheme: " + scheme);
         return ourNoProxy;
       }
-      if (myHttpConfigurable.USE_HTTP_PROXY) {
-        final Proxy proxy = new Proxy(myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
-                                      new InetSocketAddress(myHttpConfigurable.PROXY_HOST, myHttpConfigurable.PROXY_PORT));
+      final HttpConfigurable configurable = HttpConfigurable.getInstance();
+      if (configurable == null) {
+        // error removed since license server can ok do it
+        //LOG.error("HttpConfigurable not initialized yet", new Throwable());
+        return ourNoProxy;
+      }
+      if (configurable.USE_HTTP_PROXY) {
+        final Proxy proxy = new Proxy(configurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
+                                      new InetSocketAddress(configurable.PROXY_HOST, configurable.PROXY_PORT));
         LOG.debug("IDEA-wide proxy selector returns defined proxy: " + proxy);
         return Collections.singletonList(proxy);
-      } else if (myHttpConfigurable.USE_PROXY_PAC) {
+      } else if (configurable.USE_PROXY_PAC) {
         final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
         final ProxySelector proxySelector = proxySearch.getProxySelector();
         if (proxySelector != null) {

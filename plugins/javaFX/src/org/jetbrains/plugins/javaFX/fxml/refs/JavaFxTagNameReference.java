@@ -10,7 +10,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Function;
@@ -38,8 +37,9 @@ public class JavaFxTagNameReference extends TagNameReference{
     if (element instanceof PsiClass) {
       final String qualifiedName = ((PsiClass)element).getQualifiedName();
       if (qualifiedName != null) {
-        insertImportWhenNeeded((XmlFile)getElement().getContainingFile(), StringUtil.getShortName(qualifiedName), qualifiedName);
-        return getElement();
+        final String shortName = StringUtil.getShortName(qualifiedName);
+        final XmlTag tagElement = getTagElement();
+        return tagElement != null ? tagElement.setName(shortName) : getElement();
       }
     }
     return super.bindToElement(element);
@@ -62,25 +62,6 @@ public class JavaFxTagNameReference extends TagNameReference{
       elements.add(lookupElement.withInsertHandler(JavaFxTagInsertHandler.INSTANCE));
     }
     return elements.toArray(new LookupElement[elements.size()]);
-  }
-
-  private static void insertImportWhenNeeded(XmlFile xmlFile,
-                                             String shortName, 
-                                             String qualifiedName) {
-    if (shortName != null && JavaFxClassBackedElementDescriptor.findPsiClass(shortName, xmlFile.getRootTag()) == null) {
-      final XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        final XmlProcessingInstruction processingInstruction = JavaFxPsiUtil
-          .createSingleImportInstruction(qualifiedName, xmlFile.getProject());
-        final XmlProlog prolog = document.getProlog();
-        if (prolog != null) {
-          prolog.add(processingInstruction);
-        } else {
-          document.addBefore(processingInstruction, document.getRootTag());
-        }
-        PostprocessReformattingAspect.getInstance(xmlFile.getProject()).doPostponedFormatting(xmlFile.getViewProvider());
-      }
-    }
   }
 
   public static class JavaFxUnresolvedTagRefsProvider extends UnresolvedReferenceQuickFixProvider<JavaFxTagNameReference> {
@@ -111,7 +92,7 @@ public class JavaFxTagNameReference extends TagNameReference{
       if (object instanceof JavaFxClassBackedElementDescriptor) {
         final XmlFile xmlFile = (XmlFile)context.getFile();
         final String shortName = ((JavaFxClassBackedElementDescriptor)object).getName();
-        insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassBackedElementDescriptor)object).getQualifiedName());
+        JavaFxPsiUtil.insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassBackedElementDescriptor)object).getQualifiedName());
         context.commitDocument();
       }
     }

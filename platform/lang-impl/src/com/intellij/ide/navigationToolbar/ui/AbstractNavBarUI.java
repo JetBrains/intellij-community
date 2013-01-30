@@ -131,7 +131,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
     Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : Color.WHITE;
-    final Paint bg = floating ? defaultBg : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
+    final Paint bg = floating ? defaultBg : UIUtil.getGradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
     final Color selection = UIUtil.getListSelectionBackground();
     
     Graphics2D g2 = result.createGraphics();
@@ -237,12 +237,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     
     g2d.setColor(c);
     if (gradient) {
-      g2d.setPaint(new GradientPaint(0, 0, ColorUtil.toAlpha(c, 10), 0, h / 2, c));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(c, 10), 0, h / 2, c));
     }
     g2d.drawLine(0, 0, off, h / 2);
 
     if (gradient) {
-      g2d.setPaint(new GradientPaint(0, h / 2, c, 0, h, ColorUtil.toAlpha(c, 10)));
+      g2d.setPaint(UIUtil.getGradientPaint(0, h / 2, c, 0, h, ColorUtil.toAlpha(c, 10)));
     }
     g2d.drawLine(off, h / 2, 0, h);
 
@@ -251,13 +251,13 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2d.setColor(light);
       
       if (gradient) {
-        g2d.setPaint(new GradientPaint(0, 0, ColorUtil.toAlpha(light, 10), 0, h / 2, light));
+        g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(light, 10), 0, h / 2, light));
       }
       g2d.drawLine(0, 0, off, h / 2);
 
 
       if (gradient) {
-        g2d.setPaint(new GradientPaint(0, h / 2, light, 0, h, ColorUtil.toAlpha(light, 10)));
+        g2d.setPaint(UIUtil.getGradientPaint(0, h / 2, light, 0, h, ColorUtil.toAlpha(light, 10)));
       }
       g2d.drawLine(off, h / 2, 0, h);
     }

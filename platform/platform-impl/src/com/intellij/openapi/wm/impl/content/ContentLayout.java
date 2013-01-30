@@ -20,6 +20,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -61,6 +62,8 @@ abstract class ContentLayout {
 
   public abstract void rebuild();
 
+  public abstract int getMinimumWidth();
+
   public abstract void contentAdded(ContentManagerEvent event);
 
   public abstract void contentRemoved(ContentManagerEvent event);
@@ -85,15 +88,16 @@ abstract class ContentLayout {
   protected void fillTabShape(Graphics2D g2d, Shape shape, boolean isSelected, Rectangle bounds) {
     if (myUi.myWindow.isActive()) {
       if (isSelected) {
-        g2d.setPaint(new GradientPaint(bounds.x, bounds.y, TAB_BG_ACTIVE_WND_SELECTED_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_ACTIVE_WND_SELECTED_TO));
+        g2d.setPaint(UIUtil.getGradientPaint(bounds.x, bounds.y, TAB_BG_ACTIVE_WND_SELECTED_FROM, bounds.x, (float)bounds.getMaxY(),
+                                             TAB_BG_ACTIVE_WND_SELECTED_TO));
       }
       else {
-        g2d.setPaint(new GradientPaint(bounds.x, bounds.y, TAB_BG_ACTIVE_WND_UNSELECTED_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_ACTIVE_WND_UNSELECTED_TO));
+        g2d.setPaint(UIUtil.getGradientPaint(bounds.x, bounds.y, TAB_BG_ACTIVE_WND_UNSELECTED_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_ACTIVE_WND_UNSELECTED_TO));
       }
     }
     else {
       g2d.setPaint(
-        new GradientPaint(bounds.x, bounds.y, TAB_BG_PASSIVE_WND_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_PASSIVE_WND_TO));
+        UIUtil.getGradientPaint(bounds.x, bounds.y, TAB_BG_PASSIVE_WND_FROM, bounds.x, (float)bounds.getMaxY(), TAB_BG_PASSIVE_WND_TO));
     }
 
     g2d.fill(shape);

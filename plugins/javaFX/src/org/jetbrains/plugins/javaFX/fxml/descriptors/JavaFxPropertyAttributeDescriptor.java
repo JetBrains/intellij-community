@@ -79,6 +79,11 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   public static PsiClass getPropertyClass(PsiElement field) {
+    final PsiClassType classType = getPropertyClassType(field);
+    return classType != null ? classType.resolve() : null;
+  }
+  
+  public static PsiClassType getPropertyClassType(PsiElement field) {
     if (field instanceof PsiField) {
       final PsiType type = ((PsiField)field).getType();
       if (type instanceof PsiClassType) {
@@ -93,7 +98,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
             if (superClassSubstitutor != null) {
               final PsiType propertyType = superClassSubstitutor.substitute(objectProperty.getTypeParameters()[0]);
               if (propertyType instanceof PsiClassType) {
-                return ((PsiClassType)propertyType).resolve();
+                return (PsiClassType)propertyType;
               }
             }
           }

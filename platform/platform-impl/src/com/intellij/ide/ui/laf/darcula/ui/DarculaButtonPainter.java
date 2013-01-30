@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
 import javax.swing.plaf.InsetsUIResource;
@@ -42,7 +43,8 @@ public class DarculaButtonPainter implements Border, UIResource {
       final GraphicsConfig config = new GraphicsConfig(g);
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-      g2d.setPaint(new GradientPaint(width / 2, y + yOff + 1, Gray._80.withAlpha(90), width / 2, height - 2*yOff, Gray._90.withAlpha(90)));
+      g2d.setPaint(
+        UIUtil.getGradientPaint(width / 2, y + yOff + 1, Gray._80.withAlpha(90), width / 2, height - 2 * yOff, Gray._90.withAlpha(90)));
       //g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
 
       ((Graphics2D)g).setPaint(Gray._100.withAlpha(180));

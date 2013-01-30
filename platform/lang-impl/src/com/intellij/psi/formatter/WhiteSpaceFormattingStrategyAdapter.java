@@ -17,6 +17,7 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormatting
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset) {
+                                                  int endOffset, CodeStyleSettings codeStyleSettings) {
     return whiteSpaceText;
   }
 
@@ -56,7 +57,7 @@ public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormatting
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull PsiElement startElement,
                                                   int startOffset,
-                                                  int endOffset) {
+                                                  int endOffset, CodeStyleSettings codeStyleSettings) {
     return whiteSpaceText;
   }
 

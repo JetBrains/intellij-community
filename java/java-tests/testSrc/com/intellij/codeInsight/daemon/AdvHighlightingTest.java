@@ -49,8 +49,8 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run
- * For "lightweight" tests use LightAdvHighlightingTest
+ * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
+ * For "lightweight" tests use LightAdvHighlightingTest.
  */
 public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
@@ -157,12 +157,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH + "/alreadyImportedClass", false, false);
   }
 
-  public void testImportDefaultPackage() throws Exception {
+  public void testImportDefaultPackage1() throws Exception {
     doTest(BASE_PATH + "/importDefaultPackage/x/Usage.java", BASE_PATH + "/importDefaultPackage", false, false);
   }
 
   public void testImportDefaultPackage2() throws Exception {
     doTest(BASE_PATH + "/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH + "/importDefaultPackage", false, false);
+  }
+
+  public void testImportDefaultPackage3() throws Exception {
+    doTest(BASE_PATH + "/importDefaultPackage/Test.java", BASE_PATH + "/importDefaultPackage", false, false);
   }
 
   public void testImportDefaultPackageInvalid() throws Exception {
@@ -280,5 +284,21 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testNotAKeywords() throws Exception {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
     doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
+  }
+
+  public void testPackageAndClassConflict1() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub/Test.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict2() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict3() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/java/lang.java", false, false);
+  }
+
+  public void testPackageObscuring() throws Exception {
+    doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
   }
 }

@@ -42,6 +42,18 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
   
+  public void testDefaultTagProperties() throws Exception {
+    doTest();
+  }
+
+  public void testDefaultTagInList() throws Exception {
+    doTest();
+  }
+
+  public void testUnresolvedImport() throws Exception {
+    doTest();
+  }
+
   public void testImageIcon() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", "appIcon.png");
     doDoTest(false, false);
@@ -53,6 +65,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testControllerIdRef() throws Exception {
     doTestIdController();
+  }
+
+  public void testPackageLocalController() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doDoTest(false, false);
   }
   
   private void doTestIdController() throws Exception {
