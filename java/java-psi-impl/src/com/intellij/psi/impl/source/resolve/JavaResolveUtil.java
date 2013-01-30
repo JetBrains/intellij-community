@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
@@ -215,5 +216,18 @@ public class JavaResolveUtil {
     }
 
     return true;
+  }
+
+  public static void substituteResults(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult[] result) {
+    if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
+      PsiType[] parameters = ref.getTypeParameters();
+      for (int i = 0; i < result.length; i++) {
+        CandidateInfo resolveResult = (CandidateInfo)result[i];
+        PsiElement resultElement = resolveResult.getElement();
+        if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
+          result[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters));
+        }
+      }
+    }
   }
 }
