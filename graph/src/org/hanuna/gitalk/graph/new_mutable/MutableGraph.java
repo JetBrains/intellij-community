@@ -14,23 +14,20 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableGraph implements NewGraph {
-    private final EdgeController edgeController;
+    private final EdgeController edgeController = new EdgeController();
     private final ElementVisibilityController visibilityController = new ElementVisibilityController();
-    private final List<MutableNodeRow> allRows;
-    private final List<Integer> indexVisibleRows;
+    private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();
+    private final List<Integer> indexVisibleRows = new ArrayList<Integer>();
 
     private final List<Executor<Replace>> listenerList = new ArrayList<Executor<Replace>>();
-
-    public MutableGraph(EdgeController edgeController, List<MutableNodeRow> allRows) {
-        this.edgeController = edgeController;
-        this.allRows = allRows;
-        this.indexVisibleRows = new ArrayList<Integer>(allRows.size());
-        updateVisibleRows();
-    }
 
     @NotNull
     public EdgeController getEdgeController() {
         return edgeController;
+    }
+
+    public void addRow(@NotNull MutableNodeRow row) {
+        allRows.add(row);
     }
 
     @NotNull
