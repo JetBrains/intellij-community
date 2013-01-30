@@ -12,10 +12,12 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -138,6 +140,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     for (Problem problem : annotationResult.problems) {
+      String stripTrailingSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+      if (!stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
+        // ignore trailing spaces errors if they're going to disappear after save
+        if (problem.myCode.equals("W291") || problem.myCode.equals("W293")) {
+          continue;
+        }
+      }
       int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
@@ -147,16 +156,20 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
       }
       if (problemElement != null) {
+        TextRange problemRange = problemElement.getTextRange();
+        if (StringUtil.offsetToLineNumber(text, problemRange.getStartOffset()) != StringUtil.offsetToLineNumber(text, problemRange.getEndOffset())) {
+          problemRange = new TextRange(offset, StringUtil.lineColToOffset(text, problem.myLine, 0)-1);
+        }
         final Annotation annotation;
         final String message = "PEP 8: " + problem.myDescription;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {
-          annotation = holder.createErrorAnnotation(problemElement, message);
+          annotation = holder.createErrorAnnotation(problemRange, message);
         }
         else if (annotationResult.level == HighlightDisplayLevel.WARNING) {
-          annotation = holder.createWarningAnnotation(problemElement, message);
+          annotation = holder.createWarningAnnotation(problemRange, message);
         }
         else {
-          annotation = holder.createWeakWarningAnnotation(problemElement, message);
+          annotation = holder.createWeakWarningAnnotation(problemRange, message);
         }
         annotation.registerUniversalFix(new ReformatFix(), null, null);
         annotation.registerFix(new IgnoreErrorFix(problem.myCode, annotationResult.ignoredErrors));

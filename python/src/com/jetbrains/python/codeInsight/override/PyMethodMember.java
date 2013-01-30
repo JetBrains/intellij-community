@@ -33,7 +33,7 @@ public class PyMethodMember extends PsiElementMemberChooserObject implements Cla
     myFullName = buildNameFor(element);
   }
 
-  private static String trimUnderscores(String s) {
+  public static String trimUnderscores(String s) {
     return StringUtil.trimStart(StringUtil.trimStart(s, "_"), "_");
   }
 

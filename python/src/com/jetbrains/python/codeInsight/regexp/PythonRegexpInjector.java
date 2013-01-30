@@ -75,8 +75,15 @@ public class PythonRegexpInjector implements LanguageInjector {
   }
 
   private static boolean isVerbose(PyExpression expr) {
+    if (expr instanceof PyKeywordArgument) {
+      PyKeywordArgument keywordArgument = (PyKeywordArgument)expr;
+      if (!"flags".equals(keywordArgument.getName())) {
+        return false;
+      }
+      return isVerbose(keywordArgument.getValueExpression());
+    }
     if (expr instanceof PyReferenceExpression) {
-      return "VERBOSE".equals(((PyReferenceExpression) expr).getReferencedName());
+      return "VERBOSE".equals(((PyReferenceExpression)expr).getReferencedName());
     }
     if (expr instanceof PyBinaryExpression) {
       return isVerbose(((PyBinaryExpression)expr).getLeftExpression()) || isVerbose(((PyBinaryExpression)expr).getRightExpression());

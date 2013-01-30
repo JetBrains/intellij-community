@@ -28,7 +28,6 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,8 +127,8 @@ public class PyDebugRunner extends GenericProgramRunner {
   @Nullable
   private static CommandLinePatcher createRunConfigPatcher(RunProfileState state, RunProfile profile) {
     CommandLinePatcher runConfigPatcher = null;
-    if (state instanceof PythonCommandLineState && profile instanceof PythonRunConfiguration) {
-      runConfigPatcher = (PythonRunConfiguration)profile;
+    if (state instanceof PythonCommandLineState && profile instanceof AbstractPythonRunConfiguration) {
+      runConfigPatcher = (AbstractPythonRunConfiguration)profile;
     }
     return runConfigPatcher;
   }
