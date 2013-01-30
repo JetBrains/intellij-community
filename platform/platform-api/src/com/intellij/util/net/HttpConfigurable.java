@@ -18,14 +18,16 @@ package com.intellij.util.net;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.*;
 
@@ -54,9 +57,11 @@ import java.util.*;
   }
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
   public boolean USE_PROXY_PAC = false;
+  public transient boolean AUTHENTICATION_CANCELLED = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
 
@@ -65,7 +70,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
   public transient String LAST_ERROR;
-  public Map<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> myGenericPasswords = new HashMap<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>>();
+  public Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
+  public Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<CommonProxy.HostInfo>();
   private transient final Object myLock = new Object();
 
   public static HttpConfigurable getInstance() {
@@ -89,12 +95,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private void correctPasswords(HttpConfigurable from, HttpConfigurable to) {
     synchronized (myLock) {
-      to.myGenericPasswords.clear();
-      for (Map.Entry<Pair<String, Integer>, Pair<PasswordAuthentication, Boolean>> entry : from.myGenericPasswords.entrySet()) {
-        if (! Boolean.TRUE.equals(entry.getValue().getSecond())) {
-          to.myGenericPasswords.put(entry.getKey(), Pair.create(new PasswordAuthentication(entry.getValue().getFirst().getUserName(),
-                                                                                           ArrayUtil.EMPTY_CHAR_ARRAY), false));
-        } else {
+      to.myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
+      for (Map.Entry<CommonProxy.HostInfo, ProxyInfo> entry : from.myGenericPasswords.entrySet()) {
+        if (Boolean.TRUE.equals(entry.getValue().isStore())) {
           to.myGenericPasswords.put(entry.getKey(), entry.getValue());
         }
       }
@@ -110,20 +113,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     correctPasswords(state, this);
   }
 
-  public PasswordAuthentication getGenericPassword(final String host, final int port) {
-    final Pair<PasswordAuthentication, Boolean> pair;
+  public boolean isGenericPasswordCanceled(final String host, final int port) {
     synchronized (myLock) {
-      pair = myGenericPasswords.get(Pair.create(host, port));
+      return myGenericCancelled.contains(Pair.create(host, port));
     }
-    if (pair == null) return null;
-    final PasswordAuthentication first = pair.getFirst();
-    return new PasswordAuthentication(first.getUserName(), decode(String.valueOf(first.getPassword())).toCharArray());
+  }
+
+  public void setGenericPasswordCanceled(final String host, final int port) {
+    synchronized (myLock) {
+      myGenericCancelled.add(new CommonProxy.HostInfo("", host, port));
+    }
+  }
+
+  public PasswordAuthentication getGenericPassword(final String host, final int port) {
+    final ProxyInfo proxyInfo;
+    synchronized (myLock) {
+      proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo("", host, port));
+    }
+    if (proxyInfo == null) return null;
+    return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
   public void putGenericPassword(final String host, final int port, final PasswordAuthentication authentication, final boolean remember) {
     final PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
     synchronized (myLock) {
-      myGenericPasswords.put(Pair.create(host, port), Pair.create(coded, remember));
+      myGenericPasswords.put(new CommonProxy.HostInfo("", host, port), new ProxyInfo(remember, coded.getUserName(), String.valueOf(
+        coded.getPassword())));
     }
   }
 
@@ -149,28 +164,40 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(host, prompt, "", "", remember);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+                                                                  "Please enter credentials for: " + prompt, "", "", remember);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
           final boolean remember1 = remember && panel.isRememberPassword();
           value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
           putGenericPassword(host, port, value[0], remember1);
+        } else {
+          setGenericPasswordCanceled(host, port);
         }
       }
     };
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable, ModalityState.any());
+    runAboveAll(runnable);
     return value[0];
   }
 
   public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
-    if (PROXY_AUTHENTICATION && KEEP_PROXY_PASSWORD) {
-      return new PasswordAuthentication(PROXY_LOGIN, getPlainProxyPassword().toCharArray());
+    if (AUTHENTICATION_CANCELLED) return null;
+    final String password = getPlainProxyPassword();
+    if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
+      return new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
     }
+
+    // do not try to show any dialogs if application is exiting
+    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+        ApplicationManager.getApplication().isDisposed()) return null;
+
+    final String login = PROXY_LOGIN == null ? "" : PROXY_LOGIN;
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(host, prompt, "", "", KEEP_PROXY_PASSWORD);
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+                                                                  "Please enter credentials for: " + prompt, login, "", KEEP_PROXY_PASSWORD);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           final AuthenticationPanel panel = dlg.getPanel();
@@ -178,11 +205,43 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
           PROXY_LOGIN = panel.getLogin();
           setPlainProxyPassword(String.valueOf(panel.getPassword()));
           value[0] = new PasswordAuthentication(panel.getLogin(), panel.getPassword());
+        } else {
+          AUTHENTICATION_CANCELLED = true;
         }
       }
     };
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable, ModalityState.any());
+    runAboveAll(runnable);
     return value[0];
+  }
+
+  private void runAboveAll(final Runnable runnable) {
+    final Runnable throughSwing = new Runnable() {
+      @Override
+      public void run() {
+        if (SwingUtilities.isEventDispatchThread()) {
+          runnable.run();
+          return;
+        }
+        try {
+          SwingUtilities.invokeAndWait(runnable);
+        }
+        catch (InterruptedException e) {
+          LOG.info(e);
+        }
+        catch (InvocationTargetException e) {
+          LOG.info(e);
+        }
+      }
+    };
+    if (ProgressManager.getInstance().getProgressIndicator() != null) {
+      if (ProgressManager.getInstance().getProgressIndicator().isModal()) {
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(runnable);
+      } else {
+        throughSwing.run();
+      }
+    } else {
+      throughSwing.run();
+    }
   }
 
   //these methods are preserved for compatibility
@@ -352,12 +411,52 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void clearGenericPasswords() {
     synchronized (myLock) {
       myGenericPasswords.clear();
+      myGenericCancelled.clear();
     }
   }
 
   public void removeGeneric(CommonProxy.HostInfo info) {
     synchronized (myLock) {
       myGenericPasswords.remove(info);
+    }
+  }
+
+  public static class ProxyInfo {
+    public boolean myStore;
+    public String myUsername;
+    public String myPasswordCrypt;
+
+    public ProxyInfo() {
+    }
+
+    public ProxyInfo(boolean store, String username, String passwordCrypt) {
+      myStore = store;
+      myUsername = username;
+      myPasswordCrypt = passwordCrypt;
+    }
+
+    public boolean isStore() {
+      return myStore;
+    }
+
+    public void setStore(boolean store) {
+      myStore = store;
+    }
+
+    public String getUsername() {
+      return myUsername;
+    }
+
+    public void setUsername(String username) {
+      myUsername = username;
+    }
+
+    public String getPasswordCrypt() {
+      return myPasswordCrypt;
+    }
+
+    public void setPasswordCrypt(String passwordCrypt) {
+      myPasswordCrypt = passwordCrypt;
     }
   }
 }

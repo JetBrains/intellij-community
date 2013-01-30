@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,17 +158,24 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitNamedArgument(GrNamedArgument argument) {
-      PsiElement pparent = argument.getParent().getParent();
-      if (pparent instanceof GrCall && resolvesToDefaultConstructor(((GrCall)pparent))) {
-        GrArgumentLabel label = argument.getLabel();
-        if (label != null) {
-          PsiElement resolved = label.resolve();
+      GrArgumentLabel label = argument.getLabel();
+      if (label != null) {
+        PsiElement pparent = argument.getParent().getParent();
+        if (pparent instanceof GrCall && resolvesToDefaultConstructor(((GrCall)pparent))) {
+          final GroovyResolveResult resolveResult = label.advancedResolve();
+          PsiElement resolved = resolveResult.getElement();
+          PsiType type;
           if (resolved instanceof PsiField) {
-            PsiType type = ((PsiField)resolved).getType();
-            myResult = createSimpleSubTypeResult(type);
+            type = ((PsiField)resolved).getType();
           }
           else if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)resolved)) {
-            PsiType type = ((PsiMethod)resolved).getParameterList().getParameters()[0].getType();
+            type = ((PsiMethod)resolved).getParameterList().getParameters()[0].getType();
+          }
+          else {
+            type = null;
+          }
+          type = resolveResult.getSubstitutor().substitute(type);
+          if (type != null) {
             myResult = createSimpleSubTypeResult(type);
           }
         }
@@ -331,7 +338,8 @@ public class GroovyExpectedTypesProvider {
        type instanceof PsiClassType && ((PsiClassType)type).resolve() != null && ((PsiClassType)type).resolve().isEnum();
     }
 
-    private static TypeConstraint[] createSimpleSubTypeResult(PsiType type) {
+    @NotNull
+    private static TypeConstraint[] createSimpleSubTypeResult(@NotNull PsiType type) {
       return new TypeConstraint[]{new SubtypeConstraint(type, type)};
     }
 

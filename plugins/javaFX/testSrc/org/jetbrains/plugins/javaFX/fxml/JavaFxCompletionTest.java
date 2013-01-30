@@ -65,6 +65,14 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("Button");
   }
 
+  public void testDefaultProperty() throws Exception {
+    doTest("fx:id");
+  }
+
+  public void testDefaultTag() throws Exception {
+    doTest("fx:script");
+  }
+
   public void testStaticPropertiesEnumValue() throws Exception {
     doTest();
   }

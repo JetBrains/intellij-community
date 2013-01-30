@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     myRootPane = createRootPane(actionManager, uiSettings, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
-    AppUIUtil.updateFrameIcon(this);
+    AppUIUtil.updateWindowIcon(this);
     final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     setBounds(10, 10, screenSize.width - 20, screenSize.height - 40);
 

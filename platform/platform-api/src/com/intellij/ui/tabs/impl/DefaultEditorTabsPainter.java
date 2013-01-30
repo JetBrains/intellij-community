@@ -40,13 +40,13 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
                               int column,
                               boolean vertical) {
     if (tabColor != null) {
-      g2d.setPaint(new GradientPaint(x, y, Gray._200, x, y + effectiveBounds.height, Gray._130));
+      g2d.setPaint(UIUtil.getGradientPaint(x, y, Gray._200, x, y + effectiveBounds.height, Gray._130));
       g2d.fillRect(x, y, w, h);
 
       g2d.setColor(ColorUtil.toAlpha(tabColor, 150));
       g2d.fillRect(x, y, w, h);
     } else {
-      g2d.setPaint(new GradientPaint(x, y, Gray._255.withAlpha(180), x, y + effectiveBounds.height, Gray._255.withAlpha(100)));
+      g2d.setPaint(UIUtil.getGradientPaint(x, y, Gray._255.withAlpha(180), x, y + effectiveBounds.height, Gray._255.withAlpha(100)));
       g2d.fillRect(x, y, w, h);
     }
 
@@ -68,7 +68,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
 
   private static void drawShadow(Graphics2D g, int x, int w, int shadowBottom) {
     int shadowTop = shadowBottom - ACTIVE_TAB_SHADOW_HEIGHT;
-    g.setPaint(new GradientPaint(x, shadowTop, new Color(0, 0, 0, 0),
+    g.setPaint(UIUtil.getGradientPaint(x, shadowTop, new Color(0, 0, 0, 0),
                                    x, shadowBottom, new Color(0, 0, 0, 30)));
     g.fillRect(x, shadowTop, w, ACTIVE_TAB_SHADOW_HEIGHT);
   }
@@ -83,7 +83,7 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
 
     final int x = rectangle.x;
     final int y = rectangle.y;
-    g.setPaint(new GradientPaint(x, y, new Color(255, 255, 255, 160),
+    g.setPaint(UIUtil.getGradientPaint(x, y, new Color(255, 255, 255, 160),
                                  x, rectangle.y + rectangle.height, new Color(255, 255, 255, 120)));
     g.fillRect(x, rectangle.y, rectangle.width, rectangle.height + (vertical ? 1 : 0));
 
@@ -127,9 +127,9 @@ public class DefaultEditorTabsPainter implements JBEditorTabsPainter {
       g2d.setColor(multiplyColor(tabColor));
       g2d.fill(selectedShape.fillPath.getShape());
 
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._255.withAlpha(150), _x, _y + _height, Gray._255.withAlpha(0)));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._255.withAlpha(150), _x, _y + _height, Gray._255.withAlpha(0)));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._255, _x, _y + _height, Gray._230));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._255, _x, _y + _height, Gray._230));
     }
 
     g2d.fill(selectedShape.fillPath.getShape());

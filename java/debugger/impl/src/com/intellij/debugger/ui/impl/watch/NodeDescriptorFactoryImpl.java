@@ -172,6 +172,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new MethodReturnValueData(method, value));
   }
 
+  public ValueDescriptorImpl getThrownExceptionObjectDescriptor(NodeDescriptorImpl parent, ObjectReference exceptionObject) {
+    return getDescriptor(parent, new ThrownExceptionValueData(exceptionObject));
+  }
+
   public ThreadDescriptorImpl getThreadDescriptor(NodeDescriptorImpl parent, ThreadReferenceProxyImpl thread) {
     return getDescriptor(parent, new ThreadData(thread));
   }

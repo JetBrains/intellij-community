@@ -31,12 +31,14 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.DebuggerTreeBase;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
@@ -56,6 +58,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
 import com.sun.jdi.*;
+import com.sun.jdi.event.Event;
+import com.sun.jdi.event.ExceptionEvent;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -482,6 +486,19 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           final DebuggerTreeNodeImpl methodReturnValueNode = myNodeManager.createNode(returnValueDescriptor, evaluationContext);
           myChildren.add(1, methodReturnValueNode);
         }
+        // add context exceptions
+        for (Pair<Breakpoint, Event> pair : DebuggerUtilsEx.getEventDescriptors(getSuspendContext())) {
+          final Event debugEvent = pair.getSecond();
+          if (debugEvent instanceof ExceptionEvent) {
+            final ObjectReference exception = ((ExceptionEvent)debugEvent).exception();
+            if (exception != null) {
+              final ValueDescriptorImpl exceptionDescriptor = myNodeManager.getThrownExceptionObjectDescriptor(stackDescriptor, exception);
+              final DebuggerTreeNodeImpl exceptionNode = myNodeManager.createNode(exceptionDescriptor, evaluationContext);
+              myChildren.add(1, exceptionNode);
+            }
+          }
+        }
+
       }
       catch (EvaluateException e) {
         myChildren.clear();

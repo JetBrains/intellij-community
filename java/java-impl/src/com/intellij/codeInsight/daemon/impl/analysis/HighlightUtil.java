@@ -30,12 +30,15 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -45,6 +48,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -1934,6 +1938,14 @@ public class HighlightUtil extends HighlightUtilBase {
 
         return highlightInfo;
       }
+
+      if (element instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
+        if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+          return null;
+        }
+      }
+
       element = element.getParent();
       if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, referencedClass, true)) return null;
     }
@@ -2459,6 +2471,26 @@ public class HighlightUtil extends HighlightUtilBase {
       element = element.getParent();
     }
     return false;
+  }
+
+  @Nullable
+  static HighlightInfo checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref.isQualified() && isInsidePackageStatement(ref)) {
+      VirtualFile file = ref.getContainingFile().getVirtualFile();
+      if (file != null) {
+        Module module = ProjectFileIndex.SERVICE.getInstance(ref.getProject()).getModuleForFile(file);
+        if (module != null) {
+          GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+          PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
+          if (aClass != null) {
+            String message = JavaErrorMessages.message("package.clashes.with.class", ref.getText());
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, message);
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable

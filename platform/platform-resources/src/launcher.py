@@ -1,22 +1,27 @@
 #!/usr/bin/python
+
 import socket
 import struct
 import sys
 import os
-import os.path
 import time
 
-# see com.intelij.idea.SocketLock for the server side of this interface
+# see com.intellij.idea.SocketLock for the server side of this interface
 
 RUN_PATH = '$RUN_PATH$'
 CONFIG_PATH = '$CONFIG_PATH$'
 
 args = []
 skip_next = False
-for arg in sys.argv[1:]:
+for i, arg in enumerate(sys.argv[1:]):
     if arg == '-h' or arg == '-?' or arg == '--help':
-        print 'Usage: ' + sys.argv[0] + ' [-h|-?|--help] [-l|--line <line_number>] [file_path[:<line_number>]]'
-        exit( 0 )
+        print(('Usage:\n' + \
+               '  {0} -h |-? | --help\n' + \
+               '  {0} [-l|--line line] file[:line]\n' + \
+               '  {0} diff file1 file2').format(sys.argv[0]))
+        exit(0)
+    elif arg == 'diff' and i == 0:
+        args.append(arg)
     elif arg == '-l' or arg == '--line':
         args.append(arg)
         skip_next = True
@@ -25,11 +30,11 @@ for arg in sys.argv[1:]:
         skip_next = False
     else:
         if ':' in arg:
-            filepath, line_number = arg.rsplit( ':', 1 )
+            filepath, line_number = arg.rsplit(':', 1)
             if line_number.isdigit():
-              args.append( '-l' )
-              args.append( line_number )
-              args.append( os.path.abspath( filepath ) )
+              args.append('-l')
+              args.append(line_number)
+              args.append(os.path.abspath(filepath))
             else:
               args.append(os.path.abspath(arg))
         else:

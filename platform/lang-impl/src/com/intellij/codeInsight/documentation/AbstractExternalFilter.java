@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -276,6 +277,12 @@ public abstract class AbstractExternalFilter {
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getExternalDocInfo(final String surl) throws Exception {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
+      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
+      return null;
+    }
+
     if (surl == null) return null;
     if (MyJavadocFetcher.isFree()) {
       final MyJavadocFetcher fetcher = new MyJavadocFetcher(surl, new MyDocBuilder() {
@@ -284,7 +291,7 @@ public abstract class AbstractExternalFilter {
           doBuildFromStream(surl, input, result);
         }
       });
-      final Future<?> fetcherFuture = ApplicationManager.getApplication().executeOnPooledThread(fetcher);
+      final Future<?> fetcherFuture = app.executeOnPooledThread(fetcher);
       try {
         fetcherFuture.get();
       }

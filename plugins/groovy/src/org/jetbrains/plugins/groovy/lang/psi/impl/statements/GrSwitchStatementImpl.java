@@ -26,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author ilyas
  */
@@ -49,7 +52,11 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
 
   @NotNull
   public GrCaseSection[] getCaseSections() {
-    return findChildrenByClass(GrCaseSection.class);
+    List<GrCaseSection> result = new ArrayList<GrCaseSection>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrCaseSection) result.add((GrCaseSection)cur);
+    }
+    return result.toArray(new GrCaseSection[result.size()]);
   }
 
   @Override

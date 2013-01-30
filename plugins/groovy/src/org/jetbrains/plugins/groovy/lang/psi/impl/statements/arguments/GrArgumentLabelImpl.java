@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -184,13 +186,36 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @Nullable
   public PsiElement resolve() {
-    return getRealReference().resolve();
+    return advancedResolve().getElement();
   }
 
   @NotNull
   @Override
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return getRealReference().multiResolve(incompleteCode);
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    final ResolveResult[] results = getRealReference().multiResolve(incompleteCode);
+    if (results instanceof GroovyResolveResult[]) {
+      return (GroovyResolveResult[])results;
+    }
+    else {
+      final GroovyResolveResult[] results1 = new GroovyResolveResult[results.length];
+      for (int i = 0; i < results.length; i++) {
+        ResolveResult result = results[i];
+        final PsiElement element = result.getElement();
+        if (element == null) {
+          results1[i] = GroovyResolveResult.EMPTY_RESULT;
+        }
+        else {
+          results1[i] = new GroovyResolveResultImpl(element, true);
+        }
+      }
+      return results1;
+    }
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult advancedResolve() {
+    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @NotNull

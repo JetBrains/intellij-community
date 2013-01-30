@@ -26,6 +26,7 @@ package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.*;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
@@ -81,6 +82,7 @@ public class SaveAsTemplateAction extends AnAction {
     final Document document = EditorFactory.getInstance().createDocument(editor.getDocument().getText().
                                                                          substring(startOffset,
                                                                                    selection.getEndOffset()));
+    final boolean isXml = file.getLanguage().is(StdLanguages.XML);
     final int offsetDelta = startOffset;
     new WriteCommandAction.Simple(project, (String)null) {
       @Override
@@ -102,6 +104,12 @@ public class SaveAsTemplateAction extends AnAction {
               int pos = canonicalText.indexOf('<');
               if (pos > 0 && !oldText.contains("<")) {
                 canonicalText = canonicalText.substring(0, pos);
+              }
+              if (isXml) { //strip namespace prefixes
+                pos = canonicalText.lastIndexOf(':');
+                if (pos >= 0 && pos < canonicalText.length() - 1 && !oldText.contains(":")) {
+                  canonicalText = canonicalText.substring(pos + 1);
+                }
               }
               if (!canonicalText.equals(oldText)) {
                 rangeToText.put(document.createRangeMarker(range), canonicalText);

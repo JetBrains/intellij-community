@@ -50,6 +50,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author: Dmitry.Krasilschikov
  */
@@ -170,7 +173,11 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   }
 
   public GrMember[] getMembers() {
-    return findChildrenByClass(GrMember.class);
+    List<GrMember> result = new ArrayList<GrMember>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrMember) result.add((GrMember)cur);
+    }
+    return result.toArray(new GrMember[result.size()]);
   }
 
   @NotNull

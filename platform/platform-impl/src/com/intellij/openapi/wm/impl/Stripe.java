@@ -586,13 +586,13 @@ final class Stripe extends JPanel{
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
         bg = (BufferedImage) createImage(bounds.width, 50);
         Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
+        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
         graphics.fillRect(0, 0, bounds.width, 50);
         graphics.dispose();
       } else {
         bg = (BufferedImage) createImage(50, bounds.height);
         Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
+        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
         graphics.fillRect(0, 0, 50, bounds.height);
         graphics.dispose();
       }

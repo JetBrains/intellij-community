@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
@@ -72,7 +75,13 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
 
   @NotNull
   public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
+    List<GrStatement> result = new ArrayList<GrStatement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrStatement) {
+        result.add((GrStatement)cur);
+      }
+    }
+    return result.toArray(new GrStatement[result.size()]);
   }
 
   @NotNull

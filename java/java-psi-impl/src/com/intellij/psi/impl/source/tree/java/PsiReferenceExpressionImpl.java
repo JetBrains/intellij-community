@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
-import com.intellij.psi.impl.source.resolve.JavaResolveCache;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
+import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -187,59 +184,46 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    @NotNull
-    private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
-      CompositeElement treeParent = expression.getTreeParent();
-      IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-      expression.resolveAllQualifiers();
-      final JavaResolveResult[] result = expression.resolve(parentType);
-
-      if (incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION && result.length == 0) {
-        return expression.resolve(JavaElementType.REFERENCE_EXPRESSION);
-      }
-
-      return result;
-    }
-
     @Override
     @NotNull
     public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
-      final JavaResolveResult[] result = _resolve(incompleteCode, (PsiReferenceExpressionImpl)ref);
-      if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
-        final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
-        final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
-        for (int i = 0; i < result.length; i++) {
-          final CandidateInfo resolveResult = (CandidateInfo)result[i];
-          newResult[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll(
-            (PsiClass)resolveResult.getElement(), parameters));
-        }
-        return newResult;
+      PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
+      CompositeElement treeParent = expression.getTreeParent();
+      IElementType parentType = treeParent == null ? null : treeParent.getElementType();
+      resolveAllQualifiers(expression);
+      JavaResolveResult[] result = expression.resolve(parentType);
+
+      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION);
       }
+
+      JavaResolveUtil.substituteResults(expression, result);
+
       return result;
     }
-  }
 
-  private void resolveAllQualifiers() {
-    // to avoid SOE, resolve all qualifiers starting from the innermost
-    PsiElement qualifier = getQualifier();
-    if (qualifier == null) return;
-    final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
-    qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false, true)) {
-          return;
+    private static void resolveAllQualifiers(PsiReferenceExpressionImpl expression) {
+      // to avoid SOE, resolve all qualifiers starting from the innermost
+      PsiElement qualifier = expression.getQualifier();
+      if (qualifier == null) return;
+      final ResolveCache resolveCache = ResolveCache.getInstance(expression.getProject());
+      qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false, true)) {
+            return;
+          }
+          visitElement(expression);
         }
-        visitElement(expression);
-      }
 
-      @Override
-      protected void elementFinished(PsiElement element) {
-        if (!(element instanceof PsiReferenceExpressionImpl)) return;
-        PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-        resolveCache.resolveWithCaching(expression, OurGenericsResolver.INSTANCE, false, false);
-      }
-    });
+        @Override
+        protected void elementFinished(PsiElement element) {
+          if (!(element instanceof PsiReferenceExpressionImpl)) return;
+          PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
+          resolveCache.resolveWithCaching(expression, INSTANCE, false, false);
+        }
+      });
+    }
   }
 
   @NotNull
@@ -250,21 +234,33 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         return result;
       }
 
-      final PsiElement classNameElement = getReferenceNameElement();
-      if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
-      result = resolveToClass(classNameElement);
-      if (result.length > 0) {
-        return result;
+      PsiElement classNameElement = getReferenceNameElement();
+      if (!(classNameElement instanceof PsiIdentifier)) {
+        return JavaResolveResult.EMPTY_ARRAY;
       }
 
-      return resolveToPackage();
+      result = resolveToClass(classNameElement);
+      if (result.length == 1 && !result[0].isAccessible()) {
+        JavaResolveResult[] packageResult = resolveToPackage();
+        if (packageResult.length != 0) {
+          result = packageResult;
+        }
+      }
+      else if (result.length == 0) {
+        result = resolveToPackage();
+      }
+
+      return result;
     }
+
     if (parentType == JavaElementType.METHOD_CALL_EXPRESSION) {
       return resolveToMethod();
     }
+
     if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
       return resolve(JavaElementType.REFERENCE_EXPRESSION);
     }
+
     return resolveToVariable();
   }
 

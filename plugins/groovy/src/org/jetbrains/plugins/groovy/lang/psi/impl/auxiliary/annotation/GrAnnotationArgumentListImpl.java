@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -52,7 +56,11 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
 
   @NotNull
   public GrAnnotationNameValuePair[] getAttributes() {
-    return findChildrenByClass(GrAnnotationNameValuePair.class);
+    List<GrAnnotationNameValuePair> result = new ArrayList<GrAnnotationNameValuePair>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrAnnotationNameValuePair) result.add((GrAnnotationNameValuePair)cur);
+    }
+    return result.toArray(new GrAnnotationNameValuePair[result.size()]);
   }
 
   @Override

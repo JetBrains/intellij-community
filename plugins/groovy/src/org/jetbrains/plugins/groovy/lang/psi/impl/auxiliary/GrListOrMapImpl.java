@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
@@ -45,8 +46,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
@@ -105,12 +108,20 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @NotNull
   public GrExpression[] getInitializers() {
-    return findChildrenByClass(GrExpression.class);
+    List<GrExpression> result = new ArrayList<GrExpression>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (ReflectionCache.isInstance(cur, GrExpression.class)) result.add((GrExpression)cur);
+    }
+    return result.toArray((GrExpression[]) Array.newInstance(GrExpression.class, result.size()));
   }
 
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
-    return findChildrenByClass(GrNamedArgument.class);
+    List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
+    }
+    return result.toArray(new GrNamedArgument[result.size()]);
   }
 
   @Override

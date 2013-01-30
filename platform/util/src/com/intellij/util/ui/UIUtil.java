@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1250,7 +1250,7 @@ public class UIUtil {
 
     final Composite oldComposite = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-    g.setPaint(new GradientPaint(startX, 2, c1, startX, height - 5, c2));
+    g.setPaint(getGradientPaint(startX, 2, c1, startX, height - 5, c2));
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
@@ -1315,8 +1315,7 @@ public class UIUtil {
 
   public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
     final Graphics2D g2d = (Graphics2D)g;
-    final GradientPaint gradientPaint = new GradientPaint(0, 0, Gray._215, 0, height, Gray._200);
-    g2d.setPaint(gradientPaint);
+    g2d.setPaint(getGradientPaint(0, 0, Gray._215, 0, height, Gray._200));
     g2d.fillRect(0, 0, width, height);
   }
 
@@ -1334,7 +1333,7 @@ public class UIUtil {
     g.setColor(getPanelBackground());
     g.fillRect(x, 0, width, height);
 
-    ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+    ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
     g.fillRect(x, 0, width, height);
 
     g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
@@ -1501,7 +1500,7 @@ public class UIUtil {
       if (rect == null) rect = new Rectangle(size);
 
       //noinspection UndesirableClassUsage
-      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_ARGB);
+      Image image = new BufferedImage(rect.width * 2, rect.height * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
 
       imageGraphics.scale(2, 2);
@@ -1796,37 +1795,21 @@ public class UIUtil {
     }
   }
 
+  /** @deprecated use {@linkplain Dialog#setModalityType(Dialog.ModalityType)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void setToolkitModal(final JDialog dialog) {
-    try {
-      final Class<?> modalityType = dialog.getClass().getClassLoader().loadClass("java.awt.Dialog$ModalityType");
-      final Field field = modalityType.getField("TOOLKIT_MODAL");
-      final Object value = field.get(null);
-
-      final Method method = dialog.getClass().getMethod("setModalityType", modalityType);
-      method.invoke(dialog, value);
-    }
-    catch (Exception e) {
-      // ignore - no JDK 6
-    }
+    dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
   }
 
+  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static void updateDialogIcon(final JDialog dialog, final List<Image> images) {
-    try {
-      final Method method = dialog.getClass().getMethod("setIconImages", List.class);
-      method.invoke(dialog, images);
-    }
-    catch (Exception e) {
-      // ignore - no JDK 6
-    }
+    dialog.setIconImages(images);
   }
 
+  /** @deprecated outdated (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean hasJdk6Dialogs() {
-    try {
-      UIUtil.class.getClassLoader().loadClass("java.awt.Dialog$ModalityType");
-    }
-    catch (Throwable e) {
-      return false;
-    }
     return true;
   }
 
@@ -2614,5 +2597,10 @@ public class UIUtil {
 
   public static Color getDecoratedRowColor() {
     return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
+  }
+
+  @NotNull
+  public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
+    return (Registry.is("ui.no.bangs.and.whistles", false)) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 }

@@ -44,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -210,7 +211,16 @@ public class CodeFormatterFacade {
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
             formatter.setProgressTask(new FormattingProgressTask(project, file, document));
           }
-          formatter.format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
+
+          CommonCodeStyleSettings.IndentOptions indentOptions = null;
+          if (builder instanceof FormattingModelBuilderEx) {
+            indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
+          }
+          if (indentOptions == null) {
+            indentOptions  = mySettings.getIndentOptions(file.getFileType());
+          }
+          
+          formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());

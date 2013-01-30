@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -61,19 +61,12 @@ public class ConfigImportHelper {
 
     File oldConfigDir = findOldConfigDir(newConfigPath, settings.getCustomPathsSelector());
     do {
-      ImportOldConfigsPanel dlg;
-      if (UIUtil.hasJdk6Dialogs()) {
-        dlg = new ImportOldConfigsPanel(oldConfigDir, settings);
-      }
-      else {
-        dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame(), settings);
-      }
-
-      UIUtil.setToolkitModal(dlg);
-      AppUIUtil.updateDialogIcon(dlg);
-      dlg.setVisible(true);
-      if (dlg.isImportEnabled()) {
-        File instHome = dlg.getSelectedFile();
+      ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
+      dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+      AppUIUtil.updateWindowIcon(dialog);
+      dialog.setVisible(true);
+      if (dialog.isImportEnabled()) {
+        File instHome = dialog.getSelectedFile();
         oldConfigDir = getOldConfigDir(instHome, settings);
         if (!validateOldConfigDir(instHome, oldConfigDir, settings)) continue;
 

@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings)
   {
     // Does nothing
     return whiteSpaceText;
@@ -52,7 +53,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull PsiElement startElement,
                                                   final int startOffset,
-                                                  final int endOffset)
+                                                  final int endOffset, CodeStyleSettings codeStyleSettings)
   {
     assert startElement.getTextRange().contains(startOffset)
       : String.format("Element: %s, range: %s, offset: %d", startElement, startElement.getTextRange(), startOffset); 
@@ -84,7 +85,7 @@ public abstract class AbstractWhiteSpaceFormattingStrategy implements WhiteSpace
       } 
     }
     
-    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset);
+    return adjustWhiteSpaceIfNecessary(whiteSpaceText, buffer, 0, endOffset - startOffset, codeStyleSettings);
   }
 
   @Nullable

@@ -30,11 +30,13 @@ public class FxmlConstants {
   @NonNls public static final String VALUE = "value";
   @NonNls public static final String FX_VALUE = "fx:value";
   @NonNls public static final String FX_FACTORY = "fx:factory";
-  @NonNls public static final String FX_INCLUDE = "fx:include";
   @NonNls public static final String FX_REFERENCE = "fx:reference";
   @NonNls public static final String FX_COPY = "fx:copy";
   @NonNls public static final String FX_DEFINE = "fx:define";
+
   @NonNls public static final String FX_SCRIPT = "fx:script";
+  @NonNls public static final String FX_INCLUDE = "fx:include";
   
-  public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY);
+  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
 }

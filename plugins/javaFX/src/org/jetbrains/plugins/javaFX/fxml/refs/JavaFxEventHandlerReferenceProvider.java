@@ -25,7 +25,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 /**
  * User: anna
@@ -53,7 +53,7 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
     if (handlerField == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final PsiClass objectPropertyClass = JavaFxPropertyAttributeDescriptor.getPropertyClass(handlerField);
+    final PsiClass objectPropertyClass = JavaFxPsiUtil.getPropertyClass(handlerField);
     if (objectPropertyClass == null || !InheritanceUtil.isInheritor(objectPropertyClass, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER)) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -67,6 +67,6 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
         break;
       }
     }
-    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, handlerMethod, controllerClass)};
+    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, (PsiClass)currentTagClass, handlerMethod, controllerClass)};
   }
 }

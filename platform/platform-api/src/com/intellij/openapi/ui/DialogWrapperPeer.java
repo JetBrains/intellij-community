@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public abstract class DialogWrapperPeer {
 
   /**
    * Dispose the wrapped and releases all resources allocated be the wrapper to help
-   * more effecient garbage collection. You should never invoke this method twice or
+   * more efficient garbage collection. You should never invoke this method twice or
    * invoke any method of the wrapper after invocation of <code>dispose</code>.
    */
   protected abstract void dispose();
@@ -151,6 +151,8 @@ public abstract class DialogWrapperPeer {
   public abstract void repaint();
   public abstract void pack();
 
+  /** @deprecated use {@linkplain Window#setIconImages(List)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public abstract void setIconImages(List<Image> image);
 
   public abstract void setAppIcons();

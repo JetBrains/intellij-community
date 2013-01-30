@@ -152,7 +152,7 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
         final Color top = active ? ACTIVE_TOP_COLOR : INACTIVE_TOP_COLOR;
         final Color bottom = active ? ACTIVE_BOTTOM_COLOR : INACTIVE_BOTTOM_COLOR;
 
-        final GradientPaint paint = new GradientPaint(0, 0, top, 0, height, bottom);
+        final Paint paint = UIUtil.getGradientPaint(0, 0, top, 0, height, bottom);
         g.setPaint(paint);
         g.fillRect(0, 0, width, height);
 

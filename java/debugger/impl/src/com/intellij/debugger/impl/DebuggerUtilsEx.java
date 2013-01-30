@@ -40,11 +40,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.SmartList;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.event.EventSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -332,16 +335,21 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return elementsEqual(root1, root2);
   }
 
+  @NotNull
   public static List<Pair<Breakpoint, Event>> getEventDescriptors(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(suspendContext == null || suspendContext.getEventSet() == null) {
+    if(suspendContext == null) {
       return Collections.emptyList();
     }
-    final List<Pair<Breakpoint, Event>> eventDescriptors = new ArrayList<Pair<Breakpoint, Event>>();
+    final EventSet events = suspendContext.getEventSet();
+    if(events == null) {
+      return Collections.emptyList();
+    }
+    final List<Pair<Breakpoint, Event>> eventDescriptors = new SmartList<Pair<Breakpoint, Event>>();
 
     final RequestManagerImpl requestManager = suspendContext.getDebugProcess().getRequestsManager();
-    for (final Event event : suspendContext.getEventSet()) {
-      Requestor requestor = requestManager.findRequestor(event.request());
+    for (final Event event : events) {
+      final Requestor requestor = requestManager.findRequestor(event.request());
       if (requestor instanceof Breakpoint) {
         eventDescriptors.add(new Pair<Breakpoint, Event>((Breakpoint)requestor, event));
       }

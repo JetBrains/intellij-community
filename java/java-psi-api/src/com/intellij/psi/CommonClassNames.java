@@ -58,7 +58,8 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_DICTIONARY = "java.util.Dictionary";
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 
-  @NonNls String JAVA_SQL_DATE = "java.sql.Date";
+  /** @deprecated not that common (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") @NonNls String JAVA_SQL_DATE = "java.sql.Date";
 
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   @NonNls String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
@@ -87,10 +88,10 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
 
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
-  String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
+  @NonNls String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
   @NonNls String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
   @NonNls String JAVA_IO_FILE = "java.io.File";
-  String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
+  @NonNls String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
   @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
   @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";

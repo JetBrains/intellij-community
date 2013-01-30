@@ -2,12 +2,11 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,33 +73,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   protected PsiClass getEnum() {
-    final PsiClass aClass = getPropertyClass(getDeclaration());
+    final PsiClass aClass = JavaFxPsiUtil.getPropertyClass(getDeclaration());
     return aClass != null && aClass.isEnum() ? aClass : null;
-  }
-
-  public static PsiClass getPropertyClass(PsiElement field) {
-    if (field instanceof PsiField) {
-      final PsiType type = ((PsiField)field).getType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-        final PsiClass attributeClass = resolveResult.getElement();
-        if (attributeClass != null) {
-          final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
-            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
-          if (objectProperty != null) {
-            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
-              .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
-            if (superClassSubstitutor != null) {
-              final PsiType propertyType = superClassSubstitutor.substitute(objectProperty.getTypeParameters()[0]);
-              if (propertyType instanceof PsiClassType) {
-                return ((PsiClassType)propertyType).resolve();
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable
