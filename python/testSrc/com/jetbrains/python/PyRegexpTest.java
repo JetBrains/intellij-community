@@ -59,6 +59,10 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void _testDoubleOpenCurly() {  // PY-8252
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
   }
