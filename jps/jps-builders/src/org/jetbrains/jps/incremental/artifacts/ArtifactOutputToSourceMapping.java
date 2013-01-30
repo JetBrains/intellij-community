@@ -25,7 +25,6 @@ import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,25 +40,16 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
 
   @Override
   public void update(String path, @Nullable List<SourcePathAndRootIndex> state) throws IOException {
-    super.update(FileUtil.toSystemIndependentName(path), normalize(state));
+    super.update(FileUtil.toSystemIndependentName(path), state);
   }
 
   @Override
   public void appendData(String path, List<SourcePathAndRootIndex> data) throws IOException {
-    super.appendData(FileUtil.toSystemIndependentName(path), normalize(data));
-  }
-
-  private static List<SourcePathAndRootIndex> normalize(List<SourcePathAndRootIndex> data) {
-    if (data.isEmpty()) return Collections.emptyList();
-    List<SourcePathAndRootIndex> normalized = new ArrayList<SourcePathAndRootIndex>(data.size());
-    for (SourcePathAndRootIndex pair : data) {
-      normalized.add(new SourcePathAndRootIndex(FileUtil.toSystemIndependentName(pair.getPath()), pair.getRootIndex()));
-    }
-    return normalized;
+    super.appendData(FileUtil.toSystemIndependentName(path), data);
   }
 
   public void appendData(String outputPath, int rootIndex, String sourcePath) throws IOException {
-    super.appendData(outputPath, Collections.singletonList(new SourcePathAndRootIndex(FileUtil.toSystemIndependentName(sourcePath), rootIndex)));
+    super.appendData(outputPath, Collections.singletonList(new SourcePathAndRootIndex(sourcePath, rootIndex)));
   }
 
   @Override
@@ -77,8 +67,8 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     private final String myPath;
     private final int myRootIndex;
 
-    public SourcePathAndRootIndex(String path, int rootIndex) {
-      myPath = path;
+    private SourcePathAndRootIndex(String path, int rootIndex) {
+      myPath = FileUtil.toSystemIndependentName(path);
       myRootIndex = rootIndex;
     }
 
