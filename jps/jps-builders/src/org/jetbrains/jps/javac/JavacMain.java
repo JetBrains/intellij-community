@@ -123,6 +123,14 @@ public class JavacMain {
 
     try {
       final Collection<String> _options = prepareOptions(options, nowUsingJavac);
+
+      // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
+      // i.e. getJavaFileObjectsFromFiles()
+      // This way the manager will be properly initialized. Namely, the encoding will be set correctly
+      for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
+        fileManager.handleOption(iterator.next(), iterator);
+      }
+
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
