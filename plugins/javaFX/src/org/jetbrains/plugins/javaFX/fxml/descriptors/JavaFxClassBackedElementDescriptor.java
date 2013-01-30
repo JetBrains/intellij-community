@@ -85,7 +85,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             final PsiMethod getter = findPropertyGetter(propertyName, myPsiClass);
             if (getter != null) {
               final PsiType returnType = getter.getReturnType();
-              children.addAll(JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope()));
+              JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
             }
           }
         }

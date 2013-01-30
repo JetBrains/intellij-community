@@ -46,6 +46,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDefaultTagInList() throws Exception {
+    doTest();
+  }
+
   public void testUnresolvedImport() throws Exception {
     doTest();
   }
