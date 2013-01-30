@@ -137,10 +137,17 @@ public class FindInProjectUtil {
     String path = directoryName.replace(File.separatorChar, '/');
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
+      virtualFile = null;
       for (LocalFileProvider provider : ((VirtualFileManagerEx)VirtualFileManager.getInstance()).getLocalFileProviders()) {
-        virtualFile = provider.findLocalVirtualFileByPath(path);
-        if (virtualFile != null && virtualFile.isDirectory()) {
-          break;
+        VirtualFile file = provider.findLocalVirtualFileByPath(path);
+        if (file != null && file.isDirectory()) {
+          if (file.getChildren().length > 0) {
+            virtualFile = file;
+            break;
+          }
+          if(virtualFile == null){
+             virtualFile = file;
+          }
         }
       }
     }
