@@ -408,26 +408,26 @@
     </option>
     <option name="DIFF_CONFLICT">
       <value>
-        <option name="BACKGROUND" value="3d0909" />
-        <option name="ERROR_STRIPE_COLOR" value="eb5e42" />
+        <option name="BACKGROUND" value="763c3d" />
+        <option name="ERROR_STRIPE_COLOR" value="763c3d" />
       </value>
     </option>
     <option name="DIFF_DELETED">
       <value>
-        <option name="BACKGROUND" value="666666" />
-        <option name="ERROR_STRIPE_COLOR" value="747474" />
+        <option name="BACKGROUND" value="0" />
+        <option name="ERROR_STRIPE_COLOR" value="0" />
       </value>
     </option>
     <option name="DIFF_INSERTED">
       <value>
-        <option name="BACKGROUND" value="164716" />
-        <option name="ERROR_STRIPE_COLOR" value="18701" />
+        <option name="BACKGROUND" value="365d40" />
+        <option name="ERROR_STRIPE_COLOR" value="365d40" />
       </value>
     </option>
     <option name="DIFF_MODIFIED">
       <value>
-        <option name="BACKGROUND" value="1e1e45" />
-        <option name="ERROR_STRIPE_COLOR" value="3b59b2" />
+        <option name="BACKGROUND" value="337184" />
+        <option name="ERROR_STRIPE_COLOR" value="326174" />
       </value>
     </option>
     <option name="DOC_COMMENT_TAG_VALUE">
