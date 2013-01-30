@@ -11,7 +11,7 @@
 
   <welcome-screen logo-url="/pycharm_welcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 
-  <third-party url="http://confluence.jetbrains.net/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
+  <third-party url="http://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
 
   <update-urls logo-url="/Logo_welcomeScreen.png"
                check="http://www.jetbrains.com/updates/updates.xml"
