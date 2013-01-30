@@ -1736,6 +1736,38 @@ public class StringUtil extends StringUtilRt {
     return builder;
   }
 
+  public static boolean isNotEscapedBackslash(char[] chars, int startOffset, int backslashOffset) {
+    if (chars[backslashOffset] != '\\') {
+      return false;
+    }
+    boolean escaped = false;
+    for (int i = startOffset; i < backslashOffset; i++) {
+      if (chars[i] == '\\') {
+        escaped = !escaped;
+      }
+      else {
+        escaped = false;
+      }
+    }
+    return !escaped;
+  }
+
+  public static boolean isNotEscapedBackslash(CharSequence text, int startOffset, int backslashOffset) {
+    if (text.charAt(backslashOffset) != '\\') {
+      return false;
+    }
+    boolean escaped = false;
+    for (int i = startOffset; i < backslashOffset; i++) {
+      if (text.charAt(i) == '\\') {
+        escaped = !escaped;
+      }
+      else {
+        escaped = false;
+      }
+    }
+    return !escaped;
+  }
+
   @NotNull
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
     final StringBuilder result = new StringBuilder(text.length());
