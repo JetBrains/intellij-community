@@ -19,14 +19,19 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +41,13 @@ import java.util.List;
  * Date: 1/16/13
  */
 public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeValue> {
-  private PsiMethod myEventHandler;
+  private final PsiClass myCurrentTagClass;
+  private final PsiMethod myEventHandler;
   private final PsiClass myController;
 
-  public JavaFxEventHandlerReference(XmlAttributeValue element, final PsiMethod method, PsiClass controller) {
+  public JavaFxEventHandlerReference(XmlAttributeValue element, PsiClass currentTagClass, final PsiMethod method, PsiClass controller) {
     super(element);
+    myCurrentTagClass = currentTagClass;
     myEventHandler = method;
     myController = controller;
   }
@@ -98,7 +105,29 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     }
 
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
-      return "public void " + ref.getElement().getValue().substring(1) + "(" + JavaFxCommonClassNames.JAVAFX_EVENT + " e)";
+      final XmlAttributeValue element = ref.getElement();
+      String canonicalText = JavaFxCommonClassNames.JAVAFX_EVENT;
+      final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
+      final Project project = element.getProject();
+      if (xmlAttribute != null) {
+        final PsiField handlerField = ref.myCurrentTagClass.findFieldByName(xmlAttribute.getName(), true);
+        if (handlerField != null) {
+          final PsiClassType classType = JavaFxPropertyAttributeDescriptor.getPropertyClassType(handlerField);
+          if (classType != null) {
+            final PsiClass eventHandlerClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
+            final PsiTypeParameter[] typeParameters = eventHandlerClass != null ? eventHandlerClass.getTypeParameters() : null;
+            if (typeParameters != null && typeParameters.length == 1) {
+              final PsiTypeParameter typeParameter = typeParameters[0];
+              final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(eventHandlerClass, classType);
+              final PsiType eventType = substitutor.substitute(typeParameter);
+              if (eventType != null) {
+                canonicalText = eventType.getCanonicalText();
+              }
+            }
+          }
+        }
+      }
+      return "public void " + element.getValue().substring(1) + "(" + canonicalText + " e)";
     }
 
     @NotNull
