@@ -90,6 +90,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
       addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
       addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
+      addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
     }
 
     public List<Entry> getEntries() {
