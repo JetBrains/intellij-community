@@ -23,7 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.containers.hash.HashingStrategy;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,15 +180,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   private SLRUCache<Key, BufferExposingByteArrayOutputStream> createAppendCache(final KeyDescriptor<Key> keyDescriptor) {
-    final HashingStrategy<Key> hashingStrategy = new HashingStrategy<Key>() {
+    final EqualityPolicy<Key> hashingStrategy = new EqualityPolicy<Key>() {
       @Override
-      public int computeHashCode(Key object) {
+      public int getHashCode(Key object) {
         return keyDescriptor.getHashCode(object);
       }
 
       @Override
-      public boolean equals(Key o1, Key o2) {
-        return keyDescriptor.isEqual(o1, o2);
+      public boolean isEqual(Key val1, Key val2) {
+        return keyDescriptor.isEqual(val1, val2);
       }
     };
     return new SLRUCache<Key, BufferExposingByteArrayOutputStream>(16 * 1024, 4 * 1024, hashingStrategy) {
