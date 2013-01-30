@@ -55,6 +55,10 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testVerboseEscapedHash() {  // PY-6545
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
   }
