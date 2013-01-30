@@ -145,7 +145,8 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
         public void actionPerformed(ActionEvent e) {
           final String title = "Check Proxy Settings";
           final String answer = Messages
-            .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:", title, Messages.getQuestionIcon());
+            .showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
+                             title, Messages.getQuestionIcon(), "http://", null);
           if (! StringUtil.isEmptyOrSpaces(answer)) {
             apply();
             final HttpConfigurable instance = HttpConfigurable.getInstance();
