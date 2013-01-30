@@ -17,7 +17,15 @@ def <warning descr="Shadows a built-in with the same name">list</warning>():
 
 class <warning descr="Shadows a built-in with the same name">list</warning>(object):
     def foo(self):
-        pass
+        # PY-8646
+        self.list = []
 
     def list(self):
         pass
+
+
+# PY-8646
+test1.range = float()
+
+
+<warning descr="Shadows a built-in with the same name">list</warning>, x = (1, 2)
