@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,24 +66,4 @@ public class PathEnvironmentVariableUtil {
     return StringUtil.join(paths, File.pathSeparator);
   }
 
-  public static void setPathEnvVarAtProcessLevel() {
-    if (ourFixedMacPathEnvVarValue != null) {
-      UnixProcessManager.setEnv(PATH_ENV_VAR_NAME, ourFixedMacPathEnvVarValue, true);
-    }
-  }
-
-  public static void setPathEnvVarInSystemEnv() {
-    try {
-      Map<String, String> unmodifiable = System.getenv();
-      Class<?> cu = unmodifiable.getClass();
-      Field m = cu.getDeclaredField("m");
-      m.setAccessible(true);
-      Map<String, String> map = (Map<String, String>)m.get(unmodifiable);
-      if (ourFixedMacPathEnvVarValue != null) {
-        map.put(PATH_ENV_VAR_NAME, ourFixedMacPathEnvVarValue);
-      }
-    }
-    catch (Exception ignore) {
-    }
-  }
 }
