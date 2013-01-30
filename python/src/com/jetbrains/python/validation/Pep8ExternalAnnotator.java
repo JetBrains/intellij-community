@@ -12,6 +12,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -138,6 +139,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     for (Problem problem : annotationResult.problems) {
+      String stripTrailingSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+      if (!stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
+        // ignore trailing spaces errors if they're going to disappear after save
+        if (problem.myCode.equals("W291") || problem.myCode.equals("W293")) {
+          continue;
+        }
+      }
       int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
