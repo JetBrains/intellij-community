@@ -42,7 +42,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
 
     if (UIUtil.isUnderAquaLookAndFeel()) {
       if (state == ActionButtonComponent.PUSHED) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, ALPHA_40, dimension.width, dimension.height, ALPHA_20));
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, dimension.width, dimension.height, ALPHA_20));
         g.fillRect(0, 0, dimension.width - 1, dimension.height - 1);
 
         g.setColor(ALPHA_120);
@@ -53,7 +53,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         g.drawRect(1, 1, dimension.width - 3, dimension.height - 3);
       }
       else if (state == ActionButtonComponent.POPPED) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, Gray._235, 0, dimension.height, Gray._200));
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, Gray._235, 0, dimension.height, Gray._200));
         g.fillRect(1, 1, dimension.width - 3, dimension.height - 3);
       }
     }

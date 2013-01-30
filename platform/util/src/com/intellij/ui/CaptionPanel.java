@@ -67,14 +67,14 @@ public class CaptionPanel extends JPanel {
       g.drawLine(0, 0, getWidth(), 0);
       g.setColor(BOTTOM_FLICK_ACTIVE);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(new GradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR));
     }
     else {
       g.setColor(TOP_FLICK_PASSIVE);
       g.drawLine(0, 0, getWidth(), 0);
       g.setColor(BOTTOM_FLICK_PASSIVE);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(new GradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
     }
 
     g2d.fillRect(0, 1, getWidth(), getHeight() - 2);
@@ -86,14 +86,14 @@ public class CaptionPanel extends JPanel {
       g.drawLine(0, 0, getWidth(), 0);
       g.setColor(Gray._50);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g.setPaint(new GradientPaint(0, 0, Gray._100, 0, getHeight(), Gray._85));
+      g.setPaint(UIUtil.getGradientPaint(0, 0, Gray._100, 0, getHeight(), Gray._85));
     }
     else {
       g.setColor(Gray._100);
       g.drawLine(0, 0, getWidth(), 0);
       g.setColor(Gray._50);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g.setPaint(new GradientPaint(0, 0, Gray._120, 0, getHeight(), Gray._105));
+      g.setPaint(UIUtil.getGradientPaint(0, 0, Gray._120, 0, getHeight(), Gray._105));
     }
 
     g.fillRect(0, 1, getWidth(), getHeight() - 2);

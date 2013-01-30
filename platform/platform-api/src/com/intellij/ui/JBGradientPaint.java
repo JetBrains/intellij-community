@@ -31,6 +31,7 @@ import java.lang.ref.WeakReference;
 /**
  * This class provides gradient paint with dithering (run main() to see the difference)<p/>
  * Note, it doesn't support "cyclic" mode.
+ * Disclaimer: Unfortunately it works much slower than standard GradientPaint
  */
 public class JBGradientPaint extends GradientPaint {
   public JBGradientPaint(float x1, float y1, Color color1, float x2, float y2, Color color2) {

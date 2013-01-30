@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,23 +49,25 @@ public class JavaResolveUtil {
   }
 
   public static boolean isAccessible(@NotNull PsiMember member,
-                                     @Nullable final PsiClass memberClass,
+                                     @Nullable PsiClass memberClass,
                                      @Nullable PsiModifierList modifierList,
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
-                                     @Nullable final PsiElement fileResolveScope) {
+                                     @Nullable PsiElement fileResolveScope) {
     return isAccessible(member, memberClass, modifierList, place, accessObjectClass, fileResolveScope, place.getContainingFile());
   }
 
   public static boolean isAccessible(@NotNull PsiMember member,
-                                     @Nullable final PsiClass memberClass,
+                                     @Nullable PsiClass memberClass,
                                      @Nullable PsiModifierList modifierList,
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
-                                     @Nullable final PsiElement fileResolveScope,
-                                     final PsiFile placeFile) {
-    if (modifierList == null) return true;
-    final PsiManager manager = member.getManager();
+                                     @Nullable PsiElement fileResolveScope,
+                                     @Nullable PsiFile placeFile) {
+    if (modifierList == null || isInJavaDoc(place)) {
+      return true;
+    }
+
     if (placeFile instanceof JavaCodeFragment) {
       JavaCodeFragment fragment = (JavaCodeFragment)placeFile;
       JavaCodeFragment.VisibilityChecker visibilityChecker = fragment.getVisibilityChecker();
@@ -75,35 +77,50 @@ public class JavaResolveUtil {
         if (visibility == JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
       }
     }
-    else if (ignoreReferencedElementAccessibility(placeFile)) return true;
-    // We don't care about access rights in javadoc
-    if (isInJavaDoc(place)) return true;
+    else if (ignoreReferencedElementAccessibility(placeFile)) {
+      return true;
+    }
 
     if (accessObjectClass != null) {
-      if (!isAccessible(accessObjectClass, accessObjectClass.getContainingClass(), accessObjectClass.getModifierList(), place, null,
-                        null, placeFile)) return false;
+      PsiClass containingClass = accessObjectClass.getContainingClass();
+      if (!isAccessible(accessObjectClass, containingClass, accessObjectClass.getModifierList(), place, null, null, placeFile)) {
+        return false;
+      }
+    }
+
+    PsiFile file = placeFile == null ? null : FileContextUtil.getContextFile(placeFile); //TODO: implementation method!!!!
+    if (PsiImplUtil.isInServerPage(file) && PsiImplUtil.isInServerPage(member.getContainingFile())) {
+      return true;
     }
 
     int effectiveAccessLevel = PsiUtil.getAccessLevel(modifierList);
-    PsiFile file = placeFile == null ? null : FileContextUtil.getContextFile(placeFile); //TODO: implementation method!!!!
-    if (PsiImplUtil.isInServerPage(file) && PsiImplUtil.isInServerPage(member.getContainingFile())) return true;
-    if (ignoreReferencedElementAccessibility(file)) return true;
-    if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
+    if (ignoreReferencedElementAccessibility(file) || effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
       return true;
     }
+
+    PsiManager manager = member.getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(member, place)) return true;
-      if (memberClass == null) return false;
+      if (facade.arePackagesTheSame(member, place)) {
+        return true;
+      }
+      if (memberClass == null) {
+        return false;
+      }
       for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
         if (placeParent instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)placeParent, memberClass, true)) {
-          if (member instanceof PsiClass || modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
-          if (accessObjectClass == null || InheritanceUtil.isInheritorOrSelf(accessObjectClass, (PsiClass)placeParent, true)) return true;
+          if (member instanceof PsiClass ||
+              modifierList.hasModifierProperty(PsiModifier.STATIC) ||
+              accessObjectClass == null ||
+              InheritanceUtil.isInheritorOrSelf(accessObjectClass, (PsiClass)placeParent, true)) {
+            return true;
+          }
         }
       }
-      //if (accessObjectClass != null && accessObjectClass.getManager().areElementsEquivalent(accessObjectClass, memberClass)) return true;
-
       return false;
     }
+
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
       if (memberClass == null) return true;
       if (accessObjectClass != null) {
@@ -122,13 +139,14 @@ public class JavaResolveUtil {
                !((PsiClass)fileResolveScope).isInheritor(memberClass, true);
       }
     }
-    if (!JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(member, place)) return false;
+
+    if (!facade.arePackagesTheSame(member, place)) return false;
     if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
     // maybe inheritance lead through package local class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
     // check only classes since interface members are public,  and if placeClass is interface,
-    // then its members are static, and cannot refer to nonstatic members of memberClass
+    // then its members are static, and cannot refer to non-static members of memberClass
     if (memberClass.isInterface() || placeClass.isInterface()) return true;
     PsiClass clazz = accessObjectClass != null ?
                      accessObjectClass :
@@ -136,7 +154,7 @@ public class JavaResolveUtil {
     if (clazz != null && clazz.isInheritor(memberClass, true)) {
       PsiClass superClass = clazz;
       while (!manager.areElementsEquivalent(superClass, memberClass)) {
-        if (superClass == null || !JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(superClass, memberClass)) return false;
+        if (superClass == null || !facade.arePackagesTheSame(superClass, memberClass)) return false;
         superClass = superClass.getSuperClass();
       }
     }

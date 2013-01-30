@@ -47,19 +47,14 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 0, InspectionProfileTest.countInitializedTools(model));
 
-    LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
-    assert wrapper != null;
-    JavaDocLocalInspection tool = (JavaDocLocalInspection)wrapper.getTool();
+    JavaDocLocalInspection tool = getInspection(model);
     assertEquals("", tool.myAdditionalJavadocTags);
     tool.myAdditionalJavadocTags = "foo";
     model.setModified(true);
     panel.apply();
     assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
-    wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
-    assert wrapper != null;
-    tool = (JavaDocLocalInspection)wrapper.getTool();
-    assertEquals("foo", tool.myAdditionalJavadocTags);
+    assertEquals("foo", getInspection(profile).myAdditionalJavadocTags);
   }
 
   public void testModifyInstantiatedTool() throws Exception {
@@ -69,9 +64,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     profile.initInspectionTools(project);
     assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
-    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
-    assert original != null;
-    JavaDocLocalInspection originalTool = (JavaDocLocalInspection)original.getTool();
+    JavaDocLocalInspection originalTool = getInspection(profile);
     originalTool.myAdditionalJavadocTags = "foo";
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
@@ -81,18 +74,14 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1, InspectionProfileTest.countInitializedTools(model));
 
-    LocalInspectionToolWrapper copy = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
-    assert copy != null;
-    JavaDocLocalInspection copyTool = (JavaDocLocalInspection)copy.getTool();
+    JavaDocLocalInspection copyTool = getInspection(model);
     copyTool.myAdditionalJavadocTags = "bar";
 
     model.setModified(true);
     panel.apply();
     assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
-    LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
-    assertNotNull(wrapper);
-    assertEquals("bar", ((JavaDocLocalInspection)wrapper.getTool()).myAdditionalJavadocTags);
+    assertEquals("bar", getInspection(profile).myAdditionalJavadocTags);
   }
 
   public void testDoNotChangeSettingsOnCancel() throws Exception {
@@ -102,19 +91,21 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     profile.initInspectionTools(project);
     assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
-    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
-    assert original != null;
-    JavaDocLocalInspection originalTool = (JavaDocLocalInspection)original.getTool();
+    JavaDocLocalInspection originalTool = getInspection(profile);
     assertEquals("", originalTool.myAdditionalJavadocTags);
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    LocalInspectionToolWrapper copy = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
-    assert copy != null;
-    JavaDocLocalInspection copyTool = (JavaDocLocalInspection)copy.getTool();
+    JavaDocLocalInspection copyTool = getInspection(model);
     copyTool.myAdditionalJavadocTags = "foo";
     // this change IS NOT COMMITTED
 
-    assertEquals("", originalTool.myAdditionalJavadocTags);
+    assertEquals("", getInspection(profile).myAdditionalJavadocTags);
+  }
+
+  private JavaDocLocalInspection getInspection(InspectionProfileImpl profile) {
+    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    assert original != null;
+    return (JavaDocLocalInspection)original.getTool();
   }
 
   @Override

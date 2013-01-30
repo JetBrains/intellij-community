@@ -29,6 +29,7 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -108,6 +109,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
   }
 
 
+  @Nullable
   public EventSet getEventSet() {
     assertNotResumed();
     return myEventSet;

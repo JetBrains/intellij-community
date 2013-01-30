@@ -81,7 +81,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     final int u = 1;
 
     g.translate(x, y);
-    final GradientPaint paint = new GradientPaint(w / 2, 0, b.getBackground().brighter(),
+    final Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
                                                   w / 2, h, b.getBackground());
     g.setPaint(paint);
     g.fillRect(u, u, w - 2 * u, h - 2 * u);
@@ -94,15 +94,15 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     final boolean armed = b.getModel().isArmed();
 
     if (c.hasFocus()) {
-      g.setPaint(new GradientPaint(w/2, 1, armed ? Gray._100: Gray._120, w/2, h, armed ? Gray._55 : Gray._75));
+      g.setPaint(UIUtil.getGradientPaint(w/2, 1, armed ? Gray._100: Gray._120, w/2, h, armed ? Gray._55 : Gray._75));
       g.fillRoundRect(0, 0, w - 2, h - 2, 4, 4);
 
       DarculaUIUtil.paintFocusRing(g, 1, 1, w - 2, h - 2);
     } else {
-      g.setPaint(new GradientPaint(w / 2, 1, Gray._110, w / 2, h, Gray._95));
+      g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._110, w / 2, h, Gray._95));
       g.fillRoundRect(0, 0, w , h , 4, 4);
 
-      g.setPaint(new GradientPaint(w / 2, 1, Gray._120.withAlpha(90), w / 2, h, Gray._105.withAlpha(90)));
+      g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._120.withAlpha(90), w / 2, h, Gray._105.withAlpha(90)));
       g.drawRoundRect(0, 1, w, h - 1, 4, 4);
 
       g.setPaint(Gray._40.withAlpha(180));

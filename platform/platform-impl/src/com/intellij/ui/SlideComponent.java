@@ -203,7 +203,7 @@ class SlideComponent extends JComponent {
     final Graphics2D g2d = (Graphics2D)g;
 
     if (myVertical) {
-      g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
+      g2d.setPaint(UIUtil.getGradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
       g.fillRect(7, 10, 12, getHeight() - 20);
 
       g.setColor(Gray._150);
@@ -213,7 +213,7 @@ class SlideComponent extends JComponent {
       g.drawRect(8, 11, 10, getHeight() - 22);
     }
     else {
-      g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, getWidth(), 0f, Color.BLACK));
+      g2d.setPaint(UIUtil.getGradientPaint(0f, 0f, Color.WHITE, getWidth(), 0f, Color.BLACK));
       g.fillRect(10, 7, getWidth() - 20, 12);
 
       g.setColor(Gray._150);

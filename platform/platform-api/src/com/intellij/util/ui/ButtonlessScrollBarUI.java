@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -113,7 +114,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private void resetAnimator() {
     myAnimator.reset();
-    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb) {
+    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb || Registry.is("ui.no.bangs.and.whistles")) {
       myAnimator.suspend();
       myAnimationColorShift = ANIMATION_COLOR_SHIFT;
     }
@@ -262,15 +263,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       w -= 1;
     }
 
-    final GradientPaint paint;
+    final Paint paint;
     final Color start = adjustColor(getGradientLightColor());
     final Color end = adjustColor(getGradientDarkColor());
 
     if (vertical) {
-      paint = new GradientPaint(1, 0, start, w + 1, 0, end);
+      paint = UIUtil.getGradientPaint(1, 0, start, w + 1, 0, end);
     }
     else {
-      paint = new GradientPaint(0, 1, start, 0, h + 1, end);
+      paint = UIUtil.getGradientPaint(0, 1, start, 0, h + 1, end);
     }
 
     g.setPaint(paint);

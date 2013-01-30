@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
   public EncodingFileTreeTable(@NotNull Project project) {
     super(project, Charset.class, "Default Encoding", VirtualFileFilter.ALL, false);
     reset(EncodingProjectManager.getInstance(project).getAllMappings());
-
     getValueColumn().setCellRenderer(new DefaultTableCellRenderer(){
       @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value,
