@@ -15,8 +15,10 @@
  */
 package com.intellij.util.io;
 
-public interface EqualityPolicy<T> {
-  int getHashCode(T value);
 
-  boolean isEqual(T val1, T val2);
+@Deprecated
+/**
+ * Use {@link com.intellij.util.containers.hash.EqualityPolicy} directly
+ */
+public interface EqualityPolicy<T> extends com.intellij.util.containers.hash.EqualityPolicy<T>{
 }

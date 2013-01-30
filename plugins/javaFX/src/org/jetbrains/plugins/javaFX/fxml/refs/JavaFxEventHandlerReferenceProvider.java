@@ -67,6 +67,6 @@ class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReference
         break;
       }
     }
-    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, handlerMethod, controllerClass)};
+    return new PsiReference[]{new JavaFxEventHandlerReference(xmlAttributeValue, (PsiClass)currentTagClass, handlerMethod, controllerClass)};
   }
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -183,13 +182,8 @@ public class CommonProxy extends ProxySelector {
     final List<Proxy> selected = myIDEAWide.select(uri);
     final HttpConfigurable configurable;
     final Application application = ApplicationManager.getApplication();
-    if (application != null && ! application.isDisposed()) {
-      configurable = application.runReadAction(new Computable<HttpConfigurable>() {
-        @Override
-        public HttpConfigurable compute() {
-          return HttpConfigurable.getInstance();
-        }
-      });
+    if (application != null && !application.isDisposed() && !application.isDisposeInProgress()) {
+      configurable = HttpConfigurable.getInstance();
       if (configurable != null && configurable.USE_HTTP_PROXY) {
         configurable.LAST_ERROR = null;
       }
@@ -231,6 +225,7 @@ public class CommonProxy extends ProxySelector {
           host = getRequestingURL().getHost();
         }
       }
+      host = host == null ? "" : host;
       final int port = getRequestingPort();
 
       final Map<Pair<String, Integer>, NonStaticAuthenticator> copy;
@@ -244,7 +239,7 @@ public class CommonProxy extends ProxySelector {
       }
 
       if (! copy.isEmpty()) {
-        final Pair<String, Integer> hostInfo = Pair.create(getRequestingHost(), getRequestingPort());
+        final Pair<String, Integer> hostInfo = Pair.create(host, getRequestingPort());
         final NonStaticAuthenticator authenticator1 = copy.get(hostInfo);
         if (authenticator1 != null) {
           prepareAuthenticator(authenticator1);
@@ -259,26 +254,34 @@ public class CommonProxy extends ProxySelector {
       if (myHttpConfigurable.USE_HTTP_PROXY) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return common defined proxy");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getPromptedAuthentication(getRequestingHost() + ":" + getRequestingPort(), getRequestingPrompt());
+          myHttpConfigurable.getPromptedAuthentication(host + ":" + getRequestingPort(), getRequestingPrompt());
         logAuthentication(authentication);
         return authentication;
       } else if (myHttpConfigurable.USE_PROXY_PAC) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return autodetected proxy");
+        if (myHttpConfigurable.isGenericPasswordCanceled(host, getRequestingPort())) return null;
         // same but without remembering the results..
-        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(getRequestingHost(), getRequestingPort());
+        final PasswordAuthentication password = myHttpConfigurable.getGenericPassword(host, getRequestingPort());
         if (password != null) {
           logAuthentication(password);
           return password;
         }
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
 
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), true);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), true);
         logAuthentication(authentication);
         return authentication;
       } else {
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
+
         LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
         final PasswordAuthentication authentication =
-          myHttpConfigurable.getGenericPromptedAuthentication(getRequestingHost(), getRequestingPrompt(), getRequestingPort(), false);
+          myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), false);
         logAuthentication(authentication);
         return authentication;
       }

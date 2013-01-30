@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,12 +130,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
   @Override
   public boolean isAccessible(@NotNull PsiMember member,
-                              PsiModifierList modifierList,
+                              @Nullable PsiModifierList modifierList,
                               @NotNull PsiElement place,
                               @Nullable PsiClass accessObjectClass,
-                              final PsiElement currentFileResolveScope) {
-    return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass,
-                                        currentFileResolveScope);
+                              @Nullable PsiElement currentFileResolveScope) {
+    PsiClass containingClass = member.getContainingClass();
+    return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
   @Override
@@ -221,7 +221,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (nullPassed && currentSubstitution == null) return RAW_INFERENCE;
         } else if (argumentType instanceof PsiMethodReferenceType) {
           final PsiMethodReferenceExpression referenceExpression = ((PsiMethodReferenceType)argumentType).getExpression();
-          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, partialSubstitutor.substitute(parameterType));
+          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, partialSubstitutor.substitute(parameterType), partialSubstitutor, policy);
         }
         else {
           currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
@@ -608,7 +608,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   @Nullable
   private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(final PsiTypeParameter typeParam,
                                                                                             final PsiMethodReferenceExpression methodReferenceExpression,
-                                                                                            final PsiType functionalInterfaceType) {
+                                                                                            final PsiType functionalInterfaceType,
+                                                                                            final PsiSubstitutor partialSubstitutor,
+                                                                                            final ParameterTypeInferencePolicy policy) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (functionalInterfaceMethod != null) {
@@ -669,7 +671,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           } else {
             argType = methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType()));
           }
-          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          final Pair<PsiType, ConstraintType> typeParameterConstraint =
+            getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          if (typeParameterConstraint != null && typeParameterConstraint.getSecond() != ConstraintType.EQUALS && method.isConstructor()) {
+            final Pair<PsiType, ConstraintType> constraintFromParent =
+              inferMethodTypeParameterFromParent(typeParam, partialSubstitutor, methodReferenceExpression.getParent().getParent(), policy);
+            if (constraintFromParent != null && constraintFromParent.getSecond() == ConstraintType.EQUALS) return constraintFromParent;
+          }
+          return typeParameterConstraint;
         }
       }
     }

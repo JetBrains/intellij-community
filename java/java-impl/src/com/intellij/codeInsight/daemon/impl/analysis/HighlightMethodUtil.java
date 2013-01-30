@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -712,7 +712,7 @@ public class HighlightMethodUtil {
       PsiType type = expression.getType();
 
       boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      @NonNls String mismatchColor = showShort ? null : "red";
+      @NonNls String mismatchColor = showShort ? null : (UIUtil.isUnderDarcula() ? "ff6464" : "red");
       ms += "<td> " + "<b><nobr>" + (i == 0 ? "(" : "")
             + "<font " + (showShort ? "" : "color=" + mismatchColor) + ">" +
             XmlStringUtil.escapeString(showShort ? type.getPresentableText() : HighlightUtil.formatType(type))

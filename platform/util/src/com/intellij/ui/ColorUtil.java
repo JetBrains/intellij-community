@@ -132,13 +132,12 @@ public class ColorUtil {
     return (1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255) >= 0.5;
   }
 
-  public static Color mix(Color c1, Color c2, float balance) {
-    assert balance >= 0 && balance <= 1 : "balance should be in 0..1";
-    float[] rgbs1 = c1.getRGBComponents(null);
-    float[] rgbs2 = c2.getRGBComponents(null);
-    for (int i = 0; i < 4; i++) {
-      rgbs1[i] = rgbs1[i] * (1 - balance) + rgbs2[i] * balance;
-    }
-    return new Color(rgbs1[0], rgbs1[1], rgbs1[2], rgbs1[3]);
+  @NotNull
+  public static Color mix(@NotNull Color c1, @NotNull Color c2, double balance) {
+    balance = Math.min(1, Math.max(0, balance));
+    return new Color((int)((1 - balance) * c1.getRed() + c2.getRed() * balance + .5),
+                     (int)((1 - balance) * c1.getGreen() + c2.getGreen() * balance + .5),
+                     (int)((1 - balance) * c1.getBlue() + c2.getBlue() * balance + .5),
+                     (int)((1 - balance) * c1.getAlpha() + c2.getAlpha() * balance + .5));
   }
 }

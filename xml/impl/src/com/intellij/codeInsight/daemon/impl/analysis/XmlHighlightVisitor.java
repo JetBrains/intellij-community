@@ -157,6 +157,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
+    } else if (tokenType == XmlTokenType.XML_TAG_CHARACTERS && token.getParent() instanceof XmlProcessingInstruction) {
+      checkReferences(token);
     }
   }
 

@@ -50,8 +50,7 @@ import java.util.*;
 public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme> extends AbstractSchemesManager<T, E> {
   private static final Logger LOG = Logger.getInstance("#" + SchemesManagerFactoryImpl.class.getName());
 
-  @NonNls private static final String EXT = ".icls";
-  @NonNls private static final String OLD_EXT = ".xml";
+  @NonNls private static final String DEFAULT_EXT = ".xml";
 
   private final Set<String> myDeletedNames = new LinkedHashSet<String>();
   private final Set<String> myFilesToDelete = new HashSet<String>();
@@ -76,6 +75,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private boolean myListenerAdded = false;
   private Alarm myRefreshAlarm;
+  
+  private String mySchemeExtension = DEFAULT_EXT;
+  private boolean myUpgradeExtension = false;
 
   public SchemesManagerImpl(final String fileSpec,
                             final SchemeProcessor<E> processor,
@@ -88,6 +90,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     myRoamingType = roamingType;
     myProviders = providers;
     myBaseDir = baseDir;
+    if (processor instanceof SchemeExtensionProvider) {
+      mySchemeExtension = ((SchemeExtensionProvider)processor).getSchemeExtension();
+      myUpgradeExtension = ((SchemeExtensionProvider)processor).isUpgradeNeeded();
+    }
 
     myBaseDir.mkdirs();
 
@@ -242,7 +248,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     for (T scheme : mySchemes) {
       if (scheme instanceof ExternalizableScheme) {
         String fileName = ((ExternalizableScheme)scheme).getExternalInfo().getCurrentFileName();
-        if (ioFileName.equals(fileName + EXT)) {
+        if (ioFileName.equals(fileName + mySchemeExtension)) {
           @SuppressWarnings("unchecked") E e = (E)scheme;
           return e;
         }
@@ -358,7 +364,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
         ExternalInfo externalInfo = ((ExternalizableScheme)scheme).getExternalInfo();
         String name = externalInfo.getCurrentFileName();
         if (name != null) {
-          String fileName = name + EXT;
+          String fileName = name + mySchemeExtension;
           if (fileName.equals(subpath) && !Comparing.equal(schemeName, scheme.getName())) {
             return createUniqueFileName(collectAllFileNames(), UniqueFileNamesProvider.convertName(schemeName));
             /*VirtualFile oldFile = myVFSBaseDir.findChild(subpath);
@@ -436,10 +442,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   private boolean canRead(VirtualFile file) {
     if (!file.isDirectory()) {
       String ext = "." + file.getExtension();
-      if (OLD_EXT.equalsIgnoreCase(ext)) {
-        if (myVFSBaseDir.findChild(file.getName() + EXT) == null) return true;
+      if (DEFAULT_EXT.equalsIgnoreCase(ext) && !DEFAULT_EXT.equals(mySchemeExtension) && myUpgradeExtension) {
+        return myVFSBaseDir.findChild(file.getName() + mySchemeExtension) == null;
       }
-      else if (EXT.equalsIgnoreCase(ext)) {
+      else if (mySchemeExtension.equalsIgnoreCase(ext)) {
         return true;
       }
     }
@@ -553,11 +559,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private void saveFileName(String fileName, final E schemeKey) {
-    if (StringUtil.endsWithIgnoreCase(fileName, EXT)) {
-      fileName = fileName.substring(0, fileName.length() - EXT.length());
+    if (StringUtil.endsWithIgnoreCase(fileName, mySchemeExtension)) {
+      fileName = fileName.substring(0, fileName.length() - mySchemeExtension.length());
     }
-    else if (StringUtil.endsWithIgnoreCase(fileName, OLD_EXT)) {
-      fileName = fileName.substring(0, fileName.length() - OLD_EXT.length());
+    else if (StringUtil.endsWithIgnoreCase(fileName, DEFAULT_EXT)) {
+      fileName = fileName.substring(0, fileName.length() - DEFAULT_EXT.length());
     }
     schemeKey.getExternalInfo().setCurrentFileName(fileName);
   }
@@ -698,7 +704,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
               wrapped.getRootElement().setAttribute(USER, userName);
             }
           }
-          StorageUtil.sendContent(provider, getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + EXT,
+          StorageUtil.sendContent(provider, getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + mySchemeExtension,
                                   wrapped, RoamingType.GLOBAL, false);
         }
       }
@@ -826,7 +832,10 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private void deleteFilesFromDeletedSchemes() {
     for (String deletedName : myFilesToDelete) {
-      deleteLocalAndServerFiles(deletedName + EXT);
+      deleteLocalAndServerFiles(deletedName + mySchemeExtension);
+      if (!DEFAULT_EXT.equals(mySchemeExtension))  {
+        deleteLocalAndServerFiles(deletedName + DEFAULT_EXT);
+      }
     }
     myFilesToDelete.clear();
   }
@@ -894,7 +903,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       fileName = fileNameProvider.suggestName(scheme.getName());
     }
 
-    return fileName + EXT;
+    return fileName + mySchemeExtension;
   }
 
   private void saveIfNeeded(E schemeKey, String fileName, Document document, long newHash, Long oldHash) throws IOException {

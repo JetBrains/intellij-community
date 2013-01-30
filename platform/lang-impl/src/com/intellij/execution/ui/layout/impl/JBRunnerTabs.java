@@ -76,12 +76,12 @@ public class
     int _height = effectiveBounds.height - insets.top - insets.bottom - 3;
     _height -= TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
     if (dark) {
-      g2d.setPaint(new GradientPaint(_x, _y, ColorUtil.shift(UIUtil.getListBackground(), 1.3), _x, _y + effectiveBounds.height, UIUtil.getPanelBackground()));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, ColorUtil.shift(UIUtil.getListBackground(), 1.3), _x, _y + effectiveBounds.height, UIUtil.getPanelBackground()));
       g2d.fillRect(_x, _y, _width, _height);
 
       g2d.setColor(Gray._0.withAlpha(50));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, new Color(255, 255, 255, 180), _x, _y + effectiveBounds.height, new Color(255, 255, 255, 100)));
       g2d.fillRect(_x, _y, _width, _height);
 
       g2d.setColor(new Color(255, 255, 255, 100));
@@ -152,7 +152,7 @@ public class
     int _height = r.height;
 
     if (!isHideTabs()) {
-      g2d.setPaint(new GradientPaint(_x, _y, col, _x, _y + _height - 3, panelBg));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, col, _x, _y + _height - 3, panelBg));
 
       g2d.fill(selectedShape.fillPath.getShape());
 

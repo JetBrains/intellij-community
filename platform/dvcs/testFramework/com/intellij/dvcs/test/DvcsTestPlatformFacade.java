@@ -80,7 +80,7 @@ public abstract class DvcsTestPlatformFacade implements DvcsPlatformFacade {
 
   @Override
   public void executeOnPooledThread(@NotNull Runnable runnable) {
-    runnable.run();
+    new Thread(runnable).start();
   }
 
   @Override

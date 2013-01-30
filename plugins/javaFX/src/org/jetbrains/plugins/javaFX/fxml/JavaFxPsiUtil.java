@@ -18,14 +18,15 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -55,18 +56,66 @@ public class JavaFxPsiUtil {
 
       final Collection<XmlProcessingInstruction>
         instructions = new ArrayList<XmlProcessingInstruction>(PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class));
-      for (Iterator<XmlProcessingInstruction> iterator = instructions.iterator(); iterator.hasNext(); ) {
-        final XmlProcessingInstruction instruction = iterator.next();
-        final ASTNode node = instruction.getNode();
-        ASTNode xmlNameNode = node.findChildByType(XmlTokenType.XML_NAME);
-        ASTNode importNode = node.findChildByType(XmlTokenType.XML_TAG_CHARACTERS);
-        if (xmlNameNode == null || !instructionName.equals(xmlNameNode.getText()) || importNode == null) {
-          iterator.remove();
-        } else {
-          definedImports.add(importNode.getText());
+      for (final XmlProcessingInstruction instruction : instructions) {
+        final String instructionTarget = getInstructionTarget(instructionName, instruction);
+        if (instructionTarget != null) {
+          definedImports.add(instructionTarget);
         }
       }
     }
     return definedImports;
+  }
+
+  @Nullable
+  public static String getInstructionTarget(String instructionName, XmlProcessingInstruction instruction) {
+    final ASTNode node = instruction.getNode();
+    ASTNode xmlNameNode = node.findChildByType(XmlTokenType.XML_NAME);
+    ASTNode importNode = node.findChildByType(XmlTokenType.XML_TAG_CHARACTERS);
+    if (!(xmlNameNode == null || !instructionName.equals(xmlNameNode.getText()) || importNode == null)) {
+      return importNode.getText();
+    }
+    return null;
+  }
+
+  public static PsiClass findPsiClass(String name, XmlTag tag) {
+    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+  }
+
+  private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
+    PsiClass psiClass = null;
+    if (imports != null) {
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+
+      PsiFile file = tag.getContainingFile();
+      for (String anImport : imports) {
+        if (StringUtil.endsWith(anImport, "." + name)) {
+          psiClass = psiFacade.findClass(anImport, file.getResolveScope()); 
+        } else if (StringUtil.endsWith(anImport, ".*")) {
+          psiClass = psiFacade.findClass(StringUtil.trimEnd(anImport, "*") + name, file.getResolveScope());
+        }
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+    }
+    return psiClass;
+  }
+
+  public static void insertImportWhenNeeded(XmlFile xmlFile,
+                                            String shortName,
+                                            String qualifiedName) {
+    if (shortName != null && findPsiClass(shortName, xmlFile.getRootTag()) == null) {
+      final XmlDocument document = xmlFile.getDocument();
+      if (document != null) {
+        final XmlProcessingInstruction processingInstruction = createSingleImportInstruction(qualifiedName, xmlFile.getProject());
+        final XmlProlog prolog = document.getProlog();
+        if (prolog != null) {
+          prolog.add(processingInstruction);
+        } else {
+          document.addBefore(processingInstruction, document.getRootTag());
+        }
+        PostprocessReformattingAspect.getInstance(xmlFile.getProject()).doPostponedFormatting(xmlFile.getViewProvider());
+      }
+    }
   }
 }

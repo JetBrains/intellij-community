@@ -84,6 +84,6 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     else if (LOG.isDebugEnabled()) {
       LOG.debug("Target path " + targetPath + " is already registered so " + filePath + " won't be copied");
     }
-    outSrcMapping.appendData(targetPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
+    outSrcMapping.appendData(targetPath, rootIndex, filePath);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,7 +203,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       if (!isInspectionEnabled(ref.getContainingFile(), ref.getProject())) return null;
 
       if (isStaticOk(resolveResult)) return null;
-      String message = GroovyBundle.message("cannot.reference.nonstatic", ref.getReferenceName());
+      String message = GroovyBundle.message("cannot.reference.non.static", ref.getReferenceName());
       return createAnnotationForRef(ref, cannotBeDynamic, message);
     }
 

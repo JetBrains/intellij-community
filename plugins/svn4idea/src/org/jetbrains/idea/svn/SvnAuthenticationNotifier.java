@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -314,6 +315,14 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
                                         final boolean checkWrite,
                                         final String realm,
                                         final String kind, boolean interactive) {
+    // we should also NOT show proxy credentials dialog if at least fixed proxy was used, so
+    if (configuration.isIsUseDefaultProxy()) {
+      final HttpConfigurable instance = HttpConfigurable.getInstance();
+      if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (StringUtil.isEmptyOrSpaces(instance.PROXY_LOGIN) ||
+                                                                       StringUtil.isEmptyOrSpaces(instance.getPlainProxyPassword()))) {
+        return false;
+      }
+    }
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
       new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);

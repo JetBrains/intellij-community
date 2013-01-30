@@ -17,6 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +32,21 @@ import java.awt.*;
  */
 public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;
+
+  public AuthenticationDialog(@NotNull Component component, String title, String description, final String login, final String password, final boolean rememberPassword) {
+    super(component, true);
+    setTitle(title);
+
+    new MnemonicHelper().register(getContentPane());
+    panel = new AuthenticationPanel(description, login, password, rememberPassword);
+
+    final Window window = getWindow();
+    if (window instanceof JDialog) {
+      ((JDialog) window).setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    init();
+  }
 
   public AuthenticationDialog(String title, String description, final String login, final String password, final boolean rememberPassword) {
     super(JOptionPane.getRootFrame(), true);

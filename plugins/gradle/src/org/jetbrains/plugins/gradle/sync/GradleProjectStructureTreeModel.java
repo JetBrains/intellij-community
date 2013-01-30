@@ -125,7 +125,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       @Override
       public void run() {
         Collection<GradleProjectStructureChange> obsoleteChangesToUse = ContainerUtil.subtract(oldChanges, currentChanges);
-        Collection<GradleProjectStructureChange> currentChangesToUse = currentChanges;
+        Collection<GradleProjectStructureChange> currentChangesToUse = ContainerUtil.subtract(currentChanges, oldChanges);
         if (myChangesComparator != null) {
           obsoleteChangesToUse = sort(obsoleteChangesToUse, myChangesComparator);
           currentChangesToUse = sort(currentChangesToUse, myChangesComparator);
@@ -225,7 +225,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProject project = myChangesModel.getGradleProject();
     if (project != null) {
       GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project);
-      processChanges(context.getKnownChanges(), context.getCurrentChanges());
+      processChanges(Collections.<GradleProjectStructureChange>emptyList(), context.getCurrentChanges());
       filterNodes(root);
     }
   }

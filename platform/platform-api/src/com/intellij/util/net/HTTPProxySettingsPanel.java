@@ -135,6 +135,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
       @Override
       public void actionPerformed(ActionEvent e) {
         myHttpConfigurable.clearGenericPasswords();
+        Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected proxy", Messages.getInformationIcon());
       }
     });
 

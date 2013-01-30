@@ -48,7 +48,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     doTest();
   }
 
-  public void testShouldntImplementGroovyObjectMethods() {
+  public void testShouldNotImplementGroovyObjectMethods() {
     addGroovyObject();
     myFixture.addFileToProject("Foo.groovy", "class Foo {}");
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
@@ -81,9 +81,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   public void testAnonymousClassAbstractMethod() { doTest(); }
 
-  public void _testAnonymousClassStaticMethod() { doTest(); }
+  //public void _testAnonymousClassStaticMethod() { doTest(); }
 
-  public void testAnonymousClassShoudImplementMethods() { doTest(); }
+  public void testAnonymousClassShouldImplementMethods() { doTest(); }
 
   public void testAnonymousClassShouldImplementSubstitutedMethod() { doTest(); }
 
@@ -112,7 +112,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     doTest();
   }
 
-  public void testRawOverridedMethod() { doTest(); }
+  public void testRawOverriddenMethod() { doTest(); }
 
   public void testFQNJavaClassesUsages() {
     doTest();
@@ -214,9 +214,9 @@ class A {
     doTest();
   }
 
-  public void _testTestMarkupStubs() {
-    doRefTest()
-  }
+  //public void _testTestMarkupStubs() {
+  //  doRefTest()
+  //}
 
   public void testGdslWildcardTypes() {
     myFixture.configureByText("a.groovy",
@@ -245,9 +245,9 @@ class A {
     doTest();
   }
 
-  public void _testBuilderMembersAreNotUnresolved() {
-    doRefTest();
-  }
+  //public void _testBuilderMembersAreNotUnresolved() {
+  //  doRefTest();
+  //}
 
   public void testRecursiveConstructors() {
     doTest();
@@ -331,7 +331,7 @@ import pack.Foo;
 
 class Abc {
   void foo() {
-    System.out.print(new <error descr="'pack.Foo' has private access in 'pack'">Foo</error>());
+    System.out.print(new Foo()); // top-level Groovy class can't be private
   }
 }
 ''')
@@ -504,7 +504,7 @@ class A {
   static bar() {
     this.toString()
     this.getFields()
-    this.<warning descr="Cannot reference nonstatic symbol 'foo' from static context">foo</warning>()
+    this.<warning descr="Cannot reference non-static symbol 'foo' from static context">foo</warning>()
   }
 }
 ''', GrUnresolvedAccessInspection)
@@ -788,7 +788,7 @@ class A {
   class B {}
 }
 
-A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
+A.B foo = new <error descr="Cannot reference non-static symbol 'A.B' from static context">A.B</error>()
 ''')
   }
 
