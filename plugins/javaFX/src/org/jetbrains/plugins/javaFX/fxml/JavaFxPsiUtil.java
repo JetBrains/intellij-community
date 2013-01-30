@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,5 +118,35 @@ public class JavaFxPsiUtil {
         PostprocessReformattingAspect.getInstance(xmlFile.getProject()).doPostponedFormatting(xmlFile.getViewProvider());
       }
     }
+  }
+
+  public static PsiClass getPropertyClass(PsiElement field) {
+    final PsiClassType classType = getPropertyClassType(field);
+    return classType != null ? classType.resolve() : null;
+  }
+
+  public static PsiClassType getPropertyClassType(PsiElement field) {
+    if (field instanceof PsiField) {
+      final PsiType type = ((PsiField)field).getType();
+      if (type instanceof PsiClassType) {
+        final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+        final PsiClass attributeClass = resolveResult.getElement();
+        if (attributeClass != null) {
+          final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
+            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
+          if (objectProperty != null) {
+            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
+              .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
+            if (superClassSubstitutor != null) {
+              final PsiType propertyType = superClassSubstitutor.substitute(objectProperty.getTypeParameters()[0]);
+              if (propertyType instanceof PsiClassType) {
+                return (PsiClassType)propertyType;
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }
