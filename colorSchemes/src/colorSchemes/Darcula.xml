@@ -469,6 +469,13 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="ERRORS_ATTRIBUTES">
+      <value>
+        <option name="EFFECT_COLOR" value="bc3f3c" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="bc3f3c" />
+      </value>
+    </option>
     <option name="EXECUTIONPOINT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="2d6099" />
@@ -615,13 +622,21 @@
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="b389c5" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="b389c5" />
+        <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="INCLUDE_JAVA_CALL">
       <value>
         <option name="FOREGROUND" value="f7b891" />
         <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="INFO_ATTRIBUTES">
+      <value>
+        <option name="EFFECT_COLOR" value="aeae80" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="aeae80" />
       </value>
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
@@ -1479,7 +1494,7 @@
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="6300" />
+        <option name="BACKGROUND" value="8b6700" />
       </value>
     </option>
     <option name="SLIM_BAD_CHARACTER">
@@ -1672,8 +1687,8 @@
     </option>
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="6300" />
-        <option name="ERROR_STRIPE_COLOR" value="ff00" />
+        <option name="BACKGROUND" value="425f44" />
+        <option name="ERROR_STRIPE_COLOR" value="425f44" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
@@ -1695,7 +1710,7 @@
     </option>
     <option name="TYPO">
       <value>
-        <option name="EFFECT_COLOR" value="848504" />
+        <option name="EFFECT_COLOR" value="505233" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
@@ -1751,8 +1766,7 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4d4925" />
-        <option name="EFFECT_COLOR" value="8c8c00" />
+        <option name="BACKGROUND" value="525041" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
       </value>
@@ -1766,6 +1780,11 @@
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="5a647e" />
+      </value>
+    </option>
+    <option name="WRONG_REFERENCES_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="bc3f3c" />
       </value>
     </option>
     <option name="XML_ATTRIBUTE_NAME">
