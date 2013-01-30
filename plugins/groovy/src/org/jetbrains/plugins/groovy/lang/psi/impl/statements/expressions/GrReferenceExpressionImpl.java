@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,7 +266,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (!isQualified() && getContext() instanceof GrMethodCall) {
       for (PsiElement e = this.getContext(); e != null; e = e.getContext()) {
         if (e instanceof GrClosableBlock) {
-          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, (GrClosableBlock)e);
+          ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, e);
           for (ClosureMissingMethodContributor contributor : ClosureMissingMethodContributor.EP_NAME.getExtensions()) {
             if (!contributor.processMembers((GrClosableBlock)e, methodResolver, this, state)) {
               return;
@@ -504,25 +504,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       @Override
       public GroovyResolveResult[] compute() {
         Pair<GrReferenceExpressionImpl, InferenceContext> key = Pair.create(GrReferenceExpressionImpl.this, context);
-        GroovyResolveResult[] value =
-          RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
-            @Override
-            public GroovyResolveResult[] compute() {
-              return doPolyResolve(false, false);
-            }
-          });
+        GroovyResolveResult[] value = RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
+          @Override
+          public GroovyResolveResult[] compute() {
+            return doPolyResolve(false, false);
+          }
+        });
         return value == null ? GroovyResolveResult.EMPTY_ARRAY : value;
       }
     });
   }
 
-  private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER =
-    new ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl>() {
-      @NotNull
-      public GroovyResolveResult[] resolve(@NotNull GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
-        return refExpr.doPolyResolve(incompleteCode, true);
-      }
-    };
+  private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER = new ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl>() {
+    @NotNull
+    public GroovyResolveResult[] resolve(@NotNull GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
+      return refExpr.doPolyResolve(incompleteCode, true);
+    }
+  };
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
 
   public PsiType getNominalType() {
