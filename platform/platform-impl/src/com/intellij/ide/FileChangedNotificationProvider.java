@@ -40,7 +40,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
     frameStateManager.addListener(new FrameStateListener.Adapter() {
       @Override
       public void onFrameActivated() {
-        if (!myProject.isDisposed()) {
+        if (!myProject.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
           EditorNotifications notifications = EditorNotifications.getInstance(myProject);
           for (VirtualFile file : FileEditorManager.getInstance(myProject).getSelectedFiles()) {
             notifications.updateNotifications(file);
