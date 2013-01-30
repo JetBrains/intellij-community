@@ -318,14 +318,31 @@ public class PyIndentTest extends PyTestCase {
            "    return 'some string' + \\<caret>",
            "def index():\n" +
            "    return 'some string' + \\\n" +
-           "    <caret>");
+           "        <caret>");
+  }
+
+  public void testIndentOnBackslash2() {  // PY-6359
+    doTest("a = b\\<caret>",
+           "a = b\\\n    <caret>");
   }
 
   public void testAlignListBeforeEquals() {
       doTest("__all__ <caret>= [a,\n" +
              "           b]",
              "__all__ \\\n" +
-             "<caret>= [a,\n" +
+             "    <caret>= [a,\n" +
              "           b]");
+  }
+
+  public void testAlignInIncompleteCall() {  // PY-6360
+    doTest("q = query.Nested(query.Term(\"type\", \"class\"),<caret>\n" +
+           "\n" +
+           "def bar():\n" +
+           "    print('hello')",
+           "q = query.Nested(query.Term(\"type\", \"class\"),\n" +
+           "                 <caret>\n" +
+           "\n" +
+           "def bar():\n" +
+           "    print('hello')");
   }
 }

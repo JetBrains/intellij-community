@@ -1,3 +1,3 @@
-a = "foo"\
+a = "foo" \
     "bar"
 x(a)

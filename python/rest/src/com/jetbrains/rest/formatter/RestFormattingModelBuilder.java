@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.rest.RestLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,15 @@ public class RestFormattingModelBuilder implements FormattingModelBuilderEx, Cus
   public boolean isEngagedToFormat(PsiElement context) {
     PsiFile file = context.getContainingFile();
     return file != null && file.getLanguage() == RestLanguage.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
+                                                                     @NotNull FormatTextRanges ranges,
+                                                                     @NotNull CodeStyleSettings settings)
+  {
+    return null;
   }
 
   @NotNull

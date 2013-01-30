@@ -1,5 +1,6 @@
 package com.jetbrains.python.formatter;
 
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntProcedure;
@@ -21,10 +22,12 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * <p/>
    * Hence, we need to preserve them during white space manipulation.
    *
+   *
    * @param whiteSpaceText    white space text to use by default for replacing sub-sequence of the given text
    * @param text              target text which region is to be replaced by the given white space symbols
    * @param startOffset       start offset to use with the given text (inclusive)
    * @param endOffset         end offset to use with the given text (exclusive)
+   * @param codeStyleSettings the code style settings
    * @return                  symbols to use for replacing <code>[startOffset; endOffset)</code> sub-sequence of the given text
    */
   @NotNull
@@ -32,7 +35,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset)
+                                                  int endOffset,
+                                                  CodeStyleSettings codeStyleSettings)
   {
     // The general idea is that '\' symbol before line feed should be preserved.
     TIntIntHashMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
@@ -56,6 +60,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
       return whiteSpaceText;
     }
 
+    PyCodeStyleSettings settings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
     StringBuilder result = new StringBuilder();
     int line = 0;
     for (int i = 0; i < whiteSpaceText.length(); i++) {
@@ -65,6 +70,9 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
         continue;
       }
       if (!newBackSlashes.contains(line++)) {
+        if ((i == 0 || (i > 0 && whiteSpaceText.charAt(i - 1) != ' ')) && settings.SPACE_BEFORE_BACKSLASH) {
+          result.append(' ');
+        }
         result.append('\\');
       }
       result.append(c);

@@ -264,6 +264,32 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testIfConditionContinuation() {  // PY-8195
+    doTest();
+  }
+
+  public void _testIndentInNestedCall() {  // PY-8195
+    doTest();
+  }
+
+  public void testIndentAfterBackslash() {
+    doTest();
+  }
+
+  public void testSpaceBeforeBackslash() {
+    settings().getCustomSettings(PyCodeStyleSettings.class).SPACE_BEFORE_BACKSLASH = false;
+    doTest();
+  }
+
+  public void testNewLineAfterColon() {
+    settings().getCustomSettings(PyCodeStyleSettings.class).NEW_LINE_AFTER_COLON = true;
+    doTest();
+  }
+
+  public void testNewLineAfterColonMultiClause() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

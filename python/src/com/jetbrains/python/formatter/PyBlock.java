@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -124,10 +125,13 @@ public class PyBlock implements ASTBlock {
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
-    if (childType == PyElementTypes.STATEMENT_LIST || childType == PyElementTypes.IMPORT_ELEMENT) {
-      if (hasLineBreaksBefore(child, 1)) {
+    if (childType == PyElementTypes.STATEMENT_LIST) {
+      if (hasLineBreaksBefore(child, 1) || needLineBreakInStatement()) {
         childIndent = Indent.getNormalIndent();
       }
+    }
+    else if (childType == PyElementTypes.IMPORT_ELEMENT && hasLineBreaksBefore(child, 1)) {
+      childIndent = Indent.getNormalIndent();
     }
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
@@ -141,11 +145,18 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.BINARY_EXPRESSION &&
              (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType) || PyTokenTypes.OPERATIONS.contains(childType))) {
-      if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
-        childAlignment = myParent.getAlignmentForChildren();
+      if (isInControlStatement() ) {
+        PyParenthesizedExpression parens = PsiTreeUtil.getParentOfType(_node.getPsi(), PyParenthesizedExpression.class, true,
+                                                                       PyStatementPart.class);
+        childIndent = parens != null ? Indent.getNormalIndent() : Indent.getContinuationIndent();
       }
       else {
-        childAlignment = getAlignmentForChildren();
+        if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
+          childAlignment = myParent.getAlignmentForChildren();
+        }
+        else {
+          childAlignment = getAlignmentForChildren();
+        }
       }
     }
 
@@ -162,9 +173,9 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isCallInControlStatement()
+        childIndent = parentType == PyElementTypes.PARAMETER_LIST || isInControlStatement()
                       ? Indent.getContinuationIndent()
-                      : Indent.getNormalIndent();
+                      : Indent.getNormalIndent(/*true*/);
       }
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
@@ -184,7 +195,12 @@ public class PyBlock implements ASTBlock {
     else if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
       if ((childType == PyElementTypes.IMPORT_ELEMENT || childType == PyTokenTypes.RPAR) &&
           _node.findChildByType(PyTokenTypes.LPAR) != null) {
-        childAlignment = getAlignmentForChildren();
+        if (myContext.getPySettings().ALIGN_MULTILINE_IMPORTS) {
+          childAlignment = getAlignmentForChildren();
+        }
+        else {
+          childIndent = Indent.getNormalIndent();
+        }
       }
     }
     else if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
@@ -212,10 +228,20 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
+    ASTNode prev = child.getTreePrev();
+    while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
+      if (prev.getText().contains("\\") && !childIndent.equals(Indent.getContinuationIndent()) &&
+          !childIndent.equals(Indent.getContinuationIndent(true))) {
+        childIndent = Indent.getNormalIndent();
+        break;
+      }
+      prev = prev.getTreePrev();
+    }
+
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
-  private boolean isCallInControlStatement() {
+  private boolean isInControlStatement() {
     return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null;
   }
 
@@ -361,14 +387,33 @@ public class PyBlock implements ASTBlock {
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
-      final PsiElement psi1 = ((ASTBlock)child1).getNode().getPsi();
+      ASTNode node1 = ((ASTBlock)child1).getNode();
+      final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
       if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
           psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
         return Spacing.createSpacing(0, 0, 2, true, 1);
       }
+
+      if (node1.getElementType() == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
+        if (needLineBreakInStatement()) {
+          return Spacing.createSpacing(0, 0, 1, true, myContext.getSettings().KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
+  }
+
+  private boolean needLineBreakInStatement() {
+    PyStatement statement = PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatement.class);
+    if (statement != null) {
+      Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
+      if ((parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+          (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -458,6 +503,9 @@ public class PyBlock implements ASTBlock {
   @Nullable
   private Alignment getChildAlignment() {
     if (ourListElementTypes.contains(_node.getElementType())) {
+      if (isInControlStatement()) {
+        return null;
+      }
       if (_node.getPsi() instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
         return null;
       }
@@ -466,7 +514,7 @@ public class PyBlock implements ASTBlock {
         if (elements.length == 0) {
           return null;
         }
-        PyKeyValueExpression last = elements[elements.length-1];
+        PyKeyValueExpression last = elements[elements.length - 1];
         if (last.getValue() == null) { // incomplete
           return null;
         }
@@ -539,7 +587,7 @@ public class PyBlock implements ASTBlock {
     if (afterNode != null && afterNode.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION) {
       PyKeyValueExpression keyValue = (PyKeyValueExpression) afterNode.getPsi();
       if (keyValue != null && keyValue.getValue() == null) {  // incomplete
-        return Indent.getContinuationIndent(true);
+        return Indent.getContinuationIndent();
       }
     }
 
@@ -551,6 +599,15 @@ public class PyBlock implements ASTBlock {
       return Indent.getNormalIndent();
     }
 
+    if (afterNode != null) {
+      ASTNode wsAfter = afterNode.getTreeNext();
+      while (wsAfter != null && wsAfter.getElementType() == TokenType.WHITE_SPACE) {
+        if (wsAfter.getText().indexOf('\\') >= 0) {
+          return Indent.getNormalIndent();
+        }
+        wsAfter = wsAfter.getTreeNext();
+      }
+    }
     return Indent.getNoneIndent();
   }
 
@@ -578,12 +635,14 @@ public class PyBlock implements ASTBlock {
 
   public boolean isIncomplete() {
     // if there's something following us, we're not incomplete
-    PsiElement element = _node.getPsi().getNextSibling();
-    while (element instanceof PsiWhiteSpace) {
-      element = element.getNextSibling();
-    }
-    if (element != null) {
-      return false;
+    if (!PsiTreeUtil.hasErrorElements(_node.getPsi())) {
+      PsiElement element = _node.getPsi().getNextSibling();
+      while (element instanceof PsiWhiteSpace) {
+        element = element.getNextSibling();
+      }
+      if (element != null) {
+        return false;
+      }
     }
 
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
@@ -596,18 +655,33 @@ public class PyBlock implements ASTBlock {
         }
       }
       if (lastChild.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
-        PyBinaryExpression binaryExpression = (PyBinaryExpression) lastChild.getPsi();
+        PyBinaryExpression binaryExpression = (PyBinaryExpression)lastChild.getPsi();
         if (binaryExpression.getRightExpression() == null) {
           return true;
         }
       }
+      if (isIncompleteCall(lastChild)) return true;
     }
 
     if (_node.getPsi() instanceof PyArgumentList) {
       final PyArgumentList argumentList = (PyArgumentList)_node.getPsi();
       return argumentList.getClosingParen() == null;
     }
+    if (isIncompleteCall(_node)) {
+      return true;
+    }
 
+    return false;
+  }
+
+  private static boolean isIncompleteCall(ASTNode node) {
+    if (node.getElementType() == PyElementTypes.CALL_EXPRESSION) {
+      PyCallExpression callExpression = (PyCallExpression)node.getPsi();
+      PyArgumentList argumentList = callExpression.getArgumentList();
+      if (argumentList == null || argumentList.getClosingParen() == null) {
+        return true;
+      }
+    }
     return false;
   }
 

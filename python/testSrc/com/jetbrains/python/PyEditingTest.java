@@ -118,7 +118,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testEnterInStatement() {
-    doTestEnter("if a <caret>and b: pass", "if a \\\nand b: pass");
+    doTestEnter("if a <caret>and b: pass", "if a \\\n    and b: pass");
   }
 
   public void testEnterBeforeStatement() {

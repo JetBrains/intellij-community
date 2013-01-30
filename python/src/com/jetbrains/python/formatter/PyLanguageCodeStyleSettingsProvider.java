@@ -58,6 +58,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_WITHIN_BRACES", "Braces", SPACES_WITHIN);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_PY_COLON", ApplicationBundle.message("checkbox.spaces.before.colon"), SPACES_OTHER);
       consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_AFTER_PY_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"), SPACES_OTHER);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SPACE_BEFORE_BACKSLASH", "Before '\\'", SPACES_OTHER);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showStandardOptions("BLANK_LINES_AROUND_CLASS",
@@ -73,8 +74,14 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "WRAP_LONG_LINES",
                                    "ALIGN_MULTILINE_PARAMETERS",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON", "Single-clause statements",
+                                "Force new line after colon");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON_MULTI_CLAUSE", "Multi-clause statements",
+                                "Force new line after colon");
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS", "Align when multiline",
                                 "Collections and Comprehensions");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS", "Align when multiline",
+                                "Import Statements");
     }
   }
 
@@ -103,7 +110,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                    "    x = dict[1]\n" +
                                                    "    expr = (1+2)*3 << 4 & 16\n" +
                                                    "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
-                                                   "    settings_preview(key=1)";
+                                                   "    settings_preview(key=1)\n\n" +
+                                                   "foo =\\\n" +
+                                                   "    bar";
 
   @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
@@ -112,14 +121,19 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                        "    def foo(self):\n" +
                                                        "        pass";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
+  private static String WRAP_SETTINGS_PREVIEW = "from foo import (bar,\n" +
+                                                "    baz)\n\n" +
+                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
                                                 "def xyzzy(long_parameter_1,\n" +
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
                                                 "xyzzy('long_string_constant1',\n" +
                                                 "    'long_string_constant2')\n" +
                                                 "attrs = [e.attr for e in\n" +
-                                                "    items]";
+                                                "    items]\n\n" +
+                                                "if True: pass\n\n" +
+                                                "try: pass\n" +
+                                                "finally: pass\n";
   @SuppressWarnings("FieldCanBeLocal")
   private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
                                                   "    print 'bar'\n\n" +
