@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
         if (superMethods.size() > 0) {
           final PsiElement next = superMethods.iterator().next();
           // TODO should do this for Jython functions overriding Java methods too
-          if (next instanceof PyFunction && !isInClassobj((PyFunction)next)) {
+          if (next instanceof PyFunction && !isInObject((PyFunction)next)) {
             StringBuilder messageBuilder = new StringBuilder("Method ");
             messageBuilder.append(((PyFunction)element).getName());
             messageBuilder.append(" overrides method of class ");
@@ -78,8 +79,12 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     return null;
   }
 
-  private static boolean isInClassobj(PyFunction fun) {
+  private static boolean isInObject(PyFunction fun) {
     final PyClass containingClass = fun.getContainingClass();
-    return containingClass != null && PyNames.FAKE_OLD_BASE.equals(containingClass.getName());
+    if (containingClass == null) {
+      return false;
+    }
+    return (PyNames.FAKE_OLD_BASE.equals(containingClass.getName()) ||
+            (PyNames.OBJECT.equals(containingClass.getName()) && PyBuiltinCache.getInstance(fun).hasInBuiltins(containingClass)));
   }
 }
