@@ -1,13 +1,16 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,12 +24,37 @@ public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, 
     super(storePath, new PathStringDescriptor(), new SourcePathListExternalizer());
   }
 
+  @Override
+  public void update(String path, @Nullable List<SourcePathAndRootIndex> state) throws IOException {
+    super.update(FileUtil.toSystemIndependentName(path), state);
+  }
+
+  @Override
+  public void appendData(String path, List<SourcePathAndRootIndex> data) throws IOException {
+    super.appendData(FileUtil.toSystemIndependentName(path), data);
+  }
+
+  public void appendData(String outputPath, int rootIndex, String sourcePath) throws IOException {
+    super.appendData(outputPath, Collections.singletonList(new SourcePathAndRootIndex(sourcePath, rootIndex)));
+  }
+
+  @Override
+  public void remove(String path) throws IOException {
+    super.remove(FileUtil.toSystemIndependentName(path));
+  }
+
+  @Nullable
+  @Override
+  public List<SourcePathAndRootIndex> getState(String path) throws IOException {
+    return super.getState(FileUtil.toSystemIndependentName(path));
+  }
+
   public static class SourcePathAndRootIndex {
     private final String myPath;
     private final int myRootIndex;
 
-    public SourcePathAndRootIndex(String path, int rootIndex) {
-      myPath = path;
+    private SourcePathAndRootIndex(String path, int rootIndex) {
+      myPath = FileUtil.toSystemIndependentName(path);
       myRootIndex = rootIndex;
     }
 

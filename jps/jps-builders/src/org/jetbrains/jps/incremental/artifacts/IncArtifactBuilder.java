@@ -195,7 +195,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       boolean deleted = deletedPaths.contains(filePath);
       if (!deleted) {
-        deleted = FileUtil.delete(new File(FileUtil.toSystemDependentName(filePath)));
+        deleted = FileUtil.delete(new File(filePath));
       }
 
       if (deleted) {
