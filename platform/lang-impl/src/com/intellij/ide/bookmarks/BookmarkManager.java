@@ -290,11 +290,17 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
    */
   @NotNull
   public List<Bookmark> moveBookmarkUp(@NotNull Bookmark bookmark) {
-    int index = myBookmarks.indexOf(bookmark);
+    final int index = myBookmarks.indexOf(bookmark);
     if (index > 0) {
       Collections.swap(myBookmarks, index, index - 1);
+      EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index - 1));
+        }
+      });
     }
-
     return myBookmarks;
   }
 
@@ -306,9 +312,16 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
    */
   @NotNull
   public List<Bookmark> moveBookmarkDown(@NotNull Bookmark bookmark) {
-    int index = myBookmarks.indexOf(bookmark);
+    final int index = myBookmarks.indexOf(bookmark);
     if (index < myBookmarks.size() - 1) {
       Collections.swap(myBookmarks, index, index + 1);
+      EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index));
+          myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(myBookmarks.get(index + 1));
+        }
+      });
     }
 
     return myBookmarks;
