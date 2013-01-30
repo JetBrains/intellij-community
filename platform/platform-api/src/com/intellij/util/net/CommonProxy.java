@@ -271,12 +271,19 @@ public class CommonProxy extends ProxySelector {
           logAuthentication(password);
           return password;
         }
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
 
         final PasswordAuthentication authentication =
           myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), true);
         logAuthentication(authentication);
         return authentication;
       } else {
+        // do not try to show any dialogs if application is exiting
+        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+            ApplicationManager.getApplication().isDisposed()) return null;
+
         LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
         final PasswordAuthentication authentication =
           myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), false);

@@ -173,6 +173,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
       return new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
     }
+
+    // do not try to show any dialogs if application is exiting
+    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+        ApplicationManager.getApplication().isDisposed()) return null;
+
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
