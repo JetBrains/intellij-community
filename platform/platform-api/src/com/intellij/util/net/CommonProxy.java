@@ -187,6 +187,7 @@ public class CommonProxy extends ProxySelector {
       configurable = application.runReadAction(new Computable<HttpConfigurable>() {
         @Override
         public HttpConfigurable compute() {
+          if (application.isDisposeInProgress() || application.isDisposed()) return null;
           return HttpConfigurable.getInstance();
         }
       });
