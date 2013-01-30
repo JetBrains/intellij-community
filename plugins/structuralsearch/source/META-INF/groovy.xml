@@ -1,6 +1,5 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.com/idea">
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.GroovyStructuralSearchProfile"/>
     <duplicates.profile implementation="com.intellij.structuralsearch.GroovyDuplicatesProfile"/>
