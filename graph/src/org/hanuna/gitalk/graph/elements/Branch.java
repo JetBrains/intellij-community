@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class Branch {
+public final class Branch {
     private final Commit upCommit;
     private final Commit downCommit;
 
@@ -15,13 +15,26 @@ public class Branch {
         this.downCommit = downCommit;
     }
 
-    public Branch(Commit commit) {
+    public Branch(@NotNull Commit commit) {
         this(commit, commit);
     }
 
-
     public int getBranchNumber() {
         return upCommit.hashCode() + downCommit.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return upCommit.hashCode() + downCommit.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj.getClass() == Branch.class) {
+            Branch anBranch = (Branch) obj;
+            return anBranch.upCommit == upCommit && anBranch.downCommit == downCommit;
+        }
+        return false;
     }
 
     @Override
