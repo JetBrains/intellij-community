@@ -17,7 +17,8 @@ import java.util.EnumSet;
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
   protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.DANGLING_METACHARACTERS,
-                                                                      RegExpCapability.OCTAL_NO_LEADING_ZERO);
+                                                                      RegExpCapability.OCTAL_NO_LEADING_ZERO,
+                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
 
   @NotNull
   public Lexer createLexer(Project project) {
