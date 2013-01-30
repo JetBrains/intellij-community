@@ -278,7 +278,7 @@ public abstract class AbstractExternalFilter {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getExternalDocInfo(final String surl) throws Exception {
     Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread() || app.isWriteAccessAllowed()) {
+    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
       LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
       return null;
     }
