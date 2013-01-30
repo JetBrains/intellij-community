@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -373,7 +374,28 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       int rc = myProximityComparator.compare(o1, o2);
       if (rc != 0) return rc;
 
-      return Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
+      int compare = Comparing.compare(myModel.getFullName(o1), myModel.getFullName(o2));
+      if (compare == 0) {
+        int o1Weight;
+        int o2Weight;
+
+        if (o1 instanceof PsiCompiledElement) {
+          PsiElement navElement = ((PsiCompiledElement)o1).getNavigationElement();
+          o1Weight = navElement != o1 ? 0 : 1;
+        } else {
+          o1Weight = 0;
+        }
+
+        if (o2 instanceof PsiCompiledElement) {
+          PsiElement navElement = ((PsiCompiledElement)o2).getNavigationElement();
+          o2Weight = navElement != o2 ? 0 : 1;
+        } else {
+          o2Weight = 0;
+        }
+
+        compare = o1Weight - o2Weight;
+      }
+      return compare;
     }
   }
 }
