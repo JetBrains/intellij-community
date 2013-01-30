@@ -91,7 +91,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     processEntries(new EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
-        final String fullOutputPath = FileUtil.toSystemIndependentName(JpsArtifactPathUtil.appendToPath(outputPath, relativePath));
+        final String fullOutputPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
         final File outputFile = new File(fullOutputPath);
 
         FileUtil.createParentDirs(outputFile);
@@ -111,7 +111,7 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }
-          outSrcMapping.appendData(fullOutputPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
+          outSrcMapping.appendData(fullOutputPath, rootIndex, filePath);
         }
       }
     });

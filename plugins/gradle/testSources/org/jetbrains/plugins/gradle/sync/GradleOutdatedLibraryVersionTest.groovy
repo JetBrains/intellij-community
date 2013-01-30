@@ -133,4 +133,67 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
           dependencies {
             'lib (1 -> 2)' ('outdated') } } } }
   }
+
+  @Test
+  void "gradle-local library after outdated library"() {
+    init(
+      gradle: {
+        project {
+          module {
+            dependencies {
+              library('lib1-1') } } } },
+      intellij: {
+        project {
+          module {
+            dependencies {
+              library('lib1-1') } } } } )
+    checkChanges {}
+    
+    setState(gradle: {
+      project {
+        module {
+          dependencies {
+            library('lib1-2')} } } } )
+    
+    checkChanges {
+      libraryVersion (
+        name: 'lib1',
+        gradleVersion: '2',
+        gradleLibraryId: findLibraryId('lib1-2', true),
+        ideVersion: '1',
+        ideLibraryId: findLibraryId('lib1-1', false)
+      )
+    }
+    checkTree {
+      project {
+        module {
+          dependencies {
+            'lib1 (1 -> 2)' ('outdated')} } } }
+
+    setState(gradle: {
+      project {
+        module {
+          dependencies {
+            library('lib1-2')
+            library('lib2-1') } } } } )
+    checkChanges {
+      libraryVersion (
+        name: 'lib1',
+        gradleVersion: '2',
+        gradleLibraryId: findLibraryId('lib1-2', true),
+        ideVersion: '1',
+        ideLibraryId: findLibraryId('lib1-1', false)
+      )
+      presence {
+        library(gradle: gradle.libraryDependencies.values().flatten().findAll { it.name == "lib2-1" })
+      }
+    }
+    checkTree {
+      project {
+        module {
+          dependencies {
+            'lib2-1' ('gradle')
+            'lib1 (1 -> 2)' ('outdated')
+    } } } }
+  }
 }

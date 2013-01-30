@@ -15,14 +15,18 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,6 +37,40 @@ import java.util.List;
 public class ArtifactOutputToSourceMapping extends AbstractStateStorage<String, List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>> {
   public ArtifactOutputToSourceMapping(@NonNls File storePath) throws IOException {
     super(storePath, new PathStringDescriptor(), new SourcePathListExternalizer());
+  }
+
+  @Override
+  public void update(String path, @Nullable List<SourcePathAndRootIndex> state) throws IOException {
+    super.update(FileUtil.toSystemIndependentName(path), normalize(state));
+  }
+
+  @Override
+  public void appendData(String path, List<SourcePathAndRootIndex> data) throws IOException {
+    super.appendData(FileUtil.toSystemIndependentName(path), normalize(data));
+  }
+
+  private static List<SourcePathAndRootIndex> normalize(List<SourcePathAndRootIndex> data) {
+    if (data.isEmpty()) return Collections.emptyList();
+    List<SourcePathAndRootIndex> normalized = new ArrayList<SourcePathAndRootIndex>(data.size());
+    for (SourcePathAndRootIndex pair : data) {
+      normalized.add(new SourcePathAndRootIndex(FileUtil.toSystemIndependentName(pair.getPath()), pair.getRootIndex()));
+    }
+    return normalized;
+  }
+
+  public void appendData(String outputPath, int rootIndex, String sourcePath) throws IOException {
+    super.appendData(outputPath, Collections.singletonList(new SourcePathAndRootIndex(FileUtil.toSystemIndependentName(sourcePath), rootIndex)));
+  }
+
+  @Override
+  public void remove(String path) throws IOException {
+    super.remove(FileUtil.toSystemIndependentName(path));
+  }
+
+  @Nullable
+  @Override
+  public List<SourcePathAndRootIndex> getState(String path) throws IOException {
+    return super.getState(FileUtil.toSystemIndependentName(path));
   }
 
   public static class SourcePathAndRootIndex {
