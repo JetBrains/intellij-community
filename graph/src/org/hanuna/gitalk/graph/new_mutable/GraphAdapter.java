@@ -10,7 +10,6 @@ import org.hanuna.gitalk.graph.elements.GraphFragment;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractList;
 import java.util.List;
 
 /**
@@ -39,17 +38,7 @@ public class GraphAdapter implements Graph {
 
     public GraphAdapter(final NewGraph graph) {
         this.graph = graph;
-        nodeRows = new AbstractList<NodeRow>() {
-            @Override
-            public NodeRow get(int index) {
-                return graph.getNodeRow(index);
-            }
-
-            @Override
-            public int size() {
-                return graph.size();
-            }
-        };
+        nodeRows = graph.getNodeRows();
     }
 
     @NotNull

@@ -8,6 +8,7 @@ import org.hanuna.gitalk.graph.new_mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,15 +36,11 @@ public class MutableGraph implements NewGraph {
         return visibilityController;
     }
 
-    @Override
-    public int size() {
-        return visibleRows.size();
-    }
 
-    @NotNull
     @Override
-    public NodeRow getNodeRow(int rowIndex) {
-        return visibleRows.get(rowIndex);
+    @NotNull
+    public List<NodeRow> getNodeRows() {
+        return Collections.<NodeRow>unmodifiableList(visibleRows);
     }
 
     public void updateVisibleRows() {
