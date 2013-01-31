@@ -44,8 +44,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,12 +114,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
               @Override
               public void run() {
                 try {
-                  Artifact[] artifacts = ArtifactManager.getInstance(project).getArtifacts();
-
                   ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
                   modifiableModuleModel.renameModule(module, module.getProject().getName());
                   modifiableModuleModel.commit();
-                  artifacts = ArtifactManager.getInstance(project).getArtifacts();
                   fixModuleName(module);
                 }
                 catch (ModuleWithNameAlreadyExists exists) {
