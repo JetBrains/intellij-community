@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.util.net.HttpConfigurable;
-import org.junit.Test;
 
 /**
  * Created with IntelliJ IDEA.
@@ -40,4 +39,6 @@ public class SvnAndProxyTest extends Svn17TestCase {
     h.KEEP_PROXY_PASSWORD = false;
     h.LAST_ERROR = null;
   }
+
+  private @interface Test{}
 }
