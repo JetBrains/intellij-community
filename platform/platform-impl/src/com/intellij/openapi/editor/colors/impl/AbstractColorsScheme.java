@@ -305,6 +305,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         }
       }
 
+      if (myConsoleFontPreferences.getFontFamilies().isEmpty()) {
+        myFontPreferences.copyTo(myConsoleFontPreferences);
+      }
+      
       initFonts();
     }
   }
