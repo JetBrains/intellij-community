@@ -609,6 +609,15 @@ public class PyUtil {
     }
   }
 
+  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
+    for (PyClassRef classRef : cls.iterateAncestors()) {
+      if (classRef.getPyClass() == null && classRef.getType() == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
