@@ -66,7 +66,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   @Nullable
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (myName.equals(FxmlConstants.FX_DEFINE)) {
+      final String name = childTag.getName();
+      if (JavaFxPsiUtil.isClassTag(name)) {
+        return new JavaFxClassBackedElementDescriptor(name, childTag);
+      }
+    }
+    return null;
   }
 
   @Override
