@@ -87,11 +87,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (vFile == null || vFile.getFileType() != PythonFileType.INSTANCE) {
       return null;
     }
-    Sdk sdk = PythonSdkType.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(file));
-
-    if (PythonSdkType.isRemote(sdk)) {
-      sdk = PythonSdkType.findLocalPython(ModuleUtilCore.findModuleForPsiElement(file));
-    }
+    Sdk sdk = PythonSdkType.findLocalCPython(ModuleUtilCore.findModuleForPsiElement(file));
     if (sdk == null) return null;
     final String homePath = sdk.getHomePath();
     if (homePath == null) return null;
