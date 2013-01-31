@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -80,7 +81,17 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
         }
       }
 
-      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
+        if (StringUtil.isEmpty(newPath)) {
+          myLayout.show(myContent, NON_LINKED_CARD_NAME);
+          return;
+        }
+        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
+          myLayout.show(myContent, CONTENT_CARD_NAME);
+        }
+        refreshAll();
+      }
+      
       @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
       @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
       @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
