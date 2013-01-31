@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,12 @@ public class FontEditorPreview implements PreviewPanel{
       "advanced code editing and refactoring support.\n" +
       "\n" +
       "abcdefghijklmnopqrstuvwxyz 0123456789 (){}[]\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^";
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ +-*/= .,;:!? #&$%@|^\n" +
+      // Create empty lines in order to make the gutter wide enough to display two-digits line numbers (other previews use long text
+      // and we don't want different gutter widths on color pages switching).
+      "\n" +
+      "\n" +
+      "\n";
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {

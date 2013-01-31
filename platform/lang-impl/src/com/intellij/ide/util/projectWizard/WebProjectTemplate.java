@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> implements ProjectTemplate {
 
-  protected final NotNullLazyValue<GeneratorPeer<T>> myPeer = new NotNullLazyValue<GeneratorPeer<T>>() {
+  private final NotNullLazyValue<GeneratorPeer<T>> myPeerHolder = new NotNullLazyValue<GeneratorPeer<T>>() {
     @NotNull
     @Override
     protected GeneratorPeer<T> compute() {
@@ -47,59 +47,21 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    final ModuleBuilder builder = WebModuleType.getInstance().createModuleBuilder();
-    return new ModuleBuilder() {
-      @Override
-      public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-        builder.setupRootModel(modifiableRootModel);
-      }
-
-      @Override
-      public ModuleType getModuleType() {
-        return builder.getModuleType();
-      }
-
-      @Override
-      public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-        List<Module> modules = builder.commit(project, model, modulesProvider);
-        if (modules != null && !modules.isEmpty()) {
-          Module module = modules.get(0);
-          generateProject(module.getProject(), module.getProject().getBaseDir(), myPeer.getValue().getSettings(), module);
-        }
-        return modules;
-      }
-
-      @Nullable
-      @Override
-      public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-        GeneratorPeer<T> peer = myPeer.getValue();
-        peer.buildUI(settingsStep);
-        return new ModuleWizardStep() {
-          @Override
-          public JComponent getComponent() {
-            return null;
-          }
-
-          @Override
-          public void updateDataModel() {
-          }
-        };
-      }
-
-      @Override
-      public Icon getNodeIcon() {
-        return getIcon();
-      }
-    };
+    return WebModuleType.getInstance().createModuleBuilder(this);
   }
 
   @Nullable
   @Override
   public ValidationInfo validateSettings() {
-    return myPeer.getValue().validate();
+    return myPeerHolder.getValue().validate();
   }
 
-  protected Icon getIcon() {
+  public Icon getIcon() {
     return WebModuleBuilder.ICON;
+  }
+
+  @NotNull
+  public GeneratorPeer<T> getPeer() {
+    return myPeerHolder.getValue();
   }
 }

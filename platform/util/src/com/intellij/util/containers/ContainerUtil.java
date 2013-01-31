@@ -713,6 +713,15 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<Pair<KEY, VALUE>> collection) {
+    final Map<KEY, VALUE> result = new THashMap<KEY, VALUE>(collection.size());
+    for (Pair<KEY, VALUE> pair : collection) {
+      result.put(pair.first, pair.second);
+    }
+    return result;
+  }
+
+  @NotNull
   public static <T> Object[] map2Array(@NotNull T[] array, @NotNull Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
