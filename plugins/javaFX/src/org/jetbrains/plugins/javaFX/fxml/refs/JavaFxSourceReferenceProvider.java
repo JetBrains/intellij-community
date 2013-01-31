@@ -26,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: anna
  */
-class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
+class JavaFxSourceReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
                                                @NotNull ProcessingContext context) {
-    final String value = ((XmlAttributeValue)element).getValue();
-    final String relativePathToResource = value.substring(1);
-    final FileReferenceSet set = new FileReferenceSet(relativePathToResource, element, 2, null, true);
+    final FileReferenceSet set = new FileReferenceSet(((XmlAttributeValue)element).getValue(), element, 1, null, true);
     return set.getAllReferences();
   }
 }

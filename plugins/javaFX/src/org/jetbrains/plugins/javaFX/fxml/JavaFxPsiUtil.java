@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.*;
@@ -146,6 +147,40 @@ public class JavaFxPsiUtil {
           }
         }
       }
+    }
+    return null;
+  }
+
+  public static boolean isClassTag(String name) {
+    final String shortName = StringUtil.getShortName(name);
+    return StringUtil.isCapitalized(name) && name.equals(shortName);
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
+    final String packageName = StringUtil.getPackageName(attributeName);
+    if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
+      final PsiClass classWithStaticProperty = findPsiClass(packageName, context);
+      if (classWithStaticProperty != null) {
+        return findPropertySetter(attributeName, classWithStaticProperty);
+      }
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
+    final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
+    if (setters.length == 1) {
+      return setters[0];
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
+    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
+    if (getters.length >= 1) {
+      return getters[0];
     }
     return null;
   }

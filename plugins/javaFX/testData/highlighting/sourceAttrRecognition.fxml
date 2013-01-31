@@ -6,5 +6,5 @@
       <fx:reference source="myImage"/>
     </image>
   </ImageView>
-  <fx:include source="my_button.fxml"/>
+  <fx:include source="<error descr="Cannot resolve file 'my_button.fxml'">my_button.fxml</error>"/>
 </GridPane>

@@ -72,6 +72,18 @@ public class ImageLoader implements Serializable {
   }
 
   @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
+    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina)) {
+      try {
+        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static Image loadFromResource(@NonNls String s) {
     int stackFrameCount = 2;
     Class callerClass = Reflection.getCallerClass(stackFrameCount);
@@ -96,8 +108,10 @@ public class ImageLoader implements Serializable {
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    final boolean dark = UIUtil.isUnderDarcula();
-    final boolean retina = UIUtil.isRetina();
+    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina());
+  }
+
+  public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {
     if (retina || dark) {
       List<Pair<String, Integer>> answer = new ArrayList<Pair<String, Integer>>(4);
 

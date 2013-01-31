@@ -47,7 +47,14 @@ public class FxmlConstants {
 
   public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
   static {
-    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID));
     FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
   }
+
+  public static final Map<String, List<String>> FX_REQUIRED_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
+  static {
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+  }
+  
 }
