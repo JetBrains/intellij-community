@@ -297,4 +297,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testPackageAndClassConflict3() throws Exception {
     doTest(BASE_PATH + "/packageClassClash/java/lang.java", false, false);
   }
+
+  public void testPackageObscuring() throws Exception {
+    doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
+  }
 }

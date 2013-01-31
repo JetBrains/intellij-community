@@ -25,6 +25,10 @@ import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -50,7 +54,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    return new XmlElementDescriptor[0];
+    return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
   @Nullable
@@ -61,19 +65,31 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
-    return new XmlAttributeDescriptor[0];  //To change body of implemented methods use File | Settings | File Templates.
+    final List<String> defaultAttributeList = FxmlConstants.FX_ELEMENT_ATTRIBUTES.get(getName());
+    if (defaultAttributeList != null) {
+      final List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
+      for (String defaultAttrName : defaultAttributeList) {
+        descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, null));
+      }
+      return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
+    }
+    return XmlAttributeDescriptor.EMPTY;
   }
 
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    final List<String> defaultAttributeList = FxmlConstants.FX_ELEMENT_ATTRIBUTES.get(getName());
+    if (defaultAttributeList != null && defaultAttributeList.contains(attributeName)) {
+      return new JavaFxDefaultAttributeDescriptor(attributeName, null);
+    }
+    return null;
   }
 
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
-    return null;
+    return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
   @Override

@@ -1,0 +1,10 @@
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.image.*?>
+<GridPane xmlns:fx="http://javafx.com/fxml">
+  <ImageView>
+    <image>
+      <fx:reference source="myImage"/>
+    </image>
+  </ImageView>
+  <fx:include source="my_button.fxml"/>
+</GridPane>

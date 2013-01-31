@@ -31,6 +31,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
@@ -345,16 +346,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
       }
 
-      if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
-        PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
-        for (int i = 0; i < result.length; i++) {
-          CandidateInfo resolveResult = (CandidateInfo)result[i];
-          PsiElement resultElement = resolveResult.getElement();
-          if (resultElement instanceof PsiClass && ((PsiClass)resultElement).hasTypeParameters()) {
-            result[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll((PsiClass)resultElement, parameters));
-          }
-        }
-      }
+      JavaResolveUtil.substituteResults((PsiJavaCodeReferenceElement)ref, result);
 
       return result;
     }
@@ -449,7 +441,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final PsiElement classNameElement = getReferenceNameElement();
         if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
         final String className = classNameElement.getText();
-
         final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
         PsiScopesUtil.resolveAndWalk(processor, this, null);
         return processor.getResult();
@@ -464,18 +455,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
       }
-      case CLASS_FQ_OR_PACKAGE_NAME_KIND: {
-        JavaResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
-        if (result.length == 0) {
-          result = resolve(PACKAGE_NAME_KIND);
-        }
-        return result;
-      }
+      case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {
-        JavaResolveResult[] result = resolve(CLASS_NAME_KIND);
-        if (result.length == 0) {
+        int classKind = kind == CLASS_OR_PACKAGE_NAME_KIND ? CLASS_NAME_KIND : CLASS_FQ_NAME_KIND;
+        JavaResolveResult[] result = resolve(classKind);
+
+        if (result.length == 1 && !result[0].isAccessible()) {
+          JavaResolveResult[] packageResult = resolve(PACKAGE_NAME_KIND);
+          if (packageResult.length != 0) {
+            result = packageResult;
+          }
+        }
+        else if (result.length == 0) {
           result = resolve(PACKAGE_NAME_KIND);
         }
+
         return result;
       }
     }

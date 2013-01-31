@@ -53,6 +53,9 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxLocationReferenceProvider());
 
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlTokenType.XML_TAG_CHARACTERS).inFile(inFxmlElementPattern()), new ImportReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
+                                        new EnumeratedAttributeReferenceProvider());
   }
 
   private static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {

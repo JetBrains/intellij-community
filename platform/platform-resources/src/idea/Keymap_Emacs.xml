@@ -46,6 +46,9 @@
     <action id="EditorSwapSelectionBoundaries">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="X"/>
     </action>
+    <action id="$SelectAll">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="H" />
+    </action>
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control alt I"/>
       <keyboard-shortcut first-keystroke="control alt Q"/>
@@ -103,6 +106,10 @@
     </action>
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="shift alt G"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="B"/>
+    </action>
+    <action id="GotoFile">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="control F" />
     </action>
     <action id="EditorRight">
       <keyboard-shortcut first-keystroke="RIGHT"/>
@@ -148,6 +155,7 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="O"/>
     </action>
     <action id="NextEditorTab">
       <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
@@ -189,6 +197,7 @@
     <action id="EditorLineStart">
       <keyboard-shortcut first-keystroke="HOME"/>
       <keyboard-shortcut first-keystroke="control A"/>
+      <keyboard-shortcut first-keystroke="alt M"/>
     </action>
     <action id="EditorCodeBlockStartWithSelection">
       <keyboard-shortcut first-keystroke="shift control OPEN_BRACKET"/>
@@ -200,6 +209,9 @@
     </action>
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control C"/>
+    </action>
+    <action id="CloseAllEditorsButActive">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="1" />
     </action>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control alt S"/>
@@ -226,6 +238,7 @@
     <action id="CloseContent">
       <keyboard-shortcut first-keystroke="control F4"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="K"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="0"/>
     </action>
     <action id="SplitVertically">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="3"/>
@@ -256,9 +269,6 @@
       <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
       <keyboard-shortcut first-keystroke="control V"/>
     </action>
-    <action id="OpenFile">
-      <keyboard-shortcut first-keystroke="control X" second-keystroke="control F"/>
-    </action>
     <action id="VcsShowNextChangeMarker">
       <keyboard-shortcut first-keystroke="shift control alt DOWN"/>
     </action>
@@ -278,7 +288,6 @@
     <action id="OverrideMethods"/>
     <action id="ToggleBookmark2" />
     <action id="SafeDelete" />
-    <action id="$SelectAll"/>
     <action id="IntroduceField"/>
     <action id="RecentFiles"/>
     <action id="EditorTab"/>

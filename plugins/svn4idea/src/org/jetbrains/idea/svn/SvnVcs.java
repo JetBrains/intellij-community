@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1160,17 +1160,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  private static class MyFrameStateListener implements FrameStateListener {
+  private static class MyFrameStateListener extends FrameStateListener.Adapter {
     private final ChangeListManager myClManager;
     private final VcsDirtyScopeManager myDirtyScopeManager;
 
     private MyFrameStateListener(ChangeListManager clManager, VcsDirtyScopeManager dirtyScopeManager) {
       myClManager = clManager;
       myDirtyScopeManager = dirtyScopeManager;
-    }
-
-    @Override
-    public void onFrameDeactivated() {
     }
 
     @Override

@@ -77,6 +77,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest();
   }
 
+  public void testConstants() throws Exception {
+    doTest("NEGATIVE_INFINITY");
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }

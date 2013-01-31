@@ -88,21 +88,6 @@ public class UnixProcessManager {
     C_LIB.kill(pid, signal);
   }
 
-
-  /**
-   * Adds or changes an environment variable.
-   * @param name string that contains the name of the environment variable to be added or changed
-   * @param value the value of the environment variable
-   * @param overwrite change the existing entry. If {@code name} has already been defined and exists in the environment variable table,
-   *                  its value will be updated with {@code value}. If {@code name} was previously undefined, it will be appended to the table.
-   */
-  public static void setEnv(@NotNull String name, @NotNull String value, boolean overwrite) {
-    if (C_LIB != null) {
-      checkCLib();
-      C_LIB.setenv(name, value, overwrite ? 1 : 0);
-    }
-  }
-
   private static void checkCLib() {
     if (C_LIB == null) {
       throw new IllegalStateException("System is not unix(couldn't load c library)");
@@ -308,7 +293,6 @@ public class UnixProcessManager {
   private interface CLib extends Library {
     int getpid();
     int kill(int pid, int signal);
-    int setenv(String name, String value, int overwrite);
   }
 
   public static class ProcessInfo {

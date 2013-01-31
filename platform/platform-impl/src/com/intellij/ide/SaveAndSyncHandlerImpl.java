@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -45,10 +46,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSyncHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SaveAndSyncHandler");
+
   private final Runnable myIdleListener;
   private final PropertyChangeListener myGeneralSettingsListener;
   private final ProgressManager myProgressManager;
-  
+
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
   private final Alarm myRefreshDelayAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -71,7 +73,6 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         }
       }
     };
-
 
     IdeEventQueue.getInstance().addIdleListener(
       myIdleListener,
@@ -104,7 +105,6 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         refreshFiles();
       }
     });
-
   }
 
   @Override
@@ -133,7 +133,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
       LOG.debug("enter: save()");
     }
     if (ApplicationManager.getApplication().isDisposed()) return;
-    
+
     if (myBlockSaveOnFrameDeactivationCount.get() == 0 && GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
       FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -155,11 +155,11 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   }
 
   private void refreshFiles() {
-    if (ApplicationManager.getApplication().isDisposed()) return;
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: synchronize()");
+    if (ApplicationManager.getApplication().isDisposed() || !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+      return;
     }
 
+    LOG.debug("enter: refreshFiles()");
     myRefreshDelayAlarm.cancelAllRequests();
     myRefreshDelayAlarm.addRequest(new Runnable() {
       @Override
@@ -171,24 +171,20 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         maybeRefresh(ModalityState.NON_MODAL);
       }
     }, 300, ModalityState.NON_MODAL);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("exit: synchronize()");
-    }
+    LOG.debug("exit: refreshFiles()");
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {
-    if (GeneralSettings.getInstance().isSyncOnFrameActivation() && myBlockSyncOnFrameActivationCount.get() == 0) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("refresh VFS");
-      }
+    if (myBlockSyncOnFrameActivationCount.get() == 0) {
+      LOG.debug("VFS refresh started");
       RefreshQueue.getInstance().refresh(true, true, null, modalityState, ManagingFS.getInstance().getLocalRoots());
+      LOG.debug("VFS refresh finished");
     }
   }
 
   public static void refreshOpenFiles() {
     List<VirtualFile> files = ContainerUtil.newArrayList();
-    for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       VirtualFile[] projectFiles = FileEditorManager.getInstance(project).getSelectedFiles();
       for (VirtualFile file : projectFiles) {
         if (file instanceof NewVirtualFile) {
@@ -202,7 +198,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
       RefreshQueue.getInstance().refresh(false, false, null, files);
     }
   }
-  
+
   @Override
   public void blockSaveOnFrameDeactivation() {
     myBlockSaveOnFrameDeactivationCount.incrementAndGet();
@@ -217,7 +213,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   public void blockSyncOnFrameActivation() {
     myBlockSyncOnFrameActivationCount.incrementAndGet();
   }
-  
+
   @Override
   public void unblockSyncOnFrameActivation() {
     myBlockSyncOnFrameActivationCount.decrementAndGet();

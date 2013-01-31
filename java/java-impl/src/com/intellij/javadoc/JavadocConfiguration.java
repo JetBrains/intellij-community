@@ -42,6 +42,7 @@ import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -271,8 +272,9 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           for (String aPackage : packages) {
             writer.println(aPackage);
           }
+          //http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javadoc.html#runningjavadoc
           for (String source : sources) {
-            writer.println(source);
+            writer.println(StringUtil.wrapWithDoubleQuote(source));
           }
           writer.println("-sourcepath");
           OrderEnumerator enumerator = OrderEnumerator.orderEntries(myProject);
@@ -294,7 +296,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
             }
             sourcePath.append(file.getPath());
           }
-          writer.println(sourcePath.toString());
+          writer.println(StringUtil.wrapWithDoubleQuote(sourcePath.toString()));
         }
         finally {
           writer.close();
