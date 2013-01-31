@@ -85,6 +85,11 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public void setFontPreferences(@NotNull FontPreferences preferences) {
+    myDelegate.setFontPreferences(preferences);
+  }
+
+  @Override
   public int getEditorFontSize() {
     return myDelegate.getEditorFontSize();
   }
@@ -156,6 +161,11 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public FontPreferences getConsoleFontPreferences() {
     return myDelegate.getConsoleFontPreferences();
+  }
+
+  @Override
+  public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
+    myDelegate.setConsoleFontPreferences(preferences);
   }
 
   @Override

@@ -5684,7 +5684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
 
-    private final FontPreferences                            myFontPreferences = new FontPreferences();
+    private final FontPreferences                        myFontPreferences = new FontPreferences();
     private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
     private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
@@ -5808,6 +5808,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
+    public void setFontPreferences(@NotNull FontPreferences preferences) {
+      preferences.copyTo(myFontPreferences);
+      initFonts();
+    }
+
+    @Override
     public String getEditorFontName() {
       if (myFaceName == null) {
         return getGlobal().getEditorFontName();
@@ -5874,7 +5880,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public FontPreferences getConsoleFontPreferences() {
       return getGlobal().getConsoleFontPreferences();
     }
-    
+
+    @Override
+    public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
+      getGlobal().setConsoleFontPreferences(preferences);
+    }
+
     @Override
     public String getConsoleFontName() {
       return getGlobal().getConsoleFontName();

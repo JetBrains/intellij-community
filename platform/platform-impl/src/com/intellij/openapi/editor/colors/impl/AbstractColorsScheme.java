@@ -90,6 +90,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected AbstractColorsScheme(EditorColorsScheme parentScheme, DefaultColorSchemesManager defaultColorSchemesManager) {
     myParentScheme = parentScheme;
     myDefaultColorSchemesManager = defaultColorSchemesManager;
+    myFontPreferences.setChangeListener(new Runnable() {
+      @Override
+      public void run() {
+        initFonts();
+      }
+    });
   }
 
   public AbstractColorsScheme(DefaultColorSchemesManager defaultColorSchemesManager) {
@@ -179,7 +185,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public FontPreferences getFontPreferences() {
     return myFontPreferences;
   }
-  
+
+  @Override
+  public void setFontPreferences(@NotNull FontPreferences preferences) {
+    preferences.copyTo(myFontPreferences);
+    initFonts();
+  }
+
   @Override
   public String getEditorFontName() {
     if (myFallbackFontName != null) {
@@ -581,7 +593,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   public FontPreferences getConsoleFontPreferences() {
     return myConsoleFontPreferences;
   }
-  
+
+  @Override
+  public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
+    preferences.copyTo(myConsoleFontPreferences);
+    initFonts();
+  }
+
   @Override
   public String getConsoleFontName() {
     return myConsoleFontPreferences.getFontFamily();
