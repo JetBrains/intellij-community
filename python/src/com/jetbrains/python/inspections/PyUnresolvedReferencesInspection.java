@@ -655,7 +655,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (cls.findProperty(refText) != null) {
           return true;
         }
-        if (hasUnresolvedAncestors(cls)) {
+        if (PyUtil.hasUnresolvedAncestors(cls)) {
           return true;
         }
         if (isDecoratedAsDynamic(cls, true)) {
@@ -692,15 +692,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         final String docString = cls.getDocStringValue();
         if (docString != null && docString.indexOf("@DynamicAttrs") != -1) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private static boolean hasUnresolvedAncestors(PyClass cls) {
-      for (PyClassRef classRef : cls.iterateAncestors()) {
-        if (classRef.getPyClass() == null && classRef.getType() == null) {
           return true;
         }
       }

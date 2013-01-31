@@ -609,6 +609,15 @@ public class PyUtil {
     }
   }
 
+  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
+    for (PyClassRef classRef : cls.iterateAncestors()) {
+      if (classRef.getPyClass() == null && classRef.getType() == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
@@ -914,21 +923,6 @@ public class PyUtil {
     }
     for (PyClassRef superclass : pyClass.iterateAncestors()) {
       if (isBaseException(superclass.getQualifiedName())) return true;
-    }
-    return false;
-  }
-
-  public static boolean isDescendantOf(@Nullable PyClass clazz, @NotNull String name) {
-    if (clazz == null) {
-      return false;
-    }
-    if (name.equals(clazz.getQualifiedName())) {
-      return true;
-    }
-    for (PyClassRef ancestor : clazz.iterateAncestors()) {
-      if (name.equals(ancestor.getQualifiedName())) {
-        return true;
-      }
     }
     return false;
   }

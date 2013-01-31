@@ -167,8 +167,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
       if (parent instanceof PyTupleExpression) {
-        final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(parent, PyAssignmentStatement.class);
-        if (assignment != null) {
+        PsiElement nextParent = parent.getParent();
+        while (nextParent instanceof PyParenthesizedExpression) {
+          nextParent = nextParent.getParent();
+        }
+        if (nextParent instanceof PyAssignmentStatement) {
+          final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
           if (value != null) {
             final PyType assignedType = value.getType(context);
