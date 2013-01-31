@@ -164,6 +164,10 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
                   connection.setReadTimeout(3 * 1000);
                   connection.setConnectTimeout(3 * 1000);
                   connection.connect();
+                  final int code = connection.getResponseCode();
+                  if (HttpURLConnection.HTTP_OK != code) {
+                    exc[0] = new IOException("Error code: " + code);
+                  }
                 }
                 catch (IOException e1) {
                   exc[0] = e1;
