@@ -69,20 +69,14 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           }
         });
 
-        collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
-          @Override
-          public XmlElementDescriptor fun(PsiMethod method) {
-            final PsiClass aClass = method.getContainingClass();
-            return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
-          }
-        });
+        collectStaticElementDescriptors(context, children);
 
         final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
         if (annotation != null) {
           final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
           if (memberValue != null) {
             final String propertyName = StringUtil.stripQuotesAroundValue(memberValue.getText());
-            final PsiMethod getter = findPropertyGetter(propertyName, myPsiClass);
+            final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(propertyName, myPsiClass);
             if (getter != null) {
               final PsiType returnType = getter.getReturnType();
               JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
@@ -100,6 +94,25 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  static void collectStaticAttributesDescriptors(XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
+    collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
+      @Override
+      public XmlAttributeDescriptor fun(PsiMethod method) {
+        return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
+      }
+    });
+  }
+
+  protected static void collectStaticElementDescriptors(XmlTag context, List<XmlElementDescriptor> children) {
+    collectParentStaticProperties(context, children, new Function<PsiMethod, XmlElementDescriptor>() {
+      @Override
+      public XmlElementDescriptor fun(PsiMethod method) {
+        final PsiClass aClass = method.getContainingClass();
+        return new JavaFxPropertyElementDescriptor(aClass, PropertyUtil.getPropertyName(method.getName()), true);
+      }
+    });
   }
 
   private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
@@ -127,13 +140,13 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
-    if (isClassTag(name)) {
+    if (JavaFxPsiUtil.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else {
       final String shortName = StringUtil.getShortName(name);
       if (!name.equals(shortName)) { //static property
-        final PsiMethod propertySetter = findPropertySetter(name, childTag);
+        final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(name, childTag);
         if (propertySetter != null) {
           return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName, true);
         }
@@ -144,11 +157,6 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
       return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }
-  }
-
-  public static boolean isClassTag(String name) {
-    final String shortName = StringUtil.getShortName(name);
-    return StringUtil.isCapitalized(name) && name.equals(shortName);
   }
 
   @Override
@@ -164,12 +172,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
           }
         });
-        collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
-          @Override
-          public XmlAttributeDescriptor fun(PsiMethod method) {
-            return new JavaFxSetterAttributeDescriptor(method, method.getContainingClass());
-          }
-        });
+        collectStaticAttributesDescriptors(context, simpleAttrs);
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
           simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
         }
@@ -203,7 +206,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName)){
         return new JavaFxDefaultAttributeDescriptor(attributeName, myPsiClass);
       } else {
-        final PsiMethod propertySetter = findPropertySetter(attributeName, context);
+        final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
         if (propertySetter != null) {
           return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
         }
@@ -300,34 +303,5 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         }
       }
     }
-  }
-
-  public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
-    final String packageName = StringUtil.getPackageName(attributeName);
-    if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
-      final PsiClass classWithStaticProperty = JavaFxPsiUtil.findPsiClass(packageName, context);
-      if (classWithStaticProperty != null) {
-        return findPropertySetter(attributeName, classWithStaticProperty);
-      }
-    }
-    return null;
-  }
-
-  public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
-    final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
-    final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
-    if (setters.length == 1) {
-      return setters[0];
-    }
-    return null;
-  }
-
-  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
-    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
-    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
-    if (getters.length >= 1) {
-      return getters[0];
-    }
-    return null;
   }
 }

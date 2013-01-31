@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -26,6 +27,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,8 +71,9 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     if (defaultAttributeList != null) {
       final List<XmlAttributeDescriptor> descriptors = new ArrayList<XmlAttributeDescriptor>();
       for (String defaultAttrName : defaultAttributeList) {
-        descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, null));
+        descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, getName()));
       }
+      JavaFxClassBackedElementDescriptor.collectStaticAttributesDescriptors(context, descriptors);
       return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
     }
     return XmlAttributeDescriptor.EMPTY;
@@ -80,8 +83,14 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
     final List<String> defaultAttributeList = FxmlConstants.FX_ELEMENT_ATTRIBUTES.get(getName());
-    if (defaultAttributeList != null && defaultAttributeList.contains(attributeName)) {
-      return new JavaFxDefaultAttributeDescriptor(attributeName, null);
+    if (defaultAttributeList != null) {
+      if (defaultAttributeList.contains(attributeName)) {
+        return new JavaFxDefaultAttributeDescriptor(attributeName, getName());
+      }
+      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
+      if (propertySetter != null) {
+        return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
+      }
     }
     return null;
   }

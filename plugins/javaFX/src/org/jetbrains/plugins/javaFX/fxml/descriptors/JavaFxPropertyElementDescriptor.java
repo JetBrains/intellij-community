@@ -20,6 +20,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +90,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
       return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
     }
-    if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
+    if (JavaFxPsiUtil.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else if (myPsiClass != null) {
@@ -144,7 +145,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (field != null) {
       return field;
     }
-    return JavaFxClassBackedElementDescriptor.findPropertySetter(myName, myPsiClass);
+    return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
   }
 
   @Override

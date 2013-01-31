@@ -110,6 +110,14 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testReferenceAttributes() throws Exception {
+    doTest();
+  }
+
+  public void testDefineAttributes() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

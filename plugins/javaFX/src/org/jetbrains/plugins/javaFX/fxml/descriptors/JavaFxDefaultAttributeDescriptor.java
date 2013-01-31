@@ -21,6 +21,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: 1/10/13
@@ -28,8 +30,14 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultAttributeDescriptor.class.getName());
 
+  private String myDefaultPropertyName = null;
   public JavaFxDefaultAttributeDescriptor(String name, PsiClass psiClass) {
     super(name, psiClass);
+  }
+
+  public JavaFxDefaultAttributeDescriptor(String name, String defaultPropertyName) {
+    super(name, null);
+    myDefaultPropertyName = defaultPropertyName;
   }
 
   @Override
@@ -40,6 +48,15 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
   @Override
   public boolean isEnumerated() {
     return getName().equals("fx:constant");
+  }
+
+  @Override
+  public boolean isRequired() {
+    if (myDefaultPropertyName != null) {
+      final List<String> requiredAttrs = FxmlConstants.FX_REQUIRED_ELEMENT_ATTRIBUTES.get(myDefaultPropertyName);
+      if (requiredAttrs != null && requiredAttrs.contains(getName())) return true;
+    }
+    return false;
   }
 
   @Override

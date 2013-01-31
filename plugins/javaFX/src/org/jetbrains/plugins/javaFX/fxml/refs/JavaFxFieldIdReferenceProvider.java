@@ -32,27 +32,6 @@ class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvi
                                                   XmlAttributeValue xmlAttributeValue,
                                                   ProcessingContext context) {
     final PsiField field = aClass.findFieldByName(xmlAttributeValue.getValue(), false);
-    return field == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{new JavaFxIdReference(xmlAttributeValue, field)};
-  }
-
-  private static class JavaFxIdReference extends PsiReferenceBase<XmlAttributeValue> {
-    private final PsiField myField;
-
-    public JavaFxIdReference(XmlAttributeValue xmlAttributeValue, PsiField field) {
-      super(xmlAttributeValue);
-      myField = field;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement resolve() {
-      return myField;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
+    return field == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{new PsiReferenceBase.Immediate<XmlAttributeValue>(xmlAttributeValue, field)};
   }
 }
