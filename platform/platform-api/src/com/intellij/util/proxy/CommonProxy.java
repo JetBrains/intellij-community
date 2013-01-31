@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -47,10 +48,11 @@ public class CommonProxy extends ProxySelector {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.proxy.CommonProxy");
   private final Object myLock;
-  private final Set<HostInfo> myNoProxy;
+  private final Set<Pair<HostInfo, Thread>> myNoProxy;
 
   private final Map<String, ProxySelector> myCustom;
   private final Map<String, NonStaticAuthenticator> myCustomAuth;
+  private final Set<Pair<HostInfo, Thread>> myNoAuthentication;
 
   public static CommonProxy getInstance() {
     return ourInstance;
@@ -58,11 +60,12 @@ public class CommonProxy extends ProxySelector {
 
   public CommonProxy() {
     myLock = new Object();
-    myNoProxy = new HashSet<HostInfo>();
+    myNoProxy = new HashSet<Pair<HostInfo, Thread>>();
     myCustom = new HashMap<String, ProxySelector>();
     myCustomAuth = new HashMap<String, NonStaticAuthenticator>();
     myAuthenticator = new CommonAuthenticator();
     ensureAuthenticator();
+    myNoAuthentication = new HashSet<Pair<HostInfo, Thread>>();
   }
 
   public static void isInstalledAssertion() {
@@ -108,14 +111,28 @@ public class CommonProxy extends ProxySelector {
   public void noProxy(@NotNull final String protocol, @NotNull final String host, final int port) {
     synchronized (myLock) {
       LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
-      myNoProxy.add(new HostInfo(protocol, host, port));
+      myNoProxy.add(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
     }
   }
 
   public void removeNoProxy(@NotNull final String protocol, @NotNull final String host, final int port) {
     synchronized (myLock) {
       LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
-      myNoProxy.remove(new HostInfo(protocol, host, port));
+      myNoProxy.remove(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
+    }
+  }
+
+  public void noAuthentication(@NotNull final String protocol, @NotNull final String host, final int port) {
+    synchronized (myLock) {
+      LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
+      myNoProxy.add(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
+    }
+  }
+
+  public void removeNoAuthentication(@NotNull final String protocol, @NotNull final String host, final int port) {
+    synchronized (myLock) {
+      LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
+      myNoProxy.remove(Pair.create(new HostInfo(protocol, host, port), Thread.currentThread()));
     }
   }
 
@@ -163,7 +180,7 @@ public class CommonProxy extends ProxySelector {
     final HostInfo info = new HostInfo(protocol, host, port);
     final Map<String, ProxySelector> copy;
     synchronized (myLock) {
-      if (myNoProxy.contains(info)) {
+      if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
         LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
         return NO_PROXY_LIST;
       }
@@ -203,8 +220,14 @@ public class CommonProxy extends ProxySelector {
       final Map<String, NonStaticAuthenticator> copy;
       synchronized (myLock) {
         // for hosts defined as no proxy we will NOT pass authentication to not provoke credentials
-        if (myNoProxy.contains(new HostInfo(getRequestingProtocol(), host, port))) {
-          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies list (" + siteStr + ")");
+        final HostInfo hostInfo = new HostInfo(getRequestingProtocol(), host, port);
+        final Pair<HostInfo, Thread> pair = Pair.create(hostInfo, Thread.currentThread());
+        if (myNoProxy.contains(pair)) {
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies set (" + siteStr + ")");
+          return null;
+        }
+        if (myNoAuthentication.contains(pair)) {
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no authentication set (" + siteStr + ")");
           return null;
         }
         copy = new HashMap<String, NonStaticAuthenticator>(myCustomAuth);

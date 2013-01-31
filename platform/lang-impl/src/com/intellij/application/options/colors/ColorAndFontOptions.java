@@ -234,11 +234,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
         myColorsManager.removeAllSchemes();
         for (MyColorScheme scheme : mySchemes.values()) {
-            if (!scheme.isDefault()) {
-              scheme.apply();
-              myColorsManager.addColorsScheme(scheme.getOriginalScheme());
-            }
+          if (!scheme.isDefault()) {
+            scheme.apply();
+            myColorsManager.addColorsScheme(scheme.getOriginalScheme());
           }
+        }
 
         EditorColorsScheme originalScheme = mySelectedScheme.getOriginalScheme();
         myColorsManager.setGlobalScheme(originalScheme);
@@ -990,27 +990,18 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   private static class MyColorScheme extends EditorColorsSchemeImpl {
-    private int myFontSize;
-    private float myLineSpacing;
-    private String myFontName;
-
-    private int myConsoleFontSize;
-    private float myConsoleLineSpacing;
-    private String myConsoleFontName;
 
     private EditorSchemeAttributeDescriptor[] myDescriptors;
-    private String myName;
+    private String                            myName;
     private boolean myIsNew = false;
 
     private MyColorScheme(EditorColorsScheme parentScheme) {
       super(parentScheme, DefaultColorSchemesManager.getInstance());
-      myFontSize = parentScheme.getEditorFontSize();
-      myLineSpacing = parentScheme.getLineSpacing();
-      myFontName = parentScheme.getEditorFontName();
+      parentScheme.getFontPreferences().copyTo(getFontPreferences());
+      setLineSpacing(parentScheme.getLineSpacing());
 
-      myConsoleFontSize = parentScheme.getConsoleFontSize();
-      myConsoleLineSpacing = parentScheme.getConsoleLineSpacing();
-      myConsoleFontName = parentScheme.getConsoleFontName();
+      parentScheme.getConsoleFontPreferences().copyTo(getConsoleFontPreferences());
+      setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
@@ -1059,17 +1050,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     private boolean isFontModified() {
-      if (myFontSize != myParentScheme.getEditorFontSize()) return true;
-      if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
-      if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
-      if (myQuickDocFontSize != myParentScheme.getQuickDocFontSize()) return true;
+      if (!getFontPreferences().equals(myParentScheme.getFontPreferences())) return true;
+      if (getLineSpacing() != myParentScheme.getLineSpacing()) return true;
+      if (getQuickDocFontSize() != myParentScheme.getQuickDocFontSize()) return true;
       return false;
     }
 
     private boolean isConsoleFontModified() {
-      if (myConsoleFontSize != myParentScheme.getConsoleFontSize()) return true;
-      if (myConsoleLineSpacing != myParentScheme.getConsoleLineSpacing()) return true;
-      if (!myConsoleFontName.equals(myParentScheme.getConsoleFontName())) return true;
+      if (!getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences())) return true;
+      if (getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing()) return true;
       return false;
     }
 
@@ -1078,83 +1067,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void apply(EditorColorsScheme scheme) {
-      scheme.setEditorFontSize(myFontSize);
-      scheme.setEditorFontName(myFontName);
+      getFontPreferences().copyTo(scheme.getFontPreferences());
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
-      scheme.setConsoleFontSize(myConsoleFontSize);
-      scheme.setConsoleFontName(myConsoleFontName);
-      scheme.setConsoleLineSpacing(myConsoleLineSpacing);
+      getConsoleFontPreferences().copyTo(scheme.getConsoleFontPreferences());
+      scheme.setConsoleLineSpacing(getConsoleLineSpacing());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(scheme);
       }
-    }
-
-    @Override
-    public String getEditorFontName() {
-      return myFontName;
-    }
-
-    @Override
-    public int getEditorFontSize() {
-      return myFontSize;
-    }
-
-    @Override
-    public float getLineSpacing() {
-      return myLineSpacing;
-    }
-
-    @Override
-    public void setEditorFontSize(int fontSize) {
-      myFontSize = fontSize;
-      initFonts();
-    }
-
-    @Override
-    public void setLineSpacing(float lineSpacing) {
-      assert lineSpacing >= 0 : lineSpacing;
-      myLineSpacing = lineSpacing;
-    }
-
-    @Override
-    public void setEditorFontName(String fontName) {
-      myFontName = fontName;
-      initFonts();
-    }
-
-    @Override
-    public String getConsoleFontName() {
-      return myConsoleFontName;
-    }
-
-    @Override
-    public void setConsoleFontName(String fontName) {
-      myConsoleFontName = fontName;
-      initFonts();
-    }
-
-    @Override
-    public int getConsoleFontSize() {
-      return myConsoleFontSize;
-    }
-
-    @Override
-    public void setConsoleFontSize(int fontSize) {
-      myConsoleFontSize = fontSize;
-      initFonts();
-    }
-
-    @Override
-    public float getConsoleLineSpacing() {
-      return myConsoleLineSpacing;
-    }
-
-    @Override
-    public void setConsoleLineSpacing(float lineSpacing) {
-      assert lineSpacing >= 0 : lineSpacing;
-      myConsoleLineSpacing = lineSpacing;
     }
 
     @Override

@@ -69,6 +69,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       return s.contains(".idea") ? null : s;
     }
   };
+  public static final String UTF_8 = "UTF-8";
 
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
@@ -205,7 +206,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private static byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
-    return merged.replace("\\$", "$").replace("\\#", "#").getBytes();
+    return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
 
   @Nullable
