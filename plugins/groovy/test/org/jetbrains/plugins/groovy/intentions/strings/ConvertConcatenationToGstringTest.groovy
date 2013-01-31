@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions;
+package org.jetbrains.plugins.groovy.intentions.strings;
 
 
 import com.intellij.openapi.module.Module
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
