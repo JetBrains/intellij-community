@@ -3,14 +3,17 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.PointInImport;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -19,14 +22,19 @@ public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @Override
   protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
     if (qName.equals("os")) {
-      final String name = SystemInfo.isWindows ? "ntpath" : "posixpath";
+      final List<PyDynamicMember> results = new ArrayList<PyDynamicMember>();
+      PsiElement path = null;
+      PyClass osError = null;
       if (module != null) {
-        final PsiElement resolved = ResolveImportUtil.resolveModuleInRoots(PyQualifiedName.fromDottedString(name), module);
-        if (resolved != null) {
-          return Collections.singletonList(new PyDynamicMember("path", resolved));
-        }
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(module);
+        osError = builtinCache.getClass("OSError");
+
+        final String pathModuleName = SystemInfo.isWindows ? "ntpath" : "posixpath";
+        path = ResolveImportUtil.resolveModuleInRoots(PyQualifiedName.fromDottedString(pathModuleName), module);
       }
-      return Collections.singletonList(new PyDynamicMember("path"));
+      results.add(new PyDynamicMember("error", osError));
+      results.add(new PyDynamicMember("path", path));
+      return results;
     }
     return Collections.emptyList();
   }
