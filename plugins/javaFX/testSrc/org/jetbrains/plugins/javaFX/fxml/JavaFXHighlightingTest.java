@@ -130,6 +130,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPropertyElementsWithAnyAttributes() throws Exception {
+    doTest();
+  }
+
   public void testIncludeBtn() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", "btn.fxml");
     doDoTest(false, false);
