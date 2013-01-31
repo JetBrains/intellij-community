@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
@@ -166,7 +165,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
 
       @Override
       public void runWithSvnkitClient(File configDir, SvnAuthenticationManager manager) throws SVNException {
-        final SVNUpdateClient client = new SVNUpdateClient(manager, SvnConfiguration.getInstance(myProject).getOptions(myProject));
+        final SVNUpdateClient client = SvnVcs.getInstance(myProject).createUpdateClient(manager);
         client.doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
       }
 
