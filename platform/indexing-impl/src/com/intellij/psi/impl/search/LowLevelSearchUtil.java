@@ -205,11 +205,11 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = textArray != null ? textArray[index - 1]:text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          if (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2)) { //escape sequence
+          if (searcher.isHandleEscapeSequences() && (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2))) { //escape sequence
             continue;
           }
         }
-        else if (index > 0 && isNotEscapedBackslash(text, textArray, startOffset, index-1)) {
+        else if (index > 0 && searcher.isHandleEscapeSequences() && isNotEscapedBackslash(text, textArray, startOffset, index-1)) {
           continue;
         }
       }

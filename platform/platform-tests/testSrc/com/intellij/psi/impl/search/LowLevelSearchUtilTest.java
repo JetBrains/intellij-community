@@ -43,7 +43,7 @@ public class LowLevelSearchUtilTest extends TestCase {
   }
 
   private static int doTest(String pattern, String text) {
-    StringSearcher searcher = new StringSearcher(pattern, true, true);
+    StringSearcher searcher = new StringSearcher(pattern, true, true, true);
     return LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, null);
   }
 }
