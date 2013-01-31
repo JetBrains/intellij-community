@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -44,17 +43,6 @@ public class MoreOperationNode extends ZenCodingNode {
     return myRightOperand;
   }
 
-  private static void addChildrenToAllLeafs(GenerationNode root, Collection<GenerationNode> children) {
-    if (root.isLeaf()) {
-      root.addChildren(children);
-    }
-    else {
-      for (GenerationNode child : root.getChildren()) {
-        addChildrenToAllLeafs(child, children);
-      }
-    }
-  }
-
   @NotNull
   @Override
   public List<ZenCodingNode> getChildren() {
@@ -66,16 +54,15 @@ public class MoreOperationNode extends ZenCodingNode {
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd) {
+                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     if (myLeftOperand instanceof MulOperationNode || (myLeftOperand instanceof UnaryMulOperationNode && surroundedText != null)) {
       List<GenerationNode> result = new ArrayList<GenerationNode>();
       if (myLeftOperand instanceof MulOperationNode) {
         MulOperationNode mul = (MulOperationNode)myLeftOperand;
         for (int i = 0; i < mul.getRightOperand(); i++) {
-          List<GenerationNode> parentNodes = mul.getLeftOperand().expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd);
-          List<GenerationNode> innerNodes = myRightOperand.expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd);
+          List<GenerationNode> parentNodes = mul.getLeftOperand().expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
           for (GenerationNode parentNode : parentNodes) {
-            addChildrenToAllLeafs(parentNode, innerNodes);
+            myRightOperand.expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd, parentNode);
           }
           result.addAll(parentNodes);
         }
@@ -85,20 +72,18 @@ public class MoreOperationNode extends ZenCodingNode {
         String[] lines = LineTokenizer.tokenize(surroundedText, false);
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i].trim();
-          List<GenerationNode> parentNodes = unaryMul.getOperand().expand(i, line, callback, insertSurroundedTextAtTheEnd);
-          List<GenerationNode> innerNodes = myRightOperand.expand(i, line, callback, insertSurroundedTextAtTheEnd);
+          List<GenerationNode> parentNodes = unaryMul.getOperand().expand(i, line, callback, insertSurroundedTextAtTheEnd, parent);
           for (GenerationNode parentNode : parentNodes) {
-            addChildrenToAllLeafs(parentNode, innerNodes);
+            myRightOperand.expand(i, line, callback, insertSurroundedTextAtTheEnd, parentNode);
           }
           result.addAll(parentNodes);
         }
       }
       return result;
     }
-    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd);
+    List<GenerationNode> leftGenNodes = myLeftOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
     for (GenerationNode leftGenNode : leftGenNodes) {
-      List<GenerationNode> rightGenNodes = myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd);
-      addChildrenToAllLeafs(leftGenNode, rightGenNodes);
+      myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, leftGenNode);
     }
     return leftGenNodes;
   }

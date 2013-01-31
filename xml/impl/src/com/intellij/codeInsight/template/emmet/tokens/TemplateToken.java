@@ -19,12 +19,15 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class TemplateToken extends ZenCodingToken {
+  public final static TemplateToken EMPTY_TEMPLATE_TOKEN = new TemplateToken("", new ArrayList<Pair<String, String>>());
+
   private final String myKey;
   private TemplateImpl myTemplate;
   private final List<Pair<String, String>> myAttribute2Value;

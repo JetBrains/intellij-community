@@ -41,14 +41,14 @@ public class UnaryMulOperationNode extends ZenCodingNode {
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd) {
+                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     if (surroundedText == null) {
-      return myOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd);
+      return myOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
     }
     String[] lines = LineTokenizer.tokenize(surroundedText, false);
     List<GenerationNode> result = new ArrayList<GenerationNode>();
     for (int i = 0; i < lines.length; i++) {
-      result.addAll(myOperand.expand(i, lines[i].trim(), callback, insertSurroundedTextAtTheEnd));
+      result.addAll(myOperand.expand(i, lines[i].trim(), callback, insertSurroundedTextAtTheEnd, parent));
     }
     return result;
   }

@@ -229,7 +229,11 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (surroundedText != null) {
       surroundedText = surroundedText.trim();
     }
-    List<GenerationNode> genNodes = node.expand(-1, surroundedText, callback, true);
+
+    GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, surroundedText, true, null);
+    node.expand(-1, surroundedText, callback, true, fakeParentNode);
+
+    List<GenerationNode> genNodes = fakeParentNode.getChildren();
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
     for (int i = 0, genNodesSize = genNodes.size(); i < genNodesSize; i++) {

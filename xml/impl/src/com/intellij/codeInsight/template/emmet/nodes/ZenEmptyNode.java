@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,44 +18,28 @@ package com.intellij.codeInsight.template.emmet.nodes;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Eugene.Kudelevsky
+ * User: zolotov
+ * Date: 1/31/13
  */
-public class MulOperationNode extends ZenCodingNode {
-  private final ZenCodingNode myLeftOperand;
-  private final int myRightOperand;
-
-  public MulOperationNode(ZenCodingNode leftOperand, int rightOperand) {
-    myLeftOperand = leftOperand;
-    myRightOperand = rightOperand;
-  }
-
-  public ZenCodingNode getLeftOperand() {
-    return myLeftOperand;
-  }
-
-  public int getRightOperand() {
-    return myRightOperand;
-  }
+public class ZenEmptyNode extends ZenCodingNode {
+  public static final ZenCodingNode INSTANCE = new ZenEmptyNode();
 
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    List<GenerationNode> result = new ArrayList<GenerationNode>();
-    for (int i = 0; i < myRightOperand; i++) {
-      result.addAll(myLeftOperand.expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
-    }
-    return result;
+                                     boolean insertSurroundedTextAtTheEnd,
+                                     GenerationNode parent) {
+    return Collections.emptyList();
   }
 
   @Override
   public String toString() {
-    return "*";
+    return "EMPTY_NODE";
   }
 }

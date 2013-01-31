@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class TextNode extends ZenCodingNode {
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd) {
+                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
     final boolean containsSurroundedTextMarker = ZenCodingUtil.containsSurroundedTextMarker(myText);
 
@@ -41,8 +40,9 @@ public class TextNode extends ZenCodingNode {
     final TemplateImpl template = new TemplateImpl("", text, "");
     ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
 
-    final GenerationNode node = new GenerationNode(templateToken, new ArrayList<GenerationNode>(), numberInIteration,
-                                                   containsSurroundedTextMarker ? null : surroundedText, insertSurroundedTextAtTheEnd);
+    final GenerationNode node = new GenerationNode(templateToken, numberInIteration,
+                                                   containsSurroundedTextMarker ? null : surroundedText,
+                                                   insertSurroundedTextAtTheEnd, parent);
     return Collections.singletonList(node);
   }
 

@@ -106,14 +106,25 @@ class EmmetParser {
   @Nullable
   private ZenCodingNode parseAddOrMore() {
     ZenCodingNode mul = parseMul();
-    if (mul == null) {
-      return null;
-    }
+
     ZenCodingToken operationToken = nextToken();
     if (!(operationToken instanceof OperationToken)) {
       return mul;
     }
     char sign = ((OperationToken)operationToken).getSign();
+
+    if (sign == '^') {
+      myIndex++;
+      mul = mul != null ? mul : ZenEmptyNode.INSTANCE;
+      ZenCodingNode climbUp2 = parseAddOrMore();
+      if(climbUp2 == null) {
+        return null;
+      }
+      return new ClimbUpOperationNode(mul, climbUp2);
+    }
+    if (mul == null) {
+      return null;
+    }
     if (sign == '+') {
       myIndex++;
       ZenCodingNode add2 = parseAddOrMore();

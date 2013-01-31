@@ -29,7 +29,7 @@ public abstract class ZenCodingNode {
   public abstract List<GenerationNode> expand(int numberInIteration,
                                               String surroundedText,
                                               CustomTemplateCallback callback,
-                                              boolean insertSurroundedTextAtTheEnd);
+                                              boolean insertSurroundedTextAtTheEnd, GenerationNode parent);
 
   @NotNull
   public List<ZenCodingNode> getChildren() {

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,9 +44,9 @@ public class TemplateNode extends ZenCodingNode {
   public List<GenerationNode> expand(int numberInIteration,
                                      String surroundedText,
                                      CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd) {
-    GenerationNode node =
-      new GenerationNode(myTemplateToken, new ArrayList<GenerationNode>(), numberInIteration, surroundedText, insertSurroundedTextAtTheEnd);
+                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
+    GenerationNode node = new GenerationNode(myTemplateToken, numberInIteration, surroundedText,
+                                             insertSurroundedTextAtTheEnd, parent);
     return Arrays.asList(node);
   }
 

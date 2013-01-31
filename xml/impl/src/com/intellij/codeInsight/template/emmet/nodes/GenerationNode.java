@@ -48,36 +48,47 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class GenerationNode {
   private final TemplateToken myTemplateToken;
-  private final List<GenerationNode> myChildren;
+  private final List<GenerationNode> myChildren = newArrayList();
   private final int myNumberInIteration;
   private String mySurroundedText;
   private final boolean myInsertSurroundedTextAtTheEnd;
+  private GenerationNode myParent;
 
   private boolean myContainsSurroundedTextMarker = false;
 
   public GenerationNode(TemplateToken templateToken,
-                        List<GenerationNode> children,
                         int numberInIteration,
                         String surroundedText,
-                        boolean insertSurroundedTextAtTheEnd) {
+                        boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     myTemplateToken = templateToken;
-    myChildren = children;
     myNumberInIteration = numberInIteration;
     mySurroundedText = surroundedText;
     myInsertSurroundedTextAtTheEnd = insertSurroundedTextAtTheEnd;
+    if(parent != null) {
+      parent.addChild(this);
+    }
   }
 
   public List<GenerationNode> getChildren() {
     return myChildren;
   }
 
-  public void addChildren(Collection<GenerationNode> child) {
-    myChildren.addAll(child);
+  public void addChild(GenerationNode child) {
+    child.setParent(this);
+    myChildren.add(child);
+  }
+
+  public void addChildren(Collection<GenerationNode> children) {
+    for (GenerationNode child : children) {
+      addChild(child);
+    }
   }
 
   public boolean isLeaf() {
@@ -400,5 +411,13 @@ public class GenerationNode {
 
   public void setSurroundedText(String surroundedText) {
     mySurroundedText = surroundedText;
+  }
+
+  public GenerationNode getParent() {
+    return myParent;
+  }
+
+  public void setParent(GenerationNode parent) {
+    myParent = parent;
   }
 }

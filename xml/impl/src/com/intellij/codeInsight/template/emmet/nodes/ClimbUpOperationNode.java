@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
-public class MulOperationNode extends ZenCodingNode {
-  private final ZenCodingNode myLeftOperand;
-  private final int myRightOperand;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
-  public MulOperationNode(ZenCodingNode leftOperand, int rightOperand) {
+/**
+ * @author zolotov
+ */
+public class ClimbUpOperationNode extends ZenCodingNode {
+  private final ZenCodingNode myLeftOperand;
+  private final ZenCodingNode myRightOperand;
+
+  public ClimbUpOperationNode(ZenCodingNode leftOperand, ZenCodingNode rightOperand) {
     myLeftOperand = leftOperand;
     myRightOperand = rightOperand;
   }
@@ -37,7 +39,7 @@ public class MulOperationNode extends ZenCodingNode {
     return myLeftOperand;
   }
 
-  public int getRightOperand() {
+  public ZenCodingNode getRightOperand() {
     return myRightOperand;
   }
 
@@ -47,15 +49,26 @@ public class MulOperationNode extends ZenCodingNode {
                                      String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    List<GenerationNode> result = new ArrayList<GenerationNode>();
-    for (int i = 0; i < myRightOperand; i++) {
-      result.addAll(myLeftOperand.expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
+    List<GenerationNode> result = newArrayList();
+    result.addAll(myLeftOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
+    GenerationNode grandParent = parent != null ? parent.getParent() : null;
+    if (grandParent != null) {
+      myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, grandParent);
+    }
+    else {
+      result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
     }
     return result;
   }
 
+  @NotNull
+  @Override
+  public List<ZenCodingNode> getChildren() {
+    return ContainerUtil.newLinkedList(myLeftOperand, myRightOperand);
+  }
+
   @Override
   public String toString() {
-    return "*";
+    return "^";
   }
 }

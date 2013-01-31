@@ -27,7 +27,7 @@ import java.util.List;
  * Date: 1/25/13
  */
 public class EmmetLexer {
-  private static final String DELIMS = ">+*|()[]{}.#,='\" \0";
+  private static final String DELIMS = ">^+*|()[]{}.#,='\" \0";
 
   @Nullable
   public List<ZenCodingToken> lex(@NotNull String text) {
