@@ -17,7 +17,7 @@ public class MutableGraph implements NewGraph {
     private final EdgeController edgeController = new EdgeController();
     private final ElementVisibilityController visibilityController = new ElementVisibilityController();
     private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();
-    private final List<Integer> indexVisibleRows = new ArrayList<Integer>();
+    private final List<MutableNodeRow> visibleRows = new ArrayList<MutableNodeRow>();
 
     private final List<Executor<Replace>> listenerList = new ArrayList<Executor<Replace>>();
 
@@ -37,22 +37,22 @@ public class MutableGraph implements NewGraph {
 
     @Override
     public int size() {
-        return indexVisibleRows.size();
+        return visibleRows.size();
     }
 
     @NotNull
     @Override
     public NodeRow getNodeRow(int rowIndex) {
-        return allRows.get(indexVisibleRows.get(rowIndex));
+        return visibleRows.get(rowIndex);
     }
 
     public void updateVisibleRows() {
-        indexVisibleRows.clear();
+        visibleRows.clear();
         for (int  i = 0; i < allRows.size(); i++) {
             MutableNodeRow row = allRows.get(i);
             if (row.hasVisibleNodes()) {
-                row.setRowIndex(indexVisibleRows.size());
-                indexVisibleRows.add(i);
+                row.setRowIndex(visibleRows.size());
+                visibleRows.add(row);
             }
         }
     }
