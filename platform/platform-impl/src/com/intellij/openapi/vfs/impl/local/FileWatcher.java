@@ -396,6 +396,7 @@ public class FileWatcher {
     return myWatchedPaths;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp {
     GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY
   }
@@ -440,9 +441,8 @@ public class FileWatcher {
         }
 
         if (watcherOp == WatcherOp.GIVEUP) {
-          LOG.info("Native file watcher gives up to operate on this platform");
+          notifyOnFailure(ApplicationBundle.message("watcher.gave.up"), null);
           myIsShuttingDown = true;
-          shutdownProcess();
         }
         else if (watcherOp == WatcherOp.RESET) {
           reset();
