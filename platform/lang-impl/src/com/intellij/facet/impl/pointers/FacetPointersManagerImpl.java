@@ -204,6 +204,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
       final MessageBusConnection connection = module.getMessageBus().connect();
       myModule2Connection.put(module, connection);
       connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
+      refreshPointers(module);
     }
 
     public void moduleRemoved(Project project, final Module module) {

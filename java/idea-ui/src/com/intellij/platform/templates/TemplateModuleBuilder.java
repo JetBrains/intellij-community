@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
@@ -43,6 +44,8 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,17 +102,33 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           public void run() {
             try {
               setupModule(module);
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
             }
             catch (ConfigurationException e) {
               LOG.error(e);
             }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+          }
+        });
+
+        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  Artifact[] artifacts = ArtifactManager.getInstance(project).getArtifacts();
+
+                  ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                  modifiableModuleModel.renameModule(module, module.getProject().getName());
+                  modifiableModuleModel.commit();
+                  artifacts = ArtifactManager.getInstance(project).getArtifacts();
+                  fixModuleName(module);
+                }
+                catch (ModuleWithNameAlreadyExists exists) {
+                  // do nothing
+                }
+              }
+            });
           }
         });
         return module;
