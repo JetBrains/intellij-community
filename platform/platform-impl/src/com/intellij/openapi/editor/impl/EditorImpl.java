@@ -81,6 +81,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -5683,13 +5684,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
-    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
-    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+
+    private final FontPreferences                            myFontPreferences = new FontPreferences();
+    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
+    private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
-    private Map<EditorFontType, Font> myFontsMap = null;
-    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-    private int myFontSize = -1;
-    private String myFaceName = null;
+    private Map<EditorFontType, Font> myFontsMap    = null;
+    private int                       myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
+    private int                       myFontSize    = -1;
+    private String                    myFaceName    = null;
     private EditorColorsScheme myGlobalScheme;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
@@ -5710,6 +5713,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void initFonts() {
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
+
+      myFontPreferences.clear();
+      myFontPreferences.register(editorFontName, editorFontSize);
 
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
@@ -5796,6 +5802,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGlobalScheme.setQuickDocFontSize(fontSize);
     }
 
+    @NotNull
+    @Override
+    public FontPreferences getFontPreferences() {
+      return myFontPreferences.getFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
+    }
+
     @Override
     public String getEditorFontName() {
       if (myFaceName == null) {
@@ -5858,6 +5870,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
     }
 
+    @NotNull
+    @Override
+    public FontPreferences getConsoleFontPreferences() {
+      return getGlobal().getConsoleFontPreferences();
+    }
+    
     @Override
     public String getConsoleFontName() {
       return getGlobal().getConsoleFontName();
@@ -6282,7 +6300,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           for (
             FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(endOffset);
             region != null && endOffset < myDocument.getTextLength();
-            region = myFoldingModel.getCollapsedRegionAtOffset(endOffset)) {
+            region = myFoldingModel.getCollapsedRegionAtOffset(endOffset))
+          {
             final int lineNumber = myDocument.getLineNumber(region.getEndOffset());
             endOffset = myDocument.getLineEndOffset(lineNumber);
           }
@@ -6583,7 +6602,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           int x,
                           int y,
                           Color color,
-                          @NotNull FontInfo fontInfo) {
+                          @NotNull FontInfo fontInfo)
+    {
       drawCharsCached(g, data, start, end, x, y, fontInfo, color);
     }
   }
