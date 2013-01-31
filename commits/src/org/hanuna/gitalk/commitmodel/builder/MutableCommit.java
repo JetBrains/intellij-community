@@ -2,6 +2,7 @@ package org.hanuna.gitalk.commitmodel.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.commitmodel.Hash;
+import org.hanuna.gitalk.common.OneElementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ class MutableCommit implements Commit {
     }
 
     public void setParents(@NotNull List<Commit> parents) {
-        this.parents = parents;
+        this.parents = OneElementList.shortlyList(parents);
     }
 
     @NotNull
