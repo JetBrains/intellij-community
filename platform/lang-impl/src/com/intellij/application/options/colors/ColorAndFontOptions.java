@@ -1094,6 +1094,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     public boolean isNew() {
       return myIsNew;
     }
+
+    @Override
+    public String toString() {
+      return "temporary scheme for " + myName;
+    }
   }
 
   @Override
