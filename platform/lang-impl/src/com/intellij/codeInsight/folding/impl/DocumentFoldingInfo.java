@@ -134,16 +134,17 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
         continue;
       }
       FoldRegion region = FoldingUtil.findFoldRegion(editor, marker.getStartOffset(), marker.getEndOffset());
+      FoldingInfo info = marker.getUserData(FOLDING_INFO_KEY);
       if (region == null) {
-        FoldingInfo info = marker.getUserData(FOLDING_INFO_KEY);
-        region = editor.getFoldingModel().addFoldRegion(marker.getStartOffset(), marker.getEndOffset(), info.placeHolder);
+        if (info != null) {
+          region = editor.getFoldingModel().addFoldRegion(marker.getStartOffset(), marker.getEndOffset(), info.placeHolder);
+        }
         if (region == null) {
           return;
         }
       }
 
-      FoldingInfo fi = region.getUserData(FOLDING_INFO_KEY);
-      boolean state = fi != null && fi.expanded;
+      boolean state = info != null && info.expanded;
       region.setExpanded(state);
     }
   }
