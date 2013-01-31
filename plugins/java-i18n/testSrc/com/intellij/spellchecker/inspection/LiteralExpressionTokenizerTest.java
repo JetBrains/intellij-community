@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.LiteralExpressionTokenizer;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
+
 /**
  * @author yole
  */
-public class LiteralExpressionTokenizerTest extends UsefulTestCase {
+public class LiteralExpressionTokenizerTest {
   private static class TokenCollector extends TokenConsumer {
     private List<String> myTokenTexts = new ArrayList<String>();
 
@@ -42,10 +44,12 @@ public class LiteralExpressionTokenizerTest extends UsefulTestCase {
     }
   }
 
+  @Test
   public void testEscapeSequences() {
     doTest("hello\\nworld", "hello", "world");
   }
 
+  @Test
   public void testEscapeSequences2() {
     doTest("\\nhello\\nworld\\n", "hello", "world");
   }

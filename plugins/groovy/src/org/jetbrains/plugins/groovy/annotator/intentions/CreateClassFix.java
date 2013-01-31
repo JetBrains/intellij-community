@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,17 +156,8 @@ public abstract class CreateClassFix {
       }
 
       private void createInnerClass(Project project, final Editor editor, PsiElement qualifier) {
-        PsiElement resolved = null;
-        if (qualifier instanceof GrCodeReferenceElement) {
-          resolved = ((GrCodeReferenceElement)qualifier).resolve();
-        }
-        else if (qualifier instanceof GrExpression) {
-          PsiType type = ((GrExpression)qualifier).getType();
-          if (type instanceof PsiClassType) {
-            resolved = ((PsiClassType)type).resolve();
-          }
-        }
-
+        PsiElement resolved = resolveQualifier(qualifier);
+        assert resolved != null;
 
         JVMElementFactory factory = JVMElementFactories.getFactory(resolved.getLanguage(), project);
         if (factory == null) return;
@@ -205,6 +196,21 @@ public abstract class CreateClassFix {
       }
 
       @Nullable
+      private PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
+        if (qualifier instanceof GrCodeReferenceElement) {
+          return ((GrCodeReferenceElement)qualifier).resolve();
+        }
+        else if (qualifier instanceof GrExpression) {
+          PsiType type = ((GrExpression)qualifier).getType();
+          if (type instanceof PsiClassType) {
+            return ((PsiClassType)type).resolve();
+          }
+        }
+
+        return null;
+      }
+
+      @Nullable
       private PsiClass createTemplate(JVMElementFactory factory, String name) {
         switch (getType()) {
           case ENUM:
@@ -235,6 +241,18 @@ public abstract class CreateClassFix {
           addImportForClass(groovyFile, pack, targetClass);
           putCursor(project, targetClass.getContainingFile(), targetClass);
         }
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        if (!super.isAvailable(project, editor, file)) return false;
+
+        final PsiElement qualifier = myRefElement.getQualifier();
+        if (qualifier != null && resolveQualifier(qualifier) == null) {
+          return false;
+        }
+
+        return true;
       }
     };
   }

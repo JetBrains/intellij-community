@@ -146,6 +146,7 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
+   * This method is called each time UI is shown.
    * @return null if no UI options required.
    */
   @Nullable

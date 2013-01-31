@@ -22,10 +22,12 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/methodRef";
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
@@ -151,6 +153,22 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testResolveConflicts() throws Exception {
     doTest(true);
+  }
+
+  public void testIntersectionTypeInCast() throws Exception {
+    doTest(false);
+  }
+
+  public void testUnhandledExceptions() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedWildcards() throws Exception {
+    doTest();
+  }
+
+  public void testConstructorNonAbstractAbstractExpected() throws Exception {
+    doTest();
   }
 
   private void doTest() throws Exception {

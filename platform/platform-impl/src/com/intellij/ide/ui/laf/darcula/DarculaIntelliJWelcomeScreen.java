@@ -69,6 +69,9 @@ public class DarculaIntelliJWelcomeScreen implements WelcomeScreen {
     return root;
   }
 
+  @Override
+  public void setupFrame(JFrame frame) {
+  }
 
 
   @Override

@@ -52,9 +52,4 @@ public class PivotalTrackerRepositoryType extends BaseRepositoryType<PivotalTrac
                                            Consumer<PivotalTrackerRepository> changeListener) {
     return new PivotalTrackerRepositoryEditor(project, repository, changeListener);
   }
-
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
 }

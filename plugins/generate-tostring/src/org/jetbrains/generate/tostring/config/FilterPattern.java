@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,32 @@
  */
 package org.jetbrains.generate.tostring.config;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.generate.tostring.psi.PsiAdapter;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * This is a filtering pattern, used to filter unwanted fields for this action.
  */
 public class FilterPattern {
+
+    private static final Logger LOG = Logger.getInstance("#org.jetbrains.generate.tostring.config.FilterPattern");
+    private static final Set<String> loggerNames = new THashSet<String>();
+    static {
+      Collections.addAll(loggerNames,
+                         "org.apache.log4j.Logger", "java.util.logging.Logger", "org.apache.commons.logging.Log", "org.slf4j.Logger");
+    }
 
     private String fieldName;
     private String fieldType;
@@ -29,13 +51,71 @@ public class FilterPattern {
     private boolean transientModifier;
     private boolean enumField;
     private boolean loggers;
+    private Pattern methodNamePattern = null;
+    private Pattern methodTypePattern = null;
+    private Pattern fieldNamePattern = null;
+    private Pattern fieldTypePattern = null;
 
-    public String getFieldName() {
-        return fieldName;
+  public boolean fieldMatches(PsiField field) {
+    if (isConstantField() && PsiAdapter.isConstantField(field)) {
+      return true;
+    }
+    if (isEnumField() && PsiAdapter.isEnumField(field)) {
+      return true;
+    }
+    if (isStaticModifier() && field.hasModifierProperty(PsiModifier.STATIC)) {
+      return true;
+    }
+    if (isTransientModifier() && field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+      return true;
+    }
+    final Pattern fieldNamePattern = getFieldNamePattern();
+    if ((fieldNamePattern != null) && fieldNamePattern.matcher(field.getName()).matches()) {
+      return true;
+    }
+    final String typeText = field.getType().getCanonicalText();
+    final Pattern fieldTypePattern = getFieldTypePattern();
+    if ((fieldTypePattern != null) && fieldTypePattern.matcher(typeText).matches()) {
+      return true;
+    }
+    if (isLoggers() && loggerNames.contains(typeText)) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean methodMatches(@NotNull PsiMethod method) {
+    final String methodName = method.getName();
+    final Pattern methodNamePattern = getMethodNamePattern();
+    if ((methodNamePattern != null) && methodNamePattern.matcher(methodName).matches()) {
+      return true;
+    }
+    final PsiType returnType = method.getReturnType();
+    if (returnType == null) {
+      return false;
+    }
+    final Pattern patternTypePattern = getMethodTypePattern();
+    final String methodType = returnType.getCanonicalText();
+    return (patternTypePattern != null) && methodTypePattern.matcher(methodType).matches();
+  }
+
+    public Pattern getFieldNamePattern() {
+      if (StringUtil.isEmpty(fieldName)) {
+        return null;
+      }
+      if (fieldNamePattern == null) {
+        try {
+          fieldNamePattern = Pattern.compile(fieldName);
+        } catch (PatternSyntaxException e) {
+          fieldName = null;
+          LOG.warn(e.getMessage());
+        }
+      }
+      return fieldNamePattern;
     }
 
     /**
-     * Set's a filtering using regular expression on the field name.
+     * Sets a filtering using regular expression on the field name.
      *
      * @param regexp the regular expression.
      */
@@ -82,12 +162,23 @@ public class FilterPattern {
         this.staticModifier = staticModifier;
     }
 
-    public String getMethodName() {
-        return methodName;
+    public Pattern getMethodNamePattern() {
+      if (StringUtil.isEmpty(methodName)) {
+        return null;
+      }
+      if (methodNamePattern == null) {
+        try {
+          methodNamePattern = Pattern.compile(methodName);
+        } catch (PatternSyntaxException e) {
+          methodName = null;
+          LOG.warn(e.getMessage());
+        }
+      }
+      return methodNamePattern;
     }
 
     /**
-     * Set's a filtering using regular expression on the method name.
+     * Sets a filtering using regular expression on the method name.
      *
      * @param regexp the regular expression.
      */
@@ -123,12 +214,23 @@ public class FilterPattern {
         this.loggers = loggers;
     }
 
-    public String getFieldType() {
-        return fieldType;
+    public Pattern getFieldTypePattern() {
+      if (StringUtil.isEmpty(fieldType)) {
+        return null;
+      }
+      if (fieldTypePattern ==  null) {
+        try {
+          fieldTypePattern = Pattern.compile(fieldType);
+        } catch (PatternSyntaxException e) {
+          fieldType = null;
+          LOG.warn(e.getMessage());
+        }
+      }
+      return fieldTypePattern;
     }
 
     /**
-     * Set's a filtering using the field type FQN.
+     * Sets a filtering using the field type FQN.
      *
      * @param fieldType  the field type
      * @since 3.20
@@ -137,12 +239,23 @@ public class FilterPattern {
         this.fieldType = fieldType;
     }
 
-    public String getMethodType() {
-        return methodType;
+    public Pattern getMethodTypePattern() {
+      if (StringUtil.isEmpty(methodType)) {
+        return null;
+      }
+      if (methodTypePattern == null) {
+        try {
+          methodTypePattern = Pattern.compile(methodType);
+        } catch (PatternSyntaxException e) {
+          methodType = null;
+          LOG.warn(e.getMessage());
+        }
+      }
+      return methodTypePattern;
     }
 
     /**
-     * Set's a filtering using the method return type FQN.
+     * Sets a filtering using the method return type FQN.
      *
      * @param methodType  the method return type
      * @since 3.20
@@ -164,6 +277,4 @@ public class FilterPattern {
                 ", loggers=" + loggers +
                 "}";
     }
-
-
 }

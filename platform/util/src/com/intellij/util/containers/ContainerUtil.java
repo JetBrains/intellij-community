@@ -166,6 +166,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> List<T> newSmartList(T element) {
+    return new SmartList<T>(element);
+  }
+
+  @NotNull
   public static <T> List<T> newSmartList(T... elements) {
     return new SmartList<T>(elements);
   }
@@ -708,6 +713,15 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<Pair<KEY, VALUE>> collection) {
+    final Map<KEY, VALUE> result = new THashMap<KEY, VALUE>(collection.size());
+    for (Pair<KEY, VALUE> pair : collection) {
+      result.put(pair.first, pair.second);
+    }
+    return result;
+  }
+
+  @NotNull
   public static <T> Object[] map2Array(@NotNull T[] array, @NotNull Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
@@ -1039,10 +1053,21 @@ public class ContainerUtil extends ContainerUtilRt {
           Iterable<? extends T> iterable = iterables[i];
           iterators[i] = iterable.iterator();
         }
-        return new SequenceIterator<T>(iterators);
+        return concatIterators(iterators);
       }
     };
   }
+
+  @NotNull
+  public static <T> Iterator<T> concatIterators(@NotNull Iterator<T>... iterators) {
+    return new SequenceIterator<T>(iterators);
+  }
+
+  @NotNull
+  public static <T> Iterator<T> concatIterators(@NotNull Collection<Iterator<T>> iterators) {
+    return new SequenceIterator<T>(iterators);
+  }
+
   @NotNull
   public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
     return new Iterable<T>() {
@@ -1053,7 +1078,7 @@ public class ContainerUtil extends ContainerUtilRt {
           T[] iterable = iterables[i];
           iterators[i] = Arrays.asList(iterable).iterator();
         }
-        return new SequenceIterator<T>(iterators);
+        return concatIterators(iterators);
       }
     };
   }
@@ -1831,8 +1856,21 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.createEmptyCOWList();
   }
 
+  /**
+   * Creates List which is thread-safe to modify and iterate.
+   * It differs from the java.util.concurrent.CopyOnWriteArrayList in the following:
+   * - faster modification in the uncontended case
+   * - less memory
+   * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)
+   */
+  @NotNull
+  public static <T> List<T> createLockFreeCopyOnWriteList() {
+    return new LockFreeCopyOnWriteArrayList<T>();
+  }
+
+  @NotNull
   public static <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
-    return new CopyOnWriteArrayList<T>(c);
+    return new LockFreeCopyOnWriteArrayList<T>(c);
   }
 
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {

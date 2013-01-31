@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeLanguage extends Language {
-  private final List<LanguageFilter> myFilters = ContainerUtil.createEmptyCOWList();
+  private final List<LanguageFilter> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
 
   protected CompositeLanguage(final String id) {
     super(id);

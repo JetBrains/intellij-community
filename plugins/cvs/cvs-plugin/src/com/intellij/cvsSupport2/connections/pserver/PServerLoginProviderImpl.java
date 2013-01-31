@@ -75,7 +75,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     }
 
     private void tryConnection() throws AuthenticationException {
-      IConnection connection = mySettings.createConnection(new ReadWriteStatistics());
+      final IConnection connection = mySettings.createConnection(new ReadWriteStatistics());
       try {
         connection.open(new StreamLogger());
         mySettings.setOffline(false);
@@ -119,10 +119,11 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   // TODO do release password ! when opening a connection and there's a problem with authorization
 
   private static void removeAllPasswordsForThisCvsRootFromPasswordFile(String cvsRoot) throws IOException {
-    File passFile = getPassFile();
-    if (!passFile.isFile()) return;
-
-    List<String> lines = CvsFileUtil.readLinesFrom(passFile, cvsRoot);
+    final File passFile = getPassFile();
+    if (!passFile.isFile()) {
+      return;
+    }
+    final List<String> lines = CvsFileUtil.readLinesFrom(passFile, cvsRoot);
     try {
       CvsFileUtil.storeLines(lines, passFile);
     }
@@ -132,18 +133,18 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   }
 
   private static void storePassword(String stringConfiguration, String scrambledPassword) throws IOException {
-    File passFile = getPassFile();
+    final File passFile = getPassFile();
     FileUtil.createIfDoesntExist(passFile);
-    List<String> lines = CvsFileUtil.readLinesFrom(passFile);
+    final List<String> lines = CvsFileUtil.readLinesFrom(passFile);
     lines.add(stringConfiguration + " " + scrambledPassword);
     CvsFileUtil.storeLines(lines, passFile);
   }
 
   @Nullable
   private static String getPassword(String config) {
-    File passFile = getPassFile();
+    final File passFile = getPassFile();
     try {
-      BufferedReader reader =
+      final BufferedReader reader =
         new BufferedReader(new InputStreamReader(new FileInputStream(passFile), CvsApplicationLevelConfiguration.getCharset()));
       try {
         return findPasswordIn(reader, config);
@@ -165,11 +166,15 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   private static String findPasswordIn(BufferedReader reader, String config) throws IOException {
     String line;
     while ((line = reader.readLine()) != null) {
-      int position = line.indexOf(config);
-      if (position != -1) {
-        String result = line.substring(position + config.length());
-        return result.substring(1);
+      final int position = line.indexOf(config);
+      if (position == -1) {
+        continue;
       }
+      final String result = line.substring(position + config.length());
+      if (result.isEmpty()) {
+        continue;
+      }
+      return result.substring(1);
     }
     return null;
   }

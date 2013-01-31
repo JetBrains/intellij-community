@@ -191,7 +191,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       @Override
       public void appClosing() {
         // save fullscreen window states
-        if (SystemInfo.isMacOSLion && GeneralSettings.getInstance().isReopenLastProject()) {
+        if (isFullScreenSupportedInCurrentOS() && GeneralSettings.getInstance().isReopenLastProject()) {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
           
           if (openProjects.length > 0) {
@@ -232,7 +232,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     IdeFrameImpl[] frames = getAllProjectFrames();
 
     if (frames.length > 0) return frames[0];
-    return WelcomeFrame.getInstance();
+    return (JFrame)WelcomeFrame.getInstance();
   }
 
   @Override
@@ -574,10 +574,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       else if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }
-      frame.setExtendedState(myFrameExtendedState);
       frame.setProject(project);
       myProject2Frame.put(project, frame);
       frame.setVisible(true);
+      frame.setExtendedState(myFrameExtendedState);
     }
 
     frame.addWindowListener(myActivationListener);
@@ -729,8 +729,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         extendedState = ((FramePeer)frame.getPeer()).getState();
       }
       boolean usePreviousBounds = extendedState == Frame.MAXIMIZED_BOTH ||
-                                  SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
-      final Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
+                                  isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+      Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
+      if (rectangle == null) { //frame is out of the screen?
+        rectangle = ScreenUtil.getScreenRectangle(0, 0);
+      }
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
       frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
       frameElement.setAttribute(WIDTH_ATTR, Integer.toString(rectangle.width));
@@ -817,5 +820,46 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public WindowWatcher getWindowWatcher() {
     return myWindowWatcher;
+  }
+  
+  public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) {
+    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen)
+      return;
+
+    try {
+      if (SystemInfo.isMacOSLion) {
+        frame.getFrameDecorator().toggleFullScreen(fullScreen);
+        return;
+      }
+
+      if (SystemInfo.isWindows) {
+        GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
+        if (device == null) return;
+        try {
+          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
+          if (fullScreen) {
+            frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
+          }
+          frame.dispose();
+          frame.setUndecorated(fullScreen);
+        }
+        finally {
+          if (fullScreen) {
+            frame.setBounds(device.getDefaultConfiguration().getBounds());
+          }
+          else {
+            Object o = frame.getRootPane().getClientProperty("oldBounds");
+            if (o instanceof Rectangle) {
+              frame.setBounds((Rectangle)o);
+            }
+          }
+          frame.setVisible(true);
+          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        }
+      }
+    }
+    finally {
+      frame.storeFullScreenStateIfNeeded(fullScreen);
+    }
   }
 }

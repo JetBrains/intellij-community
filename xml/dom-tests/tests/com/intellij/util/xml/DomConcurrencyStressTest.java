@@ -97,27 +97,30 @@ public class DomConcurrencyStressTest extends DomTestCase {
   }
 
   private static void runThreads(int threadCount, final Runnable runnable) throws Throwable {
-    final Ref<Throwable> exc = Ref.create(null);
+    for (int i=0; i<threadCount/8 + 1; i++) {
+      final Ref<Throwable> exc = Ref.create(null);
 
-    final CountDownLatch reads = new CountDownLatch(threadCount);
-    for (int j = 0; j < threadCount; j++) {
-      new Thread(){
-        @Override
-        public void run() {
-          try {
-            runnable.run();
+      final CountDownLatch reads = new CountDownLatch(8);
+      for (int j = 0; j < 8; j++) {
+        new Thread(){
+          @Override
+          public void run() {
+            try {
+              runnable.run();
+            }
+            catch (Throwable e) {
+              exc.set(e);
+            }
+            finally {
+              reads.countDown();
+            }
           }
-          catch (Throwable e) {
-            exc.set(e);
-          } finally {
-            reads.countDown();
-          }
-        }
-      }.start();
-    }
-    reads.await();
-    if (!exc.isNull()) {
-      throw exc.get();
+        }.start();
+      }
+      reads.await();
+      if (!exc.isNull()) {
+        throw exc.get();
+      }
     }
   }
 

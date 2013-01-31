@@ -15,18 +15,15 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MavenWorkspaceMap implements Serializable {
-  private final THashMap<MavenId, Data> myMapping = new THashMap<MavenId, Data>();
+  private final Map<MavenId, Data> myMapping = new HashMap<MavenId, Data>();
 
   public void register(@NotNull MavenId id, @NotNull File file) {
     register(id, file, null);
@@ -54,15 +51,15 @@ public class MavenWorkspaceMap implements Serializable {
     return myMapping.keySet();
   }
 
-  private static List<MavenId> getAllIDs(MavenId id) {
+  private static MavenId[] getAllIDs(MavenId id) {
     String version = id.getVersion();
     if (version != null && version.contains("SNAPSHOT")) {
-      return Arrays.asList(id, new MavenId(id.getGroupId(), id.getArtifactId(), "LATEST"));
+      return new MavenId[]{id, new MavenId(id.getGroupId(), id.getArtifactId(), "LATEST")};
     }
     else {
-      return Arrays.asList(id,
-                           new MavenId(id.getGroupId(), id.getArtifactId(), "LATEST"),
-                           new MavenId(id.getGroupId(), id.getArtifactId(), "RELEASE"));
+      return new MavenId[]{id,
+        new MavenId(id.getGroupId(), id.getArtifactId(), "LATEST"),
+        new MavenId(id.getGroupId(), id.getArtifactId(), "RELEASE")};
     }
   }
 

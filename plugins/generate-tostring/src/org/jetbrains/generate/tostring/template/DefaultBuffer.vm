@@ -1,11 +1,9 @@
-public String toString() {
-final StringBuffer sb = new StringBuffer();
-sb.append("$classname");
+public java.lang.String toString() {
+final java.lang.StringBuffer sb = new java.lang.StringBuffer("$classname{");
 #set ($i = 0)
 #foreach ($member in $members)
-#if (!$member.modifierStatic)
 #if ($i == 0)
-sb.append("{##
+sb.append("##
 #else
 sb.append(", ##
 #end
@@ -15,11 +13,17 @@ $member.name='")##
 $member.name=")##
 #end
 #if ($member.primitiveArray)
-.append($member.name == null ? "null" : "");
-for (int i = 0; $member.name != null && i < $member.name .length; ++i)
-    sb.append(i == 0 ? "" : ", ").append($member.name[$i]);
+;
+if ($member.name == null) ##
+sb.append("null");
+else {
+sb.append('[');
+for (int i = 0; i < $member.name .length; ++i)
+sb.append(i == 0 ? "" : ", ").append($member.name [i]);
+sb.append(']');
+}
 #elseif ($member.objectArray)
-.append($member.name == null ? "null" : Arrays.asList($member.name).toString());
+.append($member.name == null ? "null" : java.util.Arrays.asList($member.name).toString());
 #elseif ($member.string)
 .append($member.accessor).append('\'');
 #else
@@ -27,11 +31,6 @@ for (int i = 0; $member.name != null && i < $member.name .length; ++i)
 #end
 #set ($i = $i + 1)
 #end
-#end
-#if ($members.size() == 0)
-sb.append("{}");
-#else
 sb.append('}');
-#end
 return sb.toString();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,9 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     addModifier(PsiModifier.PUBLIC);
     if (myProperty.hasModifierProperty(PsiModifier.STATIC)) {
       addModifier(PsiModifier.STATIC);
+    }
+    else if (myProperty.hasModifierProperty(PsiModifier.FINAL)) { //don't add final modifier to static method
+      addModifier(PsiModifier.FINAL);
     }
 
     setNavigationElement(property);

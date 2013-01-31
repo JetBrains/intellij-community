@@ -23,10 +23,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -34,7 +35,9 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
@@ -48,7 +51,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
+  public static final Key<String> CREATION_TRACE = Key.create("CREATION_TRACE");
   private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.StubBasedPsiElementBase");
+  protected static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
   private volatile T myStub;
   private volatile ASTNode myNode;
   private final IElementType myElementType;
@@ -71,36 +76,62 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (node == null) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
-      synchronized (file.getStubLock()) {
-        node = myNode;
-        if (node == null) {
-          NonCancelableSection criticalSection = ProgressIndicatorProvider.startNonCancelableSectionIfSupported();
-          try {
-            if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
-            FileElement treeElement = file.getTreeElement();
-            StubTree stubTree = file.getStubTree();
-            if (treeElement != null) {
-              return notBoundInExistingAst(file, treeElement, stubTree);
-            }
-            final FileElement fileElement = file.loadTreeElement();
-            node = myNode;
-            if (node == null) {
-              @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
-                                       (file.getVirtualFile() == null ? "<unknown file>" : file.getVirtualFile().getPath()) +
-                                       "\nFile stub tree:\n" +
-                                       (stubTree != null ? StringUtil.trimLog(((PsiFileStubImpl)stubTree.getRoot()).printTree(), 1024) : " is null") +
-                                       "\nLoaded file AST:\n" + StringUtil.trimLog(DebugUtil.treeToString(fileElement, true), 1024);
-              throw new IllegalArgumentException(message);
-            }
-          }
-          finally {
-            criticalSection.done();
-          }
-        }
+      if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
+
+      FileElement treeElement = file.getTreeElement();
+      StubTree stubTree = file.getStubTree();
+      if (treeElement != null && myNode == null) {
+        return notBoundInExistingAst(file, treeElement, stubTree);
+      }
+
+      final FileElement fileElement = file.calcTreeElement();
+      node = myNode;
+      if (node == null) {
+        return failedToBindStubToAst(file, stubTree, fileElement);
       }
     }
 
     return node;
+  }
+
+  private ASTNode failedToBindStubToAst(PsiFileImpl file, StubTree stubTree, FileElement fileElement) {
+    VirtualFile vFile = file.getVirtualFile();
+    String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : "is null";
+    String astString = DebugUtil.treeToString(fileElement, true);
+    if (!ourTraceStubAstBinding) {
+      stubString = StringUtil.trimLog(stubString, 1024);
+      astString = StringUtil.trimLog(astString, 1024);
+    }
+
+    @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
+                             (vFile == null ? "<unknown file>" : vFile.getPath()) +
+                             "\nFile stub tree:\n" + stubString +
+                             "\nLoaded file AST:\n" + astString;
+    if (ourTraceStubAstBinding) {
+      message += dumpCreationTraces(fileElement);
+    }
+    throw new IllegalArgumentException(message);
+  }
+
+  private String dumpCreationTraces(FileElement fileElement) {
+    final StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
+    traces.append("My creation trace:\n").append(getUserData(CREATION_TRACE));
+    traces.append("AST creation traces:\n");
+    fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        PsiElement psi = composite.getPsi();
+        if (psi != null) {
+          traces.append(psi.toString()).append("\n");
+          String trace = psi.getUserData(CREATION_TRACE);
+          if (trace != null) {
+            traces.append(trace).append("\n");
+          }
+        }
+        super.visitComposite(composite);
+      }
+    });
+    return traces.toString();
   }
 
   private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
@@ -116,10 +147,13 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
         break;
       }
     }
+    if (ourTraceStubAstBinding) {
+      message += dumpCreationTraces(treeElement);
+    }
     throw new AssertionError(message);
   }
 
-  public void setNode(final ASTNode node) {
+  public final void setNode(final ASTNode node) {
     myNode = node;
   }
 
@@ -241,7 +275,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return myStub;
   }
 
-  public void setStub(@Nullable T stub) {
+  public final void setStub(@Nullable T stub) {
     myStub = stub;
   }
 

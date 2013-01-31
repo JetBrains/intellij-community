@@ -16,6 +16,7 @@
 
 package com.intellij.tasks;
 
+import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,11 +51,21 @@ public abstract class LocalTask extends Task {
 
   public abstract void removeChangelist(final ChangeListInfo info);
 
-  public abstract long getTimeSpent();
-
-  public abstract void setTimeSpent(long time);
+  public abstract long getTotalTimeSpent();
 
   public abstract boolean isRunning();
 
   public abstract void setRunning(final boolean running);
+
+  public abstract void setWorkItems(List<WorkItem> workItems);
+
+  public abstract List<WorkItem> getWorkItems();
+
+  public abstract void addWorkItem(WorkItem workItem);
+
+  public abstract Date getLastPost();
+
+  public abstract void setLastPost(Date date);
+
+  public abstract long getTimeSpentFromLastPost();
 }

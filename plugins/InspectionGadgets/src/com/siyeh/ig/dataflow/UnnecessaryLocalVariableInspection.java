@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,19 +45,15 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "redundant.local.variable.display.name");
+    return InspectionGadgetsBundle.message("redundant.local.variable.display.name");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "redundant.local.variable.ignore.option"),
+    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
                              "m_ignoreImmediatelyReturnedVariables");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "redundant.local.variable.annotation.option"),
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.annotation.option"),
                              "m_ignoreAnnotatedVariables");
     return optionsPanel;
   }
@@ -70,8 +66,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.local.variable.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.local.variable.problem.descriptor");
   }
 
   @Override
@@ -89,15 +84,12 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     return new UnnecessaryLocalVariableVisitor();
   }
 
-  private class UnnecessaryLocalVariableVisitor
-    extends BaseInspectionVisitor {
+  private class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
 
     @SuppressWarnings({"IfStatementWithIdenticalBranches"})
     @Override
-    public void visitLocalVariable(
-      @NotNull PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-
       if (m_ignoreAnnotatedVariables) {
         final PsiModifierList list = variable.getModifierList();
         if (list != null && list.getAnnotations().length > 0) {
@@ -107,12 +99,10 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (isCopyVariable(variable)) {
         registerVariableError(variable);
       }
-      else if (!m_ignoreImmediatelyReturnedVariables &&
-               isImmediatelyReturned(variable)) {
+      else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyReturned(variable)) {
         registerVariableError(variable);
       }
-      else if (!m_ignoreImmediatelyReturnedVariables &&
-               isImmediatelyThrown(variable)) {
+      else if (!m_ignoreImmediatelyReturnedVariables && isImmediatelyThrown(variable)) {
         registerVariableError(variable);
       }
       else if (isImmediatelyAssigned(variable)) {
@@ -128,142 +118,138 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (!(initializer instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)initializer;
+      final PsiReferenceExpression reference = (PsiReferenceExpression)initializer;
       final PsiElement referent = reference.resolve();
       if (referent == null) {
         return false;
       }
-      if (!(referent instanceof PsiLocalVariable ||
-            referent instanceof PsiParameter)) {
+      if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
         return false;
       }
-      final PsiCodeBlock containingScope =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (containingScope == null) {
         return false;
       }
       if (!variable.hasModifierProperty(PsiModifier.FINAL) &&
-          VariableAccessUtils.variableIsAssigned(variable,
-                                                 containingScope, false)) {
+          VariableAccessUtils.variableIsAssigned(variable, containingScope, false)) {
         return false;
       }
       final PsiVariable initialization = (PsiVariable)referent;
       if (!initialization.hasModifierProperty(PsiModifier.FINAL) &&
-          VariableAccessUtils.variableIsAssigned(initialization,
-                                                 containingScope, false)) {
+          VariableAccessUtils.variableIsAssigned(initialization, containingScope, false)) {
         return false;
       }
-      if (!initialization.hasModifierProperty(PsiModifier.FINAL)
-          && variable.hasModifierProperty(PsiModifier.FINAL)) {
-        if (VariableAccessUtils.variableIsUsedInInnerClass(variable,
-                                                           containingScope)) {
+      if (!initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL)) {
+        if (VariableAccessUtils.variableIsUsedInInnerClass(variable, containingScope)) {
           return false;
         }
       }
-      if (TypeConversionUtil.boxingConversionApplicable(variable.getType(), ((PsiVariable)referent).getType())) return false;
-      return true;
+      return !TypeConversionUtil.boxingConversionApplicable(variable.getType(), initialization.getType());
     }
 
     private boolean isImmediatelyReturned(PsiVariable variable) {
-      final PsiCodeBlock containingScope =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiDeclarationStatement.class);
-      if (declarationStatement == null) {
+      final PsiElement parent = variable.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
         return false;
       }
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       PsiStatement nextStatement = null;
       final PsiStatement[] statements = containingScope.getStatements();
-      for (int i = 0; i < statements.length - 1; i++) {
+      for (int i = 0; i < (statements.length - 1); i++) {
         if (statements[i].equals(declarationStatement)) {
           nextStatement = statements[i + 1];
+          break;
         }
       }
       if (!(nextStatement instanceof PsiReturnStatement)) {
         return false;
       }
-      final PsiReturnStatement returnStatement =
-        (PsiReturnStatement)nextStatement;
+      final PsiReturnStatement returnStatement = (PsiReturnStatement)nextStatement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiElement referent = ((PsiReference)returnValue).resolve();
-      return !(referent == null || !referent.equals(variable));
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
+      final PsiElement referent = referenceExpression.resolve();
+      if (referent == null || !referent.equals(variable)) {
+        return false;
+      }
+      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
+        return false;
+      }
+      return true;
     }
 
     private boolean isImmediatelyThrown(PsiVariable variable) {
-      final PsiCodeBlock containingScope =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiDeclarationStatement.class);
-      if (declarationStatement == null) {
+      final PsiElement parent = variable.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
         return false;
       }
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       PsiStatement nextStatement = null;
       final PsiStatement[] statements = containingScope.getStatements();
-      for (int i = 0; i < statements.length - 1; i++) {
+      for (int i = 0; i < (statements.length - 1); i++) {
         if (statements[i].equals(declarationStatement)) {
           nextStatement = statements[i + 1];
+          break;
         }
       }
       if (!(nextStatement instanceof PsiThrowStatement)) {
         return false;
       }
-      final PsiThrowStatement throwStatement =
-        (PsiThrowStatement)nextStatement;
+      final PsiThrowStatement throwStatement = (PsiThrowStatement)nextStatement;
       final PsiExpression returnValue = throwStatement.getException();
       if (!(returnValue instanceof PsiReferenceExpression)) {
         return false;
       }
       final PsiElement referent = ((PsiReference)returnValue).resolve();
-      return !(referent == null || !referent.equals(variable));
+      if (referent == null || !referent.equals(variable)) {
+        return false;
+      }
+      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
+        return false;
+      }
+      return true;
     }
 
     private boolean isImmediatelyAssigned(PsiVariable variable) {
-      final PsiCodeBlock containingScope =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiDeclarationStatement.class);
-      if (declarationStatement == null) {
+      final PsiElement parent = variable.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
         return false;
       }
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       PsiStatement nextStatement = null;
       int followingStatementNumber = 0;
       final PsiStatement[] statements = containingScope.getStatements();
-      for (int i = 0; i < statements.length - 1; i++) {
+      for (int i = 0; i < (statements.length - 1); i++) {
         if (statements[i].equals(declarationStatement)) {
           nextStatement = statements[i + 1];
           followingStatementNumber = i + 2;
+          break;
         }
       }
       if (!(nextStatement instanceof PsiExpressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)nextStatement;
-      final PsiExpression expression =
-        expressionStatement.getExpression();
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)nextStatement;
+      final PsiExpression expression = expressionStatement.getExpression();
       if (!(expression instanceof PsiAssignmentExpression)) {
         return false;
       }
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)expression;
-      final IElementType tokenType =
-        assignmentExpression.getOperationTokenType();
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      final IElementType tokenType = assignmentExpression.getOperationTokenType();
       if (tokenType != JavaTokenType.EQ) {
         return false;
       }
@@ -271,8 +257,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (!(rhs instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)rhs;
+      final PsiReferenceExpression reference = (PsiReferenceExpression)rhs;
       final PsiElement referent = reference.resolve();
       if (referent == null || !referent.equals(variable)) {
         return false;
@@ -281,55 +266,52 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       if (lhs instanceof PsiArrayAccessExpression) {
         return false;
       }
-      if (VariableAccessUtils.variableIsUsed(variable, lhs)) {
+      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
         return false;
       }
       for (int i = followingStatementNumber; i < statements.length; i++) {
-        if (VariableAccessUtils.variableIsUsed(variable,
-                                               statements[i])) {
+        if (VariableAccessUtils.variableIsUsed(variable, statements[i])) {
           return false;
         }
       }
       return true;
     }
 
-    private boolean isImmediatelyAssignedAsDeclaration(
-      PsiVariable variable) {
-      final PsiCodeBlock containingScope =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    private boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
+      final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
       }
-      final PsiDeclarationStatement declarationStatement =
-        PsiTreeUtil.getParentOfType(variable,
-                                    PsiDeclarationStatement.class);
-      if (declarationStatement == null) {
+      final PsiElement parent = variable.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
         return false;
       }
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
       PsiStatement nextStatement = null;
       int followingStatementNumber = 0;
       final PsiStatement[] statements = containingScope.getStatements();
-      for (int i = 0; i < statements.length - 1; i++) {
+      for (int i = 0; i < (statements.length - 1); i++) {
         if (statements[i].equals(declarationStatement)) {
           nextStatement = statements[i + 1];
           followingStatementNumber = i + 2;
+          break;
         }
       }
-
       if (nextStatement instanceof PsiDeclarationStatement) {
         boolean referenceFound = false;
-        for (PsiElement declaration : ((PsiDeclarationStatement)nextStatement).getDeclaredElements()) {
+        final PsiDeclarationStatement nextDeclarationStatement = (PsiDeclarationStatement)nextStatement;
+        for (PsiElement declaration : nextDeclarationStatement.getDeclaredElements()) {
           if (!(declaration instanceof PsiVariable)) {
             continue;
           }
-          final PsiExpression initializer = ((PsiVariable)declaration).getInitializer();
-          if (!referenceFound) {
-            if (initializer instanceof PsiReferenceExpression) {
-              final PsiElement referent = ((PsiReference)initializer).resolve();
-              if (variable.equals(referent)) {
-                referenceFound = true;
-                continue;
-              }
+          final PsiVariable nextVariable = (PsiVariable)declaration;
+          final PsiExpression initializer = nextVariable.getInitializer();
+          if (!referenceFound && initializer instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
+            final PsiElement referent = referenceExpression.resolve();
+            if (variable.equals(referent)) {
+              referenceFound = true;
+              continue;
             }
           }
           if (VariableAccessUtils.variableIsUsed(variable, initializer)) {
@@ -349,13 +331,12 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
         boolean referenceFound = false;
         for (PsiResourceVariable resourceVariable : resourceList.getResourceVariables()) {
           final PsiExpression initializer = resourceVariable.getInitializer();
-          if (!referenceFound) {
-            if (initializer instanceof PsiReferenceExpression) {
-              final PsiElement referent = ((PsiReferenceExpression)initializer).resolve();
-              if (variable.equals(referent)) {
-                referenceFound = true;
-                continue;
-              }
+          if (!referenceFound && initializer instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)initializer;
+            final PsiElement referent = referenceExpression.resolve();
+            if (variable.equals(referent)) {
+              referenceFound = true;
+              continue;
             }
           }
           if (VariableAccessUtils.variableIsUsed(variable, initializer)) {
@@ -378,14 +359,33 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       else {
         return false;
       }
-
+      if (isVariableUsedInFollowingDeclarations(variable, declarationStatement)) {
+        return false;
+      }
       for (int i = followingStatementNumber; i < statements.length; i++) {
-        if (VariableAccessUtils.variableIsUsed(variable,
-                                               statements[i])) {
+        if (VariableAccessUtils.variableIsUsed(variable, statements[i])) {
           return false;
         }
       }
       return true;
+    }
+
+    private boolean isVariableUsedInFollowingDeclarations(PsiVariable variable, PsiDeclarationStatement declarationStatement) {
+      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+      if (declaredElements.length == 1) {
+        return false;
+      }
+      boolean check = false;
+      for (PsiElement declaredElement : declaredElements) {
+        if (!check && variable.equals(declaredElement)) {
+          check = true;
+        } else {
+          if (VariableAccessUtils.variableIsUsed(variable, declaredElement)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 }

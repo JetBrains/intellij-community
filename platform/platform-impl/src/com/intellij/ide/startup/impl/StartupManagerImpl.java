@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,6 +226,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       String rootPath = root.getPath();
       for (String manualWatchRoot : manualWatchRoots) {
         if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
+          LOG.info("'" + root + "' is under manual watch root '" + manualWatchRoot + "', others are " + manualWatchRoot);
           nonWatched = true;
           break loop;
         }

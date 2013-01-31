@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCase {
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     final PossibleHeapPollutionVarargsInspection varargsInspection = new PossibleHeapPollutionVarargsInspection();

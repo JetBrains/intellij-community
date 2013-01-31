@@ -8,6 +8,7 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import icons.TasksIcons;
 import org.apache.axis.utils.XMLChar;
@@ -37,7 +38,9 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   private String myDefaultSearch = "for: me sort by: updated #Unresolved";
 
-  /** for serialization */
+  /**
+   * for serialization
+   */
   @SuppressWarnings({"UnusedDeclaration"})
   public YouTrackRepository() {
   }
@@ -277,4 +280,30 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
+
+  @Override
+  public void updateTimeSpent(final LocalTask task, final String timeSpent, final String comment) throws Exception {
+    checkVersion();
+    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=work+Today+" + timeSpent.replaceAll(" ", "+") + "+" + comment, true);
+    if (method.getStatusCode() != 200) {
+      InputStream stream = method.getResponseBodyAsStream();
+      String message = new SAXBuilder(false).build(stream).getRootElement().getText();
+      throw new Exception(message);
+    }
+  }
+
+  private void checkVersion() throws Exception {
+    HttpMethod method = doREST("/rest/workflow/version", false);
+    InputStream stream = method.getResponseBodyAsStream();
+    Element element = new SAXBuilder(false).build(stream).getRootElement();
+    final boolean timeTrackingAvailable = element.getName().equals("version") && VersionComparatorUtil.compare(element.getChildText("version"), "4.1") >= 0;
+    if (!timeTrackingAvailable) {
+      throw new Exception("This version of Youtrack the time tracking is not supported");
+    }
+  }
+
+  @Override
+  protected int getFeatures() {
+    return TIME_MANAGEMENT;
+  }
 }

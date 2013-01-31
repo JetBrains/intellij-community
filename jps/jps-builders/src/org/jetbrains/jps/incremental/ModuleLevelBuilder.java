@@ -25,6 +25,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -64,8 +65,20 @@ public abstract class ModuleLevelBuilder extends Builder {
                                  OutputConsumer outputConsumer)
     throws ProjectBuildException, IOException;
 
+  /**
+   * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(java.io.File)} instead
+   */
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;
+  }
+
+  /**
+   * <strong>DO NOT RETURN {@code null}</strong> from implementation of this method. If some of builders returns {@code null} no filtering
+   * will be performed for compatibility reasons.
+   * @return list of extensions (without dot) of files which can be compiled by the builder
+   */
+  public List<String> getCompilableFileExtensions() {
+    return null;
   }
 
   public final BuilderCategory getCategory() {

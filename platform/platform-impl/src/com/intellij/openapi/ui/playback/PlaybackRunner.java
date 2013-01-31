@@ -270,7 +270,7 @@ public class PlaybackRunner {
     }
   }
 
-  private static PlaybackCommand createCommand(String string, int line, File scriptDir) {
+  protected PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
 
     if (string.startsWith(RegistryValueCommand.PREFIX)) {

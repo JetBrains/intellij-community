@@ -4,8 +4,7 @@ public @interface I {
 public int x() ;
 }
 @p.I public class A {
-@p.I public A() {
-}
+@p.I public A() {}
 }
 public class useAnno extends groovy.lang.Script {
 public static void main(java.lang.String[] args) {
@@ -13,7 +12,17 @@ new p.useAnno(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
+
+
+
+
 @p.I public java.lang.Integer var = 3;
+
+
+
+
+
+
 return null;
 
 }

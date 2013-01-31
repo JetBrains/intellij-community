@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,27 +38,17 @@ public abstract class WebBrowserUrlProvider {
   }
 
   /**
-   * Invariant: element has not null containing psi file with not null virtual file 
+   * Invariant: element has not null containing psi file with not null virtual file
+   * @deprecated
    */
   @NotNull
   public String getUrl(@NotNull PsiElement element) throws BrowserException {
-    try {
-      return getUrl(element, false);
-    }
-    catch (BrowserException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    throw new AbstractMethodError();
   }
 
-  /**
-   * @deprecated override {@link #getUrl(com.intellij.psi.PsiElement)} instead
-   */
   @NotNull
-  public String getUrl(@NotNull PsiElement element, boolean shiftDown) throws Exception {
-    throw new UnsupportedOperationException();
+  public String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
+    return getUrl(element);
   }
 
   /**

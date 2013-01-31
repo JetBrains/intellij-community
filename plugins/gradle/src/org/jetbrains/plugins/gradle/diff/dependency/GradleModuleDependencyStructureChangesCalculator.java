@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.diff.dependency;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleAbstractDependencyStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
 
 /**
@@ -11,7 +10,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
  * @since 2/20/12 11:10 AM
  */
 public class GradleModuleDependencyStructureChangesCalculator
-  extends GradleAbstractDependencyStructureChangesCalculator<GradleModuleDependency, ModuleOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<GradleModuleDependency, ModuleOrderEntry>
 {
   
   @Override
@@ -24,7 +23,7 @@ public class GradleModuleDependencyStructureChangesCalculator
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull ModuleOrderEntry entity) {
+  public Object getIdeKey(@NotNull ModuleOrderEntry entity) {
     final String intellijModuleName = entity.getModuleName();
     if (intellijModuleName == null) {
       return "";
@@ -35,7 +34,6 @@ public class GradleModuleDependencyStructureChangesCalculator
   @NotNull
   @Override
   public Object getGradleKey(@NotNull GradleModuleDependency entity, @NotNull GradleChangesCalculationContext context) {
-    // TODO den consider known changes here.
     return entity.getTarget().getName();
   }
 }

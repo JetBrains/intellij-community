@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,6 +92,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     myComboBox.setLightWeightPopupEnabled(false);
 
     myEditor = new MyEditorComboBoxEditor(getProject(), getCurrentFactory().getFileType());
+    //noinspection GtkPreferredJComboBoxRenderer
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
 
     myComboBox.setEditable(true);
@@ -98,7 +101,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public void selectPopupValue() {
-    selectAll();
+    //selectAll();
     final Object currentPopupValue = getCurrentPopupValue();
     if (currentPopupValue != null) {
       myComboBox.getModel().setSelectedItem(currentPopupValue);
@@ -133,7 +136,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     final String itemText = item.getText().replace('\n', ' ');
     restoreFactory(item);
     item.setText(itemText);
-    if (!"".equals(itemText)) {
+    if (!StringUtil.isEmpty(itemText)) {
       if (myComboBox.getItemCount() == 0 || !item.equals(myComboBox.getItemAt(0))) {
         myComboBox.insertItemAt(item, 0);
       }
@@ -204,16 +207,32 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public JComponent getEditorComponent() {
-    return (JComponent)myEditor.getEditorComponent();
+    return myEditor.getEditorComponent();
   }
 
   public void addRecent(TextWithImports text) {
     if (text.getText().length() != 0) {
-      final Component editorComponent = myComboBox.getEditor().getEditorComponent();
+      Component editorComponent = myComboBox.getEditor().getEditorComponent();
       final boolean focusOwner = editorComponent.isFocusOwner();
+      int offset = -1;
+      if (editorComponent instanceof EditorTextField) {
+        final EditorTextField textField = (EditorTextField)editorComponent;
+        if (textField.getEditor() != null) {
+          offset = textField.getCaretModel().getOffset();
+        }
+      }
       super.addRecent(text);
       myComboBox.insertItemAt(text, 0);
       myComboBox.setSelectedIndex(0);
+      editorComponent = myComboBox.getEditor().getEditorComponent();
+      if (offset != -1 && editorComponent instanceof EditorTextField) {
+        final EditorTextField textField = (EditorTextField)editorComponent;
+        final Editor editor = textField.getEditor();
+        if (editor != null) {
+          textField.getCaretModel().moveToOffset(offset);
+          editor.getSelectionModel().setSelection(offset, offset);
+        }
+      }
 
       if (focusOwner) {
         editorComponent.requestFocus();

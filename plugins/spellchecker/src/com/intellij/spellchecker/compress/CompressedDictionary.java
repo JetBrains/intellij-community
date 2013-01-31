@@ -23,6 +23,7 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -102,7 +103,8 @@ public final class CompressedDictionary implements Dictionary {
           continue;
         }
         UnitBitSet set = UnitBitSet.create(toTest);
-        result.add(encoder.decode(set));
+        String decoded = encoder.decode(set);
+        if(decoded!=null) result.add(decoded);
       }
       i++;
     }
@@ -117,13 +119,14 @@ public final class CompressedDictionary implements Dictionary {
     return name;
   }
 
-  public boolean contains(String word) {
+  @Nullable
+  public Boolean contains(String word) {
     if (word == null) {
       return false;
     }
     UnitBitSet bs = encoder.encode(word, false);
     if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS)
-      throw new EncodingException("WORD_OF_ENTIRELY_UNKNOWN_LETTERS");
+      return null;
     if (bs == null) return false;
       //TODO throw new EncodingException("WORD_WITH_SOME_UNKNOWN_LETTERS");
     byte[] compressed = UnitBitSet.getBytes(bs);

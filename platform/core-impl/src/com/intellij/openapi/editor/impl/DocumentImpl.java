@@ -52,7 +52,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
   public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
-  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
@@ -66,7 +66,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private DocumentListener[] myCachedDocumentListeners;
-  private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createEmptyCOWList();
+  private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
@@ -478,13 +478,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    * <pre>
    * <ol>
    *   <li>
-   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
-   *     {@link DocumentListener#beforeDocumentChange(DocumentEvent) before the change};
+   *     All {@link #addDocumentListener(com.intellij.openapi.editor.event.DocumentListener) registered listeners} are notified
+   *     {@link com.intellij.openapi.editor.event.DocumentListener#beforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent) before the change};
    *   </li>
    *   <li>The change is performed </li>
    *   <li>
-   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
-   *     {@link DocumentListener#documentChanged(DocumentEvent) after the change};
+   *     All {@link #addDocumentListener(com.intellij.openapi.editor.event.DocumentListener) registered listeners} are notified
+   *     {@link com.intellij.openapi.editor.event.DocumentListener#documentChanged(com.intellij.openapi.editor.event.DocumentEvent) after the change};
    *   </li>
    * </ol>
    * </pre>
@@ -648,7 +648,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
-    LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: "+listener);
+    LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: " + listener);
     boolean added = myDocumentListeners.add(listener);
     LOG.assertTrue(added, listener);
   }

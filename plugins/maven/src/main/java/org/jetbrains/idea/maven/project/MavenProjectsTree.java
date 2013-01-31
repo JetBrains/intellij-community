@@ -76,7 +76,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
     public VirtualFile findProjectFile(MavenId coordinates) {
@@ -869,7 +869,8 @@ public class MavenProjectsTree {
     if (config == null) {
       return Collections.emptySet();
     }
-    final List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    final List<String> customNonFilteredExtensions =
+      MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
     if (customNonFilteredExtensions.isEmpty()) {
       return Collections.emptySet();
     }
@@ -916,7 +917,7 @@ public class MavenProjectsTree {
         updateCrc(crc, mavenProject.getDirectory());
         updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
         updateCrc(crc, mavenProject.getModelMap().hashCode());
-        updateCrc(crc, mavenProject.getResources().hashCode());
+        updateCrc(crc, mavenProject.getResources().hashCode() + 1); // @todo remove '+1' after 01.05.2013 (when 12.0.1 become out of date)
         updateCrc(crc, mavenProject.getTestResources().hashCode());
         updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
         updateCrc(crc, mavenProject.getProperties().hashCode());
@@ -926,7 +927,9 @@ public class MavenProjectsTree {
           updateCrc(crc, file.lastModified());
         }
 
-        updateCrc(crc, getEscapeString(mavenProject));
+        Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString"));
+        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths"));
       }
 
       return (int)crc.getValue();
@@ -935,13 +938,6 @@ public class MavenProjectsTree {
       readUnlock();
     }
   }
-
-  public static String getEscapeString(MavenProject mavenProject) {
-    return MavenJDOMUtil.findChildValueByPath(
-      mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin"), "escapeString", "\\"
-    );
-  }
-
 
   public List<VirtualFile> getRootProjectsFiles() {
     return MavenUtil.collectFiles(getRootProjects());

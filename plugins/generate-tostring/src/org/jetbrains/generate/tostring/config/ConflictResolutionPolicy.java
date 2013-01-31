@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public interface ConflictResolutionPolicy {
     void setNewMethodStrategy(InsertNewMethodStrategy strategy);
 
     /**
-     * Applies the choosen policy.
+     * Applies the chosen policy.
      *
      * @param clazz          PSIClass.
      * @param existingMethod existing method if one exists.
@@ -48,5 +48,5 @@ public interface ConflictResolutionPolicy {
      * @throws IncorrectOperationException is thrown if there is an IDEA error.
      */
     @Nullable
-    PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException;
+    PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor);
 }

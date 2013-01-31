@@ -54,7 +54,8 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        if (o instanceof PsiMethod && "getClass".equals(((PsiMethod) o).getName()) &&
+            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
           return StatisticsInfo.EMPTY;
         }
 

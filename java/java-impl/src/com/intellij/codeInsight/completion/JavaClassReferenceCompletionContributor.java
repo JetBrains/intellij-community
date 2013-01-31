@@ -66,7 +66,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       return;
     }
 
-    if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
+    if (parameters.isExtendedCompletion() || parameters.getCompletionType() == CompletionType.CLASS_NAME) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result);
     }
     else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package org.jetbrains.generate.tostring.config;
 
 /**
- * Configuration.
- * <p/>
  * The configuration is stored standard xmlb.XmlSerializer that automatically stores the
  * state of this classes public fields.
  */
@@ -25,7 +23,7 @@ public class Config {
 
     public boolean useFullyQualifiedName = false;
     public InsertWhere insertNewMethodOption = InsertWhere.AT_CARET;
-    public DuplicatonPolicy whenDuplicatesOption = DuplicatonPolicy.ASK;
+    public DuplicationPolicy whenDuplicatesOption = DuplicationPolicy.ASK;
     public boolean filterConstantField = true;
     public boolean filterEnumField = false;
     public boolean filterTransientModifier = false;
@@ -40,6 +38,8 @@ public class Config {
     public boolean jumpToMethod = true; // jump cursor to toString method
     public int sortElements = 0; // 0 = none, 1 = asc, 2 = desc
 
+    private FilterPattern myPattern = null;
+
     public boolean isUseFullyQualifiedName() {
         return useFullyQualifiedName;
     }
@@ -48,11 +48,11 @@ public class Config {
         this.useFullyQualifiedName = useFullyQualifiedName;
     }
 
-    public DuplicatonPolicy getReplaceDialogInitialOption() {
+    public DuplicationPolicy getReplaceDialogInitialOption() {
         return whenDuplicatesOption;
     }
 
-    public void setReplaceDialogInitialOption(DuplicatonPolicy option) {
+    public void setReplaceDialogInitialOption(DuplicationPolicy option) {
         this.whenDuplicatesOption = option;
     }
 
@@ -89,19 +89,14 @@ public class Config {
     }
 
     public String getFilterFieldName() {
+        if (filterFieldName == null) {
+            return "";
+        }
         return filterFieldName;
     }
 
     public void setFilterFieldName(String filterFieldName) {
         this.filterFieldName = filterFieldName;
-    }
-
-    public boolean isAddImplementSerializable() {
-        return addImplementSerializable;
-    }
-
-    public void setAddImplementSerializable(boolean addImplementSerializable) {
-        this.addImplementSerializable = addImplementSerializable;
     }
 
     public boolean isEnableMethods() {
@@ -113,6 +108,9 @@ public class Config {
     }
 
     public String getFilterMethodName() {
+        if (filterMethodName == null) {
+            return "";
+        }
         return filterMethodName;
     }
 
@@ -145,6 +143,9 @@ public class Config {
     }
 
     public String getFilterFieldType() {
+        if (filterFieldType == null) {
+            return "";
+        }
         return filterFieldType;
     }
 
@@ -161,6 +162,9 @@ public class Config {
     }
 
     public String getFilterMethodType() {
+        if (filterMethodType == null) {
+            return "";
+        }
         return filterMethodType;
     }
 
@@ -169,12 +173,16 @@ public class Config {
     }
 
     /**
-     * Get's the filter pattern that this configuration represent.
+     * Gets the filter pattern that this configuration represents.
      *
      * @return the filter pattern.
      */
     public FilterPattern getFilterPattern() {
-        FilterPattern pattern = new FilterPattern();
+        FilterPattern pattern = myPattern;
+        if (pattern != null) {
+            return pattern;
+        }
+        pattern = new FilterPattern();
         pattern.setConstantField(filterConstantField);
         pattern.setTransientModifier(filterTransientModifier);
         pattern.setStaticModifier(filterStaticModifier);
@@ -184,7 +192,7 @@ public class Config {
         pattern.setMethodType(filterMethodType);
         pattern.setEnumField(filterEnumField);
         pattern.setLoggers(filterLoggers);
-        return pattern;
+        return myPattern = pattern;
     }
 
     public boolean equals(Object o) {

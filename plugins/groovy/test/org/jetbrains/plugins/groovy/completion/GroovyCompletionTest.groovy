@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
@@ -99,7 +102,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testNamedParametersForConstructorCall() {
-    doVariantableTest("hahaha", "hohoho", "hashCode");
+    doVariantableTest("hahaha", "hohoho");
   }
 
   public void testUnfinishedMethodTypeParameter() {
@@ -1631,6 +1634,33 @@ new Foooo()<caret>
 def b = new boolea<caret>
 ''', '''\
 def b = new boolean<caret>
+''')
+  }
+
+  void testCompleteSameNameClassFromOtherPackage() {
+    myFixture.addClass('''\
+package foo;
+public class Myclass{}
+''')
+    myFixture.addClass('''\
+package bar;
+public class Myclass{}
+''')
+
+    myFixture.configureByText('test.groovy', '''\
+package bar
+
+print new foo.My<caret>class()
+''')
+
+    final atCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
+    final ref = PsiTreeUtil.getParentOfType(atCaret, GrCodeReferenceElement)
+    GrReferenceAdjuster.shortenReference(ref)
+
+    myFixture.checkResult('''\
+package bar
+
+print new foo.Myclass()
 ''')
   }
 }

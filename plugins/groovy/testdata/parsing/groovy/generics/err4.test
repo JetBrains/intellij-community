@@ -1,0 +1,38 @@
+class A {
+  public <A, B> foo
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(public)('public')
+        PsiWhiteSpace(' ')
+        PsiErrorElement:Type parameters are unexpected
+          Type parameter list
+            PsiElement(<)('<')
+            Type parameter
+              PsiElement(identifier)('A')
+              Type extends bounds list
+                <empty list>
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            Type parameter
+              PsiElement(identifier)('B')
+              Type extends bounds list
+                <empty list>
+            PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('foo')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

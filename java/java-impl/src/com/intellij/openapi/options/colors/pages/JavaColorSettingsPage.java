@@ -83,8 +83,6 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.abstract.method"), CodeInsightColors.ABSTRACT_METHOD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inherited.method"), CodeInsightColors.INHERITED_METHOD_ATTRIBUTES),
 
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
-
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.name"), CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
@@ -159,7 +157,6 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     return
       "/* Block comment */\n" +
       "import <class>java.util.Date</class>;\n" +
-      "                               Bad characters: \\n #\n" +
       "/**\n" +
       " * Doc comment here for <code>SomeClass</code>\n" +
       " * @see <class>Math</class>#<methodCall>sin</methodCall>(double)\n" +

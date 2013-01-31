@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Map;
 
 /**
  * The presentation of an action in a specific place in the user interface.
@@ -33,7 +34,7 @@ import java.beans.PropertyChangeSupport;
  * @see ActionPlaces
  */
 public final class Presentation implements Cloneable {
-  private THashMap<String, Object> myUserMap;
+  private Map<String, Object> myUserMap;
 
   /**
    * Defines tool tip for button at tool bar or text for element at menu
@@ -297,6 +298,7 @@ public final class Presentation implements Cloneable {
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
+  @Override
   public Presentation clone(){
     try{
       Presentation presentation = (Presentation)super.clone();
@@ -322,9 +324,7 @@ public final class Presentation implements Cloneable {
     if (myUserMap == null) {
       return null;
     }
-    else {
-      return myUserMap.get(key);
-    }
+    return myUserMap.get(key);
   }
 
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {

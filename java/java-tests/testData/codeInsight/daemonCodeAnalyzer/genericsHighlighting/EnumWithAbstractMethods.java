@@ -1,5 +1,5 @@
 <error descr="Modifier 'abstract' not allowed here">abstract</error> enum OurEnum {
-  A <error descr="Class 'Anonymous class derived from OurEnum' must either be declared abstract or implement abstract method 'foo()' in 'OurEnum'">{</error>
+  <error descr="Class 'Anonymous class derived from OurEnum' must implement abstract method 'foo()' in 'OurEnum'">A</error> {
   },
   <error descr="'OurEnum' is abstract; cannot be instantiated">B</error>,
   C {
@@ -12,7 +12,7 @@
 
 enum xxx {
   <error descr="'xxx' is abstract; cannot be instantiated">X</error>,
-  Y <error descr="Class 'Anonymous class derived from xxx' must either be declared abstract or implement abstract method 'f()' in 'xxx'">{</error>
+  <error descr="Class 'Anonymous class derived from xxx' must implement abstract method 'f()' in 'xxx'">Y</error> {
   };
 
   abstract void f();

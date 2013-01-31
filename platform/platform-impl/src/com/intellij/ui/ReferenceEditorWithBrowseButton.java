@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
   private final Function<String, Document> myFactory;
-  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                          final Project project,

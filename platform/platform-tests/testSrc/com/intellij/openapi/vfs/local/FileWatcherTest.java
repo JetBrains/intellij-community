@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   };
   private final Object myWaiter = new Object();
   private int myTimeout = NATIVE_PROCESS_DELAY;
-  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
+  private final List<VFileEvent> myEvents = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Override
   protected void setUp() throws Exception {
@@ -93,7 +93,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     myWatcher.startup(myNotifier);
     assertTrue(myWatcher.isOperational());
 
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getProject());
     myTimeout = NATIVE_PROCESS_DELAY;
 
     myConnection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -288,11 +288,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryOverlapping() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File fileInTopDir = FileUtil.createTempFile(topDir, "file1.", ".txt");
-    final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File fileInSubDir = FileUtil.createTempFile(subDir, "file2.", ".txt");
+    final File fileInTopDir = new File(topDir, "file1.txt"); FileUtil.createIfNotExists(fileInTopDir);
+    final File subDir = new File(topDir, "sub");  FileUtil.createDirectory(subDir);
+    final File fileInSubDir = new File(subDir, "file2.txt"); FileUtil.createIfNotExists(fileInSubDir);
     final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File fileInSideDir = FileUtil.createTempFile(sideDir, "file3.", ".txt");
+    final File fileInSideDir = new File(sideDir, "file3.txt"); FileUtil.createIfNotExists(fileInSideDir);
     refresh(topDir);
     refresh(sideDir);
 
@@ -550,6 +550,28 @@ public class FileWatcherTest extends PlatformLangTestCase {
     myTimeout = NATIVE_PROCESS_DELAY;
   }
 
+  public void testLineBreaksInName() throws Exception {
+    if (!SystemInfo.isUnix) {
+      System.err.println("Ignored: Unix required");
+      return;
+    }
+
+    File topDir = IoTestUtil.createTestDir("topDir");
+    File testDir = IoTestUtil.createTestDir(topDir, "weird\ndir\nname");
+    File testFile = IoTestUtil.createTestFile(testDir, "weird\nfile\nname");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(testFile, "abc");
+      assertEvent(VFileContentChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile) {
@@ -566,6 +588,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       }
     });
     assertFalse(request.isNull());
+    assertFalse(myWatcher.isSettingRoots());
     return request.get();
   }
 

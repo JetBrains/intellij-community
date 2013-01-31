@@ -16,6 +16,7 @@
 
 package com.intellij.execution.ui.layout;
 
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -25,7 +26,7 @@ import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ViewContext extends Disposable {
@@ -58,7 +59,7 @@ public interface ViewContext extends Disposable {
 
   RunnerLayoutUi getRunnerLayoutUi();
 
-  GridCell findCellFor(final Content content);
+  GridCell findCellFor(@NotNull final Content content);
 
   Grid findGridFor(Content content);
 

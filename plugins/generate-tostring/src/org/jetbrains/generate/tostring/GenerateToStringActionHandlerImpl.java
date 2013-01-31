@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,8 +39,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.template.TemplatesManager;
 import org.jetbrains.generate.tostring.view.TemplatesPanel;
@@ -72,7 +69,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     }
 
 
-    public void executeActionQickFix(final Project project, final PsiClass clazz) {
+    public void executeActionQuickFix(final Project project, final PsiClass clazz) {
         doExecuteAction(project, clazz, null);
     }
 
@@ -98,9 +95,8 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         final MemberChooserBuilder<PsiElementClassMember> builder = new MemberChooserBuilder<PsiElementClassMember>(project);
         final MemberChooserHeaderPanel header = new MemberChooserHeaderPanel(clazz);
         builder.setHeaderPanel(header);
-        boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(clazz);
-        builder.overrideAnnotationVisible(isJdk15Enabled);
-        builder.setTitle(calcCurrentTitle());
+        builder.overrideAnnotationVisible(PsiUtil.isLanguageLevel5OrHigher(clazz));
+        builder.setTitle("Generate toString()");
 
         logger.debug("Displaying member chooser dialog");
         SwingUtilities.invokeLater(new Runnable() {
@@ -122,7 +118,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                         GenerateToStringWorker.executeGenerateActionLater(clazz, editor, selectedMembers, template, dialog.isInsertOverrideAnnotation());
                     }
                     else {
-                        Messages.showWarningDialog("The template chosen is invalid.", "Broken Template");
+                        HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
                     }
                 }
             }
@@ -131,39 +127,23 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         logger.debug("+++ doExecuteAction - END +++");
     }
 
-    private static String calcCurrentTitle() {
-        final TemplateResource template = TemplatesManager.getInstance().getDefaultTemplate();
-
-        if (template.isValidTemplate()) {
-            return "Generate " + template.getTargetMethodName();
-        }
-        else {
-            return "Generate";
-        }
-    }
-
     public static void updateDialog(PsiClass clazz, MemberChooser<PsiElementClassMember> dialog) {
-        dialog.setTitle(calcCurrentTitle());
-
         final PsiElementClassMember[] members = buildMembersToShow(clazz);
         dialog.resetElements(members);
         dialog.selectElements(members);
     }
 
     private static PsiElementClassMember[] buildMembersToShow(PsiClass clazz) {
-        Project project = clazz.getProject();
-
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
         Config config = GenerateToStringContext.getConfig();
-
-        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, config.getFilterPattern());
+        PsiField[] filteredFields = GenerateToStringUtils.filterAvailableFields(clazz, config.getFilterPattern());
         if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
-        if (logger.isDebugEnabled()) logger.debug("Number of fields after filtering: " + filteredFields.length);
-        PsiMethod[] filteredMethods = new PsiMethod[0];
+        PsiMethod[] filteredMethods;
         if (config.enableMethods) {
             // filter methods as it is enabled from config
-            filteredMethods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, config.getFilterPattern());
+            filteredMethods = GenerateToStringUtils.filterAvailableMethods(clazz, config.getFilterPattern());
             if (logger.isDebugEnabled()) logger.debug("Number of methods after filtering: " + filteredMethods.length);
+        } else {
+          filteredMethods = PsiMethod.EMPTY_ARRAY;
         }
 
         return GenerateToStringUtils.combineToClassMemberList(filteredFields, filteredMethods);
@@ -218,7 +198,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                   Configurable composite = new TabbedConfigurable(disposable) {
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<Configurable>();
-                            res.add(new GenerateToStringConfigurable());
+                            res.add(new GenerateToStringConfigurable(clazz.getProject()));
                             res.add(ui);
                             return res;
                         }
@@ -227,7 +207,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                             return "toString() Generation Settings";
                         }
 
-                    public String getHelpTopic() {
+                        public String getHelpTopic() {
                             return null; // TODO:
                         }
 

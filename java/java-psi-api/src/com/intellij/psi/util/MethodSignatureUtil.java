@@ -202,7 +202,7 @@ public class MethodSignatureUtil {
 
     if (checkDeep) {
       final PsiClass clazz = superClass.getSuperClass();
-      if (clazz != null) {
+      if (clazz != null && clazz != superClass) {
         PsiSubstitutor substitutor1 = TypeConversionUtil.getSuperClassSubstitutor(clazz, superClass, superSubstitutor);
         return doFindMethodInSuperClassBySignatureInDerived(clazz, substitutor1, signature, true);
       }

@@ -94,7 +94,10 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   @Override
   public void navigate(final boolean requestFocus) {
-    ProjectSettingsService.getInstance(myProject).openModuleSettings(getValue());
+    Module module = getValue();
+    if (module != null) {
+      ProjectSettingsService.getInstance(myProject).openModuleSettings(module);
+    }
   }
 
   @Override
@@ -104,6 +107,6 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   @Override
   public boolean canNavigate() {
-    return ProjectSettingsService.getInstance(myProject).canOpenModuleSettings();
+    return ProjectSettingsService.getInstance(myProject).canOpenModuleSettings() && getValue() != null;
   }
 }

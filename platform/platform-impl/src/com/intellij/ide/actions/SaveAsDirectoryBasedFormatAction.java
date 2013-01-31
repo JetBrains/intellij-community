@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author spleaner
@@ -58,7 +60,8 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
 
 
             final StateStorageManager storageManager = projectStore.getStateStorageManager();
-            for (String file : storageManager.getStorageFileNames()) {
+            final Collection<String> storageFileNames = new ArrayList<String>(storageManager.getStorageFileNames());
+            for (String file : storageFileNames) {
               storageManager.clearStateStorage(file);
             }
 

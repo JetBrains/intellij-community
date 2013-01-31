@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,11 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -52,19 +54,20 @@ import java.util.*;
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
 
-  protected CreateFromUsageBaseFix() {
-  }
-
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
     PsiElement element = getElement();
-    if (element == null) {
+    if (element == null || isValidElement(element)) {
+      return false;
+    }
+
+    int offset = editor.getCaretModel().getOffset();
+    if (!isAvailableImpl(offset)) {
       return false;
     }
 
     List<PsiClass> targetClasses = getTargetClasses(element);
-    return !targetClasses.isEmpty() && !isValidElement(element) && isAvailableImpl(offset);
+    return !targetClasses.isEmpty();
   }
 
   protected abstract boolean isAvailableImpl(int offset);
@@ -146,11 +149,16 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       showInBestPositionFor(editor);
   }
 
-  protected static Editor positionCursor(Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  @Nullable("null means unable to open the editor")
+  protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    VirtualFile file = targetFile.getVirtualFile();
+    if (file == null) {
+      file = PsiUtilCore.getVirtualFile(element);
+      if (file == null) return null;
+    }
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
@@ -172,10 +180,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
-    if (targetClass.isInterface()) {
-      return false;
-    }
-
+    
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     while (qualifierExpression instanceof PsiParenthesizedExpression) {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();

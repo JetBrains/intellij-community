@@ -46,7 +46,6 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -144,7 +143,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
           assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
 
-          myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
+          myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
 
           initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
@@ -294,7 +293,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+    Assert.assertTrue(FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -306,7 +305,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     verify(runSvn("copy", "-q", "-m", "coppy", mainUrl, branchUrl));
 
     clManager.forceGoInTestMode();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
     vcs.invokeRefreshSvnRoots(false);
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);
@@ -344,7 +342,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     // start change list manager again
     clManager.forceGoInTestMode();
-    SvnConfiguration.getInstance(myProject).DETECT_NESTED_COPIES = true;
     vcs.invokeRefreshSvnRoots(false);
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);

@@ -50,7 +50,7 @@ import java.util.*;
 public class KeymapManagerImpl extends KeymapManagerEx implements PersistentStateComponent<Element>, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.keymap.KeymapManager");
 
-  private final List<KeymapManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<KeymapManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private String myActiveKeymapName;
   private final Map<String, String> myBoundShortcuts = new HashMap<String, String>();
 

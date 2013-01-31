@@ -52,10 +52,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
   private final EditorImpl myEditor;
-  private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createEmptyCOWList();
+  private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
-  private boolean                   myAnimationDisabled       = false;
+  private boolean myAnimationDisabled = false;
   private final DocumentAdapter myDocumentListener;
   private int myAccumulatedXOffset = -1;
   private int myAccumulatedYOffset = -1;
@@ -97,7 +97,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   /**
    * Corrects viewport position if necessary on initial editor showing.
    *
-   * @return    <code>true</code> if the vertical viewport position has been adjusted; <code>false</code> otherwise
+   * @return <code>true</code> if the vertical viewport position has been adjusted; <code>false</code> otherwise
    */
   private boolean adjustVerticalOffsetIfNecessary() {
     // There is a possible case that the editor is configured to show virtual space at file bottom and requested position is located
@@ -111,7 +111,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       scrollToOffsets(getHorizontalScrollOffset(), offsetToUse);
       return true;
     }
-    return false; 
+    return false;
   }
 
   @NotNull
@@ -322,7 +322,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       myAccumulatedYOffset = vOffset;
       return;
     }
-    
+
     cancelAnimatedScrolling(false);
 
     VisibleEditorsTracker editorsTracker = VisibleEditorsTracker.getInstance();

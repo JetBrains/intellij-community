@@ -156,8 +156,7 @@ public class MavenDomProjectProcessorUtils {
 
 
   @NotNull
-  public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomDependency dependency,
-                                                               @NotNull final Project project) {
+  public static Set<MavenDomDependency> searchDependencyUsages(@NotNull final MavenDomDependency dependency) {
     final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
     if (model != null) {
       final String artifactId = dependency.getArtifactId().getStringValue();
@@ -195,6 +194,43 @@ public class MavenDomProjectProcessorUtils {
                 groupId.equals(domDependency.getGroupId().getStringValue())) {
               usages.add(domDependency);
             }
+          }
+        }
+        return false;
+      }
+    };
+
+    processChildrenRecursively(model, collectProcessor, project, new HashSet<MavenDomProjectModel>(), true);
+
+    return usages;
+  }
+
+  @NotNull
+  public static Collection<MavenDomPlugin> searchManagedPluginUsages(@NotNull final MavenDomPlugin plugin) {
+    String artifactId = plugin.getArtifactId().getStringValue();
+    if (artifactId == null) return Collections.emptyList();
+
+    String groupId = plugin.getGroupId().getStringValue();
+
+    MavenDomProjectModel model = plugin.getParentOfType(MavenDomProjectModel.class, false);
+    if (model == null) return Collections.emptyList();
+
+    return searchManagedPluginUsages(model, groupId, artifactId);
+  }
+
+  @NotNull
+  public static Collection<MavenDomPlugin> searchManagedPluginUsages(@NotNull final MavenDomProjectModel model,
+                                                                     @Nullable final String groupId,
+                                                                     @NotNull final String artifactId) {
+    Project project = model.getManager().getProject();
+
+    final Set<MavenDomPlugin> usages = new HashSet<MavenDomPlugin>();
+
+    Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
+      public boolean process(MavenDomProjectModel mavenDomProjectModel) {
+        for (MavenDomPlugin domPlugin : mavenDomProjectModel.getBuild().getPlugins().getPlugins()) {
+          if (MavenPluginDomUtil.isPlugin(domPlugin, groupId, artifactId)) {
+            usages.add(domPlugin);
           }
         }
         return false;
@@ -291,48 +327,85 @@ public class MavenDomProjectProcessorUtils {
     return processor.myResult;
   }
 
+  @Nullable
+  public static MavenDomPlugin searchManagingPlugin(@NotNull final MavenDomPlugin plugin) {
+    final String artifactId = plugin.getArtifactId().getStringValue();
+    final String groupId = plugin.getGroupId().getStringValue();
+    if (artifactId == null) return null;
+
+    final MavenDomProjectModel model = plugin.getParentOfType(MavenDomProjectModel.class, false);
+    if (model == null) return null;
+
+    SearchProcessor<MavenDomPlugin, MavenDomPlugins> processor = new SearchProcessor<MavenDomPlugin, MavenDomPlugins>() {
+      @Override
+      protected MavenDomPlugin find(MavenDomPlugins mavenDomPlugins) {
+        if (!model.equals(mavenDomPlugins.getParentOfType(MavenDomProjectModel.class, true))) {
+          for (MavenDomPlugin domPlugin : mavenDomPlugins.getPlugins()) {
+            if (MavenPluginDomUtil.isPlugin(domPlugin, groupId, artifactId)) {
+              return domPlugin;
+            }
+          }
+        }
+
+        return null;
+      }
+    };
+
+    Function<MavenDomProjectModelBase, MavenDomPlugins> domProfileFunction = new Function<MavenDomProjectModelBase, MavenDomPlugins>() {
+      public MavenDomPlugins fun(MavenDomProjectModelBase mavenDomProfile) {
+        return mavenDomProfile.getBuild().getPluginManagement().getPlugins();
+      }
+    };
+
+    process(model, processor, model.getManager().getProject(), domProfileFunction, domProfileFunction);
+
+    return processor.myResult;
+  }
+
 
   public static boolean processDependenciesInDependencyManagement(@NotNull MavenDomProjectModel projectDom,
                                                                   @NotNull final Processor<MavenDomDependencies> processor,
                                                                   @NotNull final Project project) {
 
-    Function<MavenDomProfile, MavenDomDependencies> domProfileFunction = new Function<MavenDomProfile, MavenDomDependencies>() {
-      public MavenDomDependencies fun(MavenDomProfile mavenDomProfile) {
+    Function<MavenDomProjectModelBase, MavenDomDependencies> domFunction = new Function<MavenDomProjectModelBase, MavenDomDependencies>() {
+      public MavenDomDependencies fun(MavenDomProjectModelBase mavenDomProfile) {
         return mavenDomProfile.getDependencyManagement().getDependencies();
       }
     };
-    Function<MavenDomProjectModel, MavenDomDependencies> projectDomFunction = new Function<MavenDomProjectModel, MavenDomDependencies>() {
-      public MavenDomDependencies fun(MavenDomProjectModel mavenDomProjectModel) {
-        return mavenDomProjectModel.getDependencyManagement().getDependencies();
+
+    return process(projectDom, processor, project, domFunction, domFunction);
+  }
+
+  public static boolean processDependencies(@NotNull MavenDomProjectModel projectDom,
+                                            @NotNull final Processor<MavenDomDependencies> processor) {
+
+    Function<MavenDomProjectModelBase, MavenDomDependencies> domFunction = new Function<MavenDomProjectModelBase, MavenDomDependencies>() {
+      public MavenDomDependencies fun(MavenDomProjectModelBase mavenDomProfile) {
+        return mavenDomProfile.getDependencies();
       }
     };
 
-    return process(projectDom, processor, project, domProfileFunction, projectDomFunction);
+    return process(projectDom, processor, projectDom.getManager().getProject(), domFunction, domFunction);
   }
 
   public static boolean processProperties(@NotNull MavenDomProjectModel projectDom,
                                           @NotNull final Processor<MavenDomProperties> processor,
                                           @NotNull final Project project) {
 
-    Function<MavenDomProfile, MavenDomProperties> domProfileFunction = new Function<MavenDomProfile, MavenDomProperties>() {
-      public MavenDomProperties fun(MavenDomProfile mavenDomProfile) {
+    Function<MavenDomProjectModelBase, MavenDomProperties> domFunction = new Function<MavenDomProjectModelBase, MavenDomProperties>() {
+      public MavenDomProperties fun(MavenDomProjectModelBase mavenDomProfile) {
         return mavenDomProfile.getProperties();
       }
     };
-    Function<MavenDomProjectModel, MavenDomProperties> projectDomFunction = new Function<MavenDomProjectModel, MavenDomProperties>() {
-      public MavenDomProperties fun(MavenDomProjectModel mavenDomProjectModel) {
-        return mavenDomProjectModel.getProperties();
-      }
-    };
 
-    return process(projectDom, processor, project, domProfileFunction, projectDomFunction);
+    return process(projectDom, processor, project, domFunction, domFunction);
   }
 
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
                                     @NotNull final Processor<T> processor,
                                     @NotNull final Project project,
-                                    @NotNull final Function<MavenDomProfile, T> domProfileFunction,
-                                    @NotNull final Function<MavenDomProjectModel, T> projectDomFunction) {
+                                    @NotNull final Function<? super MavenDomProfile , T> domProfileFunction,
+                                    @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction) {
 
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction, new HashSet<MavenDomProjectModel>());
   }
@@ -341,8 +414,8 @@ public class MavenDomProjectProcessorUtils {
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
                                     @NotNull final Processor<T> processor,
                                     @NotNull final Project project,
-                                    @NotNull final Function<MavenDomProfile, T> domProfileFunction,
-                                    @NotNull final Function<MavenDomProjectModel, T> projectDomFunction,
+                                    @NotNull final Function<? super MavenDomProfile, T> domProfileFunction,
+                                    @NotNull final Function<? super MavenDomProjectModel, T> projectDomFunction,
                                     final Set<MavenDomProjectModel> processed) {
     if (processed.contains(projectDom)) return true;
     processed.add(projectDom);
@@ -358,8 +431,8 @@ public class MavenDomProjectProcessorUtils {
   private static <T> boolean processParentProjectFile(MavenDomProjectModel projectDom,
                                                       final Processor<T> processor,
                                                       final Project project,
-                                                      final Function<MavenDomProfile, T> domProfileFunction,
-                                                      final Function<MavenDomProjectModel, T> projectDomFunction,
+                                                      final Function<? super MavenDomProfile, T> domProfileFunction,
+                                                      final Function<? super MavenDomProjectModel, T> projectDomFunction,
                                                       final Set<MavenDomProjectModel> processed) {
     Boolean aBoolean = new DomParentProjectFileProcessor<Boolean>(MavenProjectsManager.getInstance(project)) {
       protected Boolean doProcessParent(VirtualFile parentFile) {
@@ -378,7 +451,7 @@ public class MavenDomProjectProcessorUtils {
   private static <T> boolean processSettingsXml(@Nullable MavenProject mavenProject,
                                                 @NotNull Processor<T> processor,
                                                 @NotNull Project project,
-                                                Function<MavenDomProfile, T> domProfileFunction) {
+                                                Function<? super MavenDomProfile, T> domProfileFunction) {
     MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
 
     for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
@@ -394,8 +467,8 @@ public class MavenDomProjectProcessorUtils {
                                             MavenProject mavenProjectOrNull,
                                             Processor<T> processor,
                                             Project project,
-                                            Function<MavenDomProfile, T> domProfileFunction,
-                                            Function<MavenDomProjectModel, T> projectDomFunction) {
+                                            Function<? super MavenDomProfile, T> domProfileFunction,
+                                            Function<? super MavenDomProjectModel, T> projectDomFunction) {
 
     if (processProfilesXml(MavenDomUtil.getVirtualFile(projectDom), mavenProjectOrNull, processor, project, domProfileFunction)) {
       return true;
@@ -411,7 +484,7 @@ public class MavenDomProjectProcessorUtils {
                                                 MavenProject mavenProjectOrNull,
                                                 Processor<T> processor,
                                                 Project project,
-                                                Function<MavenDomProfile, T> f) {
+                                                Function<? super MavenDomProfile, T> f) {
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile == null) return false;
 
@@ -424,7 +497,7 @@ public class MavenDomProjectProcessorUtils {
   private static <T> boolean processProfiles(MavenDomProfiles profilesDom,
                                              MavenProject mavenProjectOrNull,
                                              Processor<T> processor,
-                                             Function<MavenDomProfile, T> f) {
+                                             Function<? super MavenDomProfile, T> f) {
     Collection<String> activePropfiles = mavenProjectOrNull == null ? null : mavenProjectOrNull.getActivatedProfilesIds();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
@@ -438,7 +511,7 @@ public class MavenDomProjectProcessorUtils {
 
   private static <T> boolean processProfile(MavenDomProfile profileDom,
                                             Processor<T> processor,
-                                            Function<MavenDomProfile, T> f) {
+                                            Function<? super MavenDomProfile, T> f) {
     T t = f.fun(profileDom);
     return t != null && processor.process(t);
   }
@@ -473,7 +546,7 @@ public class MavenDomProjectProcessorUtils {
     }
   }
 
-  private abstract static class SearchProcessor<R, T> implements Processor<T> {
+  public abstract static class SearchProcessor<R, T> implements Processor<T> {
 
     private R myResult;
 
@@ -490,5 +563,11 @@ public class MavenDomProjectProcessorUtils {
 
     @Nullable
     protected abstract R find(T element);
+
+    public R getResult() {
+      return myResult;
+    }
   }
+
+
 }

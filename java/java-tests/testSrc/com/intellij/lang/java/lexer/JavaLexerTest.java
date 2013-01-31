@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,17 @@ public class JavaLexerTest extends LexerTestCase {
            "DOUBLE_LITERAL ('3.14')\nWHITE_SPACE (' ')\n" +
            "DOUBLE_LITERAL ('1e-9d')\nWHITE_SPACE (' ')\n" +
            "DOUBLE_LITERAL ('1e137')");
+
+    doTest(". e0 x1 ax .e .p 08 .0e .0f",
+           "DOT ('.')\nWHITE_SPACE (' ')\n" +
+           "IDENTIFIER ('e0')\nWHITE_SPACE (' ')\n" +
+           "IDENTIFIER ('x1')\nWHITE_SPACE (' ')\n" +
+           "IDENTIFIER ('ax')\nWHITE_SPACE (' ')\n" +
+           "DOT ('.')\nIDENTIFIER ('e')\nWHITE_SPACE (' ')\n" +
+           "DOT ('.')\nIDENTIFIER ('p')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('08')\nWHITE_SPACE (' ')\n" +
+           "DOUBLE_LITERAL ('.0e')\nWHITE_SPACE (' ')\n" +
+           "FLOAT_LITERAL ('.0f')");
   }
 
   public void testTigerNumericLiterals() {
@@ -66,6 +77,9 @@ public class JavaLexerTest extends LexerTestCase {
            "DOUBLE_LITERAL ('0xab.P12')\nWHITE_SPACE (' ')\n" +
            "DOUBLE_LITERAL ('0x.abcP123d')\nWHITE_SPACE (' ')\n" +
            "DOUBLE_LITERAL ('0xabc.defP1234D')");
+
+    doTest("p0",
+           "IDENTIFIER ('p0')");
   }
 
   public void testCoinNumericLiterals() {
@@ -116,15 +130,18 @@ public class JavaLexerTest extends LexerTestCase {
   }
 
   public void testMalformedCoinLiterals() {
-    doTest("0_ _1 0_8 0x_f 0b_1 0B2 0x1.0_p-1 1.0e_1022",
-           "INTEGER_LITERAL ('0')\nIDENTIFIER ('_')\nWHITE_SPACE (' ')\n" +
+    doTest("_1 _b ._ 0_ 0_8 0x_f 0b_1 0B2 0x1.0_p-1 1.0e_1022 0._1",
            "IDENTIFIER ('_1')\nWHITE_SPACE (' ')\n" +
-           "INTEGER_LITERAL ('0')\nIDENTIFIER ('_8')\nWHITE_SPACE (' ')\n" +
-           "INTEGER_LITERAL ('0x')\nIDENTIFIER ('_f')\nWHITE_SPACE (' ')\n" +
-           "INTEGER_LITERAL ('0b')\nIDENTIFIER ('_1')\nWHITE_SPACE (' ')\n" +
-           "INTEGER_LITERAL ('0B')\nINTEGER_LITERAL ('2')\nWHITE_SPACE (' ')\n" +
-           "INTEGER_LITERAL ('0x1')\nDOUBLE_LITERAL ('.0')\nIDENTIFIER ('_p')\nMINUS ('-')\nINTEGER_LITERAL ('1')\nWHITE_SPACE (' ')\n" +
-           "DOUBLE_LITERAL ('1.0e')\nIDENTIFIER ('_1022')");
+           "IDENTIFIER ('_b')\nWHITE_SPACE (' ')\n" +
+           "DOT ('.')\nIDENTIFIER ('_')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('0_')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('0_8')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('0x_f')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('0b_1')\nWHITE_SPACE (' ')\n" +
+           "INTEGER_LITERAL ('0B2')\nWHITE_SPACE (' ')\n" +
+           "DOUBLE_LITERAL ('0x1.0_p-1')\nWHITE_SPACE (' ')\n" +
+           "DOUBLE_LITERAL ('1.0e_1022')\nWHITE_SPACE (' ')\n" +
+           "DOUBLE_LITERAL ('0._1')");
   }
 
   public void testMalformedOperators() {

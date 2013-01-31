@@ -32,6 +32,8 @@ import java.util.*;
  * @author traff
  */
 public class UnixProcessManager {
+  private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
+
   public static final int SIGINT = 2;
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
@@ -51,6 +53,8 @@ public class UnixProcessManager {
       C_LIB = null;
     }
   }
+
+  private static Map<String, String> ourCachedConsoleEnv;
 
   private UnixProcessManager() {
   }
@@ -104,6 +108,7 @@ public class UnixProcessManager {
    * @param process tree root process
    */
   public static boolean sendSignalToProcessTree(Process process, int signal) {
+    try {
     checkCLib();
 
     final int our_pid = C_LIB.getpid();
@@ -137,6 +142,11 @@ public class UnixProcessManager {
     }
     else {
       return true; //the parent process was already killed
+    }
+    } catch (Exception e) {
+      //If we fail somehow just return false
+      LOG.warn("Error killing the process", e);
+      return false;
     }
   }
 
@@ -179,17 +189,21 @@ public class UnixProcessManager {
   }
 
   public static void processPSOutput(String[] cmd, Processor<String> processor) {
+    processCommandOutput(cmd, processor, true, true);
+  }
+
+  public static void processCommandOutput(String[] cmd, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
 
-      processPSOutput(p, processor);
+      processCommandOutput(p, processor, skipFirstLine, throwOnError);
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  public static void processPSOutput(Process psProcess, Processor<String> processor) throws IOException {
+  private static void processCommandOutput(Process psProcess, Processor<String> processor, boolean skipFirstLine, boolean throwOnError) throws IOException {
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     BufferedReader stdOutput = new BufferedReader(new
                                                   InputStreamReader(psProcess.getInputStream()));
@@ -198,7 +212,9 @@ public class UnixProcessManager {
 
     try {
       String s;
-      stdOutput.readLine(); //ps output header
+      if (skipFirstLine) {
+        stdOutput.readLine(); //ps output header
+      }
       while ((s = stdOutput.readLine()) != null) {
         processor.process(s);
       }
@@ -207,8 +223,8 @@ public class UnixProcessManager {
       while ((s = stdError.readLine()) != null) {
         errorStr.append(s).append("\n");
       }
-      if (errorStr.length() > 0) {
-        throw new IllegalStateException("error:" + errorStr.toString());
+      if (throwOnError && errorStr.length() > 0) {
+        throw new IOException("Error reading ps output:" + errorStr.toString());
       }
     }
     finally {
@@ -248,10 +264,34 @@ public class UnixProcessManager {
     return res.toString();
   }
 
+  public static Map<? extends String, ? extends String> getOrLoadConsoleEnvironment() {
+    if (ourCachedConsoleEnv == null) {
+      loadConsoleEnvironment();
+    }
+    return ourCachedConsoleEnv;
+  }
 
-  public interface CLib extends Library {
+  private static void loadConsoleEnvironment() {
+    final Map<String, String> env = new HashMap<String, String>();
+    final String shell = System.getenv("SHELL");
+    if (shell != null && (shell.contains("bash") || shell.contains("zsh"))) {
+      processCommandOutput(new String[] {shell, "--login", "-c", "printenv"}, new Processor<String>() {
+        @Override
+        public boolean process(String s) {
+          final String[] split = s.split("=", 2);
+          if (split.length > 1) {
+            env.put(split[0], split[1]);
+          }
+          return false;
+        }
+      }, false, false);
+    }
+    ourCachedConsoleEnv = !env.isEmpty() ? Collections.unmodifiableMap(env) : System.getenv();
+  }
+
+
+  private interface CLib extends Library {
     int getpid();
-
     int kill(int pid, int signal);
   }
 

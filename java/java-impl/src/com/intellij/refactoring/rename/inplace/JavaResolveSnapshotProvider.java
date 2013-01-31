@@ -16,6 +16,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 
 /**
  * User: Maxim.Mossienko

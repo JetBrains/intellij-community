@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testutil
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
 import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
 
@@ -58,6 +59,11 @@ public class ChangeBuilder extends BuilderSupport {
       case "jar":
         changes.addAll attributes.gradle.collect { new GradleJarPresenceChange(it, null) }
         changes.addAll attributes.intellij.collect { new GradleJarPresenceChange(null, it) }
+        return changes
+      case "libraryVersion":
+        changes.add(new GradleOutdatedLibraryVersionChange(
+          attributes.name, attributes.gradleLibraryId, attributes.gradleVersion, attributes.ideLibraryId, attributes.ideVersion
+        ))
     }
     changes
   }

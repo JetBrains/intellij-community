@@ -332,6 +332,7 @@
                   serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
+  <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
@@ -794,10 +795,15 @@
   <completion.contributor language="TEXT" implementationClass="com.intellij.ui.TextFieldWithAutoCompletionContributor"
                           order="first, before commitCompletion"/>
 
+  <completion.contributor language="TEXT" implementationClass="com.intellij.util.CompletionContributorForTextField"
+                          order="first, before commitCompletion"/>
+
   <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
   <pathMacroFilter implementation="com.intellij.openapi.application.StructuralSearchPathMacroFilter"/>
 
   <postStartupActivity implementation="com.intellij.codeInsight.highlighting.BraceHighlighter"/>
   <usageContextPanelProvider implementation="com.intellij.usages.impl.UsagePreviewPanel$Provider"/>
   <usageContextPanelProvider implementation="com.intellij.usageView.impl.UsageContextCallHierarchyPanel$Provider"/>
+  <fileDocumentSynchronizationVetoer implementation="com.intellij.codeInsight.lookup.impl.LookupDocumentSavingVetoer"/>
+  <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
 </extensions>

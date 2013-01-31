@@ -31,7 +31,7 @@ public class HgExecutableValidator extends ExecutableValidator {
 
   @Override
   protected String getCurrentExecutable() {
-    return myVcs.getHgExecutable();
+    return myVcs.getGlobalSettings().getHgExecutable();
   }
 
   @NotNull
@@ -41,7 +41,7 @@ public class HgExecutableValidator extends ExecutableValidator {
   }
 
   @Override
-  public boolean isExecutableValid(String executable) {
+  public boolean isExecutableValid(@NotNull String executable) {
     return new HgVersionCommand().isValid(executable, myVcs.getGlobalSettings().isRunViaBash());
   }
 

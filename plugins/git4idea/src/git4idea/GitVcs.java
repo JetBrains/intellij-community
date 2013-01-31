@@ -85,6 +85,7 @@ import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -339,11 +340,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void activate() {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      if (myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
-        checkVersion();
-      }
-    }
+    checkExecutableAndVersion();
 
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
@@ -362,6 +359,24 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).activate();
+  }
+
+  private void checkExecutableAndVersion() {
+    boolean executableIsAlreadyCheckedAndFine = false;
+    String pathToGit = myAppSettings.getPathToGit();
+    if (!pathToGit.contains(File.separator)) { // no path, just sole executable, with a hope that it is in path
+      // subject to redetect the path if executable validator fails
+      if (!myExecutableValidator.isExecutableValid()) {
+        myAppSettings.setPathToGit(new GitExecutableDetector().detect());
+      }
+      else {
+        executableIsAlreadyCheckedAndFine = true; // not to check it twice
+      }
+    }
+
+    if (executableIsAlreadyCheckedAndFine || myExecutableValidator.checkExecutableAndNotifyIfNeeded()) {
+      checkVersion();
+    }
   }
 
   @Override

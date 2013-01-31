@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -29,11 +30,11 @@ public class InvertBooleanAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && (elements[0] instanceof PsiMethod || elements[0] instanceof PsiVariable);
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     if (element instanceof PsiVariable) {
       return PsiType.BOOLEAN.equals(((PsiVariable) element).getType());
     }
@@ -43,7 +44,7 @@ public class InvertBooleanAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
+  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new InvertBooleanHandler();
   }
 }

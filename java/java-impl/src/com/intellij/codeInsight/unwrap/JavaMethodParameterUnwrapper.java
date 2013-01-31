@@ -15,15 +15,16 @@
  */
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
 public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
+  private static final Logger LOG = Logger.getInstance("#" + JavaMethodParameterUnwrapper.class.getName());
+
   public JavaMethodParameterUnwrapper() {
     super("");
   }
@@ -37,25 +38,57 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
 
   @Override
   public boolean isApplicableTo(PsiElement e) {
-    return (e instanceof PsiExpression)
-           && e.getParent() instanceof PsiExpressionList;
+    final PsiElement parent = e.getParent();
+    if (e instanceof PsiExpression){
+      if (parent instanceof PsiExpressionList) {
+        return true;
+      }
+      if (e instanceof PsiReferenceExpression && parent instanceof PsiCallExpression) {
+        final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
+        if (argumentList != null && argumentList.getExpressions().length == 1) {
+          return true;
+        }
+      }
+    } else if (e instanceof PsiJavaCodeReferenceElement) {
+      if (parent instanceof PsiCall) {
+        final PsiExpressionList argumentList = ((PsiCall)parent).getArgumentList();
+        if (argumentList != null && argumentList.getExpressions().length == 1) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
-    return e.getParent().getParent();
+    return isTopLevelCall(e) ? e.getParent() : e.getParent().getParent();
+  }
+
+  private static boolean isTopLevelCall(PsiElement e) {
+    if (e instanceof PsiReferenceExpression && e.getParent() instanceof PsiCallExpression) return true;
+    return e instanceof PsiJavaCodeReferenceElement && !(e instanceof PsiExpression);
   }
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
-    PsiElement methodCall = element.getParent().getParent();
-    context.extractElement(element, methodCall);
+    PsiElement methodCall = isTopLevelCall(element) ? element.getParent() : element.getParent().getParent();
+    final PsiElement extractedElement = isTopLevelCall(element) ? getArg(element) : element;
+    context.extractElement(extractedElement, methodCall);
     if (methodCall.getParent() instanceof PsiExpressionList) {
       context.delete(methodCall);
     }
     else {
       context.deleteExactly(methodCall);
     }
+  }
+
+  private static PsiExpression getArg(PsiElement element) {
+    final PsiExpressionList argumentList = ((PsiCall)element.getParent()).getArgumentList();
+    LOG.assertTrue(argumentList != null);
+    final PsiExpression[] args = argumentList.getExpressions();
+    LOG.assertTrue(args.length == 1);
+    return args[0];
   }
 }

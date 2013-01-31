@@ -203,6 +203,11 @@ public class BreakpointMasterDetailPopupBuilder {
           myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup, withEnterOrDoubleClick);
         }
       }
+
+      @Override
+      public void removeSelectedItemsInTree() {
+        myTreeController.removeSelectedBreakpoints(myProject);
+      }
     };
 
     myPopupBuilder.
@@ -327,7 +332,14 @@ public class BreakpointMasterDetailPopupBuilder {
     actions.add(new AnAction("Remove Breakpoint", null, PlatformIcons.DELETE_ICON) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(MasterDetailPopupBuilder.allowedToRemoveItems(myPopupBuilder.getSelectedItems()));
+        boolean enabled = false;
+        final ItemWrapper[] items = myPopupBuilder.getSelectedItems();
+        for (ItemWrapper item : items) {
+          if (item.allowedToRemove()) {
+            enabled = true;
+          }
+        }
+        e.getPresentation().setEnabled(enabled);
       }
 
       @Override

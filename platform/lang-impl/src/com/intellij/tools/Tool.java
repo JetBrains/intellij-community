@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -192,8 +193,10 @@ public class Tool implements SchemeElement {
 
   public void setOutputFilters(FilterInfo[] filters) {
     myOutputFilters = new ArrayList<FilterInfo>();
-    for (int i = 0; i < filters.length; i++) {
-      myOutputFilters.add(filters[i]);
+    if (filters != null) {
+      for (int i = 0; i < filters.length; i++) {
+        myOutputFilters.add(filters[i]);
+      }
     }
   }
 
@@ -246,7 +249,7 @@ public class Tool implements SchemeElement {
   }
 
   public String getActionId() {
-    StringBuffer name = new StringBuffer(ACTION_ID_PREFIX);
+    StringBuilder name = new StringBuilder(ACTION_ID_PREFIX);
     if (myGroup != null) {
       name.append(myGroup);
       name.append('_');
@@ -257,7 +260,7 @@ public class Tool implements SchemeElement {
     return name.toString();
   }
 
-  public void execute(DataContext dataContext) {
+  public void execute(AnActionEvent event, DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
@@ -279,30 +282,6 @@ public class Tool implements SchemeElement {
         OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         handler.startNotify();
-        /*
-        ContentManager contentManager = RunManager.getInstance(project).getViewProvider();
-        ExecutionView.Descriptor descriptor = new ExecutionView.Descriptor(project, getName(), contentManager,
-                                                                           ToolWindowId.RUN);
-        descriptor.canBreak = false;
-        Content contentToReuse = RunManager.getInstance(project).getContentToReuse();
-        executionView = ExecutionView.openExecutionView(descriptor, contentToReuse, true, DefaultConsoleViewFactory.getInstance());
-        executionView.addAction(new EditToolAction(executionView), 1);
-        WindowManager.getInstance().getStatusBar(project).setInfo("External tool '" + getName() + "' started");
-        if (executionView.enterCriticalSection()) {
-          OSProcessHandler handler = commandLine.createProcessHandler();
-          executionView.getConsoleView().print(handler.getCommandLine() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-          executionView.setProcessHandler(handler);
-          handler.addProcessListener(new MyProcessAdapter(executionView, project));
-          // Add filters;
-          for (int i = 0; i < myOutputFilters.size(); i++) {
-            RegexpFilter filter = myOutputFilters.get(i);
-            if (filter != null) {
-              executionView.getConsoleView().addMessageFilter(filter);
-            }
-          }
-          handler.startNotify();
-        }
-        */
       }
     }
     catch (ExecutionException ex) {
@@ -311,8 +290,8 @@ public class Tool implements SchemeElement {
   }
 
   @Nullable
-  GeneralCommandLine createCommandLine(DataContext dataContext) {
-    if (getWorkingDirectory() != null && getWorkingDirectory().trim().length() == 0) {
+  public GeneralCommandLine createCommandLine(DataContext dataContext) {
+    if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory(null);
     }
 

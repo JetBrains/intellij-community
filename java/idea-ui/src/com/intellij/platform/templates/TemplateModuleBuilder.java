@@ -18,12 +18,16 @@ package com.intellij.platform.templates;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,9 +35,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -62,6 +69,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       return s.contains(".idea") ? null : s;
     }
   };
+  public static final String UTF_8 = "UTF-8";
 
   private final ModuleType myType;
   private ArchivedProjectTemplate myTemplate;
@@ -93,17 +101,30 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           public void run() {
             try {
               setupModule(module);
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
             }
             catch (ConfigurationException e) {
               LOG.error(e);
             }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+          }
+        });
+
+        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                  modifiableModuleModel.renameModule(module, module.getProject().getName());
+                  modifiableModuleModel.commit();
+                  fixModuleName(module);
+                }
+                catch (ModuleWithNameAlreadyExists exists) {
+                  // do nothing
+                }
+              }
+            });
           }
         });
         return module;
@@ -148,7 +169,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     ZipInputStream zipInputStream = null;
     try {
       zipInputStream = myTemplate.getStream();
-      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null);
+      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null, new ZipUtil.ContentProcessor() {
+        @Override
+        public byte[] processContent(byte[] content, String fileName) throws IOException {
+          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
+          return fileType.isBinary() ? content : processTemplates(new String(content));
+        }
+      });
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
@@ -174,6 +201,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     finally {
       StreamUtil.closeStream(zipInputStream);
     }
+  }
+
+  private static byte[] processTemplates(String s) throws IOException {
+    Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+    String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
+    return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1488,4 +1488,43 @@ new X().fo<caret>o('abc')''', PsiMethod)
     assertFalse(method.parameterList.parameters[0].type instanceof PsiEllipsisType)
   }
 
+  void testMethodWithLiteralName() {
+    resolveByText('''\
+def 'a\\'bc'(){}
+"a'b<caret>c"()
+''', GrMethod)
+  }
+
+  void testValueOf() {
+    final valueof = resolveByText('''\
+enum MyEnum {
+    FOO, BAR
+}
+
+
+MyEnum myEnum
+myEnum = MyEnum.va<caret>lueOf('FOO')
+''', PsiMethod)
+
+    assertEquals(valueof.parameterList.parametersCount, 1)
+  }
+
+  void testResolveOverloadedReturnType() {
+    myFixture.addClass('class PsiModifierList {}')
+    myFixture.addClass('class GrModifierList extends PsiModifierList {}')
+    myFixture.addClass('class GrMember {' +
+                       '  GrModifierList get();' +
+                       '}')
+    myFixture.addClass('class PsiClass {' +
+                       '  PsiModifierList get();' +
+                       '}')
+
+    myFixture.addClass('class GrTypeDefinition extends PsiClass, GrMember {}')
+
+    final PsiMethod method = resolveByText('new GrTypeDefinition().ge<caret>t()', PsiMethod)
+
+    assertTrue(method.getReturnType().getCanonicalText() == 'GrModifierList')
+
+
+  }
 }

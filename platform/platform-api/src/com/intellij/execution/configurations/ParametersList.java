@@ -47,10 +47,7 @@ public class ParametersList implements Cloneable {
   }
 
   public boolean hasProperty(@NonNls final String name) {
-    for (@NonNls String parameter : myParameters) {
-      if (parameter.startsWith("-D" + name + '=')) return true;
-    }
-    return false;
+    return getPropertyValue(name) != null;
   }
 
   @Nullable

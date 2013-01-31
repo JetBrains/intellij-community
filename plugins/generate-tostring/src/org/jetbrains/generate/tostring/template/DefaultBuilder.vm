@@ -1,11 +1,9 @@
-public String toString() {
-final StringBuilder sb = new StringBuilder();
-sb.append("$classname");
+public java.lang.String toString() {
+final java.lang.StringBuilder sb = new java.lang.StringBuilder("$classname{");
 #set ($i = 0)
 #foreach ($member in $members)
-#if (!$member.modifierStatic)
 #if ($i == 0)
-sb.append("{##
+sb.append("##
 #else
 sb.append(", ##
 #end
@@ -14,12 +12,8 @@ $member.name='")##
 #else
 $member.name=")##
 #end
-#if ($member.primitiveArray)
-.append($member.name == null ? "null" : "");
-for (int i = 0; $member.name != null && i < $member.name .length; ++i)
-    sb.append(i == 0 ? "" : ", ").append($member.name[$i]);
-#elseif ($member.objectArray)
-.append($member.name == null ? "null" : Arrays.asList($member.name).toString());
+#if ($member.primitiveArray || $member.objectArray)
+.append(java.util.Arrays.toString($member.name));
 #elseif ($member.string)
 .append($member.accessor).append('\'');
 #else
@@ -27,11 +21,6 @@ for (int i = 0; $member.name != null && i < $member.name .length; ++i)
 #end
 #set ($i = $i + 1)
 #end
-#end
-#if ($members.size() == 0)
-sb.append("{}");
-#else
 sb.append('}');
-#end
 return sb.toString();
 }

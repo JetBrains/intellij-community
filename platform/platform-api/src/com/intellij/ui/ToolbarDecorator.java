@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -118,7 +119,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JList list) {
-    return new ListToolbarDecorator(list).initPosition();
+    return new ListToolbarDecorator(list, null).initPosition();
+  }
+
+  public static ToolbarDecorator createDecorator(@NotNull JList list, EditableModel editableModel) {
+    return new ListToolbarDecorator(list, editableModel).initPosition();
   }
 
   public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
@@ -306,6 +311,9 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  /**
+   * @return panel that contains wrapped component (with added scrollpane) and toolbar panel.
+   */
   public JPanel createPanel() {
     final CommonActionsPanel.Buttons[] buttons = getButtons();
     final JComponent contextComponent = getComponent();

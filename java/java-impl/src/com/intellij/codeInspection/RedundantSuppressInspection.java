@@ -107,10 +107,12 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   @Nullable
   private CommonProblemDescriptor[] checkElement(RefClass refEntity, InspectionManager manager, final Project project) {
-    return checkElement(refEntity.getElement(), manager, project);
+    final PsiClass psiClass = refEntity.getElement();
+    if (psiClass == null) return null;
+    return checkElement(psiClass, manager, project);
   }
 
-  public CommonProblemDescriptor[] checkElement(final PsiElement psiElement, InspectionManager manager, Project project) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, InspectionManager manager, Project project) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitModifierList(PsiModifierList list) {

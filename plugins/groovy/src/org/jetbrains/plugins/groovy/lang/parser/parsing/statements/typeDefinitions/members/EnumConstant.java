@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class EnumConstant implements GroovyElementTypes {
 
     if (builder.getTokenType() == mLCURLY) {
       final PsiBuilder.Marker enumInitializer = builder.mark();
-      TypeDefinition.parseClassBody(builder, null, parser);
+      TypeDefinition.parseBody(builder, null, parser, false);
       enumInitializer.done(ENUM_CONSTANT_INITIALIZER);
     }
 

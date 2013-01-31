@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,11 +141,11 @@ class GrChangeSignatureConflictSearcher {
       String newMethodName = myChangeInfo.getNewName();
       if (method.isConstructor()) {
         prototype = factory.createConstructorFromText("foo", ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", method);
-        prototype.setName(newMethodName);
       }
       else {
-        prototype = factory.createMethodFromText("", newMethodName, returnType != null ? returnType.getTypeText() : null, ArrayUtil.EMPTY_STRING_ARRAY, method);
+        prototype = factory.createMethodFromText("", "foo", returnType != null ? returnType.getTypeText() : null, ArrayUtil.EMPTY_STRING_ARRAY, method);
       }
+      prototype.setName(newMethodName);
 
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
 

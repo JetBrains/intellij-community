@@ -13,6 +13,8 @@ new staticPropAssignment(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
+
+
 print(3 + (setProp(2 + 1)));
 return null;
 

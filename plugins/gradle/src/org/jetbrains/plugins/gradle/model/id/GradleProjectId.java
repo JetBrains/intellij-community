@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
  * @author Denis Zhdanov
  * @since 2/14/12 1:34 PM
  */
-public class GradleProjectId extends GradleAbstractEntityId {
+public class GradleProjectId extends AbstractGradleEntityId {
 
   public GradleProjectId(@NotNull GradleEntityOwner owner) {
     super(GradleEntityType.PROJECT, owner);
@@ -19,7 +19,7 @@ public class GradleProjectId extends GradleAbstractEntityId {
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
       case GRADLE: return context.getChangesModel().getGradleProject();
-      case INTELLIJ: return context.getProjectStructureHelper().getProject();
+      case IDE: return context.getProjectStructureHelper().getProject();
     }
     throw new IllegalStateException(String.format("Can't map project id to the target project. Id owner: %s", getOwner()));
   }

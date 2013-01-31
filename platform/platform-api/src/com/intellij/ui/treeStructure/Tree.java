@@ -148,7 +148,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
-    return SystemInfo.isMac ? Condition.FALSE : Condition.TRUE;
+    return SystemInfo.isMac || UIUtil.isUnderDarcula() ? Condition.FALSE : Condition.TRUE;
   }
   
   public boolean isFileColorsEnabled() {

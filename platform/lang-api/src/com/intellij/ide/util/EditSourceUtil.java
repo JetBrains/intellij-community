@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.PomTargetPsiElement;
@@ -29,8 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 public class EditSourceUtil {
-  private EditSourceUtil() {
-  }
+  private EditSourceUtil() { }
 
   @Nullable
   public static Navigatable getDescriptor(final PsiElement element) {
@@ -58,9 +58,9 @@ public class EditSourceUtil {
     if (element == null || !element.isValid()) {
       return false;
     }
-    final PsiElement navigationElement = element.getNavigationElement();
-    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navigationElement);
-    return virtualFile != null && virtualFile.isValid() && !virtualFile.isSpecialFile();
+
+    VirtualFile file = PsiUtilCore.getVirtualFile(element.getNavigationElement());
+    return file != null && file.isValid() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file);
   }
 
   public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {

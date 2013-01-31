@@ -38,6 +38,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -50,7 +51,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
-class ToolEditorDialog extends DialogWrapper {
+public class ToolEditorDialog extends DialogWrapper {
   private final JTextField myNameField = new JTextField();
   private final JTextField myDescriptionField = new JTextField();
   private final ComboBox myGroupCombo = new ComboBox(-1);
@@ -78,7 +79,8 @@ class ToolEditorDialog extends DialogWrapper {
   private FilterInfo[] myOutputFilters;
   private final Project myProject;
 
-  protected JComponent createCenterPanel() {
+  @NotNull
+  protected JPanel createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints constr;
 
@@ -167,14 +169,14 @@ class ToolEditorDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("preferences.externalToolsEdit");
   }
 
-  ToolEditorDialog(JComponent parent, String title) {
+  protected ToolEditorDialog(JComponent parent, String title) {
     super(parent, true);
 
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
@@ -204,30 +206,9 @@ class ToolEditorDialog extends DialogWrapper {
     pane.add(new JLabel(ToolsBundle.message("tools.program.label")), constr);
 
     FixedSizeButton browseCommandButton = new FixedSizeButton(myTfCommand);
-    browseCommandButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
-          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
-              if (file != null) {
-                myTfCommand.setText(file.getPresentableUrl());
-                String workingDirectory = myTfCommandWorkingDirectory.getText();
-                if (workingDirectory == null || workingDirectory.length() == 0){
-                  VirtualFile parent = file.getParent();
-                  if (parent != null && parent.isDirectory()) {
-                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
-                  }
-                }
-              }
-            }
-          });
-        }
-      }
-    );
+
+    addCommandBrowseAction(pane, browseCommandButton, myTfCommand);
+
     JPanel _pane0 = new JPanel(new BorderLayout());
     _pane0.add(myTfCommand, BorderLayout.CENTER);
     _pane0.add(browseCommandButton, BorderLayout.EAST);
@@ -289,24 +270,8 @@ class ToolEditorDialog extends DialogWrapper {
 
     FixedSizeButton browseDirectoryButton = new FixedSizeButton(myTfCommandWorkingDirectory);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseDirectoryButton, myTfCommandWorkingDirectory);
-    browseDirectoryButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+    addWorkingDirectoryBrowseAction(pane, browseDirectoryButton, myTfCommandWorkingDirectory);
 
-          chooser.choose(null, new Consumer<List<VirtualFile>>() {
-            @Override
-            public void consume(List<VirtualFile> files) {
-              VirtualFile file = files.size() > 0 ? files.get(0) : null;
-              if (file != null) {
-                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
-              }
-            }
-          });
-        }
-      }
-    );
     JPanel _pane1 = new JPanel(new BorderLayout());
     _pane1.add(myTfCommandWorkingDirectory, BorderLayout.CENTER);
     _pane1.add(browseDirectoryButton, BorderLayout.EAST);
@@ -340,6 +305,56 @@ class ToolEditorDialog extends DialogWrapper {
     return pane;
   }
 
+  protected void addWorkingDirectoryBrowseAction(final JPanel pane,
+                                                 FixedSizeButton browseDirectoryButton,
+                                                 JTextField tfCommandWorkingDirectory) {
+    browseDirectoryButton.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommandWorkingDirectory.setText(file.getPresentableUrl());
+              }
+            }
+          });
+        }
+      }
+    );
+  }
+
+  protected void addCommandBrowseAction(final JPanel pane, FixedSizeButton browseCommandButton, JTextField tfCommand) {
+    browseCommandButton.addActionListener(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
+          PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
+          chooser.choose(null, new Consumer<List<VirtualFile>>() {
+            @Override
+            public void consume(List<VirtualFile> files) {
+              VirtualFile file = files.size() > 0 ? files.get(0) : null;
+              if (file != null) {
+                myTfCommand.setText(file.getPresentableUrl());
+                String workingDirectory = myTfCommandWorkingDirectory.getText();
+                if (workingDirectory == null || workingDirectory.length() == 0) {
+                  VirtualFile parent = file.getParent();
+                  if (parent != null && parent.isDirectory()) {
+                    myTfCommandWorkingDirectory.setText(parent.getPresentableUrl());
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+    );
+  }
+
   private class InsertMacroActionListener implements ActionListener {
     private final JTextField myTextField;
 
@@ -357,7 +372,7 @@ class ToolEditorDialog extends DialogWrapper {
           myTextField.getDocument().insertString(position, "$" + macro + "$", null);
           myTextField.setCaretPosition(position + macro.length() + 2);
         }
-        catch(BadLocationException ignored){
+        catch (BadLocationException ignored) {
         }
       }
       IdeFocusManager.findInstance().requestFocus(myTextField, true);
@@ -398,7 +413,7 @@ class ToolEditorDialog extends DialogWrapper {
   }
 
   public Tool getData() {
-    Tool tool = new Tool();
+    Tool tool = createTool();
 
     tool.setName(convertString(myNameField.getText()));
     tool.setDescription(convertString(myDescriptionField.getText()));
@@ -422,17 +437,21 @@ class ToolEditorDialog extends DialogWrapper {
     return tool;
   }
 
-  protected String getDimensionServiceKey(){
+  protected Tool createTool() {
+    return new Tool();
+  }
+
+  protected String getDimensionServiceKey() {
     return "#com.intellij.tools.ToolEditorDialog";
   }
 
   /**
-    * Initialize controls
-    */
-  void setData(Tool tool, String[] existingGroups) {
+   * Initialize controls
+   */
+  protected void setData(Tool tool, String[] existingGroups) {
     myNameField.setText(tool.getName());
     myDescriptionField.setText(tool.getDescription());
-    if (myGroupCombo.getItemCount() > 0){
+    if (myGroupCombo.getItemCount() > 0) {
       myGroupCombo.removeAllItems();
     }
     for (int i = 0; i < existingGroups.length; i++) {
@@ -500,5 +519,9 @@ class ToolEditorDialog extends DialogWrapper {
     s = s.trim();
     if (s.length() == 0) return null;
     return s.replace('/', File.separatorChar);
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

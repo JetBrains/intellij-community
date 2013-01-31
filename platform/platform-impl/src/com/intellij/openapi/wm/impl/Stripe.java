@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -154,7 +155,9 @@ final class Stripe extends JPanel{
     updateText();
     updateState();
     KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      UISettings.getInstance().addUISettingsListener(myUISettingsListener,myDisposable);
+    }
   }
 
   /**
@@ -163,7 +166,9 @@ final class Stripe extends JPanel{
   @Override
   public void removeNotify(){
     KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
-    Disposer.dispose(myDisposable);
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      Disposer.dispose(myDisposable);
+    }
     super.removeNotify();
   }
 
@@ -581,13 +586,13 @@ final class Stripe extends JPanel{
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
         bg = (BufferedImage) createImage(bounds.width, 50);
         Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
+        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
         graphics.fillRect(0, 0, bounds.width, 50);
         graphics.dispose();
       } else {
         bg = (BufferedImage) createImage(50, bounds.height);
         Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
+        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
         graphics.fillRect(0, 0, 50, bounds.height);
         graphics.dispose();
       }

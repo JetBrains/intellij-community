@@ -26,5 +26,5 @@ import java.awt.*;
  * @author cdr
  */
 public interface TooltipRenderer {
-  LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, TooltipGroup group, @NotNull HintHint intInfo);
+  LightweightHint show(@NotNull Editor editor, @NotNull Point p, boolean alignToRight, @NotNull TooltipGroup group, @NotNull HintHint intInfo);
 }

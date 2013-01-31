@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,25 @@
  */
 package org.jetbrains.generate.tostring;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.*;
 import org.jetbrains.generate.tostring.element.*;
 import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.velocity.VelocityFactory;
 import org.jetbrains.generate.tostring.view.MethodExistsDialog;
@@ -50,26 +48,14 @@ import java.util.*;
 public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringWorker");
 
-  private final PsiElementFactory elementFactory;
-  private final JVMElementFactory topLevelFactory;
-  private final CodeStyleManager codeStyleManager;
   private final Editor editor;
-  private final PsiFile containingFile;
   private final PsiClass clazz;
-  private final PsiAdapter psi;
   private final Config config;
-  private final Project project;
   private final boolean hasOverrideAnnotation;
 
   public GenerateToStringWorker(PsiClass clazz, Editor editor, boolean insertAtOverride) {
     this.clazz = clazz;
-    this.project = clazz.getProject();
-    this.psi = PsiAdapterFactory.getPsiAdapter();
     this.editor = editor;
-    this.elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    this.topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), project);
-    this.codeStyleManager = CodeStyleManager.getInstance(project);
-    this.containingFile = clazz.getContainingFile();
     this.config = GenerateToStringContext.getConfig();
     this.hasOverrideAnnotation = insertAtOverride;
   }
@@ -109,22 +95,22 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method get's the choice if there is an existing <code>toString</code> method.
+   * This method gets the choice if there is an existing <code>toString</code> method.
    * <br/> 1) If there is a settings to always override use this.
    * <br/> 2) Prompt a dialog and let the user decide.
    *
-   * @param template the choosen template to use
+   * @param template the chosen template to use
    * @return the policy the user selected (never null)
    */
   private ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
-    final DuplicatonPolicy dupPolicy = config.getReplaceDialogInitialOption();
-    if (dupPolicy == DuplicatonPolicy.ASK) {
-      PsiMethod existingMethod = psi.findMethodByName(clazz, template.getTargetMethodName());
+    final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
+    if (dupPolicy == DuplicationPolicy.ASK) {
+      PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
       if (existingMethod != null) {
         return MethodExistsDialog.showDialog(template.getTargetMethodName());
       }
     }
-    else if (dupPolicy == DuplicatonPolicy.REPLACE) {
+    else if (dupPolicy == DuplicationPolicy.REPLACE) {
       return ReplacePolicy.getInstance();
     }
 
@@ -139,7 +125,7 @@ public class GenerateToStringWorker {
    * @param template the template to use
    */
   private void beforeCreateToStringMethod(Map<String, String> params, TemplateResource template) {
-    PsiMethod existingMethod = psi.findMethodByName(clazz, template.getTargetMethodName()); // find the existing method
+    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName()); // find the existing method
     if (existingMethod != null && existingMethod.getDocComment() != null) {
       PsiDocComment doc = existingMethod.getDocComment();
       if (doc != null) {
@@ -172,8 +158,9 @@ public class GenerateToStringWorker {
     body = StringUtil.convertLineSeparators(body);
 
     // create psi newMethod named toString()
-    PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", null);
-    codeStyleManager.reformat(newMethod);
+    final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
+    PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
+    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
@@ -183,17 +170,7 @@ public class GenerateToStringWorker {
     }
 
     if (hasOverrideAnnotation) {
-      annotate(toStringMethod, "java.lang.Override");
-    }
-
-    // add annotations
-    if (template.hasAnnotations()) {
-      String[] annotations = template.getAnnotations();
-      // must reverse loop to add annotations in the same order as in the template (when inserting it would insert in top)
-      for (int i = annotations.length - 1; i > -1; i--) {
-        String text = annotations[i];
-        psi.addAnnotationToMethod(topLevelFactory, toStringMethod, text);
-      }
+      toStringMethod.getModifierList().addAnnotation("java.lang.Override");
     }
 
     // applyJavaDoc conflict resolution policy (add or keep existing)
@@ -204,20 +181,16 @@ public class GenerateToStringWorker {
       newJavaDoc = velocityGenerateCode(selectedMembers, params, newJavaDoc);
       if (logger.isDebugEnabled()) logger.debug("JavaDoc body generated from Velocity:\n" + newJavaDoc);
 
-      applyJavaDoc(toStringMethod, elementFactory, codeStyleManager, existingJavaDoc, newJavaDoc);
+      applyJavaDoc(toStringMethod, existingJavaDoc, newJavaDoc);
     }
 
     // return the created method
     return toStringMethod;
   }
 
-  private void applyJavaDoc(PsiMethod newMethod,
-                            PsiElementFactory elementFactory,
-                            CodeStyleManager codeStyleManager,
-                            String existingJavaDoc,
-                            String newJavaDoc) throws IncorrectOperationException {
+  private static void applyJavaDoc(PsiMethod newMethod, String existingJavaDoc, String newJavaDoc) {
     String text = newJavaDoc != null ? newJavaDoc : existingJavaDoc; // prefer to use new javadoc
-    psi.addOrReplaceJavadoc(elementFactory, codeStyleManager, newMethod, text, true);
+    PsiAdapter.addOrReplaceJavadoc(newMethod, text, true);
   }
 
 
@@ -229,62 +202,43 @@ public class GenerateToStringWorker {
    * @param template the template to use
    * @throws IncorrectOperationException is thrown by IDEA
    */
-  private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template)
-    throws IncorrectOperationException {
-
+  private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template) {
+    PsiFile containingFile = clazz.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-      // if the code uses Arrays, then make sure java.util.Arrays is imported.
-      String javaCode = method.getText();
-      if (javaCode.indexOf("Arrays.") > 0 &&
-          !(psi.hasImportStatement(javaFile, "java.util.*") || psi.hasImportStatement(javaFile, "java.util.Arrays"))) {
-        // java.util.Arrays must be imported as java.util.* since the addImportStatement method doens't support onDemand-import statement yet.
-        psi.addImportStatement(javaFile, "java.util.*", elementFactory);
-      }
-
-      // if the code uses Reflection (Field[]), then make sure java.lang.reflect.Field is imported.
-      if (javaCode.indexOf("Field[]") > 0 &&
-          !(psi.hasImportStatement(javaFile, "java.lang.reflect.*") || psi.hasImportStatement(javaFile, "java.lang.reflect.Field"))) {
-        // java.lang.reflect.Field must be imported as java.lang.reflect.* since the addImportStatement method doens't support onDemand-import statement yet.
-        psi.addImportStatement(javaFile, "java.lang.reflect.*", elementFactory);
-      }
-
-      // any additional packages to import from the params
       if (params.get("autoImportPackages") != null) {
+        // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
+      method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
     }
-
-    // reformat code
-    codeStyleManager.reformat(method);
 
     // jump to method
-    if (config.isJumpToMethod() && editor != null) {
-      PsiMethod newMethod = psi.findMethodByName(clazz, template.getTargetMethodName());
-      if (newMethod != null) {
-        int offset = newMethod.getTextOffset();
-        if (offset > 2) {
-          VisualPosition vp = editor.offsetToVisualPosition(offset);
-          if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
-          editor.getCaretModel().moveToVisualPosition(vp);
-          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
-        }
-      }
+    if (!config.isJumpToMethod() || editor == null) {
+      return;
     }
+    int offset = method.getTextOffset();
+    if (offset <= 2) {
+      return;
+    }
+    VisualPosition vp = editor.offsetToVisualPosition(offset);
+    if (logger.isDebugEnabled()) logger.debug("Moving/Scrolling caret to " + vp + " (offset=" + offset + ")");
+    editor.getCaretModel().moveToVisualPosition(vp);
+    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);
   }
 
   /**
    * Automatic import the packages.
    *
-   * @param packageNames names of packages (must end with .* and be seperated by ; or ,)
+   * @param packageNames names of packages (must end with .* and be separated by ; or ,)
    * @throws IncorrectOperationException error adding imported package
    */
-  private void autoImportPackages(PsiJavaFile psiJavaFile, String packageNames) throws IncorrectOperationException {
+  private static void autoImportPackages(PsiJavaFile psiJavaFile, String packageNames) throws IncorrectOperationException {
     StringTokenizer tok = new StringTokenizer(packageNames, ",");
     while (tok.hasMoreTokens()) {
       String packageName = tok.nextToken().trim(); // trim in case of space
       if (logger.isDebugEnabled()) logger.debug("Auto importing package: " + packageName);
-      psi.addImportStatement(psiJavaFile, packageName, elementFactory);
+      PsiAdapter.addImportStatement(psiJavaFile, packageName);
     }
   }
 
@@ -295,7 +249,7 @@ public class GenerateToStringWorker {
    *
    * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
    * @param params          additional parameters stored with key/value in the map.
-   * @param templateMacro   the veloicty macro template
+   * @param templateMacro   the velocity macro template
    * @return code (usually javacode). Returns null if templateMacro is null.
    * @throws GenerateCodeException is thrown when there is an error generating the javacode.
    */
@@ -309,17 +263,19 @@ public class GenerateToStringWorker {
     try {
       VelocityContext vc = new VelocityContext();
 
+      vc.put("java_version", PsiAdapter.getJavaVersion(clazz));
+
       // field information
       logger.debug("Velocity Context - adding fields");
-      vc.put("fields", ElementUtils.getOnlyAsFieldElements(project, psi, selectedMembers));
+      vc.put("fields", ElementUtils.getOnlyAsFieldElements(selectedMembers));
 
       // method information
       logger.debug("Velocity Context - adding methods");
-      vc.put("methods", ElementUtils.getOnlyAsMethodElements(elementFactory, psi, selectedMembers));
+      vc.put("methods", ElementUtils.getOnlyAsMethodElements(selectedMembers));
 
       // element information (both fields and methods)
       logger.debug("Velocity Context - adding members (fields and methods)");
-      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(project, elementFactory, psi, selectedMembers);
+      List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers);
       // sort elements if enabled and not using chooser dialog
       if (config.getSortElements() != 0) {
         Collections.sort(elements, new ElementComparator(config.getSortElements()));
@@ -327,11 +283,11 @@ public class GenerateToStringWorker {
       vc.put("members", elements);
 
       // class information
-      ClassElement ce = ElementFactory.newClassElement(project, clazz, psi);
+      ClassElement ce = ElementFactory.newClassElement(clazz);
       vc.put("class", ce);
       if (logger.isDebugEnabled()) logger.debug("Velocity Context - adding class: " + ce);
 
-      // information to keep as it is to avoid breaking compability with prior releases
+      // information to keep as it is to avoid breaking compatibility with prior releases
       vc.put("classname", config.isUseFullyQualifiedName() ? ce.getQualifiedName() : ce.getName());
       vc.put("FQClassname", ce.getQualifiedName());
 
@@ -347,12 +303,6 @@ public class GenerateToStringWorker {
       if (vc.get("autoImportPackages") != null) {
         params.put("autoImportPackages", (String)vc.get("autoImportPackages"));
       }
-
-      // add java.io.Serializable if choosen in [settings] and does not already implements it
-      if (config.isAddImplementSerializable() && !ce.isImplements("java.io.Serializable")) {
-        psi.addImplements(project, clazz, "java.io.Serializable");
-      }
-
     }
     catch (Exception e) {
       throw new GenerateCodeException("Error in Velocity code generator", e);
@@ -365,13 +315,13 @@ public class GenerateToStringWorker {
    * Generates the toString() code for the specified class and selected
    * fields, doing the work through a WriteAction ran by a CommandProcessor.
    *
-   * @param selectedMemebers list of members selected
-   * @param template         the choosen template to use
+   * @param selectedMembers list of members selected
+   * @param template         the chosen template to use
    * @param insertAtOverride
    */
   public static void executeGenerateActionLater(final PsiClass clazz,
                                                 final Editor editor,
-                                                final Collection<PsiMember> selectedMemebers,
+                                                final Collection<PsiMember> selectedMembers,
                                                 final TemplateResource template,
                                                 final boolean insertAtOverride) {
     Runnable writeCommand = new Runnable() {
@@ -379,7 +329,7 @@ public class GenerateToStringWorker {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              new GenerateToStringWorker(clazz, editor, insertAtOverride).execute(selectedMemebers, template);
+              new GenerateToStringWorker(clazz, editor, insertAtOverride).execute(selectedMembers, template);
             }
             catch (Exception e) {
               GenerateToStringUtils.handleException(clazz.getProject(), e);
@@ -389,14 +339,6 @@ public class GenerateToStringWorker {
       }
     };
 
-    PsiAdapterFactory.getPsiAdapter().executeCommand(clazz.getProject(), writeCommand);
-  }
-
-  private static void annotate(@NotNull PsiMethod result, String fqn) throws IncorrectOperationException {
-    Project project = result.getProject();
-    AddAnnotationFix fix = new AddAnnotationFix(fqn, result);
-    if (fix.isAvailable(project, null, result.getContainingFile())) {
-      fix.invoke(project, null, result.getContainingFile());
-    }
+    CommandProcessor.getInstance().executeCommand(clazz.getProject(), writeCommand, "GenerateToString", null);
   }
 }

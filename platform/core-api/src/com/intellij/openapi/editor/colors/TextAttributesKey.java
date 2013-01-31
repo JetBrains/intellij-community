@@ -126,8 +126,10 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
    * @param defaultAttributes the default text attributes associated with the key.
    * @return the new key instance, or an existing instance if the key with the same
    *         identifier was already registered.
+   * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} to guarantee compatibility with generic color schemes.
    */
   @NotNull
+  @Deprecated
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     TextAttributesKey key = find(externalName);
     if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
@@ -136,6 +138,23 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return key;
   }
 
+
+  /**
+   * Registers a text attribute key with the specified identifier and a fallback key. If text attributes for the key are not defined in
+   * a color scheme, they will be acquired by the fallback key if possible.
+   * <p>Fallback keys can be chained, for example, text attribute key
+   * A can depend on key B which in turn can depend on key C. So if text attributes neither for A nor for B are found, they will be
+   * acquired by the key C.
+   * <p>Fallback keys can be used from any place including language's own definitions. Note that there is a common set of keys called
+   * <code>DefaultLanguageHighlighterColors</code> which can be used as a base. Scheme designers are supposed to set colors for these
+   * keys primarily and using them guarantees that most (if not all) text attributes will be shown correctly for the language
+   * regardless of a color scheme.
+   *
+   * @param externalName         the unique identifier of the key.
+   * @param fallbackAttributeKey the fallback key to use if text attributes for this key are not defined.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
     TextAttributesKey key = find(externalName);

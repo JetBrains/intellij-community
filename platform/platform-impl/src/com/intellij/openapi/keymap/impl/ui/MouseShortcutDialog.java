@@ -108,8 +108,12 @@ class MouseShortcutDialog extends DialogWrapper{
    * @return created/edited shortcut. Returns <code>null</code> if shortcut is invalid.
    */
   public MouseShortcut getMouseShortcut(){
+    if (myButton > 3 && getClickCount() == 2) {
+      return null;
+    }
+
     if(myButton!=-1 && myModifiers!=-1){
-      return new MouseShortcut(myButton,myModifiers,myRbSingleClick.isSelected()?1:2);
+      return new MouseShortcut(myButton,myModifiers,getClickCount());
     }else{
       return null;
     }
@@ -195,6 +199,9 @@ class MouseShortcutDialog extends DialogWrapper{
     return panel;
   }
 
+  private int getClickCount() {
+    return myRbSingleClick.isSelected() ? 1 : 2;
+  }
   /**
    * Updates all UI controls
    */
@@ -208,15 +215,16 @@ class MouseShortcutDialog extends DialogWrapper{
     // Set text into preview area
 
     // empty string should have same height
-    myLblPreview.setText(KeymapUtil.getMouseShortcutText(myButton,myModifiers,myRbSingleClick.isSelected()?1:2) + " ");
+    myLblPreview.setText(KeymapUtil.getMouseShortcutText(myButton,myModifiers,getClickCount()) + " ");
 
     // Detect conflicts
 
-    final MouseShortcut mouseShortcut;
-    if(myRbSingleClick.isSelected()){
-      mouseShortcut=new MouseShortcut(myButton,myModifiers,1);
-    }else{
-      mouseShortcut=new MouseShortcut(myButton,myModifiers,2);
+    final MouseShortcut mouseShortcut=new MouseShortcut(myButton,myModifiers,getClickCount());
+
+    if (myButton > 3 && getClickCount() == 2) {
+      myTarConflicts.setForeground(JBColor.RED);
+      myTarConflicts.setText(KeyMapBundle.message("mouse.shortcut.dialog.side.buttons.with.double.click", myButton));
+      return;
     }
 
     StringBuilder buffer = new StringBuilder();

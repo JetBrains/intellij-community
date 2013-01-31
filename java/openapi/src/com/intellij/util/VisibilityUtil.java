@@ -138,9 +138,6 @@ public class VisibilityUtil  {
   }
 
   public static void setVisibility(PsiModifierList modifierList, @PsiModifier.ModifierConstant String newVisibility) throws IncorrectOperationException {
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
-    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-    modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
     modifierList.setModifierProperty(newVisibility, true);
   }
 

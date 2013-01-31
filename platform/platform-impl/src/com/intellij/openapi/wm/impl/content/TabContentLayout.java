@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -106,7 +107,7 @@ class TabContentLayout extends ContentLayout {
   }
 
   private void showPopup() {
-    myPopup = new JPopupMenu();
+    myPopup = new JBPopupMenu();
     myPopup.addPopupMenuListener(myPopupListener);
 
     ArrayList<ContentTabLabel> tabs = myTabs;
@@ -252,6 +253,23 @@ class TabContentLayout extends ContentLayout {
     myLastLayout = data;
   }
 
+  @Override
+  public int getMinimumWidth() {
+    int result = 0;
+    if (myIdLabel != null) {
+      result += myIdLabel.getPreferredSize().width;
+      Insets insets = myIdLabel.getInsets();
+      if (insets != null) {
+        result += insets.left + insets.right;
+      }
+    }
+    if (myLastLayout != null) {
+      result += myLastLayout.moreRectWidth + myLastLayout.requiredWidth;
+      result -= myLastLayout.toLayout.size() > 1 ? myLastLayout.moreRectWidth + 1 : -14;
+    }
+    return result;
+  }
+
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);
@@ -348,7 +366,7 @@ class TabContentLayout extends ContentLayout {
       }
     }
     else {
-      g2d.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
+      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
       g2d.fillRect(0, 0, r.width, r.height);
 
       final Color c = new Color(255, 255, 255, UIUtil.isUnderDarcula() ? 10 : 80);

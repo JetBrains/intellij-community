@@ -169,8 +169,7 @@ public class JarsBuilder {
           else {
             final String filePath = FileUtil.toSystemIndependentName(descriptor.getRootFile().getAbsolutePath());
             packedFilePaths.add(filePath);
-            myOutSrcMapping.appendData(targetJarPath, Collections
-              .singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
+            myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
             extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactRootDescriptor)descriptor, relativePath, writtenPaths);
           }
         }
@@ -246,7 +245,7 @@ public class JarsBuilder {
           final Ref<Manifest> manifestRef = Ref.create(null);
           ((JarBasedArtifactRootDescriptor)descriptor).processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
             @Override
-            public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
+            public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
               if (manifestRef.isNull() && relativePath.equals(manifestPath) && inputStream != null) {
                 manifestRef.set(createManifest(inputStream, descriptor.getRootFile()));
               }
@@ -285,7 +284,7 @@ public class JarsBuilder {
     final long timestamp = FileSystemUtil.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
-      public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
+      public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
         String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, JpsArtifactPathUtil
           .appendToPath(relativeOutputPath, relativePath));
 
@@ -293,9 +292,14 @@ public class JarsBuilder {
           addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
         }
         else if (writtenPaths.add(pathInJar)) {
-          ZipEntry entry = new ZipEntry(pathInJar);
-          entry.setTime(timestamp);
-          jarOutputStream.putNextEntry(entry);
+          ZipEntry newEntry = new ZipEntry(pathInJar);
+          newEntry.setTime(timestamp);
+          if (entry.getMethod() == ZipEntry.STORED) {
+            newEntry.setMethod(ZipEntry.STORED);
+            newEntry.setSize(entry.getSize());
+            newEntry.setCrc(entry.getCrc());
+          }
+          jarOutputStream.putNextEntry(newEntry);
           FileUtil.copy(inputStream, jarOutputStream);
           jarOutputStream.closeEntry();
         }
@@ -324,7 +328,7 @@ public class JarsBuilder {
                                        List<String> packedFilePaths,
                                        int rootIndex) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    if (!filter.accept(filePath, myContext.getProjectDescriptor())) {
+    if (!filter.accept(filePath) || !filter.shouldBeCopied(filePath, myContext.getProjectDescriptor())) {
       return;
     }
 
@@ -345,7 +349,7 @@ public class JarsBuilder {
 
     final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null);
     if (rootIndex != -1) {
-      myOutSrcMapping.appendData(targetJarPath, Collections.singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
+      myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
       if (added) {
         packedFilePaths.add(filePath);
       }

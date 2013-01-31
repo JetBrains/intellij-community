@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +38,11 @@ public class UserDictionary implements EditableDictionary {
     return name;
   }
 
-  public boolean contains(String word) {
+  @Nullable
+  public Boolean contains(String word) {
     boolean contains = words.contains(word);
     if(contains) return true;
-    throw new EncodingException("WE_CARE_ABOUT_CONTAINS_ONLY");
+    return null;
   }
 
   public int size() {

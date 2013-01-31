@@ -169,7 +169,7 @@ class Foo {
   }
 
   public void testPropertyWithFieldCollision() {
-    myFixture.configureByText("a.groovy", """
+    myFixture.configureByText("a.groovy", """\
 class A {
   String na<caret>me;
 
@@ -188,7 +188,8 @@ class A {
     PsiElement field = myFixture.elementAtCaret
     myFixture.renameElement field, "ndame"
 
-    myFixture.checkResult """class A {
+    myFixture.checkResult """\
+class A {
   String ndame;
 
   class X {

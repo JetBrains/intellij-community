@@ -85,6 +85,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSimpleVariable() throws Exception { doTest('\n') }
 
+  public void testTypeParameterItemPresentation() {
+    configure()
+    LookupElementPresentation presentation = renderElement(myItems[0])
+    assert "Param" == presentation.itemText
+    assert presentation.tailText == " (type parameter of Foo)"
+    assert !presentation.typeText
+    assert !presentation.icon
+    assert !presentation.itemTextBold
+
+    presentation = renderElement(myItems[1])
+    assert "Param2" == presentation.itemText
+    assert presentation.tailText == " (type parameter of goo)"
+  }
+
   public void testMethodItemPresentation() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
@@ -839,7 +853,7 @@ public class ListUtils {
     final String path = getTestName(false) + ".java";
     configureByFile(path);
     checkResultByFile(path);
-    assertStringItems("fai1", "fai2");
+    assertStringItems("fai1", "fai2", "FunctionalInterface");
   }
 
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
@@ -1114,6 +1128,19 @@ public class ListUtils {
     configure()
     assertFirstStringItems "final", "float"
   }
+
+  public void testNonImportedClassInAnnotation() {
+    myFixture.addClass("package foo; public class XInternalTimerServiceController {}")
+    myFixture.configureByText "a.java", """
+class XInternalError {}
+
+@Anno(XInternal<caret>)
+"""
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
+  }
+
+  public void testAnnotationClassFromWithinAnnotation() { doTest() }
 
   public void testStaticallyImportedFieldsTwice() {
     myFixture.addClass("""

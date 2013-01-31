@@ -38,7 +38,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 import java.io.File;
 import java.util.*;
@@ -310,7 +309,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     return false;
   }
 
-  protected abstract AbstractUpdateIntegrateCrawler createCrawler(ISVNEventHandler eventHandler,
+  protected abstract AbstractUpdateIntegrateCrawler createCrawler(UpdateEventHandler eventHandler,
                                                  boolean totalUpdate,
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 

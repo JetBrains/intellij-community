@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
+import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -253,7 +254,7 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static String loadTextAndClose(@NotNull Reader reader) throws IOException {
     try {
-      return new String(adaptiveLoadText(reader));
+      return StringFactory.createShared(adaptiveLoadText(reader));
     }
     finally {
       reader.close();
@@ -573,7 +574,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static void ensureExists(File dir) throws IOException {
+  public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
@@ -826,9 +827,14 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.isEmpty(path) || path == null ? 0 : PATH_HASHING_STRATEGY.computeHashCode(toCanonicalPath(path));
   }
 
+  /**
+   * @deprecated this method returns extension converted to lower case, this may not be correct for case-sensitive FS.
+   * Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
+   * If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
+   */
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return FileUtilRt.getExtension(fileName);
+    return FileUtilRt.getExtension(fileName).toLowerCase();
   }
 
   @NotNull
@@ -1316,6 +1322,19 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     return FileUtilRt.loadBytes(stream, length);
+  }
+
+  @NotNull
+  public static List<String> splitPath(@NotNull String path) {
+    ArrayList<String> list = new ArrayList<String>();
+    int index = 0;
+    int nextSeparator;
+    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
+      list.add(path.substring(index, nextSeparator));
+      index = nextSeparator + 1;
+    }
+    list.add(path.substring(index, path.length()));
+    return list;
   }
 
   private static final class CompletedFuture<T> implements Future<T> {

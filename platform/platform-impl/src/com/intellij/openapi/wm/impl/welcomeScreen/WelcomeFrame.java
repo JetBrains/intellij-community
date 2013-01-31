@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,10 +36,11 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,8 +50,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 public class WelcomeFrame extends JFrame implements IdeFrame {
-  private static final String DIMENSION_KEY = "WELCOME_SCREEN";
-  private static WelcomeFrame ourInstance;
+  public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
+  static final String DIMENSION_KEY = "WELCOME_SCREEN";
+  private static IdeFrame ourInstance;
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
 
@@ -62,7 +65,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     glassPane.setVisible(false);
     setContentPane(screen.getWelcomePanel());
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
-    AppUIUtil.updateFrameIcon(this);
+    AppUIUtil.updateWindowIcon(this);
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
@@ -76,11 +79,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     myScreen = screen;
     setupCloseAction();
     new MnemonicHelper().register(this);
-
-    setResizable(false);
+    myScreen.setupFrame(this);
   }
 
-  public static WelcomeFrame getInstance() {
+  public static IdeFrame getInstance() {
     return ourInstance;
   }
 
@@ -129,10 +131,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void clearRecents() {
     if (ourInstance != null) {
-      WelcomeScreen screen = ourInstance.myScreen;
+      if (ourInstance instanceof WelcomeFrame) {
+      WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
       if (screen instanceof DefaultWelcomeScreen) {
         ((DefaultWelcomeScreen)screen).hideRecentProjectsPanel();
       }
+    }
     }
   }
 
@@ -145,7 +149,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     }
     if (screen == null) {
       //screen = new DefaultWelcomeScreen(rootPane);
-      screen = new NewWelcomeScreen(rootPane);
+      screen = new NewWelcomeScreen();
     }
     return screen;
   }
@@ -153,16 +157,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void showNow() {
     if (ourInstance == null) {
-      WelcomeFrame frame = new WelcomeFrame();
-      frame.pack();
-      Point location = DimensionService.getInstance().getLocation(DIMENSION_KEY, null);
-      Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-      frame.setLocation(new Point(
-        screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
-        screenBounds.y + (screenBounds.height - frame.getHeight()) / 3
-      ));
-      frame.setVisible(true);
-
+      IdeFrame frame = EP.getExtensions().length == 0
+                           ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      ((JFrame)frame).setVisible(true);
       ourInstance = frame;
     }
   }
@@ -183,7 +180,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   @Override
   public StatusBar getStatusBar() {
-    return null;
+    Container pane = getContentPane();
+    //noinspection ConstantConditions
+    return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 
   @Override
@@ -199,7 +198,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   @Nullable
   @Override
   public Project getProject() {
-    return null;
+    return ProjectManager.getInstance().getDefaultProject();
   }
 
   @Override

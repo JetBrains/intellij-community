@@ -1,8 +1,9 @@
 package org.jetbrains.plugins.gradle.task;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/8/12 1:52 PM
  */
-public class GradleTaskManager extends AbstractProjectComponent implements GradleTaskNotificationListener {
+public class GradleTaskManager implements GradleTaskNotificationListener, Disposable {
 
   /**
    * We receive information about the tasks being enqueued to the slave gradle projects here. However, there is a possible
@@ -43,24 +44,26 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
    */
   private static final long REFRESH_DELAY_MILLIS                 = TimeUnit.SECONDS.toMillis(10);
   private static final int  DETECT_HANGED_TASKS_FREQUENCY_MILLIS = (int)TimeUnit.SECONDS.toMillis(5);
-  
+
   @NotNull private final ConcurrentMap<GradleTaskId, Long> myTasksInProgress = new ConcurrentHashMap<GradleTaskId, Long>();
   @NotNull private final Alarm                             myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final GradleApiFacadeManager            myFacadeManager;
   @NotNull private final GradleProgressNotificationManager myProgressNotificationManager;
+  @NotNull private final Project                           myProject;
 
   public GradleTaskManager(@NotNull Project project,
                            @NotNull GradleApiFacadeManager facadeManager,
                            @NotNull GradleProgressNotificationManager notificationManager)
   {
-    super(project);
+    myProject = project;
     myFacadeManager = facadeManager;
     myProgressNotificationManager = notificationManager;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    
+
+    Disposer.register(project, this);
     notificationManager.addNotificationListener(this);
     myAlarm.addRequest(new Runnable() {
       @Override
@@ -84,9 +87,9 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myProgressNotificationManager.removeNotificationListener(this);
-    myAlarm.cancelAllRequests();
+    myAlarm.cancelAllRequests(); 
   }
 
   /**

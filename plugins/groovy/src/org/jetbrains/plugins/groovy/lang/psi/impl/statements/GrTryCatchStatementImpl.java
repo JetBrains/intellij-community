@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author ilyas
  */
@@ -50,7 +53,11 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
 
   @NotNull
   public GrCatchClause[] getCatchClauses() {
-    return findChildrenByClass(GrCatchClause.class);
+    List<GrCatchClause> result = new ArrayList<GrCatchClause>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrCatchClause) result.add((GrCatchClause)cur);
+    }
+    return result.toArray(new GrCatchClause[result.size()]);
   }
 
   public GrFinallyClause getFinallyClause() {

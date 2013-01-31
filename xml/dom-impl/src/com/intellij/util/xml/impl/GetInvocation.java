@@ -9,10 +9,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomReferenceInjector;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -43,8 +40,9 @@ public class GetInvocation implements Invocation {
       handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<List<Pair<Converter,Object>>>() {
         @Override
         public Result<List<Pair<Converter,Object>>> compute() {
-          List<Pair<Converter, Object>> list = ContainerUtil.createEmptyCOWList();
-          return Result.create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
+          List<Pair<Converter, Object>> list = ContainerUtil.createLockFreeCopyOnWriteList();
+          return Result
+            .create(list, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(project));
         }
       }, false));
     }
@@ -80,7 +78,7 @@ public class GetInvocation implements Invocation {
     }
 
     String tagValue = handler.getValue();
-    ConvertContextImpl context = new ConvertContextImpl(handler);
+    ConvertContext context = ConvertContextFactory.createConvertContext(handler);
 
     for (DomReferenceInjector each : DomUtil.getFileElement(handler).getFileDescription().getReferenceInjectors()) {
       tagValue = each.resolveString(tagValue, context);

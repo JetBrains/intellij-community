@@ -31,6 +31,7 @@
     <action id="ShowProjectStructureSettings">
       <keyboard-shortcut first-keystroke="meta SEMICOLON"/>
     </action>
+    <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE"/>
     </action>
@@ -235,12 +236,6 @@
     </action>
     <action id="Exit">
       <keyboard-shortcut first-keystroke="meta Q"/>
-    </action>
-    <action id="NextSplitter">
-      <keyboard-shortcut first-keystroke="control TAB"/>
-    </action>
-    <action id="PrevSplitter">
-      <keyboard-shortcut first-keystroke="control shift TAB"/>
     </action>
     <action id="GotoTypeDeclaration">
       <keyboard-shortcut first-keystroke="control shift B"/>
@@ -487,10 +482,12 @@
     <action id="Back">
       <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+      <mouse-shortcut keystroke="button4"/>
     </action>
     <action id="Forward">
       <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+      <mouse-shortcut keystroke="button5"/>
     </action>
 
     <action id="NextProjectWindow">

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.manage;
 
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
+import org.junit.Before
 import org.junit.Test
 import org.picocontainer.MutablePicoContainer
 
@@ -17,13 +18,18 @@ import static org.junit.Assert.fail
 public class GradleLocalNodeManageHelperTest extends AbstractGradleTest {
 
   private GradleLocalNodeManageHelper myHelper
+
+  @Before
+  public void setUp() {
+    super.setUp();
+    clearChangePostProcessors()
+  }
   
   @Override
   protected void configureContainer(MutablePicoContainer container) {
     container.registerComponentImplementation(GradleLocalNodeManageHelper)
     container.registerComponentImplementation(GradleModuleManager)
     container.registerComponentImplementation(GradleLibraryManager)
-    container.registerComponentImplementation(GradleJarManager)
     container.registerComponentImplementation(GradleDependencyManager)
     container.registerComponentImplementation(GradleContentRootManager)
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     doTest();
   }
 
-  public void testShouldntImplementGroovyObjectMethods() {
+  public void testShouldNotImplementGroovyObjectMethods() {
     addGroovyObject();
     myFixture.addFileToProject("Foo.groovy", "class Foo {}");
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
@@ -81,9 +81,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   public void testAnonymousClassAbstractMethod() { doTest(); }
 
-  public void _testAnonymousClassStaticMethod() { doTest(); }
+  //public void _testAnonymousClassStaticMethod() { doTest(); }
 
-  public void testAnonymousClassShoudImplementMethods() { doTest(); }
+  public void testAnonymousClassShouldImplementMethods() { doTest(); }
 
   public void testAnonymousClassShouldImplementSubstitutedMethod() { doTest(); }
 
@@ -112,7 +112,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     doTest();
   }
 
-  public void testRawOverridedMethod() { doTest(); }
+  public void testRawOverriddenMethod() { doTest(); }
 
   public void testFQNJavaClassesUsages() {
     doTest();
@@ -128,7 +128,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.configureByText('a.groovy', '''\
 class A {
   def foo(int... x){}
-  def foo(<error descr="Ellipsis type is not allowed here">int...</error> x, double y) {}
+  def foo(int<error descr="Ellipsis type is not allowed here">...</error> x, double y) {}
 }
 ''')
     myFixture.checkHighlighting(true, false, false)
@@ -214,9 +214,9 @@ class A {
     doTest();
   }
 
-  public void _testTestMarkupStubs() {
-    doRefTest()
-  }
+  //public void _testTestMarkupStubs() {
+  //  doRefTest()
+  //}
 
   public void testGdslWildcardTypes() {
     myFixture.configureByText("a.groovy",
@@ -245,9 +245,9 @@ class A {
     doTest();
   }
 
-  public void _testBuilderMembersAreNotUnresolved() {
-    doRefTest();
-  }
+  //public void _testBuilderMembersAreNotUnresolved() {
+  //  doRefTest();
+  //}
 
   public void testRecursiveConstructors() {
     doTest();
@@ -331,7 +331,7 @@ import pack.Foo;
 
 class Abc {
   void foo() {
-    System.out.print(new <error descr="'pack.Foo' has private access in 'pack'">Foo</error>());
+    System.out.print(new Foo()); // top-level Groovy class can't be private
   }
 }
 ''')
@@ -504,7 +504,7 @@ class A {
   static bar() {
     this.toString()
     this.getFields()
-    this.<warning descr="Cannot reference nonstatic symbol 'foo' from static context">foo</warning>()
+    this.<warning descr="Cannot reference non-static symbol 'foo' from static context">foo</warning>()
   }
 }
 ''', GrUnresolvedAccessInspection)
@@ -788,7 +788,7 @@ class A {
   class B {}
 }
 
-A.B foo = new <error descr="Cannot reference nonstatic symbol 'A.B' from static context">A.B</error>()
+A.B foo = new <error descr="Cannot reference non-static symbol 'A.B' from static context">A.B</error>()
 ''')
   }
 
@@ -980,6 +980,109 @@ print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type paramete
 class X {
   public <error descr="Return type element is not allowed in constructor">void</error> X() {}
 }
+''')
+  }
+
+  void testFinalMethodOverriding() {
+    testHighlighting('''\
+class A {
+    final void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot override method 'foo()' in 'A'; overridden method is final">void foo()</error> {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess0() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('protected') than 'foo()' in 'A' ('public')">protected</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess1() {
+    testHighlighting('''\
+class A {
+    void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('public')">private</error> void foo() {}
+}
+''')
+  }
+
+  void testWeakerMethodAccess2() {
+    testHighlighting('''\
+class A {
+    public void foo() {}
+}
+
+class B extends A{
+    void foo() {} //don't highlight anything
+}
+''')
+  }
+
+  void testWeakerMethodAccess3() {
+    testHighlighting('''\
+class A {
+    protected void foo() {}
+}
+
+class B extends A{
+    <error descr="Method 'foo()' cannot have weaker access privileges ('private') than 'foo()' in 'A' ('protected')">private</error> void foo() {}
+}
+''')
+  }
+
+  void testOverriddenProperty() {
+    testHighlighting('''\
+class A {
+    final foo = 2
+}
+
+class B extends A {
+    <error descr="Method 'getFoo()' cannot override method 'getFoo()' in 'A'; overridden method is final">def getFoo()</error>{5}
+}
+''')
+  }
+
+  void testUnresolvedQualifierHighlighting() {
+    testHighlighting('''\
+<error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
+''')
+  }
+
+  void testVarargParameterWithoutTypeElement() {
+    testHighlighting('''\
+def foo(def <error descr="Ellipsis type is not allowed here">...</error> vararg, def last) {}
+''')
+  }
+
+  void testTupleInstanceCreatingInDefaultConstructor() {
+    testHighlighting('''
+class Book {
+    String title
+    Author author
+
+    String toString() { "$title by $author.name" }
+}
+
+class Author {
+    String name
+}
+
+def book = new Book(title: "Other Title", author: [name: "Other Name"])
+
+assert book.toString() == 'Other Title by Other Name'
 ''')
   }
 }

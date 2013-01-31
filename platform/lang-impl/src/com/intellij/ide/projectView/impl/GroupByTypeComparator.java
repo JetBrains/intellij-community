@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -60,41 +61,46 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     }
 
     if (descriptor1 instanceof ProjectViewNode && descriptor2 instanceof ProjectViewNode) {
-      ProjectViewNode node1 = (ProjectViewNode) descriptor1;
-      ProjectViewNode node2 = (ProjectViewNode) descriptor2;
-      int typeWeight1 = node1.getTypeSortWeight(isSortByType());
-      int typeWeight2 = node2.getTypeSortWeight(isSortByType());
-      if (typeWeight1 != 0 && typeWeight2 == 0) {
-        return -1;
-      }
-      if (typeWeight1 == 0 && typeWeight2 != 0) {
-        return 1;
-      }
-      if (typeWeight1 != 0 && typeWeight2 != typeWeight1) {
-        return typeWeight1 - typeWeight2;
-      }
-
-      if (isSortByType()) {
-        final Comparable typeSortKey1 = node1.getTypeSortKey();
-        final Comparable typeSortKey2 = node2.getTypeSortKey();
-        if (typeSortKey1 != null && typeSortKey2 != null) {
-          final int result = typeSortKey1.compareTo(typeSortKey2);
-          if (result != 0) return result;
+      final Project project = descriptor1.getProject();
+      final ProjectView projectView = ProjectView.getInstance(project);
+      if (!(projectView instanceof ProjectViewImpl && !((ProjectViewImpl)projectView).isFoldersAlwaysOnTop())) {
+        ProjectViewNode node1 = (ProjectViewNode)descriptor1;
+        ProjectViewNode node2 = (ProjectViewNode)descriptor2;
+        int typeWeight1 = node1.getTypeSortWeight(isSortByType());
+        int typeWeight2 = node2.getTypeSortWeight(isSortByType());
+        if (typeWeight1 != 0 && typeWeight2 == 0) {
+          return -1;
         }
-      } else {
-        final Comparable typeSortKey1 = node1.getSortKey();
-        final Comparable typeSortKey2 = node2.getSortKey();
-        if (typeSortKey1 != null && typeSortKey2 != null) {
-          final int result = typeSortKey1.compareTo(typeSortKey2);
-          if (result != 0) return result;
+        if (typeWeight1 == 0 && typeWeight2 != 0) {
+          return 1;
         }
-      }
+        if (typeWeight1 != 0 && typeWeight2 != typeWeight1) {
+          return typeWeight1 - typeWeight2;
+        }
 
-      if (isAbbreviateQualifiedNames()) {
-        String key1 = node1.getQualifiedNameSortKey();
-        String key2 = node2.getQualifiedNameSortKey();
-        if (key1 != null && key2 != null) {
-          return key1.compareToIgnoreCase(key2);
+        if (isSortByType()) {
+          final Comparable typeSortKey1 = node1.getTypeSortKey();
+          final Comparable typeSortKey2 = node2.getTypeSortKey();
+          if (typeSortKey1 != null && typeSortKey2 != null) {
+            final int result = typeSortKey1.compareTo(typeSortKey2);
+            if (result != 0) return result;
+          }
+        }
+        else {
+          final Comparable typeSortKey1 = node1.getSortKey();
+          final Comparable typeSortKey2 = node2.getSortKey();
+          if (typeSortKey1 != null && typeSortKey2 != null) {
+            final int result = typeSortKey1.compareTo(typeSortKey2);
+            if (result != 0) return result;
+          }
+        }
+
+        if (isAbbreviateQualifiedNames()) {
+          String key1 = node1.getQualifiedNameSortKey();
+          String key2 = node2.getQualifiedNameSortKey();
+          if (key1 != null && key2 != null) {
+            return key1.compareToIgnoreCase(key2);
+          }
         }
       }
     }

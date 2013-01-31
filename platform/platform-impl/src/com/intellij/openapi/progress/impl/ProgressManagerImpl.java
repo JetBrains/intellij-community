@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressManagerImpl extends ProgressManager implements Disposable{
@@ -49,29 +52,20 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private final AtomicInteger myCurrentModalProgressCount = new AtomicInteger(0);
 
   private static volatile int ourLockedCheckCounter = 0;
-  @NonNls private static final String NAME = "Progress Cancel Checker";
   private static final boolean DISABLED = "disabled".equals(System.getProperty(PROCESS_CANCELED_EXCEPTION));
-
-  private volatile boolean enabled = true;
+  private final ScheduledFuture<?> myCheckCancelledFuture;
 
   public ProgressManagerImpl(Application application) {
     if (/*!application.isUnitTestMode() && */!DISABLED) {
-      final Thread thread = new Thread(NAME) {
+      myCheckCancelledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
         @Override
         public void run() {
-          while (enabled) {
-            try {
-              sleep(10);
-            }
-            catch (InterruptedException ignored) {
-            }
-            ourNeedToCheckCancel = true;
-            ProgressIndicatorProvider.ourNeedToCheckCancel = true;
-          }
+          ourNeedToCheckCancel = true;
+          ProgressIndicatorProvider.ourNeedToCheckCancel = true;
         }
-      };
-      thread.setPriority(Thread.MAX_PRIORITY - 1);
-      thread.start();
+      }, 0, 10, TimeUnit.MILLISECONDS);
+    } else {
+      myCheckCancelledFuture = null;
     }
   }
 
@@ -517,7 +511,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   @Override
   public void dispose() {
-    enabled = false;
+    if (myCheckCancelledFuture != null) myCheckCancelledFuture.cancel(false);
   }
 
   //for debugging
@@ -525,12 +519,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @SuppressWarnings({"UnusedDeclaration"})
   private static void stopCheckCanceled() {
     ((ProgressManagerImpl)getInstance()).dispose();
-  }
-
-  @TestOnly
-  public static void setNeedToCheckCancel(boolean needToCheckCancel) {
-    ourNeedToCheckCancel = needToCheckCancel;
-    ProgressIndicatorProvider.ourNeedToCheckCancel = true;
   }
 
   @TestOnly

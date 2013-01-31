@@ -38,6 +38,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -96,6 +98,11 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
       }
     }
     return exitCode;
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.emptyList();
   }
 
   protected abstract ExitCode performBuild(CompileContext context, ModuleChunk chunk, InstrumentationClassFinder finder, OutputConsumer outputConsumer);

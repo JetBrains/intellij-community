@@ -56,7 +56,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
   private final MavenProjectsManager myProjectsManager;
 
   private MyKeymapListener myKeymapListener;
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static MavenShortcutsManager getInstance(Project project) {
     return project.getComponent(MavenShortcutsManager.class);

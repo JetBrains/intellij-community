@@ -71,6 +71,8 @@ public interface DvcsPlatformFacade {
 
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
+  void executeOnPooledThread(@NotNull Runnable runnable);
+
   ChangeListManagerEx getChangeListManager(@NotNull Project project);
 
   LocalFileSystem getLocalFileSystem();

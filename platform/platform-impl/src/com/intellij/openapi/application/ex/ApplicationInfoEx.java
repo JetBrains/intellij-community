@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Calendar;
@@ -47,6 +48,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getIconUrl();
 
   public abstract String getSmallIconUrl();
+
+  @Nullable
+  public String getBigIconUrl() {
+    return null;
+  }
 
   public abstract String getOpaqueIconUrl();
 

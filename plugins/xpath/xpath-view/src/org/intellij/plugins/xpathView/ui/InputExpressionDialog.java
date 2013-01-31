@@ -589,7 +589,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return myReference instanceof PrefixReference && ((PrefixReference)myReference).isUnresolved();
+            return myReference instanceof PrefixReference && myReference.getElement().isValid() && ((PrefixReference)myReference).isUnresolved();
         }
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

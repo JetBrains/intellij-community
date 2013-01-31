@@ -48,7 +48,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,21 +218,14 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     reloadDir(virtualFileOrDir, charset);
   }
 
-  private void setAndSaveOrReload(VirtualFile virtualFileOrDir, Charset charset) {
-    if (virtualFileOrDir == null) {
-      return;
-    }
+  private static void setAndSaveOrReload(@NotNull VirtualFile virtualFileOrDir, Charset charset) {
     virtualFileOrDir.setCharset(charset);
     saveOrReload(virtualFileOrDir);
   }
 
-  private void saveOrReload(@NotNull VirtualFile virtualFile) {
+  private static void saveOrReload(@NotNull VirtualFile virtualFile) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (document != null) {
-      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-    }
     if (documentManager.isFileModified(virtualFile)) {
       if (document != null) {
         documentManager.saveDocument(document);
@@ -248,7 +240,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   @Override
   @NotNull
   public Collection<Charset> getFavorites() {
-    Set<Charset> result = new THashSet<Charset>();
+    Set<Charset> result = new HashSet<Charset>();
     result.addAll(myMapping.values());
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
@@ -257,6 +249,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     result.add(CharsetToolkit.forName("US-ASCII"));
     result.add(EncodingManager.getInstance().getDefaultCharset());
     result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
+
+    result.remove(null);
     return result;
   }
 

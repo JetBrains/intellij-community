@@ -11,7 +11,9 @@ org.codehaus.groovy.runtime.DefaultGroovyMethods.println(this, foo);
 }
 
 };
+
 an.run();
+
 println(foo);
 return null;
 

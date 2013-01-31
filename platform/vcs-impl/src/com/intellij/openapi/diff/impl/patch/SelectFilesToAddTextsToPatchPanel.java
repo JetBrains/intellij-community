@@ -184,9 +184,10 @@ public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
     myPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                    new Insets(1, 1, 1, 1), 0, 0);
-    final String sb = "<html>Base revision text should be included into patch, if it is about to be used in projects under DVCS." +
-                      "<br/>In DVCS commits can be reordered, so there could exist no revision any more with the text matching patch context." +
-                      "<br/><br/>Only modified files texts needs to be added. Add/delete changes are self-descriptive.</html>";
+    final String sb = "<html>Base revision texts are worth including into the patch, if it is about to be used in projects under DVCS." +
+                      "<br/>In DVCS commits can be reordered, " +
+                      "so there can be no revision with the text matching the patch context anymore." +
+                      "<br/><br/>Only modified files texts need to be added. Added and deleted files are self-descriptive.</html>";
 
     myBaseRevisionTextShouldLabel = new JBLabel(sb, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
     myPanel.add(myBaseRevisionTextShouldLabel, gb);

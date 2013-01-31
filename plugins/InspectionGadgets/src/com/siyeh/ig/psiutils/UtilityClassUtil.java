@@ -26,7 +26,7 @@ public class UtilityClassUtil {
     return isUtilityClass(aClass, true);
   }
 
-  public static boolean isUtilityClass(@NotNull PsiClass aClass, boolean checkExtends) {
+  public static boolean isUtilityClass(@NotNull PsiClass aClass, boolean fullCheck) {
     if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
       return false;
     }
@@ -34,7 +34,7 @@ public class UtilityClassUtil {
       return false;
     }
     final PsiReferenceList extendsList = aClass.getExtendsList();
-    if (checkExtends && extendsList != null && extendsList.getReferenceElements().length > 0) {
+    if (fullCheck && extendsList != null && extendsList.getReferenceElements().length > 0) {
       return false;
     }
     final PsiReferenceList implementsList = aClass.getImplementsList();
@@ -50,7 +50,7 @@ public class UtilityClassUtil {
     if (!allFieldsStatic(fields)) {
       return false;
     }
-    return staticMethodCount != 0 || fields.length != 0;
+    return (!fullCheck || staticMethodCount != 0) || fields.length != 0;
   }
 
   private static boolean allFieldsStatic(PsiField[] fields) {

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.action;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ public class GradleRemoveIdeEntityAction extends AbstractGradleSyncTreeNodeActio
       GradleProjectStructureNode<?> node = iterator.next();
       GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
       if (descriptor.getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE
+          || descriptor.getAttributes() == GradleTextAttributes.OUTDATED_ENTITY
           || descriptor.getElement().getType() == GradleEntityType.SYNTHETIC
           || node.getParent() == null /* is root, i.e. is a project*/)
       {
@@ -44,7 +46,7 @@ public class GradleRemoveIdeEntityAction extends AbstractGradleSyncTreeNodeActio
   
   @Override
   protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    final GradleLocalNodeManageHelper helper = project.getComponent(GradleLocalNodeManageHelper.class);
+    final GradleLocalNodeManageHelper helper = ServiceManager.getService(project, GradleLocalNodeManageHelper.class);
     helper.removeNodes(nodes);
   }
 }

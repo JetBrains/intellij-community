@@ -45,7 +45,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
   private final String myEpName;
   private ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener;
-  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ExtensionPointListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public KeyedExtensionCollector(@NonNls String epName) {
     myEpName = epName;
@@ -134,6 +134,14 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
               instance = bean.getInstance();
             }
             catch (Exception e) {
+              LOG.error(e);
+              continue;
+            }
+            catch (NoClassDefFoundError e) {
+              LOG.error(e);
+              continue;
+            }
+            catch (UnsupportedClassVersionError e) {
               LOG.error(e);
               continue;
             }

@@ -43,7 +43,12 @@ public abstract class AbstractGradleEntity implements GradleEntity {
   @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
-    // !!!! Change this implementation if current class has state. !!!
+    if (obj == this) {
+      return true;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
     return true;
   }
 } 

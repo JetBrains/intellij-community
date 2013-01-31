@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -42,7 +43,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     final Graphics2D g = (Graphics2D)g2;
     final GraphicsConfig config = new GraphicsConfig(g);
     final Color bg = c.getBackground();
-    g.setPaint(new GradientPaint(0,0, ColorUtil.shift(bg, 1.4), 0,c.getHeight(), ColorUtil.shift(bg, 0.9)));
+    g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, c.getHeight(), ColorUtil.shift(bg, 0.9)));
     final int h = c.getHeight();
     final int w = c.getWidth();
     g.fillRect(0,0, w, h);

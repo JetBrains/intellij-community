@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -54,6 +55,9 @@ public class StreamUtil {
     return outputStream.toByteArray();
   }
 
+  /**
+   * @deprecated depends on the default encoding, use StreamUtil#readText(java.io.InputStream, String) instead
+   */
   public static String readText(InputStream inputStream) throws IOException {
     final byte[] data = loadFromStream(inputStream);
     return new String(data);
@@ -65,17 +69,16 @@ public class StreamUtil {
   }
 
   public static String convertSeparators(String s) {
-    try {
-      return new String(readTextAndConvertSeparators(new StringReader(s)));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return StringFactory.createShared(convertSeparators(s.toCharArray()));
   }
 
   public static char[] readTextAndConvertSeparators(Reader reader) throws IOException {
     char[] buffer = readText(reader);
 
+    return convertSeparators(buffer);
+  }
+
+  private static char[] convertSeparators(char[] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -95,25 +98,26 @@ public class StreamUtil {
       prev = c;
     }
 
-    char[] chars = new char[dst];
-    System.arraycopy(buffer, 0, chars, 0, chars.length);
-    return chars;
+    if (dst == buffer.length) {
+      return buffer;
+    }
+    char[] result = new char[dst];
+    System.arraycopy(buffer, 0, result, 0, result.length);
+    return result;
   }
 
   public static String readTextFrom(Reader reader) throws IOException {
-    return new String(readText(reader));
+    return StringFactory.createShared(readText(reader));
   }
 
   private static char[] readText(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
 
-    {
-      char[] buffer = new char[2048];
-      while (true) {
-        int read = reader.read(buffer);
-        if (read < 0) break;
-        writer.write(buffer, 0, read);
-      }
+    char[] buffer = new char[2048];
+    while (true) {
+      int read = reader.read(buffer);
+      if (read < 0) break;
+      writer.write(buffer, 0, read);
     }
 
     return writer.toCharArray();
@@ -130,6 +134,6 @@ public class StreamUtil {
     }
   }
 
-  private final static Logger LOG = Logger.getInstance(StreamUtil.class);
+  private static final Logger LOG = Logger.getInstance(StreamUtil.class);
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.config.FilterPattern;
-import org.jetbrains.generate.tostring.element.ElementFactory;
-import org.jetbrains.generate.tostring.element.FieldElement;
-import org.jetbrains.generate.tostring.element.MethodElement;
 import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.exception.PluginException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
@@ -37,35 +35,28 @@ import java.util.List;
  * Utility methods for GenerationToStringAction and the inspections.
  */
 public class GenerateToStringUtils {
+
     private static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringUtils");
 
-    /**
-     * Private constructor.
-     */
-    private GenerateToStringUtils() {
-    }
+    private GenerateToStringUtils() {}
 
     /**
      * Filters the list of fields from the class with the given parameters from the {@link org.jetbrains.generate.tostring.config.Config config} settings.
      *
-     * @param project        Project
-     * @param psi            PSI adapter
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
-     * @return fields avaiable for this action after the filter process.
+     * @return fields available for this action after the filter process.
      */
-    public static PsiField[] filterAvailableFields(Project project, PsiAdapter psi, PsiClass clazz, FilterPattern pattern) {
+    @NotNull
+    public static PsiField[] filterAvailableFields(PsiClass clazz, FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<PsiField>();
 
         // performs til filtering process
-      PsiField[] fields = clazz.getFields();
+        PsiField[] fields = clazz.getFields();
         for (PsiField field : fields) {
-            FieldElement fe = ElementFactory.newFieldElement(project, field, psi);
-            if (log.isDebugEnabled()) log.debug("Field being filtered: " + fe);
-
-            // if the field matches the pattern then it shouldn't be in the list of avaialble fields
-            if (!fe.applyFilter(pattern)) {
+            // if the field matches the pattern then it shouldn't be in the list of available fields
+            if (!pattern.fieldMatches(field)) {
                 availableFields.add(field);
             }
         }
@@ -81,59 +72,59 @@ public class GenerateToStringUtils {
      * <li/>public, non static, non abstract
      * <ul/>
      *
-     * @param psi            PSI adapter
+     *
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
-     * @return methods avaiable for this action after the filter process.
+     * @return methods available for this action after the filter process.
      */
-    public static PsiMethod[] filterAvailableMethods(PsiAdapter psi, PsiClass clazz, FilterPattern pattern) {
+    @NotNull
+    public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<PsiMethod>();
-        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
-
-      PsiMethod[] methods = clazz.getMethods();
+        PsiMethod[] methods = clazz.getMethods();
         for (PsiMethod method : methods) {
-
-            MethodElement me = ElementFactory.newMethodElement(method, elementFactory, psi);
-            if (log.isDebugEnabled()) log.debug("Method being filtered: " + me);
-
             // the method should be a getter
-            if (!me.isGetter()) {
+            if (!PsiAdapter.isGetterMethod(method)) {
                 continue;
             }
 
             // must not return void
-            if (me.isReturnTypeVoid()) {
+            final PsiType returnType = method.getReturnType();
+            if (returnType == null || PsiType.VOID.equals(returnType)) {
                 continue;
             }
 
             // method should be public, non static, non abstract
-            if (!me.isModifierPublic() || me.isModifierStatic() || me.isModifierAbstract()) {
+            if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.STATIC) ||
+                method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 continue;
             }
 
             // method should not be a getter for an existing field
-            if (clazz.findFieldByName(me.getFieldName(), false) != null) {
+            String fieldName = PsiAdapter.getGetterFieldName(method);
+            if (clazz.findFieldByName(fieldName, false) != null) {
                 continue;
             }
 
             // must not be named toString or getClass
-            if ("toString".equals(me.getMethodName()) || "getClass".equals(me.getMethodName())) {
+            final String methodName = method.getName();
+            if ("toString".equals(methodName) || "getClass".equals(methodName) || "hashCode".equals(methodName)) {
                 continue;
             }
 
-            // if the method matches the pattern then it shouldn't be in the list of avaialble methods
-            if (!me.applyFilter(pattern)) {
-                if (log.isDebugEnabled())
-                    log.debug("Adding the method " + method.getName() + " as there is not a field for this getter");
-                availableMethods.add(method);
+            // if the method matches the pattern then it shouldn't be in the list of available methods
+            if (pattern.methodMatches(method)) {
+                continue;
             }
-        }
 
+            if (log.isDebugEnabled())
+                log.debug("Adding the method " + methodName + " as there is not a field for this getter");
+            availableMethods.add(method);
+        }
         return availableMethods.toArray(new PsiMethod[availableMethods.size()]);
     }
 
-    /**
+  /**
      * Handles any exception during the executing on this plugin.
      *
      * @param project PSI project
@@ -144,7 +135,7 @@ public class GenerateToStringUtils {
         log.info(e);
 
         if (e instanceof GenerateCodeException) {
-            // code generation error - display velocity errror in error dialog so user can identify problem quicker
+            // code generation error - display velocity error in error dialog so user can identify problem quicker
             Messages.showMessageDialog(project, "Velocity error generating code - see IDEA log for more details (stacktrace should be in idea.log):\n" + e.getMessage(), "Warning", Messages.getWarningIcon());
         } else if (e instanceof PluginException) {
             // plugin related error - could be recoverable.

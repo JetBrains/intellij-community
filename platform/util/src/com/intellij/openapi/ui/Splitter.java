@@ -67,7 +67,7 @@ public class Splitter extends JPanel {
 
 
   /**
-   * Creates horizontal split with proportion equals to .5f
+   * Creates horizontal split (with components which are side by side) with proportion equals to .5f
    */
   public Splitter() {
     this(false);
@@ -75,6 +75,8 @@ public class Splitter extends JPanel {
 
   /**
    * Creates split with specified orientation and proportion equals to .5f
+   *
+   * @param vertical If true, components are displayed above one another. If false, components are displayed side by side.
    */
   public Splitter(boolean vertical) {
     this(vertical, .5f);
@@ -82,6 +84,9 @@ public class Splitter extends JPanel {
 
   /**
    * Creates split with specified orientation and proportion.
+   *
+   * @param vertical If true, components are displayed above one another. If false, components are displayed side by side.
+   * @param proportion The initial proportion of the splitter (between 0.0f and 1.0f).
    */
   public Splitter(boolean vertical, float proportion) {
     this(vertical, proportion, 0.0f, 1.0f);

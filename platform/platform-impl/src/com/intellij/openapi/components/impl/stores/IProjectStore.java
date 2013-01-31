@@ -30,6 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Set;
 
+/**
+ * @see com.intellij.openapi.project.ex.ProjectEx#getStateStore()
+ */
 public interface IProjectStore extends IComponentStore {
   boolean checkVersion();
 

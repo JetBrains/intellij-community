@@ -1,11 +1,9 @@
 <component name="libraryTable">
   <library name="Groovy">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/groovy-all-1.8.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/groovy-all-2.0.6.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/groovy-src-1.8.5.zip!/groovy-1.8.5/src/main" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

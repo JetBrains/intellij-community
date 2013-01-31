@@ -176,7 +176,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private static GitCommandResult convertSimplePushResultToCommandResult(@NotNull GitSimplePushResult result) {
     boolean success = result.getType() == GitSimplePushResult.Type.SUCCESS;
     return new GitCommandResult(success, -1, success ? Collections.<String>emptyList() : Collections.singletonList(result.getOutput()),
-                                success ? Collections.singletonList(result.getOutput()) : Collections.<String>emptyList());
+                                success ? Collections.singletonList(result.getOutput()) : Collections.<String>emptyList(), null);
   }
 
   @Nullable

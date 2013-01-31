@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -22,8 +23,10 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgPlatformFacade;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -57,15 +60,27 @@ public final class HgCommandExecutor {
 
   private final Project myProject;
   private final HgVcs myVcs;
+  private final String myDestination;
 
   private Charset myCharset = HgEncodingUtil.getDefaultCharset();
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
+  private HgPlatformFacade myPlatformFacade;
 
   public HgCommandExecutor(Project project) {
+    this(project, null, ServiceManager.getService(project, HgPlatformFacade.class));
+  }
+
+  public HgCommandExecutor(Project project, @Nullable String destination) {
+    this(project, destination, ServiceManager.getService(project, HgPlatformFacade.class));
+  }
+
+  public HgCommandExecutor(Project project, @Nullable String destination, HgPlatformFacade platformFacade) {
     myProject = project;
-    myVcs = HgVcs.getInstance(myProject);
+    myPlatformFacade = platformFacade;
+    myVcs = platformFacade.getVcs(project);
+    myDestination = destination;
   }
 
   public void setCharset(Charset charset) {
@@ -84,9 +99,7 @@ public final class HgCommandExecutor {
     myShowOutput = showOutput;
   }
 
-  public void execute(@Nullable final VirtualFile repo,
-                      final String operation,
-                      final List<String> arguments,
+  public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       @Override
@@ -110,6 +123,12 @@ public final class HgCommandExecutor {
                                                 @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
     HgCommandResult result = executeInCurrentThread(repo, operation, arguments, handler, false);
     if (HgErrorUtil.isAuthorizationError(result)) {
+      if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
+        new HgCommandResultNotifier(myProject)
+          .notifyError(result, "Authorization failed", "Your hgrc file settings have wrong username or password in [paths].\n" +
+                                                       "Please, update your .hg/hgrc file.");
+        return null;
+      }
       result = executeInCurrentThread(repo, operation, arguments, handler, true);
     }
     return result;
@@ -127,7 +146,7 @@ public final class HgCommandExecutor {
     }
 
     final List<String> cmdLine = new LinkedList<String>();
-    cmdLine.add(myVcs.getHgExecutable());
+    cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -136,9 +155,9 @@ public final class HgCommandExecutor {
     WarningReceiver warningReceiver = new WarningReceiver();
     PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization);
 
-    SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
-    SocketServer warningServer = new SocketServer(warningReceiver);
-    SocketServer passServer = new SocketServer(passReceiver);
+    SocketServer promptServer = new SocketServer(new PromptReceiver(handler), myPlatformFacade);
+    SocketServer warningServer = new SocketServer(warningReceiver, myPlatformFacade);
+    SocketServer passServer = new SocketServer(passReceiver, myPlatformFacade);
 
     try {
       int promptPort = promptServer.start();
@@ -201,6 +220,9 @@ public final class HgCommandExecutor {
 
   // logging to the Version Control console (without extensions and configs)
   private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+    if (myProject.isDisposed()) {
+      return;
+    }
     final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
@@ -247,7 +269,7 @@ public final class HgCommandExecutor {
 
     StringBuilder message = new StringBuilder();
     message.append(HgVcsMessages.message("hg4idea.command.executable.error",
-      vcs.getHgExecutable()))
+      vcs.getGlobalSettings().getHgExecutable()))
       .append("\n")
       .append("Original Error:\n")
       .append(e.getMessage());

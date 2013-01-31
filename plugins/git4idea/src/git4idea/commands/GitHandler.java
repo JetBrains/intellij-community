@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -50,7 +51,6 @@ import java.util.concurrent.LinkedBlockingQueue;
  * A handler for git commands
  */
 public abstract class GitHandler {
-
   protected final Project myProject;
   protected final GitCommand myCommand;
 
@@ -99,6 +99,7 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
+  @Nullable private ModalityState myState;
 
 
   /**
@@ -276,16 +277,24 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  private static String escapeParameterIfNeeded(@NotNull String parameter) {
-    if (SystemInfo.isWindows && parameter.contains("^")) {
+  private String escapeParameterIfNeeded(@NotNull String parameter) {
+    if (escapeNeeded(parameter)) {
       return parameter.replaceAll("\\^", "^^^^");
     }
     return parameter;
   }
 
+  private boolean escapeNeeded(@NotNull String parameter) {
+    return SystemInfo.isWindows && isCmd() && parameter.contains("^");
+  }
+
+  private boolean isCmd() {
+    return myAppSettings.getPathToGit().toLowerCase().endsWith("cmd");
+  }
+
   @NotNull
   private String unescapeCommandLine(@NotNull String commandLine) {
-    if (SystemInfo.isWindows && commandLine.contains("^")) {
+    if (escapeNeeded(commandLine)) {
       return commandLine.replaceAll("\\^\\^\\^\\^", "^");
     }
     return commandLine;
@@ -347,7 +356,7 @@ public abstract class GitHandler {
    * @return is "--progress" parameter supported by this version of Git.
    */
   public boolean addProgressParameter() {
-    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS.existsIn(myVcs.getVersion())) {
+    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myVcs.getVersion())) {
       addParameters("--progress");
       return true;
     }
@@ -424,7 +433,7 @@ public abstract class GitHandler {
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
+        myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
         myEnvironmentCleanedUp = false;
         myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
         int port = ssh.getXmlRcpPort();
@@ -633,6 +642,9 @@ public abstract class GitHandler {
     myResumeAction.run();
   }
 
+  public void setModalityState(@Nullable ModalityState state) {
+    myState = state;
+  }
 
   /**
    * @return true if the command line is too big
@@ -772,9 +784,4 @@ public abstract class GitHandler {
   public String toString() {
     return myCommandLine.toString();
   }
-
-  public void dontEscapeQuotes() {
-    myCommandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
-  }
-
 }

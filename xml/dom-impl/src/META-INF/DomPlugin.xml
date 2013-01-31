@@ -17,6 +17,8 @@
 
     <extensionPoint name="dom.uiControlsProvider"
                     interface="com.intellij.util.Consumer"/>
+
+    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

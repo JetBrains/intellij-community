@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import git4idea.history.browser.CachedRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -131,8 +132,13 @@ public class MediatorImpl implements Mediator {
   @Override
   public void oneFinished() {
     if (myController.isEmpty()) {
-      myUIRefresh.finished();
-      myTableWrapper.finished();
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myUIRefresh.finished();
+          myTableWrapper.finished();
+        }
+      });
     }
   }
 
@@ -193,7 +199,7 @@ public class MediatorImpl implements Mediator {
           }
         }));
       filters.setUseOnlyHashes(true);
-      myLoader.loadSkeleton(myTicket.copy(), rootsHolder, Collections.<String>emptyList(), filters, myController, false);
+      myLoader.loadSkeleton(myTicket.copy(), rootsHolder, Collections.<String>emptyList(), filters, myController, true);
     } else {
       myUIRefresh.finished();
       myTableWrapper.finished();
@@ -242,7 +248,8 @@ public class MediatorImpl implements Mediator {
   }
 
   @NonNls public static final String GIT_LOG_PAGE_SIZE = "git.log.page.size";
-  public final static int ourManyLoadedStep = (! pageSizeOk(Integer.getInteger(GIT_LOG_PAGE_SIZE))) ? 1000 : Integer.getInteger(
+  public static final int ourDefaultPageSize = 1000;
+  public final static int ourManyLoadedStep = (! pageSizeOk(Integer.getInteger(GIT_LOG_PAGE_SIZE))) ? ourDefaultPageSize : Integer.getInteger(
     GIT_LOG_PAGE_SIZE);
 
   private static class SequenceSupportBuffer {

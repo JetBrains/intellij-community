@@ -28,7 +28,9 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.GradleJar;
+import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryId;
+import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -44,10 +46,12 @@ import java.util.Set;
  */
 public class GradleJarManager {
 
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final PlatformFacade              myPlatformFacade;
+  @NotNull private final GradleLibraryPathTypeMapper myLibraryPathTypeMapper;
 
-  public GradleJarManager(@NotNull PlatformFacade facade) {
+  public GradleJarManager(@NotNull PlatformFacade facade, @NotNull GradleLibraryPathTypeMapper mapper) {
     myPlatformFacade = facade;
+    myLibraryPathTypeMapper = mapper;
   }
 
   public void importJar(@NotNull final GradleJar jar, @NotNull final Project project) {
@@ -61,7 +65,8 @@ public class GradleJarManager {
         }
         Library.ModifiableModel model = library.getModifiableModel();
         try {
-          for (VirtualFile file : model.getFiles(OrderRootType.CLASSES)) {
+          OrderRootType ideJarType = myLibraryPathTypeMapper.map(jar.getPathType());
+          for (VirtualFile file : model.getFiles(ideJarType)) {
             if (jar.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
               return;
             }
@@ -75,7 +80,7 @@ public class GradleJarManager {
             return;
           }
           if (virtualFile.isDirectory()) {
-            model.addRoot(virtualFile, OrderRootType.CLASSES);
+            model.addRoot(virtualFile, ideJarType);
           }
           else {
             VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
@@ -85,7 +90,7 @@ public class GradleJarManager {
               ));
               return;
             }
-            model.addRoot(jarRoot, OrderRootType.CLASSES);
+            model.addRoot(jarRoot, ideJarType);
           }
         }
         finally {
@@ -117,7 +122,7 @@ public class GradleJarManager {
       Set<GradleJar> libraryJars = ContainerUtilRt.newHashSet(entry.getValue());
       for (GradleJar jar : entry.getValue()) {
         boolean valid = false;
-        for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+        for (VirtualFile file : library.getFiles(myLibraryPathTypeMapper.map(jar.getPathType()))) {
           if (jar.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
             valid = true;
             break;
@@ -158,9 +163,12 @@ public class GradleJarManager {
         });
         Library.ModifiableModel model = library.getModifiableModel();
         try {
-          for (VirtualFile file : model.getFiles(OrderRootType.CLASSES)) {
-            if (pathsToRemove.contains(GradleUtil.getLocalFileSystemPath(file))) {
-              model.removeRoot(file.getUrl(), OrderRootType.CLASSES);
+          for (LibraryPathType gradlePathType : LibraryPathType.values()) {
+            OrderRootType idePathType = myLibraryPathTypeMapper.map(gradlePathType);
+            for (VirtualFile file : model.getFiles(idePathType)) {
+              if (pathsToRemove.contains(GradleUtil.getLocalFileSystemPath(file))) {
+                model.removeRoot(file.getUrl(), idePathType);
+              }
             }
           }
         }

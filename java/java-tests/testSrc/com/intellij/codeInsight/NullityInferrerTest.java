@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.inferNullity.NullityInferrer;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +44,18 @@ public class NullityInferrerTest extends CodeInsightTestCase {
 
   public void testParameterDereferenced() throws Exception {
     doTest(false);
+  }
+
+  public void testParameterCheckedForInstanceof() throws Exception {
+    try {
+      doTest(false);
+      fail("Should infer nothing");
+    }
+    catch (RuntimeException e) {
+      if (!Comparing.strEqual(e.getMessage(), NullityInferrer.NOTHING_FOUND_TO_INFER)) {
+        fail();
+      }
+    }
   }
 
   public void testParameterUsedInForeachIteratedValue() throws Exception {

@@ -39,7 +39,7 @@ public class MavenRunnerSettings implements Cloneable {
   private boolean skipTests = false;
   private Map<String, String> mavenProperties = new LinkedHashMap<String, String>();
 
-  private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public boolean isRunMavenInBackground() {
     return runMavenInBackground;
@@ -137,7 +137,7 @@ public class MavenRunnerSettings implements Cloneable {
     try {
       final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
-      clone.myListeners = ContainerUtil.createEmptyCOWList();
+      clone.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
       return clone;
     }
     catch (CloneNotSupportedException e) {

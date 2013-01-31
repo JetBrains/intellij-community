@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
@@ -49,6 +51,9 @@ import java.util.Date;
  * Time: 7:03 PM
  */
 public class SvnParseCommandLineParseTest extends TestCase {
+
+  public static final String LINUX_ROOT = "/c7181320/";
+
   public void testInfo() throws Exception {
     final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<info>\n" +
@@ -554,6 +559,8 @@ public class SvnParseCommandLineParseTest extends TestCase {
                      "</status>\n";
 
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
+    final boolean isWindows = SystemInfo.isWindows;
+    final String basePath = isWindows ? "C:/base/" : "/base33729/";
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
@@ -564,7 +571,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File("C:/base/"), new Convertor<File, SVNInfo>() {
+    }, new File(basePath), new Convertor<File, SVNInfo>() {
       @Override
       public SVNInfo convert(File o) {
         try {
@@ -573,12 +580,18 @@ public class SvnParseCommandLineParseTest extends TestCase {
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        final int idx = o.getPath().indexOf(":");
-        Assert.assertTrue(idx > 0);
-        final int secondIdx = o.getPath().indexOf(":", idx + 1);
-        Assert.assertTrue(o.getPath(), secondIdx == -1);
+        if (isWindows) {
+          final int idx = o.getPath().indexOf(":");
+          Assert.assertTrue(idx > 0);
+          final int secondIdx = o.getPath().indexOf(":", idx + 1);
+          Assert.assertTrue(o.getPath(), secondIdx == -1);
+        } else {
+          if (o.getPath().contains(LINUX_ROOT)) {
+            Assert.assertFalse(o.getPath().contains(basePath));
+          }
+        }
         try {
-          return createStubInfo("C:/base/1", "http://a.b.c");
+          return createStubInfo(basePath + "1", "http://a.b.c");
         }
         catch (SVNException e) {
           //
@@ -588,9 +601,15 @@ public class SvnParseCommandLineParseTest extends TestCase {
     });
     handlerArr[0] = handler;
 
+    final String osChecked = changePathsIfNix(s);
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    parser.parse(new ByteArrayInputStream(s.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
+    parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
     final MultiMap<String,PortableStatus> changes = handler.getCurrentListChanges();
+  }
+
+  private String changePathsIfNix(String s) {
+    s = StringUtil.replace(s, "\\", "/");
+    return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
   private IdeaSVNInfo createStubInfo(final String basePath, final String baseUrl) throws SVNException {

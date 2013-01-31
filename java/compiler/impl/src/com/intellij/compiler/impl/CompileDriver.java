@@ -39,6 +39,7 @@ import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.compiler.generic.GenericCompiler;
+import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
@@ -76,6 +77,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
+import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
@@ -88,6 +90,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -498,7 +501,7 @@ public class CompileDriver {
     }
 
     final MessageBus messageBus = myProject.getMessageBus();
-
+    final MultiMap<String, Artifact> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
@@ -518,11 +521,10 @@ public class CompileDriver {
 
       @Override
       public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
-        final String trace = failure.getStacktrace();
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
+        final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {
           LOG.info(trace);
-          System.out.println(trace);
         }
         compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
       }
@@ -561,10 +563,23 @@ public class CompileDriver {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
             final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
               final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
               publisher.fileGenerated(root, relativePath);
+              if (outputToArtifact != null) {
+                Collection<Artifact> artifacts = outputToArtifact.get(root);
+                if (!artifacts.isEmpty()) {
+                  for (Artifact artifact : artifacts) {
+                    ArtifactsCompiler.addChangedArtifact(compileContext, artifact);
+                  }
+                  writtenArtifactOutputPaths.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
+                }
+              }
+            }
+            if (writtenArtifactOutputPaths != null && !writtenArtifactOutputPaths.isEmpty()) {
+              ArtifactsCompiler.addWrittenPaths(compileContext, writtenArtifactOutputPaths);
             }
             break;
           case BUILD_COMPLETED:
@@ -2307,6 +2322,7 @@ public class CompileDriver {
       final Set<File> nonExistingOutputPaths = new HashSet<File>();
       final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      final boolean useOutOfProcessBuild = useOutOfProcessBuild();
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
@@ -2329,9 +2345,11 @@ public class CompileDriver {
         }
         else {
           if (outputPath != null) {
-            final File file = new File(outputPath.replace('/', File.separatorChar));
-            if (!file.exists()) {
-              nonExistingOutputPaths.add(file);
+            if (!useOutOfProcessBuild) {
+              final File file = new File(outputPath.replace('/', File.separatorChar));
+              if (!file.exists()) {
+                nonExistingOutputPaths.add(file);
+              }
             }
           }
           else {
@@ -2340,9 +2358,11 @@ public class CompileDriver {
             }
           }
           if (testsOutputPath != null) {
-            final File f = new File(testsOutputPath.replace('/', File.separatorChar));
-            if (!f.exists()) {
-              nonExistingOutputPaths.add(f);
+            if (!useOutOfProcessBuild) {
+              final File f = new File(testsOutputPath.replace('/', File.separatorChar));
+              if (!f.exists()) {
+                nonExistingOutputPaths.add(f);
+              }
             }
           }
           else {
@@ -2350,7 +2370,7 @@ public class CompileDriver {
               modulesWithoutOutputPathSpecified.add(module.getName());
             }
           }
-          if (!useOutOfProcessBuild()) {
+          if (!useOutOfProcessBuild) {
             if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
               final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
               if (path == null) {
@@ -2476,7 +2496,7 @@ public class CompileDriver {
           }
         }
       }
-      if (!useOutOfProcessBuild()) {
+      if (!useOutOfProcessBuild) {
         final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
         for (Compiler compiler : allCompilers) {
           if (!compiler.validateConfiguration(scope)) {

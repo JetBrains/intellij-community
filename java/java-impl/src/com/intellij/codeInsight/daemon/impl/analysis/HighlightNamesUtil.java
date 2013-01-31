@@ -244,7 +244,7 @@ public class HighlightNamesUtil {
 
   public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiEnumConstantInitializer) {
-      return aClass.getLBrace().getTextRange();
+      return ((PsiEnumConstantInitializer)aClass).getEnumConstant().getNameIdentifier().getTextRange();
     }
     final PsiElement psiElement = aClass instanceof PsiAnonymousClass
                                   ? ((PsiAnonymousClass)aClass).getBaseClassReference()

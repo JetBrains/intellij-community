@@ -21,10 +21,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import org.jetbrains.annotations.NotNull;
 
 public class WrapReturnValueAction extends BaseRefactoringAction{
 
-  protected RefactoringActionHandler getHandler(DataContext context){
+  protected RefactoringActionHandler getHandler(@NotNull DataContext context){
         return new WrapReturnValueHandler();
     }
 
@@ -33,7 +34,7 @@ public class WrapReturnValueAction extends BaseRefactoringAction{
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (psiMethod != null && !(psiMethod instanceof PsiCompiledElement)) {
       final PsiType returnType = psiMethod.getReturnType();
@@ -42,7 +43,7 @@ public class WrapReturnValueAction extends BaseRefactoringAction{
     return false;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length != 1) {
         return false;
     }

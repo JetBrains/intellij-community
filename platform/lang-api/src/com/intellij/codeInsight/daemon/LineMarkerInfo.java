@@ -75,6 +75,15 @@ public class LineMarkerInfo<T extends PsiElement> {
     endOffset = range.getEndOffset();
   }
 
+  /**
+   * Creates a line marker info for the element.
+   * @param element         the element for which the line marker is created.
+   * @param startOffset     the offset (relative to beginning of file) with which the marker is associated
+   * @param icon            the icon to show in the gutter for the line marker
+   * @param updatePass      the ID of the daemon pass during which the marker should be recalculated
+   * @param tooltipProvider the callback to calculate the tooltip for the gutter icon
+   * @param navHandler      the handler executed when the gutter icon is clicked
+   */
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,

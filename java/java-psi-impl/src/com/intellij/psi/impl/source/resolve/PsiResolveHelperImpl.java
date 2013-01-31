@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
     try {
       final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
-      LOG.assertTrue(ref.isValid());
+      LOG.assertTrue(ref.isValid(), referenceText);
       return ResolveClassUtil.resolveClass(ref);
     }
     catch (IncorrectOperationException e) {
@@ -130,12 +130,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
   @Override
   public boolean isAccessible(@NotNull PsiMember member,
-                              PsiModifierList modifierList,
+                              @Nullable PsiModifierList modifierList,
                               @NotNull PsiElement place,
                               @Nullable PsiClass accessObjectClass,
-                              final PsiElement currentFileResolveScope) {
-    return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierList, place, accessObjectClass,
-                                        currentFileResolveScope);
+                              @Nullable PsiElement currentFileResolveScope) {
+    PsiClass containingClass = member.getContainingClass();
+    return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
   @Override
@@ -221,7 +221,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (nullPassed && currentSubstitution == null) return RAW_INFERENCE;
         } else if (argumentType instanceof PsiMethodReferenceType) {
           final PsiMethodReferenceExpression referenceExpression = ((PsiMethodReferenceType)argumentType).getExpression();
-          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, partialSubstitutor.substitute(parameterType));
+          currentSubstitution = inferConstraintFromFunctionalInterfaceMethod(typeParameter, referenceExpression, partialSubstitutor.substitute(parameterType), partialSubstitutor, policy);
         }
         else {
           currentSubstitution = getSubstitutionForTypeParameterConstraint(typeParameter, parameterType,
@@ -504,7 +504,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     Pair<PsiType, ConstraintType> substitution = null;
     if (owner instanceof PsiMethod && parent instanceof PsiCallExpression) {
       PsiCallExpression methodCall = (PsiCallExpression)parent;
-      substitution = inferMethodTypeParameterFromParent(skipParenthesizedExprUp(methodCall.getParent()), methodCall, typeParameter, substitutor, policy);
+      substitution = inferMethodTypeParameterFromParent(PsiUtil.skipParenthesizedExprUp(methodCall.getParent()), methodCall, typeParameter, substitutor, policy);
     }
     return substitution;
   }
@@ -546,7 +546,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (arg == null ||
           arg.getDeepComponentType() instanceof PsiPrimitiveType ||
           arg instanceof PsiIntersectionType ||
-          (psiClass != null && (isContraVariantPosition || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())))) {
+          (psiClass != null && (isContraVariantPosition || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()) || (arg instanceof PsiArrayType)))) {
         PsiType bound = intersectAllExtends(typeParam, arg);
         return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
       }
@@ -585,7 +585,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                            PsiType lowerBound) {
     final PsiLambdaExpression lambdaExpression = arg.getExpression();
     if (PsiUtil.getLanguageLevel(lambdaExpression).isAtLeast(LanguageLevel.JDK_1_8)) {
-      final PsiElement parent = skipParenthesizedExprUp(lambdaExpression.getParent());
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent());
       if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> methodMap = MethodCandidateInfo.CURRENT_CANDIDATE.get();
@@ -608,7 +608,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   @Nullable
   private static Pair<PsiType, ConstraintType> inferConstraintFromFunctionalInterfaceMethod(final PsiTypeParameter typeParam,
                                                                                             final PsiMethodReferenceExpression methodReferenceExpression,
-                                                                                            final PsiType functionalInterfaceType) {
+                                                                                            final PsiType functionalInterfaceType,
+                                                                                            final PsiSubstitutor partialSubstitutor,
+                                                                                            final ParameterTypeInferencePolicy policy) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod functionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (functionalInterfaceMethod != null) {
@@ -669,7 +671,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           } else {
             argType = methReferenceResolveResult.getSubstitutor().substitute(subst.substitute(method.getReturnType()));
           }
-          return getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          final Pair<PsiType, ConstraintType> typeParameterConstraint =
+            getSubstitutionForTypeParameterConstraint(typeParam, functionalInterfaceReturnType, argType, true, PsiUtil.getLanguageLevel(functionalInterfaceMethod));
+          if (typeParameterConstraint != null && typeParameterConstraint.getSecond() != ConstraintType.EQUALS && method.isConstructor()) {
+            final Pair<PsiType, ConstraintType> constraintFromParent =
+              inferMethodTypeParameterFromParent(typeParam, partialSubstitutor, methodReferenceExpression.getParent().getParent(), policy);
+            if (constraintFromParent != null && constraintFromParent.getSecond() == ConstraintType.EQUALS) return constraintFromParent;
+          }
+          return typeParameterConstraint;
         }
       }
     }
@@ -689,7 +698,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (constraintFromFormalParams != null) return constraintFromFormalParams;
 
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
-      if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {
+      if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {  
+        //todo should always return null for b.72
         if (lowerBound != PsiType.NULL) {
           return null;
         }
@@ -927,12 +937,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType expectedType = null;
 
     if (parent instanceof PsiVariable) {
-      if (methodCall.equals(skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
         expectedType = ((PsiVariable)parent).getType();
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (methodCall.equals(skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
         expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
@@ -1052,20 +1062,5 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       result = new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
     }
     return result;
-  }
-
-  @Nullable
-  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
-    while (initializer instanceof PsiParenthesizedExpression) {
-      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
-    }
-    return initializer;
-  }
-
-  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
-    while (parent instanceof PsiParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    return parent;
   }
 }

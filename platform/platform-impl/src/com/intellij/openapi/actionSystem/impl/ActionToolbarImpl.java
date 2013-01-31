@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
@@ -212,7 +213,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     ourToolbars.remove(this);
     myActionManager.removeTimerListener(myWeakTimerListener);
     myActionManager.removeTransparentTimerListener(myWeakTimerListener);
-    myKeymapManager.removeWeakListener(myKeymapManagerListener);
+    if (ScreenUtil.isStandardAddRemoveNotify(this))
+      myKeymapManager.removeWeakListener(myKeymapManagerListener);
   }
 
   @Override

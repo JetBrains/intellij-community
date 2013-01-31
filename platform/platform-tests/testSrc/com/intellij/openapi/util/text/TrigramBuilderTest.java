@@ -16,6 +16,8 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -74,7 +76,7 @@ public class TrigramBuilderTest {
       }
     }
     else {
-      String ext = FileUtil.getExtension(name);
+      String ext = FileUtilRt.getExtension(name);
       if (!allowedExtension.contains(ext)) return;
       if (root.length() > 100 * 1024) return;
 
@@ -111,10 +113,10 @@ public class TrigramBuilderTest {
     }
   }
 
-  private static final Set<String> allowedExtension = new HashSet<String>(
+  private static final Set<String> allowedExtension = new THashSet<String>(
     Arrays.asList("iml", "xml", "java", "html", "bat", "policy", "properties", "sh", "dtd", "ipr", "txt", "plist", "form", "xsl", "css",
                   "jsp", "jspx", "xhtml", "tld", "htm", "tag", "jspf", "js", "ft", "xsd", "xls", "rb", "php", "ftl", "c", "y", "erb", "rjs",
-                  "rhtml", "sql", "cfml", "groovy", "text", "gsp", "h", "cc", "cpp", "wsdl"));
+                  "rhtml", "sql", "cfml", "groovy", "text", "gsp", "h", "cc", "cpp", "wsdl"), FileUtil.PATH_HASHING_STRATEGY);
 
   private static Collection<File> lookup(TIntObjectHashMap<List<File>> trigramsDatabase, String query) {
     final Set<File> result = new HashSet<File>();

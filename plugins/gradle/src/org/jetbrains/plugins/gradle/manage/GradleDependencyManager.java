@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.manage;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -65,10 +66,11 @@ public class GradleDependencyManager {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
         try {
-          final GradleProjectStructureHelper projectStructureHelper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          final GradleProjectStructureHelper projectStructureHelper
+            = ServiceManager.getService(module.getProject(), GradleProjectStructureHelper.class);
           for (GradleModuleDependency dependency : dependencies) {
             final String moduleName = dependency.getName();
-            final Module intellijModule = projectStructureHelper.findIntellijModule(moduleName);
+            final Module intellijModule = projectStructureHelper.findIdeModule(moduleName);
             if (intellijModule == null) {
               assert false;
               continue;
@@ -78,7 +80,7 @@ public class GradleDependencyManager {
               continue;
             }
 
-            ModuleOrderEntry orderEntry = projectStructureHelper.findIntellijModuleDependency(dependency, moduleRootModel);
+            ModuleOrderEntry orderEntry = projectStructureHelper.findIdeModuleDependency(dependency, moduleRootModel);
             if (orderEntry == null) {
               orderEntry = moduleRootModel.addModuleOrderEntry(intellijModule);
             }
@@ -110,7 +112,7 @@ public class GradleDependencyManager {
         }
 
         for (GradleLibraryDependency dependency : dependencies) {
-          GradleProjectStructureHelper helper = module.getProject().getComponent(GradleProjectStructureHelper.class);
+          GradleProjectStructureHelper helper = ServiceManager.getService(module.getProject(), GradleProjectStructureHelper.class);
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
           try {
@@ -120,7 +122,7 @@ public class GradleDependencyManager {
               assert false;
               continue;
             }
-            LibraryOrderEntry orderEntry = helper.findIntellijLibraryDependency(dependency.getName(), moduleRootModel);
+            LibraryOrderEntry orderEntry = helper.findIdeLibraryDependency(dependency.getName(), moduleRootModel);
             if (orderEntry == null) {
               // We need to get the most up-to-date Library object due to our project model restrictions.
               orderEntry = moduleRootModel.addLibraryEntry(library);
@@ -137,7 +139,7 @@ public class GradleDependencyManager {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeDependencies(@NotNull final Collection<ExportableOrderEntry> dependencies) {
+  public void removeDependencies(@NotNull final Collection<? extends ExportableOrderEntry> dependencies) {
     if (dependencies.isEmpty()) {
       return;
     }

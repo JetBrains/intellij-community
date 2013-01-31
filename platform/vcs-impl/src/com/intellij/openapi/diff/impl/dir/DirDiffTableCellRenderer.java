@@ -16,37 +16,19 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DirDiffOperation;
-import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.image.BufferedImage;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
-  private final HashMap<String, BufferedImage> cache = new HashMap<String, BufferedImage>();
-  private final JBTable myTable;
-
-  public DirDiffTableCellRenderer(JBTable table) {
-    myTable = table;
-    myTable.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        cache.clear();
-      }
-    });
-  }
-
   @Override
   public Component getTableCellRendererComponent(final JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
     final DirDiffTableModel model = (DirDiffTableModel)table.getModel();
@@ -55,10 +37,13 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
     final int modelColumn = table.convertColumnIndexToModel(column);
 
     if (element.isSeparator()) {
-      return new JPanel() {
+      return new SimpleColoredComponent() {
+        {
+          setIcon(ObjectUtils.chooseNotNull(element.getSourceIcon(), element.getTargetIcon()));
+          append(element.getName());
+        }
         @Override
-        public void paint(Graphics g) {
-          super.paint(g);
+        protected void doPaint(Graphics2D g) {
           int offset = 0;
           int i = 0;
           final TableColumnModel columnModel = table.getColumnModel();
@@ -66,10 +51,9 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
             offset += columnModel.getColumn(i).getWidth();
             i++;
           }
-          int width = columnModel.getColumn(column).getWidth();
-          int height = table.getRowHeight(row);
-          final BufferedImage image = getOrCreate(element.getName(), ObjectUtils.chooseNotNull(element.getSourceIcon(), element.getTargetIcon()));
-          g.drawImage(image, 0, 0, width, height, offset, 0, offset + width, height, null);
+          g.translate(-offset, 0);
+          super.doPaint(g);
+          g.translate(offset, 0);
         }
       };
     }
@@ -105,23 +89,5 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       }
     }
     return c;
-  }
-
-  private BufferedImage getOrCreate(String path, Icon icon) {
-    final BufferedImage image = cache.get(path);
-    if (image != null) {
-      return image;
-    }
-    final int w = myTable.getWidth();
-    final int h = myTable.getRowHeight();
-    final BufferedImage img = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
-    final Graphics g = img.getGraphics();
-    if (icon != null) {
-      g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);
-    }
-    g.setColor(UIUtil.getLabelForeground());
-    g.drawString(path, 2 + (icon == null ? 0 : icon.getIconWidth()) + 2, h - 3);
-    cache.put(path, img);
-    return img;
   }
 }

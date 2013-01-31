@@ -36,7 +36,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class SimpleProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = ContainerUtil.createEmptyCOWList();
+  private final List<ProviderInfo<Provider, ElementPattern>> myProviderPairs = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void registerProvider(Provider provider, ElementPattern pattern, double priority) {
     myProviderPairs.add(new ProviderInfo<Provider, ElementPattern>(provider, pattern, priority));

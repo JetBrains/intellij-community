@@ -51,7 +51,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   }
 
   @Override
-    public void visitLeaf(LeafElement leaf) {
+  public void visitLeaf(LeafElement leaf) {
     String leafText = leaf instanceof ForeignLeafPsiElement ? "" : leaf.getText();
     catLeafs.append(leafText);
     final TextRange leafRange = leaf.getTextRange();

@@ -100,7 +100,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
-    params.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
+    params.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 package org.jetbrains.generate.tostring.element;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.generate.tostring.config.FilterPattern;
-import org.jetbrains.generate.tostring.config.Filterable;
-
-import java.io.Serializable;
 
 /**
  * This is a method element containing information about the method.
@@ -27,12 +23,12 @@ import java.io.Serializable;
  * @see ElementFactory
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class MethodElement extends AbstractElement implements Serializable, Element, Filterable {
+public class MethodElement extends AbstractElement implements Element {
 
     private String methodName;
     private String fieldName;
     private boolean modifierAbstract;
-    private boolean modifierSynchronzied;
+    private boolean modifierSynchronized;
     private boolean returnTypeVoid;
     private boolean getter;
     private boolean deprecated;
@@ -65,12 +61,19 @@ public class MethodElement extends AbstractElement implements Serializable, Elem
         this.modifierAbstract = modifierAbstract;
     }
 
+  /**
+   * Exists for compatibility with old templates
+   */
     public boolean isModifierSynchronzied() {
-        return modifierSynchronzied;
+        return isModifierSynchronized();
     }
 
-    public void setModifierSynchronzied(boolean modifierSynchronzied) {
-        this.modifierSynchronzied = modifierSynchronzied;
+    public boolean isModifierSynchronized() {
+        return modifierSynchronized;
+    }
+
+    public void setModifierSynchronized(boolean modifierSynchronized) {
+        this.modifierSynchronized = modifierSynchronized;
     }
 
     public boolean isReturnTypeVoid() {
@@ -112,35 +115,15 @@ public class MethodElement extends AbstractElement implements Serializable, Elem
         return methodName.matches(regexp);
     }
 
-    public boolean applyFilter(FilterPattern pattern) {
-        if (pattern == null)
-            return false;
-
-        if (StringUtil.isNotEmpty(pattern.getMethodName()) && methodName.matches(pattern.getMethodName())) {
-            return true;
-        }
-
-        if (StringUtil.isNotEmpty(pattern.getMethodType()) && !returnTypeVoid && !isPrimitive && getTypeQualifiedName() != null) {
-            String type = getTypeQualifiedName();
-            if (type.matches(pattern.getMethodType())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public String toString() {
         return super.toString() + " ::: MethodElement{" +
                 "fieldName='" + fieldName + "'" +
                 ", methodName='" + methodName + "'" +
                 ", modifierAbstract=" + modifierAbstract +
-                ", modifierSynchronzied=" + modifierSynchronzied +
+                ", modifierSynchronized=" + modifierSynchronized +
                 ", returnTypeVoid=" + returnTypeVoid +
                 ", getter=" + getter +
                 ", deprecated=" + deprecated +
                 "}";
     }
-
-
 }

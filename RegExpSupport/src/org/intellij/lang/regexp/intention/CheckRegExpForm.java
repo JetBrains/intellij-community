@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import org.intellij.lang.regexp.RegExpLanguage;
 
@@ -106,12 +107,14 @@ public class CheckRegExpForm {
           @Override
           public void documentChanged(DocumentEvent e) {
             updater.cancelAllRequests();
-            updater.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                updateBalloon();
-              }
-            }, 200);
+            if (!updater.isDisposed()) {
+              updater.addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  updateBalloon();
+                }
+              }, 200);
+            }
           }
         };
         myRegExp.addDocumentListener(documentListener);
@@ -134,7 +137,7 @@ public class CheckRegExpForm {
       correct = Pattern.compile(myRegExp.getText()).matcher(mySampleText.getText()).matches();
     } catch (Exception ignore) {}
 
-    mySampleText.setBackground(correct ? new Color(231, 250, 219) : new Color(255, 177, 160));
+    mySampleText.setBackground(correct ? new JBColor(new Color(231, 250, 219), new Color(68, 85, 66)) : new JBColor(new Color(255, 177, 160), new Color(110, 43, 40)));
     BalloonImpl balloon = (BalloonImpl)myRef.get();
     if (balloon != null && balloon.isDisposed()) {
       balloon.revalidate();

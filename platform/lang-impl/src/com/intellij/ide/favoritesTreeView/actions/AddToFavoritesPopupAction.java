@@ -21,13 +21,14 @@ import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: Feb 24, 2005
  */
 public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction {
-  protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
+  protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     group.removeAll();
     final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
     for (String favoritesList : availableFavoritesLists) {

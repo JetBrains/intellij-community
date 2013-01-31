@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.openapi.impl.RenameRefactoringImpl;
@@ -38,7 +38,7 @@ public class RenameFileWithClassIntention extends Intention {
     final String name = psiClass.getName();
 
     final PsiFile file = psiClass.getContainingFile();
-    final String newFileName = name + "." + FileUtil.getExtension(file.getName());
+    final String newFileName = name + "." + FileUtilRt.getExtension(file.getName());
     new RenameRefactoringImpl(project, file, newFileName, true, true).run();
   }
 

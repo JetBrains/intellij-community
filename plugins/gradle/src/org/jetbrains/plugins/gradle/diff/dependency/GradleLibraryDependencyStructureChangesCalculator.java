@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
  * @since 1/24/12 1:37 PM
  */
 public class GradleLibraryDependencyStructureChangesCalculator
-  extends GradleAbstractDependencyStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<GradleLibraryDependency, LibraryOrderEntry>
 {
   
   private final GradleLibraryStructureChangesCalculator myLibraryCalculator;
@@ -35,12 +35,12 @@ public class GradleLibraryDependencyStructureChangesCalculator
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull LibraryOrderEntry entity) {
+  public Object getIdeKey(@NotNull LibraryOrderEntry entity) {
     final Library library = entity.getLibrary();
     if (library == null) {
       return "";
     }
-    return myLibraryCalculator.getIntellijKey(library);
+    return myLibraryCalculator.getIdeKey(library);
   }
 
   @NotNull

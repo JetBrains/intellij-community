@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class TypeProvider {
 
   @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
-  public PsiType getReturnType(PsiMethod method) {
+  public PsiType getReturnType(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       GrTypeElement typeElement = ((GrMethod)method).getReturnTypeElementGroovy();
       if (typeElement != null) return typeElement.getType();
@@ -63,7 +63,7 @@ public class TypeProvider {
 
   @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
-  public PsiType getVarType(PsiVariable variable) {
+  public PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
     PsiType type = null;
     if (variable instanceof GrVariable) {
@@ -79,7 +79,7 @@ public class TypeProvider {
   }
 
   @NotNull
-  public PsiType getParameterType(PsiParameter parameter) {
+  public PsiType getParameterType(@NotNull PsiParameter parameter) {
     if (!(parameter instanceof GrParameter)) {
       PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof GrAccessorMethod) {
@@ -102,7 +102,8 @@ public class TypeProvider {
     return types[((GrParameterList)parent).getParameterNumber((GrParameter)parameter)];
   }
 
-  private PsiType[] inferMethodParameters(GrMethod method) {
+  @NotNull
+  private PsiType[] inferMethodParameters(@NotNull GrMethod method) {
     PsiType[] psiTypes = inferredTypes.get(method);
     if (psiTypes != null) return psiTypes;
 
@@ -148,7 +149,9 @@ public class TypeProvider {
     paramInds.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int i) {
-        if (types[i]==null) types[i] = parameters[i].getType();
+        if (types[i] == null || types[i] == PsiType.NULL) {
+          types[i] = parameters[i].getType();
+        }
         return true;
       }
     });

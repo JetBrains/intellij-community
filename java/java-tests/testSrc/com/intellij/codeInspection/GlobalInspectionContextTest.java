@@ -21,9 +21,9 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
@@ -55,7 +55,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
   }
 
   public void testRunInspectionContext() throws Exception {
-    InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
+    InspectionProfile profile = new InspectionProfileImpl("foo");
     InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     for (InspectionProfileEntry tool : tools) {
       if (!tool.isEnabledByDefault()) {
@@ -65,7 +65,7 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
         return;
       }
     }
-    fail("No disabled tools found");
+    fail("No disabled tools found: " + Arrays.asList(tools));
   }
 
   @Override

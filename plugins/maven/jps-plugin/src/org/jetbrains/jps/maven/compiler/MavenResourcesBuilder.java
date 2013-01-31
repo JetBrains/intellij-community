@@ -1,16 +1,12 @@
 package org.jetbrains.jps.maven.compiler;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.BuildOperations;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -55,15 +51,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(target.getModule().getProject());
     final Date timestamp = new Date();
 
-    @Nullable
-    final Map<MavenResourcesTarget, Set<File>> cleanedSources;
-    if (context.isProjectRebuild()) {
-      cleanedSources = null;
-    }
-    else {
-      cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
-    }
-
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
       private Map<String, String> myProperties;
       private Pattern myDelimitersPattern;
@@ -74,15 +61,12 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         if (relPath == null) {
           return true;
         }
-        final String sourcePath = file.getPath();
-        if (!rd.isIncluded(relPath)) {
-          return true;
-        }
         final File outputDir = MavenResourcesTarget.getOutputDir(target.getModuleOutputDir(), rd.getConfiguration());
         if (outputDir == null) {
           return true;
         }
         final File outputFile = new File(outputDir, relPath);
+        final String sourcePath = file.getPath();
         boolean shouldFilter = rd.getConfiguration().isFiltered && !filteringExcludedExtensions.contains(getExtension(file));
         if (shouldFilter && file.length() > FILTERING_SIZE_LIMIT) {
           context.processMessage(new CompilerMessage("MavenResources", BuildMessage.Kind.WARNING, "File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering", sourcePath));
@@ -102,14 +86,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         catch (UnsupportedEncodingException e) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, "Resource was not copied: " + e.getMessage(), sourcePath));
         }
-        finally {
-          if (cleanedSources != null) {
-            final Set<File> files = cleanedSources.get(target);
-            if (files != null) {
-              files.remove(file);
-            }
-          }
-        }
         return !context.getCancelStatus().isCanceled();
       }
 
@@ -127,7 +103,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
           final byte[] bytes = FileUtil.loadFileBytes(file);
           final String text = encoding != null? new String(bytes, encoding) : new String(bytes);
           doFilterText(
-            getDelimitersPattern(), text, projectConfig, config, endsWith(file.getName(), ".properties") ? "\\" : null, getProperties(), null,
+            getDelimitersPattern(), text, projectConfig, config, getProperties(), null,
             writer
           );
         }
@@ -163,19 +139,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
 
     context.checkCanceled();
 
-    if (cleanedSources != null) {
-      // cleanup mapping for the files that were copied before but not copied now
-      for (Map.Entry<MavenResourcesTarget, Set<File>> entry : cleanedSources.entrySet()) {
-        final Set<File> files = entry.getValue();
-        if (!files.isEmpty()) {
-          final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(entry.getKey());
-          for (File file : files) {
-            mapping.remove(file.getPath());
-          }
-        }
-      }
-    }
-
     context.processMessage(new ProgressMessage(""));
   }
 
@@ -183,10 +146,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
   @NotNull
   public String getPresentableName() {
     return BUILDER_NAME;
-  }
-
-  private static boolean endsWith(final String fileName, final String suffix) {
-    return SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(fileName, suffix) : StringUtil.endsWithIgnoreCase(fileName, suffix);
   }
 
   private static String getExtension(File file) {
@@ -202,7 +161,6 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
                                    String text,
                                    MavenProjectConfiguration projectConfig,
                                    MavenModuleResourceConfiguration moduleConfig,
-                                   final @Nullable String escapedCharacters,
                                    @NotNull Map<String, String> additionalProperties,
                                    @Nullable Map<String, String> resolvedPropertiesParam,
                                    final Appendable out) throws IOException {
@@ -259,23 +217,17 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
         resolvedProperties.put(propertyName, null);
 
         StringBuilder sb = new StringBuilder();
-        doFilterText(delimitersPattern, resolved, projectConfig, moduleConfig, escapedCharacters, additionalProperties, resolvedProperties, sb);
+        doFilterText(delimitersPattern, resolved, projectConfig, moduleConfig, additionalProperties, resolvedProperties, sb);
         propertyValue = sb.toString();
 
         resolvedProperties.put(propertyName, propertyValue);
       }
 
-      if (escapedCharacters == null) {
-        out.append(propertyValue);
+      if (moduleConfig.escapeWindowsPaths) {
+        MavenEscapeWindowsCharacterUtils.escapeWindowsPath(out, propertyValue);
       }
       else {
-        for (int i = 0; i < propertyValue.length(); i++) {
-          char ch = propertyValue.charAt(i);
-          if (escapedCharacters.indexOf(ch) != -1) {
-            out.append('\\');
-          }
-          out.append(ch);
-        }
+        out.append(propertyValue);
       }
     }
 

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -44,7 +44,7 @@ import java.util.Set;
  *         Date: 7/8/12
  */
 public class FSOperations {
-  public static final Key<Set<File>> ALL_OUTPUTS_KEY = Key.create("_all_project_output_dirs_");
+  public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
 
   public static void markDirty(CompileContext context, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
@@ -161,19 +161,17 @@ public class FSOperations {
                                           @NotNull final Timestamps tsStorage,
                                           final boolean forceDirty,
                                           @Nullable Set<File> currentFiles, @Nullable FileFilter filter, @NotNull FSCache fsCache) throws IOException {
-    if (context.getProjectDescriptor().getIgnoredFileIndex().isIgnored(file.getName())) {
-      return;
-    }
+    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     final File[] children = fsCache.getChildren(file);
     if (children != null) { // is directory
-      if (children.length > 0 && !rd.getExcludedRoots().contains(file)) {
+      if (children.length > 0 && rootIndex.isDirectoryAccepted(file, rd)) {
         for (File child : children) {
           traverseRecursively(context, rd, child, tsStorage, forceDirty, currentFiles, filter, fsCache);
         }
       }
     }
     else { // is file
-      if (filter == null || filter.accept(file)) {
+      if (rootIndex.isFileAccepted(file, rd) && (filter == null || filter.accept(file))) {
         boolean markDirty = forceDirty;
         if (!markDirty) {
           markDirty = tsStorage.getStamp(file, rd.getTarget()) != FileSystemUtil.lastModified(file);

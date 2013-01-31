@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.generate.tostring.element;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
@@ -33,12 +32,10 @@ public class ElementFactory {
   /**
    * Creates a new {@link ClassElement} object.
    *
-   * @param project the IDEA project.
    * @param clazz   class information.
-   * @param psi     the psi adapter
    * @return a new {@link ClassElement} object.
    */
-  public static ClassElement newClassElement(Project project, PsiClass clazz, PsiAdapter psi) {
+  public static ClassElement newClassElement(PsiClass clazz) {
     ClassElement ce = new ClassElement();
 
     // name
@@ -46,12 +43,11 @@ public class ElementFactory {
     ce.setQualifiedName(clazz.getQualifiedName());
 
     // super
-    ce.setHasSuper(psi.hasSuperClass(project, clazz));
-    PsiClass superClass = psi.getSuperClass(project, clazz);
-    ce.setSuperName(superClass == null ? null : superClass.getName());
+    PsiClass superClass = clazz.getSuperClass();
+    ce.setSuperName((superClass == null) ? null : superClass.getName());
 
     // interfaces
-    ce.setImplementNames(psi.getImplementsClassnames(clazz));
+    ce.setImplementNames(PsiAdapter.getImplementsClassnames(clazz));
 
     // other
     ce.setEnum(clazz.isEnum());
@@ -65,28 +61,24 @@ public class ElementFactory {
   /**
    * Create a new {@link FieldElement} object.
    *
-   * @param project the IDEA project.
    * @param field   the {@link com.intellij.psi.PsiField} to get the information from.
-   * @param psi     the psi adapter
    * @return a new {@link FieldElement} object.
    */
-  public static FieldElement newFieldElement(Project project, PsiField field, PsiAdapter psi) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-
+  public static FieldElement newFieldElement(PsiField field) {
     FieldElement fe = new FieldElement();
-    PsiType type = field.getType();
-
     fe.setName(field.getName());
 
-    if (psi.isConstantField(field)) fe.setConstant(true);
-    if (psi.isEnumField(field)) fe.setEnum(true);
+    if (PsiAdapter.isConstantField(field)) fe.setConstant(true);
+    if (PsiAdapter.isEnumField(field)) fe.setEnum(true);
     PsiModifierList modifiers = field.getModifierList();
     if (modifiers != null) {
       if (modifiers.hasModifierProperty(PsiModifier.TRANSIENT)) fe.setModifierTransient(true);
       if (modifiers.hasModifierProperty(PsiModifier.VOLATILE)) fe.setModifierVolatile(true);
     }
 
-    setElementInfo(fe, factory, type, modifiers, psi);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+    PsiType type = field.getType();
+    setElementInfo(fe, factory, type, modifiers);
 
     return fe;
   }
@@ -95,12 +87,10 @@ public class ElementFactory {
    * Creates a new {@link MethodElement} object.
    *
    * @param method  the PSI method object.
-   * @param factory the PsiAdapterFactory.
-   * @param psi     the psi adapter
    * @return a new {@link MethodElement} object.
    * @since 2.15
    */
-  public static MethodElement newMethodElement(PsiMethod method, PsiElementFactory factory, PsiAdapter psi) {
+  public static MethodElement newMethodElement(PsiMethod method) {
     MethodElement me = new MethodElement();
     PsiType type = method.getReturnType();
     PsiModifierList modifiers = method.getModifierList();
@@ -111,25 +101,25 @@ public class ElementFactory {
       log.warn("This method does not have a valid return type: " + method.getName() + ", returnType=" + type);
       return me;
     }
-
-    setElementInfo(me, factory, type, modifiers, psi);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    setElementInfo(me, factory, type, modifiers);
 
     // names
-    String fieldName = psi.getGetterFieldName(factory, method);
+    String fieldName = PsiAdapter.getGetterFieldName(method);
     me.setName(fieldName == null ? method.getName() : fieldName);
     me.setFieldName(fieldName);
     me.setMethodName(method.getName());
 
     // getter
-    me.setGetter(psi.isGetterMethod(factory, method));
+    me.setGetter(PsiAdapter.isGetterMethod(method));
 
     // misc
     me.setDeprecated(method.isDeprecated());
-    me.setReturnTypeVoid(psi.isTypeOfVoid(method.getReturnType()));
+    me.setReturnTypeVoid(PsiAdapter.isTypeOfVoid(method.getReturnType()));
 
     // modifiers
     if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) me.setModifierAbstract(true);
-    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronzied(true);
+    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronized(true);
 
     return me;
   }
@@ -138,48 +128,46 @@ public class ElementFactory {
    * Sets the basic element information from the given type.
    *
    * @param element   the element to set information from the type
-   * @param factory   the PsiAdapterFactory.
+   * @param factory
    * @param type      the type
-   * @param psi       the psi adapter.
    * @param modifiers modifier list
    * @since 2.15
    */
   private static void setElementInfo(AbstractElement element,
                                      PsiElementFactory factory,
                                      PsiType type,
-                                     PsiModifierList modifiers,
-                                     PsiAdapter psi) {
+                                     PsiModifierList modifiers) {
 
     // type names
-    element.setTypeName(psi.getTypeClassName(type));
-    element.setTypeQualifiedName(psi.getTypeQualifiedClassName(type));
+    element.setTypeName(PsiAdapter.getTypeClassName(type));
+    element.setTypeQualifiedName(PsiAdapter.getTypeQualifiedClassName(type));
 
     // arrays, collections and maps types
-    if (psi.isObjectArrayType(type)) {
+    if (PsiAdapter.isObjectArrayType(type)) {
       element.setObjectArray(true);
       element.setArray(true);
 
       // additional specify if the element is a string array
-      if (psi.isStringArrayType(type)) element.setStringArray(true);
+      if (PsiAdapter.isStringArrayType(type)) element.setStringArray(true);
 
     }
-    else if (psi.isPrimitiveArrayType(type)) {
+    else if (PsiAdapter.isPrimitiveArrayType(type)) {
       element.setPrimitiveArray(true);
       element.setArray(true);
     }
-    if (psi.isCollectionType(factory, type)) element.setCollection(true);
-    if (psi.isListType(factory, type)) element.setList(true);
-    if (psi.isSetType(factory, type)) element.setSet(true);
-    if (psi.isMapType(factory, type)) element.setMap(true);
+    if (PsiAdapter.isCollectionType(factory, type)) element.setCollection(true);
+    if (PsiAdapter.isListType(factory, type)) element.setList(true);
+    if (PsiAdapter.isSetType(factory, type)) element.setSet(true);
+    if (PsiAdapter.isMapType(factory, type)) element.setMap(true);
 
     // other types
-    if (psi.isPrimitiveType(type)) element.setPrimitive(true);
-    if (psi.isObjectType(factory, type)) element.setObject(true);
-    if (psi.isStringType(factory, type)) element.setString(true);
-    if (psi.isNumericType(factory, type)) element.setNumeric(true);
-    if (psi.isDateType(factory, type)) element.setDate(true);
-    if (psi.isCalendarType(factory, type)) element.setCalendar(true);
-    if (psi.isBooleanType(factory, type)) element.setBoolean(true);
+    if (PsiAdapter.isPrimitiveType(type)) element.setPrimitive(true);
+    if (PsiAdapter.isObjectType(factory, type)) element.setObject(true);
+    if (PsiAdapter.isStringType(factory, type)) element.setString(true);
+    if (PsiAdapter.isNumericType(factory, type)) element.setNumeric(true);
+    if (PsiAdapter.isDateType(factory, type)) element.setDate(true);
+    if (PsiAdapter.isCalendarType(factory, type)) element.setCalendar(true);
+    if (PsiAdapter.isBooleanType(factory, type)) element.setBoolean(true);
 
     // modifiers
     if (modifiers != null) {
@@ -196,7 +184,5 @@ public class ElementFactory {
       }
       else if (modifiers.hasModifierProperty(PsiModifier.PRIVATE)) element.setModifierPrivate(true);
     }
-
   }
-
 }

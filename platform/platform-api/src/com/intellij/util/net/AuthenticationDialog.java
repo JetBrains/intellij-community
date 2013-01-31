@@ -15,14 +15,13 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,16 +33,27 @@ import java.awt.event.ActionEvent;
 public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;
 
-  public AuthenticationDialog(String title, String description) {
+  public AuthenticationDialog(@NotNull Component component, String title, String description, final String login, final String password, final boolean rememberPassword) {
+    super(component, true);
+    setTitle(title);
+
+    new MnemonicHelper().register(getContentPane());
+    panel = new AuthenticationPanel(description, login, password, rememberPassword);
+
+    final Window window = getWindow();
+    if (window instanceof JDialog) {
+      ((JDialog) window).setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    }
+
+    init();
+  }
+
+  public AuthenticationDialog(String title, String description, final String login, final String password, final boolean rememberPassword) {
     super(JOptionPane.getRootFrame(), true);
     setTitle(title);
 
     new MnemonicHelper().register(getContentPane());
-
-    panel = new AuthenticationPanel(description,
-                                    HttpConfigurable.getInstance().PROXY_LOGIN,
-                                    HttpConfigurable.getInstance().getPlainProxyPassword(),
-                                    HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD);
+    panel = new AuthenticationPanel(description, login, password, rememberPassword);
 
     final Window window = getWindow();
     if (window instanceof JDialog) {
@@ -54,31 +64,17 @@ public class AuthenticationDialog extends DialogWrapper {
   }
 
   @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return panel.getPreferredFocusedComponent();
+  }
+
+  @Nullable
   protected JComponent createCenterPanel() {
     return panel;
   }
 
-  protected Action[] createActions() {
-    Action [] actions =
-      new Action [] {
-        new AbstractAction (CommonBundle.getOkButtonText()) {
-          public void actionPerformed(ActionEvent e) {
-            HttpConfigurable.getInstance().PROXY_LOGIN = panel.getLogin();
-            HttpConfigurable.getInstance().setPlainProxyPassword(String.valueOf(panel.getPassword()));
-            HttpConfigurable.getInstance().PROXY_AUTHENTICATION = true;
-            HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD = panel.isRememberPassword();
-
-            dispose();
-          }
-        },
-        new AbstractAction(CommonBundle.getCancelButtonText()) {
-          public void actionPerformed(ActionEvent e) {
-            HttpConfigurable.getInstance().PROXY_AUTHENTICATION = false;
-            dispose();
-          }
-        }
-      };
-    actions [0].putValue(Action.DEFAULT, Boolean.TRUE.toString());
-    return actions;
+  public AuthenticationPanel getPanel() {
+    return panel;
   }
 }

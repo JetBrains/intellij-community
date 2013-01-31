@@ -41,6 +41,7 @@ import java.util.Set;
 
 public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler(){
     return this;

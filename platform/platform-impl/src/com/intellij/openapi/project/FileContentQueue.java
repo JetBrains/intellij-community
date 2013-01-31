@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +56,7 @@ public class FileContentQueue {
       public void run() {
         try {
           for (VirtualFile file : files) {
-            if (indicator != null) {
-              indicator.checkCanceled();
-            }
+            indicator.checkCanceled();
             addLast(file, indicator);
           }
 
@@ -87,7 +86,7 @@ public class FileContentQueue {
   private void addLast(VirtualFile file, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     FileContent content = new FileContent(file);
 
-    if (file.isValid() && !file.isDirectory()) {
+    if (file.isValid() && !file.isDirectory() && !file.isSpecialFile() && !VfsUtilCore.isBrokenLink(file)) {
       if (!doLoadContent(content, indicator)) {
         content.setEmptyContent();
       }
@@ -99,6 +98,7 @@ public class FileContentQueue {
     myQueue.put(content);
   }
 
+  @SuppressWarnings("InstanceofCatchParameter")
   private boolean doLoadContent(final FileContent content, @NotNull final ProgressIndicator indicator) throws InterruptedException {
     final long contentLength = content.getLength();
 
@@ -124,10 +124,16 @@ public class FileContentQueue {
           notifyAll();
         }
       }
-      if (e instanceof ProcessCanceledException) throw (ProcessCanceledException)e;
-      if (e instanceof InterruptedException) throw (InterruptedException)e;
 
-      if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) LOG.info(e);
+      if (e instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)e;
+      }
+      else if (e instanceof InterruptedException) {
+        throw (InterruptedException)e;
+      }
+      else if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) {
+        LOG.info(e);
+      }
       else if (ApplicationManager.getApplication().isUnitTestMode()) {
         e.printStackTrace();
       }

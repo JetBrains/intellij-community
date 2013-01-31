@@ -116,7 +116,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     T get();
   }
 
-  protected abstract <T> Key<T> createKey(T k, ReferenceQueue<? super T> q);
+  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q);
 
   private static class HardKey<T> implements Key<T> {
     private T myObject;
@@ -185,7 +185,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public boolean containsKey(@NotNull Object key) {
+  public boolean containsKey(Object key) {
+    if (key == null) return false;
     // optimization:
     myHardKeyInstance.set((K)key);
     boolean result = myMap.containsKey(myHardKeyInstance);
@@ -194,7 +195,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V get(@NotNull Object key) {
+  public V get(Object key) {
+    if (key == null) return null;
     myHardKeyInstance.set((K)key);
     V result = myMap.get(myHardKeyInstance);
     myHardKeyInstance.clear();

@@ -65,7 +65,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       LOG.info("executeCommand no default path configured");
       return null;
     }
-    HgCommandExecutor executor = new HgCommandExecutor(project);
+    HgCommandExecutor executor = new HgCommandExecutor(project, repositoryURL);
     HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
     if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);

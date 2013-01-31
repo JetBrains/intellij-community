@@ -27,6 +27,7 @@
                       serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
   <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
+  <exportable serviceInterface="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
   <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                       serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
@@ -55,8 +56,6 @@
 
   <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
                       serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
-  <applicationService serviceInterface="com.intellij.util.net.HttpConfigurable"
-                      serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
   <applicationService serviceInterface="com.intellij.openapi.vfs.impl.http.RemoteFileManager"
                       serviceImplementation="com.intellij.openapi.vfs.impl.http.RemoteFileManagerImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.RefreshQueue"
@@ -284,10 +283,14 @@
   <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
   <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
+  <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
 
   <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 
-  <applicationService serviceInterface="com.intellij.ide.XmlRpcServer"
-                      serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
+  <applicationService serviceInterface="org.jetbrains.ide.WebServerManager" serviceImplementation="org.jetbrains.ide.WebServerManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
   <serverPipelineConsumer implementation="org.jetbrains.ide.XmlRpcPipelineConsumer"/>
+  <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
+
+  <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
 </extensions>

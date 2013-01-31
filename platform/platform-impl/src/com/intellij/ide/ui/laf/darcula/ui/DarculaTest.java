@@ -22,6 +22,8 @@ import com.intellij.ui.components.JBCheckBox;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 /**
@@ -50,6 +52,53 @@ public class DarculaTest {
   private JTextField myTextField3;
   private JTextField myTextField4;
   private JSpinner mySpinner1;
+  private JProgressBar myProgressBar1;
+  private JButton myProgressButton;
+  private JProgressBar myProgressBar2;
+  private JButton myStartButton;
+
+  public DarculaTest() {
+    myProgressButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myProgressButton.getText().equals("Start")) {
+          myProgressBar1.setIndeterminate(true);
+          myProgressButton.setText("Stop");
+        } else {
+          myProgressBar1.setIndeterminate(false);
+          myProgressButton.setText("Start");
+        }
+      }
+    });
+    myStartButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myStartButton.setEnabled(false);
+        new Thread(){
+          @Override
+          public void run() {
+            while (myProgressBar2.getValue() < 100) {
+              try {
+                sleep(20);
+              }
+              catch (InterruptedException e1) {
+              }
+              myProgressBar2.setValue(myProgressBar2.getValue() + 1);
+            }
+
+            try {
+              sleep(1000);
+            }
+            catch (InterruptedException e1) {
+            }
+
+            myProgressBar2.setValue(0);
+            myStartButton.setEnabled(true);
+          }
+        }.start();
+      }
+    });
+  }
 
   public static void main(String[] args) {
     try {

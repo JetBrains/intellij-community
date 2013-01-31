@@ -98,7 +98,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
-  private final List<Listener> myManagerListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private ModificationTracker myModificationTracker;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
@@ -1098,7 +1098,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       for (Map.Entry<Object, Object> propEntry : properties.entrySet()) {
         resourceConfig.properties.put((String)propEntry.getKey(), (String)propEntry.getValue());
       }
-      resourceConfig.escapeString = MavenProjectsTree.getEscapeString(mavenProject);
+
+      Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+      resourceConfig.escapeString = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString", "\\");
+      String escapeWindowsPaths = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
+      if (escapeWindowsPaths != null) {
+        resourceConfig.escapeWindowsPaths = Boolean.parseBoolean(escapeWindowsPaths);
+      }
+
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
     }
 
@@ -1138,16 +1145,16 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       props.directory = FileUtil.toSystemIndependentName(dir);
 
       final String target = resource.getTargetPath();
-      props.targetPath = target != null? FileUtil.toSystemIndependentName(target) : null;
+      props.targetPath = target != null ? FileUtil.toSystemIndependentName(target) : null;
 
       props.isFiltered = resource.isFiltered();
       props.includes.clear();
       for (String include : resource.getIncludes()) {
-        props.includes.add(FileUtil.convertAntToRegexp(include.trim()));
+        props.includes.add(include.trim());
       }
       props.excludes.clear();
       for (String exclude : resource.getExcludes()) {
-        props.excludes.add(FileUtil.convertAntToRegexp(exclude.trim()));
+        props.excludes.add(exclude.trim());
       }
       container.add(props);
     }
@@ -1155,7 +1162,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private static Properties getFilteringProperties(MavenProject mavenProject) {
     final Properties properties = new Properties();
-    properties.putAll(mavenProject.getProperties());
+
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -1169,6 +1176,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       catch (IOException ignored) {
       }
     }
+
+    properties.putAll(mavenProject.getProperties());
     return properties;
   }
 

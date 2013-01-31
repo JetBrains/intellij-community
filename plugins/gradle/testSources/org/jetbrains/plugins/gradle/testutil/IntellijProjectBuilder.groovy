@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil
  */
 class IntellijProjectBuilder extends AbstractProjectBuilder {
 
-  static def LIBRARY_ENTRY_TYPES = [(OrderRootType.CLASSES) : "bin"]
+  static def LIBRARY_ENTRY_TYPES = [(OrderRootType.CLASSES) : "bin", (OrderRootType.SOURCES) : "src"]
   static VirtualFile[] DUMMY_VIRTUAL_FILE_ARRAY = new VirtualFile[0]
 
   def projectStub = [getName: { same }]

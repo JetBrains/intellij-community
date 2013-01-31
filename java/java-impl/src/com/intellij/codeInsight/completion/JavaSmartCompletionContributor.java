@@ -246,13 +246,13 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
-        final ElementPattern<? extends PsiElement> leftNeighbor = PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("."));
+        final ElementPattern<? extends PsiElement> leftNeighbor = JavaCompletionData.AFTER_DOT;
         final boolean needQualify = leftNeighbor.accepts(element);
 
         for (final PsiType type : ExpectedTypesGetter.getExpectedTypes(element, false)) {
           final PsiClass psiClass = PsiUtil.resolveClassInType(type);
           if (psiClass != null && psiClass.isAnnotationType()) {
-            final LookupItem item = JavaClassNameCompletionContributor.createClassLookupItem(psiClass, true);
+            final LookupItem item = AllClassesGetter.createLookupItem(psiClass, AnnotationInsertHandler.INSTANCE);
             if (needQualify) JavaCompletionUtil.qualify(item);
             result.addElement(item);
           }
@@ -320,7 +320,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
-    if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
+    if (!JavaCompletionData.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
         new JavaMembersGetter(info.getType(), params).addMembers(!quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {

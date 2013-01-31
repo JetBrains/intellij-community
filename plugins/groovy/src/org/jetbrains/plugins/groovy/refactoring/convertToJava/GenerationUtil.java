@@ -300,9 +300,9 @@ public class GenerationUtil {
     text.append('>');
   }
 
-  static void writeParameterList(StringBuilder text,
-                                 PsiParameter[] parameters,
-                                 final ClassNameProvider classNameProvider,
+  static void writeParameterList(@NotNull StringBuilder text,
+                                 @NotNull PsiParameter[] parameters,
+                                 @NotNull final ClassNameProvider classNameProvider,
                                  @Nullable ExpressionContext context) {
     Set<String> usedNames = new HashSet<String>();
     text.append('(');

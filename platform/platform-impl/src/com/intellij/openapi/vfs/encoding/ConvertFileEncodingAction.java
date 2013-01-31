@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -48,7 +47,7 @@ public class ConvertFileEncodingAction extends ReloadFileInOtherEncodingAction {
   @Override
   // document, description
   public Pair<Document, String> checkEnabled(@NotNull VirtualFile virtualFile) {
-    String failReason = ChooseFileEncodingAction.checkCanConvert(virtualFile);
+    String failReason = checkCanConvert(virtualFile);
     if (failReason != null) return null;
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
@@ -56,21 +55,17 @@ public class ConvertFileEncodingAction extends ReloadFileInOtherEncodingAction {
 
     Charset charsetFromContent = EncodingManager.getInstance().getCachedCharsetFromContent(document);
     Charset charset = charsetFromContent != null ? charsetFromContent : virtualFile.getCharset();
-    String text = MessageFormat.format("Convert ''{0}''-encoded file ''{1}'' to another encoding", charset.displayName(), virtualFile.getName());
+    String text = MessageFormat.format("Save ''{0}''-encoded file ''{1}'' in another encoding", charset.displayName(), virtualFile.getName());
 
     return Pair.create(document, text);
   }
 
   @Override
-  public boolean value(Charset charset) {
-    return canBeConvertedTo(myFile, charset);
+  public boolean isCompatibleCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] bytesOnDisk, @NotNull String text, @NotNull Charset charset) {
+    return canConvertTo(virtualFile, text, charset);
   }
 
-  public static boolean canBeConvertedTo(@NotNull VirtualFile virtualFile, @NotNull Charset charset) {
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    Document document = documentManager.getDocument(virtualFile);
-    if (document == null) return false;
-    String text = document.getText();
+  private static boolean canConvertTo(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull Charset charset) {
     Pair<Charset, byte[]> chosen = LoadTextUtil.chooseMostlyHarmlessCharset(virtualFile.getCharset(), charset, text);
 
     byte[] buffer = chosen.second;
@@ -81,12 +76,12 @@ public class ConvertFileEncodingAction extends ReloadFileInOtherEncodingAction {
   }
 
   @Override
-  protected void chosen(@NotNull Document document, Editor editor, @NotNull VirtualFile virtualFile, @NotNull final Charset charset) {
-    if (!canBeConvertedTo(virtualFile, charset)) {
-      int res = Messages.showDialog("Encoding '" + charset.displayName() + "' does not support some characters from the text.",
-                          "Incompatible Encoding: "+charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1, AllIcons.General.WarningDialog);
-      if (res != 0) return;
-    }
+  protected void chosen(@NotNull Document document,
+                        Editor editor,
+                        @NotNull VirtualFile virtualFile,
+                        @NotNull byte[] bytes,
+                        @NotNull final Charset charset) {
+    if (!checkCompatibleEncodingAndWarn(virtualFile, bytes, document.getText(), charset, "Convert")) return;
     convert(document, editor, virtualFile, charset);
   }
 
@@ -120,5 +115,33 @@ public class ConvertFileEncodingAction extends ReloadFileInOtherEncodingAction {
 
       ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
     }
+  }
+
+  @Nullable("null means enabled, notnull means disabled and contains error message")
+  private static String checkCanConvert(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.isDirectory()) {
+      return "file is a directory";
+    }
+    String reason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
+    if (reason == null) {
+      return null;
+    }
+    String failReason = null;
+
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    if (charsetFromContent != null) {
+      failReason = "hard coded in text, encoding: {0}";
+    }
+    else {
+      Pair<Charset, String> check = ChooseFileEncodingAction.checkFileType(virtualFile);
+      if (check.second != null) {
+        failReason = check.second;
+      }
+    }
+
+    if (failReason != null) {
+      return MessageFormat.format(failReason, charsetFromContent == null ? "" : charsetFromContent.displayName());
+    }
+    return null;
   }
 }

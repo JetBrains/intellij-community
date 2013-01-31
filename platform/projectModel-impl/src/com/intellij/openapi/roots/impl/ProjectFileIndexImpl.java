@@ -62,13 +62,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
       if (module.isDisposed()) continue;
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {
-        DirectoryInfo info = getInfoForDirectory(contentRoot);
+        DirectoryInfo info = getInfoForFileOrDirectory(contentRoot);
         if (info == null) continue; // is excluded or ignored
         if (!module.equals(info.getModule())) continue; // maybe 2 modules have the same content root?
 
         VirtualFile parent = contentRoot.getParent();
         if (parent != null) {
-          DirectoryInfo parentInfo = getInfoForDirectory(parent);
+          DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
           if (parentInfo != null && parentInfo.getModule() != null) continue; // inner content - skip it
         }
 
@@ -81,8 +81,25 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   @Nullable
-  private DirectoryInfo getInfoForDirectory(@NotNull VirtualFile file) {
-    return myDirectoryIndex.getInfoForDirectory(file);
+  private DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
+    return getInfoForFileOrDirectory(file, myDirectoryIndex);
+  }
+
+  @Nullable
+  static DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file, DirectoryIndex directoryIndex) {
+    if (!file.isDirectory() && file.getParent() == null) return null; // e.g. LightVirtualFile in test
+    DirectoryInfo info = directoryIndex.getInfoForDirectory(file);
+    if (info != null) {
+      return info;
+    }
+
+    if (!file.isDirectory()) {
+      VirtualFile dir = file.getParent();
+      if (dir != null) {
+        return directoryIndex.getInfoForDirectory(dir);
+      }
+    }
+    return null;
   }
 
   @Override
@@ -97,14 +114,14 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
-    DirectoryInfo info = getInfoForDirectory(dir);
+    DirectoryInfo info = getInfoForFileOrDirectory(dir);
     if (info != null) return false;
     if (myDirectoryIndex.isProjectExcludeRoot(dir)) return true;
 
     VirtualFile parent = dir.getParent();
     while (true) {
       if (parent == null) return false;
-      DirectoryInfo parentInfo = getInfoForDirectory(parent);
+      DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
       if (parentInfo != null) return true;
       if (myDirectoryIndex.isProjectExcludeRoot(parent)) return true;
       parent = parent.getParent();
@@ -116,7 +133,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    DirectoryInfo info = getInfoForDirectory(dir);
+    DirectoryInfo info = getInfoForFileOrDirectory(dir);
     if (info == null) return null;
     return info.getModule();
   }
@@ -124,36 +141,28 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return Collections.emptyList();
-    final DirectoryInfo info = getInfoForDirectory(dir);
+    DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info == null) return Collections.emptyList();
     return Arrays.asList(info.getOrderEntries());
   }
 
   @Override
   public VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
-    VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return null;
-    final DirectoryInfo info = getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info == null) return null;
     return info.getLibraryClassRoot();
   }
 
   @Override
   public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
-    final VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return null;
-    final DirectoryInfo info = getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info == null) return null;
     return info.getSourceRoot();
   }
 
   @Override
   public VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
-    VirtualFile dir = file.isDirectory() ? file : file.getParent();
-    if (dir == null) return null;
-    final DirectoryInfo info = getInfoForDirectory(dir);
+    final DirectoryInfo info = getInfoForFileOrDirectory(file);
     if (info == null) return null;
     return info.getContentRoot();
   }
@@ -175,14 +184,13 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isLibraryClassFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
     if (myFileTypeRegistry.isFileIgnored(file)) return false;
-    VirtualFile parent = file.getParent();
-    DirectoryInfo parentInfo = getInfoForDirectory(parent);
+    DirectoryInfo parentInfo = getInfoForFileOrDirectory(file);
     return parentInfo != null && parentInfo.hasLibraryClassRoot();
   }
 
   @Override
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     if (info != null) {
       return info.isInModuleSource() || info.isInLibrarySource();
     }
@@ -194,7 +202,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     if (info != null) {     
       return info.hasLibraryClassRoot();
     }
@@ -206,7 +214,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
     if (info != null) {
       return info.isInLibrarySource();
     }
@@ -218,45 +226,27 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && info.getModule() != null;
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInContent(parent);
-    }
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info != null && info.getModule() != null;
   }
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource();
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInSourceContent(parent);
-    }
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info != null && info.isInModuleSource();
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && info.isInModuleSource() && info.isTestSource();
-    }
-    else {
-      VirtualFile parent = fileOrDir.getParent();
-      return parent != null && isInTestSourceContent(parent);
-    }
+    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return info != null && info.isInModuleSource() && info.isTestSource();
   }
 
   private class ContentFilter implements VirtualFileFilter {
     @Override
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
-        DirectoryInfo info = getInfoForDirectory(file);
+        DirectoryInfo info = getInfoForFileOrDirectory(file);
         return info != null && info.getModule() != null;
       }
       else {

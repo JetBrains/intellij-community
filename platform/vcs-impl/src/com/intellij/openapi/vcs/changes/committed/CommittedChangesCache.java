@@ -46,6 +46,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private final Project myProject;
   private final MessageBus myBus;
   private final ProgressManagerQueue myTaskQueue;
+  private final MessageBusConnection myConnection;
   private boolean myRefreshingIncomingChanges = false;
   private int myPendingUpdateCount = 0;
   private State myState = new State();
@@ -139,6 +141,26 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   public CommittedChangesCache(final Project project, final MessageBus bus, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myBus = bus;
+    myConnection = myBus.connect();
+    final VcsListener vcsListener = new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        myLocationCache.reset();
+        refreshAllCachesAsync(false, true);
+        refreshIncomingChangesAsync();
+        myTaskQueue.run(new Runnable() {
+          @Override
+          public void run() {
+            final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
+            for (ChangesCacheFile file : files) {
+              final RepositoryLocation location = file.getLocation();
+              fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
+            }
+            fireIncomingReloaded();
+          }
+        });
+      }
+    };
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
@@ -146,12 +168,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       @Override
       public void run() {
         myTaskQueue.start();
+        myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+        myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
       }
     });
     myVcsManager = vcsManager;
     Disposer.register(project, new Disposable() {
       public void dispose() {
         cancelRefreshTimer();
+        myConnection.disconnect();
       }
     });
     myExternallyLoadedChangeLists = new ConcurrentHashMap<String, Pair<Long, List<CommittedChangeList>>>();
@@ -491,6 +516,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
   }
 
+  private void fireIncomingReloaded() {
+    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
+      @Override
+      public void consume(CommittedChangesListener listener) {
+        listener.incomingChangesUpdated(Collections.<CommittedChangeList>emptyList());
+      }
+    });
+  }
+
   // todo: fix - would externally loaded nesseccerily for file? i.e. just not efficient now 
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
     final List<CommittedChangeList> newLists = new ArrayList<CommittedChangeList>();
@@ -674,7 +708,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           try {
             if (file.isEmpty()) return;
             file.editChangelist(number, newMessage);
-            loadIncomingChanges(false);
+            loadIncomingChanges(true);
             fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
           }
           catch (IOException e) {
@@ -813,7 +847,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          final List<CommittedChangeList> lists = loadIncomingChanges(false);
+          final List<CommittedChangeList> lists = loadIncomingChanges(true);
           fireIncomingChangesUpdated(lists);
         }
       };

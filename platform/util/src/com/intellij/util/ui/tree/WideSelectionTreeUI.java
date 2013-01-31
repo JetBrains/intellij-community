@@ -331,7 +331,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
           if (myWideSelectionCondition.value(row) || selected) {
             rowGraphics.setColor(bg);
-            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
         }
       }

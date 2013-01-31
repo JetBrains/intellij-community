@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ public class CancelPolicy implements ConflictResolutionPolicy {
 
     private static final CancelPolicy instance = new CancelPolicy();
 
-    private CancelPolicy() {
-    }
+    private CancelPolicy() {}
 
     public static CancelPolicy getInstance() {
         return instance;
@@ -39,13 +38,11 @@ public class CancelPolicy implements ConflictResolutionPolicy {
         // not used as this is cancel
     }
 
-    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
+    public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) {
         return null;
     }
 
     public String toString() {
         return "Cancel";
     }
-
-
 }

@@ -30,7 +30,7 @@ import java.io.File;
 import java.io.IOException;
 
 
-class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
+abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor<ToolsGroup<T>> {
   @NonNls private static final String TOOL_SET = "toolSet";
   @NonNls private static final String TOOL = "tool";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -55,32 +55,23 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
 
   @NonNls private static final String APPLICATION_HOME_MACRO = "$APPLICATION_HOME_DIR$";
 
-  public ToolsGroup readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
+  public ToolsGroup<T> readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
     Element root = document.getRootElement();
-    if (root == null || !TOOL_SET.equals(root.getName())){
+    if (root == null || !TOOL_SET.equals(root.getName())) {
       throw new InvalidDataException();
     }
 
     String groupName = root.getAttributeValue(ATTRIBUTE_NAME);
-    ToolsGroup result = new ToolsGroup(groupName);
+    ToolsGroup<T> result = createToolsGroup(groupName);
 
     final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
 
     for (final Object o : root.getChildren(TOOL)) {
       Element element = (Element)o;
 
-      Tool tool = new Tool();
-      tool.setName(ToolManager.convertString(element.getAttributeValue(NAME)));
-      tool.setDescription(ToolManager.convertString(element.getAttributeValue(DESCRIPTION)));
-      tool.setShownInMainMenu(Boolean.valueOf(element.getAttributeValue(SHOW_IN_MAIN_MENU)).booleanValue());
-      tool.setShownInEditor(Boolean.valueOf(element.getAttributeValue(SHOW_IN_EDITOR)).booleanValue());
-      tool.setShownInProjectViews(Boolean.valueOf(element.getAttributeValue(SHOW_IN_PROJECT)).booleanValue());
-      tool.setShownInSearchResultsPopup(Boolean.valueOf(element.getAttributeValue(SHOW_IN_SEARCH_POPUP)).booleanValue());
-      tool.setEnabled(!Boolean.valueOf(element.getAttributeValue(DISABLED)).booleanValue());
-      tool.setUseConsole(Boolean.valueOf(element.getAttributeValue(USE_CONSOLE)).booleanValue());
-      tool.setShowConsoleOnStdOut(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDOUT)).booleanValue());
-      tool.setShowConsoleOnStdErr(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDERR)).booleanValue());
-      tool.setFilesSynchronizedAfterRun(Boolean.valueOf(element.getAttributeValue(SYNCHRONIZE_AFTER_EXECUTION)).booleanValue());
+      T tool = createTool();
+
+      readToolAttributes(element, tool);
 
       Element exec = element.getChild(EXEC);
       if (exec != null) {
@@ -118,28 +109,44 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
     }
 
     return result;
-
   }
 
-  public Document writeScheme(final ToolsGroup scheme) throws WriteExternalException {
+  protected void readToolAttributes(Element element, T tool) {
+    tool.setName(ToolManager.convertString(element.getAttributeValue(NAME)));
+    tool.setDescription(ToolManager.convertString(element.getAttributeValue(DESCRIPTION)));
+    tool.setShownInMainMenu(Boolean.valueOf(element.getAttributeValue(SHOW_IN_MAIN_MENU)).booleanValue());
+    tool.setShownInEditor(Boolean.valueOf(element.getAttributeValue(SHOW_IN_EDITOR)).booleanValue());
+    tool.setShownInProjectViews(Boolean.valueOf(element.getAttributeValue(SHOW_IN_PROJECT)).booleanValue());
+    tool.setShownInSearchResultsPopup(Boolean.valueOf(element.getAttributeValue(SHOW_IN_SEARCH_POPUP)).booleanValue());
+    tool.setEnabled(!Boolean.valueOf(element.getAttributeValue(DISABLED)).booleanValue());
+    tool.setUseConsole(Boolean.valueOf(element.getAttributeValue(USE_CONSOLE)).booleanValue());
+    tool.setShowConsoleOnStdOut(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDOUT)).booleanValue());
+    tool.setShowConsoleOnStdErr(Boolean.valueOf(element.getAttributeValue(SHOW_CONSOLE_ON_STDERR)).booleanValue());
+    tool.setFilesSynchronizedAfterRun(Boolean.valueOf(element.getAttributeValue(SYNCHRONIZE_AFTER_EXECUTION)).booleanValue());
+  }
+
+  protected abstract ToolsGroup<T> createToolsGroup(String groupName);
+
+  protected abstract T createTool();
+
+  public Document writeScheme(final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
     if (scheme.getName() != null) {
       groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
     }
 
-    for (Tool tool : scheme.getElements()) {
+    for (T tool : scheme.getElements()) {
       saveTool(tool, groupElement);
     }
 
     return new Document(groupElement);
-
   }
 
   public boolean shouldBeSaved(final ToolsGroup scheme) {
     return true;
   }
 
-  private void saveTool(Tool tool, Element groupElement) {
+  private void saveTool(T tool, Element groupElement) {
     Element element = new Element(TOOL);
     if (tool.getName() != null) {
       element.setAttribute(NAME, tool.getName());
@@ -148,15 +155,7 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
       element.setAttribute(DESCRIPTION, tool.getDescription());
     }
 
-    element.setAttribute(SHOW_IN_MAIN_MENU, Boolean.toString(tool.isShownInMainMenu()));
-    element.setAttribute(SHOW_IN_EDITOR, Boolean.toString(tool.isShownInEditor()));
-    element.setAttribute(SHOW_IN_PROJECT, Boolean.toString(tool.isShownInProjectViews()));
-    element.setAttribute(SHOW_IN_SEARCH_POPUP, Boolean.toString(tool.isShownInSearchResultsPopup()));
-    element.setAttribute(DISABLED, Boolean.toString(!tool.isEnabled()));
-    element.setAttribute(USE_CONSOLE, Boolean.toString(tool.isUseConsole()));
-    element.setAttribute(SHOW_CONSOLE_ON_STDOUT, Boolean.toString(tool.isShowConsoleOnStdOut()));
-    element.setAttribute(SHOW_CONSOLE_ON_STDERR, Boolean.toString(tool.isShowConsoleOnStdErr()));
-    element.setAttribute(SYNCHRONIZE_AFTER_EXECUTION, Boolean.toString(tool.synchronizeAfterExecution()));
+    saveToolAttributes(tool, element);
 
     Element taskElement = new Element(EXEC);
 
@@ -165,21 +164,21 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
     Element option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, COMMAND);
-    if (tool.getProgram() != null ) {
+    if (tool.getProgram() != null) {
       option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getProgram()));
     }
 
     option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, PARAMETERS);
-    if (tool.getParameters() != null ) {
+    if (tool.getParameters() != null) {
       option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getParameters()));
     }
 
     option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, WORKING_DIRECTORY);
-    if (tool.getWorkingDirectory() != null ) {
+    if (tool.getWorkingDirectory() != null) {
       option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getWorkingDirectory()).replace(File.separatorChar, '/'));
     }
 
@@ -195,6 +194,15 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
     groupElement.addContent(element);
   }
 
-
-
+  protected void saveToolAttributes(T tool, Element element) {
+    element.setAttribute(SHOW_IN_MAIN_MENU, Boolean.toString(tool.isShownInMainMenu()));
+    element.setAttribute(SHOW_IN_EDITOR, Boolean.toString(tool.isShownInEditor()));
+    element.setAttribute(SHOW_IN_PROJECT, Boolean.toString(tool.isShownInProjectViews()));
+    element.setAttribute(SHOW_IN_SEARCH_POPUP, Boolean.toString(tool.isShownInSearchResultsPopup()));
+    element.setAttribute(DISABLED, Boolean.toString(!tool.isEnabled()));
+    element.setAttribute(USE_CONSOLE, Boolean.toString(tool.isUseConsole()));
+    element.setAttribute(SHOW_CONSOLE_ON_STDOUT, Boolean.toString(tool.isShowConsoleOnStdOut()));
+    element.setAttribute(SHOW_CONSOLE_ON_STDERR, Boolean.toString(tool.isShowConsoleOnStdErr()));
+    element.setAttribute(SYNCHRONIZE_AFTER_EXECUTION, Boolean.toString(tool.synchronizeAfterExecution()));
+  }
 }

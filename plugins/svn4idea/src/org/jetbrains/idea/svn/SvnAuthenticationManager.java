@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
@@ -47,12 +48,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.*;
 import java.util.*;
 
 /**
  * @author alex
  */
-public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
+public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener, ISVNAuthenticationManagerExt {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationManager");
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
   public static final String SVN_SSH = "svn+ssh";
@@ -166,27 +168,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     myConfigDirectory = new File(authDir.getParent());
     myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(authDir, userName);
     return myPersistentAuthenticationProviderProxy;
-  }
-
-  @Override
-  public void acknowledgeAuthentication(boolean accepted,
-                                        String kind,
-                                        String realm,
-                                        SVNErrorMessage errorMessage,
-                                        SVNAuthentication authentication) throws SVNException {
-    boolean successSaving = false;
-    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
-    try {
-      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
-      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
-      successSaving = true;
-    } finally {
-      mySavePermissions.remove();
-      if (myArtificialSaving) {
-        throw new CredentialsSavedException(successSaving);
-      }
-    }
   }
 
   private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
@@ -376,24 +357,59 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myKeyAlgorithm.get(Thread.currentThread());
   }
 
+  @Override
+  public void acknowledgeConnectionSuccessful(SVNURL url) {
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+  }
+
+  @Override
+  public void acknowledgeAuthentication(boolean accepted,
+                                        String kind,
+                                        String realm,
+                                        SVNErrorMessage errorMessage,
+                                        SVNAuthentication authentication,
+                                        SVNURL url) throws SVNException {
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    boolean successSaving = false;
+    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
+    try {
+      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
+      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
+      successSaving = true;
+    } finally {
+      mySavePermissions.remove();
+      if (myArtificialSaving) {
+        throw new CredentialsSavedException(successSaving);
+      }
+    }
+  }
+
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
+    CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
     // this code taken from default manager (changed for system properties reading)
-      String host = url.getHost();
+    String host = url.getHost();
 
     String proxyHost = getServersPropertyIdea(host, "http-proxy-host");
     if ((proxyHost == null) || "".equals(proxyHost.trim())) {
       if (getConfig().isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
-        final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-        final String ideaWideProxyHost = httpConfigurable.PROXY_HOST;
-        String ideaWideProxyPort = String.valueOf(httpConfigurable.PROXY_PORT);
-
-        if (ideaWideProxyPort == null) {
-          ideaWideProxyPort = "3128";
+        try {
+          final List<Proxy> proxies = CommonProxy.getInstance().select(new URI(url.toString()));
+          if (proxies != null && ! proxies.isEmpty()) {
+            for (Proxy proxy : proxies) {
+              if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
+                final SocketAddress address = proxy.address();
+                if (address instanceof InetSocketAddress) {
+                  return new MyPromptingProxyManager(((InetSocketAddress)address).getHostName(), "" + ((InetSocketAddress)address).getPort(),
+                                                     url.getProtocol());
+                }
+              }
+            }
+          }
         }
-
-        if ((ideaWideProxyHost != null) && (! "".equals(ideaWideProxyHost.trim()))) {
-          return new MyPromptingProxyManager(ideaWideProxyHost, ideaWideProxyPort);
+        catch (URISyntaxException e) {
+          LOG.info(e);
         }
       }
       return null;
@@ -418,11 +434,15 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
   }
 
+
+
   private static class MyPromptingProxyManager extends MySimpleProxyManager {
     private static final String ourPrompt = "Proxy authentication";
+    private final String myProtocol;
 
-    private MyPromptingProxyManager(final String host, final String port) {
+    private MyPromptingProxyManager(final String host, final String port, String protocol) {
       super(host, port, null, null);
+      myProtocol = protocol;
     }
 
     @Override
@@ -430,12 +450,24 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       if (myProxyUser != null) {
         return myProxyUser;
       }
-      final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-      if (httpConfigurable.PROXY_AUTHENTICATION && (! httpConfigurable.KEEP_PROXY_PASSWORD)) {
-        httpConfigurable.getPromptedAuthentication(myProxyHost, ourPrompt);
-      }
-      myProxyUser = httpConfigurable.PROXY_LOGIN;
+      tryGetCredentials();
       return myProxyUser;
+    }
+
+    private void tryGetCredentials() {
+      try {
+        final InetAddress ia = InetAddress.getByName(getProxyHost());
+        final PasswordAuthentication authentication =
+          Authenticator.requestPasswordAuthentication(getProxyHost(), ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol,
+                                                      null, Authenticator.RequestorType.PROXY);
+        if (authentication != null) {
+          myProxyUser = authentication.getUserName();
+          myProxyPassword = String.valueOf(authentication.getPassword());
+        }
+      }
+      catch (UnknownHostException e) {
+        //
+      }
     }
 
     @Override
@@ -443,11 +475,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       if (myProxyPassword != null) {
         return myProxyPassword;
       }
-      final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
-      if (httpConfigurable.PROXY_AUTHENTICATION && (! httpConfigurable.KEEP_PROXY_PASSWORD)) {
-        httpConfigurable.getPromptedAuthentication(myProxyUser, ourPrompt);
-      }
-      myProxyPassword = httpConfigurable.getPlainProxyPassword();
+      tryGetCredentials();
       return myProxyPassword;
     }
   }

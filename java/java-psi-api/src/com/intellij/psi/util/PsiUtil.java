@@ -95,7 +95,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static JavaResolveResult getAccessObjectClass(@NotNull PsiExpression expression) {
-    if (expression instanceof PsiSuperExpression || expression instanceof PsiThisExpression) return JavaResolveResult.EMPTY;
+    if (expression instanceof PsiSuperExpression) return JavaResolveResult.EMPTY;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -472,6 +472,14 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
       if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
+      if (isRawSubstitutor(method, substitutorForMethod)) {
+        final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
+        final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
+        if (erasedArgType != null &&  erasedParamType != null &&
+            TypeConversionUtil.isAssignable(erasedParamType, erasedArgType)) {
+          return ApplicabilityLevel.FIXED_ARITY;
+        }
+      }
     }
 
     if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
@@ -961,5 +969,20 @@ public final class PsiUtil extends PsiUtilCore {
 
     final PsiMethod[] closes = autoCloseable.findMethodsByName("close", false);
     return closes.length == 1 ? resourceClass.findMethodBySignature(closes[0], true) : null;
+  }
+
+  @Nullable
+  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
+    while (initializer instanceof PsiParenthesizedExpression) {
+      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
+    }
+    return initializer;
+  }
+
+  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+    while (parent instanceof PsiParenthesizedExpression) {
+      parent = parent.getParent();
+    }
+    return parent;
   }
 }

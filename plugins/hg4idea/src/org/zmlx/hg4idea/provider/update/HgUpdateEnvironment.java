@@ -34,12 +34,10 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  private final HgUpdaterFactory hgUpdaterFactory;
   private final HgUpdater.UpdateConfiguration updateConfiguration = new HgUpdater.UpdateConfiguration();
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
-    hgUpdaterFactory = new HgUpdaterFactory(project);
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {
@@ -64,7 +62,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
         continue;
       }
       try {
-        HgUpdater updater = hgUpdaterFactory.buildUpdater(repository, updateConfiguration);
+        HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
         result &= updater.update(updatedFiles, indicator, exceptions);
       } catch (VcsException e) {
         //TODO include module name where exception occurred

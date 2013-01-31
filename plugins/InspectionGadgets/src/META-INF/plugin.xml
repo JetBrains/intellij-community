@@ -455,7 +455,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.MarkerInterfaceInspection"/>
     <localInspection language="JAVA" shortName="MissingDeprecatedAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="missing.deprecated.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.classlayout.MissingDeprecatedAnnotationInspection"/>
     <localInspection language="JAVA" suppressId="override" shortName="MissingOverrideAnnotation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="missing.override.annotation.display.name" groupBundle="messages.InspectionsBundle"
@@ -1197,7 +1197,7 @@
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection"/>
-    <localInspection language="JAVA" shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection language="XML" shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.PackageDotHtmlMayBePackageInfoInspection"/>

@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
 
+  // See org.apache.maven.shared.filtering.DefaultMavenResourcesFiltering#defaultNonFilteredFileExtensions
   private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = ContainerUtil.newHashSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
@@ -216,7 +217,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
-    properties.putAll(mavenProject.getProperties());
 
     for (String each : mavenProject.getFilters()) {
       try {
@@ -233,6 +233,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         context.addMessage(CompilerMessageCategory.WARNING, "Maven: Cannot read the filter. " + e.getMessage(), url, -1, -1);
       }
     }
+
+    properties.putAll(mavenProject.getProperties());
+
     return properties;
   }
 
@@ -405,7 +408,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (shouldFilter) {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
-          String escapedCharacters = sourceVirtualFile.getName().endsWith(".properties") ? "\\" : null;
 
           PrintWriter printWriter = new PrintWriter(outputFile, charset);
           try {
@@ -413,7 +415,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                                text,
                                                eachItem.getProperties(),
                                                eachItem.getEscapeString(),
-                                               escapedCharacters,
                                                printWriter);
           }
           finally {

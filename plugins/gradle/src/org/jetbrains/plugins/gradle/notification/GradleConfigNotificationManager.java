@@ -4,7 +4,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -33,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 3/21/12 4:04 PM
  */
-public class GradleConfigNotificationManager extends AbstractProjectComponent {
+public class GradleConfigNotificationManager {
 
   @NotNull private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
     GradleBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
@@ -42,9 +41,10 @@ public class GradleConfigNotificationManager extends AbstractProjectComponent {
   @NotNull private final AtomicReference<Notification> myNotification = new AtomicReference<Notification>();
 
   @NotNull private final GradleInstallationManager myLibraryManager;
+  @NotNull private final Project                   myProject;
 
   public GradleConfigNotificationManager(@NotNull final Project project, @NotNull GradleInstallationManager manager) {
-    super(project);
+    myProject = project;
     myLibraryManager = manager;
     final GradleConfigNotifierAdapter handler = new GradleConfigNotifierAdapter() {
       @Override

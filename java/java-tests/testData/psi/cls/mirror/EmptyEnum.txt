@@ -4,7 +4,7 @@
 
 package pkg;
 
-final enum EmptyEnum {
+enum EmptyEnum {
     ;
 
     public static pkg.EmptyEnum[] values() { /* compiled code */ }

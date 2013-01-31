@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -436,7 +436,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(expression);
 
     InstructionImpl head = myHead;
-    addPendingEdge(expression, addNodeAndCheckPending(new PositiveGotoInstruction(expression, cond)));
+    addNodeAndCheckPending(new PositiveGotoInstruction(expression, cond));
+    handlePossibleReturn(expression);
+    addPendingEdge(expression, myHead);
 
     if (negations.isEmpty()) {
       myHead = head;
@@ -566,16 +568,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     visitCall(expression);
 
     if (opType == mLAND) {
-      for (GotoInstruction negation : negations) {
-        addPendingEdge(expression, negation);
-      }
+      InstructionImpl head = myHead;
       if (negations.isEmpty()) {
-        InstructionImpl head = myHead;
         addNode(new NegatingGotoInstruction(expression, condition));
         handlePossibleReturn(expression);
         addPendingEdge(expression, myHead);
-        myHead = head;
       }
+      else {
+        for (GotoInstruction negation : negations) {
+          myHead = negation;
+          handlePossibleReturn(expression);
+          addPendingEdge(expression, myHead);
+        }
+      }
+      myHead = head;
     }
     else /*if (opType == mLOR)*/ {
       final InstructionImpl instruction =

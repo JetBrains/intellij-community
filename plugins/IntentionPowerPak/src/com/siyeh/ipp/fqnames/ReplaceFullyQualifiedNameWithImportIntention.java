@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @see com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
+ */
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
 
   @Override
@@ -40,10 +43,8 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement reference =
-      (PsiJavaCodeReferenceElement)element;
+  public void processIntention(@NotNull PsiElement element) {
+    PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element;
     PsiElement target = reference.resolve();
     if (!(target instanceof PsiClass)) {
       PsiElement parent = reference.getParent();
@@ -69,16 +70,11 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     if (file == null) {
       return;
     }
-    if (!ImportUtils.nameCanBeImported(qualifiedName, file)) {
-      return;
-    }
-    ImportUtils.addImportIfNeeded(file, aClass);
+    ImportUtils.addImportIfNeeded(aClass, reference);
     final String fullyQualifiedText = reference.getText();
-    final QualificationRemover qualificationRemover =
-      new QualificationRemover(fullyQualifiedText);
+    final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
     file.accept(qualificationRemover);
-    final Collection<PsiJavaCodeReferenceElement> shortenedElements =
-      qualificationRemover.getShortenedElements();
+    final Collection<PsiJavaCodeReferenceElement> shortenedElements = qualificationRemover.getShortenedElements();
     final int elementCount = shortenedElements.size();
     final String text;
     if (elementCount == 1) {
@@ -93,12 +89,10 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     HighlightUtil.highlightElements(shortenedElements, text);
   }
 
-  private static class QualificationRemover
-    extends JavaRecursiveElementWalkingVisitor {
+  private static class QualificationRemover extends JavaRecursiveElementWalkingVisitor {
 
     private final String fullyQualifiedText;
-    private final List<PsiJavaCodeReferenceElement> shortenedElements =
-      new ArrayList();
+    private final List<PsiJavaCodeReferenceElement> shortenedElements = new ArrayList();
 
     QualificationRemover(String fullyQualifiedText) {
       this.fullyQualifiedText = fullyQualifiedText;
@@ -109,8 +103,7 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     }
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement parent = reference.getParent();
       if (parent instanceof PsiImportStatement) {
@@ -128,8 +121,7 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
         qualifier.delete();
       }
       catch (IncorrectOperationException e) {
-        final Class<? extends QualificationRemover> aClass =
-          getClass();
+        final Class<? extends QualificationRemover> aClass = getClass();
         final String className = aClass.getName();
         final Logger logger = Logger.getInstance(className);
         logger.error(e);

@@ -1,8 +1,24 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,12 +37,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author peter
  */
 public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrMap> {
+  @NotNull
   private final PsiClassType myExpectedType;
 
   public LiteralConstructorReference(@NotNull GrListOrMap element, @NotNull PsiClassType constructedClassType) {
@@ -44,6 +62,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     return getElement();
   }
 
+  @NotNull
   public PsiClassType getConstructedClassType() {
     return myExpectedType;
   }
@@ -76,6 +95,12 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
         if (expected != null) return (PsiClassType)expected;
       }
     }
+    else if (parent instanceof GrNamedArgument) {  //possible default constructor named arg
+      for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
+        expected = filterOutTrashTypes(expected);
+        if (expected != null) return (PsiClassType)expected;
+      }
+    }
     else {
       final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
@@ -93,7 +118,11 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     if (!(type instanceof PsiClassType)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return null;
-
+    if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_MAP)) return null;
+    if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_HASH_MAP)) return null;
+    if (TypesUtil.resolvesTo(type, CommonClassNames.JAVA_UTIL_LIST)) return null;
+    final PsiType erased = TypeConversionUtil.erasure(type);
+    if (erased == null || erased.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
     return (PsiClassType)type;
   }
 
@@ -112,6 +141,9 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
         }
 
         return GrExpression.EMPTY_ARRAY;
+      }
+      else {
+        return new GrExpression[]{literal};
       }
     }
     return literal.getInitializers();

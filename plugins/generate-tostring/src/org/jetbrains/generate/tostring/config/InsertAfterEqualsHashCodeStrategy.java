@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package org.jetbrains.generate.tostring.config;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
 /**
  * Inserts the method after the hashCode/equals methods in the javafile.
@@ -29,26 +27,18 @@ import org.jetbrains.annotations.NotNull;
 public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrategy {
 
     private static final InsertAfterEqualsHashCodeStrategy instance = new InsertAfterEqualsHashCodeStrategy();
-    private static PsiAdapter psi;
 
-    private InsertAfterEqualsHashCodeStrategy() {
-    }
+    private InsertAfterEqualsHashCodeStrategy() {}
 
     public static InsertAfterEqualsHashCodeStrategy getInstance() {
         return instance;
     }
 
-    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        // lazy initialize otherwise IDEA throws error: Component requests are not allowed before they are created
-        if (psi == null) {
-            psi = PsiAdapterFactory.getPsiAdapter();
-        }
+    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
+        PsiMethod methodHashCode = PsiAdapter.findHashCodeMethod(clazz);
+        PsiMethod methodEquals = PsiAdapter.findEqualsMethod(clazz);
 
-        // if main method exists and is the last then add toString just before main method
-        PsiMethod methodHashCode = psi.findHashCodeMethod(clazz);
-        PsiMethod methodEquals = psi.findEqualsMethod(clazz);
-
-        // if both methos exist determine the last method in the javafile
+        // if both methods exist determine the last method in the javafile
         PsiMethod method;
         if (methodEquals != null && methodHashCode != null) {
             if (methodEquals.getTextOffset() > methodHashCode.getTextOffset()) {
@@ -74,5 +64,4 @@ public class InsertAfterEqualsHashCodeStrategy implements InsertNewMethodStrateg
     public String toString() {
         return "After equals/hashCode";
     }
-
 }

@@ -23,19 +23,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAware {
   public GotoNextErrorAction() {
     super(false);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(true);
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }
 }

@@ -224,7 +224,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       throw e;
     }
     catch (Throwable ex) {
-      handleInitComponentError(ex, false, component.getClass().getName());
+      handleInitComponentError(ex, false, component.getClass().getName(), null);
     }
   }
 
@@ -242,7 +242,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
 
-  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
+  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName, ComponentConfig config) {
     LOG.error(ex);
   }
 
@@ -447,7 +447,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                                              interfaceClass : Class.forName(config.getImplementationClass(), true, loader);
 
         if (myInterfaceToClassMap.get(interfaceClass) != null) {
-          throw new Error("ComponentSetup for component " + interfaceClass.getName() + " already registered");
+          throw new ComponentAlreadyRegisteredException(interfaceClass);
         }
 
         getPicoContainer().registerComponent(new ComponentConfigComponentAdapter(config, implementationClass));
@@ -455,23 +455,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         myComponentClassToConfig.put(implementationClass, config);
         myComponentInterfaces.add(interfaceClass);
       }
-      catch (Exception e) {
-        @NonNls final String message = "Error while registering component: " + config;
-
-        if (config.pluginDescriptor != null) {
-          LOG.error(message, new PluginException(e, config.pluginDescriptor.getPluginId()));
-        }
-        else {
-          LOG.error(message, e);
-        }
+      catch (ComponentAlreadyRegisteredException ex) {
+        throw new Error(ex);
       }
-      catch (Error e) {
-        if (config.pluginDescriptor != null) {
-          LOG.error(new PluginException(e, config.pluginDescriptor.getPluginId()));
-        }
-        else {
-          throw e;
-        }
+      catch (Throwable e) {
+        handleInitComponentError(e, false, null, config);
+      }
+    }
+
+    private class ComponentAlreadyRegisteredException extends Exception {
+      private ComponentAlreadyRegisteredException(Class interfaceClass) {
+        super(interfaceClass.getName() + " component already registered");
       }
     }
 
@@ -605,7 +599,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               throw e;
             }
             catch (Throwable t) {
-              handleInitComponentError(t, componentInstance == null, componentKey);
+              handleInitComponentError(t, componentInstance == null, componentKey, config);
             }
             return componentInstance;
           }

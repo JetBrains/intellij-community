@@ -17,13 +17,26 @@ public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
   public PositionManager createPositionManager(final DebugProcess process) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (JavaPsiFacade.getInstance(process.getProject()).findPackage("com.springsource.loaded") != null) {
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(process.getProject());
+      if (facade.findPackage("com.springsource.loaded") != null || facade.findPackage("org.springsource.loaded") != null) {
         return new SpringLoadedPositionManager(process);
       }
-      return null;
     }
     finally {
       accessToken.finish();
     }
+
+    try {
+      // Check spring loaded for remote process
+      if (process.getVirtualMachineProxy().classesByName("com.springsource.loaded.agent.SpringLoadedAgent").size() > 0
+          || process.getVirtualMachineProxy().classesByName("org.springsource.loaded.agent.SpringLoadedAgent").size() > 0) {
+        return new SpringLoadedPositionManager(process);
+      }
+    }
+    catch (Exception ignored) {
+      // Some problem with virtual machine.
+    }
+
+    return null;
   }
 }

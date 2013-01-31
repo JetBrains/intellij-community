@@ -32,6 +32,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 
@@ -91,7 +92,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
         }
       }
 
-      relativeNamesToExtract.add(PathManager.getConfigPath() + "/" + PluginManager.INSTALLED_TXT);
+      relativeNamesToExtract.add(PluginManager.INSTALLED_TXT);
 
       final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
       FileUtil.copy(saveFile, tempFile);
@@ -103,6 +104,8 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
 
+      UpdateSettings.getInstance().forceCheckForUpdateAfterRestart();
+
       String key = ApplicationManager.getApplication().isRestartCapable()
                    ? "message.settings.imported.successfully.restart"
                    : "message.settings.imported.successfully";
@@ -111,12 +114,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
                                                                     ApplicationNamesInfo.getInstance().getFullProductName()),
                                                   IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
       if (ret == 0) {
-        if (ApplicationManager.getApplication().isRestartCapable()) {
-          ApplicationManager.getApplication().restart();
-        }
-        else {
-          ApplicationManager.getApplication().exit();
-        }
+        ApplicationManager.getApplication().restart();
       }
     }
     catch (ZipException e1) {

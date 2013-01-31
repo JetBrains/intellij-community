@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -83,7 +84,7 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
   }
 
   @Override
-  public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
+  public PsiField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place) {
     if (targetClass instanceof GroovyScriptClass) {
       PsiElement added = targetClass.getContainingFile().add(field.getParent());
       return (PsiField)((GrVariableDeclaration)added).getVariables()[0];

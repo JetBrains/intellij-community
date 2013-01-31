@@ -4,8 +4,8 @@
 
 package pkg;
 
-public final enum SimpleEnum {
-    public static final E1, public static final E2;
+public enum SimpleEnum {
+    E1, E2;
 
     public static pkg.SimpleEnum[] values() { /* compiled code */ }
 

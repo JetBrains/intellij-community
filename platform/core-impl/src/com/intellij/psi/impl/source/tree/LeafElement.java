@@ -89,8 +89,8 @@ public abstract class LeafElement extends TreeElement {
     if (len > TEXT_MATCHES_THRESHOLD) {
       char[] chars = CharArrayUtil.fromSequenceWithoutCopying(myText);
       if (chars != null) {
-        for(int i = 0; i < chars.length; ++i) {
-          if (chars[i] == c) return true;
+        for (char aChar : chars) {
+          if (aChar == c) return true;
         }
         return false;
       }

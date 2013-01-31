@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +33,15 @@ public class GitCommandResult {
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
+  @Nullable private final Throwable myException;
 
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output) {
+  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output,
+                          @Nullable Throwable exception) {
     myExitCode = exitCode;
     mySuccess = success;
     myErrorOutput = errorOutput;
     myOutput = output;
+    myException = exception;
   }
 
   /**
@@ -45,14 +49,6 @@ public class GitCommandResult {
    */
   public boolean success() {
     return mySuccess;
-  }
-
-  /**
-   * @return the part of output that we treated as an error.
-   */
-  @NotNull
-  public List<String> getErrorOutput() {
-    return new ArrayList<String>(myErrorOutput);
   }
 
   @NotNull
@@ -78,4 +74,10 @@ public class GitCommandResult {
   public String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }
+
+  @Nullable
+  public Throwable getException() {
+    return myException;
+  }
+
 }

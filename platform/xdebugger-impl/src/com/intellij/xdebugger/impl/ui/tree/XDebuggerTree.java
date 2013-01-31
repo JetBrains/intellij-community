@@ -73,7 +73,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;
-  private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XDebugSession mySession;
   private final PopupHandler myPopupHandler;
 

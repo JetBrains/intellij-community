@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.find.FindManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,9 +28,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class ReplacePromptDialog extends DialogWrapper {
-
   private final boolean myIsMultiple;
-  @Nullable private FindManager.MalformedReplacementStringException myException;
+  @Nullable private final FindManager.MalformedReplacementStringException myException;
 
   public ReplacePromptDialog(boolean isMultipleFiles, String title, Project project) {
     this(isMultipleFiles, title, project, null);
@@ -39,11 +39,13 @@ public class ReplacePromptDialog extends DialogWrapper {
     super(project, true);
     myIsMultiple = isMultipleFiles;
     myException = exception;
-    setButtonsAlignment(SwingUtilities.CENTER);
+    setButtonsAlignment(SwingConstants.CENTER);
     setTitle(title);
     init();
   }
 
+  @NotNull
+  @Override
   protected Action[] createActions(){
     DoAction replaceAction = new DoAction(UIBundle.message("replace.prompt.replace.button"), FindManager.PromptResult.OK);
     replaceAction.putValue(DEFAULT_ACTION,Boolean.TRUE);
@@ -56,7 +58,8 @@ public class ReplacePromptDialog extends DialogWrapper {
           new DoAction(UIBundle.message("replace.prompt.all.files.action"), FindManager.PromptResult.ALL_FILES),
           getCancelAction()
         };
-      } else {
+      }
+      else {
         return new Action[]{
           replaceAction,
           createSkipAction(),
@@ -76,6 +79,7 @@ public class ReplacePromptDialog extends DialogWrapper {
     return new DoAction(UIBundle.message("replace.prompt.skip.button"), FindManager.PromptResult.SKIP);
   }
 
+  @Override
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -86,15 +90,16 @@ public class ReplacePromptDialog extends DialogWrapper {
     }
     JLabel label = new JLabel(getMessage());
     label.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
-    label.setForeground(Color.black);
+    label.setForeground(JBColor.foreground);
     panel.add(label, BorderLayout.CENTER);
     return panel;
   }
 
   protected String getMessage() {
-    return myException == null ? UIBundle.message("replace.propmt.replace.occurrence.label") : myException.getMessage();
+    return myException == null ? UIBundle.message("replace.prompt.replace.occurrence.label") : myException.getMessage();
   }
 
+  @Override
   public JComponent createCenterPanel() {
     return null;
   }
@@ -112,6 +117,7 @@ public class ReplacePromptDialog extends DialogWrapper {
       myExitCode = exitCode;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       close(myExitCode);
     }

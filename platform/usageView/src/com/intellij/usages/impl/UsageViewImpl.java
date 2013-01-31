@@ -65,10 +65,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -143,10 +140,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Object lock = new Object();
   private Splitter myPreviewSplitter;
 
-  public UsageViewImpl(@NotNull final Project project,
-                       @NotNull UsageViewPresentation presentation,
-                       @NotNull UsageTarget[] targets,
-                       Factory<UsageSearcher> usageSearcherFactory) {
+  UsageViewImpl(@NotNull final Project project,
+                @NotNull UsageViewPresentation presentation,
+                @NotNull UsageTarget[] targets,
+                Factory<UsageSearcher> usageSearcherFactory) {
     myPresentation = presentation;
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
@@ -316,7 +313,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           }
         }
       });
-
       tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       myPreviewSplitter.setSecondComponent(tabbedPane);
     }
@@ -417,6 +413,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     TreeUtil.selectFirstNode(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
+
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        TreePath path = event.getPath();
+        Object component = path.getLastPathComponent();
+        if (!(component instanceof Node)) return;
+        Node node = (Node)component;
+        if (node.needsUpdate()) {
+          checkNodeValidity(node, path);
+        }
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+      }
+    });
+
     //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
   }
 
@@ -542,7 +556,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
-      //createImportToFavorites(),
       actionsManager.createExportToTextFileAction(myTextFileExporter),
       actionsManager.createHelpAction(HELP_ID)
     };
@@ -907,7 +920,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private void updateImmediately() {
     if (myProject.isDisposed()) return;
-    checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
+    TreeNode root = (TreeNode)myTree.getModel().getRoot();
+    checkNodeValidity(root, new TreePath(root));
     updateOnSelectionChanged();
   }
 
@@ -918,12 +932,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private void checkNodeValidity(@NotNull DefaultMutableTreeNode node) {
-    Enumeration enumeration = node.children();
-    while (enumeration.hasMoreElements()) {
-      checkNodeValidity((DefaultMutableTreeNode)enumeration.nextElement());
+  private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path) {
+    if (node instanceof Node && node != getModelRoot()) {
+      ((Node)node).update(this);
     }
-    if (node instanceof Node && node != getModelRoot()) ((Node)node).update(this);
+    if (myTree.isCollapsed(path)) {
+      if (node instanceof Node) {
+        ((Node)node).markNeedUpdate();
+      }
+      return; // optimization: do not call expensive update() on invisible node
+    }
+    for (int i=0; i < node.getChildCount(); i++) {
+      TreeNode child = node.getChildAt(i);
+      checkNodeValidity(child, path.pathByAddingChild(child));
+    }
   }
 
   private void updateLater() {

@@ -18,11 +18,11 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -74,14 +74,16 @@ public final class ResourceRootDescriptor extends BuildRootDescriptor {
     return myPackagePrefix;
   }
 
+  @NotNull
   @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+  public FileFilter createFileFilter() {
     final JpsProject project = myTarget.getModule().getProject();
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCompilerExcludes();
+    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
     return new FileFilter() {
       @Override
       public boolean accept(File file) {
-        return !excludes.isExcluded(file);
+        return !excludes.isExcluded(file) && configuration.isResourceFile(file, getRootFile());
       }
     };
   }

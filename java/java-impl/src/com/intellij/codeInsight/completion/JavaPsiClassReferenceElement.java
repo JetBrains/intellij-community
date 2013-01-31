@@ -142,7 +142,9 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   }
 
   public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass, boolean diamond) {
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
+    if (!(psiClass instanceof PsiTypeParameter)) {
+      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
+    }
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);

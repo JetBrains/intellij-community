@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>InterfaceWithOnlyOneDirectInheritor.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Interface which has only one direct inheritor</problem_class>
+    <description>Interface &lt;code&gt;InterfaceWithOnlyOneDirectInheritor&lt;/code&gt; has only one direct inheritor #loc</description>
+  </problem>
+</problems>

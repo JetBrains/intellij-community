@@ -36,15 +36,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Component which provides means to invoke different VCS-related services.
  */
 public abstract class AbstractVcsHelper {
+
+  protected final Project myProject;
+
+  protected AbstractVcsHelper(@NotNull Project project) {
+    myProject = project;
+  }
+
   public static AbstractVcsHelper getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, AbstractVcsHelper.class);
   }
@@ -115,14 +120,28 @@ public abstract class AbstractVcsHelper {
    * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
    */
   @NotNull
-  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
+  public final List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
+    return showMergeDialog(files, provider, new MergeDialogCustomizer());
+  }
 
   /**
    * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description and with default merge provider
    * for the current VCS.
    */
   @NotNull
-  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files);
+  public final List<VirtualFile> showMergeDialog(List<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
+    MergeProvider provider = null;
+    for (VirtualFile virtualFile : files) {
+      final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+      if (vcs != null) {
+        provider = vcs.getMergeProvider();
+        if (provider != null) break;
+      }
+    }
+    if (provider == null) return Collections.emptyList();
+    return showMergeDialog(files, provider);
+  }
 
   public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, final AbstractVcs vcs,
                                        final String repositoryPath);

@@ -33,7 +33,7 @@ public class DownloadUtil {
    * @param indicator   progress indicator
    * @param url         url to download
    * @param outputFile  output file
-   * @param tempFile    temporary file to download to
+   * @param tempFile    temporary file to download to. This file will be removed on method exit.
    */
   public static void downloadAtomically(@Nullable ProgressIndicator indicator,
                                         @NotNull String url,
@@ -42,7 +42,7 @@ public class DownloadUtil {
   {
     try {
       downloadContentToFile(indicator, url, tempFile);
-      FileUtil.copy(tempFile, outputFile);
+      FileUtil.rename(tempFile, outputFile);
     } finally {
       FileUtil.delete(tempFile);
     }

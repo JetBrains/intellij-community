@@ -39,7 +39,7 @@ public class GithubLoginPanel {
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
-        BrowserUtil.launchBrowser(e.getURL().toExternalForm());
+        BrowserUtil.browse(e.getURL());
       }
     });
     mySignupTextField.setText(

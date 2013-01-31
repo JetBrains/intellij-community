@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
@@ -46,7 +47,11 @@ import java.util.Map;
  * as required by the underlying platform.
  */
 public class GeneralCommandLine implements UserDataHolder {
-  public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
+  /** @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
+  private static final char QUOTE = '\uEFEF';
 
   private String myExePath = null;
   private File myWorkDirectory = null;
@@ -187,22 +192,34 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   public Process createProcess() throws ExecutionException {
-    checkWorkingDirectory();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Executing [" + getCommandLineString() + "]");
+    }
 
-    final String[] commands = prepareCommands();
-    if (StringUtil.isEmptyOrSpaces(commands[0])) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+    String[] commands;
+    try {
+      checkWorkingDirectory();
+
+      commands = prepareCommands();
+      if (StringUtil.isEmptyOrSpaces(commands[0])) {
+        throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      throw e;
     }
 
     try {
-      final ProcessBuilder builder = new ProcessBuilder(commands);
-      final Map<String, String> environment = builder.environment();
+      ProcessBuilder builder = new ProcessBuilder(commands);
+      Map<String, String> environment = builder.environment();
       setupEnvironment(environment);
       builder.directory(myWorkDirectory);
       builder.redirectErrorStream(myRedirectErrorStream);
       return builder.start();
     }
     catch (IOException e) {
+      LOG.warn(e);
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }
@@ -212,8 +229,7 @@ public class GeneralCommandLine implements UserDataHolder {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(
-        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
       throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
@@ -222,32 +238,41 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private String[] prepareCommands() {
     final List<String> parameters = myProgramParams.getList();
-    final boolean doNotEscape = Boolean.TRUE.equals(getUserData(DO_NOT_ESCAPE_QUOTES));
-
     final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath), doNotEscape) : null;
+    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
     for (int i = 0; i < parameters.size(); i++) {
-      result[i + 1] = prepareCommand(parameters.get(i), doNotEscape);
+      result[i + 1] = prepareCommand(parameters.get(i));
     }
     return result;
   }
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() (besides doNotEscape option)
-  private static String prepareCommand(String parameter, final boolean doNotEscape) {
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
+  private static String prepareCommand(String parameter) {
     if (SystemInfo.isWindows) {
-      if (!doNotEscape && parameter.contains("\"")) {
+      if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }
       else if (parameter.length() == 0) {
         parameter = "\"\"";
       }
     }
+
+    if (parameter.length() >= 2 && parameter.charAt(0) == QUOTE && parameter.charAt(parameter.length() - 1) == QUOTE) {
+      parameter = '"' + parameter.substring(1, parameter.length() - 1) + '"';
+    }
+
     return parameter;
   }
 
   private void setupEnvironment(final Map<String, String> environment) {
     if (!myPassParentEnvironment) {
       environment.clear();
+    }
+    else if (SystemInfo.isMac) {
+      String pathEnvVarValue = PathEnvironmentVariableUtil.getFixedPathEnvVarValueOnMac();
+      if (pathEnvVarValue != null) {
+        environment.put(PathEnvironmentVariableUtil.PATH_ENV_VAR_NAME, pathEnvVarValue);
+      }
     }
     if (myEnvParams != null) {
       if (SystemInfo.isWindows) {
@@ -261,6 +286,18 @@ public class GeneralCommandLine implements UserDataHolder {
         environment.putAll(myEnvParams);
       }
     }
+  }
+
+  /**
+   * Normally, double quotes in parameters are escaped so they arrive to a called program as-is.
+   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get they quotes non-escaped.
+   * Wrapping a parameter by this method (instead of using quotes) will do exactly this.
+   *
+   * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
+   */
+  @NotNull
+  public static String inescapableQuote(@NotNull String parameter) {
+    return QUOTE + parameter + QUOTE;
   }
 
   @Override

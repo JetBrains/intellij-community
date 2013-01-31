@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -224,7 +225,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     File xmlFile = suite.save(new File(PathManager.getSystemPath()));
     String path = xmlFile.getAbsolutePath() + "\n";
     try {
-      FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+      FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -236,7 +237,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     try {
       if (buildTestParams.isEmpty()) {
         String path = new File(myData.getSuiteName()).getAbsolutePath() + "\n";
-        FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+        FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
         return;
       }
       final Parser parser = new Parser(myData.getSuiteName());
@@ -258,7 +259,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
           fileWriter.close();
         }
         String path = suiteFile.getAbsolutePath() + "\n";
-        FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+        FileUtil.writeToFile(myTempFile, path.getBytes(CharsetToolkit.UTF8_CHARSET), true);
       }
     }
     catch (Exception e) {

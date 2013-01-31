@@ -62,26 +62,36 @@ public class FormatterUtil {
 
   @Nullable
   public static ASTNode getPrevious(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    return getNextOrPrevious(node, false, typesToIgnore);
+  }
+
+  @Nullable
+  public static ASTNode getNext(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    return getNextOrPrevious(node, true, typesToIgnore);
+  }
+
+  @Nullable
+  private static ASTNode getNextOrPrevious(@Nullable ASTNode node, boolean isNext, @NotNull IElementType... typesToIgnore) {
     if (node == null) return null;
 
-    ASTNode prev = node.getTreePrev();
+    ASTNode each = isNext ? node.getTreeNext() : node.getTreePrev();
     ASTNode parent = node.getTreeParent();
-    while (prev == null && parent != null) {
-      prev = parent.getTreePrev();
+    while (each == null && parent != null) {
+      each = isNext ? parent.getTreeNext() : parent.getTreePrev();
       parent = parent.getTreeParent();
     }
 
-    if (prev == null) {
+    if (each == null) {
       return null;
     }
 
     for (IElementType type : typesToIgnore) {
-      if (prev.getElementType() == type) {
-        return getPrevious(prev, typesToIgnore);
+      if (each.getElementType() == type) {
+        return getNextOrPrevious(each, isNext, typesToIgnore);
       }
     }
 
-    return prev;
+    return each;
   }
 
   @Nullable
@@ -179,6 +189,14 @@ public class FormatterUtil {
     }
     if (prevNode == null) return false;
     return expectedTypes.contains(prevNode.getElementType());
+  }
+
+  public static boolean hasPrecedingSiblingOfType(@Nullable ASTNode node, IElementType expectedSiblingType, IElementType... skipTypes) {
+    for (ASTNode prevNode = node == null ? null : node.getTreePrev(); prevNode != null; prevNode = prevNode.getTreePrev()) {
+      if (isWhitespaceOrEmpty(prevNode) || isOneOf(prevNode, skipTypes)) continue;
+      if (prevNode.getElementType() == expectedSiblingType) return true;
+    }
+    return false;
   }
 
   public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType) {

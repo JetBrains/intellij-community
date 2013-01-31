@@ -18,11 +18,13 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -68,5 +70,10 @@ public class BuildResult implements MessageHandler {
     final Function<BuildMessage,String> toStringFunction = StringUtil.createToStringFunction(BuildMessage.class);
     Assert.assertTrue("Build failed. \nErrors:\n" + StringUtil.join(myErrorMessages, toStringFunction, "\n") +
                       "\nInfo messages:\n" + StringUtil.join(myInfoMessages, toStringFunction, "\n"), isSuccessful());
+  }
+
+  @NotNull
+  public List<BuildMessage> getErrorMessages() {
+    return Collections.unmodifiableList(myErrorMessages);
   }
 }

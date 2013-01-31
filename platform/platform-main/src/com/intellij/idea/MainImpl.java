@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.DateFormatUtilRt;
 import com.intellij.util.ui.UIUtil;
 
@@ -37,14 +38,12 @@ public class MainImpl {
    * Called from PluginManager via reflection.
    */
   protected static void start(final String[] args) {
-    if (System.getProperty("idea.platform.prefix") == null) {
-      System.setProperty("idea.platform.prefix", "Idea");
-    }
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.COMMUNITY_PREFIX));
 
     StartupUtil.isHeadless = Main.isHeadless(args);
     if (!StartupUtil.isHeadless) {
       AppUIUtil.updateFrameClass();
-      AppUIUtil.updateFrameIcon(JOptionPane.getRootFrame());
+      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
 
       UIUtil.initDefaultLAF();
 

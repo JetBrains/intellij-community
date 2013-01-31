@@ -118,7 +118,6 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
         @Override
         public void stateChanged(boolean validSettings) {
           getOKAction().setEnabled(validSettings);
-          initValidation();
         }
       });
       setTitle(WebProjectGenerator.this.getName());

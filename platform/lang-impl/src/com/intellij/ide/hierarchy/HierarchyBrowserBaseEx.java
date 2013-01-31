@@ -45,6 +45,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -229,7 +230,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         @Override
         public void removeNotify() {
           super.removeNotify();
-          myRefreshAction.unregisterCustomShortcutSet(this);
+          if (ScreenUtil.isStandardAddRemoveNotify(this))
+            myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override
@@ -290,7 +292,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         @Override
         public void removeNotify() {
           super.removeNotify();
-          myRefreshAction.unregisterCustomShortcutSet(this);
+          if (ScreenUtil.isStandardAddRemoveNotify(this))
+            myRefreshAction.unregisterCustomShortcutSet(this);
         }
 
         @Override

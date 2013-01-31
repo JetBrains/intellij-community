@@ -28,6 +28,8 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
 /**
+ * Represents a tab or pane displayed in a toolwindow or in another content manager.
+ *
  * @see ContentFactory#createContent(javax.swing.JComponent, String, boolean)
  */
 public interface Content extends UserDataHolder, ComponentContainer {

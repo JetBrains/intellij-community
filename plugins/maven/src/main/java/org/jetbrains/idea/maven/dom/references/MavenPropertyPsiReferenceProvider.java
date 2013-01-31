@@ -17,15 +17,23 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPluginDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +48,36 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
     return getReferences(element, SOFT_DEFAULT);
   }
 
+  private static boolean isElementCanContainReference(PsiElement element) {
+    if (element instanceof XmlTag) {
+      if ("delimiter".equals(((XmlTag)element).getName())) {
+        XmlTag delimitersTag = ((XmlTag)element).getParentTag();
+        if (delimitersTag != null && "delimiters".equals(delimitersTag.getName())) {
+          XmlTag configurationTag = delimitersTag.getParentTag();
+          if (configurationTag != null && "configuration".equals(configurationTag.getName())) {
+            DomElement configurationDom = DomManager.getDomManager(configurationTag.getProject()).getDomElement(configurationTag);
+            if (configurationDom != null && configurationDom instanceof MavenDomConfiguration) {
+              if (MavenPluginDomUtil.isPlugin((MavenDomConfiguration)configurationDom, "org.apache.maven.plugins", "maven-resources-plugin")) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  @Nullable
+  private static MavenProject findMavenProject(PsiElement element) {
+    VirtualFile virtualFile = MavenDomUtil.getVirtualFile(element);
+    if (virtualFile == null) return null;
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    return manager.findProject(virtualFile);
+  }
+
   public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {
     TextRange textRange = ElementManipulators.getValueTextRange(element);
     if (textRange.isEmpty()) return PsiReference.EMPTY_ARRAY;
@@ -48,9 +86,9 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
     if (StringUtil.isEmptyOrSpaces(text)) return PsiReference.EMPTY_ARRAY;
 
-    MavenProject mavenProject = MavenDomUtil.findContainingProject(element);
-    if (mavenProject == null) return PsiReference.EMPTY_ARRAY;
+    if (!isElementCanContainReference(element)) return PsiReference.EMPTY_ARRAY;
 
+    MavenProject mavenProject = null;
     List<PsiReference> result = null;
 
     Matcher matcher = MavenPropertyResolver.PATTERN.matcher(textRange.substring(text));
@@ -69,6 +107,11 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
 
       if (result == null) {
         result = new ArrayList<PsiReference>();
+
+        mavenProject = findMavenProject(element);
+        if (mavenProject == null) {
+          return PsiReference.EMPTY_ARRAY;
+        }
       }
 
       result.add(new MavenPropertyPsiReference(mavenProject, element, propertyName, range, isSoft));

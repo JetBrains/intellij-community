@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
+import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy2_1LibraryName
+
 /**
  * @author Max Medvedev
  */
@@ -36,7 +37,7 @@ class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   @Override
   public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-    final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$mockGroovy1_8LibraryName!/");
+    final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$mockGroovy2_1LibraryName!/");
     assert groovyJar != null;
     modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
     modifiableModel.commit();

@@ -60,7 +60,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   @Override
-  protected final RefactoringActionHandler getHandler(DataContext dataContext) {
+  protected final RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     PsiElement element = null;
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -123,7 +123,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return getHandler(context) != null; 
   }
 
@@ -133,7 +133,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   @Override
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length > 0) {
       Language language = elements[0].getLanguage();
       RefactoringActionHandler handler = getHandler(language, elements[0]);

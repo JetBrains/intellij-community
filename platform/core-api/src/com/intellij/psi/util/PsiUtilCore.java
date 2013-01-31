@@ -38,232 +38,235 @@ import java.util.Collection;
  * @author yole
  */
 public class PsiUtilCore {
-  @SuppressWarnings("ConstantConditions")
   public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
     @Override
     @NotNull
     public Project getProject() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public Language getLanguage() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiManager getManager() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public PsiElement[] getChildren() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement getParent() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @Nullable
     public PsiElement getFirstChild() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @Nullable
     public PsiElement getLastChild() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @Nullable
     public PsiElement getNextSibling() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @Nullable
     public PsiElement getPrevSibling() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiFile getContainingFile() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public TextRange getTextRange() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public int getStartOffsetInParent() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public int getTextLength() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement findElementAt(int offset) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @Nullable
     public PsiReference findReferenceAt(int offset) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public int getTextOffset() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public String getText() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public char[] textToCharArray() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement getNavigationElement() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement getOriginalElement() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean textMatches(@NotNull CharSequence text) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean textMatches(@NotNull PsiElement element) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean textContains(char c) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void accept(@NotNull PsiElementVisitor visitor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement copy() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement add(@NotNull PsiElement element) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void checkAdd(@NotNull PsiElement element) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement addRange(PsiElement first, PsiElement last) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void delete() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void checkDelete() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public void deleteChildRange(PsiElement first, PsiElement last) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement replace(@NotNull PsiElement newElement) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean isValid() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean isWritable() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
+    }
+
+    private PsiInvalidElementAccessException createException() {
+      return new PsiInvalidElementAccessException(this, "NULL_PSI_ELEMENT", null);
     }
 
     @Override
     @Nullable
     public PsiReference getReference() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public PsiReference[] getReferences() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public <T> T getCopyableUserData(Key<T> key) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public <T> void putCopyableUserData(Key<T> key, T value) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
@@ -271,49 +274,49 @@ public class PsiUtilCore {
                                        @NotNull ResolveState state,
                                        PsiElement lastParent,
                                        @NotNull PsiElement place) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public PsiElement getContext() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public boolean isPhysical() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public GlobalSearchScope getResolveScope() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     @NotNull
     public SearchScope getUseScope() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public ASTNode getNode() {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, T value) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override
     public Icon getIcon(int flags) {
-      throw new PsiInvalidElementAccessException(this);
+      throw createException();
     }
 
     @Override

@@ -214,8 +214,13 @@ ul li p {
 }
 
 a {
-    color: #5a7b88;
+    color: #589df6;
     text-decoration: underline
+}
+
+address {
+    color: #589df6;
+    font-style: italic
 }
 
 big {
@@ -321,11 +326,6 @@ th {
     padding-right: 3;
     padding-top: 3;
     padding-bottom: 3
-}
-
-address {
-    color: #5a7b88;
-    font-style: italic
 }
 
 blockquote {

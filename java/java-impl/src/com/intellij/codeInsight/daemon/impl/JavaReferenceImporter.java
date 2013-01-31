@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,7 +35,10 @@ public class JavaReferenceImporter implements ReferenceImporter {
   }
 
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
-    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return false;
+    if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) {
+      return false;
+    }
+
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
@@ -55,14 +55,17 @@ public class JavaReferenceImporter implements ReferenceImporter {
         }
       }
     }
+
     return false;
   }
 
   @Override
   public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return false;
-    PsiReference element = file.findReferenceAt(offset);
+    if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) {
+      return false;
+    }
 
+    PsiReference element = file.findReferenceAt(offset);
     if (element instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
       if (ref.multiResolve(true).length == 0) {
@@ -70,6 +73,7 @@ public class JavaReferenceImporter implements ReferenceImporter {
         return true;
       }
     }
+
     return false;
   }
 }

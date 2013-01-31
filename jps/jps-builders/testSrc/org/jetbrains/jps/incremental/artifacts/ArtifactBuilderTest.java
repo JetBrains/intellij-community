@@ -23,11 +23,17 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
@@ -294,8 +300,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
                                        .fileCopy(firstFile).fileCopy(manifestFile).fileCopy(lastFile));
     buildArtifacts(a);
     final String jarPath = a.getOutputPath() + "/a.jar";
-    assertNotNull(jarPath);
-    JarFile jarFile = new JarFile(new File(FileUtil.toSystemDependentName(jarPath)));
+    JarFile jarFile = new JarFile(new File(jarPath));
     try {
       final Enumeration<JarEntry> entries = jarFile.entries();
       assertTrue(entries.hasMoreElements());
@@ -307,6 +312,43 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     }
   }
 
+  public void testPreserveCompressionMethodForEntryExtractedFromOneArchiveAndPackedIntoAnother() throws IOException {
+    String path = createFile("data/a.jar");
+    ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(new File(path))));
+    try {
+      ZipEntry entry = new ZipEntry("a.txt");
+      byte[] text = "text".getBytes();
+      entry.setMethod(ZipEntry.STORED);
+      entry.setSize(text.length);
+      CRC32 crc32 = new CRC32();
+      crc32.update(text);
+      entry.setCrc(crc32.getValue());
+      output.putNextEntry(entry);
+      output.write(text);
+      output.closeEntry();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+    finally {
+      output.close();
+    }
+    JpsArtifact a = addArtifact(archive("b.jar").extractedDir(path, ""));
+    buildAll();
+    assertOutput(a, fs().archive("b.jar").file("a.txt", "text"));
+
+    final String jarPath = a.getOutputPath() + "/b.jar";
+    ZipFile zipFile = new ZipFile(new File(jarPath));
+    try {
+      ZipEntry entry = zipFile.getEntry("a.txt");
+      assertNotNull(entry);
+      assertEquals(ZipEntry.STORED, entry.getMethod());
+    }
+    finally {
+      zipFile.close();
+    }
+  }
+  
   public void testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {
     String src = PathUtil.getParentPath(PathUtil.getParentPath(createFile("src/x/A.java", "package x; class A{}")));
     JpsModule module = addModule("m", src);

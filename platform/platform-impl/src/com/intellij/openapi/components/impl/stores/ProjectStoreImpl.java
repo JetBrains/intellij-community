@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.OrderedSet;
@@ -198,7 +199,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   private static boolean isIprPath(final File file) {
-    return ProjectFileType.DEFAULT_EXTENSION.equals(FileUtil.getExtension(file.getName()));
+    return FileUtilRt.extensionEquals(file.getName(), ProjectFileType.DEFAULT_EXTENSION);
   }
 
   private static String composeWsPath(String filePath) {
@@ -694,9 +695,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }
 
-      if (!componentNames.isEmpty()) {
-        StorageUtil.logStateDiffInfo(changedFiles, componentNames);
-      }
+      StorageUtil.logStateDiffInfo(changedFiles, componentNames);
 
       if (!isReloadPossible(componentNames)) {
         return false;
@@ -721,4 +720,3 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return true;
   }
 }
-

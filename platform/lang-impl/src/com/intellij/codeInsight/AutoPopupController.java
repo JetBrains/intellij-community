@@ -141,8 +141,17 @@ public class AutoPopupController implements Disposable {
     }
   }
 
-  private void addRequest(Runnable request, final int delay) {
-    myAlarm.addRequest(request, delay);
+  private void addRequest(final Runnable request, final int delay) {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        myAlarm.addRequest(request, delay);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 
   private void cancelAllRequest() {

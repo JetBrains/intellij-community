@@ -29,7 +29,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -339,15 +338,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       }
     }
     else {
-      if (!allowedToRemoveItems(getSelectedItems()) ) {
-        return;
-      }
-      final Object[] items = getSelectedItems();
-      JTree tree = (JTree)myChooserComponent;
-      TreeUtil.removeSelected(tree);
-      for (Object item : items) {
-        ((ItemWrapper)item).removed(project);
-      }
+      myDelegate.removeSelectedItemsInTree();
     }
   }
 
@@ -413,6 +404,8 @@ public class MasterDetailPopupBuilder implements MasterController {
     Object[] getSelectedItemsInTree();
 
     void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick);
+
+    void removeSelectedItemsInTree();
   }
 
   public static class ListItemRenderer extends JPanel implements ListCellRenderer {

@@ -77,7 +77,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
     final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
-    LOG.assertTrue(relativePath != null, "vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir);
+    LOG.assertTrue(relativePath != null, "vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir + "; content File: "+fileIndex.getContentRootForFile(virtualFile));
     return myFilePattern.matcher(relativePath).matches();
   }
 
@@ -192,8 +192,8 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Nullable
-  public static String getRelativePath(final VirtualFile virtualFile,
-                                       final ProjectFileIndex index,
+  public static String getRelativePath(@NotNull VirtualFile virtualFile,
+                                       @NotNull ProjectFileIndex index,
                                        final boolean useFQName,
                                        VirtualFile projectBaseDir) {
     final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);

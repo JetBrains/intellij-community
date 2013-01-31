@@ -57,7 +57,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-    if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE) && !method.hasModifierProperty(PsiModifier.STATIC)) {
       if (!isAbstract && !isOnIdentifier(file, offset)) return false;
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {

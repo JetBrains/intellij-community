@@ -29,7 +29,7 @@ public abstract class TextFieldCompletionProvider {
     myCaseInsensitivity = caseInsensitivity;
   }
 
-  public void apply(@NotNull EditorTextField field, String text) {
+  public void apply(@NotNull EditorTextField field, @NotNull String text) {
     Project project = field.getProject();
     if (project != null) {
       field.setDocument(createDocument(project, text));
@@ -40,7 +40,7 @@ public abstract class TextFieldCompletionProvider {
     apply(field, "");
   }
 
-  private Document createDocument(final Project project, String text) {
+  private Document createDocument(final Project project, @NotNull String text) {
     final FileType fileType = PlainTextLanguage.INSTANCE.getAssociatedFileType();
     assert fileType != null;
 

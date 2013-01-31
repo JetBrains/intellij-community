@@ -51,7 +51,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     void findModelChanged(FindModel findModel);
   }
 
-  private final List<FindModelObserver> myObservers = ContainerUtil.createEmptyCOWList();
+  private final List<FindModelObserver> myObservers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void addObserver(FindModelObserver observer) {
     myObservers.add(observer);

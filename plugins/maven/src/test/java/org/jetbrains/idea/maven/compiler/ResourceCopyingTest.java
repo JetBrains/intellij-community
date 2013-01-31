@@ -127,6 +127,56 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
     assertCopied("target/anotherDir/foo/file.properties");
   }
 
+  public void testMavenSpecifiedPattern() throws Exception {
+    createProjectSubFile("res/subdir/a.txt");
+    createProjectSubFile("res/b.txt");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <includes>" +
+                  "        <include>**/**</include>" +
+                  "      </includes>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertCopied("target/classes/subdir/a.txt");
+    assertCopied("target/classes/b.txt");
+  }
+
+  public void testMavenSpecifiedPatternEndSlash() throws Exception {
+    createProjectSubFile("res/subdir/a.txt");
+    createProjectSubFile("res/b.txt");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <includes>" +
+                  "        <include>**/</include>" +
+                  "      </includes>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assertCopied("target/classes/subdir/a.txt");
+    assertCopied("target/classes/b.txt");
+  }
+
   public void testIncludesAndExcludes() throws Exception {
     createProjectSubFile("res/dir/file.xxx");
     createProjectSubFile("res/dir/file.yyy");

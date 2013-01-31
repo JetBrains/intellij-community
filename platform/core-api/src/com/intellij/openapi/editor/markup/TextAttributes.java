@@ -22,6 +22,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.lang.reflect.Field;
 
 /**
  * Defines the visual representation (colors and effects) of text.
@@ -30,6 +31,8 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.markup.TextAttributes");
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
+
+  private boolean myEnforcedDefaults = false;
 
   /**
    * Merges (layers) the two given text attributes.
@@ -41,7 +44,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public static TextAttributes merge(TextAttributes under, TextAttributes above) {
     if (under == null) return above;
     if (above == null) return under;
-    
+
     TextAttributes attrs = under.clone();
     if (above.getBackgroundColor() != null){
       attrs.setBackgroundColor(above.getBackgroundColor());
@@ -92,7 +95,19 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
+      DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
+        @Override
+        public boolean isAccept(Field field) {
+          try {
+            if (field.getType().equals(Color.class) && field.get(Externalizable.this) == null) return false;
+            if (field.getType().equals(int.class) && field.getInt(Externalizable.this) == 0) return false;
+          }
+          catch (IllegalAccessException e) {
+            LOG.error("Can not access: " + field.getName());
+          }
+          return true;
+        }
+      });
     }
 
     private EffectType getEffectType() {
@@ -160,6 +175,17 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   public boolean isEmpty(){
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
+  }
+
+  public boolean isFallbackEnabled() {
+    return isEmpty() && !myEnforcedDefaults;
+  }
+
+  public void reset() {
+    setForegroundColor(null);
+    setBackgroundColor(null);
+    setEffectColor(null);
+    setFontType(Font.PLAIN);
   }
 
   @NotNull
@@ -231,6 +257,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public TextAttributes clone() {
     TextAttributes cloned = new TextAttributes();
     cloned.myAttrs = myAttrs;
+    cloned.myEnforcedDefaults = myEnforcedDefaults;
     return cloned;
   }
 
@@ -256,6 +283,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
                                          ext.EFFECT_COLOR,
                                          ext.getEffectType(),
                                          ext.ERROR_STRIPE_COLOR);
+    if (isEmpty()) myEnforcedDefaults = true;
   }
 
   @Override

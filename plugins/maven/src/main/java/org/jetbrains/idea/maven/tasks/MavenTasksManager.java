@@ -50,7 +50,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
   private final MavenProjectsManager myProjectsManager;
   private final MavenRunner myRunner;
 
-  private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static MavenTasksManager getInstance(Project project) {
     return project.getComponent(MavenTasksManager.class);

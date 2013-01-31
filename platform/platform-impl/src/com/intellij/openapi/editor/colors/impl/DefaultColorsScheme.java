@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -37,10 +38,18 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Override
+  @Nullable
   public TextAttributes getAttributes(TextAttributesKey key) {
     if (key == null) return null;
     TextAttributes attrs = myAttributesMap.get(key);
-    return attrs != null ? attrs : key.getDefaultAttributes();
+    if (attrs == null) {
+      if (key.getFallbackAttributeKey() != null) {
+        attrs = getFallbackAttributes(key.getFallbackAttributeKey());
+        if (attrs != null && !attrs.isFallbackEnabled()) return attrs;
+      }
+      attrs = key.getDefaultAttributes();
+    }
+    return attrs;
   }
 
   @Override

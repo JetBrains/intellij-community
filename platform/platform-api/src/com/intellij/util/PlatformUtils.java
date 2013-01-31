@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class PlatformUtils {
+  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
+
   public static final String IDEA_PREFIX = "idea";
   public static final String COMMUNITY_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";
@@ -36,7 +42,7 @@ public class PlatformUtils {
   }
 
   public static String getPlatformPrefix(String defaultPrefix) {
-    return System.getProperty("idea.platform.prefix", defaultPrefix);
+    return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
 
   public static boolean isIdea() {
@@ -73,5 +79,13 @@ public class PlatformUtils {
 
   public static boolean isIntelliJ() {
     return isIdea() || isCommunity();
+  }
+
+  public static boolean isIdeaProject(@Nullable Project project) {
+    final VirtualFile baseDir;
+    return project != null
+           && ("IDEA".equals(project.getName()) || "community".equals(project.getName()))
+           && (baseDir = project.getBaseDir()) != null
+           && baseDir.findFileByRelativePath("plugins") != null;
   }
 }

@@ -5,6 +5,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,51 +91,51 @@ public class DomIncludesTest extends JavaCodeInsightFixtureTestCase {
                             "<xi:include href=\"b.xml\" xpointer=\"xpointer(/xxx/*)\"/>" +
                             "</root>");
 
-    final PsiFile fileB = createFile("b.xml",
-                                    "<xxx><boy/><xi:include href=\"c.xml\" xpointer=\"xpointer(/xxx/*)\"/><child/><xi:include href=\"c.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>");
-    final PsiFile fileC = createFile("c.xml",
-                                    "<xxx><child/><xi:include href=\"d.xml\" xpointer=\"xpointer(/xxx/*)\"/><boy/><xi:include href=\"d.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>");
-    final PsiFile fileD = createFile("d.xml",
-                                    "<xxx><boy/><xi:include href=\"e.xml\" xpointer=\"xpointer(/xxx/*)\"/><child/><xi:include href=\"e.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>");
-    final PsiFile fileE = createFile("e.xml",
-                                    "<xxx><boy/><child/><boy/><child/><boy/><child/><boy/><child/><boy/><child/><boy/><child/></xxx>");
+    final String textB =
+      "<xxx><boy/><xi:include href=\"c.xml\" xpointer=\"xpointer(/xxx/*)\"/><child/><xi:include href=\"c.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>";
+    final PsiFile fileB = createFile("b.xml", textB);
+    final String textC =
+      "<xxx><child/><xi:include href=\"d.xml\" xpointer=\"xpointer(/xxx/*)\"/><boy/><xi:include href=\"d.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>";
+    final PsiFile fileC = createFile("c.xml", textC);
+    final String textD =
+      "<xxx><boy/><xi:include href=\"e.xml\" xpointer=\"xpointer(/xxx/*)\"/><child/><xi:include href=\"e.xml\" xpointer=\"xpointer(/xxx/*)\"/></xxx>";
+    final PsiFile fileD = createFile("d.xml", textD);
+    final String textE = "<xxx><boy/><child/><boy/><child/><boy/><child/><boy/><child/><boy/><child/><boy/><child/></xxx>";
+    final PsiFile fileE = createFile("e.xml", textE);
     final int threadCount = 100;
-    final int iterationCount = Timings.adjustAccordingToMySpeed(800, true);
+    final int iterationCount = Timings.adjustAccordingToMySpeed(100, true);
     System.out.println("iterationCount = " + iterationCount);
 
     final CountDownLatch finished = new CountDownLatch(threadCount);
     final AtomicReference<Exception> ex = new AtomicReference<Exception>();
 
-    Thread[] threads = new Thread[threadCount];
     for (int j = 0; j < threadCount; j++) {
-      Thread thread = new Thread() {
+      JobLauncher.getInstance().submitToJobThread(0, new Runnable() {
         @Override
         public void run() {
+          try {
           for (int k = 0; k < iterationCount; k++) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                try {
                   final List<Boy> boys = rootElement.getBoys();
                   Thread.yield();
                   final List<Child> children = rootElement.getChildren();
                   Thread.yield();
                   assertEquals(boys, rootElement.getBoys());
                   assertEquals(children, rootElement.getChildren());
-                }
-                catch (Exception e) {
-                  ex.set(e);
-                }
-                finally {
-                  finished.countDown();
-                }
               }
             });
             Thread.yield();
           }
+          }
+          catch (Exception e) {
+            ex.set(e);
+          }
+          finally {
+            finished.countDown();
+          }
         }
-      };
-      threads[j] = thread;
-      thread.start();
+      });
     }
 
     for (int i = 0; i < iterationCount; i++) {
@@ -154,12 +155,18 @@ public class DomIncludesTest extends JavaCodeInsightFixtureTestCase {
         }
       });
       Thread.sleep(10);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          fileB.getViewProvider().getDocument().setText(textB);
+          fileC.getViewProvider().getDocument().setText(textC);
+          fileD.getViewProvider().getDocument().setText(textD);
+          fileE.getViewProvider().getDocument().setText(textE);
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); //clear xinclude caches
+        }
+      });
     }
 
     finished.await();
-    for (Thread thread : threads) {
-      thread.join();
-    }
     final Exception exception = ex.get();
     if (exception != null) {
       throw exception;

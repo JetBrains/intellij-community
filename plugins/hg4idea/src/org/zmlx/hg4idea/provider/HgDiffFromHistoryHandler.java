@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -35,6 +36,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgPlatformFacade;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
@@ -115,7 +117,10 @@ public class HgDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myChanges = HgUtil.getDiff(HgDiffFromHistoryHandler.this.myProject, root, path, rev1, rev2);
+        if (myProject != null) {
+          myChanges = HgUtil.getDiff(HgDiffFromHistoryHandler.this.myProject, root, path, rev1, rev2, ServiceManager
+            .getService(myProject, HgPlatformFacade.class));
+        }
       }
 
       @Override

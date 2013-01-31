@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +59,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSemicolonInExpressionBodyInExpressionList() {
+    doTest();
+  }
+
+  public void testIgnoreDefaultMethods() {
     doTest();
   }
 

@@ -38,7 +38,7 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
 
   public SendStatisticsProjectComponent(Project project) {
     myProject = project;
-    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
 
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
     NotificationsConfiguration.getNotificationsConfiguration().register(

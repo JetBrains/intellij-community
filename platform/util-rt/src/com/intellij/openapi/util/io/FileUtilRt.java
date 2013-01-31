@@ -42,6 +42,19 @@ public class FileUtilRt {
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
+  public static final FileFilter ALL_FILES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return true;
+    }
+  };
+  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return file.isDirectory();
+    }
+  };
+
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     @Override
     protected byte[] initialValue() {
@@ -55,7 +68,17 @@ public class FileUtilRt {
   public static String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
-    return fileName.substring(index + 1).toLowerCase();
+    return fileName.substring(index + 1);
+  }
+
+  public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
+    int extLen = extension.length();
+    if (extLen == 0) {
+      return fileName.indexOf('.') == -1;
+    }
+    int extStart = fileName.length() - extLen;
+    return extStart >= 1 && fileName.charAt(extStart-1) == '.'
+           && fileName.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
   @NotNull

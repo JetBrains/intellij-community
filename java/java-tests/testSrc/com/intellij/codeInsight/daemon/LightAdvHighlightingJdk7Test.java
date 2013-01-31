@@ -55,6 +55,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
@@ -157,8 +158,13 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningIDEA70620() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA60166() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA21432() throws Exception { doTest(true, false); }
+  public void testUncheckedWarningIDEA99357() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA26738() throws Exception { doTest(true, false); }
+  public void testUncheckedWarningIDEA99536() throws Exception { doTest(true, false); }
   public void testDefaultMethodVisibility() throws Exception { doTest(true, false); }
+  public void testInheritUnrelatedDefaults() throws Exception { doTest(true, false); }
+  public void testNotInheritFromUnrelatedDefault() throws Exception { doTest(true, false); }
   public void testEnclosingInstance() throws Exception { doTest(false, false); }
   public void testWrongArgsAndUnknownTypeParams() throws Exception { doTest(false, false); }
+  public void testAmbiguousMethodCallIDEA97983() throws Exception { doTest(false, false); }
 }

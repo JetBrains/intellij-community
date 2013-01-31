@@ -39,10 +39,7 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -85,6 +82,11 @@ public class FormsBindingManager extends FormsBuilder {
   @NotNull
   private static File getMarkerFile(CompileContext context) {
     return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "forms_rebuild_required");
+  }
+
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Arrays.asList(FORM_EXTENSION);
   }
 
   @Override

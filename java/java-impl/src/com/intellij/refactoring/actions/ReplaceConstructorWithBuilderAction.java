@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
   protected boolean isAvailableInEditorOnly() {
@@ -34,18 +35,18 @@ public class ReplaceConstructorWithBuilderAction extends BaseRefactoringAction{
   }
 
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement elementAt = file.findElementAt(offset);
     final PsiClass psiClass = ReplaceConstructorWithBuilderHandler.getParentNamedClass(elementAt);
     return psiClass != null && psiClass.getConstructors().length > 0;
   }
 
-  protected boolean isEnabledOnElements(final PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {
     return false;
   }
 
-  protected RefactoringActionHandler getHandler(final DataContext dataContext) {
+  protected RefactoringActionHandler getHandler(@NotNull final DataContext dataContext) {
     return new ReplaceConstructorWithBuilderHandler();
   }
 }

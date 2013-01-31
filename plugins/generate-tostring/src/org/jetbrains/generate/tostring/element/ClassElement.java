@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.generate.tostring.element;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -26,11 +25,10 @@ import java.util.Arrays;
  * Note: getters are accessed from Velocity templates, they aren't dead code
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class ClassElement implements Serializable {
+public class ClassElement {
 
     private String name;
     private String qualifiedName;
-    private boolean hasSuper;
     private String superName;
     private String superQualifiedName;
     private String[] implementNames;
@@ -50,7 +48,7 @@ public class ClassElement implements Serializable {
      */
     public boolean isImplements(String interfaceName) {
         for (String className : implementNames) {
-            if (interfaceName.indexOf(className) != -1) {
+            if (interfaceName.contains(className)) {
                 return true;
             }
         }
@@ -65,7 +63,7 @@ public class ClassElement implements Serializable {
      * @return  true if this class extends one of the given classnames.
      */
     public boolean isExtends(String classNames) {
-        return (classNames.indexOf(superName) != -1);
+        return classNames.contains(superName);
     }
 
     /**
@@ -79,7 +77,6 @@ public class ClassElement implements Serializable {
         if (StringUtil.isEmpty(regexp)) {
             throw new IllegalArgumentException("Can't perform regular expression since the given input is empty. Check your Velocity template: regexp='" + regexp + "'");
         }
-
         return name.matches(regexp);
     }
 
@@ -124,11 +121,7 @@ public class ClassElement implements Serializable {
     }
 
     public boolean isHasSuper() {
-        return hasSuper;
-    }
-
-    public void setHasSuper(boolean hasSuper) {
-        this.hasSuper = hasSuper;
+        return this.superName != null;
     }
 
     public boolean isDeprecated() {
@@ -167,7 +160,6 @@ public class ClassElement implements Serializable {
         return "ClassElement{" +
                 "name='" + name + "'" +
                 ", qualifiedName='" + qualifiedName + "'" +
-                ", hasSuper=" + hasSuper +
                 ", superName='" + superName + "'" +
                 ", superQualifiedName='" + superQualifiedName + "'" +
                 ", implementNames=" + (implementNames == null ? null : Arrays.asList(implementNames)) +
@@ -177,6 +169,4 @@ public class ClassElement implements Serializable {
                 ", abstract=" + _abstract +
                 "}";
     }
-
-
 }

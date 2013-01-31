@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
+import java.util.Set;
 
 public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference {
   public MavenFilteredPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range) {
@@ -49,13 +50,13 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
   }
 
   @Override
-  protected void collectVariants(List<Object> result) {
-    super.collectVariants(result);
+  protected void collectVariants(List<Object> result, Set<String> variants) {
+    super.collectVariants(result, variants);
 
     for (String each : myMavenProject.getFilters()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each);
       if (file == null) continue;
-      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result);
+      collectPropertiesFileVariants(MavenDomUtil.getPropertiesFile(myProject, file), null, result, variants);
     }
   }
 

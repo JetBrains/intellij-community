@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 
+import java.util.List;
+
 /**
  * @author Eugene Belyaev
  */
@@ -35,7 +37,7 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    runTool(myActionId, e.getDataContext());
+    runTool(myActionId, e.getDataContext(), e);
   }
 
   @Override
@@ -48,7 +50,7 @@ public class ToolAction extends AnAction implements DumbAware {
 
   private static Tool findTool(String actionId, DataContext context) {
     MacroManager.getInstance().cacheMacrosPreview(context);
-    for (Tool tool : ToolManager.getInstance().getTools()) {
+    for (Tool tool : getAllTools()) {
       if (actionId.equals(tool.getActionId())) {
         return tool;
       }
@@ -56,10 +58,18 @@ public class ToolAction extends AnAction implements DumbAware {
     return null;
   }
 
+  protected static List<Tool> getAllTools() {
+    return ToolsProvider.getAllTools();
+  }
+
   static void runTool(String actionId, DataContext context) {
+    runTool(actionId, context, null);
+  }
+
+  static void runTool(String actionId, DataContext context, AnActionEvent e) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      tool.execute(new HackyDataContext(context));
+      tool.execute(e, new HackyDataContext(context, e));
     }
   }
 }

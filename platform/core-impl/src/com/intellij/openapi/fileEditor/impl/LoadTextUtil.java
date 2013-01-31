@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
+  @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
   private LoadTextUtil() {
   }
@@ -101,7 +103,27 @@ public final class LoadTextUtil {
   }
 
   private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    Charset charset = doDetectCharset(virtualFile, content);
+    Charset charset = null;
+
+    Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
+    if (guessed != null && guessed.first != null) {
+      charset = guessed.first;
+    }
+    else {
+      FileType fileType = virtualFile.getFileType();
+      String charsetName = fileType.getCharset(virtualFile, content);
+
+      if (charsetName == null) {
+        Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
+        if (specifiedExplicitly != null) {
+          charset = specifiedExplicitly;
+        }
+      }
+      else {
+        charset = CharsetToolkit.forName(charsetName);
+      }
+    }
+
     charset = charset == null ? EncodingRegistry.getInstance().getDefaultCharset() : charset;
     if (EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
@@ -122,22 +144,9 @@ public final class LoadTextUtil {
     final byte[] bom = bomAndCharset.second;
     if (saveBOM && bom != null && bom.length != 0) {
       virtualFile.setBOM(bom);
+      setCharsetWasDetectedFromBytes(virtualFile, AUTO_DETECTED_FROM_BOM);
     }
     return bomAndCharset;
-  }
-
-  private static Charset doDetectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
-    if (guessed != null && guessed.first != null) return guessed.first;
-
-    FileType fileType = virtualFile.getFileType();
-    String charsetName = fileType.getCharset(virtualFile, content);
-
-    if (charsetName == null) {
-      Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-      if (specifiedExplicitly != null) return specifiedExplicitly;
-    }
-    return CharsetToolkit.forName(charsetName);
   }
 
   @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
@@ -151,7 +160,7 @@ public final class LoadTextUtil {
         toolkit.setEnforce8Bit(true);
         Charset charset = toolkit.guessFromBOM();
         if (charset != null) {
-          detectedFromBytes = "auto-detected from BOM";
+          detectedFromBytes = AUTO_DETECTED_FROM_BOM;
           byte[] bom = CharsetToolkit.getBom(charset);
           if (bom == null) bom = CharsetToolkit.UTF8_BOM;
           return Trinity.create(charset, null, bom);
@@ -248,12 +257,12 @@ public final class LoadTextUtil {
   }
 
   public static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    if (virtualFile.getBOM() != null) {
-      // prevent file to be reloaded in other encoding after save with BOM
-      setCharsetWasDetectedFromBytes(virtualFile, "auto-detected from BOM");
+    if (virtualFile.getBOM() == null) {
+      guessFromContent(virtualFile, content, content.length);
     }
     else {
-      guessFromContent(virtualFile, content, content.length);
+      // prevent file to be reloaded in other encoding after save with BOM
+      setCharsetWasDetectedFromBytes(virtualFile, AUTO_DETECTED_FROM_BOM);
     }
   }
 

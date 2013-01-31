@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@ import org.jetbrains.annotations.NotNull;
 public class DuplicatePolicy implements ConflictResolutionPolicy {
 
   private static final DuplicatePolicy instance = new DuplicatePolicy();
-  private static InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();
+  private InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();
 
-  private DuplicatePolicy() {
-  }
+  private DuplicatePolicy() {}
 
   public static DuplicatePolicy getInstance() {
     return instance;
@@ -40,13 +39,11 @@ public class DuplicatePolicy implements ConflictResolutionPolicy {
     newMethodStrategy = strategy;
   }
 
-  public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor)
-    throws IncorrectOperationException {
+  public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) {
     return newMethodStrategy.insertNewMethod(clazz, newMethod, editor);
   }
 
   public String toString() {
     return "Duplicate";
   }
-
 }

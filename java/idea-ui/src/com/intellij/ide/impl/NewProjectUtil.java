@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -42,14 +43,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,6 +103,7 @@ public class NewProjectUtil {
 
     try {
       File projectDir = new File(projectFilePath).getParentFile();
+      LOG.assertTrue(projectDir != null, "Cannot create project in '" + projectFilePath + "': no parent file exists");
       FileUtil.ensureExists(projectDir);
       if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
         final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
@@ -197,13 +198,13 @@ public class NewProjectUtil {
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
-        if (SystemInfo.isMacOSLion) {
+        if (WindowManager.isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
           if (lastFocusedFrame != null) {
             boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
             if (fullScreen) {
-              newProject.putUserData(MacMainFrameDecorator.SHOULD_OPEN_IN_FULLSCREEN, Boolean.TRUE);
+              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULLSCREEN, Boolean.TRUE);
             }
           }
         }
@@ -245,4 +246,6 @@ public class NewProjectUtil {
       }
     }
   }
+
+  private final static Logger LOG = Logger.getInstance(NewProjectUtil.class);
 }

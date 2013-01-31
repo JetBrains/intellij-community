@@ -48,12 +48,15 @@ class RecursionWeigher extends LookupElementWeigher {
   private final PsiExpression myCallQualifier;
   private final PsiExpression myPositionQualifier;
   private final boolean myDelegate;
+  private final CompletionType myCompletionType;
 
   public RecursionWeigher(PsiElement position,
+                          CompletionType completionType,
                           @NotNull PsiReferenceExpression reference,
                           @Nullable PsiMethodCallExpression expression,
                           ExpectedTypeInfo[] expectedInfos) {
     super("recursion");
+    myCompletionType = completionType;
     myFilter = recursionFilter(position);
     myPosition = position;
     myReference = reference;
@@ -121,7 +124,7 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.recursive;
     }
 
-    if (isPassingObjectToItself(object)) {
+    if (isPassingObjectToItself(object) && myCompletionType == CompletionType.SMART) {
       return Result.passingObjectToItself;
     }
 

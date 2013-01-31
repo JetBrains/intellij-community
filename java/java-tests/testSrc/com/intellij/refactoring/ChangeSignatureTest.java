@@ -135,6 +135,12 @@ public class ChangeSignatureTest extends LightRefactoringTestCase {
     }, false);
   }
 
+  public void testParamNameSameAsFieldName() throws Exception {
+    doTest(null, new ParameterInfoImpl[] {
+      new ParameterInfoImpl(0, "fieldName", PsiType.INT)
+    }, false);
+  }
+
   public void testParamNameNoConflict() throws Exception {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0),

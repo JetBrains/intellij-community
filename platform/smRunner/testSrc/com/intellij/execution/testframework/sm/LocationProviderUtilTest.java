@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.UsefulTestCase;
 
 /**
@@ -23,21 +24,21 @@ import com.intellij.testFramework.UsefulTestCase;
 public class LocationProviderUtilTest extends UsefulTestCase {
   public void testExtractProtocol() {
     assertEquals(null,
-                 TestsLocationProviderUtil.extractProtocol(""));
+                 VirtualFileManager.extractProtocol(""));
     assertEquals(null,
-                 TestsLocationProviderUtil.extractProtocol("file:/"));
+                 VirtualFileManager.extractProtocol("file:/"));
 
     assertEquals("file",
-                 TestsLocationProviderUtil.extractProtocol("file://"));
+                 VirtualFileManager.extractProtocol("file://"));
     assertEquals("file",
-                 TestsLocationProviderUtil.extractProtocol("file:///some/path/file.rb:24"));
+                 VirtualFileManager.extractProtocol("file:///some/path/file.rb:24"));
     assertEquals("file",
-                 TestsLocationProviderUtil.extractProtocol("file://./some/path/file.rb:24"));
+                 VirtualFileManager.extractProtocol("file://./some/path/file.rb:24"));
 
     assertEquals("ruby_qn",
-                 TestsLocationProviderUtil.extractProtocol("ruby_qn://"));
+                 VirtualFileManager.extractProtocol("ruby_qn://"));
     assertEquals("ruby_qn",
-                 TestsLocationProviderUtil.extractProtocol("ruby_qn://A::B.method"));
+                 VirtualFileManager.extractProtocol("ruby_qn://A::B.method"));
   }
 
   public void testExtractPath() {

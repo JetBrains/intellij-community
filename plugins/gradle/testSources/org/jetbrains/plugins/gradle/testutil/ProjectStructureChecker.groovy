@@ -28,9 +28,10 @@ class ProjectStructureChecker {
   ]
   
   static def COLORS = [
-    'gradle' : GradleTextAttributes.GRADLE_LOCAL_CHANGE,
+    'gradle'   : GradleTextAttributes.GRADLE_LOCAL_CHANGE,
     'intellij' : GradleTextAttributes.INTELLIJ_LOCAL_CHANGE,
-    'conflict' : GradleTextAttributes.CHANGE_CONFLICT
+    'conflict' : GradleTextAttributes.CHANGE_CONFLICT,
+    'outdated' : GradleTextAttributes.OUTDATED_ENTITY
   ]
 
   def check(Node expected, DefaultMutableTreeNode actual) {
@@ -81,7 +82,7 @@ class ProjectStructureChecker {
     assertEquals("node '$descriptor'", expectedMarkup, descriptor.attributes)
 
     if (descriptor.element.type != GradleEntityType.SYNTHETIC) {
-      def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.INTELLIJ
+      def expectedOwner = expectedMarkup == GradleTextAttributes.GRADLE_LOCAL_CHANGE ? GradleEntityOwner.GRADLE : GradleEntityOwner.IDE
       assertEquals("node '$descriptor'", expectedOwner, descriptor.element.owner)
     }
   }

@@ -78,7 +78,7 @@ public class MoveClassesOrPackagesImpl {
       new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, initialTargetElement, moveCallback);
     boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, searchInComments,
+    moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, initialTargetElement == null, searchInComments,
                        searchForTextOccurences, HelpID.getMoveHelpID(psiElements[0]));
     moveDialog.show();
   }

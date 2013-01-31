@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,13 +44,13 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -66,7 +63,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -115,6 +111,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     return (String)args[0];
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
@@ -164,13 +161,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(GrMethod method) {
-      if (!shouldProcess(method)) return;
-
-      super.visitMethod(method);
-    }
-
-    @Override
     public void visitReturnStatement(GrReturnStatement returnStatement) {
       super.visitReturnStatement(returnStatement);
       final GrExpression value = returnStatement.getReturnValue();
@@ -196,20 +186,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
-    protected boolean shouldProcess(GrMethod method) {
-      return !GroovyPsiManager.getInstance(method.getProject()).isCompileStatic(method);
-    }
-
-    @Override
-    public void visitField(GrField field) {
-      if (GroovyPsiManager.getInstance(field.getProject()).isCompileStatic(field)) return;
-      super.visitField(field);
-    }
-
-    @Override
-    public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
-      if (GroovyPsiManager.getInstance(typeDefinition.getProject()).isCompileStatic(typeDefinition)) return;
-      super.visitTypeDefinition(typeDefinition);
+    protected boolean shouldProcess(GrMember member) {
+      return !GroovyPsiManager.getInstance(member.getProject()).isCompileStatic(member);
     }
 
     @Override
@@ -537,12 +515,88 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-      super.visitReferenceExpression(referenceExpression);
+    public void visitIndexProperty(GrIndexProperty expression) {
+      super.visitIndexProperty(expression);
+      checkMethodCall(expression, expression.getInvokedExpression());
+    }
 
-      final PsiElement parent = referenceExpression.getParent();
-      if (parent instanceof GrCall) {
-        GrCall call = (GrCall)parent;
+    private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
+      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return true;
+
+      registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
+                    GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
+      return false;
+    }
+
+    @Override
+    public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+      super.visitMethodCallExpression(methodCallExpression);
+      checkMethodCall(methodCallExpression, methodCallExpression.getInvokedExpression());
+    }
+
+    @Override
+    public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+      super.visitApplicationStatement(applicationStatement);
+      checkMethodCall(applicationStatement, applicationStatement.getInvokedExpression());
+    }
+
+    @Override
+    public void visitEnumConstant(GrEnumConstant enumConstant) {
+      super.visitEnumConstant(enumConstant);
+      checkConstructorCall(enumConstant, enumConstant);
+    }
+
+    private void checkNamedArgumentsType(GrCall call) {
+      GrNamedArgument[] namedArguments = PsiUtil.getFirstMapNamedArguments(call);
+
+      if (namedArguments.length == 0) return;
+
+      Map<String, NamedArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
+      if (map == null) return;
+
+      for (GrNamedArgument namedArgument : namedArguments) {
+        String labelName = namedArgument.getLabelName();
+
+        NamedArgumentDescriptor descriptor = map.get(labelName);
+
+        if (descriptor == null) continue;
+
+        GrExpression namedArgumentExpression = namedArgument.getExpression();
+        if (namedArgumentExpression == null) continue;
+
+        if (isNewInstanceInitialingByTuple(namedArgumentExpression)) continue;
+
+        if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
+
+        PsiType expressionType = namedArgumentExpression.getType();
+        if (expressionType == null) continue;
+
+        expressionType = TypesUtil.boxPrimitiveType(expressionType, call.getManager(), call.getResolveScope());
+
+        if (!descriptor.checkType(expressionType, call)) {
+          registerError(namedArgumentExpression,
+                        "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
+        }
+      }
+    }
+
+    /**
+     * checks only children of e
+     */
+    private static boolean hasErrorElements(@Nullable PsiElement e) {
+      if (e == null) return false;
+
+      for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiErrorElement) return true;
+      }
+      return false;
+    }
+
+    private void checkMethodCall(GrCall call, GrExpression invoked) {
+      if (hasErrorElements(call.getArgumentList())) return;
+
+      if (invoked instanceof GrReferenceExpression) {
+        final GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
         GroovyResolveResult resolveResult = call.advancedResolve();
         GroovyResolveResult[] results = call.multiResolve(false); //cached
 
@@ -578,85 +632,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                         GroovyBundle.message("method.call.is.ambiguous"));
         }
       }
-    }
-
-    private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
-      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return true;
-
-      registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
-                    GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
-      return false;
-    }
-
-    @Override
-    public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
-      super.visitMethodCallExpression(methodCallExpression);
-      checkMethodCall(methodCallExpression);
-    }
-
-    @Override
-    public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
-      super.visitApplicationStatement(applicationStatement);
-      checkMethodCall(applicationStatement);
-    }
-
-    @Override
-    public void visitEnumConstant(GrEnumConstant enumConstant) {
-      super.visitEnumConstant(enumConstant);
-      checkConstructorCall(enumConstant, enumConstant);
-    }
-
-    private void checkNamedArgumentsType(GrCall call) {
-      GrNamedArgument[] namedArguments = PsiUtil.getFirstMapNamedArguments(call);
-
-      if (namedArguments.length == 0) return;
-
-      Map<String, NamedArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
-      if (map == null) return;
-
-      for (GrNamedArgument namedArgument : namedArguments) {
-        String labelName = namedArgument.getLabelName();
-
-        NamedArgumentDescriptor descriptor = map.get(labelName);
-
-        if (descriptor == null) continue;
-
-        GrExpression namedArgumentExpression = namedArgument.getExpression();
-        if (namedArgumentExpression == null) continue;
-
-        if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
-
-        PsiType expressionType = namedArgumentExpression.getType();
-        if (expressionType == null) continue;
-
-        expressionType = TypesUtil.boxPrimitiveType(expressionType, call.getManager(), call.getResolveScope());
-
-        if (!descriptor.checkType(expressionType, call)) {
-          registerError(namedArgumentExpression,
-                        "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
-        }
-      }
-    }
-
-    /**
-     * checks only children of e
-     */
-    private static boolean hasErrorElements(@Nullable PsiElement e) {
-      if (e == null) return false;
-
-      for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiErrorElement) return true;
-      }
-      return false;
-    }
-
-    private void checkMethodCall(GrMethodCall call) {
-      if (hasErrorElements(call.getArgumentList())) return;
-
-      final GrExpression expression = call.getInvokedExpression();
-      if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
-        final PsiType type = expression.getType();
-        checkCallApplicability(type, expression, true);
+      else if (invoked != null) { //it checks in visitRefExpr(...)
+        final PsiType type = invoked.getType();
+        checkCallApplicability(type, invoked, true);
       }
 
       checkNamedArgumentsType(call);
@@ -908,14 +886,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private AnnotationHolder myHolder;
 
     @Override
-    protected boolean shouldProcess(GrMethod method) {
+    protected boolean shouldProcess(GrMember member) {
       return true;
     }
 
     @Override
     protected void registerError(@NotNull final PsiElement location,
-                                 final String description,
-                                 final LocalQuickFix[] fixes,
+                                 @NotNull final String description,
+                                 @NotNull final LocalQuickFix[] fixes,
                                  final ProblemHighlightType highlightType) {
       Annotation annotation = myHolder.createErrorAnnotation(location, description);
       for (final LocalQuickFix fix : fixes) {
@@ -984,4 +962,41 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       annotatingVisitor.myHolder = oldHolder;
     }
   }
+
+  @Nullable
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile psiFile, @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
+    if (!(psiFile instanceof GroovyFileBase)) {
+      return super.checkFile(psiFile, inspectionManager, isOnTheFly);
+    }
+
+
+    final GroovyFileBase groovyFile = (GroovyFileBase)psiFile;
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, isOnTheFly);
+    final MyVisitor visitor = (MyVisitor)buildGroovyVisitor(problemsHolder, isOnTheFly);
+
+    processElement(groovyFile, visitor);
+
+    return problemsHolder.getResultsArray();
+  }
+
+  private static void processElement(@NotNull GroovyPsiElement element, @NotNull MyVisitor visitor) {
+    if (element instanceof GrMember && !visitor.shouldProcess((GrMember)element)) {
+      return;
+    }
+
+    final int count = visitor.getErrorCount();
+
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      if (child instanceof GroovyPsiElement) {
+        processElement((GroovyPsiElement)child, visitor);
+      }
+      child = child.getNextSibling();
+    }
+
+    if (count == visitor.getErrorCount()) {
+      element.accept(visitor);
+    }
+  }
+
 }

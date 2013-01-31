@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 
@@ -128,7 +129,18 @@ public final class FloatingDecorator extends JDialog{
   }
 
   public final void dispose(){
-    Disposer.dispose(myDelayAlarm);
+    if (ScreenUtil.isStandardAddRemoveNotify(getParent()))
+      Disposer.dispose(myDelayAlarm);
+    else {
+      if (isShowing()) {
+        SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          show();
+        }
+      });
+      }
+    }
     super.dispose();
   }
 

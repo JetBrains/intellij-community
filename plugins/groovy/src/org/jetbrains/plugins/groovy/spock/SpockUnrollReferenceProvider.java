@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.spock;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +42,6 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
     String shortName = annotation.getShortName();
     if (!shortName.equals("Unroll") && !shortName.equals("spock.lang.Unroll")) return PsiReference.EMPTY_ARRAY;
-
-    PsiClass aClass = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
-    if (aClass == null) return PsiReference.EMPTY_ARRAY;
-
-    if (!GroovyPsiManager.isInheritorCached(aClass, SpockUtils.SPEC_CLASS_NAME)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement modifierList = annotation.getParent();
     if (!(modifierList instanceof GrModifierList)) return PsiReference.EMPTY_ARRAY;

@@ -45,12 +45,20 @@ public class TabLabel extends JPanel {
   protected final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
     @Override
     protected boolean shouldDrawMacShadow() {
-      return SystemInfo.isMac && !UIUtil.isUnderDarcula();
+      return SystemInfo.isMac || UIUtil.isUnderDarcula();
     }
 
     @Override
     protected boolean shouldDrawDimmed() {
       return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
+    }
+
+    @Override
+    public Font getFont() {
+      if (isFontSet() || !myTabs.useSmallLabels()) {
+        return super.getFont();
+      }
+      return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
     }
   };
   
@@ -77,7 +85,6 @@ public class TabLabel extends JPanel {
     myLabel.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
-    if (myTabs.useSmallLabels() || UIUtil.isUnderDarcula()) myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     setOpaque(false);
     setLayout(new BorderLayout());
 

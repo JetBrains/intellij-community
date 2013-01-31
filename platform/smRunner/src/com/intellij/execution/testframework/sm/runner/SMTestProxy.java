@@ -26,6 +26,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -215,7 +216,7 @@ public class SMTestProxy extends AbstractTestProxy {
       return null;
     }
 
-    final String protocolId = TestsLocationProviderUtil.extractProtocol(myLocationUrl);
+    final String protocolId = VirtualFileManager.extractProtocol(myLocationUrl);
     final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
 
     if (protocolId != null && path != null) {

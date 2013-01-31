@@ -31,6 +31,8 @@ import git4idea.*;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
@@ -348,10 +350,12 @@ public final class GitPusher {
       String branchName = source.getName();
       try {
         boolean rebase = getMergeOrRebaseConfig(project, root);
-        String mergeOrRebase = rebase ? ".rebase" : ".merge";
         GitConfigUtil.setValue(project, root, "branch." + branchName + ".remote", remote.getName());
-        GitConfigUtil.setValue(project, root, "branch." + branchName + mergeOrRebase,
+        GitConfigUtil.setValue(project, root, "branch." + branchName + ".merge",
                                GitBranch.REFS_HEADS_PREFIX + dest.getNameForRemoteOperations());
+        if (rebase) {
+          GitConfigUtil.setValue(project, root, "branch." + branchName + ".rebase", "true");
+        }
       }
       catch (VcsException e) {
         LOG.error(String.format("Couldn't set up tracking for source branch %s, target branch %s, remote %s in root %s",
@@ -394,7 +398,8 @@ public final class GitPusher {
   @NotNull
   private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
-    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector);
+    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
+    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector, progressListener);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);

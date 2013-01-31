@@ -102,7 +102,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myTable.setModel(myModel);
     new TableSpeedSearch(myTable);
 
-    final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
+    final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer();
+    myTable.setExpandableItemsEnabled(false);
     myTable.setDefaultRenderer(Object.class, renderer);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     final Project project = myModel.getProject();

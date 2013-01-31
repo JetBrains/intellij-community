@@ -32,7 +32,7 @@ public class ExtractMethodAction extends BasePlatformRefactoringAction {
     return true;
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 

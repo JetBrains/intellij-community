@@ -18,6 +18,7 @@ package git4idea.history.wholeTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -61,11 +62,11 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
-import git4idea.ui.branch.GitBranchUiUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -884,10 +885,8 @@ public class GitLogUI implements Disposable {
 
       group.addAll(getCustomActions());
 
-      final CustomShortcutSet refreshShortcut =
-        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
-      myRefreshAction.registerCustomShortcutSet(refreshShortcut, myGraphGutter.getComponent());
+      myRefreshAction.registerShortcutOn(myJBTable);
+      myRefreshAction.registerShortcutOn(myGraphGutter.getComponent());
 
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
@@ -1609,7 +1608,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private class MyRefreshAction extends DumbAwareAction {
+  private class MyRefreshAction extends RefreshAction {
     private MyRefreshAction() {
       super("Refresh", "Refresh", AllIcons.Actions.Refresh);
     }
@@ -1617,19 +1616,11 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       rootsChanged(myRootsUnderVcs);
-      updateRefs();
     }
 
-    private void updateRefs() {
-      for (VirtualFile root : myRootsUnderVcs) {
-        try {
-          CachedRefs cachedRefs = new LowLevelAccessImpl(myProject, root).getRefs();
-          myUIRefresh.reportSymbolicRefs(root, cachedRefs);
-        }
-        catch (VcsException e) {
-          LOG.warn("Couldn't update references in repository " + root, e);
-        }
-      }
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
     }
   }
 
@@ -2504,7 +2495,8 @@ public class GitLogUI implements Disposable {
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
-      final String name = GitBranchUiUtil.getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
+      final String name = GitBranchUtil
+        .getNewBranchNameFromUser(myProject, Collections.singleton(repository), "Checkout New Branch From " + reference);
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkoutNewBranchStartingFrom(name, reference, Collections.singletonList(repository), myRefresh);

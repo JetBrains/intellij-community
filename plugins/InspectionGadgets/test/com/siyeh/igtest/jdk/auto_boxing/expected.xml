@@ -17,13 +17,6 @@
 
   <problem>
     <file>AutoBoxing.java</file>
-    <line>11</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
-    <description>Auto-boxing &lt;code&gt;someNumber++&lt;/code&gt; #loc</description>
-  </problem>
-
-  <problem>
-    <file>AutoBoxing.java</file>
     <line>12</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
     <description>Auto-boxing &lt;code&gt;~someNumber&lt;/code&gt; #loc</description>

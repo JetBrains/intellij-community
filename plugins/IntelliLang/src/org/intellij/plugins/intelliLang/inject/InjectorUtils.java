@@ -244,7 +244,7 @@ public class InjectorUtils {
           else continue;
         }
         else if (e instanceof PsiWhiteSpace) continue;
-        else if (comment == null && e instanceof PsiLanguageInjectionHost) {
+        else if (e instanceof PsiLanguageInjectionHost) {
           if (StringUtil.isEmptyOrSpaces(e.getText())) continue;
           else return null;
         }

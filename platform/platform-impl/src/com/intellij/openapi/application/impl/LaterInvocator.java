@@ -76,7 +76,7 @@ public class LaterInvocator {
     }
   }
 
-  private static final List<Object> ourModalEntities = ContainerUtil.createEmptyCOWList();
+  private static final List<Object> ourModalEntities = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final List<RunnableInfo> ourQueue = new ArrayList<RunnableInfo>(); //protected by LOCK
   private static volatile int ourQueueSkipCount = 0; // optimization
   private static final Runnable ourFlushQueueRunnable = new FlushQueue();

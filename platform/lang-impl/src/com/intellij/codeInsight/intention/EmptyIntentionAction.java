@@ -17,19 +17,22 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
  * User: anna
  * Date: May 11, 2005
  */
-public final class EmptyIntentionAction implements IntentionAction, LowPriorityAction{
+public final class EmptyIntentionAction implements IntentionAction, LowPriorityAction, Iconable {
   private final String myName;
 
   public EmptyIntentionAction(@NotNull String name) {
@@ -79,5 +82,10 @@ public final class EmptyIntentionAction implements IntentionAction, LowPriorityA
   @Deprecated
   public EmptyIntentionAction(@NotNull final String name, @NotNull List<IntentionAction> options) {
     myName = name;
+  }
+
+  @Override
+  public Icon getIcon(@IconFlags int flags) {
+    return AllIcons.Actions.RealIntentionBulb;
   }
 }

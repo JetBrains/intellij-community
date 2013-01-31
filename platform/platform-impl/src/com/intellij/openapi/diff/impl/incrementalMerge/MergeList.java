@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.util.containers.SequenceIterator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -187,8 +187,7 @@ public class MergeList implements UserDataHolder {
   }
 
   public Iterator<Change> getAllChanges() {
-    return SequenceIterator.create(myBaseToLeftChangeList.getChanges().iterator(),
-                                   myBaseToRightChangeList.getChanges().iterator());
+    return ContainerUtil.concatIterators(myBaseToLeftChangeList.getChanges().iterator(), myBaseToRightChangeList.getChanges().iterator());
   }
 
   public void addListener(ChangeList.Listener listener) {

@@ -33,17 +33,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 
-public class JarHandler extends JarHandlerBase implements FileSystemInterface {
+public class JarHandler extends JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
 
   @NonNls private static final String JARS_FOLDER = "jars";
@@ -134,83 +131,5 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
     }
 
     return mirror;
-  }
-
-  @Override
-  public boolean isWritable(@NotNull final VirtualFile file) {
-    return false;
-  }
-
-  private static void throwReadOnly() throws IOException {
-    throw new IOException("Jar file system is read-only");
-  }
-
-  @Override
-  @NotNull
-  @SuppressWarnings({"ConstantConditions"})
-  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
-    throwReadOnly();
-    return null; // Unreachable
-  }
-
-  @Override
-  @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
-    throwReadOnly();
-    return null;
-  }
-
-  @Override
-  public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
-    throwReadOnly();
-  }
-
-  @Override
-  public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
-    throwReadOnly();
-  }
-
-  @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
-    throwReadOnly();
-  }
-
-  @Override
-  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-    throwReadOnly();
-  }
-
-  @Override
-  public boolean isSymLink(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
-  public String resolveSymLink(@NotNull VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public boolean isSpecialFile(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
-  @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
-    throwReadOnly();
-    return null;
-  }
-
-  @Override
-  @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
-    throwReadOnly();
-    return null;
-  }
-
-  @Override
-  public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
-    throwReadOnly();
   }
 }

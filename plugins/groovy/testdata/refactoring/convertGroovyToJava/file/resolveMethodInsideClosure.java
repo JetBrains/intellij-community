@@ -4,6 +4,7 @@ new resolveMethodInsideClosure(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
+
 return null;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,12 +25,12 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
@@ -52,35 +53,45 @@ import java.util.regex.Pattern;
  */
 
 public abstract class AbstractExternalFilter {
+
+  private static final boolean EXTRACT_IMAGES_FROM_JARS = SystemProperties.getBooleanProperty("extract.doc.images", true);
+
+  @NotNull public static final String QUICK_DOC_DIR_NAME = "quickdoc";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocExternalFilter");
-  
-  private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
-  private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
+
+  private static final Pattern ourClassDataStartPattern  = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ourClassDataEndPattern    = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
   private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A NAME=", Pattern.CASE_INSENSITIVE);
-  
-  protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
-  protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
-  private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
-  private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-  private static @NonNls final String JAR_PROTOCOL = "jar:";
-  @NonNls private static final String HR = "<HR>";
-  @NonNls private static final String P = "<P>";
-  @NonNls private static final String DL = "<DL>";
-  @NonNls protected static final String H2 = "</H2>";
-  @NonNls protected static final String HTML_CLOSE = "</HTML>";
-  @NonNls protected static final String HTML = "<HTML>";
-  @NonNls private static final String BR = "<BR>";
-  @NonNls private static final String DT = "<DT>";
-  private static final Pattern CHARSET_META_PATTERN =
+
+  protected static @NonNls final Pattern          ourAnchorsuffix         = Pattern.compile("#(.*)$");
+  protected static @NonNls final Pattern          ourHTMLFilesuffix       = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
+  private static @NonNls final   Pattern          ourAnnihilator          = Pattern.compile("/[^/^.]*/[.][.]/");
+  private static @NonNls final   Pattern          ourIMGselector          =
+    Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*?)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static @NonNls final   Pattern          ourPathInsideJarPattern = Pattern.compile(
+    String.format("%s(.+\\.jar)!/(.+?)[^/]+", JarFileSystem.PROTOCOL_PREFIX),
+    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+  );
+  private static @NonNls final   String           JAR_PROTOCOL            = "jar:";
+  @NonNls private static final   String           HR                      = "<HR>";
+  @NonNls private static final   String           P                       = "<P>";
+  @NonNls private static final   String           DL                      = "<DL>";
+  @NonNls protected static final String           H2                      = "</H2>";
+  @NonNls protected static final String           HTML_CLOSE              = "</HTML>";
+  @NonNls protected static final String           HTML                    = "<HTML>";
+  @NonNls private static final   String           BR                      = "<BR>";
+  @NonNls private static final   String           DT                      = "<DT>";
+  private static final           Pattern          CHARSET_META_PATTERN    =
     Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
-  private static final String FIELD_SUMMARY = "<!-- =========== FIELD SUMMARY =========== -->";
-  private static final String CLASS_SUMMARY = "<div class=\"summary\">";
-  private final HttpConfigurable myHttpConfigurable = HttpConfigurable.getInstance();
+  private static final           String           FIELD_SUMMARY           = "<!-- =========== FIELD SUMMARY =========== -->";
+  private static final           String           CLASS_SUMMARY           = "<div class=\"summary\">";
+  private final                  HttpConfigurable myHttpConfigurable      = HttpConfigurable.getInstance();
 
   protected static abstract class RefConvertor {
-    private final Pattern mySelector;
+    @NotNull private final Pattern mySelector;
 
-    public RefConvertor(Pattern selector) {
+    public RefConvertor(@NotNull Pattern selector) {
       mySelector = selector;
     }
 
@@ -99,12 +110,12 @@ public abstract class AbstractExternalFilter {
         ready.append(before);
         ready.append("\"");
         ready.append(ApplicationManager.getApplication().runReadAction(
-            new Computable<String>() {
-              @Override
-              public String compute() {
-                return convertReference(root, href);
-              }
+          new Computable<String>() {
+            @Override
+            public String compute() {
+              return convertReference(root, href);
             }
+          }
         ));
         ready.append("\"");
       }
@@ -119,10 +130,63 @@ public abstract class AbstractExternalFilter {
     @Override
     protected String convertReference(String root, String href) {
       if (StringUtil.startsWithChar(href, '#')) {
-        return DocumentationManager.DOC_ELEMENT_PROTOCOL + root + href;
+        return DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL + root + href;
       }
 
-      if (Comparing.strEqual(VirtualFileManager.extractProtocol(root), LocalFileSystem.PROTOCOL)) {
+      String protocol = VirtualFileManager.extractProtocol(root);
+      if (EXTRACT_IMAGES_FROM_JARS && Comparing.strEqual(protocol, JarFileSystem.PROTOCOL)) {
+        Matcher matcher = ourPathInsideJarPattern.matcher(root);
+        if (matcher.matches()) {
+          // There is a possible case that javadoc jar is assembled with images inside. However, our standard quick doc
+          // renderer (JEditorPane) doesn't know how to reference images from such jars. That's why we unpack them to temp
+          // directory if necessary and substitute that 'inside jar path' to usual file url.
+          String jarPath = matcher.group(1);
+          String jarName = jarPath;
+          int i = jarName.lastIndexOf(File.separatorChar);
+          if (i >= 0 && i < jarName.length() - 1) {
+            jarName = jarName.substring(i + 1);
+          }
+          jarName = jarName.substring(0, jarName.length() - ".jar".length());
+          String basePath = matcher.group(2);
+          String imgPath = FileUtil.toCanonicalPath(basePath + href);
+          File unpackedImagesRoot = new File(FileUtilRt.getTempDirectory(), QUICK_DOC_DIR_NAME);
+          File unpackedJarImagesRoot = new File(unpackedImagesRoot, jarName);
+          File unpackedImage = new File(unpackedJarImagesRoot, imgPath);
+          boolean referenceUnpackedImage = true;
+          if (!unpackedImage.isFile()) {
+            referenceUnpackedImage = false;
+            JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+            try {
+              JarFile jarFile = jarFileSystem.getJarFile(jarFileSystem.findFileByPath(jarPath + StandardFileSystems.JAR_SEPARATOR));
+              if (jarFile != null) {
+                JarFile.JarEntry entry = jarFile.getEntry(imgPath);
+                if (entry != null) {
+                  FileUtilRt.createIfNotExists(unpackedImage);
+                  FileOutputStream fOut = new FileOutputStream(unpackedImage);
+                  try {
+                    // Don't bother with wrapping file output stream into buffered stream in assumption that FileUtil operates
+                    // on NIO channels.
+                    FileUtilRt.copy(jarFile.getInputStream(entry), fOut);
+                    referenceUnpackedImage = true;
+                  }
+                  finally {
+                    fOut.close();
+                  }
+                }
+                unpackedImage.deleteOnExit();
+              }
+            }
+            catch (IOException e) {
+              // Do nothing
+            }
+          }
+          if (referenceUnpackedImage) {
+            return LocalFileSystem.PROTOCOL_PREFIX + unpackedImage.getAbsolutePath();
+          }
+        }
+      }
+
+      if (Comparing.strEqual(protocol, LocalFileSystem.PROTOCOL)) {
         final String path = VirtualFileManager.extractPath(root);
         if (!path.startsWith("/")) {//skip host for local file system files (format - file://host_name/path)
           root = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, "/" + path);
@@ -143,7 +207,7 @@ public abstract class AbstractExternalFilter {
     return path;
   }
 
-  private String correctRefs(String root, String read) {
+  public String correctRefs(String root, String read) {
     String result = read;
 
     for (RefConvertor myReferenceConvertor : getRefConvertors()) {
@@ -156,7 +220,9 @@ public abstract class AbstractExternalFilter {
   protected abstract RefConvertor[] getRefConvertors();
 
   @Nullable
-  private static Reader getReaderByUrl(final String surl, final HttpConfigurable httpConfigurable, final ProgressIndicator pi) throws IOException {
+  private static Reader getReaderByUrl(final String surl, final HttpConfigurable httpConfigurable, final ProgressIndicator pi)
+    throws IOException
+  {
     if (surl.startsWith(JAR_PROTOCOL)) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(BrowserUtil.getDocURL(surl));
 
@@ -171,8 +237,7 @@ public abstract class AbstractExternalFilter {
     if (url == null) {
       return null;
     }
-    httpConfigurable.prepareURL(url.toString());
-    final URLConnection urlConnection = url.openConnection();
+    final URLConnection urlConnection = httpConfigurable.openConnection(url.toString());
     final String contentEncoding = guessEncoding(url);
     final InputStream inputStream =
       pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();
@@ -189,7 +254,7 @@ public abstract class AbstractExternalFilter {
       if (result != null) return result;
       //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      for(String htmlLine = reader.readLine();htmlLine != null; htmlLine = reader.readLine()) {
+      for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
         result = parseContentEncoding(htmlLine);
         if (result != null) {
           break;
@@ -197,12 +262,14 @@ public abstract class AbstractExternalFilter {
       }
     }
     catch (IOException ignored) {
-    } finally {
+    }
+    finally {
       if (reader != null)
         try {
           reader.close();
         }
-        catch (IOException ignored) {}
+        catch (IOException ignored) {
+        }
     }
     return result;
   }
@@ -210,7 +277,13 @@ public abstract class AbstractExternalFilter {
   @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getExternalDocInfo(final String surl) throws Exception {
-    if (surl == null) return null;    
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
+      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
+      return null;
+    }
+
+    if (surl == null) return null;
     if (MyJavadocFetcher.isFree()) {
       final MyJavadocFetcher fetcher = new MyJavadocFetcher(surl, new MyDocBuilder() {
         @Override
@@ -218,7 +291,7 @@ public abstract class AbstractExternalFilter {
           doBuildFromStream(surl, input, result);
         }
       });
-      final Future<?> fetcherFuture = ApplicationManager.getApplication().executeOnPooledThread(fetcher);
+      final Future<?> fetcherFuture = app.executeOnPooledThread(fetcher);
       try {
         fetcherFuture.get();
       }
@@ -241,8 +314,8 @@ public abstract class AbstractExternalFilter {
   }
 
   @Nullable
-   public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
-     return getExternalDocInfo(docURL);
+  public String getExternalDocInfoForElement(final String docURL, final PsiElement element) throws Exception {
+    return getExternalDocInfo(docURL);
   }
 
   protected void doBuildFromStream(String surl, Reader input, StringBuffer data) throws IOException {
@@ -258,21 +331,21 @@ public abstract class AbstractExternalFilter {
     @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
 
     data.append(HTML);
-    data.append( "<style type=\"text/css\">" +
-                 "  ul.inheritance {\n" +
-                 "      margin:0;\n" +
-                 "      padding:0;\n" +
-                 "  }\n" +
-                 "  ul.inheritance li {\n" +
-                 "       display:inline;\n" +
-                 "       list-style:none;\n" +
-                 "  }\n" +
-                 "  ul.inheritance li ul.inheritance {\n" +
-                 "    margin-left:15px;\n" +
-                 "    padding-left:15px;\n" +
-                 "    padding-top:1px;\n" +
-                 "  }\n" +
-                 "</style>");
+    data.append("<style type=\"text/css\">" +
+                "  ul.inheritance {\n" +
+                "      margin:0;\n" +
+                "      padding:0;\n" +
+                "  }\n" +
+                "  ul.inheritance li {\n" +
+                "       display:inline;\n" +
+                "       list-style:none;\n" +
+                "  }\n" +
+                "  ul.inheritance li ul.inheritance {\n" +
+                "    margin-left:15px;\n" +
+                "    padding-left:15px;\n" +
+                "    padding-top:1px;\n" +
+                "  }\n" +
+                "</style>");
 
     String read;
     String contentEncoding = null;
@@ -289,7 +362,8 @@ public abstract class AbstractExternalFilter {
 
     if (input instanceof MyReader && contentEncoding != null) {
       if (!contentEncoding.equalsIgnoreCase("UTF-8") &&
-          !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
+          !contentEncoding.equals(((MyReader)input).getEncoding()))
+      { //restart page parsing with correct encoding
         Reader stream;
         try {
           stream = getReaderByUrl(surl, myHttpConfigurable, new ProgressIndicatorBase());

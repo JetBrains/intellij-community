@@ -30,12 +30,12 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +105,7 @@ public class FSRecords implements Forceable {
 
   static class DbConnection {
     private static boolean ourInitialized;
-    private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
+    private static final ConcurrentHashMap<String, Integer> myAttributeIds = new ConcurrentHashMap<String, Integer>();
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
@@ -205,7 +205,7 @@ public class FSRecords implements Forceable {
           throw new IOException("Corruption marker file found");
         }
 
-        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLock(false).myDefaultStorageLockContext;
+        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
@@ -458,14 +458,11 @@ public class FSRecords implements Forceable {
     }
 
     private static int getAttributeId(String attId) throws IOException {
-      if (myAttributeIds.containsKey(attId)) {
-        return myAttributeIds.get(attId);
-      }
-
-      int id = myNames.enumerate(attId);
-      myAttributeIds.put(attId, id);
-
-      return id;
+      Integer integer = myAttributeIds.get(attId);
+      if (integer != null) return integer.intValue();
+      int enumeratedId = myNames.enumerate(attId);
+      integer = myAttributeIds.putIfAbsent(attId, enumeratedId);
+      return integer == null ? enumeratedId:  integer.intValue();
     }
 
     private static RuntimeException handleError(final Throwable e) {
@@ -929,6 +926,36 @@ public class FSRecords implements Forceable {
     }
     finally {
       w.unlock();
+    }
+  }
+
+  public static int getNameId(int id) {
+    try {
+      r.lock();
+      try {
+        return getRecordInt(id, NAME_OFFSET);
+      }
+      finally {
+        r.unlock();
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  public static int getNameId(String name) {
+    try {
+      r.lock();
+      try {
+        return getNames().enumerate(name);
+      }
+      finally {
+        r.unlock();
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
     }
   }
 

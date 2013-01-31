@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package org.jetbrains.io;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -35,6 +35,7 @@ import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -51,7 +52,7 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebServer {
   private static final String START_TIME_PATH = "/startTime";
 
-  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createEmptyCOWList();
+  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
   private static final Logger LOG = Logger.getInstance(WebServer.class);
@@ -59,15 +60,12 @@ public class WebServer {
   @NonNls
   private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
 
-  private final Executor pooledThreadExecutor = new Executor() {
-    private final Application application = ApplicationManager.getApplication();
+  private final NioServerSocketChannelFactory channelFactory;
 
-    @Override
-    public void execute(@NotNull Runnable command) {
-      application.executeOnPooledThread(command);
-    }
-  };
-  private final NioServerSocketChannelFactory channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
+  public WebServer() {
+    Executor pooledThreadExecutor = new PooledThreadExecutor();
+    channelFactory = new NioServerSocketChannelFactory(pooledThreadExecutor, pooledThreadExecutor, 1);
+  }
 
   public boolean isRunning() {
     return !openChannels.isEmpty();
@@ -96,8 +94,8 @@ public class WebServer {
     return bind(firstPort, portsCount, tryAnyPort, bootstrap);
   }
 
-  private boolean checkPort(final InetSocketAddress remoteAddress) {
-    final ClientBootstrap bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(pooledThreadExecutor));
+  private static boolean checkPort(final InetSocketAddress remoteAddress) {
+    final ClientBootstrap bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(new PooledThreadExecutor()));
     bootstrap.setOption("child.tcpNoDelay", true);
 
     final AtomicBoolean result = new AtomicBoolean(false);
@@ -136,9 +134,9 @@ public class WebServer {
     ChannelFuture connectFuture = null;
     try {
       connectFuture = bootstrap.connect(remoteAddress);
-    if (!waitComplete(connectFuture, "connect")) {
-      return false;
-    }
+      if (!waitComplete(connectFuture, "connect")) {
+        return false;
+      }
       ChannelFuture writeFuture = connectFuture.getChannel().write(new DefaultHttpRequest(HTTP_1_1, HttpMethod.GET, START_TIME_PATH));
       if (!waitComplete(writeFuture, "write")) {
         return false;
@@ -181,7 +179,9 @@ public class WebServer {
   // so, we bind to 127.0.0.1 and 0.0.0.0
   private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
     String property = System.getProperty(PROPERTY_ONLY_ANY_HOST);
-    boolean onlyAnyHost = property == null ? (SystemInfo.isLinux || SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) : (property.isEmpty() || Boolean.valueOf(property));
+    boolean onlyAnyHost = property == null
+                          ? (SystemInfo.isLinux || SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer)
+                          : (property.isEmpty() || Boolean.valueOf(property));
     boolean portChecked = false;
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
@@ -246,7 +246,7 @@ public class WebServer {
     return -1;
   }
 
-  private boolean checkPortSafe(@NotNull InetSocketAddress localAddress) {
+  private static boolean checkPortSafe(@NotNull InetSocketAddress localAddress) {
     LOG.info("We have tried to bind to 127.0.0.1 host but have got exception (" +
              SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + "), " +
              "so, try to check - are we really need to bind to 127.0.0.1");
@@ -296,7 +296,7 @@ public class WebServer {
   }
 
   public void addShutdownHook() {
-    Runtime.getRuntime().addShutdownHook(new Thread(createShutdownTask()));
+    ShutDownTracker.getInstance().registerShutdownTask(createShutdownTask());
   }
 
   public static void removePluggableHandlers(ChannelPipeline pipeline) {

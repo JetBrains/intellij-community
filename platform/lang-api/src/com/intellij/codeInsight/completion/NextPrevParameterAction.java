@@ -37,13 +37,14 @@ public abstract class NextPrevParameterAction extends CodeInsightAction {
     myNext = next;
   }
 
+  @NotNull
   @Override
   public CodeInsightActionHandler getHandler() {
     return new Handler();
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return hasSutablePolicy(editor, file);
   }
 

@@ -32,12 +32,11 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
   private static String resolve(Module module,
                                 String text,
                                 Properties additionalProperties,
-                                String propertyEscapeString,
-                                String escapedCharacters) {
+                                String propertyEscapeString) {
     StringBuilder sb = new StringBuilder();
 
     try {
-      MavenPropertyResolver.doFilterText(module, text, additionalProperties, propertyEscapeString, escapedCharacters, sb);
+      MavenPropertyResolver.doFilterText(module, text, additionalProperties, propertyEscapeString, sb);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -283,25 +282,13 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertEquals("foo ^project bar",
-                 resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/", null));
+                 resolve(getModule("project"), "foo ^${project.artifactId} bar", new Properties(), "/"));
     assertEquals("foo ${project.artifactId} bar",
-                 resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^", null));
+                 resolve(getModule("project"), "foo ^^${project.artifactId} bar", new Properties(), "^^"));
     assertEquals("project ${project.artifactId} project ${project.artifactId}",
                  resolve(getModule("project"),
                          "${project.artifactId} ^${project.artifactId} ${project.artifactId} ^${project.artifactId}",
-                         new Properties(), "^", null));
-  }
-
-  public void testEscapingCharacters() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "" +
-                  "<properties>" +
-                  "  <foo>abc:def\\ghi</foo>" +
-                  "</properties>");
-
-    assertEquals("abc\\:def\\\\ghi", resolve(getModule("project"), "${foo}", new Properties(), null, ":\\"));
+                         new Properties(), "^"));
   }
 
   private String resolve(String text, VirtualFile f) {

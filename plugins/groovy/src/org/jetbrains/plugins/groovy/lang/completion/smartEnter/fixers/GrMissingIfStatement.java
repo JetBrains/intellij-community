@@ -15,21 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 04.07.2008
  */
-public class GrMissingIfStatement implements GrFixer {
-  public void apply(Editor editor, GroovySmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+public class GrMissingIfStatement extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
+  public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
     if (!(psiElement instanceof GrIfStatement)) return;
 
     GrIfStatement ifStatement = (GrIfStatement) psiElement;

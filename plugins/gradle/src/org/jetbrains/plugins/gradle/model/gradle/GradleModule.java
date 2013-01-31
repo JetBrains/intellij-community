@@ -1,13 +1,16 @@
 package org.jetbrains.plugins.gradle.model.gradle;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Module settings holder.
@@ -22,13 +25,13 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
 
   private static final long serialVersionUID = 1L;
 
-  private final List<GradleContentRoot> myContentRoots       = new ArrayList<GradleContentRoot>();
-  private final Map<SourceType, String> myCompileOutputPaths = new HashMap<SourceType, String>();
-  private final Set<GradleDependency>   myDependencies       = new HashSet<GradleDependency>();
-  
+  private final List<GradleContentRoot> myContentRoots       = ContainerUtilRt.newArrayList();
+  private final Map<SourceType, String> myCompileOutputPaths = ContainerUtilRt.newHashMap();
+  private final Set<GradleDependency>   myDependencies       = ContainerUtilRt.newHashSet();
+
   private String myModuleFilePath;
   private boolean myInheritProjectCompileOutputPath = true;
-  
+
   public GradleModule(@NotNull String name, @NotNull String moduleFileDirectoryPath) {
     super(name);
     setModuleFileDirectoryPath(moduleFileDirectoryPath);
@@ -121,8 +124,7 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
 
     GradleModule that = (GradleModule)o;
 

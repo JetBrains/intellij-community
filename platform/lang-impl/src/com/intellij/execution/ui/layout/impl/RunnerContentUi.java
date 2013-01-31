@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -425,13 +426,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return new RelativeRectangle(myTabs.getComponent());
   }
 
+  @NotNull
   @Override
-  public boolean canAccept(DockableContent content, RelativePoint point) {
+  public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     if (!(content instanceof DockableGrid)) {
-      return false;
+      return ContentResponse.DENY;
     }
     final RunnerContentUi ui = ((DockableGrid)content).getOriginalRunnerUi();
-    return ui.getProject() == myProject && ui.mySessionName.equals(mySessionName);
+    return ui.getProject() == myProject && ui.mySessionName.equals(mySessionName) ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
   }
 
   @Override
@@ -447,7 +449,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public void add(DockableContent dockable, RelativePoint dropTarget) {
+  public void add(@NotNull DockableContent dockable, RelativePoint dropTarget) {
     final DockableGrid dockableGrid = (DockableGrid)dockable;
     final RunnerContentUi prev = dockableGrid.getRunnerUi();
 
@@ -514,12 +516,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public Image startDropOver(DockableContent content, RelativePoint point) {
+  public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
     return null;
   }
 
   @Override
-  public Image processDropOver(DockableContent content, RelativePoint point) {
+  public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
     JBTabs current = getTabsAt(content, point);
 
     if (myCurrentOver != null && myCurrentOver != current) {
@@ -556,7 +558,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public void resetDropOver(DockableContent content) {
+  public void resetDropOver(@NotNull DockableContent content) {
     if (myCurrentOver != null) {
       myCurrentOver.resetDropOver(myCurrentOverInfo);
       myCurrentOver = null;
@@ -753,7 +755,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  public GridCell findCellFor(final Content content) {
+  public GridCell findCellFor(@NotNull final Content content) {
     GridImpl cell = getGridFor(content, false);
     return cell != null ? cell.getCellFor(content) : null;
   }
@@ -1070,6 +1072,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myMinimizedButtonsPlaceholder.clear();
     myCommonActionsPlaceholder.clear();
     myContextActions.clear();
+
+    myOriginal = null;
+    myTopActions = null;
+    myAdditonalFocusActions = null;
+    myLeftToolbarActions = null;
   }
 
   public void restoreLayout() {
@@ -1259,6 +1266,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     public void removeNotify() {
       super.removeNotify();
+      if (!ScreenUtil.isStandardAddRemoveNotify(this))
+        return;
 
       if (Disposer.isDisposed(RunnerContentUi.this)) return;
 

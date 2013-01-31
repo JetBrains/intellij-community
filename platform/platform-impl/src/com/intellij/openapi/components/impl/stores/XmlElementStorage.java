@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.fs.IFile;
@@ -41,11 +42,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @NonNls private static final String ATTR_NAME = "name";
 
+  protected static StringInterner ourInterner = new StringInterner();
+
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
   private Object mySession;
   private StorageData myLoadedData;
-  protected static StringInterner ourInterner = new StringInterner();
   protected final StreamProvider myStreamProvider;
   protected final String myFileSpec;
   private final ComponentRoamingManager myComponentRoamingManager;
@@ -155,7 +157,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   @NotNull
-  protected StorageData loadData(final boolean useProvidersData, ComponentVersionListener listener) throws StateStorageException {
+  protected StorageData loadData(boolean useProvidersData, @SuppressWarnings("UnusedParameters") ComponentVersionListener listener) throws StateStorageException {
     Document document = loadDocument();
 
     StorageData result = createStorageData();
@@ -164,27 +166,29 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       loadState(result, document.getRootElement());
     }
 
-    if (!myIsProjectSettings && useProvidersData) {
+    if (!myIsProjectSettings && useProvidersData && myStreamProvider.isEnabled()) {
       for (RoamingType roamingType : RoamingType.values()) {
         if (roamingType != RoamingType.DISABLED && roamingType != RoamingType.GLOBAL) {
-          try {
-            if (myStreamProvider.isEnabled()) {
-              final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
-              if (sharedDocument != null) {
-                filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
-                filterOutOfDateComponents(sharedDocument.getRootElement());
-                loadState(result, sharedDocument.getRootElement());
-              }
-            }
-          }
-          catch (Exception e) {
-            LOG.warn(e);
-          }
+          loadProviderData(result, roamingType);
         }
       }
     }
 
     return result;
+  }
+
+  private void loadProviderData(StorageData result, RoamingType roamingType) {
+    try {
+      final Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
+      if (sharedDocument != null) {
+        filterComponentsDisabledForRoaming(sharedDocument.getRootElement(), roamingType);
+        filterOutOfDateComponents(sharedDocument.getRootElement());
+        loadState(result, sharedDocument.getRootElement());
+      }
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
   }
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
@@ -242,7 +246,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return saveSession;
   }
 
-  private SaveSession createNullSession() {
+  private static SaveSession createNullSession() {
     return new SaveSession(){
       @Override
       public void save() throws StateStorageException {
@@ -339,7 +343,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return new Document(element);
   }
 
-  protected abstract class MySaveSession implements SaveSession {
+  protected abstract class MySaveSession implements SaveSession, SafeWriteRequestor {
     StorageData myStorageData;
     private Document myDocumentToSave;
 
@@ -607,7 +611,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     for (Element toDeleteElement : toDelete) {
       element.removeContent(toDeleteElement);
     }
-
   }
 
   private void loadProviderVersions() {
@@ -625,8 +628,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       if (doc != null) {
         StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
       }
-
     }
   }
 
+  @Nullable
+  Document logComponents() throws StateStorageException {
+    return mySession instanceof MySaveSession ? getDocument(((MySaveSession)mySession).myStorageData) : null;
+  }
 }

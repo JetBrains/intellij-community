@@ -191,8 +191,7 @@ public class CreatePatchConfigurationPanel {
       inclusionListener.run();
 
       final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-      boolean turnOn = dvcsIsUsed || configuration.INCLUDE_TEXT_INTO_PATCH;
-      myIncludeBaseRevisionTextCheckBox.setSelected(turnOn);
+      myIncludeBaseRevisionTextCheckBox.setSelected(configuration.INCLUDE_TEXT_INTO_PATCH);
       myIncludeBaseRevisionTextCheckBox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -220,7 +219,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public void onOk() {
-    if (myIncludeBaseRevisionTextCheckBox.isVisible() && !myDvcsIsUsed) {
+    if (myIncludeBaseRevisionTextCheckBox.isVisible()) {
       final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
       vcsConfiguration.INCLUDE_TEXT_INTO_PATCH = myIncludeBaseRevisionTextCheckBox.isSelected();
     }

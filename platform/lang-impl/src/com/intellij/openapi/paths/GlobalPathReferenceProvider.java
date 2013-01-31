@@ -18,6 +18,7 @@ package com.intellij.openapi.paths;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -64,6 +65,6 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
   @Override
   @Nullable
   public PathReference getPathReference(@NotNull String path, @NotNull final PsiElement element) {
-    return path.contains("://") ? new PathReference(path, PathReference.NULL_ICON) : null;
+    return URLUtil.containsScheme(path) ? new PathReference(path, PathReference.NULL_ICON) : null;
   }
 }

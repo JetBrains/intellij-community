@@ -23,7 +23,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,7 +47,18 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
+    return getReferencesByElement(element, text, offset, soft, Module.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  public PsiReference[] getReferencesByElement(PsiElement element,
+                                               String text,
+                                               int offset,
+                                               final boolean soft,
+                                               final @NotNull Module... forModules) {
     return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
+
+
       @Override
       protected boolean isSoft() {
         return soft;
@@ -67,9 +81,17 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       }
 
       @Override
-      @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
-        final Module module = ModuleUtil.findModuleForPsiElement(getElement());
-        return getRoots(module, true);
+      @NotNull
+      public Collection<PsiFileSystemItem> computeDefaultContexts() {
+        Set<PsiFileSystemItem> systemItems = new HashSet<PsiFileSystemItem>();
+        if (forModules.length > 0) {
+          for (Module forModule : forModules) {
+            systemItems.addAll(getRoots(forModule, true));
+          }
+        } else {
+          systemItems.addAll(getRoots(ModuleUtil.findModuleForPsiElement(getElement()), true));
+        }
+        return systemItems;
       }
 
       @Override
@@ -87,7 +109,6 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
         };
       }
     }.getAllReferences();
-
   }
 
   @Override
@@ -154,5 +175,4 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     }
     return result;
   }
-
 }

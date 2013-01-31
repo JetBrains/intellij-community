@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -49,6 +50,10 @@ import java.util.Map;
 public class HgMockVcsHelper extends AbstractVcsHelper {
 
   private Collection<VcsHelperListener> myListeners = new THashSet<VcsHelperListener>();
+
+  public HgMockVcsHelper(@NotNull Project project) {
+    super(project);
+  }
 
   @Override
   public void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
@@ -115,18 +120,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   @NotNull
   @Override
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files) {
     return null;
   }
 

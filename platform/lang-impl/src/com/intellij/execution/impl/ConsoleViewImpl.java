@@ -231,7 +231,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private String myHelpId;
 
-  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();
@@ -943,7 +943,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final Document document = myEditor.getDocument();
     final int startOffset = document.getLineStartOffset(startLine);
-    String text = new String(document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine))));
+    String text = document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)));
     final Document documentCopy = new DocumentImpl(text,true);
     documentCopy.setReadOnly(true);
 

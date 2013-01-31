@@ -96,3 +96,17 @@ class WithFileInputStream {
     }
   }
 }
+
+class ContainingKlass {
+    public static class Inner {
+    }
+
+    private static class OuterInner {
+        private static final class Inner {
+            private Inner s() {
+                return this;
+            }
+        }
+    }
+}
+

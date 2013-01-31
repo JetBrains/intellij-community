@@ -20,19 +20,25 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.update.Activatable;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public interface DockContainer extends Disposable, Activatable {
+  enum ContentResponse {ACCEPT_MOVE, ACCEPT_COPY, DENY;
+    public boolean canAccept() {return this != DENY;}
+  }
 
   RelativeRectangle getAcceptArea();
-  boolean canAccept(DockableContent content, RelativePoint point);
+
+  @NotNull
+  ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point);
 
   JComponent getContainerComponent();
 
-  void add(DockableContent content, RelativePoint dropTarget);
+  void add(@NotNull DockableContent content, RelativePoint dropTarget);
 
   void closeAll();
 
@@ -41,12 +47,12 @@ public interface DockContainer extends Disposable, Activatable {
   boolean isEmpty();
 
   @Nullable
-  Image startDropOver(DockableContent content, RelativePoint point);
+  Image startDropOver(@NotNull DockableContent content, RelativePoint point);
 
   @Nullable
-  Image processDropOver(DockableContent content, RelativePoint point);
+  Image processDropOver(@NotNull DockableContent content, RelativePoint point);
 
-  void resetDropOver(DockableContent content);
+  void resetDropOver(@NotNull DockableContent content);
 
 
   boolean isDisposeWhenEmpty();

@@ -16,10 +16,8 @@
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.xmlb.annotations.*;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Tag;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +60,9 @@ public class MavenModuleResourceConfiguration {
   @OptionTag
   public String escapeString = MavenProjectConfiguration.DEFAULT_ESCAPE_STRING;
 
+  @OptionTag
+  public boolean escapeWindowsPaths = true;
+
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
   public List<ResourceRootConfiguration> resources = new ArrayList<ResourceRootConfiguration>();
@@ -90,6 +91,7 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + properties.hashCode();
     result = 31 * result + filteringExclusions.hashCode();
     result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
+    result = 31 * result + (escapeWindowsPaths ? 1 : 0);
 
     final List<ResourceRootConfiguration> _resources = forTestResources? testResources : resources;
     result = 31 * result;

@@ -485,12 +485,24 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     else if (e instanceof MouseEvent) {
-      if (((MouseEvent)e).getButton() != 0) {
-        setLastClickEvent((MouseEvent)e);
+      MouseEvent me = (MouseEvent)e;
+      if (myMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
+        final MouseEvent toDispatch =
+          new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,
+                         me.isPopupTrigger(), me.getButton());
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            dispatchEvent(toDispatch);
+          }
+        });
+      }
+      if (me.getButton() != 0) {
+        setLastClickEvent(me);
       } else if (lastClickEvent != null && Math.abs(System.currentTimeMillis() - lastClickTime) > 200){
         setLastClickEvent(null);//Obsolete event
       }
-      if (!myMouseEventDispatcher.dispatchMouseEvent((MouseEvent)e)) {
+      if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
         defaultDispatchEvent(e);
       }
     }

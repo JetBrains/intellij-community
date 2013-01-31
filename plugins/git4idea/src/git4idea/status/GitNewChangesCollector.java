@@ -285,7 +285,7 @@ class GitNewChangesCollector extends GitChangesCollector {
   private VcsRevisionNumber getHeadFromGit() throws VcsException {
     VcsRevisionNumber nativeHead = VcsRevisionNumber.NULL;
     try {
-      nativeHead = GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD");
+      nativeHead = GitChangeUtils.resolveReference(myProject, myVcsRoot, "HEAD");
     }
     catch (VcsException e) {
       if (!GitChangeUtils.isHeadMissing(e)) { // fresh repository

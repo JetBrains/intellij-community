@@ -15,21 +15,15 @@
  */
 package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import org.codehaus.plexus.util.SelectorUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Eugene Zhuravlev
@@ -40,8 +34,8 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   private final ResourceRootConfiguration myConfig;
   private final File myFile;
   private final String myId;
-  private Collection<Pattern> myCompiledIncludes;
-  private Collection<Pattern> myCompiledExcludes;
+  private String[] myNormalizedIncludes;
+  private String[] myNormalizedExcludes;
 
   public MavenResourceRootDescriptor(@NotNull MavenResourcesTarget target, ResourceRootConfiguration config) {
     myTarget = target;
@@ -70,30 +64,37 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     return myTarget;
   }
 
+  @NotNull
   @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
+  public FileFilter createFileFilter() {
     return new FileFilter() {
       @Override
-      public boolean accept(File pathname) {
-        return true;
+      public boolean accept(File file) {
+        final String relPath = FileUtil.getRelativePath(getRootFile(), file);
+        return relPath != null && isIncluded(relPath);
       }
     };
   }
 
   public boolean isIncluded(String relativePath) {
-    if (myCompiledIncludes == null) {
-      myCompiledIncludes = compilePatterns(myConfig.includes, MavenProjectConfiguration.DEFAULT_INCLUDE_PATTERN);
+    if (myNormalizedIncludes == null) {
+      if (myConfig.includes.isEmpty()) {
+        myNormalizedIncludes = new String[]{"**" + File.separatorChar + '*'};
+      }
+      else {
+        myNormalizedIncludes = normalizePatterns(myConfig.includes);
+      }
     }
-    if (myCompiledExcludes == null) {
-      myCompiledExcludes = compilePatterns(myConfig.excludes, null);
+    if (myNormalizedExcludes == null) {
+      myNormalizedExcludes = normalizePatterns(myConfig.excludes);
     }
-    return isIncluded(FileUtil.toSystemIndependentName(relativePath), myCompiledIncludes, myCompiledExcludes);
+    return isIncluded(relativePath, myNormalizedIncludes, myNormalizedExcludes);
   }
 
-  private static boolean isIncluded(String relativeName, Collection<Pattern> includes, Collection<Pattern> excludes) {
+  private static boolean isIncluded(String relativeName, String[] includes, String[] excludes) {
     boolean isIncluded = false;
-    for (Pattern each : includes) {
-      if (each.matcher(relativeName).matches()) {
+    for (String each : includes) {
+      if (SelectorUtils.matchPath(each, relativeName)) {
         isIncluded = true;
         break;
       }
@@ -101,8 +102,8 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
     if (!isIncluded) {
       return false;
     }
-    for (Pattern each : excludes) {
-      if (each.matcher(relativeName).matches()) {
+    for (String each : excludes) {
+      if (SelectorUtils.matchPath(each, relativeName)) {
         return false;
       }
     }
@@ -110,31 +111,40 @@ public class MavenResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @NotNull
-  private static Collection<Pattern> compilePatterns(@NotNull Collection<String> patterns, @Nullable String defaultValue) {
-    final List<Pattern> result = new ArrayList<Pattern>();
-    if (patterns.isEmpty()) {
-      if (defaultValue == null) {
-        return Collections.emptyList();
-      }
-      try {
-        result.add(compilePattern(defaultValue));
-      }
-      catch (PatternSyntaxException ignore) {
-      }
+  private static String[] normalizePatterns(@NotNull Collection<String> patterns) {
+    String[] res = new String[patterns.size()];
+
+    int i = 0;
+    for (String pattern : patterns) {
+      res[i++] = normalizePattern(pattern);
     }
 
-    for (String pattern : patterns) {
-      try {
-        result.add(compilePattern(pattern));
-      }
-      catch (PatternSyntaxException ignore) {
-      }
-    }
-    return result;
+    return res;
   }
 
-  private static Pattern compilePattern(String defaultValue) {
-    return Pattern.compile(defaultValue, SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
+  /*
+   * Copy-pasted from org.codehaus.plexus.util.AbstractScanner#normalizePattern()
+   */
+  private static String normalizePattern(String pattern) {
+    pattern = pattern.trim();
+
+    if (pattern.startsWith(SelectorUtils.REGEX_HANDLER_PREFIX)) {
+      if (File.separatorChar == '\\') {
+        pattern = StringUtils.replace(pattern, "/", "\\\\");
+      }
+      else {
+        pattern = StringUtils.replace(pattern, "\\\\", "/");
+      }
+    }
+    else {
+      pattern = pattern.replace(File.separatorChar == '/' ? '\\' : '/', File.separatorChar);
+
+      if (pattern.endsWith(File.separator)) {
+        pattern += "**";
+      }
+    }
+
+    return pattern;
   }
 
   @Override

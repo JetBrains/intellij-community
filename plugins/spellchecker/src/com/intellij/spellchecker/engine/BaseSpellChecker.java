@@ -28,7 +28,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
-import com.intellij.spellchecker.compress.EncodingException;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
@@ -49,11 +48,11 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final Transformation transform = new Transformation();
 
   private final Set<EditableDictionary> dictionaries = new HashSet<EditableDictionary>();
-  private final List<Dictionary> bundledDictionaries = ContainerUtil.createEmptyCOWList();
+  private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Metrics metrics = new LevenshteinDistance();
 
   private final AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false);
-  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createEmptyCOWList();
+  private final List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
 
   public BaseSpellChecker(final Project project) {
@@ -244,18 +243,12 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     //System.out.println("dictionaries = " + dictionaries);
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
-      try {
-        if (dictionary == null) continue;
-        //System.out.print("\tBSC.isCorrect " + transformed + " " + dictionary);
-        boolean contains = dictionary.contains(transformed);
-        //System.out.println("\tcontains = " + contains);
-        if (contains) return 0;
-      }
-      catch (EncodingException e) {
-        ++errors;
-        //System.out.println(e.getMessage() + " " + transformed);
-        //return true;
-      }
+      if (dictionary == null) continue;
+      //System.out.print("\tBSC.isCorrect " + transformed + " " + dictionary);
+      Boolean contains = dictionary.contains(transformed);
+      //System.out.println("\tcontains = " + contains);
+      if (contains==null) ++errors;
+      else if (contains) return 0;
     }
     if (errors == dictionaries.size()) return errors;
     return -1;

@@ -1,17 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='org.jdom.Element Element(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="org.jdom.Element Element(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='org.jdom.Element java.util.List getChildren(java.lang.String)'>
-    <annotation name='org.jetbrains.annotations.NotNull'>
-    </annotation>
+  <item name="org.jdom.Element java.util.List getChildren()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='org.jdom.Element java.util.List getChildren(java.lang.String, org.jdom.Namespace)'>
-    <annotation name='org.jetbrains.annotations.NotNull'>
-    </annotation>
+  <item name="org.jdom.Element java.util.List getChildren(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='org.jdom.Element java.util.List getChildren()'>
-    <annotation name='org.jetbrains.annotations.NotNull'>
-    </annotation>
+  <item name="org.jdom.Element java.util.List getChildren(java.lang.String, org.jdom.Namespace)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
 </root>
+

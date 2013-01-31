@@ -48,6 +48,28 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  public void testTestResourceProperties() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <testResources>" +
+                  "    <testResource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </testResource>" +
+                  "  </testResources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.properties",
+                                         "foo=abc${project<caret>.version}abc");
+
+    assertResolved(f, findTag("project.version"));
+  }
+
   public void testBasicAt() throws Exception {
     createProjectSubDir("res");
 
@@ -533,6 +555,50 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     assert !(getReference(f, "basedir") instanceof MavenPropertyPsiReference);
     assertNotNull(resolveReference(f, "pom.baseUri"));
+  }
+
+  public void testDontAddReferenceToDelimiterDefinition() throws Exception {
+    importProject("<groupId>test</groupId>\n" +
+                  "<artifactId>project</artifactId>\n" +
+                  "<version>1</version>\n" +
+                  "<properties>\n" +
+                  "  <aaa>${zzz}</aaa>\n" +
+                  "</properties>\n" +
+
+                  "<build>\n" +
+                  "  <plugins>\n" +
+                  "    <plugin>\n" +
+                  "      <artifactId>maven-resources-plugin</artifactId>\n" +
+                  "      <configuration>\n" +
+                  "        <delimiters>\n" +
+                  "          <delimiter>${*}</delimiter>\n" +
+                  "        </delimiters>\n" +
+                  "      </configuration>\n" +
+                  "    </plugin>\n" +
+                  "  </plugins>\n" +
+                  "</build>");
+
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+                     "<properties>\n" +
+                     "  <aaa>${<error>zzz</error>}</aaa>\n" +
+                     "</properties>\n" +
+
+                     "<build>\n" +
+                     "  <plugins>\n" +
+                     "    <plugin>\n" +
+                     "      <artifactId>maven-resources-plugin</artifactId>\n" +
+                     "      <configuration>\n" +
+                     "        <delimiters>\n" +
+                     "          <delimiter>${*}</delimiter>\n" +
+                     "        </delimiters>\n" +
+                     "      </configuration>\n" +
+                     "    </plugin>\n" +
+                     "  </plugins>\n" +
+                     "</build>");
+
+    checkHighlighting();
   }
 
 }

@@ -44,11 +44,8 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       myBounds = myContainer.getBounds(layer);
 
-      myFirstInsertFeedback = new RectangleFeedback(Color.green, 2);
-      myFirstInsertFeedback.setBounds(myBounds);
-
-      myInsertFeedback = new LineInsertFeedback(Color.green, !myHorizontal);
-      myInsertFeedback.size(myBounds.width, myBounds.height);
+      createFirstInsertFeedback();
+      createInsertFeedback();
 
       if (myContainer.getChildren().isEmpty()) {
         layer.add(myFirstInsertFeedback);
@@ -58,6 +55,16 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
       layer.repaint();
     }
+  }
+
+  protected void createInsertFeedback() {
+    myInsertFeedback = new LineInsertFeedback(Color.green, !myHorizontal);
+    myInsertFeedback.size(myBounds.width, myBounds.height);
+  }
+
+  protected void createFirstInsertFeedback() {
+    myFirstInsertFeedback = new RectangleFeedback(Color.green, 2);
+    myFirstInsertFeedback.setBounds(myBounds);
   }
 
   @Override
@@ -92,28 +99,29 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
 
       Rectangle targetBounds = getBounds(myChildTarget, layer);
-      if (myHorizontal) {
-        myInsertBefore = location.x < targetBounds.getCenterX();
-
-        if (myInsertBefore) {
-          myInsertFeedback.setLocation(targetBounds.x, myBounds.y);
-        }
-        else {
-          myInsertFeedback.setLocation(targetBounds.x + targetBounds.width, myBounds.y);
-        }
-      }
-      else {
-        myInsertBefore = location.y < targetBounds.getCenterY();
-
-        if (myInsertBefore) {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y);
-        }
-        else {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height);
-        }
-      }
+      myInsertBefore = myHorizontal ? location.x < targetBounds.getCenterX() : location.y < targetBounds.getCenterY();
+      setInsertFeedbackBounds(targetBounds);
 
       layer.repaint();
+    }
+  }
+
+  protected void setInsertFeedbackBounds(Rectangle targetBounds) {
+    if (myHorizontal) {
+      if (myInsertBefore) {
+        myInsertFeedback.setLocation(targetBounds.x, myBounds.y);
+      }
+      else {
+        myInsertFeedback.setLocation(targetBounds.x + targetBounds.width, myBounds.y);
+      }
+    }
+    else {
+      if (myInsertBefore) {
+        myInsertFeedback.setLocation(myBounds.x, targetBounds.y);
+      }
+      else {
+        myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height);
+      }
     }
   }
 

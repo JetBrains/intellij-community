@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -129,7 +132,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   @Nullable
   @Override
   public GrExpression getTupleInitializer() {
-    return findChildByClass(GrExpression.class);
+    return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
   @Override
@@ -170,7 +173,11 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   }
 
   public GrMember[] getMembers() {
-    return findChildrenByClass(GrMember.class);
+    List<GrMember> result = new ArrayList<GrMember>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrMember) result.add((GrMember)cur);
+    }
+    return result.toArray(new GrMember[result.size()]);
   }
 
   @NotNull

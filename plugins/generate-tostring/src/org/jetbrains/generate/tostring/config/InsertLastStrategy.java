@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.generate.tostring.psi.PsiAdapter;
 
 /**
  * Inserts the method last in the javafile.
@@ -31,18 +30,16 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
 
     private static final InsertLastStrategy instance = new InsertLastStrategy();
 
-    private InsertLastStrategy() {
-    }
+    private InsertLastStrategy() {}
 
     public static InsertLastStrategy getInstance() {
         return instance;
     }
 
-    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
-        PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
+    public PsiMethod insertNewMethod(PsiClass clazz, @NotNull PsiMethod newMethod, Editor editor) {
 
         // if main method exists and is the last then add toString just before main method
-        PsiMethod mainMethod = psi.findPublicStaticVoidMainMethod(clazz);
+        PsiMethod mainMethod = PsiAdapter.findPublicStaticVoidMainMethod(clazz);
         if (mainMethod != null) {
             // add before main method if it is the last method
             PsiMethod[] methods = clazz.getMethods();
@@ -59,5 +56,4 @@ public class InsertLastStrategy implements InsertNewMethodStrategy {
     public String toString() {
         return "Last";
     }
-
 }

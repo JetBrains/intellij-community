@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -145,12 +146,20 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   public void update(final AnActionEvent event) {
-    if(!DebuggerAction.isFirstStart(event)) return;
+    if(!DebuggerAction.isFirstStart(event)) {
+      return;
+    }
 
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(event.getDataContext());
 
-    debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+    final DebugProcessImpl process = debuggerContext.getDebugProcess();
+    if (process == null) {
+      event.getPresentation().setEnabled(false);
+      return;
+    }
+    
+    process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       public void threadAction() {
         myChildren = calcChildren(selectedNodes);
         DebuggerAction.enableAction(event, myChildren.length > 0);

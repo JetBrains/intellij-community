@@ -41,6 +41,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention
+ */
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -148,22 +151,23 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
           return;
         }
         final String text = reference.getText();
-        if (text.equals(fullyQualifiedText)) {
-          final PsiElement qualifier = reference.getQualifier();
-          if (qualifier == null) {
-            return;
-          }
-          try {
-            qualifier.delete();
-          }
-          catch (IncorrectOperationException e) {
-            final Class<? extends QualificationRemover> aClass = getClass();
-            final String className = aClass.getName();
-            final Logger logger = Logger.getInstance(className);
-            logger.error(e);
-          }
-          shortenedElements.add(reference);
+        if (!text.equals(fullyQualifiedText)) {
+          return;
         }
+        final PsiElement qualifier = reference.getQualifier();
+        if (qualifier == null) {
+          return;
+        }
+        try {
+          qualifier.delete();
+        }
+        catch (IncorrectOperationException e) {
+          final Class<? extends QualificationRemover> aClass = getClass();
+          final String className = aClass.getName();
+          final Logger logger = Logger.getInstance(className);
+          logger.error(e);
+        }
+        shortenedElements.add(reference);
       }
     }
   }

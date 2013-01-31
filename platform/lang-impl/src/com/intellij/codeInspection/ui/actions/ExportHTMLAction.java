@@ -136,7 +136,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         }
 
         if (exportToHTML && exportToHTMLSettings.OPEN_IN_BROWSER) {
-          BrowserUtil.launchBrowser(exportToHTMLSettings.OUTPUT_DIRECTORY + File.separator + "index.html");
+          BrowserUtil.browse(new File(exportToHTMLSettings.OUTPUT_DIRECTORY, "index.html"));
         }
       }
     });

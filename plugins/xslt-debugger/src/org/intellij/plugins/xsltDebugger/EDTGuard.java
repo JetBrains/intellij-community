@@ -50,7 +50,6 @@ class EDTGuard implements InvocationHandler {
   // maximum time to wait for a result on the EDT
   private static final long MAX_TIMEOUT = 10 * 1000;
 
-  @SuppressWarnings({"unchecked"})
   private final Map<Object, Object> myInstanceCache = ContainerUtil.newIdentityTroveMap();
 
   private final Object myTarget;
@@ -208,7 +207,7 @@ class EDTGuard implements InvocationHandler {
     });
 
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, d);
-    final Alarm alarm2 = new Alarm(Alarm.ThreadToUse.OWN_THREAD, alarm);
+    final Alarm alarm2 = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, alarm);
 
     final Runnable watchdog = new Runnable() {
       @Override

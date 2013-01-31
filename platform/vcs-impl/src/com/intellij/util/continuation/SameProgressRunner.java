@@ -69,7 +69,7 @@ public class SameProgressRunner extends GeneralRunner {
     while (true) {
       try {
         // stop if project is being disposed
-        if (! myProject.isOpen()) return;
+        if (ApplicationManager.getApplication().isDisposed() || ! myProject.isOpen()) return;
 
         if (getSuspendFlag()) {
           mySemaphore.down();

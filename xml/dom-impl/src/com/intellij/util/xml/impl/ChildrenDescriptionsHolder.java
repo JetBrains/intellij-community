@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.XmlName;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,9 @@ import java.util.*;
  * @author peter
  */
 public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
-  private final Map<XmlName, T> myMap = new TreeMap<XmlName, T>();
+  private final Map<XmlName, T> myMap = new THashMap<XmlName, T>();
   private final ChildrenDescriptionsHolder<T> myDelegate;
+  private volatile List<T> myCached = null;
 
   public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<T> delegate) {
     myDelegate = delegate;
@@ -38,6 +40,7 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
 
   final T addDescription(@NotNull T t) {
     myMap.put(t.getXmlName(), t);
+    myCached = null;
     return t;
   }
 
@@ -67,14 +70,28 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
     return myDelegate != null ? myDelegate.findDescription(localName) : null;
   }
 
+  @NotNull
   final List<T> getDescriptions() {
     final ArrayList<T> result = new ArrayList<T>();
     dumpDescriptions(result);
     return result;
   }
 
+  private List<T> getSortedDescriptions() {
+    List<T> cached = myCached;
+    if (cached != null) {
+      return cached;
+    }
+
+    cached = new ArrayList<T>(myMap.values());
+    Collections.sort(cached);
+    myCached = cached;
+    return cached;
+  }
+
+
   final void dumpDescriptions(Collection<? super T> to) {
-    to.addAll(myMap.values());
+    to.addAll(getSortedDescriptions());
     if (myDelegate != null) {
       myDelegate.dumpDescriptions(to);
     }

@@ -18,6 +18,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

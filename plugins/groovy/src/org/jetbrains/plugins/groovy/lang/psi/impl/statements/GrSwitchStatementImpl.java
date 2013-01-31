@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author ilyas
  */
@@ -44,12 +47,16 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
   }
 
   public GrExpression getCondition() {
-    return findChildByClass(GrExpression.class);
+    return findExpressionChild(this);
   }
 
   @NotNull
   public GrCaseSection[] getCaseSections() {
-    return findChildrenByClass(GrCaseSection.class);
+    List<GrCaseSection> result = new ArrayList<GrCaseSection>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrCaseSection) result.add((GrCaseSection)cur);
+    }
+    return result.toArray(new GrCaseSection[result.size()]);
   }
 
   @Override

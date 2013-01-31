@@ -1,7 +1,7 @@
 // "Change 'list' type to 'Lost<java.lang.Integer>'" "true"
 public class Test {
   void foo()  {
-    Lost<Integer> list = new Lost<Integer>();
+    Lost<Integer> list = new Lost<>();
     list.addd(new Lost<Integer>(), new Integer(9));
   }
 }

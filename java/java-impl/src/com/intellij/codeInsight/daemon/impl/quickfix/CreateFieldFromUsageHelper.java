@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
@@ -41,13 +42,13 @@ public abstract class CreateFieldFromUsageHelper {
                                     CreateFromUsageBaseFix.getTargetSubstitutor(context));
   }
 
-  public static PsiField insertField(PsiClass targetClass, PsiField field, PsiElement place) {
+  public static PsiField insertField(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place) {
     CreateFieldFromUsageHelper helper = EP_NAME.forLanguage(field.getLanguage());
     if (helper == null) return null;
     return helper.insertFieldImpl(targetClass, field, place);
   }
 
-  public abstract PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place);
+  public abstract PsiField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place);
 
   public abstract Template setupTemplateImpl(PsiField field,
                                              Object expectedTypes,

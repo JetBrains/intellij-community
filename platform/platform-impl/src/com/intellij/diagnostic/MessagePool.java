@@ -41,7 +41,7 @@ public class MessagePool {
 
   MessagePool(int maxGroupSize, int timeout) {
     myFatalsGrouper = new MessageGrouper(timeout, maxGroupSize);
-    JobScheduler.getScheduler().scheduleAtFixedRate(myFatalsGrouper, (long)300, (long)300, TimeUnit.MILLISECONDS);
+    JobScheduler.getScheduler().scheduleWithFixedDelay(myFatalsGrouper, (long)300, (long)300, TimeUnit.MILLISECONDS);
   }
 
   private static class MessagePoolHolder {

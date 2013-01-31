@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,6 @@ import java.io.IOException;
  * @author max
  */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
-  public static boolean DEBUG = false;
-
   public JavaClassElementType(@NotNull @NonNls final String id) {
     super(id);
   }
@@ -185,11 +183,6 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public void indexStub(final PsiClassStub stub, final IndexSink sink) {
-    if (DEBUG) {
-      System.out.println("JavaClassElementType.indexStub");
-      System.out.println("stub.getName() = " + stub.getName());
-    }
-
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();

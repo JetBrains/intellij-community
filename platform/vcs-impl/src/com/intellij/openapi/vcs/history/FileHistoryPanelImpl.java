@@ -376,7 +376,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 
@@ -1349,6 +1349,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
 
+    @Nullable
     @Override
     public RepositoryLocation getChangedRepositoryPath() {
       return myRevision.getChangedRepositoryPath();

@@ -208,6 +208,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       FileChooserFactoryImpl.getMacroMap(), getDisposable(),
       new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
       protected void onTextChanged(final String newValue) {
+        myUiUpdater.cancelAllUpdates();
         updateTreeFromPath(newValue);
       }
     };
@@ -357,6 +358,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private VirtualFile[] getSelectedFilesInt() {
+    if (myTreeIsUpdating || !myUiUpdater.isEmpty()) {
+      if (!isTextFieldActive() || StringUtil.isEmpty(myPathTextField.getTextFieldText()))
+        return VirtualFile.EMPTY_ARRAY;
+      final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
+      return toFind == null || !toFind.exists() ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{toFind.getFile()};
+    }
     final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
     return VfsUtilCore.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
   }

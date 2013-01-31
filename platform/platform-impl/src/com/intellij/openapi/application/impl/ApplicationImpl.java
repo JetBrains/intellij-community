@@ -26,6 +26,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
@@ -115,8 +116,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myDoNotSave;
   private volatile boolean myDisposeInProgress = false;
 
-  private int myRestartCode = 0;
-  private volatile int myExitCode = 0;
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
   
   private boolean myHandlingInitComponentError;
@@ -267,8 +266,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       });
     }
 
-    myRestartCode = Restarter.getRestartCode();
-
     registerFont("/fonts/Inconsolata.ttf");
     registerFont("/fonts/SourceCodePro-Regular.ttf");
     registerFont("/fonts/SourceCodePro-Bold.ttf");
@@ -366,15 +363,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
+  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName, ComponentConfig config) {
     if (myHandlingInitComponentError) {
       return;
     }
     myHandlingInitComponentError = true;
     try {
-      if (PluginManager.isPluginClass(componentClassName)) {
-        LOG.error(ex);
-        PluginId pluginId = PluginManager.getPluginByClassName(componentClassName);
+      PluginId pluginId = config == null ? PluginManager.getPluginByClassName(componentClassName) : config.getPluginId();
+      if (pluginId != null) {
+        LOG.warn(ex);
         @NonNls final String errorMessage =
           "Plugin " + pluginId.getIdString() + " failed to initialize and will be disabled:\n" + ex.getMessage() +
           "\nPlease restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
@@ -382,7 +379,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!myHeadlessMode) {
           JOptionPane.showMessageDialog(null, errorMessage);
         }
-        else {
+        else if (!isUnitTestMode()) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println(errorMessage);
           System.exit(1);
@@ -402,7 +399,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           System.out.println(errorMessage);
         }
       }
-      super.handleInitComponentError(ex, fatal, componentClassName);
+      super.handleInitComponentError(ex, fatal, componentClassName, config);
     }
     finally {
       myHandlingInitComponentError = false;
@@ -806,10 +803,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public void exit(final boolean force) {
-    exit(force, true);
+    exit(force, true, false);
   }
 
-  public void exit(final boolean force, final boolean allowListenersToCancel) {
+  @Override
+  public void restart() {
+    restart(false);
+  }
+
+  @Override
+  public void restart(boolean force) {
+    exit(force, true, true);
+  }
+
+  public void exit(final boolean force, final boolean allowListenersToCancel, final boolean restart) {
     if (!force && getDefaultModalityState() != ModalityState.NON_MODAL) {
       return;
     }
@@ -819,15 +826,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       public void run() {
         if (!force && !showConfirmation()) {
           saveAll();
-          myExitCode = 0;
           return;
         }
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
         myDisposeInProgress = true;
-        if (!doExit(allowListenersToCancel)) {
+        if (!doExit(allowListenersToCancel, restart)) {
           myDisposeInProgress = false;
-          myExitCode = 0;
         }
       }
     };
@@ -840,7 +845,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private boolean doExit(boolean allowListenersToCancel) {
+  private boolean doExit(boolean allowListenersToCancel, boolean restart) {
     saveSettings();
 
     if (allowListenersToCancel && !canExit()) {
@@ -852,7 +857,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return false;
     }
 
-    System.exit(myExitCode);
+    int exitCode = 0;
+    if (restart) {
+      try {
+        exitCode = Restarter.scheduleRestart();
+      }
+      catch (IOException e) {
+        LOG.warn("Cannot restart", e);
+      }
+    }
+    System.exit(exitCode);
     return true;
   }
 
@@ -1467,24 +1481,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public boolean isRestartCapable() {
-    return Restarter.isSupported() || myRestartCode > 0;
-  }
-
-  @Override
-  public void restart() {
-    boolean restarted = false;
-    try {
-      restarted = Restarter.restart();
-    }
-    catch (Restarter.CannotRestartException e) {
-      LOG.warn(e);
-    }
-
-    if (!restarted) {
-      myExitCode = myRestartCode;
-    }
-
-    exit(true);
+    return Restarter.isSupported();
   }
 
   public boolean isSaving() {

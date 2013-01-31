@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -32,15 +33,15 @@ import java.awt.event.*;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   public static JBColor getGradientLightColor() {
-    return new JBColor(Gray._251, Gray._122);
+    return new JBColor(Gray._251, Gray._90);
   }
 
   public static JBColor getGradientDarkColor() {
-    return new JBColor(Gray._215, Gray._105);
+    return new JBColor(Gray._215, Gray._70);
   }
 
   private static JBColor getGradientThumbBorderColor() {
-    return new JBColor(Gray._201, Gray._98);
+    return new JBColor(Gray._201, Gray._75);
   }
 
   public static JBColor getTrackBackground() {
@@ -52,7 +53,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private static final BasicStroke BORDER_STROKE = new BasicStroke();
-  public static final int ANIMATION_COLOR_SHIFT = 40;
+  public static final int ANIMATION_COLOR_SHIFT = UIUtil.isUnderDarcula() ? 20 : 40;
 
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;
@@ -113,7 +114,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   private void resetAnimator() {
     myAnimator.reset();
-    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb) {
+    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb || Registry.is("ui.no.bangs.and.whistles")) {
       myAnimator.suspend();
       myAnimationColorShift = ANIMATION_COLOR_SHIFT;
     }
@@ -262,15 +263,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       w -= 1;
     }
 
-    final GradientPaint paint;
+    final Paint paint;
     final Color start = adjustColor(getGradientLightColor());
     final Color end = adjustColor(getGradientDarkColor());
 
     if (vertical) {
-      paint = new GradientPaint(1, 0, start, w + 1, 0, end);
+      paint = UIUtil.getGradientPaint(1, 0, start, w + 1, 0, end);
     }
     else {
-      paint = new GradientPaint(0, 1, start, 0, h + 1, end);
+      paint = UIUtil.getGradientPaint(0, 1, start, 0, h + 1, end);
     }
 
     g.setPaint(paint);
@@ -294,7 +295,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   protected Color adjustColor(Color c) {
     if (myAnimationColorShift == 0) return c;
-    return Gray.get(c.getRed() - myAnimationColorShift);
+    final int sign = UIUtil.isUnderDarcula() ? -1 : 1;
+    return Gray.get(c.getRed() - sign * myAnimationColorShift);
   }
 
   private boolean isVertical() {

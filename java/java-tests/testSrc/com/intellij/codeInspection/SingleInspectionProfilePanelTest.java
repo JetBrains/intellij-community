@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.testFramework.LightIdeaTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -46,19 +47,65 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 0, InspectionProfileTest.countInitializedTools(model));
 
-    LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspection.getShortName());
-    assert wrapper != null;
-    JavaDocLocalInspection tool = (JavaDocLocalInspection)wrapper.getTool();
+    JavaDocLocalInspection tool = getInspection(model);
     assertEquals("", tool.myAdditionalJavadocTags);
     tool.myAdditionalJavadocTags = "foo";
     model.setModified(true);
     panel.apply();
     assertEquals(1, InspectionProfileTest.countInitializedTools(model));
 
-    wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
-    assert wrapper != null;
-    tool = (JavaDocLocalInspection)wrapper.getTool();
-    assertEquals("foo", tool.myAdditionalJavadocTags);
+    assertEquals("foo", getInspection(profile).myAdditionalJavadocTags);
+  }
+
+  public void testModifyInstantiatedTool() throws Exception {
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
+    profile.initInspectionTools(project);
+    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
+
+    JavaDocLocalInspection originalTool = getInspection(profile);
+    originalTool.myAdditionalJavadocTags = "foo";
+
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    panel.setVisible(true);
+    panel.reset();
+    assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1, InspectionProfileTest.countInitializedTools(model));
+
+    JavaDocLocalInspection copyTool = getInspection(model);
+    copyTool.myAdditionalJavadocTags = "bar";
+
+    model.setModified(true);
+    panel.apply();
+    assertEquals(1, InspectionProfileTest.countInitializedTools(model));
+
+    assertEquals("bar", getInspection(profile).myAdditionalJavadocTags);
+  }
+
+  public void testDoNotChangeSettingsOnCancel() throws Exception {
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
+    profile.initInspectionTools(project);
+    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
+
+    JavaDocLocalInspection originalTool = getInspection(profile);
+    assertEquals("", originalTool.myAdditionalJavadocTags);
+
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
+    JavaDocLocalInspection copyTool = getInspection(model);
+    copyTool.myAdditionalJavadocTags = "foo";
+    // this change IS NOT COMMITTED
+
+    assertEquals("", getInspection(profile).myAdditionalJavadocTags);
+  }
+
+  private JavaDocLocalInspection getInspection(InspectionProfileImpl profile) {
+    LocalInspectionToolWrapper original = (LocalInspectionToolWrapper)profile.getInspectionTool(myInspection.getShortName());
+    assert original != null;
+    return (JavaDocLocalInspection)original.getTool();
   }
 
   @Override
@@ -75,6 +122,7 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
 
   private final JavaDocLocalInspection myInspection = new JavaDocLocalInspection();
 
+  @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {myInspection};

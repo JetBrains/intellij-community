@@ -21,17 +21,32 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * Describes why the data entered in a DialogWrapper is invalid.
+ *
+ * @author Konstantin Bulenkov
+ * @see com.intellij.openapi.ui.DialogWrapper#doValidate()
+ */
 public final class ValidationInfo {
   public final String message;
   public final JComponent component;
 
+  /**
+   * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
+   * and will be focused when the user tries to close the dialog by pressing OK.
+   *
+   * @param message   the error message to display.
+   * @param component the component containing the invalid data.
+   */
   public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
     this.message = message;
     this.component = component;
   }
 
+  /**
+   * Creates a validation error message not associated with a specific component.
+   *
+   * @param message the error message to display.
+   */
   public ValidationInfo(@NotNull String message) {
     this(message, null);
   }

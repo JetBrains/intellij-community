@@ -103,4 +103,16 @@ public class Patches {
    * monitors exists
    */
   public static final boolean SUN_BUG_ID_6209673 = true;
+
+  /**
+   * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6486393.
+   */
+  public static final boolean SUN_BUG_ID_6486393 = SystemInfo.isXWindow;
+
+  /**
+   * Desktop API calls may crash on Windows.
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6457572.
+   */
+  public static final boolean SUN_BUG_ID_6457572 = SystemInfo.isWindows && !SystemInfo.isJavaVersionAtLeast("1.7");
 }

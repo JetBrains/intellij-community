@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,20 @@
  */
 package org.jetbrains.generate.tostring.view;
 
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.exception.ParseErrorException;
+import com.intellij.ui.LanguageTextField;
+import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.Config;
-import org.jetbrains.generate.tostring.config.DuplicatonPolicy;
+import org.jetbrains.generate.tostring.config.DuplicationPolicy;
 import org.jetbrains.generate.tostring.config.InsertWhere;
 import org.jetbrains.generate.tostring.config.PolicyOptions;
-import org.jetbrains.generate.tostring.exception.PluginException;
-import org.jetbrains.generate.tostring.template.TemplateResource;
-import org.jetbrains.generate.tostring.velocity.VelocityFactory;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.StringWriter;
 
 /**
  * Configuration User Interface.
@@ -43,36 +36,38 @@ import java.io.StringWriter;
  * The configuration is in the menu <b>File - Settings - GenerateToString</b>
  */
 public class ConfigUI extends JPanel {
-    private final Border etched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 
-    private final JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified classname in code generation ($classname)");
+    private final JCheckBox fullyQualifiedName = new JCheckBox("Use fully qualified class name in code generation ($classname)");
     private final JCheckBox enableMethods = new JCheckBox("Enable getters in code generation ($methods)");
     private final JCheckBox moveCaretToMethod = new JCheckBox("Move caret to generated method");
 
     private JRadioButton[] initialValueForReplaceDialog;
     private JRadioButton[] initialValueForNewMethodDialog;
 
-    private final JCheckBox filterConstant = new JCheckBox("Exclude all constant fields");
-    private final JCheckBox filterEnum = new JCheckBox("Exclude all enum fields");
-    private final JCheckBox filterStatic = new JCheckBox("Exclude all static fields");
-    private final JCheckBox filterTransient = new JCheckBox("Exclude all transient fields");
-    private final JCheckBox filterLoggers = new JCheckBox("Exclude all logger fields (Log4j, JDK Logging, Jakarta Commons Logging)");
-    private final JTextField filterFieldName = new JTextField();
-    private final JTextField filterFieldType = new JTextField();
-    private final JTextField filterMethodName = new JTextField();
-    private final JTextField filterMethodType = new JTextField();
+    private final JCheckBox filterConstant = new JCheckBox("Exclude constant fields");
+    private final JCheckBox filterEnum = new JCheckBox("Exclude enum fields");
+    private final JCheckBox filterStatic = new JCheckBox("Exclude static fields");
+    private final JCheckBox filterTransient = new JCheckBox("Exclude transient fields");
+    private final JCheckBox filterLoggers = new JCheckBox("Exclude logger fields (Log4j, JDK Logging, Jakarta Commons Logging)");
+    private final LanguageTextField filterFieldName;
+    private final LanguageTextField filterFieldType;
+    private final LanguageTextField filterMethodName;
+    private final LanguageTextField filterMethodType;
     private final JComboBox sortElementsComboBox = new JComboBox();
     private final JCheckBox sortElements = new JCheckBox("Sort elements");
-
-    private final JCheckBox autoAddImplementsSerializable = new JCheckBox("Automatic add implements java.io.Serializable");
 
     /**
      * Constructor.
      *
      * @param config Configuration for this UI to display.
+     * @param project
      */
-    public ConfigUI(Config config) {
+    public ConfigUI(Config config, Project project) {
         super(new BorderLayout());
+        filterFieldName = new LanguageTextField(RegExpLanguage.INSTANCE, project, config.getFilterFieldName());
+        filterFieldType = new LanguageTextField(RegExpLanguage.INSTANCE, project, config.getFilterFieldType());
+        filterMethodName = new LanguageTextField(RegExpLanguage.INSTANCE, project, config.getFilterMethodName());
+        filterMethodType = new LanguageTextField(RegExpLanguage.INSTANCE, project, config.getFilterMethodType());
         init();
         setConfig(config);
     }
@@ -95,8 +90,7 @@ public class ConfigUI extends JPanel {
      */
     private JPanel initSettingPanel() {
         GridBagConstraints constraint = new GridBagConstraints();
-        JPanel outer = new JPanel();
-        outer.setLayout(new GridBagLayout());
+        JPanel outer = new JPanel(new GridBagLayout());
 
         // UI Layout - Settings
         JPanel panel = new JPanel();
@@ -126,10 +120,12 @@ public class ConfigUI extends JPanel {
         constraint.fill = GridBagConstraints.BOTH;
         constraint.gridx = 0;
         constraint.gridy = 0;
+        constraint.insets.left = 5;
+        constraint.insets.right = 5;
         outer.add(panel, constraint);
 
         // UI Layout - Conflict Resolution
-        DuplicatonPolicy[] options = PolicyOptions.getConflictOptions();
+        DuplicationPolicy[] options = PolicyOptions.getConflictOptions();
         initialValueForReplaceDialog = new JRadioButton[options.length];
         ButtonGroup selection = new ButtonGroup();
         for (int i = 0; i < options.length; i++) {
@@ -195,7 +191,7 @@ public class ConfigUI extends JPanel {
         filterFieldName.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude fields by typename (reg exp)"));
+        innerPanel.add(new JLabel("Exclude fields by type name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterFieldType);
         filterFieldType.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
@@ -207,7 +203,7 @@ public class ConfigUI extends JPanel {
         filterMethodName.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
         panel.add(innerPanel);
         innerPanel = Box.createHorizontalBox();
-        innerPanel.add(new JLabel("Exclude methods by return typename (reg exp)"));
+        innerPanel.add(new JLabel("Exclude methods by return type name (reg exp)"));
         innerPanel.add(Box.createHorizontalStrut(3));
         innerPanel.add(filterMethodType);
         filterMethodType.setMinimumSize(new Dimension(100, 20)); // avoid input field to small
@@ -226,7 +222,7 @@ public class ConfigUI extends JPanel {
      */
     public final void setConfig(Config config) {
         fullyQualifiedName.setSelected(config.isUseFullyQualifiedName());
-        DuplicatonPolicy option = config.getReplaceDialogInitialOption();
+        DuplicationPolicy option = config.getReplaceDialogInitialOption();
         for (JRadioButton anInitialValueForReplaceDialog : initialValueForReplaceDialog) {
             if (anInitialValueForReplaceDialog.getText().equals(option.toString())) {
                 anInitialValueForReplaceDialog.setSelected(true);
@@ -245,12 +241,7 @@ public class ConfigUI extends JPanel {
         filterStatic.setSelected(config.isFilterStaticModifier());
         filterTransient.setSelected(config.isFilterTransientModifier());
         filterLoggers.setSelected(config.isFilterLoggers());
-        filterFieldName.setText(config.getFilterFieldName());
-        filterFieldType.setText(config.getFilterFieldType());
-        filterMethodName.setText(config.getFilterMethodName());
-        filterMethodType.setText(config.getFilterMethodType());
 
-        autoAddImplementsSerializable.setSelected(config.isAddImplementSerializable());
         enableMethods.setSelected(config.isEnableMethods());
         moveCaretToMethod.setSelected(config.isJumpToMethod());
 
@@ -301,7 +292,6 @@ public class ConfigUI extends JPanel {
         config.setFilterMethodName(emptyToNull(filterMethodName.getText()));
         config.setFilterMethodType(emptyToNull(filterMethodType.getText()));
 
-        config.setAddImplementSerializable(autoAddImplementsSerializable.isSelected());
         config.setEnableMethods(enableMethods.isSelected());
         config.setJumpToMethod(moveCaretToMethod.isSelected());
 
@@ -320,9 +310,9 @@ public class ConfigUI extends JPanel {
      * Action for the options for the conflict resolution policy
      */
     private static class ConflictResolutionOptionAction extends AbstractAction {
-        public final DuplicatonPolicy option;
+        public final DuplicationPolicy option;
 
-        ConflictResolutionOptionAction(DuplicatonPolicy option) {
+        ConflictResolutionOptionAction(DuplicationPolicy option) {
             super(option.toString());
             this.option = option;
         }
@@ -355,39 +345,4 @@ public class ConfigUI extends JPanel {
             sortElementsComboBox.setEnabled(sortElements.isSelected());
         }
     }
-
-    /**
-     * Action listener for user clicking syntax check
-     */
-    private class OnSyntaxCheck implements ActionListener {
-        private final JTextArea methodBody = new JTextArea();
-        public void actionPerformed(ActionEvent event) {
-
-            // validate template first
-            if (!TemplateResource.isValidTemplate(methodBody.getText())) {
-                Messages.showWarningDialog("The template is incompatible with this version of the plugin.", "Incompatible Template");
-                return;
-            }
-
-            // okay let veloicty do it's syntax check
-            try {
-                StringWriter sw = new StringWriter();
-                VelocityContext vc = new VelocityContext();
-
-                // velocity
-                VelocityEngine velocity = VelocityFactory.getVelocityEngine();
-                velocity.evaluate(vc, sw, "org.intellij.idea.plugin.tostring.view.ConfigUI$OnSyntaxCheck", methodBody.getText());
-
-                // no errors
-                Messages.showMessageDialog("Syntax check complete - no errors found", "Syntax Check", Messages.getInformationIcon());
-
-            } catch (ParseErrorException e) {
-                // Syntax Error - display to user
-                Messages.showMessageDialog("Syntax Error:\n" + e.getMessage(), "Syntax Error", Messages.getErrorIcon());
-            } catch (Exception e) {
-                throw new PluginException("Error syntax checking template", e);
-            }
-        }
-    }
-
 }

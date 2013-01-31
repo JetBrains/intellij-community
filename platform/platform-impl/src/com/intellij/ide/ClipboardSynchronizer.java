@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -329,9 +330,9 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       try {
-        final Collection<DataFlavor> flavors = checkContentsQuick();
-        if (flavors != null) {
-          return flavors.contains(dataFlavor);
+        final Pair<long[], ? extends Collection<DataFlavor>> contents = checkContentsQuick();
+        if (contents != null) {
+          return contents.second.contains(dataFlavor);
         }
 
         return super.isDataFlavorAvailable(dataFlavor);
@@ -350,8 +351,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       try {
-        final Collection<DataFlavor> flavors = checkContentsQuick();
-        if (flavors != null && flavors.isEmpty()) {
+        final Pair<long[], ? extends Collection<DataFlavor>> contents = checkContentsQuick();
+        if (contents != null && contents.second.isEmpty()) {
           return null;
         }
 
@@ -359,8 +360,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           return super.getContents();
         }
         catch (IllegalArgumentException e) {
-          if ("Comparison method violates its general contract!".equals(e.getMessage())) {
-            LOG.error("Cannot sort: " + flavors, e);
+          if (contents != null && "Comparison method violates its general contract!".equals(e.getMessage())) {
+            LOG.error("Cannot sort: " + contents.second + ", formats: " + Arrays.toString(contents.first), e);
             return null;
           }
           throw e;
@@ -390,7 +391,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
      *         collection of available data flavors otherwise.
      */
     @Nullable
-    private static Collection<DataFlavor> checkContentsQuick() {
+    private static Pair<long[], ? extends Collection<DataFlavor>> checkContentsQuick() {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       final Class<? extends Clipboard> aClass = clipboard.getClass();
       if (!"sun.awt.X11.XClipboard".equals(aClass.getName())) return null;
@@ -410,10 +411,10 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       try {
         final long[] formats = (long[])getClipboardFormats.invoke(clipboard);
         if (formats == null || formats.length == 0) {
-          return Collections.emptySet();
+          return Pair.create(formats, Collections.<DataFlavor>emptySet());
         }
         @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-        return set;
+        return Pair.create(formats, set);
       }
       catch (IllegalAccessException ignore) { }
       catch (IllegalArgumentException ignore) { }

@@ -3,7 +3,7 @@
   <h2>Generate toString() plugin</h2>
 
   <h3>Plugin home page</h3>
-  The plugin is hosted at Google code where there is an offical issue tracker and wiki pages with more information.
+  The plugin is hosted at Google code where there is an official issue tracker and wiki pages with more information.
   <br/>
   Plugin home page: <a href="http://code.google.com/p/generate-tostring/">generate-tostring</a>
 
@@ -49,7 +49,7 @@
 
   <h3>Enable getters in code generation</h3>
   Using this feature getter methods that does not directly use an existing field are avail in the Velocity Template Macro
-  langauge as the variable $methods.
+  language as the variable $methods.
 
   <br/>The example again with getters enabled:
   <pre>
@@ -113,8 +113,8 @@
     <tr/><td>Exclude fields by typename</td><td>Performs a regular expression matching on the field type name (fully qualified name). If the result is <b>true</b> the field will <b>not</b> be part of available fields for the code generator.</td>
     <tr/><td>Exclude methods by name</td><td>Performs a regular expression matching on the method name. If the result is <b>true</b> the method will <b>not</b> be part of available methods for the code generator.</td>
     <tr/><td>Exclude methods by return typename</td><td>Performs a regular expression matching on the method return typename (fully qualified name). If the result is <b>true</b> the method will <b>not</b> be part of available methods for the code generator.</td>
-    <tr/><td>Automatic add implements java.io.Serializable</td><td>Will automatic add <code>implements Serializable</code> to the java bean class if not already implemented. This is usefull for value objects that usually have to implement this interface for working in J2EE environments.</td>
-    <tr/><td>Automatic import packages</td><td>Will automatic import the packages. Additional packages can be separated using comma. IDEA will optmize the imports so java.util.* will be optimized to java.util.List;java.util.Arrays etc. <br/>Can be used to import your own classes that might be added to the generated code in the toString method.</td>
+    <tr/><td>Automatic add implements java.io.Serializable</td><td>Will automatic add <code>implements Serializable</code> to the java bean class if not already implemented. This is useful for value objects that usually have to implement this interface for working in J2EE environments.</td>
+    <tr/><td>Automatic import packages</td><td>Will automatic import the packages. Additional packages can be separated using comma. IDEA will optimize the imports so java.util.* will be optimized to java.util.List;java.util.Arrays etc. <br/>Can be used to import your own classes that might be added to the generated code in the toString method.</td>
     <tr/><td>Templates</td><td>A list of predefined templates to choose. To use a new template first select it and click the <b>Use this template</b> button.</td>
     <tr/><td>Active template</td><td>Activates the current selected template. A confirm dialog will be prompted.</td>
     <tr/><td>Save template</td><td>Saving the current template to a file. A file chooser dialog will be prompted.</td>
@@ -160,7 +160,7 @@
 
   <h3>JavaDoc</h3>
   It is possible to add javadoc comments to the generated toString() method. This is done by inserting the javadoc
-  comments in the veloicty template. See the supplied javadoc templte example. A requirement is to use /** and */
+  comments in the velocity template. See the supplied javadoc template example. A requirement is to use /** and */
   enclosing the javadoc comments. The javadoc comments should be in the top of the template.
   <p/>
   Here is an example:
@@ -246,7 +246,7 @@
   <h3>Inspection</h3>
   This plugin provides two code inspections:
   <ul>
-    <li/>Class does not overwrite toString() method
+    <li/>Class does not override toString() method
     <li/>Field not used in toString() method
   </ul>
   The <b>Field not used in toString() method</b> inspection can be used to identify out of synchronization situations
@@ -259,7 +259,7 @@
   Enabling the on-the-fly feature can be done from setting <b>settings -> Errors -> ToString() Issues</b>.
   Also on-the-fly should be enabled from the settings to the plugin.
   <p/>
-  The inspection <b>Class does not overwrite toString() method</b> can be used to identify any classes where you
+  The inspection <b>Class does not override toString() method</b> can be used to identify any classes where you
   might have forgotten to add a toString() method. This inspection will use the exclude settings from the plugin
   configuration to ignore classes having fields not supposed to be dumped. An additional settings is to exclude certain
   classes by using a regular expression matching their classname. As default this is used to exclude any Exception classes.
@@ -298,8 +298,8 @@
     <tr><td>$member.accessor</td><td>String</td><td>The accessor of the field or method. For field it is the <code>$field.name</code> and for method it is <code>$method.methodName</code></td></tr>
     <tr><td>$member.typeName</td><td>String</td><td>The classname of the type (Object, String, List etc.)</td></tr>
     <tr><td>$member.typeQualifiedName</td><td>String</td><td>The qualified classname of the type (java.lang.Object, java.lang.String, java.uti.List etc.)</td></tr>
-    <tr><td>$member.array</td><td>boolean</td><td>Tests if the type is an array type (either a primitve array or object array)?</td></tr>
-    <tr><td>$member.primitiveArray</td><td>boolean</td><td>Is the type a primitve array type? (int[], short[], float[] etc.)</td></tr>
+    <tr><td>$member.array</td><td>boolean</td><td>Tests if the type is an array type (either a primitive array or object array)?</td></tr>
+    <tr><td>$member.primitiveArray</td><td>boolean</td><td>Is the type a primitive array type? (int[], short[], float[] etc.)</td></tr>
     <tr><td>$member.objectArray</td><td>boolean</td><td>Is the type an Object array type? (Object[], String[] etc.)</td></tr>
     <tr><td>$member.stringArray</td><td>boolean</td><td>Is the type an String array type? (String[])</td></tr>
     <tr><td>$member.collection</td><td>boolean</td><td>Is the type assignable from java.util.Collection?</td></tr>
@@ -333,9 +333,9 @@
     <tr><td>$method.methodName</td><td>String</td><td>The name of the method (getFoo).</td></tr>
     <tr><td>$method.fieldName</td><td>String</td><td>The name of the field this getter method covers - null if the method is not a getter for a field</td></tr>
     <tr><td>$method.modifierAbstract</td><td>boolean</td><td>Is this method an abstract method?</td></tr>
-    <tr><td>$method.modifierSynchronzied</td><td>boolean</td><td>Is this method a synchronzied method?</td></tr>
+    <tr><td>$method.modifierSynchronized</td><td>boolean</td><td>Is this method a synchronized method?</td></tr>
     <tr><td>$method.returnTypeVoid</td><td>boolean</td><td>Is this method a void method (does not return anything) ?</td></tr>
-    <tr><td>$methor.getter</td><td>boolean</td><td>Is this a getter method?</td></tr>
+    <tr><td>$method.getter</td><td>boolean</td><td>Is this a getter method?</td></tr>
     <tr><td>$method.matchName(regexp)</td><td>boolean</td><td>Performs a regular expression matching on the methodname.</td></tr>
     <tr><td>$method.deprecated</td><td>boolean</td><td>Is this method deprecated?</td></tr>
     <tr><td></td><td></td></tr>

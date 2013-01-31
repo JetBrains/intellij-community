@@ -108,7 +108,7 @@ public class IdeFatalErrorsIcon extends JLabel {
       return;
     }
 
-    myBlinker = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    myBlinker = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       boolean enabled = false;
 
       @Override

@@ -17,9 +17,9 @@ package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
@@ -65,8 +65,14 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
           for (MavenDomDependency d : dependencies) {
             if (d == dependency) continue;
 
-            if (d.getParent() == dependency.getParent() || scope(d).equals(scope(dependency))) {
-              duplicatedDependencies.add(d);
+            if (d.getParent() == dependency.getParent()) {
+              duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:type:classifier
+            }
+            else {
+              if (scope(d).equals(scope(dependency))
+                  && Comparing.equal(d.getVersion().getStringValue(), dependency.getVersion().getStringValue())) {
+                duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:VERSION:type:classifier:SCOPE
+              }
             }
           }
 
@@ -176,11 +182,10 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
     if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) return null;
 
-    String version = coordinates.getVersion().getStringValue();
     String type = coordinates.getType().getStringValue();
     String classifier = coordinates.getClassifier().getStringValue();
 
-    return groupId + ":" + artifactId + ":" + version + ":" + type + ":" + classifier;
+    return groupId + ":" + artifactId + ":" + type + ":" + classifier;
   }
 
   @NotNull

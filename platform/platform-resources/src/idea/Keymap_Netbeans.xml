@@ -35,6 +35,7 @@
     <action id="AddToFavoritesPopup" />
     <action id="Back">
       <keyboard-shortcut first-keystroke="alt LEFT" />
+      <mouse-shortcut keystroke="button4"/>
     </action>
     <action id="CheckinProject" />
     <action id="ClassNameCompletion">
@@ -51,6 +52,7 @@
       <keyboard-shortcut first-keystroke="control F4" />
       <keyboard-shortcut first-keystroke="control W" />
     </action>
+    <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
       <keyboard-shortcut first-keystroke="control BACK_SLASH" />
@@ -136,6 +138,7 @@
     <action id="FindUsagesInFile" />
     <action id="Forward">
       <keyboard-shortcut first-keystroke="alt RIGHT" />
+      <mouse-shortcut keystroke="button5"/>
     </action>
     <action id="GotoAction">
       <keyboard-shortcut first-keystroke="control I" />

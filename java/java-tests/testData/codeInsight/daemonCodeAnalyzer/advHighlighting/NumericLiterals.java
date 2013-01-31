@@ -1,24 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/// assignment compatible types
-import java.io.*;
-import java.net.*;
-
-public class a  {
+public class NumericLiterals {
   final int FI = 2;
   final int FIBIG = 200000000;
 
@@ -38,7 +18,8 @@ public class a  {
     int i13 = <error descr="Integer number too large">040000000000</error>;
     int i14 = 020000000000;
     int i15 = <error descr="Integer number too large">0xf044332211</error>;
-    int octale = 017777777777;  // negative
+    int oi1 = 017777777777;
+    int oi2 = <error descr="Integer number too large">08</error>;
     int bi1 = <error descr="Binary literals are not supported at this language level">0b0010</error>;
     int bi2 = <error descr="Binary literals are not supported at this language level">0B0010</error>;
     int bi3 = <error descr="Underscores in literals are not supported at this language level">1_2</error>;
@@ -53,8 +34,8 @@ public class a  {
     long l8 = 0xffffffffffffffffL;
     long l9 = <error descr="Long number too large">0xffffffffffffffff9L</error>;
     long l10 = 0x8000000000000000L;
-    long octalValue = 01777777777777777777600L;
-    long octalValua = 01777777777777777777777L;
+    long ol1 = 01777777777777777777600L;
+    long ol2 = 01777777777777777777777L;
     long bl1 = <error descr="Binary literals are not supported at this language level">0b0010l</error>;
     long bl2 = <error descr="Binary literals are not supported at this language level">0B0010L</error>;
     long bl3 = <error descr="Underscores in literals are not supported at this language level">10_24L</error>;
@@ -63,7 +44,8 @@ public class a  {
     float f2 = <error descr="Floating point number too large">1e39f</error>;
     float f3 = 0E1F;
     float f4 = <error descr="Hexadecimal floating point literals are not supported at this language level">0xabc.defP2f</error>;
-    float bf1 = <error descr="Underscores in literals are not supported at this language level">3.141_592f</error>;
+    float f5 = <error descr="Underscores in literals are not supported at this language level">3.141_592f</error>;
+    float f6 = .0f;
 
     double dd1 = <error descr="Floating point number too small">1e-324</error>;
     double dd2 = <error descr="Floating point number too large">1e309</error>;
@@ -81,5 +63,6 @@ public class a  {
     double d10 = <error descr="Malformed floating point literal">1e-F</error>;
     double d11 = <error descr="Malformed floating point literal">1e-f</error>;
     double d12 = <error descr="Underscores in literals are not supported at this language level">3.141_592_653_589_793d</error>;
+    double d13 = <error descr="Malformed floating point literal">.0e</error>;
   }
 }

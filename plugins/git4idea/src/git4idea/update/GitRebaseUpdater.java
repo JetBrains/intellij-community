@@ -73,7 +73,8 @@ public class GitRebaseUpdater extends GitUpdater {
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
     rebaseHandler.addLineListener(untrackedFilesDetector);
 
-    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, "Rebasing");
+    String progressTitle = makeProgressTitle("Rebasing");
+    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, progressTitle);
     rebaseTask.setProgressIndicator(myProgressIndicator);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();

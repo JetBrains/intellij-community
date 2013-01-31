@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -239,8 +240,7 @@ public class GitUnstashDialog extends DialogWrapper {
    */
   private void addStashParameter(@NotNull GitHandler handler, @NotNull String stash) {
     if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) {
-      handler.addParameters("\"" + stash + "\"");
-      handler.dontEscapeQuotes();
+      handler.addParameters(GeneralCommandLine.inescapableQuote(stash));
     }
     else {
       handler.addParameters(stash);

@@ -20,12 +20,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.IOUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.StringScanner;
 import git4idea.config.GitConfigUtil;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +56,7 @@ public final class GitDeprecatedRemote {
   /**
    * The push url of the remote
    */
-  private String myPushUrl;
+  private final String myPushUrl;
   /**
    * Prefix for url in "git remote show -n {branch}"
    */
@@ -75,10 +77,6 @@ public final class GitDeprecatedRemote {
    * line that starts branches section in "git remote show -n {branch}"
    */
   @NonNls private static final String SHOW_BRANCHES_LINE = "  Tracked remote branch";
-  /**
-   * US-ASCII encoding name
-   */
-  @NonNls private static final String US_ASCII_ENCODING = "US-ASCII";
   /**
    * Pattern that parses pull spec
    */
@@ -320,14 +318,13 @@ public final class GitDeprecatedRemote {
    */
   public static List<String> getFetchSpecs(Project project, VirtualFile root, String remoteName) throws VcsException {
     ArrayList<String> rc = new ArrayList<String>();
-    final File rootFile = VfsUtil.virtualToIoFile(root);
+    final File rootFile = VfsUtilCore.virtualToIoFile(root);
     @NonNls final File remotesFile = new File(rootFile, GitUtil.DOT_GIT + File.separator + "remotes" + File.separator + remoteName);
     // TODO try branches file?
     if (remotesFile.exists() && !remotesFile.isDirectory()) {
       // try remotes file
       try {
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        String text = FileUtil.loadFile(remotesFile, US_ASCII_ENCODING);
+        String text = FileUtil.loadFile(remotesFile, IOUtil.US_ASCII.name());
         @NonNls String pullPrefix = "Pull:";
         for (StringScanner s = new StringScanner(text); s.hasMoreData();) {
           String line = s.line();

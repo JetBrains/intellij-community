@@ -37,5 +37,5 @@ if [ "$OS_TYPE" = "Linux" ]; then
 elif [ "$OS_TYPE" = "Darwin" ]; then
   cp -a $DEV_IDEA_HOME/bin/mac/*.jnilib $WORK_IDEA_HOME/bin
   cp -a $DEV_IDEA_HOME/bin/mac/fsnotifier $WORK_IDEA_HOME/bin
-  cp -a $DEV_IDEA_HOME/bin/mac/relaunch $WORK_IDEA_HOME/bin
+  cp -a $DEV_IDEA_HOME/bin/mac/restarter $WORK_IDEA_HOME/bin
 fi

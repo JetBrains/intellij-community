@@ -36,6 +36,7 @@ import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -55,6 +56,8 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
 import java.io.*;
@@ -71,7 +74,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
   public static final String BUILDER_NAME = "java";
-  private static final String JAVA_EXTENSION = ".java";
+  private static final String JAVA_EXTENSION = "java";
+  private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
@@ -84,21 +88,28 @@ public class JavaBuilder extends ModuleLevelBuilder {
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
   ));
 
-  private static final FileFilter JAVA_SOURCES_FILTER =
+  public static final FileFilter JAVA_SOURCES_FILTER =
     SystemInfo.isFileSystemCaseSensitive?
     new FileFilter() {
       public boolean accept(File file) {
-        return file.getPath().endsWith(JAVA_EXTENSION);
+        return file.getPath().endsWith(DOT_JAVA_EXTENSION);
       }
     } :
     new FileFilter() {
       public boolean accept(File file) {
-        return StringUtil.endsWithIgnoreCase(file.getPath(), JAVA_EXTENSION);
+        return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_JAVA_EXTENSION);
       }
     };
 
   private final Executor myTaskRunner;
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes;
+  static {
+    ourCompilableModuleTypes = new HashSet<JpsModuleType<?>>();
+    for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+      ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+    }
+  }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
     ourClassProcessors.add(processor);
@@ -136,6 +147,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     COMPILER_VERSION_INFO.set(context, new AtomicReference<String>(messageText));
   }
 
+  @Override
+  public List<String> getCompilableFileExtensions() {
+    return Collections.singletonList(JAVA_EXTENSION);
+  }
+
   public ExitCode build(final CompileContext context,
                         final ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
@@ -144,12 +160,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return ExitCode.NOTHING_DONE;
     }
     try {
-      final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
         public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
-          if (JAVA_SOURCES_FILTER.accept(file)) {
-            filesToCompile.put(file, target);
+          if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+            filesToCompile.add(file);
           }
           return true;
         }
@@ -159,12 +175,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
           if (filesToCompile.size() > 0) {
-            logger.logCompiledFiles(filesToCompile.keySet(), BUILDER_NAME, "Compiling files:");
+            logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
           }
         }
       }
 
-      return compile(context, chunk, dirtyFilesHolder, filesToCompile.keySet(), outputConsumer);
+      return compile(context, chunk, dirtyFilesHolder, filesToCompile, outputConsumer);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -186,12 +202,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       throw new ProjectBuildException(message, e);
     }
   }
-
-  @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return JAVA_SOURCES_FILTER.accept(file);
-  }
-
 
   private ExitCode compile(final CompileContext context,
                            ModuleChunk chunk,
@@ -803,9 +813,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
         default:
           kind = BuildMessage.Kind.INFO;
       }
-      final JavaFileObject source = diagnostic.getSource();
       File sourceFile = null;
       try {
+        // for eclipse compiler just an attempt to call getSource() may lead to an NPE,
+        // so calling this method under try/catch to avoid induced compiler errors
+        final JavaFileObject source = diagnostic.getSource();
         sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
       }
       catch (Exception e) {
@@ -845,6 +857,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void save(@NotNull final OutputFileObject fileObject) {
+      if (JavaFileObject.Kind.CLASS != fileObject.getKind()) {
+        // generated sources or resources must be saved synchronously, because some compilers (e.g. eclipse)
+        // may want to read generated text for further compilation
+        try {
+          final BinaryContent content = fileObject.getContent();
+          if (content != null) {
+            content.saveToFile(fileObject.getFile());
+          }
+        }
+        catch (IOException e) {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+        }
+      }
+
       submitAsyncTask(myContext, new Runnable() {
         public void run() {
           try {

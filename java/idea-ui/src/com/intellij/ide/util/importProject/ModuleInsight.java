@@ -26,6 +26,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -419,7 +420,7 @@ public abstract class ModuleInsight {
     myProgress.setText2(file.getName());
     try {
       final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(new CharArrayCharSequence(chars), new Consumer<String>() {
+      scanSourceFileForImportedPackages(StringFactory.createShared(chars), new Consumer<String>() {
         public void consume(final String s) {
           usedPackages.add(myInterner.intern(s));
         }

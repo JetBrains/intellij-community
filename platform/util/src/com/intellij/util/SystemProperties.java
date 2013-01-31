@@ -18,6 +18,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Utility wrappers for accessing system properties.
@@ -43,6 +44,7 @@ public class SystemProperties {
     return ourTestUserName != null ? ourTestUserName : System.getProperty("user.name");
   }
 
+  @TestOnly
   public static void setTestUserName(@Nullable String name) {
     ourTestUserName = name;
   }

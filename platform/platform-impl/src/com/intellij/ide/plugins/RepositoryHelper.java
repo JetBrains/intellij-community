@@ -64,9 +64,7 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
     }
 
-    HttpConfigurable.getInstance().setAuthenticator();
-
-    HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
+    HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(url);
     connection.setRequestProperty("Accept-Encoding", "gzip");
 
     if (indicator != null) {

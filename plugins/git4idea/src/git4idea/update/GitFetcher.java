@@ -211,6 +211,7 @@ public class GitFetcher {
 
   private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @Nullable String branch) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
+    h.addProgressParameter();
     if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
       h.addParameters("--prune");
     }
@@ -221,7 +222,7 @@ public class GitFetcher {
       h.addParameters(getFetchSpecForBranch(branch, remoteName));
     }
 
-    final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
+    final GitTask fetchTask = new GitTask(myProject, h, "Fetching " + remote.getFirstUrl());
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
 

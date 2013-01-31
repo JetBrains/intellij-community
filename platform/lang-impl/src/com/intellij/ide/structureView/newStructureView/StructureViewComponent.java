@@ -22,6 +22,7 @@ import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
@@ -52,6 +53,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -168,6 +170,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
   }
 
+  public void showToolbar() {
+    setToolbar(createToolbar());
+  }
+
   private JComponent createToolbar() {
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
   }
@@ -178,7 +184,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollFromSourceHandler.install();
 
     TreeUtil.installActions(getTree());
-    new TreeSpeedSearch(getTree());
+
+    new TreeSpeedSearch(getTree(), new Convertor<TreePath, String>() {
+      public String convert(final TreePath treePath) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject != null) {
+          return FileStructurePopup.getSpeedSearchText(userObject);
+        }
+        return null;
+      }
+    });
 
     addTreeKeyListener();
     addTreeMouseListeners();
@@ -622,7 +638,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return myAbstractTreeBuilder.getTreeStructure();
   }
 
-  public JTree getTree() {
+  public Tree getTree() {
     return myTree;
   }
 
@@ -758,6 +774,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return paths == null || paths.length != 1 ? null : paths[0];
   }
 
+  @NotNull
   public StructureViewModel getTreeModel() {
     return myTreeModel;
   }

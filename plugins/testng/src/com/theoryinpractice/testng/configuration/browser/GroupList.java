@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,8 +63,8 @@ public class GroupList extends JPanel
         GroupList groupList = new GroupList(classes);
         DialogBuilder builder = new DialogBuilder(component);
         builder.setCenterPanel(groupList);
-        builder.setPreferedFocusComponent(groupList.list);
-        builder.setTitle("Choose Test Group");
+      builder.setPreferredFocusComponent(groupList.list);
+      builder.setTitle("Choose Test Group");
         return builder.show() != 0 ? null : groupList.getSelected();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2012 the original author or authors.
+ * Copyright 2001-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package org.jetbrains.generate.tostring.inspection;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
-import org.jetbrains.generate.tostring.psi.PsiAdapter;
-import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.util.StringUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
@@ -44,8 +42,6 @@ import java.awt.*;
  */
 public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
 
-    private final AbstractGenerateToStringQuickFix fix = new GenerateToStringQuickFix();
-
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization
     /** User options for excluded exception classes */
@@ -57,9 +53,11 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     /** User options for excluded abstract classes */
     public boolean excludeAbstract = false; // must be public for JDOMSerialization
 
+    public boolean excludeTestCode = false;
+
     @NotNull
     public String getDisplayName() {
-        return "Class does not override toString() method";
+        return "Class does not override 'toString()' method";
     }
 
     @NotNull
@@ -80,10 +78,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (nameIdentifier == null || clazz.getName() == null)
                     return;
 
-                PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-
                 // must not be an exception
-                if (excludeException && PsiAdapter.isExceptionClass(clazz)) {
+                if (excludeException && InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_LANG_THROWABLE)) {
                     log.debug("This class is an exception");
                     return;
                 }
@@ -105,6 +101,11 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     return;
                 }
 
+                if (excludeTestCode && TestFrameworks.getInstance().isTestClass(clazz)) {
+                    log.debug("Class is test class");
+                    return;
+                }
+
                 // if it is an excluded class - then skip
                 if (StringUtil.isNotEmpty(excludeClassNames)) {
                     String name = clazz.getName();
@@ -122,19 +123,17 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // get list of fields and getter methods supposed to be dumped in the toString method
-                Project project = clazz.getProject();
-                fields = GenerateToStringUtils.filterAvailableFields(project, psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+                fields = GenerateToStringUtils.filterAvailableFields(clazz, GenerateToStringContext.getConfig().getFilterPattern());
                 PsiMethod[] methods = null;
                 if (GenerateToStringContext.getConfig().isEnableMethods()) {
                     // okay 'getters in code generation' is enabled so check
-                    methods = GenerateToStringUtils.filterAvailableMethods(psi, clazz, GenerateToStringContext.getConfig().getFilterPattern());
+                    methods = GenerateToStringUtils.filterAvailableMethods(clazz, GenerateToStringContext.getConfig().getFilterPattern());
                 }
 
                 // there should be any fields
-                if (fields == null && methods == null)
-                    return;
-                else if (Math.max( fields == null ? 0 : fields.length, methods == null ? 0 : methods.length) == 0)
-                    return;
+                if (Math.max(fields.length, methods == null ? 0 : methods.length) == 0) {
+                  return;
+                }
 
                 // okay some fields/getter methods are supposed to dumped, does a toString method exist
                 final PsiMethod[] toStringMethods = clazz.findMethodsByName("toString", false);
@@ -158,7 +157,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
                 if (log.isDebugEnabled()) log.debug("Class does not override toString() method: " + clazz.getQualifiedName());
 
-                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override toString() method", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+                holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
             }
         };
     }
@@ -206,58 +206,29 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.fill = GridBagConstraints.NONE;
         panel.add(excludeClassNamesField, constraints);
 
-        final JCheckBox excludeExceptionCheckBox = new JCheckBox("Exclude exception classes", excludeException);
-        final ButtonModel bmException = excludeExceptionCheckBox.getModel();
-        bmException.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                excludeException = bmException.isSelected();
-            }
-        });
+        final CheckBox excludeExceptionCheckBox = new CheckBox("Ignore exception classes", this, "excludeException");
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.gridwidth = 2;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(excludeExceptionCheckBox, constraints);
 
-        final JCheckBox excludeDeprectedCheckBox = new JCheckBox("Exclude deprecated classes", excludeDeprecated);
-        final ButtonModel bmDeprecated = excludeDeprectedCheckBox.getModel();
-        bmDeprecated.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                excludeDeprecated = bmDeprecated.isSelected();
-            }
-        });
-        constraints.gridx = 0;
+        final CheckBox excludeDeprecatedCheckBox = new CheckBox("Ignore deprecated classes", this, "excludeDeprecated");
         constraints.gridy = 2;
-        constraints.gridwidth = 2;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(excludeDeprectedCheckBox, constraints);
+        panel.add(excludeDeprecatedCheckBox, constraints);
 
-        final JCheckBox excludeEnumCheckBox = new JCheckBox("Exclude enum classes", excludeEnum);
-        final ButtonModel bmEnum = excludeEnumCheckBox.getModel();
-        bmEnum.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                excludeEnum = bmEnum.isSelected();
-            }
-        });
-        constraints.gridx = 0;
+        final CheckBox excludeEnumCheckBox = new CheckBox("Ignore enum classes", this, "excludeEnum");
         constraints.gridy = 3;
-        constraints.gridwidth = 2;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(excludeEnumCheckBox, constraints);
 
-        final JCheckBox excludeAbstractCheckBox = new JCheckBox("Exclude abstract classes", excludeAbstract);
-        final ButtonModel bmAbstract = excludeAbstractCheckBox.getModel();
-        bmAbstract.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
-                excludeAbstract = bmAbstract.isSelected();
-            }
-        });
-        constraints.gridx = 0;
+        final CheckBox excludeAbstractCheckBox = new CheckBox("Ignore abstract classes", this, "excludeAbstract");
         constraints.gridy = 4;
-        constraints.gridwidth = 2;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(excludeAbstractCheckBox, constraints);
+
+        final CheckBox excludeInTestCodeCheckBox = new CheckBox("Ignore test classes", this, "excludeTestCode");
+        constraints.gridy = 5;
+        constraints.weighty = 1.0;
+        panel.add(excludeInTestCodeCheckBox, constraints);
 
         return panel;
     }

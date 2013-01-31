@@ -50,7 +50,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
 
   private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
-  private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
+  private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount = 0;
 
   public VirtualFileManagerImpl(@NotNull VirtualFileSystem[] fileSystems, @NotNull MessageBus bus) {
@@ -248,6 +248,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   @Override
   public long getModificationCount() {
     return 0;
+  }
+
+  @Override
+  public List<LocalFileProvider> getLocalFileProviders(){
+    return ContainerUtil.findAll(myPhysicalFileSystems, LocalFileProvider.class);
   }
 
   private static class LoggingListener implements VirtualFileListener {

@@ -30,6 +30,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -178,7 +179,7 @@ public class ITNProxy {
   }
 
   private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    HttpURLConnection connection = (HttpURLConnection)HttpConfigurable.getInstance().openConnection(url.toString());
 
     connection.setReadTimeout(10 * 1000);
     connection.setConnectTimeout(10 * 1000);

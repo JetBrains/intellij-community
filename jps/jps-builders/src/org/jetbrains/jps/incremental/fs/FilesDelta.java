@@ -134,7 +134,8 @@ final class FilesDelta {
       isMarkedDeleted = !myDeletedPaths.isEmpty() && myDeletedPaths.contains(FileUtil.toCanonicalPath(file.getPath()));
     }
     if (!isMarkedDeleted) {
-      return _addToRecompiled(root, file);
+      _addToRecompiled(root, file);
+      return true;
     }
     return false;
   }

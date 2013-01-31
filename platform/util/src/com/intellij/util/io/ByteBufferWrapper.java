@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public abstract class ByteBufferWrapper {
-  public static final boolean NO_MMAP = "true".equals(System.getProperty("idea.io.use.direct"));
-
   protected final File myFile;
   protected final long myPosition;
   protected final long myLength;
@@ -57,8 +55,7 @@ public abstract class ByteBufferWrapper {
   }
 
   public static ByteBufferWrapper readWrite(final File file, final int offset, final int length) {
-    return NO_MMAP ? new ReadWriteDirectBufferWrapper(file, offset, length)
-                   : new ReadWriteMappedBufferWrapper(file, offset, length);
+    return new ReadWriteDirectBufferWrapper(file, offset, length);
   }
 
   public static ByteBufferWrapper readWriteDirect(final File file, final int offset, final int length) {
@@ -67,5 +64,10 @@ public abstract class ByteBufferWrapper {
 
   public static ByteBufferWrapper readOnly(final File file, final int offset) {
     return new ReadOnlyMappedBufferWrapper(file, offset);
+  }
+
+  @Override
+  public String toString() {
+    return "Buffer for " + myFile + " size: " + myLength;
   }
 }

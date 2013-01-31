@@ -667,9 +667,7 @@ public class TypeConversionUtil {
 
     if (right instanceof PsiMethodReferenceType) {
       final PsiMethodReferenceExpression methodReferenceExpression = ((PsiMethodReferenceType)right).getExpression();
-      if (left instanceof PsiClassType) {
-        return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, (PsiClassType)left);
-      } else if (left instanceof PsiLambdaExpressionType) {
+      if (left instanceof PsiLambdaExpressionType) {
         final PsiType rType = methodReferenceExpression.getFunctionalInterfaceType();
         final PsiType lType = ((PsiLambdaExpressionType)left).getExpression().getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
@@ -678,18 +676,17 @@ public class TypeConversionUtil {
         final PsiType lType = ((PsiMethodReferenceType)left).getExpression().getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
       }
+      return PsiMethodReferenceUtil.isAcceptable(methodReferenceExpression, left);
     }
     if (right instanceof PsiLambdaExpressionType) {
       final PsiLambdaExpression rLambdaExpression = ((PsiLambdaExpressionType)right).getExpression();
-      if (left instanceof PsiClassType) {
-        return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
-      }
       if (left instanceof PsiLambdaExpressionType) {
         final PsiLambdaExpression lLambdaExpression = ((PsiLambdaExpressionType)left).getExpression();
         final PsiType rType = rLambdaExpression.getFunctionalInterfaceType();
         final PsiType lType = lLambdaExpression.getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
       }
+      return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
     }
 
     if (left instanceof PsiIntersectionType) {
@@ -1245,7 +1242,7 @@ public class TypeConversionUtil {
         if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
           return erasure(beforeSubstitutor.substitute(boundTypeParameter));
         }
-        return typeParameterErasureInner(boundTypeParameter, visited);
+        return typeParameterErasureInner(boundTypeParameter, visited, beforeSubstitutor);
       }
       else if (psiClass != null) {
         return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
@@ -1254,14 +1251,19 @@ public class TypeConversionUtil {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  private static PsiClassType typeParameterErasureInner(PsiTypeParameter typeParameter, Set<PsiClass> visited) {
+  private static PsiClassType typeParameterErasureInner(PsiTypeParameter typeParameter,
+                                                        Set<PsiClass> visited,
+                                                        PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
         if (!visited.contains(psiClass)) {
           visited.add(psiClass);
-          return typeParameterErasureInner((PsiTypeParameter)psiClass, visited);
+          if (beforeSubstitutor.getSubstitutionMap().containsKey(psiClass)) {
+            return (PsiClassType)erasure(beforeSubstitutor.substitute((PsiTypeParameter)psiClass));
+          }
+          return typeParameterErasureInner((PsiTypeParameter)psiClass, visited, beforeSubstitutor);
         }
       }
       else if (psiClass != null) {

@@ -18,6 +18,7 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
@@ -78,7 +79,10 @@ public class JavacMain {
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus, nowUsingJavac));
+    
+    final List<JavaSourceTransformer> transformers = getSourceTransformers();
+
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus, nowUsingJavac), transformers);
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -138,8 +142,16 @@ public class JavacMain {
 
     try {
       final Collection<String> _options = prepareOptions(options, nowUsingJavac);
+
+      // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
+      // i.e. getJavaFileObjectsFromFiles()
+      // This way the manager will be properly initialized. Namely, the encoding will be set correctly
+      for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
+        fileManager.handleOption(iterator.next(), iterator);
+      }
+
       final JavaCompiler.CompilationTask task = compiler.getTask(
-        out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
+        out, fileManager, outConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
       );
 
       //if (!IS_VM_6_VERSION) { //todo!
@@ -160,6 +172,16 @@ public class JavacMain {
       fileManager.close();
     }
     return false;
+  }
+
+  private static List<JavaSourceTransformer> getSourceTransformers() {
+    final Class<JavaSourceTransformer> transformerClass = JavaSourceTransformer.class;
+    final ServiceLoader<JavaSourceTransformer> loader = ServiceLoader.load(transformerClass, transformerClass.getClassLoader());
+    final List<JavaSourceTransformer> transformers = new ArrayList<JavaSourceTransformer>();
+    for (JavaSourceTransformer t : loader) {
+      transformers.add(t);
+    }
+    return transformers;
   }
 
   private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {

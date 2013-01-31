@@ -36,6 +36,7 @@ import org.zmlx.hg4idea.ui.HgPushDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -61,6 +62,7 @@ public class HgPusher {
         final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
         if (repositories.isEmpty()) {
           VcsBalloonProblemNotifier.showOverChangesView(myProject, "No Mercurial repositories in the project", MessageType.ERROR);
+          return;
         }
         VirtualFile firstRepo = repositories.get(0);
         final List<HgTagBranch> branches = getBranches(myProject, firstRepo);
@@ -90,15 +92,16 @@ public class HgPusher {
     return configCommand.getDefaultPushPath(repo);
   }
 
+  @NotNull
   public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
-    final AtomicReference<List<HgTagBranch>> branchesRef = new AtomicReference<List<HgTagBranch>>();
+    final List<HgTagBranch> branchesList = new ArrayList<HgTagBranch>();
     new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
       @Override
       public void consume(final List<HgTagBranch> branches) {
-        branchesRef.set(branches);
+        branchesList.addAll(branches);
       }
     });
-    return branchesRef.get();
+    return branchesList;
   }
 
   private static void push(final Project project, HgPushCommand command) {

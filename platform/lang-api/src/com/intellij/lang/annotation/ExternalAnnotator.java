@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.annotation;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,11 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   @Nullable
   public InitialInfoType collectionInformation(@NotNull PsiFile file) {
     return null;
+  }
+  
+  @Nullable
+  public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor) {
+    return collectionInformation(file);
   }
 
   // Lengthy annotation goes here

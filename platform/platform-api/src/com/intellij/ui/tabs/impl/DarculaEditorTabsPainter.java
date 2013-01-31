@@ -58,7 +58,7 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
     final int x = rectangle.x;
     final int y = rectangle.y;
     final int h = rectangle.height;
-    g.setPaint(new GradientPaint(x, y, Gray._78.withAlpha(160), x, y + h, Gray._78.withAlpha(120)));
+    g.setPaint(UIUtil.getGradientPaint(x, y, Gray._78.withAlpha(160), x, y + h, Gray._78.withAlpha(120)));
     final int w = rectangle.width;
     g.fillRect(x, rectangle.y, w, h + (vertical ? 1 : 0));
 
@@ -96,9 +96,9 @@ class DarculaEditorTabsPainter implements JBEditorTabsPainter {
       g2d.setColor(tabColor);
       g2d.fill(selectedShape.fillPath.getShape());
 
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._255.withAlpha(50), _x, _y + _height, Gray._255.withAlpha(0)));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._255.withAlpha(50), _x, _y + _height, Gray._255.withAlpha(0)));
     } else {
-      g2d.setPaint(new GradientPaint(_x, _y, Gray._105, _x, _y + _height, Gray._80));
+      g2d.setPaint(UIUtil.getGradientPaint(_x, _y, Gray._85, _x, _y + _height, Gray._60));
     }
 
     g2d.fill(selectedShape.fillPath.getShape());

@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -28,7 +29,9 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.maven.compiler.MavenEscapeWindowsCharacterUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,7 +45,6 @@ public class MavenPropertyResolver {
                                   String text,
                                   Properties additionalProperties,
                                   String propertyEscapeString,
-                                  String escapedCharacters,
                                   Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProject mavenProject = manager.findProject(module);
@@ -50,25 +52,29 @@ public class MavenPropertyResolver {
       out.append(text);
       return;
     }
-    
+
+    Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+    String escapeWindowsPathsStr = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths");
+    boolean escapeWindowsPath = escapeWindowsPathsStr == null || Boolean.parseBoolean(escapeWindowsPathsStr);
+
     doFilterText(MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject),
                  manager,
                  mavenProject,
                  text,
                  additionalProperties,
                  propertyEscapeString,
-                 escapedCharacters,
+                 escapeWindowsPath,
                  null,
                  out);
   }
-  
+
   private static void doFilterText(Pattern pattern,
                                    MavenProjectsManager mavenProjectsManager,
                                    MavenProject mavenProject,
                                    String text,
                                    Properties additionalProperties,
                                    @Nullable String escapeString,
-                                   @Nullable String escapedCharacters,
+                                   boolean escapeWindowsPath,
                                    @Nullable Map<String, String> resolvedPropertiesParam,
                                    Appendable out) throws IOException {
     Map<String, String> resolvedProperties = resolvedPropertiesParam;
@@ -124,23 +130,17 @@ public class MavenPropertyResolver {
         resolvedProperties.put(propertyName, null);
 
         StringBuilder sb = new StringBuilder();
-        doFilterText(pattern, mavenProjectsManager, mavenProject, resolved, additionalProperties, null, null, resolvedProperties, sb);
+        doFilterText(pattern, mavenProjectsManager, mavenProject, resolved, additionalProperties, null, escapeWindowsPath, resolvedProperties, sb);
         propertyValue = sb.toString();
 
         resolvedProperties.put(propertyName, propertyValue);
       }
 
-      if (escapedCharacters == null) {
-        out.append(propertyValue);
+      if (escapeWindowsPath) {
+        MavenEscapeWindowsCharacterUtils.escapeWindowsPath(out, propertyValue);
       }
       else {
-        for (int i = 0; i < propertyValue.length(); i++) {
-          char ch = propertyValue.charAt(i);
-          if (escapedCharacters.indexOf(ch) != -1) {
-            out.append('\\');
-          }
-          out.append(ch);
-        }
+        out.append(propertyValue);
       }
     }
     
@@ -160,7 +160,7 @@ public class MavenPropertyResolver {
 
     StringBuilder res = new StringBuilder();
     try {
-      doFilterText(PATTERN, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, null, null, res);
+      doFilterText(PATTERN, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null, res);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // never thrown

@@ -37,7 +37,8 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
   protected static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter");
   protected static final Key<Map<File, Collection<File>>> FORMS_TO_COMPILE = Key.create("_forms-to_compile_");
   protected static final String JAVA_EXTENSION = ".java";
-  protected static final String FORM_EXTENSION = ".form";
+  protected static final String FORM_EXTENSION = "form";
+  protected static final String DOT_FORM_EXTENSION = "." + FORM_EXTENSION;
   protected static final FileFilter JAVA_SOURCES_FILTER =
     SystemInfo.isFileSystemCaseSensitive?
     new FileFilter() {
@@ -55,12 +56,12 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
     SystemInfo.isFileSystemCaseSensitive?
     new FileFilter() {
       public boolean accept(File file) {
-        return file.getPath().endsWith(FORM_EXTENSION);
+        return file.getPath().endsWith(DOT_FORM_EXTENSION);
       }
     } :
     new FileFilter() {
       public boolean accept(File file) {
-        return StringUtil.endsWithIgnoreCase(file.getPath(), FORM_EXTENSION);
+        return StringUtil.endsWithIgnoreCase(file.getPath(), DOT_FORM_EXTENSION);
       }
     }
     ;
@@ -70,11 +71,6 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
   public FormsBuilder(BuilderCategory category, String name) {
     super(category);
     myBuilderName = name;
-  }
-
-  @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return FORM_SOURCES_FILTER.accept(file);
   }
 
   @NotNull
@@ -91,5 +87,4 @@ public abstract class FormsBuilder extends ModuleLevelBuilder {
     }
     forms.add(form);
   }
-
 }

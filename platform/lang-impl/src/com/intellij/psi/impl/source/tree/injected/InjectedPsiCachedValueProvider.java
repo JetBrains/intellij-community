@@ -27,6 +27,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -53,8 +54,8 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
   }
 
   @Nullable
-  static MultiHostRegistrarImpl doCompute(final PsiElement element,
-                                          InjectedLanguageManagerImpl injectedManager,
+  static MultiHostRegistrarImpl doCompute(@NotNull final PsiElement element,
+                                          @NotNull InjectedLanguageManagerImpl injectedManager,
                                           Project project,
                                           PsiFile hostPsiFile) {
     MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -42,10 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +71,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (false && !isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new PsiReference[] {
           new PsiReferenceBase<PsiElement>(element, true) {
             @Override
@@ -159,7 +155,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
@@ -276,14 +272,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
 
   private static String fqnIconsClass(String className) {
     return "AllIcons".equals(className) ? "com.intellij.icons.AllIcons" : "icons." + className;
-  }
-
-  public static boolean isIdeaProject(@Nullable Project project) {
-    final VirtualFile baseDir;
-    return project != null
-           && ("IDEA".equals(project.getName()) || "community".equals(project.getName()))
-           && (baseDir = project.getBaseDir()) != null
-           && baseDir.findFileByRelativePath("plugins") != null;
   }
 
   @Override

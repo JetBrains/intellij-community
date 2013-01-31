@@ -8,9 +8,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskListenerAdapter;
-import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.*;
 import com.intellij.tasks.actions.GotoTaskAction;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.ui.LayeredIcon;
@@ -136,50 +134,45 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
         updateTable();
       }
     });
-    group.add(new ToggleAction("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode) {
-      @Override
-      public boolean isSelected(final AnActionEvent e) {
-        return myTimeTrackingManager.getState().autoMode;
-      }
+    group.add(new ModeToggleAction());
+    group.add(new StartStopAction());
 
-      @Override
-      public void setSelected(final AnActionEvent e, final boolean state) {
-        myTimeTrackingManager.setAutoMode(state);
-        updateTable();
-      }
-    });
-    group.add(new AnAction() {
-      @Override
-      public void update(final AnActionEvent e) {
-        if (myTimeTrackingManager.getState().autoMode) {
-          e.getPresentation().setEnabled(false);
-          e.getPresentation().setIcon(TasksIcons.StartTimer);
-          e.getPresentation().setText("Start timer for active task");
+    if (timeManagementExist()) {
+      group.add(new AnAction("Post work item to bugtracker", "Post work item to bugtracker", AllIcons.Actions.Export) {
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          final LocalTask localTask = myTable.getSelectedObject();
+          if (localTask == null) return;
+          new SendTimeTrackingInformationDialog(myProject, localTask).show();
         }
-        else {
-          e.getPresentation().setEnabled(true);
-          if (myTaskManager.getActiveTask().isRunning()) {
-            e.getPresentation().setIcon(TasksIcons.StopTimer);
-            e.getPresentation().setText("Stop timer for active task");
+
+        @Override
+        public void update(final AnActionEvent e) {
+          final LocalTask localTask = myTable.getSelectedObject();
+          if (localTask == null) {
+            e.getPresentation().setEnabled(false);
           }
           else {
-            e.getPresentation().setIcon(TasksIcons.StartTimer);
-            e.getPresentation().setText("Start timer for active task");
+            final TaskRepository repository = localTask.getRepository();
+            e.getPresentation().setEnabled(repository != null && repository.isSupported(TaskRepository.TIME_MANAGEMENT));
           }
         }
-      }
+      });
 
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        final LocalTask activeTask = myTaskManager.getActiveTask();
-        if (activeTask.isRunning()) {
-          activeTask.setRunning(false);
+      group.add(new ToggleAction("Show time spent from last post of work item", "Show time spent from last post of work item",
+                                 TasksIcons.Clock) {
+        @Override
+        public boolean isSelected(final AnActionEvent e) {
+          return myTimeTrackingManager.getState().showSpentTimeFromLastPost;
         }
-        else {
-          activeTask.setRunning(true);
+
+        @Override
+        public void setSelected(final AnActionEvent e, final boolean state) {
+          myTimeTrackingManager.getState().showSpentTimeFromLastPost = state;
+          myTable.repaint();
         }
-      }
-    });
+      });
+    }
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, myVertical);
     return actionToolBar.getComponent();
   }
@@ -190,7 +183,7 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
                                                  @Override
                                                  public boolean value(final LocalTask task) {
                                                    return task.isActive() ||
-                                                          (task.getTimeSpent() != 0 &&
+                                                          (task.getTotalTimeSpent() != 0 &&
                                                            (myTimeTrackingManager.getState().showClosedTasks ||
                                                             !myTaskManager.isLocallyClosed(task)));
                                                  }
@@ -251,7 +244,8 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
       @Nullable
       @Override
       public String valueOf(final LocalTask task) {
-        long timeSpent = task.getTimeSpent();
+        long timeSpent =
+          myTimeTrackingManager.getState().showSpentTimeFromLastPost ? task.getTimeSpentFromLastPost() : task.getTotalTimeSpent();
         if (task.isActive()) {
           return formatDuration(timeSpent);
         }
@@ -289,7 +283,11 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
         return new Comparator<LocalTask>() {
           @Override
           public int compare(final LocalTask o1, final LocalTask o2) {
-            return Comparing.compare(o1.getTimeSpent(), o2.getTimeSpent());
+            final long timeSpent1 =
+              myTimeTrackingManager.getState().showSpentTimeFromLastPost ? o1.getTimeSpentFromLastPost() : o1.getTotalTimeSpent();
+            final long timeSpent2 =
+              myTimeTrackingManager.getState().showSpentTimeFromLastPost ? o2.getTimeSpentFromLastPost() : o2.getTotalTimeSpent();
+            return Comparing.compare(timeSpent1, timeSpent2);
           }
         };
       }
@@ -298,9 +296,68 @@ public class TasksToolWindowPanel extends SimpleToolWindowPanel implements Dispo
     return new ListTableModel<LocalTask>((new ColumnInfo[]{task, spentTime}));
   }
 
+  private boolean timeManagementExist() {
+    for (TaskRepository repository : myTaskManager.getAllRepositories()) {
+      if (repository.isSupported(TaskRepository.TIME_MANAGEMENT)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public void dispose() {
     myTimer.stop();
     myTimer = null;
+  }
+
+  private class StartStopAction extends AnAction {
+    @Override
+    public void update(final AnActionEvent e) {
+      if (myTimeTrackingManager.getState().autoMode) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setIcon(TasksIcons.StartTimer);
+        e.getPresentation().setText("Start timer for active task");
+      }
+      else {
+        e.getPresentation().setEnabled(true);
+        if (myTaskManager.getActiveTask().isRunning()) {
+          e.getPresentation().setIcon(TasksIcons.StopTimer);
+          e.getPresentation().setText("Stop timer for active task");
+        }
+        else {
+          e.getPresentation().setIcon(TasksIcons.StartTimer);
+          e.getPresentation().setText("Start timer for active task");
+        }
+      }
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final LocalTask activeTask = myTaskManager.getActiveTask();
+      if (activeTask.isRunning()) {
+        activeTask.setRunning(false);
+      }
+      else {
+        activeTask.setRunning(true);
+      }
+    }
+  }
+
+  private class ModeToggleAction extends ToggleAction {
+    public ModeToggleAction() {
+      super("Auto mode", "Automatic starting and stopping of timer", TasksIcons.AutoMode);
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myTimeTrackingManager.getState().autoMode;
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      myTimeTrackingManager.setAutoMode(state);
+      updateTable();
+    }
   }
 }

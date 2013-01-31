@@ -118,6 +118,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     Template template = builder.buildTemplate();
 
     final Editor newEditor = positionCursor(project, targetFile, var);
+    if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
@@ -153,8 +154,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       minOffset = Math.min(minOffset, expressionOccurences[i].getTextRange().getStartOffset());
     }
 
-    PsiCodeBlock block = (PsiCodeBlock) (parent instanceof PsiCodeBlock ? parent : PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class));
-    LOG.assertTrue(block != null && block.getStatements().length > 0);
+    final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+    LOG.assertTrue(block != null && block.getStatements().length > 0, block);
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
       if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
@@ -35,7 +35,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
@@ -55,24 +53,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
  */
 public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
-  private static final boolean ourDumpChangedComponentStates = "true".equals(System.getProperty("log.externally.changed.component.states"));
 
-  private StorageUtil() {
-  }
+  private static final boolean DUMP_COMPONENT_STATES = SystemProperties.getBooleanProperty("idea.log.externally.changed.component.states", false);
+  private static final SimpleDateFormat LOG_DIR_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
-  public static void notifyUnknownMacros(@NotNull final TrackingPathMacroSubstitutor substitutor, @NotNull final Project project, @Nullable final String componentName) {
+  private StorageUtil() { }
+
+  public static void notifyUnknownMacros(@NotNull TrackingPathMacroSubstitutor substitutor,
+                                         @NotNull final Project project,
+                                         @Nullable String componentName) {
     final LinkedHashSet<String> macros = new LinkedHashSet<String>(substitutor.getUnknownMacros(componentName));
     if (macros.isEmpty()) {
       return;
@@ -83,11 +84,9 @@ public class StorageUtil {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
         if (!macros.isEmpty()) {
-          String content = String.format("<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>",
-                                         StringUtil.join(macros, ", "),
-                                         macros.size() == 1 ? "is" : "are");
-          new UnknownMacroNotification("Load Error", "Load error: undefined path variables!",
-                                       content, NotificationType.ERROR,
+          String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>";
+          String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are");
+          new UnknownMacroNotification("Load Error", "Load error: undefined path variables!", content, NotificationType.ERROR,
                                        new NotificationListener() {
                                          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                                            ((ProjectEx)project).checkUnknownMacros(true);
@@ -107,58 +106,40 @@ public class StorageUtil {
     return notified;
   }
 
-  static VirtualFile save(final IFile file, final Parent element, final Object requestor) throws StateStorageException {
-    final VirtualFile[] result = new VirtualFile[1];
-    final String filePath = file.getCanonicalPath();
+  @Nullable
+  static VirtualFile save(@NotNull IFile file, Parent element, Object requestor) throws StateStorageException {
     try {
-      final Ref<IOException> refIOException = Ref.create(null);
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      Pair<String, String> pair = loadFile(vFile);
+      String text = JDOMUtil.writeParent(element, pair.second);
 
-      final Pair<String, String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
-      final byte[] text = JDOMUtil.writeParent(element, pair.second).getBytes(CharsetToolkit.UTF8);
       if (file.exists()) {
-        if (new String(text).equals(pair.first)) return null;
-        IFile backupFile = deleteBackup(filePath);
-        file.renameTo(backupFile);
+        if (text.equals(pair.first)) {
+          return null;
+        }
+      }
+      else {
+        file.createParentDirs();
       }
 
       // mark this action as modifying the file which daemon analyzer should ignore
-      ApplicationManager.getApplication().runWriteAction(new DocumentRunnable.IgnoreDocumentRunnable() {
-        public void run() {
-          if (!file.exists()) {
-            file.createParentDirs();
-          }
-
-          try {
-            final VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
-
-            virtualFile.setBinaryContent(text, -1, -1, requestor);
-            result[0] = virtualFile;
-          }
-          catch (IOException e) {
-            refIOException.set(e);
-          }
-
-          deleteBackup(filePath);
-        }
-      });
-      if (refIOException.get() != null) {
-        throw new StateStorageException(refIOException.get());
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      try {
+        VirtualFile virtualFile = getOrCreateVirtualFile(requestor, file);
+        byte[] bytes = text.getBytes(CharsetToolkit.UTF8);
+        virtualFile.setBinaryContent(bytes, -1, -1, requestor);
+        return virtualFile;
+      }
+      finally {
+        token.finish();
       }
     }
     catch (IOException e) {
       throw new StateStorageException(e);
     }
-    return result[0];
   }
 
-  static IFile deleteBackup(final String path) {
-    IFile backupFile = FileSystem.FILE_SYSTEM.createFile(path + "~");
-    if (backupFile.exists()) {
-      backupFile.delete();
-    }
-    return backupFile;
-  }
-
+  @NotNull
   static VirtualFile getOrCreateVirtualFile(final Object requestor, final IFile ioFile) throws IOException {
     VirtualFile vFile = getVirtualFile(ioFile);
 
@@ -184,12 +165,11 @@ public class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  @Deprecated
   public static byte[] printDocument(final Document document) throws StateStorageException {
     try {
-      return printDocumentToString(document).getBytes(CharsetToolkit.UTF8);
+      return printDocumentToString(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
     }
-    catch (IOException e) {
+    catch (UnsupportedEncodingException e) {
       throw new StateStorageException(e);
     }
   }
@@ -233,11 +213,6 @@ public class StorageUtil {
     return JDOMUtil.writeDocument(document, lineSeparator);
   }
 
-  @Deprecated
-  public static String printDocumentToString(final Document document) {
-    return printDocumentToString(document, SystemProperties.getLineSeparator());
-  }
-
   static String printElement(final Element element, final String lineSeparator) throws StateStorageException {
     return JDOMUtil.writeElement(element, lineSeparator);
   }
@@ -257,10 +232,17 @@ public class StorageUtil {
 
   @Nullable
   public static Document loadDocument(final InputStream stream) {
-    if (stream == null) return null;
+    if (stream == null) {
+      return null;
+    }
 
     try {
-      return JDOMUtil.loadDocument(stream);
+      try {
+        return JDOMUtil.loadDocument(stream);
+      }
+      finally {
+        stream.close();
+      }
     }
     catch (JDOMException e) {
       return null;
@@ -268,66 +250,59 @@ public class StorageUtil {
     catch (IOException e) {
       return null;
     }
-    finally {
-      try {
-        stream.close();
-      }
-      catch (IOException e) {
-        //ignore
-      }
-    }
   }
 
-  public static void sendContent(final StreamProvider streamProvider, final String fileSpec, final Document copy, final RoamingType roamingType, boolean async)
-      throws IOException {
+  public static void sendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
     byte[] content = printDocument(copy);
     ByteArrayInputStream in = new ByteArrayInputStream(content);
     try {
-      if (streamProvider.isEnabled()) {
-        streamProvider.saveContent(fileSpec, in, content.length, roamingType, async);
+      if (provider.isEnabled()) {
+        provider.saveContent(fileSpec, in, content.length, type, async);
       }
     }
     finally {
       in.close();
     }
-
   }
 
   public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ourDumpChangedComponentStates) return;
+    if (componentNames.isEmpty() || !(DUMP_COMPONENT_STATES || ApplicationManager.getApplication().isInternal())) {
+      return;
+    }
 
     try {
       File logDirectory = createLogDirectory();
+      if (!logDirectory.mkdirs()) {
+        throw new IOException("Cannot create " + logDirectory);
+      }
 
-      logDirectory.mkdirs();
+      for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
+        File file = new File(pair.first.getPath());
+        StateStorage storage = pair.second;
 
-      for (String componentName : componentNames) {
-        for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-          StateStorage storage = pair.second;
-          if (storage instanceof XmlElementStorage) {
-            Element state = ((XmlElementStorage)storage).getState(componentName);
-            if (state != null) {
-              File logFile = new File(logDirectory, "prev_" + componentName + ".xml");
-              FileUtil.writeToFile(logFile, JDOMUtil.writeElement(state, "\n").getBytes());
-            }
+        if (storage instanceof XmlElementStorage) {
+          Document state = ((XmlElementStorage)storage).logComponents();
+          if (state != null) {
+            File logFile = new File(logDirectory, "prev_" + file.getName());
+            JDOMUtil.writeDocument(state, logFile, "\n");
           }
         }
-      }
 
-      for (Pair<VirtualFile, StateStorage> changedFile : changedFiles) {
-        File in = new File(changedFile.first.getPath());
-        if (in.exists()) {
-          File logFile = new File(logDirectory, "new_" + changedFile.first.getName());
-          FileUtil.copy(in, logFile);
+        if (file.exists()) {
+          File logFile = new File(logDirectory, "new_" + file.getName());
+          FileUtil.copy(file, logFile);
         }
       }
+
+      File logFile = new File(logDirectory, "components.txt");
+      FileUtil.writeToFile(logFile, componentNames.toString() + "\n");
     }
     catch (Throwable e) {
       LOG.info(e);
     }
   }
 
-  static File createLogDirectory() {
+  private static File createLogDirectory() {
     UniqueFileNamesProvider namesProvider = new UniqueFileNamesProvider();
 
     File statesDir = new File(PathManager.getSystemPath(), "log/componentStates");
@@ -347,13 +322,12 @@ public class StorageUtil {
         }
       }
 
-
       for (File child : children) {
         namesProvider.reserveFileName(child.getName());
       }
     }
 
-    return new File(statesDir, namesProvider.suggestName("state-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date())
-                        + "-" + ApplicationInfo.getInstance().getBuild().asString()));
+    String name = "state-" + LOG_DIR_FORMAT.format(new Date()) + "-" + ApplicationInfo.getInstance().getBuild().asString();
+    return new File(statesDir, namesProvider.suggestName(name));
   }
 }

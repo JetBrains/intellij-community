@@ -17,7 +17,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,6 +74,7 @@ public interface StructureView extends Disposable {
    */
   void storeState();
 
+  @NotNull
   StructureViewModel getTreeModel();
 
   interface Scrollable extends StructureView {

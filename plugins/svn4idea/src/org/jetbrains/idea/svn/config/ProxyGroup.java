@@ -29,8 +29,7 @@ public class ProxyGroup {
   public ProxyGroup(final String groupName, final String patterns, final Map<String, String> properties) {
     myGroupName = groupName;
     myPattern = patterns;
-    myProperties = new HashMap<String, String>();
-    myProperties.putAll(properties);
+    myProperties = properties;
   }
 
   public Map<String, String> getProperties() {
@@ -55,6 +54,10 @@ public class ProxyGroup {
 
   public String getTimeout() {
     return myProperties.get(SvnServerFileKeys.TIMEOUT);
+  }
+
+  public void setTimeout(final String value) {
+    myProperties.put(SvnServerFileKeys.TIMEOUT, value);
   }
 
   public String getPatterns() {

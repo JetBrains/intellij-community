@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -46,7 +49,11 @@ public class CreateFieldFix {
     return myTargetClass.isValid();
   }
 
-  protected void doFix(Project project, String[] modifiers, String fieldName, TypeConstraint[] typeConstraints, PsiElement context) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project,
+                       @NotNull @GrModifier.ModifierConstant String[] modifiers,
+                       @NotNull @NonNls String fieldName,
+                       @NotNull TypeConstraint[] typeConstraints,
+                       @NotNull PsiElement context) throws IncorrectOperationException {
     JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     if (factory == null) return;
 
@@ -55,7 +62,7 @@ public class CreateFieldFix {
       field.getModifierList().addAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
     }
 
-    for (String modifier : modifiers) {
+    for (@GrModifier.ModifierConstant String modifier : modifiers) {
       PsiUtil.setModifierProperty(field, modifier, true);
     }
 

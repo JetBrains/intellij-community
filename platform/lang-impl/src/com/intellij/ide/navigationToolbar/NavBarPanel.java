@@ -739,7 +739,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   public void removeNotify() {
     super.removeNotify();
-    Disposer.dispose(this);
+    if (ScreenUtil.isStandardAddRemoveNotify(this))
+      Disposer.dispose(this);
   }
 
   public void updateState(final boolean show) {

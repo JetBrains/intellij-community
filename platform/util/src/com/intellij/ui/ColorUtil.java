@@ -131,4 +131,13 @@ public class ColorUtil {
     // based on perceptional luminosity, see
     return (1 - (0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue()) / 255) >= 0.5;
   }
+
+  @NotNull
+  public static Color mix(@NotNull Color c1, @NotNull Color c2, double balance) {
+    balance = Math.min(1, Math.max(0, balance));
+    return new Color((int)((1 - balance) * c1.getRed() + c2.getRed() * balance + .5),
+                     (int)((1 - balance) * c1.getGreen() + c2.getGreen() * balance + .5),
+                     (int)((1 - balance) * c1.getBlue() + c2.getBlue() * balance + .5),
+                     (int)((1 - balance) * c1.getAlpha() + c2.getAlpha() * balance + .5));
+  }
 }

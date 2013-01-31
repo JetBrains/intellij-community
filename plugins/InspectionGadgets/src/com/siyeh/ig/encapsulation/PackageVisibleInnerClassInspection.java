@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("package.visible.inner.class.ignore.enum.option"), "ignoreEnums");
-    panel.addCheckbox(InspectionGadgetsBundle.message("package.visible.inner.class.ignore.enum.option"), "ignoreInterfaces");
+    panel.addCheckbox(InspectionGadgetsBundle.message("package.visible.inner.class.ignore.interface.option"), "ignoreInterfaces");
     return panel;
   }
 

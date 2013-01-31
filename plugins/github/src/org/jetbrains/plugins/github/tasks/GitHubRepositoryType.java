@@ -52,9 +52,4 @@ public class GitHubRepositoryType extends BaseRepositoryType<GitHubRepository> {
                                            Consumer<GitHubRepository> changeListener) {
     return new GitHubRepositoryEditor(project, repository, changeListener);
   }
-
-  @Override
-  protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
-  }
 }

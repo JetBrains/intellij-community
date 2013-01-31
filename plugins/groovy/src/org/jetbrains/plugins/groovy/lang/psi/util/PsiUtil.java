@@ -1281,7 +1281,7 @@ public class PsiUtil {
     return qualifier instanceof GrReferenceExpression && (isThisReference(qualifier) || isSuperReference(qualifier));
   }
 
-  public static boolean isInstanceThisRef(GrExpression qualifier) {
+  public static boolean isInstanceThisRef(PsiElement qualifier) {
     if (isThisReference(qualifier)) {
       GrReferenceExpression ref = (GrReferenceExpression)qualifier;
 
@@ -1291,5 +1291,11 @@ public class PsiUtil {
       return hasEnclosingInstanceInScope((PsiClass)resolved, qualifier, false);
     }
     return false;
+  }
+
+  public static boolean isLineFeed(@Nullable PsiElement e) {
+    return e != null &&
+           TokenSets.WHITE_SPACES_SET.contains(e.getNode().getElementType()) &&
+           (e.getText().indexOf('\n') >= 0 || e.getText().indexOf('\r') >= 0);
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import java.util.List;
 
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
+  public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
   private int numAnnotationsAdded = 0;
   private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
   private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
@@ -152,6 +154,9 @@ public class NullityInferrer {
 
   public boolean nothingFoundMessage(final Project project) {
     if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(NOTHING_FOUND_TO_INFER);
+      }
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
@@ -583,6 +588,9 @@ public class NullityInferrer {
           registerNullableAnnotation(parameter);
           return true;
         }
+      }
+      else if (parent instanceof PsiInstanceOfExpression) {
+        return true;
       }
       else if (parent instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression)parent).getQualifierExpression();

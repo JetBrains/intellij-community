@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -75,7 +77,11 @@ public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements Gr
   }
 
   public GrDocMethodParameter[] getParameters() {
-    return findChildrenByClass(GrDocMethodParameter.class);
+    List<GrDocMethodParameter> result = new ArrayList<GrDocMethodParameter>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (ReflectionCache.isInstance(cur, GrDocMethodParameter.class)) result.add((GrDocMethodParameter)cur);
+    }
+    return result.toArray(new GrDocMethodParameter[result.size()]);
   }
 
   @NotNull

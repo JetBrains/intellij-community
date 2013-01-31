@@ -30,8 +30,8 @@ class EventLogTest extends LightPlatformTestCase {
   }
 
   public void testHtmlEntities() {
-    def entry = format("Title", "Hello&nbsp;world&laquo;&raquo;")
-    assert entry.message == 'Title: Hello world<<>>'
+    def entry = format("Title", "Hello&nbsp;world&laquo;&raquo;&lt;&gt;")
+    assert entry.message == 'Title: Hello world<<>><>'
   }
 
   public void testParseMultilineText() {

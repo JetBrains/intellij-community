@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.xml.Required;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -38,9 +39,17 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
   @AbstractCollection(surroundWithTag = false)
   public Param[] params;
 
-  /**
-   * @author Sergey Evdokimov
-   */
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false)
+  public ModelProperty[] properties;
+
+  @Tag("property")
+  public static class ModelProperty {
+    @Attribute("name")
+    @Required
+    public String name;
+  }
+
   @Tag("param")
   public static class Param {
 
@@ -57,5 +66,38 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     @Attribute("refProvider")
     public String refProvider;
 
+    @Attribute("values")
+    public String values;
+
+    @Attribute("soft")
+    public Boolean soft;
+
+    /**
+     * Language to inject.
+     */
+    @Attribute("language")
+    public String language;
+
+    /**
+     * Class of type org.jetbrains.idea.maven.plugins.api.MavenParamLanguageProvider
+     */
+    @Attribute("languageProvider")
+    public String languageProvider;
+
+    @Attribute("languageInjectionPrefix")
+    public String languageInjectionPrefix;
+
+    @Attribute("languageInjectionSuffix")
+    public String languageInjectionSuffix;
   }
+
+  public static Pair<String, String> parsePluginId(String mavenId) {
+    int idx = mavenId.indexOf(':');
+    if (idx <= 0 || idx == mavenId.length() - 1 || mavenId.lastIndexOf(':') != idx) {
+      throw new RuntimeException("Failed to parse mavenId: " + mavenId + " (mavenId should has format 'groupId:artifactId')");
+    }
+
+    return new Pair<String, String>(mavenId.substring(0, idx), mavenId.substring(idx + 1));
+  }
+
 }

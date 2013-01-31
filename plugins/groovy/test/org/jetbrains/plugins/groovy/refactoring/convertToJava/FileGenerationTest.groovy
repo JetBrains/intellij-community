@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,7 @@ class FileGenerationTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/file'
 
   private void doTest() {
-    myFixture.addClass("""\
-package java.util;
-
-public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
-    public LinkedHashMap(int initialCapacity, float loadFactor) {}
-    public LinkedHashMap(int initialCapacity) {}
-    public LinkedHashMap() {}
-    public LinkedHashMap(Map<? extends K, ? extends V> m) {}
-    public LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {}
-}""")
+    addLinkedHashMap()
 
     final String testName = getTestName(true)
     final PsiFile file = myFixture.configureByFile("${testName}.groovy");
@@ -126,4 +117,10 @@ public enum A {
   void testImplementGroovyObject() { doTest() }
 
   void testFinalMethodParameterUsedInAnonymous() { doTest() }
+
+  void testMethodWithUntypedParameterInitializedWithNull() { doTest() }
+
+  void testGroovyDoc() { doTest() }
+
+  void testReflectedMethodWithEllipsis() { doTest() }
 }

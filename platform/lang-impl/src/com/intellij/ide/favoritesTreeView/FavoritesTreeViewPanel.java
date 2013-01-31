@@ -36,6 +36,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -54,6 +55,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
@@ -66,6 +72,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -76,7 +83,7 @@ import java.util.List;
  * @author anna
  * @author Konstantin Bulenkov
  */
-public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
+public class FavoritesTreeViewPanel extends JPanel implements DataProvider, DockContainer {
   public static final String NEW_FAVORITES_LIST = "New Favorites List...";
   private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
@@ -109,6 +116,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     final DefaultTreeModel treeModel = new DefaultTreeModel(root);
     myTree = new DnDAwareTree(treeModel);
     myBuilder = new FavoritesViewTreeBuilder(myProject, myTree, treeModel, myFavoritesTreeStructure);
+    DockManager.getInstance(project).register(this);
 
     TreeUtil.installActions(myTree);
     UIUtil.setLineStyleAngled(myTree);
@@ -671,6 +679,46 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     return myBuilder;
   }
 
+  @Nullable
+  FavoritesListNode findFavoritesListNode(Point point) {
+    final TreePath path = myTree.getClosestPathForLocation(point.x, point.y);
+    final FavoritesListNode node = getListNodeFromPath(path);
+    return node == null ? (FavoritesListNode)((FavoritesRootNode)myFavoritesTreeStructure.getRootElement()).getChildren().iterator().next()
+                        : node;
+  }
+
+  static FavoritesListNode getListNodeFromPath(TreePath path) {
+    if (path != null && path.getPathCount() > 1) {
+      final Object o = path.getPath()[1];
+      if (o instanceof DefaultMutableTreeNode) {
+        final Object obj = ((DefaultMutableTreeNode)o).getUserObject();
+        if (obj instanceof FavoritesTreeNodeDescriptor) {
+          final AbstractTreeNode node = ((FavoritesTreeNodeDescriptor)obj).getElement();
+          if (node instanceof FavoritesListNode) {
+            return (FavoritesListNode)node;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  void dropPsiElements(FavoritesManager mgr, FavoritesListNode node, PsiElement[] elements) {
+    if (elements != null && elements.length > 0) {
+      final ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+      for (PsiElement element : elements) {
+        if (element instanceof SmartPsiElementPointer) {
+          element = ((SmartPsiElementPointer)element).getElement();
+        }
+        final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
+          .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
+        nodes.addAll(tmp);
+        mgr.addRoots(node.getValue(), nodes);
+      }
+      myBuilder.select(nodes.toArray(), null);
+    }
+  }
+
   private final class MyDeletePSIElementProvider implements DeleteProvider {
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getElementsToDelete();
@@ -786,5 +834,93 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     public PsiDirectory getOrChooseDirectory() {
       return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
+  }
+
+  //DockContainer methods
+
+  @Override
+  public RelativeRectangle getAcceptArea() {
+    return new RelativeRectangle(myTree);
+  }
+
+  @NotNull
+  @Override
+  public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+    if (content.getKey() instanceof VirtualFile) {
+      return ContentResponse.ACCEPT_COPY;
+    }
+    return ContentResponse.DENY;
+  }
+
+  @Override
+  public JComponent getContainerComponent() {
+    return this;
+  }
+
+  @Override
+  public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
+    if (content.getKey() instanceof VirtualFile) {
+      VirtualFile vFile = (VirtualFile)content.getKey();
+      final PsiFileSystemItem psiFile = vFile.isDirectory()
+                                        ? PsiManager.getInstance(myProject).findDirectory(vFile)
+                                        : PsiManager.getInstance(myProject).findFile(vFile);
+      Point p = dropTarget.getScreenPoint();
+      SwingUtilities.convertPointFromScreen(p, myTree);
+      FavoritesListNode node = findFavoritesListNode(p);
+      if (node != null && psiFile != null) {
+        dropPsiElements(myFavoritesManager, node, new PsiElement[]{psiFile});
+      }
+    }
+  }
+
+  @Override
+  public void closeAll() {
+  }
+
+  @Override
+  public void addListener(Listener listener, Disposable parent) {
+    throw new UnsupportedOperationException("Method is not supported");
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return myTree.isEmpty();
+  }
+
+  @Nullable
+  @Override
+  public Image startDropOver(@NotNull DockableContent content, RelativePoint point) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Image processDropOver(@NotNull DockableContent content, RelativePoint point) {
+    Point p = point.getScreenPoint();
+    SwingUtilities.convertPointFromScreen(p, myTree);
+    TreePath treePath = myTree.getClosestPathForLocation(p.x, p.y);
+    FavoritesListNode node = getListNodeFromPath(treePath);
+    treePath = node != null ? myTree.getPath(node) : null;
+    if (treePath != null) {
+      myTree.setSelectionPath(treePath);
+    }
+    return null;
+  }
+
+  @Override
+  public void resetDropOver(@NotNull DockableContent content) {
+  }
+
+  @Override
+  public boolean isDisposeWhenEmpty() {
+    return false;
+  }
+
+  @Override
+  public void showNotify() {
+  }
+
+  @Override
+  public void hideNotify() {
   }
 }

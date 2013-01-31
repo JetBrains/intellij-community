@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.InvalidDataException;
@@ -79,6 +76,12 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public void setColor(ColorKey key, @Nullable Color color) {
     myDelegate.setColor(key, color);
+  }
+
+  @NotNull
+  @Override
+  public FontPreferences getFontPreferences() {
+    return myDelegate.getFontPreferences();
   }
 
   @Override
@@ -147,6 +150,12 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public Object clone() {
     return myDelegate.clone();
+  }
+
+  @NotNull
+  @Override
+  public FontPreferences getConsoleFontPreferences() {
+    return myDelegate.getConsoleFontPreferences();
   }
 
   @Override

@@ -32,6 +32,8 @@ import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author lesya
@@ -42,6 +44,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
   private int myExternalsCount;
   private final SvnVcs myVCS;
   @Nullable private final SvnUpdateContext mySequentialUpdatesContext;
+  private final Map<File, SVNURL> myUrlToCheckForSwitch;
 
   protected String myText;
   protected String myText2;
@@ -52,6 +55,11 @@ public class UpdateEventHandler implements ISVNEventHandler {
     myVCS = vcs;
     mySequentialUpdatesContext = sequentialUpdatesContext;
     myExternalsCount = 1;
+    myUrlToCheckForSwitch = new HashMap<File, SVNURL>();
+  }
+
+  public void addToSwitch(final File file, final SVNURL url) {
+    myUrlToCheckForSwitch.put(file, url);
   }
 
   public void setUpdatedFiles(final UpdatedFiles updatedFiles) {
@@ -107,6 +115,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
       addFileToGroup(FileGroup.REMOVED_FROM_REPOSITORY_ID, event);
     }
     else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
+      possiblySwitched(event);
       if (event.getContentsStatus() == SVNStatusType.CONFLICTED || event.getPropertiesStatus() == SVNStatusType.CONFLICTED) {
         if (event.getContentsStatus() == SVNStatusType.CONFLICTED) {
           addFileToGroup(FileGroup.MERGED_WITH_CONFLICT_ID, event);
@@ -154,6 +163,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
       addFileToGroup(FileGroup.RESTORED_ID, event);
     }
     else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED && event.getRevision() >= 0) {
+      possiblySwitched(event);
       myExternalsCount--;
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
       if (myExternalsCount == 0) {
@@ -167,6 +177,16 @@ public class UpdateEventHandler implements ISVNEventHandler {
     }
 
     updateProgressIndicator();
+  }
+
+  private void possiblySwitched(SVNEvent event) {
+    final File file = event.getFile();
+    if (file == null) return;
+    final SVNURL wasUrl = myUrlToCheckForSwitch.get(file);
+    if (wasUrl != null && ! wasUrl.equals(event.getURL())) {
+      myUrlToCheckForSwitch.remove(file);
+      addFileToGroup(FileGroup.SWITCHED_ID, event);
+    }
   }
 
   private boolean itemSwitched(final SVNEvent event) {

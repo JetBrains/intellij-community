@@ -203,7 +203,7 @@ public final class UpdateChecker {
       try {
         final String oldInstalledPlugins = FileUtil.loadFile(installedTxt);
         for (String pluginId : oldInstalledPlugins.trim().split("\n")) {
-          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId, null);
+          if (!toUpdate.containsKey(pluginId)) toUpdate.put(pluginId.trim(), null);
         }
       }
       catch (IOException e) {
@@ -353,7 +353,7 @@ public final class UpdateChecker {
             try {
               final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
               if (progressIndicator != null) {
-                progressIndicator.setText(finalPluginUrl);
+                progressIndicator.setText2(finalPluginUrl);
               }
               final PluginDownloader downloader = new PluginDownloader(pluginId, finalPluginUrl, pluginVersion);
               if (downloader.prepareToInstall()) {
@@ -467,6 +467,8 @@ public final class UpdateChecker {
     return result;
   }
 
+  private static boolean myUpdateInfoDialogShown = false;
+
   public static void showUpdateResult(CheckForUpdateResult checkForUpdateResult,
                                       List<PluginDownloader> updatedPlugins,
                                       boolean showConfirmation,
@@ -478,9 +480,16 @@ public final class UpdateChecker {
       dialog.setModal(alwaysShowResults);
       dialog.show();
     }
-    else if (checkForUpdateResult.hasNewBuildInSelectedChannel()) {
-      UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink);
+    else if (checkForUpdateResult.hasNewBuildInSelectedChannel() && !myUpdateInfoDialogShown) {
+      UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink) {
+        @Override
+        protected void dispose() {
+          myUpdateInfoDialogShown = false;
+          super.dispose();
+        }
+      };
       dialog.setModal(alwaysShowResults);
+      myUpdateInfoDialogShown = true;
       dialog.show();
     }
     else if (updatedPlugins != null || alwaysShowResults && ProjectManager.getInstance().getOpenProjects().length == 0) {

@@ -226,9 +226,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromResults(myInfos, indicator);
   }
 
-  private static MultiMap<LocalInspectionToolWrapper, String> getToolsForElements(List<LocalInspectionToolWrapper> toolWrappers,
-                                                               boolean checkDumbAwareness,
-                                                               List<PsiElement> inside, List<PsiElement> outside) {
+  private static MultiMap<LocalInspectionToolWrapper, String> getToolsForElements(@NotNull List<LocalInspectionToolWrapper> toolWrappers,
+                                                                                  boolean checkDumbAwareness,
+                                                                                  @NotNull List<PsiElement> inside,
+                                                                                  @NotNull List<PsiElement> outside) {
     Set<Language> languages = new THashSet<Language>();
     Map<String, Language> langIds = new THashMap<String, Language>();
     Set<String> dialects = new THashSet<String>();

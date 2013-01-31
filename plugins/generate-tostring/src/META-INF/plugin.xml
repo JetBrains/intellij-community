@@ -22,10 +22,10 @@
         <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
                             serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
 
-      <localInspection language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not overwrite toString() method"
+      <localInspection language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
                        groupName="toString() issues" enabledByDefault="false" level="WARNING"
                        implementationClass="org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection"/>
-      <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in toString() method" groupName="toString() issues"
+      <localInspection language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupName="toString() issues"
                        enabledByDefault="false" level="WARNING" runForWholeFile="true"
                        implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
 

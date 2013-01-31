@@ -236,16 +236,25 @@ public final class IdeMouseEventDispatcher {
     catch (Exception ignored) { }
   }
 
-  private static void patchClickCount(final MouseEvent e) {
-    if (e.getClickCount() == 0 && e.getButton() > 3) {
+  /**
+   * This method patches event if it concerns side buttons like 4 (Backward) or 5 (Forward)
+   * AND it's not single-click event. We won't support double-click for side buttons.
+   * Also some JDK bugs produce zero-click events for side buttons.
+
+   * @return true if event was patched
+   */
+  public static boolean patchClickCount(final MouseEvent e) {
+    if (e.getClickCount() != 1 && e.getButton() > 3) {
       try {
         final Field clickCount = e.getClass().getDeclaredField("clickCount");
         clickCount.setAccessible(true);
         clickCount.set(e, 1);
+        return true;
       }
       catch (Exception ignored) {
       }
     }
+    return false;
   }
 
   private boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {

@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.intentions;
@@ -31,10 +31,11 @@ import org.jetbrains.annotations.Nullable
  */
 public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
 
-  @Nullable
   protected final String myHint;
+  private final Class<? extends LocalInspectionTool>[] myInspections
 
-  GrIntentionTestCase(@Nullable String hint = null) {
+  GrIntentionTestCase(@Nullable String hint = null, @NotNull Class<? extends LocalInspectionTool>... inspections = []) {
+    myInspections = inspections
     myHint = hint
   }
 
@@ -56,6 +57,7 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
     assertNotNull(hint)
     myFixture.configureByText("a.groovy", before);
     myFixture.enableInspections(inspections)
+    myFixture.enableInspections(myInspections)
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     myFixture.launchAction(assertOneElement(list));
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();

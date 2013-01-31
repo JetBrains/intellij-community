@@ -61,6 +61,7 @@ public class SimpleOpenTaskDialog extends DialogWrapper {
     binder.reset();
 
     TaskRepository repository = task.getRepository();
+    myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
     if (repository == null || !repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
       myMarkAsInProgressBox.setVisible(false);
     }

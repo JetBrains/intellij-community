@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   }
 
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
-    return ElementManipulators.INSTANCE.forClass(element.getClass());
+    return INSTANCE.forClass(element.getClass());
   }
 
   public static int getOffsetInElement(final PsiElement element) {
@@ -48,8 +48,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
 
   public static TextRange getValueTextRange(final PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    assert manipulator != null: element.getClass().getName();
-    return manipulator.getRangeInElement(element);
+    return manipulator == null ? TextRange.from(0, element.getTextLength()) : manipulator.getRangeInElement(element);
   }
 
   public static String getValueText(final PsiElement element) {
@@ -57,7 +56,10 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     if (valueTextRange.isEmpty()) return "";
 
     final String text = element.getText();
-    LOG.assertTrue(valueTextRange.getEndOffset() <= text.length(), "Wrong range for " + element + " text: " + text + " range " + valueTextRange);
+    if (valueTextRange.getEndOffset() > text.length()) {
+      LOG.error("Wrong range for " + element + " text: " + text + " range " + valueTextRange);
+    }
+
     return valueTextRange.substring(text);
   }
 }

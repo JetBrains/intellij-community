@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class GroovyDocGenerationPanel extends JPanel {
+public final class GroovyDocGenerationPanel extends JPanel/* implements Disposable*/ {
   JPanel myPanel;
   TextFieldWithBrowseButton myOutputDir;
   NonFocusableCheckBox myIsUse;
@@ -54,10 +54,13 @@ public final class GroovyDocGenerationPanel extends JPanel {
   private final DefaultListModel myDataModel;
 
   GroovyDocGenerationPanel() {
-    myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.input.directory.browse"), null, null,
+    //Disposer.register(this, myInputDir);
+    //Disposer.register(this, myOutputDir);
+
+    myInputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
-    myOutputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.output.directory.browse"), null, null,
+    myOutputDir.addBrowseFolderListener(GroovyDocBundle.message("groovydoc.generate.directory.browse"), null, null,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myDataModel = new DefaultListModel();
@@ -77,6 +80,8 @@ public final class GroovyDocGenerationPanel extends JPanel {
 
     myPanel.setMinimumSize(new Dimension(275, 350));
   }
+
+
 
   private ActionGroup getActionGroup() {
     if (myActionGroup == null) {
@@ -155,5 +160,9 @@ private static String[] toStringArray(final DefaultListModel model) {
 
   public JPanel getPanel() {
     return myPanel;
+  }
+
+  //@Override
+  public void dispose() {
   }
 }

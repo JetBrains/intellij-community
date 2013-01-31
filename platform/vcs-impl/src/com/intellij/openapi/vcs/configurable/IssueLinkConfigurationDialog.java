@@ -15,16 +15,16 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -76,6 +76,12 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "reference.settings.vcs.issue.navigation.add.link";
   }
 
   public IssueNavigationLink getLink() {

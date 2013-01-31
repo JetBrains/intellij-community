@@ -56,10 +56,9 @@ public class InlineUtil {
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
     PsiType exprType = expr.getType();
-    if (exprType != null && (!varType.equals(exprType) && varType instanceof PsiPrimitiveType
+    if (exprType != null && (!varType.equals(exprType) && (varType instanceof PsiPrimitiveType || exprType instanceof PsiPrimitiveType)
                              || !TypeConversionUtil.isAssignable(varType, exprType) 
-                             || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType)
-                             || expr instanceof PsiConditionalExpression)) {
+                             || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType))) {
       boolean matchedTypes = false;
       //try explicit type arguments
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

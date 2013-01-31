@@ -22,6 +22,7 @@ package com.intellij.tools;
 import com.intellij.execution.filters.InvalidExpressionException;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.PopupHandler;
 import com.intellij.CommonBundle;
@@ -119,7 +120,7 @@ class FilterDialog extends DialogWrapper {
   }
 
   private void makePopup() {
-    myPopup = new JPopupMenu();
+    myPopup = new JBPopupMenu();
     String[] macrosName = RegexpFilter.getMacrosName();
     JMenuItem[] items = new JMenuItem[macrosName.length];
     for (int i = 0; i < macrosName.length; i++) {

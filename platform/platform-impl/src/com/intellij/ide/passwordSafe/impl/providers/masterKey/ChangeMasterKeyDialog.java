@@ -19,9 +19,13 @@ import com.intellij.ide.passwordSafe.HelpID;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This dialog is used to change master password
@@ -93,9 +97,14 @@ public class ChangeMasterKeyDialog extends DialogWrapper {
   /**
    * {@inheritDoc}
    */
+  @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), new DialogWrapperExitAction("Reset Password", RESET_PASSWORD_CODE), getCancelAction()};
+    List<Action> baseActions = new ArrayList<Action>();
+    Collections.addAll(baseActions, super.createActions());
+    int okIndex = baseActions.indexOf(getOKAction());
+    baseActions.add(okIndex, new DialogWrapperExitAction("Reset Password", RESET_PASSWORD_CODE));
+    return baseActions.toArray(new Action[baseActions.size()]);
   }
 
   /**

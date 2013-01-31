@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class ExpressionParser {
   private static final TokenSet ARGS_LIST_CONTINUE = TokenSet.create(
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
+  private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
@@ -396,7 +397,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker refExpr = expr.precede();
           myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
 
-          if (!expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
+          if (!expectOrError(builder, ID_OR_SUPER, "expected.identifier")) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
@@ -548,10 +549,13 @@ public class ExpressionParser {
       final PsiBuilder.Marker mark = builder.mark();
 
       final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, 0);
-      if (typeInfo != null && (typeInfo.isPrimitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
-        final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, typeInfo.isPrimitive);
-        if (result != null) {
-          return result;
+      if (typeInfo != null) {
+        boolean optionalClassKeyword = typeInfo.isPrimitive || typeInfo.isArray;
+        if (optionalClassKeyword || !typeInfo.hasErrors && typeInfo.isParameterized) {
+          final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, optionalClassKeyword);
+          if (result != null) {
+            return result;
+          }
         }
       }
 
@@ -775,10 +779,10 @@ public class ExpressionParser {
   @Nullable
   private PsiBuilder.Marker continueClassAccessOrMethodReference(final PsiBuilder builder,
                                                                  final PsiBuilder.Marker expr,
-                                                                 final boolean primitive) {
+                                                                 final boolean optionalClassKeyword) {
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.DOT) {
-      return parseClassObjectAccess(builder, expr, primitive);
+      return parseClassObjectAccess(builder, expr, optionalClassKeyword);
     }
     else if (tokenType == JavaTokenType.DOUBLE_COLON) {
       return parseMethodReference(builder, expr);
@@ -788,7 +792,7 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean primitive) {
+  private static PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
     final PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
 
@@ -797,7 +801,7 @@ public class ExpressionParser {
       builder.advanceLexer();
     }
     else {
-      if (!primitive) return null;
+      if (!optionalClassKeyword) return null;
       mark.rollbackTo();
       builder.error(".class expected");
     }

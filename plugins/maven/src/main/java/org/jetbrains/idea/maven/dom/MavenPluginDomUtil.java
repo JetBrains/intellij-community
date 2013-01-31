@@ -20,7 +20,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -40,6 +42,29 @@ public class MavenPluginDomUtil {
     if (pluginXmlFile == null) return null;
 
     return MavenDomUtil.getMavenDomModel(p, pluginXmlFile, MavenDomPluginModel.class);
+  }
+
+  public static boolean isPlugin(@NotNull MavenDomConfiguration configuration, @Nullable String groupId, @NotNull String artifactId) {
+    MavenDomPlugin domPlugin = configuration.getParentOfType(MavenDomPlugin.class, true);
+    if (domPlugin == null) return false;
+
+    return isPlugin(domPlugin, groupId, artifactId);
+  }
+
+  public static boolean isPlugin(@NotNull MavenDomPlugin plugin, @Nullable String groupId, @NotNull String artifactId) {
+    if (!artifactId.equals(plugin.getArtifactId().getStringValue())) return false;
+
+    String pluginGroupId = plugin.getGroupId().getStringValue();
+
+    if (groupId == null) {
+      return pluginGroupId == null || (pluginGroupId.equals("org.apache.maven.plugins") || pluginGroupId.equals("org.codehaus.mojo"));
+    }
+
+    if (pluginGroupId == null && (groupId.equals("org.apache.maven.plugins") || groupId.equals("org.codehaus.mojo"))) {
+      return true;
+    }
+
+    return groupId.equals(pluginGroupId);
   }
 
   @Nullable

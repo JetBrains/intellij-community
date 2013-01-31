@@ -3,6 +3,12 @@
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="android" url="file://$PROJECT_DIR$/plugins/android/testData/AndroidManifest.xml" />
+    <file type="android" url="file://$PROJECT_DIR$/plugins/android/testData/lint/global/buttonsOrder/AndroidManifest.xml" />
+    <file type="android" url="file://$PROJECT_DIR$/plugins/android/testData/lint/global/manifestOrder/AndroidManifest.xml" />
+    <file type="android" url="file://$PROJECT_DIR$/plugins/android/testData/resNavigation/AndroidManifest.xml" />
+  </component>
   <component name="IdProvider" IDEtalkID="88DB5D232B345F18EEFB2825E88EC093" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />

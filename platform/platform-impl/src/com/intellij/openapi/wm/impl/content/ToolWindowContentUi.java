@@ -216,7 +216,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public Dimension getMinimumSize() {
-    return getPreferredSize();
+    Insets insets = getInsets();
+    return new Dimension(insets.left + insets.right + getCurrentLayout().getMinimumWidth(), super.getMinimumSize().height);
   }
 
   public Dimension getPreferredSize() {

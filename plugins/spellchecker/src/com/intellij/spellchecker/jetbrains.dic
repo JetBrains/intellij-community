@@ -63,6 +63,7 @@ codebase
 codeinsight
 codesign
 commandline
+committer
 conf
 config
 configs
@@ -111,6 +112,7 @@ evex
 exif
 expr
 facebook
+favicon
 filename
 fileset
 filesets

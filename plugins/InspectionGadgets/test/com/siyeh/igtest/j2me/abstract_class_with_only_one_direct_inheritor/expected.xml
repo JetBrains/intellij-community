@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>AbstractClassWithOnlyOneDirectInheritor.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Abstract class which has only one direct inheritor</problem_class>
+    <description>Abstract class &lt;code&gt;AbstractClassWithOnlyOneDirectInheritor&lt;/code&gt; has only one direct inheritor #loc</description>
+  </problem>
+</problems>

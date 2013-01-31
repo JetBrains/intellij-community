@@ -201,6 +201,12 @@ public class StaticChecker {
   public static boolean isInStaticContext(GrQualifiedReference refExpression, @Nullable PsiClass targetClass) {
     PsiElement qualifier = refExpression.getQualifier();
     if (qualifier != null && !PsiUtil.isThisOrSuperRef(refExpression)) {
+      if (PsiUtil.isInstanceThisRef(qualifier) || PsiUtil.isSuperReference(qualifier)) {
+        return false;
+      }
+      else if (PsiUtil.isThisReference(qualifier)) { //instance 'this' already is processed. So it static 'this'
+        return true;
+      }
       return qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
     }
 

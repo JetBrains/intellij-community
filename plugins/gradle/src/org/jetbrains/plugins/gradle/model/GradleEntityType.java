@@ -13,7 +13,7 @@ import javax.swing.*;
 public enum GradleEntityType {
   PROJECT(GradleIcons.PROJECT_ICON), MODULE(AllIcons.Nodes.Module), MODULE_DEPENDENCY(AllIcons.Nodes.Module),
   LIBRARY(AllIcons.Nodes.PpLib), LIBRARY_DEPENDENCY(AllIcons.Nodes.PpLib), CONTENT_ROOT(null), SYNTHETIC(null),
-  JAR(AllIcons.FileTypes.Archive);
+  JAR(AllIcons.FileTypes.Archive), DEPENDENCY_TO_OUTDATED_LIBRARY(LIBRARY.getIcon());
 
   @Nullable private final Icon myIcon;
 

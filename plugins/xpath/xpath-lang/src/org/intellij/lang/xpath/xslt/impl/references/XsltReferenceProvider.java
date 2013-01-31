@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.URLUtil;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
@@ -118,7 +119,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         //noinspection StringEquality
         if (href == resourceLocation) {
           // not a configured external resource
-          if (!href.contains("://")) {
+          if (!URLUtil.containsScheme(href)) {
             // a local file reference
             final FileReferenceSet filereferenceset = new FileReferenceSet(
               href,

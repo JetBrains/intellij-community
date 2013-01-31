@@ -1,15 +1,18 @@
 package org.jetbrains.plugins.gradle.sync;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
-import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
+import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -23,24 +26,34 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 11/3/11 7:01 PM
  */
-public class GradleProjectStructureChangesModel extends AbstractProjectComponent {
+public class GradleProjectStructureChangesModel {
 
-  private final Set<GradleProjectStructureChangeListener> myListeners = new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
-  private final AtomicReference<Set<GradleProjectStructureChange>> myChanges
-    = new AtomicReference<Set<GradleProjectStructureChange>>(new HashSet<GradleProjectStructureChange>());
-  
-  private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
+  private final Set<GradleProjectStructureChangeListener>          myListeners =
+    new CopyOnWriteArraySet<GradleProjectStructureChangeListener>();
+  private final AtomicReference<Set<GradleProjectStructureChange>> myChanges   =
+    new AtomicReference<Set<GradleProjectStructureChange>>(new HashSet<GradleProjectStructureChange>());
+
+  private final AtomicReference<GradleProject>                         myGradleProject  = new AtomicReference<GradleProject>();
+  private final Collection<GradleProjectStructureChangesPostProcessor> myPostProcessors = ContainerUtilRt.createEmptyCOWList();
 
   @NotNull private final GradleStructureChangesCalculator<GradleProject, Project> myChangesCalculator;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final PlatformFacade                                           myPlatformFacade;
+  @NotNull private final GradleLibraryPathTypeMapper                              myLibraryPathTypeMapper;
+  @NotNull private final Project                                                  myProject;
 
   public GradleProjectStructureChangesModel(@NotNull Project project,
                                             @NotNull GradleStructureChangesCalculator<GradleProject, Project> changesCalculator,
-                                            @NotNull PlatformFacade platformFacade)
+                                            @NotNull PlatformFacade platformFacade,
+                                            @NotNull GradleLibraryPathTypeMapper mapper,
+                                            @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor,
+                                            @NotNull GradleOutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor)
   {
-    super(project);
+    myProject = project;
     myChangesCalculator = changesCalculator;
     myPlatformFacade = platformFacade;
+    myLibraryPathTypeMapper = mapper;
+    myPostProcessors.add(movedJarsPostProcessor);
+    myPostProcessors.add(changedLibraryVersionPostProcessor);
   }
 
   /**
@@ -63,7 +76,7 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
    */
   public void update(@NotNull GradleProject gradleProject) {
     myGradleProject.set(gradleProject);
-    GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
+    final GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
     if (!context.hasNewChanges()) {
       return;
     }
@@ -81,6 +94,12 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
     return myGradleProject.get();
   }
   
+  @NotNull
+  @TestOnly
+  public Collection<GradleProjectStructureChangesPostProcessor> getPostProcessors() {
+    return myPostProcessors;
+  }
+
   /**
    * Registers given listener within the current model.
    * 
@@ -94,8 +113,12 @@ public class GradleProjectStructureChangesModel extends AbstractProjectComponent
 
   @NotNull
   public GradleChangesCalculationContext getCurrentChangesContext(@NotNull GradleProject gradleProject) {
-    GradleChangesCalculationContext context = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade);
+    GradleChangesCalculationContext context
+      = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade, myLibraryPathTypeMapper);
     myChangesCalculator.calculate(gradleProject, myProject, context);
+    for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
+      processor.processChanges(context.getCurrentChanges(), myProject);
+    }
     return context;
   }
   

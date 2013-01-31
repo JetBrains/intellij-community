@@ -31,8 +31,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
-import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mustBeType;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.FAIL;
+import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.REF_WITH_TYPE_PARAMS;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -88,7 +88,7 @@ public class Declaration implements GroovyElementTypes {
                                                  boolean modifiersParsed) {
     boolean expressionPossible = !isInAnnotation && !isInClass;
     if (modifiersParsed && builder.getTokenType() == mLT) {
-      return parseMethodWithGenerics(builder, isInClass, isInAnnotation, typeDefinitionName, parser, modifiersParsed, expressionPossible);
+      return parseDeclarationWithGenerics(builder, isInClass, isInAnnotation, typeDefinitionName, parser, modifiersParsed, expressionPossible);
     }
     else if (modifiersParsed) {
       return parseDeclarationWithoutGenerics(builder, isInClass, isInAnnotation, typeDefinitionName, parser, modifiersParsed, expressionPossible);
@@ -108,24 +108,15 @@ public class Declaration implements GroovyElementTypes {
                                                           @Nullable String typeDefinitionName,
                                                           @NotNull GroovyParser parser,
                                                           boolean expressionPossible) {
-    //if definition starts with lower case letter than it can be just call expression
-
-    String text = builder.getTokenText();
-    if (!builder.eof()
-        && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-        && text != null && StringUtil.isNotEmpty(text)
-        && (Character.isLowerCase((text.charAt(0))) || !Character.isLetter(text.charAt(0))) &&
-        (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
-      //call expression
+    if (isCall(builder)) {
       return WRONGWAY;
     }
 
     boolean typeParsed = false;
     if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
-      typeParsed = TypeSpec.parse(builder, true, expressionPossible) != fail;
+      typeParsed = TypeSpec.parse(builder, true, expressionPossible) != FAIL;
       //type specification starts with upper case letter
       if (!typeParsed) {
-        builder.error(GroovyBundle.message("type.specification.expected"));
         return WRONGWAY;
       }
     }
@@ -141,6 +132,19 @@ public class Declaration implements GroovyElementTypes {
     return WRONGWAY;
   }
 
+  private static boolean isCall(@NotNull PsiBuilder builder) {
+    if (builder.eof()) return false;
+    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) return false;
+
+    final String text = builder.getTokenText();
+    if (StringUtil.isEmpty(text)) return false;
+    assert text != null;
+
+    final char firstChar = text.charAt(0);
+    return (Character.isLowerCase(firstChar) || !Character.isLetter(firstChar)) &&
+           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN));
+  }
+
   private static IElementType parseDeclarationWithoutGenerics(@NotNull PsiBuilder builder,
                                                               boolean isInClass,
                                                               boolean isInAnnotation,
@@ -151,7 +155,7 @@ public class Declaration implements GroovyElementTypes {
     PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
     ReferenceElement.ReferenceElementResult typeResult = TypeSpec.parse(builder, false, expressionPossible);
-    if (typeResult == fail) { //if type wasn't recognized trying parse VariableDeclaration
+    if (typeResult == FAIL) { //if type wasn't recognized trying parse VariableDeclaration
       checkMarker.rollbackTo();
 
       if (isInAnnotation) {
@@ -167,7 +171,7 @@ public class Declaration implements GroovyElementTypes {
                                                                             modifiersParsed, false, parser);
 
       if (varDeclarationTop == WRONGWAY) {
-        if (typeResult == mustBeType) {
+        if (typeResult == REF_WITH_TYPE_PARAMS) {
           checkMarker.drop();
           return VARIABLE_DEFINITION_ERROR;
         }
@@ -188,13 +192,13 @@ public class Declaration implements GroovyElementTypes {
     }
   }
 
-  private static IElementType parseMethodWithGenerics(@NotNull PsiBuilder builder,
-                                                      boolean isInClass,
-                                                      boolean isInAnnotation,
-                                                      @Nullable String typeDefinitionName,
-                                                      @NotNull GroovyParser parser,
-                                                      boolean modifiersParsed,
-                                                      boolean expressionPossible) {
+  private static IElementType parseDeclarationWithGenerics(@NotNull PsiBuilder builder,
+                                                           boolean isInClass,
+                                                           boolean isInAnnotation,
+                                                           @Nullable String typeDefinitionName,
+                                                           @NotNull GroovyParser parser,
+                                                           boolean modifiersParsed,
+                                                           boolean expressionPossible) {
     final PsiBuilder.Marker start = builder.mark();
 
     final IElementType type = tryParseWithGenerics(builder, isInClass, isInAnnotation, typeDefinitionName, parser, modifiersParsed, expressionPossible, true);
@@ -229,11 +233,24 @@ public class Declaration implements GroovyElementTypes {
 
     PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-    if (TypeSpec.parse(builder, true, expressionPossible) == fail) { //if type wasn't recognized trying parse VariableDeclaration
-      checkMarker.rollbackTo();
-    }
-    else {
-      checkMarker.drop();
+    switch (TypeSpec.parse(builder, false, expressionPossible)) {
+      case PATH_REF:
+      case REF_WITH_TYPE_PARAMS:
+        checkMarker.drop();
+        break;
+      case FAIL:
+        checkMarker.rollbackTo();
+        break;
+      case IDENTIFIER:
+        // declaration name element can be parsed as type element
+        IElementType result = VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, typeDefinitionName, modifiersParsed, false, parser);
+        if (result == WRONGWAY) {
+          checkMarker.rollbackTo();
+        }
+        else {
+          checkMarker.drop();
+          return result;
+        }
     }
     return VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, typeDefinitionName, modifiersParsed, false, parser);
   }

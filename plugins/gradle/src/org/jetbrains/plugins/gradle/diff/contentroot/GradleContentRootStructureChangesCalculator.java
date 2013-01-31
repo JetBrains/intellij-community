@@ -16,14 +16,14 @@ public class GradleContentRootStructureChangesCalculator
 {
   @Override
   public void calculate(@NotNull GradleContentRoot gradleEntity,
-                        @NotNull ModuleAwareContentRoot intellijEntity,
+                        @NotNull ModuleAwareContentRoot ideEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
   }
 
   @NotNull
   @Override
-  public Object getIntellijKey(@NotNull ModuleAwareContentRoot entity) {
+  public Object getIdeKey(@NotNull ModuleAwareContentRoot entity) {
     return GradleEntityIdMapper.mapEntityToId(entity);
   }
 

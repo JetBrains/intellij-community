@@ -17,19 +17,22 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -56,6 +59,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -63,6 +67,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -147,7 +152,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
   private boolean myUpdating;
-  private CompletionPreview myPreview;
   private final ModalityState myModalityState;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
@@ -216,15 +220,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     mySortingLabel.setBorder(new LineBorder(Color.LIGHT_GRAY));
     mySortingLabel.setOpaque(true);
-    new ClickListener() {
-      @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
-        UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = !UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
-        updateSorting();
-        return true;
-      }
-    }.installOn(mySortingLabel);
+    new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
     myModalityState = ModalityState.stateForComponent(getComponent());
   }
@@ -254,7 +250,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     });
   }
 
-  private void updateSorting() {
+  void updateSorting() {
     final boolean lexi = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
     mySortingLabel.setIcon(lexi ? AllIcons.Ide.LookupAlphanumeric : AllIcons.Ide.LookupRelevance);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
@@ -272,6 +268,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void setFocused(boolean focused) {
+    if (focused && !myFocused) {
+      CompletionPreview.installPreview(this);
+    }
     myFocused = focused;
   }
 
@@ -623,7 +622,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFinishing = true;
     AccessToken token = WriteAction.start();
     try {
-      insertLookupString(item, myOffsets.getPrefixLength(item, this));
+      insertLookupString(item, getPrefixLength(item));
     }
     finally {
       token.finish();
@@ -636,6 +635,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     doHide(false, true);
 
     fireItemSelected(item, completionChar);
+  }
+
+  public int getPrefixLength(LookupElement item) {
+    return myOffsets.getPrefixLength(item, this);
   }
 
   private void insertLookupString(LookupElement item, final int prefix) {
@@ -726,7 +729,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
     assert !myChangeGuard : "already in change";
-    uninstallPreview();
 
     myChangeGuard = true;
     boolean result;
@@ -1347,7 +1349,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private class LookupLayeredPane extends JLayeredPane {
+  private class LookupLayeredPane extends JBLayeredPane {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
@@ -1467,21 +1469,30 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  public CompletionPreview getPreview() {
-    return myPreview;
-  }
+  private class ChangeLookupSorting extends ClickListener {
 
-  @Nullable 
-  public CompletionPreview uninstallPreview() {
-    CompletionPreview preview = myPreview;
-    if (preview != null) {
-      preview.uninstallPreview();
-      assert myPreview == null;
+    @Override
+    public boolean onClick(MouseEvent e, int clickCount) {
+      DataContext context = DataManager.getInstance().getDataContext(mySortingLabel);
+      DefaultActionGroup group = new DefaultActionGroup();
+      group.add(createSortingAction(true));
+      group.add(createSortingAction(false));
+      JBPopupFactory.getInstance().createActionGroupPopup("Change sorting", group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInBestPositionFor(
+        context);
+      return true;
     }
-    return preview;
-  }
 
-  void setPreview(CompletionPreview preview) {
-    myPreview = preview;
+    private AnAction createSortingAction(boolean checked) {
+      boolean currentSetting = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+      final boolean newSetting = checked ? currentSetting : !currentSetting;
+      return new AnAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null, checked ? PlatformIcons.CHECK_ICON : null) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
+          UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = newSetting;
+          updateSorting();
+        }
+      };
+    }
   }
 }

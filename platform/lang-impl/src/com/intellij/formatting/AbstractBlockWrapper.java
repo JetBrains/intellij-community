@@ -341,6 +341,10 @@ public abstract class AbstractBlockWrapper {
     if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent(indentOption.USE_RELATIVE_INDENTS);
 
     IndentData indent = getIndent(indentOption, index, childIndent);
+    if (childIndent.isRelativeToDirectParent()) {
+      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getOffsetBefore(CoreFormatterUtil.getFirstLeaf(this)),
+                            indent.getSpaces());
+    }
     if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
       return indent.add(getWhiteSpace());
     }

@@ -26,7 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
@@ -155,11 +154,9 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           try {
             LOG.info("Downloading sources jar: " + myUrl);
 
-            HttpConfigurable.getInstance().prepareURL(myUrl);
-
             indicator.checkCanceled();
 
-            HttpURLConnection urlConnection = (HttpURLConnection)new URL(myUrl).openConnection();
+            HttpURLConnection urlConnection = HttpConfigurable.getInstance().openHttpConnection(myUrl);
 
             int contentLength = urlConnection.getContentLength();
 

@@ -19,6 +19,10 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -216,5 +220,14 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   @Override
   public boolean isModified() {
     return false;
+  }
+
+  public boolean isInherited() {
+    return false;
+  }
+
+  @Nullable
+  public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
+    return null;
   }
 }

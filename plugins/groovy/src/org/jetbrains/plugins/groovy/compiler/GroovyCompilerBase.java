@@ -152,7 +152,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
-    parameters.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
+    parameters.getVMParametersList().addAll(HttpConfigurable.convertArguments(HttpConfigurable.getJvmPropertiesList(false, null)));
 
     //debug
     //parameters.getVMParametersList().add("-Xdebug"); parameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");

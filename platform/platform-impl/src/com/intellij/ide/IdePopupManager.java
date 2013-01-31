@@ -29,7 +29,7 @@ import java.util.List;
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
 
-  private final List<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createEmptyCOWList();
+  private final List<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createLockFreeCopyOnWriteList();
 
   boolean isPopupActive() {
     for (IdePopupEventDispatcher each : myDispatchStack) {
@@ -62,7 +62,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
-      for (int i = myDispatchStack.size() - 1; (i >=0 && i < myDispatchStack.size()); i--) {
+      for (int i = myDispatchStack.size() - 1; (i >= 0 && i < myDispatchStack.size()); i--) {
         final boolean dispatched = myDispatchStack.get(i).dispatch(e);
         if (dispatched) return true;
       }
@@ -81,7 +81,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     myDispatchStack.remove(dispatcher);
   }
 
-  public boolean closeAllPopups(){
+  public boolean closeAllPopups() {
     if (myDispatchStack.size() == 0) return false;
 
     boolean closed = true;

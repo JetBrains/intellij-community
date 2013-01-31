@@ -148,7 +148,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
         g2.setColor(UIUtil.getControlColor());
       }
       else {
-        g2.setPaint(new GradientPaint(0, 0, new JBColor(Gray._190, Gray._120), 0, barHeight, new JBColor(Gray._230, Gray._160)));
+        g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(Gray._190, Gray._120), 0, barHeight, new JBColor(Gray._230, Gray._160)));
       }
       g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
 
@@ -194,10 +194,10 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       end = end.darker();
     }
     if (invert) {
-      g2.setPaint(new GradientPaint(0, 0, end, 0, height, start));
+      g2.setPaint(UIUtil.getGradientPaint(0, 0, end, 0, height, start));
     }
     else {
-      g2.setPaint(new GradientPaint(0, 0, start, 0, height, end));
+      g2.setPaint(UIUtil.getGradientPaint(0, 0, start, 0, height, end));
     }
   }
 
@@ -222,7 +222,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
    */
   @Override
   public void addNotify() {
-    myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+    myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       public void run() {
         if (isDisplayable()) {
           updateState();

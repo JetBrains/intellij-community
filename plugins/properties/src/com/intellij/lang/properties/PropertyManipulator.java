@@ -15,7 +15,7 @@ public class PropertyManipulator extends AbstractElementManipulator<PropertyImpl
     TextRange valueRange = getRangeInElement(element);
     final String oldText = element.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
-    element.setValue(newText.substring(valueRange.getStartOffset()));
+    element.setValue(newText.substring(valueRange.getStartOffset()).replaceAll("([^\\s])\n", "$1 \n"));  // add explicit space before \n
     return element;
   }
 

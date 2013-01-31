@@ -109,7 +109,7 @@ public class IOUtil {
     }
   }
 
-  private static final Charset US_ASCII = Charset.forName("US-ASCII");
+  public static final Charset US_ASCII = Charset.forName("US-ASCII");
   public static String readUTFFast(final byte[] buffer, final DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {

@@ -1,16 +1,18 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.Storage;
+import gnu.trove.THashSet;
 import junit.framework.TestCase;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+
+import static com.intellij.util.io.StringEnumeratorTest.createRandomString;
 
 /**
  * @author Eugene Zhuravlev
@@ -335,8 +337,138 @@ public class PersistentMapTest extends TestCase {
     System.out
       .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + Storage.DATA_EXTENSION).length());
   }
-  
+
+  private static final boolean DO_SLOW_TEST = false;
+
+  public void test2GLimit() throws IOException {
+    if (!DO_SLOW_TEST) return;
+    File file = FileUtil.createTempFile("persistent", "map");
+    FileUtil.createParentDirs(file);
+    EnumeratorStringDescriptor stringDescriptor = new EnumeratorStringDescriptor();
+    PersistentHashMap<String, String> map = new PersistentHashMap<String, String>(file, stringDescriptor, stringDescriptor);
+    for (int i = 0; i < 12000; i++) {
+      map.put("abc" + i, StringUtil.repeat("0123456789", 10000));
+    }
+    map.close();
+
+    map = new PersistentHashMap<String, String>(file,
+                                                stringDescriptor, stringDescriptor);
+    long len = 0;
+    for (String key : map.getAllKeysWithExistingMapping()) {
+      len += map.get(key).length();
+    }
+    map.close();
+    assertEquals(1200000000L, len);
+  }
+
   private static String createRandomString() {
     return StringEnumeratorTest.createRandomString();
+  }
+
+  public void testOpeningWithCompact3() throws IOException {
+    if (!DO_SLOW_TEST) return;
+    File file = FileUtil.createTempFile("persistent", "map");
+
+    EnumeratorStringDescriptor stringDescriptor = new EnumeratorStringDescriptor();
+    EnumeratorIntegerDescriptor integerDescriptor = new EnumeratorIntegerDescriptor();
+    PersistentHashMap<String, Integer> map = new PersistentHashMap<String, Integer>(file, stringDescriptor, integerDescriptor);
+    try {
+      final int stringsCount = 10000002;
+      //final int stringsCount =      102;
+
+      for(int t = 0; t < 4; ++t) {
+        for (int i = 0; i < stringsCount; ++i) {
+          final int finalI = i;
+          final int finalT = t;
+          PersistentHashMap.ValueDataAppender appender = new PersistentHashMap.ValueDataAppender() {
+            @Override
+            public void append(DataOutput out) throws IOException {
+              out.write((finalI + finalT) & 0xFF);
+            }
+          };
+          map.appendData(String.valueOf(i), appender);
+        }
+      }
+      map.close();
+      map = new PersistentHashMap<String, Integer>(file, stringDescriptor, integerDescriptor);
+      for (int i = 0; i < stringsCount; ++i) {
+        if (i < 2 * stringsCount / 3) {
+          map.remove(String.valueOf(i));
+        }
+      }
+      map.close();
+      final boolean isSmall = stringsCount < 1000000;
+      assertTrue(isSmall || map.makesSenseToCompact());
+      long started = System.currentTimeMillis();
+
+      map = new PersistentHashMap<String, Integer>(file, stringDescriptor, integerDescriptor);
+      if (isSmall) map.compact();
+      assertTrue(!map.makesSenseToCompact());
+      System.out.println(System.currentTimeMillis() - started);
+      for (int i = 0; i < stringsCount; ++i) {
+        if (i >= 2 * stringsCount / 3) {
+          Integer s = map.get(String.valueOf(i));
+          assertEquals((s & 0xFF), ((i + 3) & 0xFF));
+          assertEquals(((s >>> 8) & 0xFF), ((i + 2) & 0xFF));
+          assertEquals((s >>> 16) & 0xFF, ((i + 1) & 0xFF));
+          assertEquals((s >>> 24) & 0xFF, (i & 0xFF));
+        }
+      }
+    }
+    finally {
+      clearMap(file, map);
+    }
+  }
+
+  public void test2GLimitWithAppend() throws IOException {
+    if (!DO_SLOW_TEST) return;
+    File file = FileUtil.createTempFile("persistent", "map");
+    FileUtil.createParentDirs(file);
+    EnumeratorStringDescriptor stringDescriptor = new EnumeratorStringDescriptor();
+    class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
+      public void save(DataOutput out, Collection<String> value) throws IOException {
+        for (String str : value) {
+          IOUtil.writeString(str, out);
+        }
+      }
+
+      public Collection<String> read(DataInput in) throws IOException {
+        final Set<String> result = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        final DataInputStream stream = (DataInputStream)in;
+        while (stream.available() > 0) {
+          final String str = IOUtil.readString(stream);
+          result.add(str);
+        }
+        return result;
+      }
+    }
+    PathCollectionExternalizer externalizer = new PathCollectionExternalizer();
+    PersistentHashMap<String, Collection<String>> map = new PersistentHashMap<String, Collection<String>>(file, stringDescriptor,
+                                                                                                          externalizer);
+    for (int j = 0; j < 7; ++j) {
+      for (int i = 0; i < 2000; i++) {
+        final int finalJ = j;
+        map.appendData("abc" + i, new PersistentHashMap.ValueDataAppender() {
+          @Override
+          public void append(DataOutput out) throws IOException {
+            IOUtil.writeString(StringUtil.repeat("0123456789", 10000 + finalJ - 3), out);
+          }
+        });
+      }
+    }
+
+    map.close();
+
+    map = new PersistentHashMap<String, Collection<String>>(file, stringDescriptor, externalizer);
+
+    long len = 0;
+
+    for (String key : map.getAllKeysWithExistingMapping()) {
+      for (String k : map.get(key)) {
+        len += k.length();
+      }
+    }
+    map.close();
+    assertEquals(1400000000L, len);
   }
 }

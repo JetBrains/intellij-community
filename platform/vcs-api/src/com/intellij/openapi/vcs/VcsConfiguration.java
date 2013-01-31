@@ -25,7 +25,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
@@ -345,10 +345,10 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public void acceptLastCreatedPatchName(final String string) {
     if (StringUtil.isEmptyOrSpaces(string)) return;
-    final String extension = FileUtil.getExtension(string);
-    if (DIFF.equalsIgnoreCase(extension)) {
+    if (FileUtilRt.extensionEquals(string, DIFF)) {
       DEFAULT_PATCH_EXTENSION = DIFF;
-    } else if (PATCH.equalsIgnoreCase(extension)) {
+    }
+    else if (FileUtilRt.extensionEquals(string, PATCH)) {
       DEFAULT_PATCH_EXTENSION = PATCH;
     }
   }

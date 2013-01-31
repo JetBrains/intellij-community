@@ -28,9 +28,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,8 +46,8 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     super(project, defaultExpression);
     setTitle(DebuggerBundle.message("evaluate.expression.dialog.title"));
 
-    final KeyStroke expressionStroke = KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK);
-    final KeyStroke resultStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_MASK);
+    final KeyStroke expressionStroke = KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK);
+    final KeyStroke resultStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_MASK);
 
     final JRootPane rootPane = getRootPane();
 
@@ -99,6 +101,30 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
 
     panel.add(exprPanel, BorderLayout.NORTH);
     panel.add(resultPanel, BorderLayout.CENTER);
+    
+    panel.setFocusTraversalPolicyProvider(true);
+    panel.setFocusTraversalPolicy(new AbstractDelegatingToRootTraversalPolicy() {
+      @Override
+      public Component getComponentBefore(Container aContainer, Component aComponent) {
+        boolean focusExpressionCombo = isParent(aComponent, getEvaluationPanel());
+        return focusExpressionCombo ? getExpressionCombo().getEditorComponent() : super.getComponentBefore(aContainer, aComponent);
+      }
+
+      @Override
+      public Component getComponentAfter(Container aContainer, Component aComponent) {
+        boolean focusEvaluationPanel = isParent(aComponent, exprPanel);
+        return focusEvaluationPanel ? getEvaluationPanel().getTree() : super.getComponentAfter(aContainer, aComponent);
+      }
+
+      private boolean isParent(@NotNull Component component, @NotNull Container parent) {
+        for (Component c = component; c != null; c = c.getParent()) {
+          if (c == parent) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
 
     return panel;
   }
@@ -112,6 +138,7 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
     return (DebuggerExpressionComboBox)getEditor();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] { getOKAction(), getCancelAction(), new SwitchAction(), getHelpAction() } ;
   }

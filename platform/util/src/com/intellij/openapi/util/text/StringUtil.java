@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.LineReader;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -939,7 +940,7 @@ public class StringUtil extends StringUtilRt {
   public static String repeatSymbol(final char aChar, final int count) {
     char[] buffer = new char[count];
     Arrays.fill(buffer, aChar);
-    return new String(buffer);
+    return StringFactory.createShared(buffer);
   }
 
   @NotNull
@@ -1362,7 +1363,7 @@ public class StringUtil extends StringUtilRt {
 
     char[] buffer = displayString.toCharArray();
     buffer[0] = uppedFirstChar;
-    return new String(buffer);
+    return StringFactory.createShared(buffer);
   }
 
   /**
@@ -1547,6 +1548,13 @@ public class StringUtil extends StringUtilRt {
     return -1;
   }
 
+  public static int indexOf(@NotNull char[] s, char c, int start, int end, boolean caseSensitive) {
+    for (int i = start; i < end; i++) {
+      if (charsMatch(s[i], c, !caseSensitive)) return i;
+    }
+    return -1;
+  }
+
   public static int indexOfSubstringEnd(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return -1;
@@ -1726,6 +1734,38 @@ public class StringUtil extends StringUtilRt {
     }
 
     return builder;
+  }
+
+  public static boolean isNotEscapedBackslash(char[] chars, int startOffset, int backslashOffset) {
+    if (chars[backslashOffset] != '\\') {
+      return false;
+    }
+    boolean escaped = false;
+    for (int i = startOffset; i < backslashOffset; i++) {
+      if (chars[i] == '\\') {
+        escaped = !escaped;
+      }
+      else {
+        escaped = false;
+      }
+    }
+    return !escaped;
+  }
+
+  public static boolean isNotEscapedBackslash(CharSequence text, int startOffset, int backslashOffset) {
+    if (text.charAt(backslashOffset) != '\\') {
+      return false;
+    }
+    boolean escaped = false;
+    for (int i = startOffset; i < backslashOffset; i++) {
+      if (text.charAt(i) == '\\') {
+        escaped = !escaped;
+      }
+      else {
+        escaped = false;
+      }
+    }
+    return !escaped;
   }
 
   @NotNull
@@ -2011,6 +2051,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String fixVariableNameDerivedFromPropertyName(@NotNull String name) {
+    if (isEmptyOrSpaces(name)) return name;
     char c = name.charAt(0);
     if (isVowel(c)) {
       return "an" + Character.toUpperCase(c) + name.substring(1);

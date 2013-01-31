@@ -43,7 +43,7 @@ public class ChangeSet {
   public ChangeSet(long id, long timestamp) {
     myId = id;
     myTimestamp = timestamp;
-    myChanges = ContainerUtil.createEmptyCOWList();
+    myChanges = ContainerUtil.createLockFreeCopyOnWriteList();
   }
 
   public ChangeSet(DataInput in) throws IOException {

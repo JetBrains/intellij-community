@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,7 +313,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrTopStatement createTopElementFromText(String text) {
     GroovyFile dummyFile = createGroovyFileChecked(text);
     final GrTopStatement[] topStatements = dummyFile.getTopStatements();
-    LOG.assertTrue(topStatements.length == 1);
+    if (topStatements.length != 1) throw new IncorrectOperationException("text = '" + text + "'");
     return topStatements[0];
   }
 
@@ -417,7 +417,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createStringLiteralForReference(String text) {
-    return ((GrReferenceExpression) createGroovyFileChecked("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
+    return createLiteralFromValue(text).getFirstChild();
   }
 
   public PsiElement createModifierFromText(String name) {
@@ -896,17 +896,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrLiteral createLiteralFromValue(@Nullable Object value) {
     if (value instanceof String) {
-      StringBuilder buffer = new StringBuilder();
-      if (((String)value).indexOf('\n') >= 0) {
-        buffer.append("'''");
-        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "", false, true, buffer);
-        buffer.append("'''");
-      }
-      else {
-        buffer.append("'");
-        GrStringUtil.escapeStringCharacters(((String)value).length(), ((String)value), "'", false, true, buffer);
-        buffer.append("'");
-      }
+      StringBuilder buffer = GrStringUtil.getLiteralTextByValue((String)value);
       final GrExpression expr = createExpressionFromText(buffer);
       LOG.assertTrue(expr instanceof GrLiteral, "value = " + value);
       return (GrLiteral)expr;

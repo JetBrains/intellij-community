@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -101,7 +101,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || FileUtil.getExtension(newName).length() > 0) {
+    if (getDefaultExtension() == null || FileUtilRt.getExtension(newName).length() > 0) {
       return newName;
     }
     return newName + "." + getDefaultExtension();
@@ -123,6 +123,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     public boolean checkInput(String inputString) {
       if (FileTypeManager.getInstance().isFileIgnored(getFileName(inputString))) {
         myErrorText = "This filename is ignored (Settings | File Types | Ignore files and folders)";
+        return false;
+      }
+      if (inputString.equals(".") || StringUtil.isEmpty(inputString.replace('.', ' ').trim())) {
+        myErrorText = "Can't create file with name '" + inputString + "'";
         return false;
       }
       myErrorText = null;

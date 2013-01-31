@@ -314,6 +314,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
   }
 
+  public void testAlphaSortingStartMatchesFirst() {
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
+    checkPreferredItems 0, 'xxbar', 'xxfoo', 'xxgoo', 'barxx', 'fooxx', 'gooxx'
+  }
+
   public void testSortSameNamedVariantsByProximity() {
     myFixture.addClass("public class Bar {}");
     for (int i = 0; i < 10; i++) {
@@ -392,6 +397,14 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'get', 'getClass'
   }
 
+  public void testEqualsStats() {
+    checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, 'equalsIgnoreCase', 'equals'
+    incUseCount(lookup, 1)
+    checkPreferredItems 0, 'equals', 'equalsIgnoreCase'
+  }
+
   public void testPreferClassToItsConstants() {
     checkPreferredItems 0, 'Calendar.FIELD_COUNT', 'Calendar', 'Calendar.AM'
   }
@@ -457,7 +470,7 @@ import java.lang.annotation.Target;
     repeatCompletion 'b'
 
     myFixture.completeBasic();
-    assertPreferredItems(0, '_boo2', '_foo2', 'return', '_boo1', '_foo1', '_goo1', '_goo2')
+    assertPreferredItems(0, 'return', '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
     myFixture.type('_');
     assertPreferredItems(0, '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
     myFixture.type('g')
@@ -534,6 +547,13 @@ import java.lang.annotation.Target;
 
   public void testNoExpectedTypeInStringConcatenation() {
     checkPreferredItems(0, 'vx')
+  }
+
+  public void testLocalVarsOverStats() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems 0, 'psiElement', 'PsiElement'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'psiElement', 'PsiElement'
   }
 
 }
