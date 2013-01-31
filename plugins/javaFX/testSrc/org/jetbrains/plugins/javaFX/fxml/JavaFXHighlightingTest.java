@@ -134,6 +134,14 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testHandlerWithoutController() throws Exception {
+    doTest();
+  }
+
+  public void testHandlerWithoutPageLanguage() throws Exception {
+    doTest();
+  }
+
   public void testIncludeBtn() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", "btn.fxml");
     doDoTest(false, false);
