@@ -12,12 +12,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.SpeedSearchComparator;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -87,7 +89,18 @@ public class PyOverrideImplementUtil {
     }
 
     final MemberChooser<PyMethodMember> chooser =
-      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[elements.size()]), false, true, project);
+      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[elements.size()]), false, true, project) {
+        @Override
+        protected SpeedSearchComparator getSpeedSearchComparator() {
+          return new SpeedSearchComparator(false) {
+            @Nullable
+            @Override
+            public Iterable<TextRange> matchingFragments(String pattern, String text) {
+              return super.matchingFragments(PyMethodMember.trimUnderscores(pattern), text);    //To change body of overridden methods use File | Settings | File Templates.
+            }
+          };
+        }
+      };
     chooser.setTitle("Select Methods to Override");
     chooser.setCopyJavadocVisible(false);
     chooser.show();

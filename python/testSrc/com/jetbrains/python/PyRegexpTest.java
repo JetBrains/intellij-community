@@ -47,6 +47,22 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testBraceCommaN() {  // PY-8304
+    doTestHighlighting();
+  }
+
+  public void testVerboseAsKwArg() {  // PY-8143
+    doTestHighlighting();
+  }
+
+  public void testVerboseEscapedHash() {  // PY-6545
+    doTestHighlighting();
+  }
+
+  public void _testDoubleOpenCurly() {  // PY-8252
+    doTestHighlighting();
+  }
+
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
   }

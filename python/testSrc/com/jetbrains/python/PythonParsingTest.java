@@ -370,6 +370,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testEmptySubscription() {  // PY-8652
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

@@ -1,17 +1,18 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -396,7 +397,23 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public boolean characterNeedsEscaping(char c) {
+    if (c == '#') {
+      return isVerboseInjection();
+    }
     return c == ']' || c == '}' || c == '\"' || c == '\'';
+  }
+
+  private boolean isVerboseInjection() {
+    List<Pair<PsiElement,TextRange>> files = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
+    if (files != null) {
+      for (Pair<PsiElement, TextRange> file : files) {
+        Language language = file.getFirst().getLanguage();
+        if (language == PythonVerboseRegexpLanguage.INSTANCE) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean supportsPerl5EmbeddedComments() {
