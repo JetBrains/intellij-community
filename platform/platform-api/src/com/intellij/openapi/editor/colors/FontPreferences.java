@@ -201,6 +201,6 @@ public class FontPreferences {
     if (plainFont.getFamily().equals("Dialog") && !"Dialog".equals(fontName)) {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
     }
-    return fontName;
+    return null;
   }
 }
