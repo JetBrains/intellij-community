@@ -2097,7 +2097,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
-        if (onlyRemoveOutdatedData) {
+        if (onlyRemoveOutdatedData || isTooLarge(file)) {
           // on shutdown there is no need to re-index the file, just remove outdated data from indices
           final List<ID<?, ?>> affected = new ArrayList<ID<?,?>>();
           for (final ID<?, ?> indexId : myRequiringContentIndices) {  // non requiring content indices should be flushed
