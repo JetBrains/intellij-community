@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,27 @@
  */
 package com.intellij.codeInsight.template.emmet.nodes;
 
-import com.google.common.base.Joiner;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
+import com.intellij.codeInsight.template.emmet.generators.LoremGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class TemplateNode extends ZenCodingNode {
-  private static final Joiner JOINER = Joiner.on(",");
-  private final TemplateToken myTemplateToken;
+public class LoremNode extends ZenCodingNode {
+  private final int myWordsCount;
+  private final LoremGenerator myLoremGenerator;
 
-  public TemplateNode(TemplateToken templateToken) {
-    myTemplateToken = templateToken;
-  }
-
-  public TemplateToken getTemplateToken() {
-    return myTemplateToken;
+  public LoremNode(int wordsCount) {
+    myLoremGenerator = new LoremGenerator();
+    myWordsCount = wordsCount;
   }
 
   @NotNull
@@ -45,18 +44,19 @@ public class TemplateNode extends ZenCodingNode {
                                      String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    GenerationNode node = new GenerationNode(myTemplateToken, numberInIteration, surroundedText,
-                                             insertSurroundedTextAtTheEnd, parent);
-    return Arrays.asList(node);
+
+
+    final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
+    final TemplateImpl template = new TemplateImpl("", myLoremGenerator.generate(myWordsCount, numberInIteration <= 0), "");
+    ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
+
+    final GenerationNode node = new GenerationNode(templateToken, numberInIteration,
+                                                   surroundedText, insertSurroundedTextAtTheEnd, parent);
+    return Collections.singletonList(node);
   }
 
   @Override
   public String toString() {
-    String result = myTemplateToken.getKey();
-    List<Pair<String, String>> attributes = myTemplateToken.getAttribute2Value();
-    if (!attributes.isEmpty()) {
-      result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
-    }
-    return "Template(" + result + ")";
+    return "Lorem(" + myWordsCount + ")";
   }
 }

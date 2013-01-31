@@ -96,6 +96,10 @@ public class LoremGenerator {
   }
 
   private void insertCommas(String[] words) {
+    if (words.length <= 1) {
+      return;
+    }
+
     int len = words.length;
     int totalCommas;
 

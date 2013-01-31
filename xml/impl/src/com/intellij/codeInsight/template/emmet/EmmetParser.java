@@ -28,6 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
 /**
  * User: zolotov
@@ -37,6 +41,8 @@ class EmmetParser {
   private static final String ID = "id";
   private static final String CLASS = "class";
   private static final String DEFAULT_TAG = "div";
+  private static final int DEFAULT_LOREM_LENGTH = 30;
+  private static final Pattern LOREM_PATTERN = Pattern.compile("(lorem|lipsum)(\\d*)");
   private final List<ZenCodingToken> myTokens;
   private final CustomTemplateCallback myCallback;
   private final ZenCodingGenerator myGenerator;
@@ -117,7 +123,7 @@ class EmmetParser {
       myIndex++;
       mul = mul != null ? mul : ZenEmptyNode.INSTANCE;
       ZenCodingNode climbUp2 = parseAddOrMore();
-      if(climbUp2 == null) {
+      if (climbUp2 == null) {
         return null;
       }
       return new ClimbUpOperationNode(mul, climbUp2);
@@ -137,7 +143,7 @@ class EmmetParser {
       myIndex++;
       String parentTag = getParentTag(mul);
       boolean hasParent = false;
-      if(!Strings.isNullOrEmpty(parentTag)) {
+      if (!Strings.isNullOrEmpty(parentTag)) {
         hasParent = true;
         tagLevel.push(parentTag);
       }
@@ -145,7 +151,7 @@ class EmmetParser {
       if (more2 == null) {
         return null;
       }
-      if(hasParent) {
+      if (hasParent) {
         tagLevel.pop();
       }
       return new MoreOperationNode(mul, more2);
@@ -155,11 +161,12 @@ class EmmetParser {
 
   @Nullable
   private static String getParentTag(ZenCodingNode node) {
-    if(node instanceof TemplateNode) {
+    if (node instanceof TemplateNode) {
       return ((TemplateNode)node).getTemplateToken().getKey();
-    } else if(node instanceof MulOperationNode) {
+    }
+    else if (node instanceof MulOperationNode) {
       ZenCodingNode leftOperand = ((MulOperationNode)node).getLeftOperand();
-      if(leftOperand instanceof TemplateNode) {
+      if (leftOperand instanceof TemplateNode) {
         return ((TemplateNode)leftOperand).getTemplateToken().getKey();
       }
     }
@@ -223,22 +230,59 @@ class EmmetParser {
   }
 
   @Nullable
+  private ZenCodingNode parseLorem(String templateKey) {
+    Matcher matcher = LOREM_PATTERN.matcher(templateKey);
+    if (matcher.matches()) {
+      int loremWordsCount = DEFAULT_LOREM_LENGTH;
+      if (matcher.groupCount() > 1) {
+        String group = matcher.group(2);
+        loremWordsCount = group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
+      }
+
+      final List<Pair<String, String>> attrList = parseSelectors();
+      ZenCodingToken token = nextToken();
+      boolean isRepeating = token instanceof OperationToken && ((OperationToken)token).getSign() == '*';
+      if (!attrList.isEmpty() || isRepeating) {
+        String wrapTag = suggestTagName();
+        TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
+        if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
+          return null;
+        }
+        final TemplateToken templateToken = new TemplateToken(wrapTag, attrList);
+        if (!setTemplate(templateToken, template)) {
+          return null;
+        }
+        return new MoreOperationNode(new TemplateNode(templateToken), new LoremNode(loremWordsCount));
+      }
+      else {
+        return new LoremNode(loremWordsCount);
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
+  @Nullable
   private ZenCodingNode parseTemplate() {
-    final ZenCodingToken token = nextToken();
+    ZenCodingToken token = nextToken();
     String templateKey = ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
     boolean mustHaveSelector = true;
 
     if (token instanceof IdentifierToken) {
       templateKey = ((IdentifierToken)token).getText();
-      mustHaveSelector = false;
       myIndex++;
+      if (startsWithIgnoreCase(templateKey, "lorem") || startsWithIgnoreCase(templateKey, "lipsum")) {
+        return parseLorem(templateKey);
+      }
+      mustHaveSelector = false;
     }
 
     if (templateKey == null) {
       return null;
     }
 
-    final TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
+    TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
     if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
       return null;
     }
@@ -249,7 +293,6 @@ class EmmetParser {
     }
 
     final TemplateToken templateToken = new TemplateToken(templateKey, attrList);
-
     if (!setTemplate(templateToken, template)) {
       return null;
     }
@@ -257,7 +300,7 @@ class EmmetParser {
   }
 
   private String suggestTagName() {
-    if(!tagLevel.empty()) {
+    if (!tagLevel.empty()) {
       String parentTag = tagLevel.peek();
       if (parentChildTagMapping.containsKey(parentTag)) {
         return parentChildTagMapping.get(parentTag);
