@@ -208,17 +208,12 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected void initFonts() {
     String editorFontName = getEditorFontName();
     int editorFontSize = getEditorFontSize();
-
+    
+    myFallbackFontName = FontPreferences.getFallbackName(editorFontName, editorFontSize, myParentScheme);
+    if (myFallbackFontName != null) {
+      editorFontName = myFallbackFontName;
+    }
     Font plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-    if (plainFont.getFamily().equals("Dialog") && !editorFontName.equals("Dialog")) {
-      editorFontName = myParentScheme != null ? myParentScheme.getEditorFontName() : FontPreferences.DEFAULT_FONT_NAME;
-      myFallbackFontName = editorFontName;
-      plainFont = new Font(editorFontName, Font.PLAIN, editorFontSize);
-    }
-    else {
-      myFallbackFontName = null;
-    }
-
     Font boldFont = new Font(editorFontName, Font.BOLD, editorFontSize);
     Font italicFont = new Font(editorFontName, Font.ITALIC, editorFontSize);
     Font boldItalicFont = new Font(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize);
@@ -305,7 +300,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         }
       }
 
-      if (myConsoleFontPreferences.getFontFamilies().isEmpty()) {
+      if (myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty()) {
         myFontPreferences.copyTo(myConsoleFontPreferences);
       }
       
@@ -442,7 +437,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     // IJ has used a 'single customizable font' mode for ages. That's why we want to support that format now, when it's possible
     // to specify fonts sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
     // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
-    boolean useOldFontFormat = myFontPreferences.getFontFamilies().size() <= 1;
+    boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (useOldFontFormat) {
       element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, EDITOR_FONT_SIZE);
@@ -454,7 +449,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
 
     if (!myFontPreferences.equals(myConsoleFontPreferences)) {
-      if (myConsoleFontPreferences.getFontFamilies().size() <= 1) {
+      if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         element = new Element(OPTION_ELEMENT);
         element.setAttribute(NAME_ATTR, CONSOLE_FONT_NAME);
         element.setAttribute(VALUE_ELEMENT, getConsoleFontName());
@@ -504,7 +499,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static void writeFontPreferences(@NotNull String key, @NotNull Element parent, @NotNull FontPreferences preferences) {
-    for (String fontFamily : preferences.getFontFamilies()) {
+    for (String fontFamily : preferences.getRealFontFamilies()) {
       Element element = new Element(key);
       Element e = new Element(OPTION_ELEMENT);
       e.setAttribute(NAME_ATTR, EDITOR_FONT_NAME);

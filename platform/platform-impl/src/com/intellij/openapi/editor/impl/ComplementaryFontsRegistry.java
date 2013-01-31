@@ -146,7 +146,7 @@ public class ComplementaryFontsRegistry {
   @NotNull
   public static FontInfo getFontAbleToDisplay(char c, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
     boolean tryDefaultFont = true;
-    List<String> fontFamilies = preferences.getFontFamilies();
+    List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     FontInfo result;
     for (String fontFamily : fontFamilies) {
       result = doGetFontAbleToDisplay(c, preferences.getSize(fontFamily), style, fontFamily);
