@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.NonStaticAuthenticator;
 
+import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
 /**
@@ -38,7 +39,10 @@ public class IdeaWideAuthenticator extends NonStaticAuthenticator {
 
   @Override
   public PasswordAuthentication getPasswordAuthentication() {
-      final String host = CommonProxy.getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
+    final String host = CommonProxy.getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
+    final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType());
+    final String prefix = isProxy ? "Proxy authentication: " : "Server authentication: ";
+    if (isProxy) {
       // according to idea-wide settings
       if (myHttpConfigurable.USE_HTTP_PROXY) {
         LOG.debug("CommonAuthenticator.getPasswordAuthentication will return common defined proxy");
@@ -55,14 +59,15 @@ public class IdeaWideAuthenticator extends NonStaticAuthenticator {
         if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
             ApplicationManager.getApplication().isDisposed()) return null;
 
-        return myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), true);
-      } else {
-        // do not try to show any dialogs if application is exiting
-        if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
-            ApplicationManager.getApplication().isDisposed()) return null;
-
-        LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
-        return myHttpConfigurable.getGenericPromptedAuthentication(host, getRequestingPrompt(), getRequestingPort(), false);
+        return myHttpConfigurable.getGenericPromptedAuthentication(prefix, host, getRequestingPrompt(), getRequestingPort(), true);
       }
+    }
+
+    // do not try to show any dialogs if application is exiting
+    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
+        ApplicationManager.getApplication().isDisposed()) return null;
+
+    LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
+    return myHttpConfigurable.getGenericPromptedAuthentication(prefix, host, getRequestingPrompt(), getRequestingPort(), false);
   }
 }

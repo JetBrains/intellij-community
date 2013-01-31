@@ -51,6 +51,7 @@ public class CommonProxy extends ProxySelector {
 
   private final Map<String, ProxySelector> myCustom;
   private final Map<String, NonStaticAuthenticator> myCustomAuth;
+  private final Set<HostInfo> myNoAuthentication;
 
   public static CommonProxy getInstance() {
     return ourInstance;
@@ -63,6 +64,7 @@ public class CommonProxy extends ProxySelector {
     myCustomAuth = new HashMap<String, NonStaticAuthenticator>();
     myAuthenticator = new CommonAuthenticator();
     ensureAuthenticator();
+    myNoAuthentication = new HashSet<HostInfo>();
   }
 
   public static void isInstalledAssertion() {
@@ -113,6 +115,20 @@ public class CommonProxy extends ProxySelector {
   }
 
   public void removeNoProxy(@NotNull final String protocol, @NotNull final String host, final int port) {
+    synchronized (myLock) {
+      LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
+      myNoProxy.remove(new HostInfo(protocol, host, port));
+    }
+  }
+
+  public void noAuthentication(@NotNull final String protocol, @NotNull final String host, final int port) {
+    synchronized (myLock) {
+      LOG.debug("no proxy added: " + protocol + "://" + host + ":" + port);
+      myNoProxy.add(new HostInfo(protocol, host, port));
+    }
+  }
+
+  public void removeNoAuthentication(@NotNull final String protocol, @NotNull final String host, final int port) {
     synchronized (myLock) {
       LOG.debug("no proxy removed: " + protocol + "://" + host + ":" + port);
       myNoProxy.remove(new HostInfo(protocol, host, port));
@@ -203,8 +219,13 @@ public class CommonProxy extends ProxySelector {
       final Map<String, NonStaticAuthenticator> copy;
       synchronized (myLock) {
         // for hosts defined as no proxy we will NOT pass authentication to not provoke credentials
-        if (myNoProxy.contains(new HostInfo(getRequestingProtocol(), host, port))) {
-          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies list (" + siteStr + ")");
+        final HostInfo hostInfo = new HostInfo(getRequestingProtocol(), host, port);
+        if (myNoProxy.contains(hostInfo)) {
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no proxies set (" + siteStr + ")");
+          return null;
+        }
+        if (myNoAuthentication.contains(hostInfo)) {
+          LOG.debug("CommonAuthenticator.getPasswordAuthentication found host in no authentication set (" + siteStr + ")");
           return null;
         }
         copy = new HashMap<String, NonStaticAuthenticator>(myCustomAuth);

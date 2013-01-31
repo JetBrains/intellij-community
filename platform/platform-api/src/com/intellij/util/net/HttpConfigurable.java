@@ -186,11 +186,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return new String(new Base64().encode(password.getBytes()));
   }
 
-  public PasswordAuthentication getGenericPromptedAuthentication(final String host, final String prompt, final int port, final boolean remember) {
+  public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
-        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
+        final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
                                                                   "Please enter credentials for: " + prompt, "", "", remember);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
