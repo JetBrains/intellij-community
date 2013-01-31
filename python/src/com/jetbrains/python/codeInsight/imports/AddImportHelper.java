@@ -223,7 +223,7 @@ public class AddImportHelper {
     final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;
     String path = qName.toString();
-    if (target instanceof PsiFileSystemItem) {
+    if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
       addImportStatement(file, path, null, priority);
     }
     else if (useQualified) {
@@ -232,7 +232,8 @@ public class AddImportHelper {
       element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), qName + "." + target.getName()));
     }
     else {
-      addImportFrom(file, null, path, target.getName(), null, priority);
+      final PyQualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
+      addImportFrom(file, null, toImportQName.toString(), target.getName(), null, priority);
     }
   }
 
