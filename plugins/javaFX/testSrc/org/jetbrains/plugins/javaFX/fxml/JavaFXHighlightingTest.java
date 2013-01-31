@@ -106,6 +106,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals(resultField, reference.resolve());
   }
 
+  public void testSourceAttrRecognition() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
