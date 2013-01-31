@@ -5,9 +5,8 @@ import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.new_mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.new_mutable.elements.MutableNodeRow;
-import org.hanuna.gitalk.graph.new_mutable.elements.SimpleEdge;
-import org.hanuna.gitalk.graph.new_mutable.elements.SimpleNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -89,12 +88,12 @@ public class GraphBuilder {
     }
 
     private void createUpEdges(@NotNull Node node, @NotNull UnderdoneNode underdoneNode) {
-        SimpleEdge oldEdge = new SimpleEdge(graph, Edge.Type.USUAL, underdoneNode.getBranch());
-        graph.getEdgeController().addEdge(underdoneNode.getFirstUpNode(), node, oldEdge);
+        graph.getEdgeController().createEdge(underdoneNode.getFirstUpNode(),
+                node, underdoneNode.getBranch(), Edge.Type.USUAL);
 
         if (underdoneNode.getSecondUpNode() != null) {
-            SimpleEdge newEdge = new SimpleEdge(graph, Edge.Type.USUAL, underdoneNode.getSecondEdgeBranch());
-            graph.getEdgeController().addEdge(underdoneNode.getSecondUpNode(), node, newEdge);
+            graph.getEdgeController().createEdge(underdoneNode.getSecondUpNode(), node,
+                    underdoneNode.getSecondEdgeBranch(), Edge.Type.USUAL);
         }
     }
 
@@ -102,9 +101,9 @@ public class GraphBuilder {
         UnderdoneNode underdoneNode = notAddedNodes.remove(commit);
         Node node;
         if (underdoneNode == null) {
-            node = new SimpleNode(nextRow, new Branch(commit), commit, Node.Type.COMMIT_NODE);
+            node = new MutableNode(nextRow, new Branch(commit), commit, Node.Type.COMMIT_NODE);
         } else {
-            node = new SimpleNode(nextRow, underdoneNode.getBranch(), commit, Node.Type.COMMIT_NODE);
+            node = new MutableNode(nextRow, underdoneNode.getBranch(), commit, Node.Type.COMMIT_NODE);
             createUpEdges(node, underdoneNode);
         }
 
@@ -125,7 +124,7 @@ public class GraphBuilder {
             int parentRowIndex = getLogIndexOfCommit(parentCommit);
             // i.e. we need of create EDGE_NODE node
             if (nextRow.getRowIndex() != parentRowIndex) {
-                Node edgeNode = new SimpleNode(nextRow, underdoneNode.getBranch(), parentCommit, Node.Type.EDGE_NODE);
+                Node edgeNode = new MutableNode(nextRow, underdoneNode.getBranch(), parentCommit, Node.Type.EDGE_NODE);
                 createUpEdges(edgeNode, underdoneNode);
                 nextRow.addNode(edgeNode);
 
@@ -161,7 +160,7 @@ public class GraphBuilder {
         Set<Commit> notReadiedCommits = notAddedNodes.keySet();
         for (Commit commit : notReadiedCommits) {
             UnderdoneNode underdoneNode = notAddedNodes.get(commit);
-            Node node = new SimpleNode(nextRow, underdoneNode.getBranch(), commit, Node.Type.END_COMMIT_NODE);
+            Node node = new MutableNode(nextRow, underdoneNode.getBranch(), commit, Node.Type.END_COMMIT_NODE);
             createUpEdges(node, underdoneNode);
             nextRow.addNode(node);
         }

@@ -3,19 +3,20 @@ package org.hanuna.gitalk.graph.new_mutable.elements;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
 public class SimpleEdge implements Edge {
-    private final MutableGraph graph;
+    private final Node upNode;
+    private final Node downNode;
     private final Type type;
     private final Branch branch;
 
-    public SimpleEdge(MutableGraph graph, Type type, Branch branch) {
-        this.graph = graph;
+    public SimpleEdge(Node upNode, Node downNode, Type type, Branch branch) {
+        this.upNode = upNode;
+        this.downNode = downNode;
         this.type = type;
         this.branch = branch;
     }
@@ -23,13 +24,13 @@ public class SimpleEdge implements Edge {
     @NotNull
     @Override
     public Node getUpNode() {
-        return graph.getEdgeController().getUpNode(this);
+        return upNode;
     }
 
     @NotNull
     @Override
     public Node getDownNode() {
-        return graph.getEdgeController().getDownNode(this);
+        return downNode;
     }
 
     @NotNull
