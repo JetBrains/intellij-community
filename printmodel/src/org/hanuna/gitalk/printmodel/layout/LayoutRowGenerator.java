@@ -54,6 +54,7 @@ class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> 
             throw new NoSuchElementException();
         }
         List<GraphElement> layoutRow = row.getModifiableOrderedGraphElements();
+        Set<Node> addedNodeInNextRow = new HashSet<Node>();
         for (ListIterator<GraphElement> iterator = layoutRow.listIterator(); iterator.hasNext(); ) {
             GraphElement element = iterator.next();
             Node node = element.getNode();
@@ -66,8 +67,9 @@ class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> 
                     for (Edge edge : orderAddEdges(edges)) {
                         Node downNode = edge.getDownNode();
                         if (downNode.getRowIndex() == newRowIndex) {
-                            if (downNode.getBranch() == edge.getBranch()) {
+                            if (!addedNodeInNextRow.contains(downNode)) {
                                 iterator.add(downNode);
+                                addedNodeInNextRow.add(downNode);
                             }
                         } else {
                             iterator.add(edge);
@@ -80,8 +82,9 @@ class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> 
                     throw new IllegalStateException("unexpected element class");
                 }
                 if (edge.getDownNode().getRowIndex() == newRowIndex) {
-                    if (edge.getBranch() == edge.getDownNode().getBranch()) {
+                    if (!addedNodeInNextRow.contains(edge.getDownNode())) {
                         iterator.set(edge.getDownNode());
+                        addedNodeInNextRow.add(edge.getDownNode());
                     } else {
                         iterator.remove();
                     }
