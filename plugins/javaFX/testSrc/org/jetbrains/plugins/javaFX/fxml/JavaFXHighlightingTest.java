@@ -3,7 +3,9 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,6 +84,26 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     final PsiReference reference = myFile.findReferenceAt(offset);
     assertNotNull(reference);
     assertEquals(controllerClass.getFields()[0], reference.resolve());
+  }
+
+  public void testConstantNavigation() throws Exception {
+    doTestNavigation("java.lang.Double", "NEGATIVE_INFINITY");
+  }
+
+  public void testEnumNavigation() throws Exception {
+    doTestNavigation("javafx.geometry.Pos", "CENTER");
+  }
+
+  private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml");
+    final int offset = myEditor.getCaretModel().getOffset();
+    final PsiReference reference = myFile.findReferenceAt(offset);
+    assertNotNull(reference);
+    final PsiClass resultClass = myJavaFacade.findClass(resultClassName, ProjectScope.getLibrariesScope(getProject()));
+    assertNotNull("Class " + resultClassName + " not found", resultClass);
+    final PsiField resultField = resultClass.findFieldByName(resultFieldName, false);
+    assertNotNull(resultField);
+    assertEquals(resultField, reference.resolve());
   }
 
   @NotNull

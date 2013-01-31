@@ -171,7 +171,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           }
         });
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
-          simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty));
+          simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
         }
         return simpleAttrs.isEmpty() ? XmlAttributeDescriptor.EMPTY : simpleAttrs.toArray(new XmlAttributeDescriptor[simpleAttrs.size()]);
       }
@@ -201,7 +201,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (myPsiClass == null) return null;
     if (myPsiClass.findFieldByName(attributeName, true) == null) {
       if (FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName)){
-        return new JavaFxDefaultAttributeDescriptor(attributeName);
+        return new JavaFxDefaultAttributeDescriptor(attributeName, myPsiClass);
       } else {
         final PsiMethod propertySetter = findPropertySetter(attributeName, context);
         if (propertySetter != null) {

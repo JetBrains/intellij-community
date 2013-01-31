@@ -24,6 +24,10 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     myPsiClass = psiClass;
   }
 
+  public PsiClass getPsiClass() {
+    return myPsiClass;
+  }
+
   @Override
   public boolean isRequired() {
     return false;
@@ -63,7 +67,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       final PsiField[] fields = enumClass.getFields();
       final List<String> enumConstants = new ArrayList<String>();
       for (PsiField enumField : fields) {
-        if (enumField instanceof PsiEnumConstant) {
+        if (isConstant(enumField)) {
           enumConstants.add(enumField.getName());
         }
       }
@@ -72,30 +76,28 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     return null;
   }
 
+  protected boolean isConstant(PsiField enumField) {
+    return enumField instanceof PsiEnumConstant;
+  }
+
   protected PsiClass getEnum() {
     final PsiClass aClass = JavaFxPsiUtil.getPropertyClass(getDeclaration());
     return aClass != null && aClass.isEnum() ? aClass : null;
   }
 
-  @Nullable
-  @Override
-  public String validateValue(XmlElement context, String value) {
+  public PsiField getEnumConstant(String attrValue) {
     if (isEnumerated()) {
-      final String[] values = getEnumeratedValues();
-      if (values != null && !isWithingBounds(value, values)) {
-        return value + " is not withing its bounds";
-      }
+      final String fieldNameIgnoreCase = StringUtil.stripQuotesAroundValue(attrValue);
+      final PsiClass aClass = getEnum();
+      return aClass.findFieldByName(fieldNameIgnoreCase.toUpperCase(), false);
     }
     return null;
   }
-
-  private static boolean isWithingBounds(String value, String[] values) {
-    for (String enumConstant : values) {
-      if (StringUtil.endsWithIgnoreCase(enumConstant, value)) {
-        return true;
-      }
-    }
-    return false;
+  
+  @Nullable
+  @Override
+  public String validateValue(XmlElement context, String value) {
+    return null;
   }
 
   @Override

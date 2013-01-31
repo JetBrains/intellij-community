@@ -2,7 +2,10 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import java.lang.Double?>
 
 <GridPane xmlns:fx="http://javafx.com/fxml" alignment="center">
-    <HBox alignment="<error descr="Cannot resolve symbol 'UNKNOWN'">UNKNOWN</error>"/>
+  <Button>
+    <minHeight><Double fx:constant="NEGATIVE_INFI<caret>NITY"/></minHeight>
+  </Button>
 </GridPane>
