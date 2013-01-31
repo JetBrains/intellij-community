@@ -42,7 +42,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -320,15 +319,11 @@ public class GenerationNode {
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       segments.add(template.getSegmentName(i));
     }
-    IntArrayList varsToRemove = new IntArrayList();
-    for (int i = 0; i < template.getVariableCount(); i++) {
+    for (int i = template.getVariableCount() - 1; i >= 0; i--) {
       String varName = template.getVariableNameAt(i);
       if (!segments.contains(varName)) {
-        varsToRemove.add(i);
+        template.removeVariable(i);
       }
-    }
-    for (int i = 0; i < varsToRemove.size(); i++) {
-      template.removeVariable(varsToRemove.get(i));
     }
   }
 
