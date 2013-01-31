@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -18,6 +20,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   protected void setUpModule() {
     super.setUpModule();
     PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+  }
+
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {new XmlPathReferenceInspection()};
   }
 
   public void testLoginForm() throws Exception {
@@ -116,6 +123,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testDefineAttributes() throws Exception {
     doTest();
+  }
+
+  public void testIncludeBtn() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "btn.fxml");
+    doDoTest(false, false);
   }
 
   @NotNull
