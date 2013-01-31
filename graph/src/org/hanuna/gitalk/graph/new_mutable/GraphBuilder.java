@@ -1,7 +1,6 @@
 package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -18,7 +17,7 @@ import java.util.Set;
  * @author erokhins
  */
 public class GraphBuilder {
-    public static NewGraph build(@NotNull List<Commit> commits) {
+    public static MutableGraph build(@NotNull List<Commit> commits) {
         Map<Commit, Integer> commitLogIndexes = new HashMap<Commit, Integer>(commits.size());
         for (int i = 0; i < commits.size(); i++) {
             commitLogIndexes.put(commits.get(i), i);
@@ -170,7 +169,7 @@ public class GraphBuilder {
     }
 
     @NotNull
-    private NewGraph runBuild(@NotNull List<Commit> commits) {
+    private MutableGraph runBuild(@NotNull List<Commit> commits) {
         if (commits.size() == 0) {
             throw new IllegalArgumentException("Empty list commits");
         }
