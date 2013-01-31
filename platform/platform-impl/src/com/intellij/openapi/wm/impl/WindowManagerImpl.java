@@ -574,10 +574,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       else if (myFrameBounds != null) {
         frame.setBounds(myFrameBounds);
       }
-      frame.setExtendedState(myFrameExtendedState);
       frame.setProject(project);
       myProject2Frame.put(project, frame);
       frame.setVisible(true);
+      frame.setExtendedState(myFrameExtendedState);
     }
 
     frame.addWindowListener(myActivationListener);
