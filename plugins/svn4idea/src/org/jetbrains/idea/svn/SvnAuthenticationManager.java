@@ -389,7 +389,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         String realm,
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
-                                        SVNURL accessedLocation) throws SVNException {
+                                        SVNURL url) throws SVNException {
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
@@ -465,7 +466,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       try {
         final InetAddress ia = InetAddress.getByName(getProxyHost());
         final PasswordAuthentication authentication =
-          Authenticator.requestPasswordAuthentication(ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol);
+          Authenticator.requestPasswordAuthentication(getProxyHost(), ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol,
+                                                      null, Authenticator.RequestorType.PROXY);
         if (authentication != null) {
           myProxyUser = authentication.getUserName();
           myProxyPassword = String.valueOf(authentication.getPassword());
