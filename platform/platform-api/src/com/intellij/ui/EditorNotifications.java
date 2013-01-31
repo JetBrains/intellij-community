@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,17 +37,14 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class EditorNotifications extends AbstractProjectComponent {
-
-  private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME = new ExtensionPointName<Provider>("com.intellij.editorNotificationProvider");
+  private static final ExtensionPointName<Provider> EXTENSION_POINT_NAME =
+    new ExtensionPointName<Provider>("com.intellij.editorNotificationProvider");
 
   public abstract static class Provider<T extends JComponent> {
-
     public abstract Key<T> getKey();
-
 
     @Nullable
     public abstract T createNotificationPanel(VirtualFile file, FileEditor fileEditor);
-
   }
 
   public static EditorNotifications getInstance(Project project) {
@@ -105,7 +102,8 @@ public class EditorNotifications extends AbstractProjectComponent {
     }
     if (component != null) {
       myFileEditorManager.addTopComponent(editor, component);
-      editor.putUserData((Key<JComponent>)key, component);
+      @SuppressWarnings("unchecked") Key<JComponent> _key = (Key<JComponent>)key;
+      editor.putUserData(_key, component);
     }
     else {
       editor.putUserData(key, null);

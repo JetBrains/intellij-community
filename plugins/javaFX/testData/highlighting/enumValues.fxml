@@ -4,5 +4,5 @@
 <?import javafx.scene.control.*?>
 
 <GridPane xmlns:fx="http://javafx.com/fxml" alignment="center">
-    <HBox alignment=<error descr="UNKNOWN is not withing its bounds">"UNKNOWN"</error>/>
+    <HBox alignment="<error descr="Cannot resolve symbol 'UNKNOWN'">UNKNOWN</error>"/>
 </GridPane>

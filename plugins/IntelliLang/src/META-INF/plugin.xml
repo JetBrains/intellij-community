@@ -1,4 +1,4 @@
-<idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
+<idea-plugin version="2">
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
   <vendor>JetBrains</vendor>

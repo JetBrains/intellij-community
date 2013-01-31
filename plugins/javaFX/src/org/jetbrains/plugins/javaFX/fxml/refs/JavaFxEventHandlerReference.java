@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -31,7 +30,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,12 +104,13 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     private static String getHandlerSignature(JavaFxEventHandlerReference ref) {
       final XmlAttributeValue element = ref.getElement();
       String canonicalText = JavaFxCommonClassNames.JAVAFX_EVENT;
-      final XmlAttribute xmlAttribute = (XmlAttribute)element.getParent();
-      final Project project = element.getProject();
-      if (xmlAttribute != null) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlAttribute xmlAttribute = (XmlAttribute)parent;
+        final Project project = element.getProject();
         final PsiField handlerField = ref.myCurrentTagClass.findFieldByName(xmlAttribute.getName(), true);
         if (handlerField != null) {
-          final PsiClassType classType = JavaFxPropertyAttributeDescriptor.getPropertyClassType(handlerField);
+          final PsiClassType classType = JavaFxPsiUtil.getPropertyClassType(handlerField);
           if (classType != null) {
             final PsiClass eventHandlerClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER, GlobalSearchScope.allScope(project));
             final PsiTypeParameter[] typeParameters = eventHandlerClass != null ? eventHandlerClass.getTypeParameters() : null;

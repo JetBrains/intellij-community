@@ -18,8 +18,8 @@ package com.intellij.cvsSupport2.connections.ssh;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.net.CommonProxy;
-import com.intellij.util.net.NonStaticAuthenticator;
+import com.intellij.util.proxy.CommonProxy;
+import com.intellij.util.proxy.NonStaticAuthenticator;
 import org.netbeans.lib.cvsclient.connection.ConnectionSettings;
 
 import java.io.IOException;
@@ -48,13 +48,13 @@ public class SocksAuthenticatorManager {
     mySelector.register(connectionSettings.getHostName(), connectionSettings.getPort(),
                         connectionSettings.getProxyHostName(), connectionSettings.getProxyPort(),
                         connectionSettings.getProxyLogin(), connectionSettings.getProxyPassword());
-    CommonProxy.getInstance().setCustomAuth(connectionSettings.getHostName(), connectionSettings.getPort(), mySelector.getAuthenticator());
+    CommonProxy.getInstance().setCustomAuth(getClass().getName(), mySelector.getAuthenticator());
   }
 
   public void unregister(final ConnectionSettings connectionSettings) {
     SshLogger.debug("unregister in authenticator");
     mySelector.unregister(connectionSettings.getHostName(), connectionSettings.getPort());
-    CommonProxy.getInstance().removeCustomAuth(connectionSettings.getHostName(), connectionSettings.getPort());
+    CommonProxy.getInstance().removeCustomAuth(getClass().getName());
   }
 
   private void ensureRegistered() {

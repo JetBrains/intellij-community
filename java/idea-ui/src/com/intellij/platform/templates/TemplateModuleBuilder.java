@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
@@ -99,17 +100,30 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           public void run() {
             try {
               setupModule(module);
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
             }
             catch (ConfigurationException e) {
               LOG.error(e);
             }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+          }
+        });
+
+        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                  modifiableModuleModel.renameModule(module, module.getProject().getName());
+                  modifiableModuleModel.commit();
+                  fixModuleName(module);
+                }
+                catch (ModuleWithNameAlreadyExists exists) {
+                  // do nothing
+                }
+              }
+            });
           }
         });
         return module;

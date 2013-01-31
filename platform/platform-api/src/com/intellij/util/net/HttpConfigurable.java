@@ -29,6 +29,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.proxy.CommonProxy;
+import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -56,7 +58,7 @@ import java.util.*;
     @Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")
   }
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, JDOMExternalizable {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
@@ -73,6 +75,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
   public Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<CommonProxy.HostInfo>();
   private transient final Object myLock = new Object();
+  private IdeaWideProxySelector mySelector;
+  private IdeaWideAuthenticator myAuthenticator;
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
@@ -91,6 +95,28 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     correctPasswords(this, state);
     return state;
+  }
+
+  @Override
+  public void initComponent() {
+    mySelector = new IdeaWideProxySelector(this);
+    myAuthenticator = new IdeaWideAuthenticator(this);
+    final String name = getClass().getName();
+    CommonProxy.getInstance().setCustom(name, mySelector);
+    CommonProxy.getInstance().setCustomAuth(name, myAuthenticator);
+  }
+
+  @Override
+  public void disposeComponent() {
+    final String name = getClass().getName();
+    CommonProxy.getInstance().removeCustom(name);
+    CommonProxy.getInstance().removeCustomAuth(name);
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return getClass().getName();
   }
 
   private void correctPasswords(HttpConfigurable from, HttpConfigurable to) {
@@ -273,7 +299,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /**
    * todo [all] It is NOT nessesary to call anything if you obey common IDEA proxy settings;
-   * todo if you want to define your own behaviour, refer to {@link com.intellij.util.net.CommonProxy}
+   * todo if you want to define your own behaviour, refer to {@link com.intellij.util.proxy.CommonProxy}
    *
    * also, this method is useful in a way that it test connection to the host [through proxy]
    *

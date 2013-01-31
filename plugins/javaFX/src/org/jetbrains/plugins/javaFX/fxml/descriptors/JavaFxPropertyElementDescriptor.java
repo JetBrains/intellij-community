@@ -19,6 +19,7 @@ import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,14 +54,19 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     final PsiElement declaration = getDeclaration();
     if (declaration instanceof PsiField) {
       final PsiType psiType = ((PsiField)declaration).getType();
-      final List<XmlElementDescriptor> descriptors = collectDescriptorsByCollection(psiType, declaration.getResolveScope());
+      final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+      collectDescriptorsByCollection(psiType, declaration.getResolveScope(), descriptors);
+      for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
+        descriptors.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
+      }
       if (!descriptors.isEmpty()) return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  public static List<XmlElementDescriptor> collectDescriptorsByCollection(PsiType psiType, GlobalSearchScope resolveScope) {
-    final List<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
+  public static void collectDescriptorsByCollection(PsiType psiType,
+                                                    GlobalSearchScope resolveScope,
+                                                    final List<XmlElementDescriptor> descriptors) {
     final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(psiType, resolveScope);
     if (collectionItemType != null) {
       final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
@@ -74,13 +80,15 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
         });
       }
     }
-    return descriptors;
   }
 
   @Nullable
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
+    if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
+      return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
+    }
     if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }

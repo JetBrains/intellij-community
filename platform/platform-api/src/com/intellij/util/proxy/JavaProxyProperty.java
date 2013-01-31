@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.net;
+package com.intellij.util.proxy;
 
 /**
  * Created with IntelliJ IDEA.
