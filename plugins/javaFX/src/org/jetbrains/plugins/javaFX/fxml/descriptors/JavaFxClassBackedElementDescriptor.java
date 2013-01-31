@@ -96,7 +96,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
-  static void collectStaticAttributesDescriptors(XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
+  static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
+    if (context == null) return;
     collectParentStaticProperties(context.getParentTag(), simpleAttrs, new Function<PsiMethod, XmlAttributeDescriptor>() {
       @Override
       public XmlAttributeDescriptor fun(PsiMethod method) {
