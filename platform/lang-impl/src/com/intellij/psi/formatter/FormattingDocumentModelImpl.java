@@ -26,6 +26,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -40,6 +42,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   private final PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
+  private CodeStyleSettings mySettings;
 
   public FormattingDocumentModelImpl(final Document document, PsiFile file) {
     myDocument = document;
@@ -51,6 +54,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     else {
       myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy();
     }
+    mySettings = CodeStyleSettingsManager.getSettings(file != null ? file.getProject() : null);
   }
 
   public static FormattingDocumentModelImpl createOn(PsiFile file) {
@@ -147,7 +151,8 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
                                                   boolean changedViaPsi)
   {
     if (!changedViaPsi) {
-        return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset); 
+      return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset,
+                                                              mySettings);
     }
     
     final PsiElement element = myFile.findElementAt(startOffset);
@@ -155,7 +160,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       return whiteSpaceText;
     }
     else {
-      return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, element, startOffset, endOffset);
+      return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, element, startOffset, endOffset, mySettings);
     }
   }
 

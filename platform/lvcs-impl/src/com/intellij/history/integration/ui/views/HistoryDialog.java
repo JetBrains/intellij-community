@@ -50,6 +50,7 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -586,7 +587,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class MyDiffContainer extends JLayeredPane implements Disposable {
+  private static class MyDiffContainer extends JBLayeredPane implements Disposable {
     private AnimatedIcon myIcon = new AsyncProcessIcon.Big(this.getClass().getName());
 
     private JComponent myContent;

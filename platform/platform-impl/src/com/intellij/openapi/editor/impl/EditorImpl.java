@@ -73,12 +73,16 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -767,7 +771,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     */
 
     if (mayShowToolbar()) {
-      JLayeredPane layeredPane = new JLayeredPane() {
+      JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
         public void doLayout() {
           final Component[] components = getComponents();
@@ -1796,6 +1800,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, image);
   }
 
+  private static final Key<Pair<Point, BufferedImage>> CUSTOM_IMAGE = Key.create("CUSTOM_IMAGE");
+
+  public void setCustomImage(Pair<Point, BufferedImage> customImage) {
+    putUserData(CUSTOM_IMAGE, customImage);
+  }
+
   void paint(@NotNull Graphics2D g) {
     Rectangle clip = g.getClipBounds();
 
@@ -1845,6 +1855,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     borderEffect.paintHighlighters(getHighlighter());
     borderEffect.paintHighlighters(docMarkup);
     borderEffect.paintHighlighters(myMarkupModel);
+
+    Pair<Point, BufferedImage> pair = getUserData(CUSTOM_IMAGE);
+    if (pair != null) {
+      g.drawImage(pair.second, pair.first.x, pair.first.y, null);
+    }
+
     paintCaretCursor(g);
 
     paintComposedTextDecoration(g);
@@ -1948,7 +1964,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
       VisualPosition visStart =
         offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getStartOffset(), myDocument.getTextLength()));
-      int y = visibleLineToY(visStart.line) + getLineHeight() - getDescent() + 1;
+      int y = visibleLineToY(visStart.line) + getAscent() + 1;
       Point p1 = visualPositionToXY(visStart);
       Point p2 = logicalPositionToXY(
         offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getEndOffset(), myDocument.getTextLength())));
@@ -2021,7 +2037,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.fillRect(end.x, end.y, charWidth, lineHeight);
       }
       if (attributes != null && attributes.getEffectColor() != null) {
-        int y = visibleLineToY(visibleStartLine) + getLineHeight() - getDescent() + 1;
+        int y = visibleLineToY(visibleStartLine) + getAscent() + 1;
         g.setColor(attributes.getEffectColor());
         if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
           drawWave(g, end.x, end.x + charWidth - 1, y);
@@ -3010,9 +3026,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!isInClip) return position.x;
 
-    int y = getLineHeight() - getDescent() + position.y;
+    int y = getAscent() + position.y;
     int x = position.x;
     return drawTabbedString(g, text, start, end, x, y, effectColor, effectType, fontType, fontColor, clip);
+  }
+
+  public int getAscent() {
+    return getLineHeight() - getDescent();
   }
 
   private int drawString(@NotNull Graphics g,
@@ -3027,7 +3047,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!isInClip) return position.x;
 
-    int y = getLineHeight() - getDescent() + position.y;
+    int y = getAscent() + position.y;
     int x = position.x;
 
     return drawTabbedString(g, text.toCharArray(), 0, text.length(), x, y, effectColor, effectType, fontType, fontColor, clip);
@@ -4352,7 +4372,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             //in case of italic style we paint out of the cursor block. Painting the symbol to a dedicated buffered image
             //solves the problem, but still looks weird because it leaves colored pixels at right.
             g.setColor(CURSOR_FOREGROUND);
-            g.drawChars(new char[]{ch}, 0, 1, x, y + getLineHeight() - getDescent());
+            g.drawChars(new char[]{ch}, 0, 1, x, y + getAscent());
           }
           finally {
             if (state != null) state.dispose();
@@ -5663,13 +5683,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
-    private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
-    private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
+
+    private final FontPreferences                        myFontPreferences = new FontPreferences();
+    private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
+    private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
-    private Map<EditorFontType, Font> myFontsMap = null;
-    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-    private int myFontSize = -1;
-    private String myFaceName = null;
+    private Map<EditorFontType, Font> myFontsMap    = null;
+    private int                       myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
+    private int                       myFontSize    = -1;
+    private String                    myFaceName    = null;
     private EditorColorsScheme myGlobalScheme;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
@@ -5690,6 +5712,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void initFonts() {
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
+
+      myFontPreferences.clear();
+      myFontPreferences.register(editorFontName, editorFontSize);
 
       myFontsMap = new EnumMap<EditorFontType, Font>(EditorFontType.class);
 
@@ -5776,6 +5801,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGlobalScheme.setQuickDocFontSize(fontSize);
     }
 
+    @NotNull
+    @Override
+    public FontPreferences getFontPreferences() {
+      return myFontPreferences.getEffectiveFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
+    }
+
+    @Override
+    public void setFontPreferences(@NotNull FontPreferences preferences) {
+      preferences.copyTo(myFontPreferences);
+      initFonts();
+    }
+
     @Override
     public String getEditorFontName() {
       if (myFaceName == null) {
@@ -5836,6 +5873,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
       int globalFontSize = getGlobal().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
+    }
+
+    @NotNull
+    @Override
+    public FontPreferences getConsoleFontPreferences() {
+      return getGlobal().getConsoleFontPreferences();
+    }
+
+    @Override
+    public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
+      getGlobal().setConsoleFontPreferences(preferences);
     }
 
     @Override
@@ -6262,7 +6310,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           for (
             FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(endOffset);
             region != null && endOffset < myDocument.getTextLength();
-            region = myFoldingModel.getCollapsedRegionAtOffset(endOffset)) {
+            region = myFoldingModel.getCollapsedRegionAtOffset(endOffset))
+          {
             final int lineNumber = myDocument.getLineNumber(region.getEndOffset());
             endOffset = myDocument.getLineEndOffset(lineNumber);
           }
@@ -6563,7 +6612,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           int x,
                           int y,
                           Color color,
-                          @NotNull FontInfo fontInfo) {
+                          @NotNull FontInfo fontInfo)
+    {
       drawCharsCached(g, data, start, end, x, y, fontInfo, color);
     }
   }

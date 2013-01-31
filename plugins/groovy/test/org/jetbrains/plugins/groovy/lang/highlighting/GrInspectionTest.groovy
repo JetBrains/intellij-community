@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,30 @@ private boolean onWinOrMacOS() {
    }
 <warning descr="Not all execution paths return a value">}</warning>
 
+''', MissingReturnInspection)
+  }
+
+  void testMissingReturnInUnary() {
+    testHighlighting('''\
+boolean foo(def list) {
+  !list
+}
+
+boolean bar(def list) {
+  if (list) !list
+<warning descr="Not all execution paths return a value">}</warning>
+''', MissingReturnInspection)
+  }
+
+  void testMissingReturnInBinary() {
+    testHighlighting('''\
+boolean foo(def list) {
+  !list && list
+}
+
+boolean bar(def list) {
+  if (list) !list && list
+<warning descr="Not all execution paths return a value">}</warning>
 ''', MissingReturnInspection)
   }
 

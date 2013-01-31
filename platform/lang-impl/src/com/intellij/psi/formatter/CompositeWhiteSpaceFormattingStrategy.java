@@ -17,6 +17,7 @@ package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,11 +85,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings)
   {
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
-      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset);
+      result = strategy.adjustWhiteSpaceIfNecessary(result, text, startOffset, endOffset, codeStyleSettings);
     }
     return result;
   }
@@ -97,11 +98,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull PsiElement startElement,
                                                   int startOffset,
-                                                  int endOffset)
+                                                  int endOffset, CodeStyleSettings codeStyleSettings)
   {
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
-      result = strategy.adjustWhiteSpaceIfNecessary(result, startElement, startOffset, endOffset);
+      result = strategy.adjustWhiteSpaceIfNecessary(result, startElement, startOffset, endOffset, codeStyleSettings);
     }
     return result;
   }

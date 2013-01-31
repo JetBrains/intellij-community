@@ -25,11 +25,11 @@
     <orderEntry type="module-library">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.3.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -40,8 +40,8 @@
     <orderEntry type="module-library">
       <library name="Slf4j">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.6.6.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/slf4j-simple-1.6.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/slf4j-simple-1.7.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -1,17 +1,19 @@
 <component>
   <version codename="Community Edition" major="12" minor="0" eap="true"/>
-  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/"/>
+  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="123.1" maxbuild="123.9999" version="12"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="236" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/idea_community_about.png" foreground="ffffff"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png"/>
+  <about url="/idea_community_about.png" foreground="ffffff" logoX="300" logoY="265" logoW="75" logoH="30"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"
                   caption-url="/welcomeCaption_community.png" 
                   slogan-url="/developSlogan_community.png"/>
+
+  <third-party url="http://www.jetbrains.org/"/>
 
   <editor background-url="/idea_logo_background.png"/>
 
@@ -21,9 +23,9 @@
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="http://www.jetbrains.com/idea/documentation"/>
   <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://youtrack.jetbrains.net"
+  <feedback eap-url="http://youtrack.jetbrains.com"
             release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <plugins url="http://plugins.intellij.net"/>
+  <plugins url="http://plugins.jetbrains.com"/>
   <whatsnew url="http://www.jetbrains.com/idea/whatsnew/index.html"/>
   <keymap win="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>

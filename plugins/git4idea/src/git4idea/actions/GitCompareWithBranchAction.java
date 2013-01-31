@@ -204,7 +204,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
 
       // constructing the revision with human readable name (will work for files comparison however).
       final VcsFileRevision compareRevision =
-        new GitFileRevision(project, filePath, new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()), false);
+        new GitFileRevision(project, filePath, new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()));
       CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
       new GitDiffFromHistoryHandler(project).showDiffForTwo(new FilePathImpl(file), compareRevision, currentRevision);
     }

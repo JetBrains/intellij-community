@@ -46,26 +46,30 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String N_A = "N/A";
 
   private PluginManagerMain installed;
+  private final String myVendorFilter;
 
-  public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings) {
+  public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings, String vendorFilter) {
     super(uiSettings);
     this.installed = installed;
+    myVendorFilter = vendorFilter;
     init();
     final JButton manageRepositoriesBtn = new JButton(MANAGE_REPOSITORIES);
-    manageRepositoriesBtn.setMnemonic('m');
-    manageRepositoriesBtn.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
-          final ArrayList<String> pluginHosts = UpdateSettings.getInstance().myPluginHosts;
-          if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
-            ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase());
+    if (myVendorFilter == null) {
+      manageRepositoriesBtn.setMnemonic('m');
+      manageRepositoriesBtn.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
+            final ArrayList<String> pluginHosts = UpdateSettings.getInstance().myPluginHosts;
+            if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
+              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase());
+            }
+            loadAvailablePlugins();
           }
-          loadAvailablePlugins();
         }
-      }
-    });
-    myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
+      });
+      myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
+    }
 
     final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
     httpProxySettingsButton.addActionListener(new ActionListener() {
@@ -83,7 +87,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
   @Override
   protected JScrollPane createTable() {
-    pluginsModel = new AvailablePluginsTableModel();
+    AvailablePluginsTableModel model = new AvailablePluginsTableModel();
+    model.setVendor(myVendorFilter);
+    pluginsModel = model;
     pluginTable = new PluginTable(pluginsModel);
     pluginTable.getTableHeader().setReorderingAllowed(false);
     pluginTable.setColumnWidth(PluginManagerColumnInfo.COLUMN_DOWNLOADS, 70);

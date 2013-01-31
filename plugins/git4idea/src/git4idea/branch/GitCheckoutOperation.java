@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -129,7 +130,12 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     else if (smartCheckoutDecision == GitSmartOperationDialog.FORCE_EXIT_CODE) {
-      return checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
+      boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
+      if (forceCheckoutSucceeded) {
+        markSuccessful(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
+        refresh(ArrayUtil.toObjectArray(allConflictingRepositories, GitRepository.class));
+      }
+      return forceCheckoutSucceeded;
     }
     else {
       fatalLocalChangesError(myStartPointReference);

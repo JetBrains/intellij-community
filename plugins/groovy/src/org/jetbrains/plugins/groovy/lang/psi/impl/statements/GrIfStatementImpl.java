@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -29,6 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @autor: ilyas
@@ -60,19 +64,24 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
 
   @Nullable
   public GrStatement getThenBranch() {
-    GrStatement[] statements = findChildrenByClass(GrStatement.class);
+    List<GrStatement> statements = new ArrayList<GrStatement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (ReflectionCache.isInstance(cur, GrStatement.class)) statements.add((GrStatement)cur);
+    }
 
-    if (getCondition() == null && statements.length > 0) return statements[0];
-    else if (statements.length > 1 && (statements[1] instanceof GrStatement)) return statements[1];
-
+    if (getCondition() == null && statements.size() > 0) return statements.get(0);
+    if (statements.size() > 1) return statements.get(1);
     return null;
   }
 
   @Nullable
   public GrStatement getElseBranch() {
-    GrStatement[] statements = findChildrenByClass(GrStatement.class);
-    if (statements.length == 3 && (statements[2] instanceof GrStatement)) {
-      return statements[2];
+    List<GrStatement> statements = new ArrayList<GrStatement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrStatement) statements.add((GrStatement)cur);
+    }
+    if (statements.size() == 3) {
+      return statements.get(2);
     }
 
     return null;

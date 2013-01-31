@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 03.04.2007
@@ -54,11 +57,15 @@ public class GrThrowsClauseImpl extends GroovyPsiElementImpl implements GrThrows
 
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    GrCodeReferenceElement[] refs = findChildrenByClass(GrCodeReferenceElement.class);
-    if (refs.length == 0) return PsiClassType.EMPTY_ARRAY;
-    PsiClassType[] result = new PsiClassType[refs.length];
+    List<GrCodeReferenceElement> refs = new ArrayList<GrCodeReferenceElement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrCodeReferenceElement) refs.add((GrCodeReferenceElement)cur);
+    }
+    if (refs.size() == 0) return PsiClassType.EMPTY_ARRAY;
+
+    PsiClassType[] result = new PsiClassType[refs.size()];
     for (int i = 0; i < result.length; i++) {
-      result[i] = new GrClassReferenceType(refs[i]);
+      result[i] = new GrClassReferenceType(refs.get(i));
     }
 
     return result;

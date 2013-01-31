@@ -113,10 +113,7 @@ public class HgRegularUpdater implements HgUpdater {
         abortOnMultiplePulledHeads(pulledBranchHeads);
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
-        //update to the pulled in head, because we consider that head as the 'authoritative' head
-        updateToPulledHead(repository, updatedFiles, pulledBranchHeads.get(0), indicator);
-
-        HgCommandResult mergeResult = doMerge(updatedFiles, indicator, warnings, remainingOriginalBranchHeads.get(0));
+        HgCommandResult mergeResult = doMerge(updatedFiles, indicator, warnings, pulledBranchHeads.get(0));
 
         if (shouldCommitAfterMerge()) {
           commitOrWarnAboutConflicts(warnings, mergeResult);

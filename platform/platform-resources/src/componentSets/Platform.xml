@@ -124,6 +124,10 @@
       <skipForDefaultProject/>
     </component>
 
+    <component>
+      <implementation-class>com.intellij.util.net.HttpConfigurable</implementation-class>
+    </component>
+
   </application-components>
 
   <project-components>

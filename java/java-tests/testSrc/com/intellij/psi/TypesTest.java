@@ -454,6 +454,6 @@ public class TypesTest extends GenericsTestCase {
     assertEquals(PsiType.INT, plusBytePrefix.getType());
     final PsiStatement declaration = factory.createStatementFromText("Byte b = 1;", null);
     final PsiExpression plusPlusPostfix = factory.createExpressionFromText("b++", declaration);
-    assertEquals(PsiType.BYTE, plusPlusPostfix.getType());
+    assertEquals(PsiType.BYTE.getBoxedType(declaration), plusPlusPostfix.getType());
   }
 }

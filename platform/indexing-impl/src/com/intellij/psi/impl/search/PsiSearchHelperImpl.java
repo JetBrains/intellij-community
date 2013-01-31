@@ -126,14 +126,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public AsyncFuture<Boolean> processElementsWithWordAsync(@NotNull final TextOccurenceProcessor processor,
                                          @NotNull SearchScope searchScope,
                                          @NotNull final String text,
-                                         short searchContext,
+                                         final short searchContext,
                                          final boolean caseSensitively) {
     if (text.isEmpty()) {
       return AsyncFutureFactory.wrapException(new IllegalArgumentException("Cannot search for elements with empty text"));
     }
     final ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (searchScope instanceof GlobalSearchScope) {
-      StringSearcher searcher = new StringSearcher(text, caseSensitively, true);
+      StringSearcher searcher = new StringSearcher(text, caseSensitively, true, searchContext == UsageSearchContext.IN_STRINGS);
 
       return processElementsWithTextInGlobalScopeAsync(processor,
                                                        (GlobalSearchScope)searchScope,
@@ -154,6 +154,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                                                                              text,
                                                                                                                              caseSensitively,
                                                                                                                              ignoreInjectedPsi,
+                                                                                                                             searchContext == UsageSearchContext.IN_STRINGS,
                                                                                                                              progress);
                                                                               }
                                                                             });
@@ -165,11 +166,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                final String word,
                                                                final boolean caseSensitive,
                                                                final boolean ignoreInjectedPsi,
+                                                               final boolean handleEscapeSequences,
                                                                final ProgressIndicator progress) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        StringSearcher searcher = new StringSearcher(word, caseSensitive, true);
+        StringSearcher searcher = new StringSearcher(word, caseSensitive, true, handleEscapeSequences);
 
         return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, !ignoreInjectedPsi, progress);
       }
@@ -389,7 +391,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     });
 
-    final StringSearcher searcher = new StringSearcher(qName, true, true);
+    final StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
     if (progress != null) {
       progress.pushState();
@@ -615,7 +617,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final Map<RequestWithProcessor, StringSearcher> searchers = new HashMap<RequestWithProcessor, StringSearcher>();
     final Set<String> allWords = new TreeSet<String>();
     for (RequestWithProcessor singleRequest : candidateFiles.values()) {
-      searchers.put(singleRequest, new StringSearcher(singleRequest.request.word, singleRequest.request.caseSensitive, true));
+      searchers.put(singleRequest, new StringSearcher(singleRequest.request.word, singleRequest.request.caseSensitive, true, false));
       allWords.add(singleRequest.request.word);
     }
 

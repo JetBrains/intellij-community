@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.PairFunction;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -96,14 +97,14 @@ public class Messages {
   }
 
   /**
-   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
+   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!
    */
   public static int showDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
   /**
-   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
+   * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!
    */
   public static int showDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -162,7 +163,7 @@ public class Messages {
         return MacMessages.getInstance()
           .showMessageDialog(title, message, options, false, SwingUtilities.getWindowAncestor(parent), defaultOptionIndex, defaultOptionIndex, null);
       }
-  
+
       MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon, false);
       dialog.show();
       return dialog.getExitCode();
@@ -183,7 +184,7 @@ public class Messages {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance().showMessageDialog(title, message, options, false, null, defaultOptionIndex, focusedOptionIndex, doNotAskOption);
       }
-  
+
       //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
       MessageDialog dialog = new MessageDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
       dialog.show();
@@ -219,7 +220,7 @@ public class Messages {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
-    
+
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
@@ -228,7 +229,7 @@ public class Messages {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(parent));
       return;
     }
-    
+
     showDialog(parent, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
@@ -243,7 +244,7 @@ public class Messages {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON);
       return;
     }
-    
+
     showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
@@ -254,7 +255,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, WindowManager.getInstance().suggestParentWindow(project));
     }
-    
+
     return showDialog(project, message, title, new String[]{yesText, noText}, 0, icon);
   }
 
@@ -265,7 +266,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
     }
-    
+
     return showYesNoDialog(project, message, title, YES_BUTTON, NO_BUTTON, icon);
   }
 
@@ -276,7 +277,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, SwingUtilities.getWindowAncestor(parent));
     }
-    
+
     return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
@@ -292,10 +293,10 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, null, doNotAskOption);
     }
-    
+
     return showDialog(message, title, new String[]{yesText, noText}, 0, icon, doNotAskOption);
   }
-  
+
   /**
    * Use this method only if you do not know project or component
    *
@@ -306,7 +307,7 @@ public class Messages {
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon) {
     return showYesNoDialog(message, title, yesText, noText, icon, null);
   }
-  
+
   /**
    * Use this method only if you do not know project or component
    *
@@ -328,7 +329,7 @@ public class Messages {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project),
                                          doNotAskOption);
     }
-    
+
     return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption);
   }
 
@@ -336,7 +337,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, WindowManager.getInstance().suggestParentWindow(project));
     }
-    
+
     return showDialog(project, message, title, new String[]{okText, cancelText}, 0, icon);
   }
 
@@ -387,7 +388,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, null, doNotAskOption);
     }
-    
+
     return showDialog(message, title, new String[]{okText, cancelText}, 0, icon, doNotAskOption);
   }
 
@@ -445,7 +446,7 @@ public class Messages {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getErrorTitle(), message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
-    
+
     showDialog(component, message, CommonBundle.getErrorTitle(), new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
@@ -469,7 +470,7 @@ public class Messages {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getWarningTitle(), message, OK_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
       return;
     }
-    
+
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
@@ -493,7 +494,7 @@ public class Messages {
       MacMessages.getInstance().showErrorDialog(CommonBundle.getWarningTitle(), message, OK_BUTTON, null);
       return;
     }
-    
+
     showDialog(message, title, new String[]{OK_BUTTON}, 0, getWarningIcon());
   }
 
@@ -536,7 +537,7 @@ public class Messages {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoCancelDialog(title, message, yes, no, cancel, null, doNotAskOption);
     }
-    
+
     return showDialog(message, title, new String[]{yes, no, cancel}, 0, icon, doNotAskOption);
   }
 
@@ -549,7 +550,7 @@ public class Messages {
   public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon) {
     return showYesNoCancelDialog(message, title, yes, no, cancel, icon, null);
   }
-  
+
   /**
    * Use this method only if you do not know project or component
    *
@@ -809,7 +810,7 @@ public class Messages {
       MacMessages.getInstance().showOkMessageDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
       return;
     }
-    
+
     showMessageDialog(component, message, title, getInformationIcon());
   }
 
@@ -843,7 +844,7 @@ public class Messages {
   }
 
   /**
-   * Shows dialog with text area to edit long strings that don't fit in text field 
+   * Shows dialog with text area to edit long strings that don't fit in text field.
    */
   public static void showTextAreaDialog(final JTextField textField, final String title, @NonNls final String dimensionServiceKey) {
     if (isApplicationInUnitTestOrHeadless()) {
@@ -853,8 +854,7 @@ public class Messages {
       final JTextArea textArea = new JTextArea(10, 50);
       textArea.setWrapStyleWord(true);
       textArea.setLineWrap(true);
-      String s = textField.getText().replaceAll("[ ]*=[ ]*", "=").replaceAll("=\\-", "=\\ \\-");
-      List<String> lines = StringUtil.splitHonorQuotes(s, ' ');
+      List<String> lines = ParametersListUtil.parse(textField.getText(), true);
       textArea.setText(StringUtil.join(lines, "\n"));
       InsertPathAction.copyFromTo(textField, textArea);
       final DialogBuilder builder = new DialogBuilder(textField);
@@ -946,7 +946,7 @@ public class Messages {
     public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       this(parent, message, title, options, defaultOptionIndex, icon, false);
     }
-    
+
     public MessageDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
       this(parent, message, title, options, defaultOptionIndex, -1, icon, canBeParent);
     }
@@ -960,7 +960,7 @@ public class Messages {
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
       this(message, title, options, defaultOptionIndex, icon, false);
     }
-    
+
     public MessageDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, boolean canBeParent) {
       super(canBeParent);
       _init(title, message, options, defaultOptionIndex, -1, icon, null);

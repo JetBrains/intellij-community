@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,31 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   Color getColor(ColorKey key);
   void setColor(ColorKey key, Color color);
 
-  int getEditorFontSize();
-  void setEditorFontSize(int fontSize);
-
-  FontSize getQuickDocFontSize();
-  void setQuickDocFontSize(@NotNull FontSize fontSize);
+  /**
+   * The IDE has allowed to configure only a single font family for a while. However, that doesn't handle a situation when
+   * that font family is unable to display particular char - fallback font family was chosen randomly from the whole collection
+   * of all registered fonts.
+   * <p/>
+   * Now it's possible to specify more than one font, i.e. directly indicated 'fallback fonts sequence' (see {@link FontPreferences}).
+   * However, old single font-based API is still here in order to preserve backward compatibility ({@link #getEditorFontName()} and
+   * {@link #getEditorFontSize()}). I.e. those methods are just re-written in order to use {@link FontPreferences} object exposed
+   * by this method.
+   * 
+   * @return    font preferences to use
+   */
+  @NotNull
+  FontPreferences getFontPreferences();
+  void setFontPreferences(@NotNull FontPreferences preferences);
   
   String getEditorFontName();
   void setEditorFontName(String fontName);
-
+  
+  int getEditorFontSize();
+  void setEditorFontSize(int fontSize);
+  
+  FontSize getQuickDocFontSize();
+  void setQuickDocFontSize(@NotNull FontSize fontSize);
+  
   Font getFont(EditorFontType key);
   void setFont(EditorFontType key, Font font);
 
@@ -56,6 +72,14 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   void setLineSpacing(float lineSpacing);
 
   Object clone();
+
+  /**
+   * @return    console font preferences to use
+   * @see #getFontPreferences()
+   */
+  @NotNull
+  FontPreferences getConsoleFontPreferences();
+  void setConsoleFontPreferences(@NotNull FontPreferences preferences);
 
   String getConsoleFontName();
   void setConsoleFontName(String fontName);

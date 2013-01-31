@@ -40,13 +40,11 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
-  private final SvnVcs mySvnVcs;
   private final ISVNAuthenticationStorage myAuthenticationStorage;
   private static final Set<Thread> ourForceInteractive = new HashSet<Thread>();
 
   public SvnAuthenticationProvider(final SvnVcs svnVcs, final ISVNAuthenticationProvider provider,
                                    final ISVNAuthenticationStorage authenticationStorage) {
-    mySvnVcs = svnVcs;
     myAuthenticationStorage = authenticationStorage;
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();

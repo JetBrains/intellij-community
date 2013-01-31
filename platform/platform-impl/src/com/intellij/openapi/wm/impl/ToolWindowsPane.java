@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -49,7 +50,7 @@ import java.util.Comparator;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ToolWindowsPane extends JLayeredPane implements Disposable {
+public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
 
   private final IdeFrameImpl myFrame;
@@ -369,7 +370,7 @@ final class ToolWindowsPane extends JLayeredPane implements Disposable {
     return null;
   }
 
-  private void setDocumentComponent(final JComponent component){
+  public void setDocumentComponent(final JComponent component){
     myHorizontalSplitter.setInnerComponent(component);
   }
 

@@ -1661,7 +1661,7 @@ public class JBTabsImpl extends JComponent
         shapeInfo.fillPath.transformLine(shapeInfo.fillPath.getX(), paintTopY, shapeInfo.fillPath.getX(), paintBottomY);
 
 
-      g2d.setPaint(new GradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
+      g2d.setPaint(UIUtil.getGradientPaint((float)gradientLine.getX1(), (float)gradientLine.getY1(),
                                      shapeInfo.fillPath.transformY1(shapeInfo.from, shapeInfo.to), (float)gradientLine.getX2(),
                                      (float)gradientLine.getY2(), shapeInfo.fillPath.transformY1(shapeInfo.to, shapeInfo.from)));
       g2d.fill(shapeInfo.fillPath.getShape());
@@ -2051,12 +2051,12 @@ public class JBTabsImpl extends JComponent
     final Line2D.Float gradientLine =
       shape.transformLine(0, topY, 0, topY + shape.deltaY((int)(shape.getHeight() / 1.5)));
 
-    final GradientPaint gp = UIUtil.isUnderDarcula()
-                             ? new GradientPaint(gradientLine.x1, gradientLine.y1,
+    final Paint gp = UIUtil.isUnderDarcula()
+                             ? UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
                                                  shape.transformY1(backgroundColor, backgroundColor),
                                                  gradientLine.x2, gradientLine.y2,
                                                  shape.transformY1(backgroundColor, backgroundColor))
-                             : new GradientPaint(gradientLine.x1, gradientLine.y1,
+                             : UIUtil.getGradientPaint(gradientLine.x1, gradientLine.y1,
                                                  shape.transformY1(backgroundColor.brighter().brighter(), backgroundColor),
                                                  gradientLine.x2, gradientLine.y2,
                                                  shape.transformY1(backgroundColor, backgroundColor.brighter().brighter()));

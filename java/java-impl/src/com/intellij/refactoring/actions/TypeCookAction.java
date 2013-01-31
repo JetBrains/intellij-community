@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.typeCook.TypeCookHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeCookAction extends BaseRefactoringAction {
 
@@ -35,7 +36,7 @@ public class TypeCookAction extends BaseRefactoringAction {
     return language.equals(JavaLanguage.INSTANCE);
   }
 
-  public boolean isEnabledOnElements(PsiElement[] elements) {
+  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
     if (project == null) {
@@ -59,7 +60,7 @@ public class TypeCookAction extends BaseRefactoringAction {
     return true;
   }
 
-  public RefactoringActionHandler getHandler(DataContext dataContext) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return getHandler();
   }
   public RefactoringActionHandler getHandler() {

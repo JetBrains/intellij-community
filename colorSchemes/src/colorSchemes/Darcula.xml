@@ -408,26 +408,26 @@
     </option>
     <option name="DIFF_CONFLICT">
       <value>
-        <option name="BACKGROUND" value="3d0909" />
-        <option name="ERROR_STRIPE_COLOR" value="eb5e42" />
+        <option name="BACKGROUND" value="763c3d" />
+        <option name="ERROR_STRIPE_COLOR" value="763c3d" />
       </value>
     </option>
     <option name="DIFF_DELETED">
       <value>
-        <option name="BACKGROUND" value="666666" />
-        <option name="ERROR_STRIPE_COLOR" value="747474" />
+        <option name="BACKGROUND" value="0" />
+        <option name="ERROR_STRIPE_COLOR" value="0" />
       </value>
     </option>
     <option name="DIFF_INSERTED">
       <value>
-        <option name="BACKGROUND" value="164716" />
-        <option name="ERROR_STRIPE_COLOR" value="18701" />
+        <option name="BACKGROUND" value="365d40" />
+        <option name="ERROR_STRIPE_COLOR" value="365d40" />
       </value>
     </option>
     <option name="DIFF_MODIFIED">
       <value>
-        <option name="BACKGROUND" value="1e1e45" />
-        <option name="ERROR_STRIPE_COLOR" value="3b59b2" />
+        <option name="BACKGROUND" value="337184" />
+        <option name="ERROR_STRIPE_COLOR" value="326174" />
       </value>
     </option>
     <option name="DOC_COMMENT_TAG_VALUE">
@@ -469,6 +469,13 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="ERRORS_ATTRIBUTES">
+      <value>
+        <option name="EFFECT_COLOR" value="bc3f3c" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="bc3f3c" />
+      </value>
+    </option>
     <option name="EXECUTIONPOINT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="2d6099" />
@@ -476,7 +483,7 @@
     </option>
     <option name="FOLDED_TEXT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="575c5d" />
+        <option name="BACKGROUND" value="3a3a3a" />
       </value>
     </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
@@ -615,13 +622,21 @@
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="b389c5" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="b389c5" />
+        <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="INCLUDE_JAVA_CALL">
       <value>
         <option name="FOREGROUND" value="f7b891" />
         <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="INFO_ATTRIBUTES">
+      <value>
+        <option name="EFFECT_COLOR" value="aeae80" />
+        <option name="EFFECT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="aeae80" />
       </value>
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
@@ -1005,7 +1020,6 @@
     <option name="PY.STRING.B">
       <value>
         <option name="FOREGROUND" value="a5c261" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="REGEXP.BRACES">
@@ -1479,7 +1493,7 @@
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="6300" />
+        <option name="BACKGROUND" value="8b6700" />
       </value>
     </option>
     <option name="SLIM_BAD_CHARACTER">
@@ -1672,8 +1686,8 @@
     </option>
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="6300" />
-        <option name="ERROR_STRIPE_COLOR" value="ff00" />
+        <option name="BACKGROUND" value="425f44" />
+        <option name="ERROR_STRIPE_COLOR" value="425f44" />
       </value>
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
@@ -1695,7 +1709,7 @@
     </option>
     <option name="TYPO">
       <value>
-        <option name="EFFECT_COLOR" value="848504" />
+        <option name="EFFECT_COLOR" value="505233" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
@@ -1751,8 +1765,7 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4d4925" />
-        <option name="EFFECT_COLOR" value="8c8c00" />
+        <option name="BACKGROUND" value="525041" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
       </value>
@@ -1766,6 +1779,11 @@
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="5a647e" />
+      </value>
+    </option>
+    <option name="WRONG_REFERENCES_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="bc3f3c" />
       </value>
     </option>
     <option name="XML_ATTRIBUTE_NAME">

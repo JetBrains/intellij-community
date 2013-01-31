@@ -2,12 +2,14 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,10 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   public JavaFxPropertyAttributeDescriptor(String name, PsiClass psiClass) {
     myName = name;
     myPsiClass = psiClass;
+  }
+
+  public PsiClass getPsiClass() {
+    return myPsiClass;
   }
 
   @Override
@@ -64,7 +70,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       final PsiField[] fields = enumClass.getFields();
       final List<String> enumConstants = new ArrayList<String>();
       for (PsiField enumField : fields) {
-        if (enumField instanceof PsiEnumConstant) {
+        if (isConstant(enumField)) {
           enumConstants.add(enumField.getName());
         }
       }
@@ -73,32 +79,19 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     return null;
   }
 
+  protected boolean isConstant(PsiField enumField) {
+    return enumField instanceof PsiEnumConstant;
+  }
+
   protected PsiClass getEnum() {
-    final PsiClass aClass = getPropertyClass(getDeclaration());
+    final PsiClass aClass = JavaFxPsiUtil.getPropertyClass(getDeclaration());
     return aClass != null && aClass.isEnum() ? aClass : null;
   }
 
-  public static PsiClass getPropertyClass(PsiElement field) {
-    if (field instanceof PsiField) {
-      final PsiType type = ((PsiField)field).getType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-        final PsiClass attributeClass = resolveResult.getElement();
-        if (attributeClass != null) {
-          final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
-            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
-          if (objectProperty != null) {
-            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
-              .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
-            if (superClassSubstitutor != null) {
-              final PsiType propertyType = superClassSubstitutor.substitute(objectProperty.getTypeParameters()[0]);
-              if (propertyType instanceof PsiClassType) {
-                return ((PsiClassType)propertyType).resolve();
-              }
-            }
-          }
-        }
-      }
+  public PsiField getEnumConstant(String attrValue) {
+    if (isEnumerated()) {
+      final PsiClass aClass = getEnum();
+      return aClass.findFieldByName(attrValue.toUpperCase(), false);
     }
     return null;
   }
@@ -106,22 +99,24 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   @Nullable
   @Override
   public String validateValue(XmlElement context, String value) {
-    if (isEnumerated()) {
-      final String[] values = getEnumeratedValues();
-      if (values != null && !isWithingBounds(value, values)) {
-        return value + " is not withing its bounds";
+    if (context instanceof XmlAttributeValue) {
+      final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)context;
+      final PsiElement parent = xmlAttributeValue.getParent();
+      if (parent instanceof XmlAttribute && JavaFxPsiUtil.checkIfAttributeHandler((XmlAttribute)parent)) {
+        final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(context.getContainingFile());
+        if (value.startsWith("#")) {
+          if (controllerClass == null) {
+            return "No controller specified for top level element";
+          }
+        }
+        else {
+          if (JavaFxPsiUtil.parseInjectedLanguages((XmlFile)context.getContainingFile()).isEmpty()) {
+            return "Page language not specified.";
+          }
+        }
       }
     }
     return null;
-  }
-
-  private static boolean isWithingBounds(String value, String[] values) {
-    for (String enumConstant : values) {
-      if (StringUtil.endsWithIgnoreCase(enumConstant, value)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -140,7 +135,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   @Override
-  public void init(PsiElement element) {}
+  public void init(PsiElement element) {
+  }
 
   @Override
   public Object[] getDependences() {

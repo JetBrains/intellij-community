@@ -32,12 +32,18 @@ public class StringSearcher {
   private final boolean myCaseSensitive;
   private final boolean myForwardDirection;
   private final boolean myJavaIdentifier;
+  private final boolean myHandleEscapeSequences;
 
   public int getPatternLength() {
     return myPatternLength;
   }
 
   public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection) {
+    this(pattern, caseSensitive, forwardDirection, false);
+  }
+
+  public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection, boolean handleEscapeSequences) {
+    myHandleEscapeSequences = handleEscapeSequences;
     LOG.assertTrue(!pattern.isEmpty());
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
@@ -64,6 +70,10 @@ public class StringSearcher {
 
   public boolean isForwardDirection() {
     return myForwardDirection;
+  }
+
+  public boolean isHandleEscapeSequences() {
+    return myHandleEscapeSequences;
   }
 
   public int scan(@NotNull CharSequence text) {

@@ -26,4 +26,6 @@ public interface SvnServerFileManager {
   Map<String, ProxyGroup> getGroups();
 
   void updateUserServerFile(final Collection<ProxyGroup> newUserGroups);
+
+  void updateFromFile();
 }

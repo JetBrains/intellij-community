@@ -89,17 +89,8 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return references;
   }
 
-  private static AbstractConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
-    return new AbstractConvertContext() {
-      @NotNull
-      public DomElement getInvocationElement() {
-        return domValue;
-      }
-
-      public PsiManager getPsiManager() {
-        return psiElement.getManager();
-      }
-    };
+  private static ConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
+    return ConvertContextFactory.createConvertContext(domValue);
   }
 
   @Nullable
@@ -108,7 +99,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
   }
 
   private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
-    AbstractConvertContext context = createConvertContext(psiElement, domValue);
+    ConvertContext context = createConvertContext(psiElement, domValue);
 
     List<PsiReference> result = new ArrayList<PsiReference>();
     String unresolvedText = ElementManipulators.getValueText(psiElement);

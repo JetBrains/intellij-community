@@ -80,6 +80,6 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
                                                            @NotNull String pathInJar,
                                                            @NotNull SourceFileFilter filter, final DestinationInfo destinationInfo) {
-    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myBuildTarget, destinationInfo);
+    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex++, myBuildTarget, destinationInfo);
   }
 }

@@ -106,7 +106,7 @@ public class JavaExecutionUtil {
   }
 
   @Nullable
-  public static String getRuntimeQualifiedName(final PsiClass aClass) {
+  public static String getRuntimeQualifiedName(@NotNull final PsiClass aClass) {
     return ClassUtil.getJVMClassName(aClass);
   }
 

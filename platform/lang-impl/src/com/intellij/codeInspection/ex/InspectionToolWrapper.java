@@ -58,7 +58,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   /** Copy ctor */
   protected InspectionToolWrapper(InspectionToolWrapper<T, E> other) {
     myEP = other.myEP;
-    myTool = other.myTool;
+    // we need to create a copy for buffering
+    //noinspection unchecked
+    myTool = other.myTool == null ? null : (T)InspectionToolRegistrar.instantiateTool(other.myTool.getClass());
   }
 
   public abstract InspectionToolWrapper<T, E> createCopy();
@@ -67,9 +69,6 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   public T getTool() {
     if (myTool == null) {
       //noinspection unchecked
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        instantated = new Throwable();
-      }
       myTool = (T)myEP.instantiateTool();
       if (!myTool.getShortName().equals(myEP.getShortName())) {
         LOG.error("Short name not matched for " +
@@ -82,9 +81,6 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
     return myTool;
   }
-
-  // todo remove it
-  public Throwable instantated;
 
   @Override
   public boolean isInitialized() {

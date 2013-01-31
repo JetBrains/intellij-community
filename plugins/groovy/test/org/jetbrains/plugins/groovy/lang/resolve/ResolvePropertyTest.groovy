@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -788,7 +788,7 @@ new A().pro<caret>p''')
     assertInstanceOf(resolved, GrGdkMethod)
     def method = resolved.staticMethod as PsiMethod
 
-    assertEquals(method.parameterList.parameters[0].type.canonicalText, CommonClassNames.JAVA_LANG_STRING)
+    assertEquals(method.parameterList.parameters[0].type.canonicalText, 'java.lang.CharSequence')
   }
 
   void testLocalVarNotAvailableInClass() {

@@ -39,10 +39,11 @@ public class BranchesLoader {
     final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
 
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = passive ? configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(
-            SvnVcs.getInstance(project));
+    final SvnVcs vcs = SvnVcs.getInstance(project);
+    final ISVNAuthenticationManager passiveManager = passive ?
+      configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(vcs);
 
-    final SVNLogClient logClient = new SVNLogClient(passiveManager, configuration.getOptions(project));
+    final SVNLogClient logClient = vcs.createLogClient(passiveManager);
     final SVNURL branchesUrl = SVNURL.parseURIEncoded(url);
     logClient.doList(branchesUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, new ISVNDirEntryHandler() {
       public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {

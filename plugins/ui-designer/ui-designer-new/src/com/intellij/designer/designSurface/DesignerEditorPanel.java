@@ -49,6 +49,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -865,7 +866,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
   }
 
-  private final class MyLayeredPane extends JLayeredPane implements Scrollable {
+  private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
         Component component = getComponent(i);

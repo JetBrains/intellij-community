@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -185,7 +186,7 @@ public class LowLevelSearchUtil {
   }
 
   public static int searchWord(@NotNull CharSequence text,
-                               char[] textArray,
+                               @Nullable char[] textArray,
                                int startOffset,
                                int endOffset,
                                @NotNull StringSearcher searcher,
@@ -204,9 +205,12 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = textArray != null ? textArray[index - 1]:text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          if (index < 2 || (textArray != null ? textArray[index - 2]:text.charAt(index - 2)) != '\\') { //escape sequence
+          if (!searcher.isHandleEscapeSequences() || (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2))) { //escape sequence
             continue;
           }
+        }
+        else if (index > 0 && searcher.isHandleEscapeSequences() && isNotEscapedBackslash(text, textArray, startOffset, index-1)) {
+          continue;
         }
       }
 
@@ -220,5 +224,11 @@ public class LowLevelSearchUtil {
       return index;
     }
     return -1;
+  }
+
+  private static boolean isNotEscapedBackslash(CharSequence text, char[] textArray, int startOffset, int index) {
+    return textArray != null
+                 ? StringUtil.isNotEscapedBackslash(textArray, startOffset, index)
+                 : StringUtil.isNotEscapedBackslash(text, startOffset, index);
   }
 }

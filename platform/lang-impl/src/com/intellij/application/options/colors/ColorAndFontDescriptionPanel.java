@@ -64,7 +64,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private ActionListener myActionListener;
   private JLabel myLabelFont;
 
-  private JLabel myInheritanceLabel = new JLabel();
+  private JLabel myInheritanceLabel = new JLabel("X");
   private final static Icon INHERITED_ICON = AllIcons.Ide.Link;
 
 
@@ -395,31 +395,39 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     else {
       myEffectsCombo.setEnabled(false);
     }
+    setInheritanceLabel(description);
+  }
 
-    if (description.isInherited()) {
-      myInheritanceLabel.setIcon(INHERITED_ICON);
-      Pair<ColorSettingsPage,AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
-      String attrName  = "?";
+
+  private void setInheritanceLabel(ColorAndFontDescription description) {
+    Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
+    if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
+      String attrName = baseDescriptor.second.getDisplayName();
+      ColorSettingsPage settingsPage = baseDescriptor.first;
       String pageName = "?";
-      if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
-        attrName = baseDescriptor.second.getDisplayName();
-        ColorSettingsPage settingsPage = baseDescriptor.first;
-        if (settingsPage != null) {
-          pageName = settingsPage.getDisplayName();
-        }
+      if (settingsPage != null) {
+        pageName = settingsPage.getDisplayName();
       }
       String tooltipText = attrName + " (" + pageName + ")";
       String labelText = tooltipText;
       if (labelText.length() > 30 && pageName.length() >= 4) {
         labelText = attrName + " (" + pageName.substring(0, 4) + "...)";
       }
+      if (description.isInherited()) {
+        myInheritanceLabel.setIcon(INHERITED_ICON);
+      }
+      else {
+        myInheritanceLabel.setDisabledIcon(INHERITED_ICON);
+      }
       myInheritanceLabel.setText(labelText);
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setForeground(myLabelFont.getForeground());
+      myInheritanceLabel.setEnabled(description.isInherited());
     }
     else {
       myInheritanceLabel.setText("X");
       myInheritanceLabel.setIcon(null);
+      myInheritanceLabel.setDisabledIcon(null);
       myInheritanceLabel.setForeground(myLabelFont.getBackground());
     }
   }

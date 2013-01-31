@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,7 +88,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private static final Icon BG = IconLoader.getIcon("/frame_background.png");
 
-  IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
+  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
               final Application application, IdeFrame frame){
     myActionManager = actionManager;
     myUISettings = uiSettings;
@@ -153,6 +154,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     contentPane.revalidate();
+  }
+
+  protected JLayeredPane createLayeredPane() {
+    JLayeredPane p = new JBLayeredPane();
+    p.setName(this.getName()+".layeredPane");
+    return p;
   }
 
   protected final Container createContentPane(){
@@ -317,5 +324,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public boolean isOptimizedDrawingEnabled() {
     return !myGlassPane.hasPainters() && myGlassPane.getComponentCount() == 0;
+  }
+
+  public ToolWindowsPane getToolWindowsPane() {
+    return myToolWindowsPane;
   }
 }

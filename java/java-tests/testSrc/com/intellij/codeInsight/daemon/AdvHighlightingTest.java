@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,8 +49,8 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run
- * For "lightweight" tests use LightAdvHighlightingTest
+ * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
+ * For "lightweight" tests use LightAdvHighlightingTest.
  */
 public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
@@ -158,12 +157,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH + "/alreadyImportedClass", false, false);
   }
 
-  public void testImportDefaultPackage() throws Exception {
+  public void testImportDefaultPackage1() throws Exception {
     doTest(BASE_PATH + "/importDefaultPackage/x/Usage.java", BASE_PATH + "/importDefaultPackage", false, false);
   }
 
   public void testImportDefaultPackage2() throws Exception {
     doTest(BASE_PATH + "/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH + "/importDefaultPackage", false, false);
+  }
+
+  public void testImportDefaultPackage3() throws Exception {
+    doTest(BASE_PATH + "/importDefaultPackage/Test.java", BASE_PATH + "/importDefaultPackage", false, false);
   }
 
   public void testImportDefaultPackageInvalid() throws Exception {
@@ -232,15 +235,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testMultiJDKConflict() throws Exception {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    assert root != null : path;
     loadAllModulesUnder(root);
+
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
-    final Module java4 = moduleManager.findModuleByName("java4");
+    Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
     ModuleRootModificationUtil.setModuleSdk(java4, IdeaTestUtil.getMockJdk17("java 1.4"));
     ModuleRootModificationUtil.setModuleSdk(java5, IdeaTestUtil.getMockJdk17("java 1.5"));
     ModuleRootModificationUtil.addDependency(java5, java4);
 
-    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));
     Collection<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
@@ -249,9 +253,9 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSameFQNClasses() throws Exception {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    assert root != null : path;
     loadAllModulesUnder(root);
 
-    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("client/src/BugTest.java"));
     Collection<HighlightInfo> infos = highlightErrors();
     assertEmpty(infos);
@@ -260,9 +264,9 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSameClassesInSourceAndLib() throws Exception {
     String path = PathManagerEx.getTestDataPath() + BASE_PATH + "/" + getTestName(true);
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    assert root != null : path;
     loadAllModulesUnder(root);
 
-    assert root != null;
     configureByExistingFile(root.findFileByRelativePath("src/ppp/SomeClass.java"));
     PsiField field = ((PsiJavaFile)myFile).getClasses()[0].findFieldByName("f", false);
     assert field != null;
@@ -270,8 +274,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     assert aClass != null;
     assertEquals("ppp.BadClass", aClass.getQualifiedName());
     //lies in source
-    final VirtualFile vFile1 = myFile.getVirtualFile();
-    final VirtualFile vFile2 = aClass.getContainingFile().getVirtualFile();
+    VirtualFile vFile1 = myFile.getVirtualFile();
+    VirtualFile vFile2 = aClass.getContainingFile().getVirtualFile();
     assert vFile1 != null;
     assert vFile2 != null;
     assertEquals(vFile1.getParent(), vFile2.getParent());
@@ -280,5 +284,21 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testNotAKeywords() throws Exception {
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
     doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
+  }
+
+  public void testPackageAndClassConflict1() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub/Test.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict2() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/pkg/sub.java", BASE_PATH + "/packageClassClash", false, false);
+  }
+
+  public void testPackageAndClassConflict3() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash/java/lang.java", false, false);
+  }
+
+  public void testPackageObscuring() throws Exception {
+    doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
   }
 }

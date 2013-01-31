@@ -12,8 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +32,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -77,10 +74,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
-    "Mercurial Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Mercurial Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
@@ -96,6 +89,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
+  protected final @NotNull HgPlatformFacade myPlatformFacade;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -117,7 +111,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager) {
+               ProjectLevelVcsManager vcsManager, HgPlatformFacade platformFacade) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
@@ -133,6 +127,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myPlatformFacade = platformFacade;
   }
 
   public String getDisplayName() {
@@ -371,18 +366,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    */
   public static void setTestHgExecutablePath(String path) {
     ourTestHgExecutablePath = path;
-  }
-
-  /**
-   * Returns the hg executable file.
-   * If it is a test, returns the special value set in the test setup.
-   * If it is a normal app, returns the value from global settings.
-   */
-  public String getHgExecutable() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return (new File(ourTestHgExecutablePath, HG_EXECUTABLE_FILE_NAME)).getPath();
-    }
-    return globalSettings.getHgExecutable();
   }
 
   @NotNull

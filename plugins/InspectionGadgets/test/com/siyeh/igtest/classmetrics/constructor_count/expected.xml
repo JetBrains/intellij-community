@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ConstructorCount.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Class with too many constructors</problem_class>
+    <description>&lt;code&gt;A&lt;/code&gt; has too many constructors (constructor count = 3) #loc</description>
+  </problem>
+</problems>

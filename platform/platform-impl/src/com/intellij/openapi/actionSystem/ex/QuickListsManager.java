@@ -235,7 +235,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
       getTemplatePresentation().setText(myQuickList.getDisplayName(), false);
     }
 
-    protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
+    protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
       ActionManager actionManager = ActionManagerEx.getInstance();
       for (String actionId : myQuickList.getActionIds()) {
         if (QuickList.SEPARATOR_ID.equals(actionId)) {

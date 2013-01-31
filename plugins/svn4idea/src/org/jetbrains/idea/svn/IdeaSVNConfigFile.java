@@ -63,6 +63,10 @@ public class IdeaSVNConfigFile {
     return new DefaultProxyGroup(myDefaultProperties);
   }
 
+  public void setValue(final String groupName, final String propertyName, final String value) {
+    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, true);
+  }
+
   public void deleteGroup(final String name) {
     // remove all properties
     final Map<String, String> properties = mySVNConfigFile.getProperties(name);

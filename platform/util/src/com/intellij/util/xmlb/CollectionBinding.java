@@ -17,11 +17,20 @@
 package com.intellij.util.xmlb;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
   public CollectionBinding(ParameterizedType type, final Accessor accessor) {
-    super((Class)type.getActualTypeArguments()[0], Constants.COLLECTION, accessor);
+    super(getComponentClass(type), Constants.COLLECTION, accessor);
+  }
+
+  private static Class getComponentClass(ParameterizedType type) {
+    Type arg = type.getActualTypeArguments()[0];
+    if (arg instanceof ParameterizedType) {
+      return (Class)((ParameterizedType)arg).getRawType();
+    }
+    return (Class)arg;
   }
 
 

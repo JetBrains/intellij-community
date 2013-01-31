@@ -15,14 +15,13 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.XmlAttributeValuePattern;
-import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
@@ -46,12 +45,38 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         new JavaFxFieldIdReferenceProvider());
 
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_INCLUDE)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxSourceReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_REFERENCE)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxComponentIdReferenceProvider());
+
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
                                           .and(attributeValueInFxml),
                                         new JavaFxEventHandlerReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider());
+
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlTokenType.XML_TAG_CHARACTERS).inFile(inFxmlElementPattern()), new ImportReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
+                                        new EnumeratedAttributeReferenceProvider());
+  }
+
+  private static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {
+    return new PsiFilePattern.Capture<PsiFile>(new InitialPatternCondition<PsiFile>(PsiFile.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        return o instanceof PsiFile && JavaFxFileTypeFactory.isFxml((PsiFile)o);
+      }
+    });
   }
 
   private static PatternCondition<XmlAttributeValue> inFxmlCondition() {

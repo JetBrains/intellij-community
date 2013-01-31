@@ -51,9 +51,7 @@ public class PsiPostfixExpressionImpl extends ExpressionPsiElement implements Ps
 
   @Override
   public PsiType getType() {
-    PsiType type = getOperand().getType();
-    if (type instanceof PsiClassType) type = PsiPrimitiveType.getUnboxedType(type);
-    return type;
+    return getOperand().getType();
   }
 
   @Override

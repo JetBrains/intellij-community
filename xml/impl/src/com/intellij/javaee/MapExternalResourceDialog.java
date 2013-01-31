@@ -98,7 +98,7 @@ public class MapExternalResourceDialog extends DialogWrapper {
       }
     };
     searcher.search();
-    new ConfigFilesTreeBuilder(mySchemasTree).buildTree(searcher, root);
+    new ConfigFilesTreeBuilder(mySchemasTree).buildTree(root, searcher);
     TreeUtil.expandAll(mySchemasTree);
     mySchemasTree.setRootVisible(false);
     mySchemasTree.setShowsRootHandles(true);

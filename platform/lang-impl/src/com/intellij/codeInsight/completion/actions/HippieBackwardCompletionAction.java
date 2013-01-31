@@ -36,6 +36,7 @@ public class HippieBackwardCompletionAction extends BaseCodeInsightAction implem
     super.actionPerformedImpl(project, editor);
   }
 
+  @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new HippieWordCompletionHandler(false);

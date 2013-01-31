@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
@@ -190,7 +191,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     return zoomModel;
   }
 
-  private static final class ImageContainerPane extends JLayeredPane {
+  private static final class ImageContainerPane extends JBLayeredPane {
     private final ImageComponent imageComponent;
 
     public ImageContainerPane(ImageComponent imageComponent) {

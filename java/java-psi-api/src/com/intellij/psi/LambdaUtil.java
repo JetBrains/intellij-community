@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import java.util.*;
 public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
   public static ThreadLocal<Set<PsiParameterList>> ourParams = new ThreadLocal<Set<PsiParameterList>>();
+  @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
   @Nullable
   public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
@@ -111,8 +113,18 @@ public class LambdaUtil {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    if (parent instanceof PsiExpressionList && functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
-      return false;
+    if (parent instanceof PsiExpressionList) {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiMethodCallExpression) {
+        final PsiExpression qualifierExpression = ((PsiMethodCallExpression)gParent).getMethodExpression().getQualifierExpression();
+        final PsiType type = qualifierExpression != null ? qualifierExpression.getType() : null;
+        if (type instanceof PsiClassType && ((PsiClassType)type).isRaw()) {
+          return true;
+        }
+      }
+      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
+        return false;
+      }
     }
     return true;
   }
@@ -605,12 +617,18 @@ public class LambdaUtil {
   }
 
   private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
-    if (returnType instanceof PsiPrimitiveType && returnType != PsiType.VOID && !(returnType1 instanceof PsiPrimitiveType)) {
-      return -1;
+    if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
+    if (returnType instanceof PsiPrimitiveType) {
+      if (!(returnType1 instanceof PsiPrimitiveType)) {
+        return -1;
+      } else {
+        return TypeConversionUtil.areTypesConvertible(returnType, returnType1) ? 1 : -1;
+      }
     }
-    if (returnType1 instanceof PsiPrimitiveType && returnType1 != PsiType.VOID && !(returnType instanceof PsiPrimitiveType)) {
+    if (returnType1 instanceof PsiPrimitiveType) {
       return 1;
     }
+
     final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
     final PsiClass rClass = r.getElement();
     final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);
@@ -657,6 +675,20 @@ public class LambdaUtil {
     final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
     final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
     return getFunctionalInterfaceReturnType(functionalInterfaceType);
+  }
+
+  @Nullable
+  public static String checkFunctionalInterface(PsiAnnotation annotation) {
+    if (PsiUtil.isLanguageLevel8OrHigher(annotation) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+      final PsiAnnotationOwner owner = annotation.getOwner();
+      if (owner instanceof PsiModifierList) {
+        final PsiElement parent = ((PsiModifierList)owner).getParent();
+        if (parent instanceof PsiClass) {
+          return LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent);
+        }
+      }
+    }
+    return null;
   }
 
   static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

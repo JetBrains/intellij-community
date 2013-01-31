@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
+  @Nullable
   public abstract String getAuthorEmail();
 
   @Nullable

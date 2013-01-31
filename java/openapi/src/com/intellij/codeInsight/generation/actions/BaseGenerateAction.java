@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BaseGenerateAction extends CodeInsightAction {
@@ -31,6 +32,7 @@ public class BaseGenerateAction extends CodeInsightAction {
     myHandler = handler;
   }
 
+  @NotNull
   @Override
   protected final CodeInsightActionHandler getHandler() {
     return myHandler;
@@ -46,7 +48,7 @@ public class BaseGenerateAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     if (file instanceof PsiCompiledElement) return false;
 

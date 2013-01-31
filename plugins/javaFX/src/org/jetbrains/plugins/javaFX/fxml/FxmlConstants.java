@@ -18,7 +18,9 @@ package org.jetbrains.plugins.javaFX.fxml;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -30,11 +32,29 @@ public class FxmlConstants {
   @NonNls public static final String VALUE = "value";
   @NonNls public static final String FX_VALUE = "fx:value";
   @NonNls public static final String FX_FACTORY = "fx:factory";
-  @NonNls public static final String FX_INCLUDE = "fx:include";
+  @NonNls public static final String FX_CONSTANT = "fx:constant";
+  
   @NonNls public static final String FX_REFERENCE = "fx:reference";
   @NonNls public static final String FX_COPY = "fx:copy";
   @NonNls public static final String FX_DEFINE = "fx:define";
   @NonNls public static final String FX_SCRIPT = "fx:script";
+  @NonNls public static final String FX_INCLUDE = "fx:include";
   
-  public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
+  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+
+  public static final String FX_ELEMENT_SOURCE = "source";
+
+  public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
+  static {
+    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID));
+    FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+  }
+
+  public static final Map<String, List<String>> FX_REQUIRED_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
+  static {
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+  }
+  
 }

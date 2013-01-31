@@ -21,7 +21,7 @@ public class ConvertContextImpl extends AbstractConvertContext {
   }
 
   @NotNull
-  public final DomElement getInvocationElement() {
+  public DomElement getInvocationElement() {
     return myHandler.getProxy();
   }
 

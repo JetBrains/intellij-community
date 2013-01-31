@@ -34,14 +34,17 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -56,12 +59,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.*;
 import java.util.List;
 
 public class CodeFormatterFacade {
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
-  
+
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
@@ -69,7 +73,7 @@ public class CodeFormatterFacade {
    *
    * @see CodeStyleSettings#WRAP_LONG_LINES
    */
-  public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY 
+  public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
     = new Key<Boolean>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
   private final CodeStyleSettings mySettings;
@@ -207,7 +211,16 @@ public class CodeFormatterFacade {
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
             formatter.setProgressTask(new FormattingProgressTask(project, file, document));
           }
-          formatter.format(model, mySettings, mySettings.getIndentOptions(file.getFileType()), ranges);
+
+          CommonCodeStyleSettings.IndentOptions indentOptions = null;
+          if (builder instanceof FormattingModelBuilderEx) {
+            indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
+          }
+          if (indentOptions == null) {
+            indentOptions  = mySettings.getIndentOptions(file.getFileType());
+          }
+          
+          formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());
@@ -229,50 +242,111 @@ public class CodeFormatterFacade {
       }
       return result;
     }
-    
-    PsiFile file = psi.getContainingFile();
-    
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
-    if (!injectedDocuments.isEmpty()) {
-      List<DocumentWindow> injectedDocumentsToUse = ContainerUtilRt.newArrayList(injectedDocuments);
-      for (DocumentWindow window : injectedDocumentsToUse) {
-        if (!window.isValid()) {
-          // There is a possible case that format pre-processor modifies target document in a way that some injections are dropped.
-          continue;
-        }
-        PsiFile injected = psiDocumentManager.getCachedPsiFile(window);
-        if (injected != null) {
-          int startHostOffset = window.injectedToHost(0);
-          int endHostOffset = window.injectedToHost(window.getTextLength());
-          int startInjectedOffset = range.getStartOffset() > startHostOffset ? startHostOffset - range.getStartOffset() : 0;
-          int endInjectedOffset = injected.getTextLength();
-          if (range.getEndOffset() < endHostOffset) {
-            endInjectedOffset -= endHostOffset - range.getEndOffset();
-          }
-          final TextRange initialInjectedRange = TextRange.create(startInjectedOffset, endInjectedOffset);
-          TextRange injectedRange = initialInjectedRange;
-          for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-            injectedRange = processor.process(injected.getNode(), injectedRange);
-          }
 
-          // Allow only range expansion (not reduction) for injected context.
-          if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
-              || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
-                  && initialInjectedRange.getEndOffset() < injected.getTextLength())) {
-            range = TextRange.create(
-              range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
-              range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
+    PsiFile file = psi.getContainingFile();
+
+    // We use a set here because we encountered a situation when more than one PSI leaf points to the same injected fragment
+    // (at least for sql injected into sql).
+    final LinkedHashSet<TextRange> injectedFileRangesSet = ContainerUtilRt.newLinkedHashSet();
+
+    if (!psi.getProject().isDefault()) {
+      List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+      if (!injectedDocuments.isEmpty()) {
+        for (DocumentWindow injectedDocument : injectedDocuments) {
+          injectedFileRangesSet.add(TextRange.from(injectedDocument.injectedToHost(0), injectedDocument.getTextLength()));
+        }
+      }
+      else {
+        Collection<PsiLanguageInjectionHost> injectionHosts = collectInjectionHosts(file, range);
+        PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          @Override
+          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+            for (PsiLanguageInjectionHost.Shred place : places) {
+              Segment rangeMarker = place.getHostRangeMarker();
+              injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+            }
+          }
+        };
+        for (PsiLanguageInjectionHost host : injectionHosts) {
+          InjectedLanguageUtil.enumerate(host, visitor);
+        }
+      }
+    }
+
+    if (!injectedFileRangesSet.isEmpty()) {
+      List<TextRange> ranges = ContainerUtilRt.newArrayList(injectedFileRangesSet);
+      Collections.reverse(ranges);
+      for (TextRange injectedFileRange : ranges) {
+        int startHostOffset = injectedFileRange.getStartOffset();
+        int endHostOffset = injectedFileRange.getEndOffset();
+        if (startHostOffset >= range.getStartOffset() && endHostOffset <= range.getEndOffset()) {
+          PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(file, startHostOffset);
+          if (injected != null) {
+            int startInjectedOffset = range.getStartOffset() > startHostOffset ? startHostOffset - range.getStartOffset() : 0;
+            int endInjectedOffset = injected.getTextLength();
+            if (range.getEndOffset() < endHostOffset) {
+              endInjectedOffset -= endHostOffset - range.getEndOffset();
+            }
+            final TextRange initialInjectedRange = TextRange.create(startInjectedOffset, endInjectedOffset);
+            TextRange injectedRange = initialInjectedRange;
+            for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+              injectedRange = processor.process(injected.getNode(), injectedRange);
+            }
+
+            // Allow only range expansion (not reduction) for injected context.
+            if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
+                || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
+                    && initialInjectedRange.getEndOffset() < injected.getTextLength()))
+            {
+              range = TextRange.create(
+                range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
+                range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
+            }
           }
         }
       }
     }
+
     for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
       result = processor.process(node, result);
     }
 
     return result;
   }
+
+  @NotNull
+  private static Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
+    Stack<PsiElement> toProcess = new Stack<PsiElement>();
+    for (PsiElement e = file.findElementAt(range.getStartOffset()); e != null; e = e.getNextSibling()) {
+      if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
+        break;
+      }
+      toProcess.push(e);
+    }
+    if (toProcess.isEmpty()) {
+      return Collections.emptySet();
+    }
+    Set<PsiLanguageInjectionHost> result = null;
+    while (!toProcess.isEmpty()) {
+      PsiElement e = toProcess.pop();
+      if (e instanceof PsiLanguageInjectionHost) {
+        if (result == null) {
+          result = ContainerUtilRt.newHashSet();
+        }
+        result.add((PsiLanguageInjectionHost)e);
+      }
+      else {
+        for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
+            break;
+          }
+          toProcess.push(child);
+        }
+      }
+    }
+    return result == null ? Collections.<PsiLanguageInjectionHost>emptySet() : result;
+  }
+  
 
   /**
    * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#RIGHT_MARGIN right margin}.
@@ -335,7 +409,7 @@ public class CodeFormatterFacade {
           doWrapLongLinesIfNecessary(editorToUse, file.getProject(), editorToUse.getDocument(), startOffset, endOffset);
           if (caretMarker.isValid() && caretModel.getOffset() != caretMarker.getStartOffset()) {
             caretModel.moveToOffset(caretMarker.getStartOffset());
-          } 
+          }
         }
       });
     }
@@ -349,7 +423,7 @@ public class CodeFormatterFacade {
   }
 
   public void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
-                                          int startOffset, int endOffset) {
+                                         int startOffset, int endOffset) {
     // Normalization.
     int startOffsetToUse = Math.min(document.getTextLength(), Math.max(0, startOffset));
     int endOffsetToUse = Math.min(document.getTextLength(), Math.max(0, endOffset));
@@ -388,7 +462,7 @@ public class CodeFormatterFacade {
         }
       }
 
-      boolean wrapLine = false; 
+      boolean wrapLine = false;
       int preferredWrapPosition = Integer.MAX_VALUE;
       if (!hasTabs) {
         if (Math.min(endLineOffset, endOffsetToUse) - startLineOffset > mySettings.RIGHT_MARGIN) {
@@ -465,7 +539,7 @@ public class CodeFormatterFacade {
         continue;
       }
       editor.getCaretModel().moveToOffset(wrapOffset);
-      
+
       // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
       // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
       final DataContext baseDataContext = DataManager.getInstance().getDataContext(editor.getComponent());
@@ -475,11 +549,11 @@ public class CodeFormatterFacade {
           Object result = baseDataContext.getData(dataId);
           if (result == null && PlatformDataKeys.PROJECT.is(dataId)) {
             result = project;
-          } 
+          }
           return result;
         }
       };
-      
+
 
       SelectionModel selectionModel = editor.getSelectionModel();
       int startSelectionOffset = 0;
@@ -528,9 +602,9 @@ public class CodeFormatterFacade {
       maxLine++;
     }
   }
-  
+
   private static class DelegatingDataContext implements DataContext, UserDataHolder {
-    
+
     private final DataContext myDataContextDelegate;
     private final UserDataHolder myDataHolderDelegate;
 

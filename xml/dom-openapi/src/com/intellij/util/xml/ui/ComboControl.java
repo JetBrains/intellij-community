@@ -112,24 +112,6 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     };
   }
 
-  public static Factory<Collection<? extends Object>> createVariantsGetter(final GenericDomValue<?> reference) {
-    return new Factory<Collection<? extends Object>>() {
-      public Collection<? extends Object> create() {
-        final Converter converter = reference.getConverter();
-        if (converter instanceof ResolvingConverter) {
-          return ((ResolvingConverter)converter).getVariants(new AbstractConvertContext() {
-            @NotNull
-            public DomElement getInvocationElement() {
-              return reference;
-            }
-          });
-
-        }
-        return Collections.emptyList();
-      }
-    };
-  }
-
   public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<? extends Object>> variantFactory) {
     return new Factory<List<Pair<String, Icon>>>() {
       public List<Pair<String, Icon>> create() {

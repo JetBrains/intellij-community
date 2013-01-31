@@ -564,6 +564,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         GrExpression namedArgumentExpression = namedArgument.getExpression();
         if (namedArgumentExpression == null) continue;
 
+        if (isNewInstanceInitialingByTuple(namedArgumentExpression)) continue;
+
         if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
 
         PsiType expressionType = namedArgumentExpression.getType();

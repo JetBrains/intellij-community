@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,6 +303,16 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
 
       if (!typesAgree(TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
+    }
+
+    if (!(method1 instanceof SyntheticElement) && !(method2 instanceof SyntheticElement)) {
+      final PsiType returnType1 = substitutor1.substitute(method1.getReturnType());
+      final PsiType returnType2 = substitutor2.substitute(method2.getReturnType());
+
+      if (!TypesUtil.isAssignableWithoutConversions(returnType1, returnType2, myPlace) &&
+          TypesUtil.isAssignableWithoutConversions(returnType2, returnType1, myPlace)) {
+        return false;
+      }
     }
 
     return true;

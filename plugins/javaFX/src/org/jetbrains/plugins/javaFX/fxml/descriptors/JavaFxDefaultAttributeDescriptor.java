@@ -16,89 +16,55 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.ArrayUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+
+import java.util.List;
 
 /**
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFxDefaultAttributeDescriptor implements XmlAttributeDescriptor {
+public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultAttributeDescriptor.class.getName());
 
-  private final String myName;
-
-  public JavaFxDefaultAttributeDescriptor(String name) {
-    myName = name;
+  private String myDefaultPropertyName = null;
+  public JavaFxDefaultAttributeDescriptor(String name, PsiClass psiClass) {
+    super(name, psiClass);
   }
 
-  @Override
-  public boolean isRequired() {
-    return false;
-  }
-
-  @Override
-  public boolean isFixed() {
-    return false;
+  public JavaFxDefaultAttributeDescriptor(String name, String defaultPropertyName) {
+    super(name, null);
+    myDefaultPropertyName = defaultPropertyName;
   }
 
   @Override
   public boolean hasIdType() {
-    return myName.equals(FxmlConstants.FX_ID);
-  }
-
-  @Override
-  public boolean hasIdRefType() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultValue() {
-    return null;
+    return getName().equals(FxmlConstants.FX_ID);
   }
 
   @Override
   public boolean isEnumerated() {
+    return getName().equals("fx:constant");
+  }
+
+  @Override
+  public boolean isRequired() {
+    if (myDefaultPropertyName != null) {
+      final List<String> requiredAttrs = FxmlConstants.FX_REQUIRED_ELEMENT_ATTRIBUTES.get(myDefaultPropertyName);
+      if (requiredAttrs != null && requiredAttrs.contains(getName())) return true;
+    }
     return false;
   }
 
-  @Nullable
   @Override
-  public String[] getEnumeratedValues() {
-    return new String[0];
+  protected PsiClass getEnum() {
+    return isEnumerated() ? getPsiClass() : null ;
   }
 
-  @Nullable
-  @Override
-  public String validateValue(XmlElement context, String value) {
-    return null;
-  }
-
-  @Override
-  public PsiElement getDeclaration() {
-    return null;
-  }
-
-  @Override
-  public String getName(PsiElement context) {
-    return getName();
-  }
-
-  @Override
-  public String getName() {
-    return myName;
-  }
-
-  @Override
-  public void init(PsiElement element) {}
-
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  protected boolean isConstant(PsiField field) {
+    return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.PUBLIC);
   }
 }

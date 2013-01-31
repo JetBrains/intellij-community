@@ -569,7 +569,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
-  private InspectionTool copyToolSettings(InspectionToolWrapper tool)
+  private static InspectionTool copyToolSettings(InspectionToolWrapper tool)
     throws WriteExternalException, InvalidDataException {
     final InspectionTool inspectionTool = tool.createCopy();
     if (tool.isInitialized()) {

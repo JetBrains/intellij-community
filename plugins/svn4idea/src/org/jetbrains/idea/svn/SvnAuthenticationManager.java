@@ -31,8 +31,8 @@ import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.net.CommonProxy;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
@@ -168,27 +168,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     myConfigDirectory = new File(authDir.getParent());
     myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(authDir, userName);
     return myPersistentAuthenticationProviderProxy;
-  }
-
-  @Override
-  public void acknowledgeAuthentication(boolean accepted,
-                                        String kind,
-                                        String realm,
-                                        SVNErrorMessage errorMessage,
-                                        SVNAuthentication authentication) throws SVNException {
-    boolean successSaving = false;
-    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
-    try {
-      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
-      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
-      successSaving = true;
-    } finally {
-      mySavePermissions.remove();
-      if (myArtificialSaving) {
-        throw new CredentialsSavedException(successSaving);
-      }
-    }
   }
 
   private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
@@ -389,7 +368,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         String realm,
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
-                                        SVNURL accessedLocation) throws SVNException {
+                                        SVNURL url) throws SVNException {
+    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    boolean successSaving = false;
+    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
+    try {
+      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
+      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
+      successSaving = true;
+    } finally {
+      mySavePermissions.remove();
+      if (myArtificialSaving) {
+        throw new CredentialsSavedException(successSaving);
+      }
+    }
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
@@ -465,7 +458,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       try {
         final InetAddress ia = InetAddress.getByName(getProxyHost());
         final PasswordAuthentication authentication =
-          Authenticator.requestPasswordAuthentication(ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol);
+          Authenticator.requestPasswordAuthentication(getProxyHost(), ia, getProxyPort(), myProtocol, getProxyHost(), myProtocol,
+                                                      null, Authenticator.RequestorType.PROXY);
         if (authentication != null) {
           myProxyUser = authentication.getUserName();
           myProxyPassword = String.valueOf(authentication.getPassword());

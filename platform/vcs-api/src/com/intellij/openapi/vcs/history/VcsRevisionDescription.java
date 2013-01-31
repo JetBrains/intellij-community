@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Date;
 
 /**
@@ -29,7 +31,9 @@ public interface VcsRevisionDescription {
 
   Date getRevisionDate();
 
+  @Nullable
   String getAuthor();
 
+  @Nullable
   String getCommitMessage();
 }
