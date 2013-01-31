@@ -17,7 +17,11 @@ package com.intellij.openapi.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import org.junit.Test;
+
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
@@ -171,12 +175,12 @@ public class ParametersListTest {
                    "C:\\phing.bat");
     checkTokenizer("-Dp.1=\"some text\" -Dp.2=\\\"value\\\"",
                    "-Dp.1=some text", "-Dp.2=\"value\"");
-    checkTokenizer("-Dp.1=value\n\"-Dp.2=-\"\n-Dp.3=value",
-                   "-Dp.1=value", "-Dp.2=-", "-Dp.3=value");
+    checkTokenizer("-Dp.1=- -dump-config",
+                   "-Dp.1=-", "-dump-config");
   }
 
   @Test
-  public void joiningParams() throws Exception {
+  public void joiningParams() {
     String[] parameters = {"simpleParam", "param with spaces", "withQuote=\"", "param=\"complex quoted\""};
     ParametersList parametersList = new ParametersList();
     parametersList.addAll(parameters);
@@ -186,16 +190,19 @@ public class ParametersListTest {
   }
 
   @Test
-  public void properties() throws Exception {
+  public void properties() {
     ParametersList params = new ParametersList();
     params.addProperty("foo.foo", "\"bar bar\" bar");
     assertEquals(1, params.getProperties().size());
     assertEquals("\"bar bar\" bar", params.getProperties().get("foo.foo"));
   }
 
-  private static void checkTokenizer(final String paramString, final String... expected) {
+  private static void checkTokenizer(String paramString, String... expected) {
     ParametersList params = new ParametersList();
     params.addParametersString(paramString);
     assertEquals(asList(expected), params.getList());
+
+    List<String> lines = ParametersListUtil.parse(paramString, true);
+    assertEquals(paramString, StringUtil.join(lines, " "));
   }
 }
