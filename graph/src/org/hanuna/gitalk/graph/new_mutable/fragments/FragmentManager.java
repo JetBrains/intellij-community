@@ -57,12 +57,26 @@ public class FragmentManager {
         throw new IllegalArgumentException("is bad hide fragment: " + fragment);
     }
 
+    @Nullable
+    public Edge getUpDownEdge(@NotNull NewGraphFragment fragment) {
+        for (Edge edge : graph.getEdgeController().getAllDownEdges(fragment.getUpNode())) {
+            if (edge.getDownNode() == fragment.getDownNode()) {
+                return edge;
+            }
+        }
+        return null;
+    }
+
     public Replace show(@NotNull NewGraphFragment fragment) {
         if (fragment.isVisible()) {
             throw new IllegalArgumentException("is not hide fragment: " + fragment);
         }
         graph.getEdgeController().removeEdge(getHideFragmentEdge(fragment));
         graph.getVisibilityController().show(fragment.getIntermediateNodes());
+        Edge upDownEdge = getUpDownEdge(fragment);
+        if (upDownEdge != null){
+            graph.getVisibilityController().showEdge(upDownEdge);
+        }
         fragment.setVisibility(true);
         return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
     }
@@ -70,6 +84,10 @@ public class FragmentManager {
     public Replace hide(@NotNull NewGraphFragment fragment) {
         if (!fragment.isVisible()) {
             throw new IllegalArgumentException("is hide fragment: " + fragment);
+        }
+        Edge upDownEdge = getUpDownEdge(fragment);
+        if (upDownEdge != null) {
+            graph.getVisibilityController().hideEdge(upDownEdge);
         }
         Edge edge = graph.getEdgeController().createEdge(fragment.getUpNode(), fragment.getDownNode(),
                 fragment.getUpNode().getBranch(), Edge.Type.HIDE_FRAGMENT);

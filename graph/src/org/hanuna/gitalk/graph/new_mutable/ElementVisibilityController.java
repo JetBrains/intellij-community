@@ -13,6 +13,7 @@ import java.util.*;
  */
 public class ElementVisibilityController {
     private final Set<Node> hiddenNodes = new HashSet<Node>();
+    private final Set<Edge> hiddenEdges = new HashSet<Edge>();
     private final Collection<Commit> visibleCommits = new HashSet<Commit>();
     private boolean showAllBranchesFlag = true;
 
@@ -23,7 +24,7 @@ public class ElementVisibilityController {
         } else {
             Edge edge = graphElement.getEdge();
             assert edge != null;
-            return isVisible(edge.getUpNode()) && isVisible(edge.getDownNode());
+            return isVisible(edge.getUpNode()) && isVisible(edge.getDownNode()) && !hiddenEdges.contains(edge);
         }
     }
 
@@ -38,6 +39,15 @@ public class ElementVisibilityController {
 
     public void show(@NotNull Collection<Node> graphElements) {
         hiddenNodes.removeAll(graphElements);
+    }
+
+    //this method use, but rarely
+    public void hideEdge(@NotNull Edge edge) {
+        hiddenEdges.add(edge);
+    }
+
+    public void showEdge(@NotNull Edge edge) {
+        hiddenEdges.remove(edge);
     }
 
     public void setShowAllBranchesFlag(boolean showAllBranchesFlag) {

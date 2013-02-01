@@ -7,6 +7,9 @@ import org.hanuna.gitalk.graph.new_mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.new_mutable.elements.SimpleEdge;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author erokhins
  */
@@ -26,6 +29,10 @@ public class EdgeController {
     public void removeEdge(@NotNull Edge edge) {
         ((MutableNode) edge.getUpNode()).getInnerDownEdges().remove(edge);
         ((MutableNode) edge.getDownNode()).getInnerUpEdges().remove(edge);
+    }
+
+    public List<Edge> getAllDownEdges(@NotNull Node node) {
+        return Collections.unmodifiableList(((MutableNode) node).getInnerDownEdges());
     }
 
 }

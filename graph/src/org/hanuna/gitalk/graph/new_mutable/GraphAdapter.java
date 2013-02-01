@@ -11,21 +11,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static org.hanuna.gitalk.graph.GraphStrUtils.toStr;
-
 /**
  * @author erokhins
  */
 public class GraphAdapter implements Graph {
     private final MutableGraph graph;
     private final List<NodeRow> nodeRows;
-    private final FragmentManager fragmentManager;
     private final GraphFragmentController graphFragmentController;
 
     public GraphAdapter(MutableGraph graph) {
         this.graph = graph;
         nodeRows = graph.getNodeRows();
-        fragmentManager = new FragmentManager(graph);
+        FragmentManager fragmentManager = new FragmentManager(graph);
         graphFragmentController = new GraphFragmentControllerAdapter(fragmentManager);
     }
 
@@ -56,8 +53,5 @@ public class GraphAdapter implements Graph {
         graph.removeAllListeners();
     }
 
-    @Override
-    public String toString() {
-        return toStr(this);
-    }
+
 }
