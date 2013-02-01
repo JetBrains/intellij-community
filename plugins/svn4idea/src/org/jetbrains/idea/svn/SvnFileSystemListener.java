@@ -246,15 +246,15 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
       final boolean is17 = SvnUtil.is17CopyPart(src);
       if (is17) {
-        SVNStatus srcStatus = getFileStatus(src);
+        SVNStatus srcStatus = getFileStatus(vcs, src);
         final File toDir = dst.getParentFile();
-        SVNStatus dstStatus = getFileStatus(toDir);
+        SVNStatus dstStatus = getFileStatus(vcs, toDir);
         final boolean srcUnversioned = srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus);
         if (srcUnversioned && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
           return false;
         }
         if (srcUnversioned) {
-          SVNStatus dstWasStatus = getFileStatus(dst);
+          SVNStatus dstWasStatus = getFileStatus(vcs, dst);
           if (dstWasStatus == null || SvnVcs.svnStatusIsUnversioned(dstWasStatus)) {
             return false;
           }
@@ -309,7 +309,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     } else {
       if (doUsualMove(vcs, src)) return true;
       // check destination directory
-      final SVNStatus dstParentStatus = getFileStatus(dst.getParentFile());
+      final SVNStatus dstParentStatus = getFileStatus(vcs, dst.getParentFile());
       if (dstParentStatus == null || SvnVcs.svnStatusIsUnversioned(dstParentStatus)) {
         try {
           copyFileOrDir(src, dst);
@@ -482,7 +482,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         //
     }
 
-    SVNStatus status = getFileStatus(ioFile);
+    SVNStatus status = getFileStatus(vcs, ioFile);
 
     if (status == null ||
         SvnVcs.svnStatusIsUnversioned(status) ||
@@ -1029,18 +1029,6 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private static File getIOFile(VirtualFile vf) {
     return new File(vf.getPath()).getAbsoluteFile();
-  }
-
-  @Nullable
-  private static SVNStatus getFileStatus(File file) {
-    final SVNClientManager clientManager = SVNClientManager.newInstance();
-    try {
-      SVNStatusClient stClient = clientManager.getStatusClient();
-      return getFileStatus(file, stClient);
-    }
-    finally {
-      clientManager.dispose();
-    }
   }
 
   @Nullable
