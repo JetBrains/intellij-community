@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
-  private boolean myDestroyRecursively = false;
+  private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull final Process process) {
     this(process, null);
