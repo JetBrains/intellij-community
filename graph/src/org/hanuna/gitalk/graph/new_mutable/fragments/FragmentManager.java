@@ -33,7 +33,9 @@ public class FragmentManager {
     public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
         Node node = graphElement.getNode();
         if (node != null) {
+            graph.getVisibilityController().setShowAllBranchesFlag(true);
             NewGraphFragment fragment = fragmentGenerator.getFragment(node);
+            graph.getVisibilityController().setShowAllBranchesFlag(false);
             if (fragment != null && !fragment.getIntermediateNodes().isEmpty()){
                 return fragment;
             }

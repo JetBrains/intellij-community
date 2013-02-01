@@ -39,6 +39,7 @@ public class DataPack {
         MyTimer graphTimer = new MyTimer("graph build");
         //graph = GraphBuilder.build(commits, refsModel);
         newGraph = GraphBuilder.build(commits);
+        newGraph.getVisibilityController().setVisibleCommits(commits);
         graph = new GraphAdapter(newGraph, refsModel.getOrderedLogTrackedCommit());
         graphTimer.print();
 
