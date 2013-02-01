@@ -30,6 +30,7 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
   private static final String HELPERS_PATH = "HELPERS_PATH";
   private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
   private static final String REMOTE_PATH = "REMOTE_PATH";
+  private static final String INITIALIZED = "INITIALIZED";
 
   private String myHost;
   private int myPort;
@@ -51,6 +52,8 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
   private boolean myHelpersVersionChecked = false;
 
   private List<String> myRemoteRoots = new ArrayList<String>();
+
+  private boolean myInitialized;
 
   public RemoteSdkDataHolder(@NotNull final String defaultDirName) {
     myHelpersDefaultDirName = defaultDirName;
@@ -285,6 +288,16 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
     myHelpersVersionChecked = helpersVersionChecked;
   }
 
+  @Override
+  public boolean isInitialized() {
+    return myInitialized;
+  }
+
+  @Override
+  public void setInitialized(boolean initialized) {
+    myInitialized = initialized;
+  }
+
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
       return path.startsWith(SSH_PREFIX);
@@ -309,6 +322,8 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
     setHelpersPath(StringUtil.nullize(element.getAttributeValue(HELPERS_PATH)));
 
     setRemoteRoots(loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
+
+    setInitialized(StringUtil.parseBoolean(element.getAttributeValue(INITIALIZED), true));
   }
 
   protected static List<String> loadStringsList(Element element, String rootName, String attrName) {
@@ -335,6 +350,8 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
 
     rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
     rootElement.setAttribute(HELPERS_PATH, StringUtil.notNullize(getHelpersPath()));
+
+    rootElement.setAttribute(INITIALIZED, Boolean.toString(isInitialized()));
 
     for (String remoteRoot : getRemoteRoots()) {
       final Element child = new Element(REMOTE_ROOTS);

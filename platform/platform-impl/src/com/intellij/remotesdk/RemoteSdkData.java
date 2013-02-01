@@ -53,4 +53,8 @@ public interface RemoteSdkData extends RemoteCredentials {
   boolean isHelpersVersionChecked();
 
   void setHelpersVersionChecked(boolean helpersVersionChecked);
+
+  boolean isInitialized();
+
+  void setInitialized(boolean initialized);
 }
