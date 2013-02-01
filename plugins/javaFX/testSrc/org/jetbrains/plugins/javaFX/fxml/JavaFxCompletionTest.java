@@ -85,6 +85,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("text");
   }
 
+  public void testFactoryMethods() throws Exception {
+    doTest("observableArrayList");
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }
