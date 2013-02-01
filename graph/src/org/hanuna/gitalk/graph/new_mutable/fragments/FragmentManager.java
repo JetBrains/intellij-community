@@ -30,24 +30,51 @@ public class FragmentManager {
     }
 
     @Nullable
-    public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
-        Node node = graphElement.getNode();
-        if (node != null) {
-            graph.getVisibilityController().setShowAllBranchesFlag(true);
-            NewGraphFragment fragment = fragmentGenerator.getFragment(node);
-            graph.getVisibilityController().setShowAllBranchesFlag(false);
-            if (fragment != null && !fragment.getIntermediateNodes().isEmpty()){
-                return fragment;
+    public NewGraphFragment getFragment(@NotNull Node node) {
+        graph.getVisibilityController().setShowAllBranchesFlag(true);
+        NewGraphFragment fragment = fragmentGenerator.getFragment(node);
+        graph.getVisibilityController().setShowAllBranchesFlag(false);
+        return fragment;
+    }
+
+
+    @Nullable
+    public Edge getHideEdge(@NotNull Node node) {
+        for (Edge edge : node.getDownEdges()) {
+            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+                return edge;
             }
-        } else {
-            Edge edge = graphElement.getEdge();
-            if (edge != null && edge.getType() == Edge.Type.HIDE_FRAGMENT) {
-                NewGraphFragment fragment = hideFragments.get(edge);
-                assert fragment != null;
-                return fragment;
+        }
+        for (Edge edge : node.getUpEdges()) {
+            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+                return edge;
             }
         }
         return null;
+    }
+
+    @Nullable
+    public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
+        Node node = graphElement.getNode();
+        if (node != null) {
+            Edge edge = getHideEdge(node);
+            if (edge != null) {
+                NewGraphFragment fragment = hideFragments.get(edge);
+                assert fragment != null;
+                return fragment;
+            } else {
+                return getFragment(node);
+            }
+        } else {
+            Edge edge = graphElement.getEdge();
+            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+                NewGraphFragment fragment = hideFragments.get(edge);
+                assert fragment != null;
+                return fragment;
+            } else {
+                return getFragment(edge.getUpNode());
+            }
+        }
     }
 
     @NotNull
@@ -105,5 +132,28 @@ public class FragmentManager {
         return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
     }
 
+    @Nullable
+    private Node commitNodeInRow(int rowIndex) {
+        for (Node node : graph.getNodeRows().get(rowIndex).getNodes()) {
+            if (node.getType() == Node.Type.COMMIT_NODE) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    public void hideAll() {
+        int rowIndex = 0;
+        while (rowIndex < graph.getNodeRows().size()) {
+            Node node = commitNodeInRow(rowIndex);
+            if (node != null) {
+                NewGraphFragment fragment = fragmentGenerator.getMaximumDownFragment(node);
+                if (fragment != null) {
+                    hide(fragment);
+                }
+            }
+            rowIndex++;
+        }
+    }
 
 }

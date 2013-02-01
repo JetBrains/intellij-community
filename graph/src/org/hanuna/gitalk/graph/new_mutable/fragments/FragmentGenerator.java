@@ -51,6 +51,9 @@ public class FragmentGenerator {
 
     @Nullable
     public NewGraphFragment getMaximumDownFragment(@NotNull Node startNode) {
+        if (startNode.getType() != Node.Type.COMMIT_NODE) {
+            return null;
+        }
         NewGraphFragment fragment = shortFragmentGenerator.getDownShortFragment(startNode);
         if (fragment == null) {
             return null;

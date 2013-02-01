@@ -29,7 +29,7 @@ public class DataPack {
     private final List<Commit> commits;
     private final CommitDataGetter commitDataGetter;
     private MutableGraph newGraph;
-    private Graph graph;
+    private GraphAdapter graph;
     private GraphPrintCellModel printCellModel;
 
     public DataPack(RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
@@ -95,6 +95,12 @@ public class DataPack {
 
     public CommitDataGetter getCommitDataGetter() {
         return commitDataGetter;
+    }
+
+    public void hideAll() {
+        graph.removeAllListeners();
+        graph.getFragmentManager().hideAll();
+        updatePrintModel();
     }
 
     public void updatePrintModel() {

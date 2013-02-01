@@ -3,7 +3,6 @@ package org.hanuna.gitalk.ui_controller;
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.GraphFragment;
@@ -118,24 +117,13 @@ public class UI_Controller {
     }
 
     public void hideAll() {
-        int currentRowIndex = 0;
-        Graph graph = dataPack.getGraph();
-        GraphFragmentController fragmentController = graph.getFragmentController();
-        while (currentRowIndex < graph.getNodeRows().size()) {
-            Node node = mainNodeInRow(currentRowIndex);
-            if (node != null) {
-                GraphFragment fragment = fragmentController.relateFragment(node);
-                if (fragment != null && fragmentController.isVisible(fragment)) {
-                    fragmentController.setVisible(fragment, false);
-                }
-            }
-            currentRowIndex++;
-        }
-
-        dataPack.updatePrintModel();
+        MyTimer timer = new MyTimer("hide All");
+        dataPack.hideAll();
         graphTableModel.rewriteData(dataPack);
+
         events.runUpdateTable();
         events.runJumpToRow(0);
+        timer.print();
     }
 
 

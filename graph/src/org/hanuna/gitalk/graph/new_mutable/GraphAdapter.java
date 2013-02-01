@@ -23,12 +23,13 @@ public class GraphAdapter implements Graph {
     private final MutableGraph graph;
     private final List<NodeRow> nodeRows;
     private final GraphFragmentController graphFragmentController;
+    private final FragmentManager fragmentManager;
     private final Set<Commit> unhiddenCommits;
 
     public GraphAdapter(@NotNull MutableGraph graph, List<Commit> unhiddenCommits) {
         this.graph = graph;
         nodeRows = graph.getNodeRows();
-        FragmentManager fragmentManager = new FragmentManager(graph);
+        fragmentManager = new FragmentManager(graph);
         fragmentManager.setUnhiddenNodes(new UnhiddenNodeFunction() {
             @Override
             public boolean isUnhiddenNode(@NotNull Node node) {
@@ -66,5 +67,7 @@ public class GraphAdapter implements Graph {
         graph.removeAllListeners();
     }
 
-
+    public FragmentManager getFragmentManager() {
+        return fragmentManager;
+    }
 }
