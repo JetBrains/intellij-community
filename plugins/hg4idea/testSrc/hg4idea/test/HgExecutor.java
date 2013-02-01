@@ -17,7 +17,6 @@ package hg4idea.test;
 
 import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.util.text.StringUtil;
-import org.zmlx.hg4idea.provider.HgRepositoryLocation;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * @author Nadya Zabrodina
  */
-class HgExecutor extends Executor {
+public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
   //private static final String TEAMCITY_HG_EXECUTABLE_ENV = "TEAMCITY_HG_PATH";   //todo var for server testing
@@ -37,31 +36,18 @@ class HgExecutor extends Executor {
     return findExecutable("hg", "hg", "hg.exe", Arrays.asList(HG_EXECUTABLE_ENV));
   }
 
-  public String hg(String command) {
+  public static String hg(String command) {
     printVersionTheFirstTime();
     List<String> split = StringUtil.split(command, " ");
     split.add(0, HG_EXECUTABLE);
     log("hg " + command);
-    for (int attempt = 0; attempt < 3; attempt++) {
-      String stdout = run(split);
-      return stdout;
+    for(int attempt = 0; attempt < 3; attempt++) {
+      return run(split);
     }
     throw new RuntimeException("fatal error during execution of Hg command: " + command);
   }
 
-
-  public String hg(HgRepositoryLocation repository, String command) {
-    if (repository != null) {
-      cd(repository);
-    }
-    return hg(command);
-  }
-
-  public void cd(HgRepositoryLocation repository) {
-    cd(repository.getRoot().getPath());
-  }
-
-  private void printVersionTheFirstTime() {
+  private static void printVersionTheFirstTime() {
     if (!myVersionPrinted) {
       myVersionPrinted = true;
       hg("version");
