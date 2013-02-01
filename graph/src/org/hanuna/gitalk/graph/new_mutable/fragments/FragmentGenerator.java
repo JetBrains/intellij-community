@@ -15,6 +15,12 @@ public class FragmentGenerator {
     private static final int SEARCH_LIMIT = 20; // 20 nodes
 
     private final ShortFragmentGenerator shortFragmentGenerator;
+    private UnhiddenNodeFunction unhiddenNodes = new UnhiddenNodeFunction() {
+        @Override
+        public boolean isUnhiddenNode(@NotNull Node node) {
+            return false;
+        }
+    };
 
     public FragmentGenerator(NewGraph graph) {
         shortFragmentGenerator = new ShortFragmentGenerator(graph);
@@ -22,6 +28,7 @@ public class FragmentGenerator {
 
     public void setUnhiddenNodes(UnhiddenNodeFunction unhiddenNodes) {
         shortFragmentGenerator.setUnhiddenNodes(unhiddenNodes);
+        this.unhiddenNodes = unhiddenNodes;
     }
 
     public NewGraphFragment getFragment(@NotNull Node node) {
@@ -60,7 +67,8 @@ public class FragmentGenerator {
         }
         Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
         Node endNode = fragment.getDownNode();
-        while ((fragment = shortFragmentGenerator.getDownShortFragment(endNode)) != null) {
+        while ((fragment = shortFragmentGenerator.getDownShortFragment(endNode)) != null
+                && !unhiddenNodes.isUnhiddenNode(endNode)) {
             intermediateNodes.addAll(fragment.getIntermediateNodes());
             intermediateNodes.add(endNode);
             endNode = fragment.getDownNode();
@@ -81,7 +89,8 @@ public class FragmentGenerator {
         }
         Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
         Node endNode = fragment.getDownNode();
-        while ((fragment = shortFragmentGenerator.getUpShortFragment(endNode)) != null) {
+        while ((fragment = shortFragmentGenerator.getUpShortFragment(endNode)) != null
+                && !unhiddenNodes.isUnhiddenNode(endNode)) {
             intermediateNodes.addAll(fragment.getIntermediateNodes());
             intermediateNodes.add(endNode);
             endNode = fragment.getUpNode();
