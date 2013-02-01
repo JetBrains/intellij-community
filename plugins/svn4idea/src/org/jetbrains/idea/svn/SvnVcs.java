@@ -667,6 +667,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return client;
   }
 
+  public SVNUpdateClient createUpdateClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
+    return client;
+  }
+
   public SVNStatusClient createStatusClient() {
     SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
@@ -677,6 +683,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SVNWCClient createWCClient() {
     final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
 
@@ -695,6 +707,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SVNLogClient createLogClient() {
     final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNLogClient createLogClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
 

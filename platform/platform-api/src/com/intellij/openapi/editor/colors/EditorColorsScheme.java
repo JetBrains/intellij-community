@@ -54,6 +54,7 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
    */
   @NotNull
   FontPreferences getFontPreferences();
+  void setFontPreferences(@NotNull FontPreferences preferences);
   
   String getEditorFontName();
   void setEditorFontName(String fontName);
@@ -78,6 +79,7 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
    */
   @NotNull
   FontPreferences getConsoleFontPreferences();
+  void setConsoleFontPreferences(@NotNull FontPreferences preferences);
 
   String getConsoleFontName();
   void setConsoleFontName(String fontName);

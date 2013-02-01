@@ -17,7 +17,10 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -30,6 +33,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,11 +41,11 @@ import java.util.List;
  */
 public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescriptor{
   private final String myName;
-  private PsiElement myElement;
+  private final XmlTag myXmlTag;
 
   public JavaFxDefaultPropertyElementDescriptor(String name, XmlTag tag) {
     myName = name;
-    myElement = tag;
+    myXmlTag = tag;
   }
 
   @Override
@@ -62,7 +66,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   @Nullable
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (myName.equals(FxmlConstants.FX_DEFINE)) {
+      final String name = childTag.getName();
+      if (JavaFxPsiUtil.isClassTag(name)) {
+        return new JavaFxClassBackedElementDescriptor(name, childTag);
+      }
+    }
+    return null;
   }
 
   @Override
@@ -74,11 +84,41 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, getName()));
       }
       JavaFxClassBackedElementDescriptor.collectStaticAttributesDescriptors(context, descriptors);
+      final XmlTag referencedTag = getReferencedTag(getName(), myXmlTag);
+      if (referencedTag != null) {
+        final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
+        if (referencedDescriptor != null) {
+          final XmlAttributeDescriptor[] attributesDescriptors = referencedDescriptor.getAttributesDescriptors(referencedTag);
+          if (attributesDescriptors != null) {
+            Collections.addAll(descriptors, attributesDescriptors);
+          }
+        }
+      }
       return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
     }
     return XmlAttributeDescriptor.EMPTY;
   }
 
+  @Nullable
+  private static XmlTag getReferencedTag(String name, XmlTag tag) {
+    if (name.equals(FxmlConstants.FX_REFERENCE)) {
+      final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
+      if (attribute != null) {
+        final XmlAttributeValue valueElement = attribute.getValueElement();
+        if (valueElement != null) {
+          final PsiReference reference = valueElement.getReference();
+          if (reference != null) {
+            final PsiElement resolve = reference.resolve();
+            if (resolve instanceof XmlAttributeValue) {
+              return PsiTreeUtil.getParentOfType(resolve, XmlTag.class);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
@@ -90,6 +130,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
       final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
       if (propertySetter != null) {
         return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
+      }
+      final XmlTag referencedTag = getReferencedTag(getName(), myXmlTag);
+      if (referencedTag != null) {
+        final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
+        if (referencedDescriptor != null) {
+          return referencedDescriptor.getAttributeDescriptor(attributeName, referencedTag);
+        }
       }
     }
     return null;
@@ -125,7 +172,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public PsiElement getDeclaration() {
-    return myElement;
+    return myXmlTag;
   }
 
   @Override

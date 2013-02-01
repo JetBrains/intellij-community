@@ -39,7 +39,7 @@ class EnumeratedAttributeReferenceProvider extends PsiReferenceProvider {
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor instanceof JavaFxPropertyAttributeDescriptor && descriptor.isEnumerated()) {
-          return new PsiReference[]{new PsiReferenceBase.Immediate<XmlAttributeValue>(xmlAttributeValue, ((JavaFxPropertyAttributeDescriptor)descriptor).getEnumConstant(element.getText()))};
+          return new PsiReference[] {new PsiReferenceBase.Immediate<XmlAttributeValue>(xmlAttributeValue, ((JavaFxPropertyAttributeDescriptor)descriptor).getEnumConstant(xmlAttributeValue.getValue()))};
         }
       }
     }

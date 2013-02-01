@@ -22,21 +22,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.HttpConfigurable;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
@@ -47,32 +52,47 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
+  private static final String SAMPLES_GALLERY = "Samples Gallery";
+  private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
+  private final ClearableLazyValue<MultiMap<String, ProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ProjectTemplate>>() {
+    @NotNull
+    @Override
+    protected MultiMap<String, ProjectTemplate> compute() {
+      return getTemplates();
+    }
+  };
 
   @NotNull
   @Override
   public String[] getGroups() {
-    return new String[] { "Samples Gallery"};
+    myTemplates.drop();
+    return ArrayUtil.toStringArray(myTemplates.getValue().keySet());
   }
 
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
+    Collection<ProjectTemplate> templates = myTemplates.getValue().get(group);
+    return templates.toArray(new ProjectTemplate[templates.size()]);
+  }
+
+  private static MultiMap<String, ProjectTemplate> getTemplates() {
     InputStream stream = null;
     HttpURLConnection connection = null;
     String code = ApplicationInfo.getInstance().getBuild().getProductCode();
     try {
       connection = getConnection(code + "_templates.xml");
       stream = connection.getInputStream();
-      String text = StreamUtil.readText(stream);
+      String text = StreamUtil.readText(stream, TemplateModuleBuilder.UTF_8);
       return createFromText(text);
     }
     catch (IOException ex) {  // timeouts, lost connection etc
       LOG.info(ex);
-      return ProjectTemplate.EMPTY_ARRAY;
+      return MultiMap.emptyInstance();
     }
     catch (Exception e) {
       LOG.error(e);
-      return ProjectTemplate.EMPTY_ARRAY;
+      return MultiMap.emptyInstance();
     }
     finally {
       StreamUtil.closeStream(stream);
@@ -83,15 +103,32 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @SuppressWarnings("unchecked")
-  public static ProjectTemplate[] createFromText(String text) throws IOException, JDOMException {
+  public static MultiMap<String, ProjectTemplate> createFromText(String text) throws IOException, JDOMException {
 
-    List<Element> elements = JDOMUtil.loadDocument(text).getRootElement().getChildren("template");
+    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
+    List<Element> groups = rootElement.getChildren("group", NAMESPACE);
+    MultiMap<String, ProjectTemplate> map = new MultiMap<String, ProjectTemplate>();
+    if (groups.isEmpty()) { // sample gallery by default
+      map.put(SAMPLES_GALLERY, createGroupTemplates(rootElement, Namespace.NO_NAMESPACE));
+    }
+    else {
+      for (Element group : groups) {
+        map.put(group.getChildText("name", NAMESPACE), createGroupTemplates(group, NAMESPACE));
+      }
+    }
 
-    List<ProjectTemplate> templates = ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ProjectTemplate>() {
+    return map;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<ProjectTemplate> createGroupTemplates(Element groupElement, final Namespace ns) {
+    List<Element> elements = groupElement.getChildren("template", ns);
+
+    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ProjectTemplate>() {
       @Override
       public ProjectTemplate fun(final Element element) {
 
-        List<Element> plugins = element.getChildren("requiredPlugin");
+        List<Element> plugins = element.getChildren("requiredPlugin", ns);
         for (Element plugin : plugins) {
           String id = plugin.getTextTrim();
           if (!PluginManager.isPluginInstalled(PluginId.getId(id))) {
@@ -100,7 +137,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         }
         String type = element.getChildText("moduleType");
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-        return new ArchivedProjectTemplate(element.getChildTextTrim("name")) {
+        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns)) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
@@ -108,7 +145,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
           @Override
           public ZipInputStream getStream() throws IOException {
-            String path = element.getChildText("path");
+            String path = element.getChildText("path", ns);
             final HttpURLConnection connection = getConnection(path);
             return new ZipInputStream(connection.getInputStream()) {
               @Override
@@ -122,12 +159,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
           @Nullable
           @Override
           public String getDescription() {
-            return element.getChildTextTrim("description");
+            return element.getChildTextTrim("description", ns);
           }
         };
       }
     });
-    return templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   private static HttpURLConnection getConnection(String path) throws IOException {

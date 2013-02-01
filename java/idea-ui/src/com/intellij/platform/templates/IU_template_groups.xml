@@ -1,0 +1,13 @@
+<template-groups xmlns="http://www.jetbrains.com/projectTemplates">
+  <group>
+    <name>Spring</name>
+    <path>Spring</path>
+    <template>
+      <name>Spring Core</name>
+      <description><![CDATA[ A simple console application with Spring Framework 3.2. ]]></description>
+      <path>SpringApp</path>
+      <input-field>IJ_BASE_PACKAGE</input-field>
+      <input-field>IJ_APPLICATION_SERVER</input-field>
+    </template>
+  </group>
+</template-groups>

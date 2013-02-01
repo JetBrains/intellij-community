@@ -1067,10 +1067,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
 
     public void apply(EditorColorsScheme scheme) {
-      getFontPreferences().copyTo(scheme.getFontPreferences());
+      scheme.setFontPreferences(getFontPreferences());
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
-      getConsoleFontPreferences().copyTo(scheme.getConsoleFontPreferences());
+      scheme.setConsoleFontPreferences(getConsoleFontPreferences());
       scheme.setConsoleLineSpacing(getConsoleLineSpacing());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
@@ -1093,6 +1093,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     public boolean isNew() {
       return myIsNew;
+    }
+
+    @Override
+    public String toString() {
+      return "temporary scheme for " + myName;
     }
   }
 

@@ -44,21 +44,33 @@ public class FontPreferences {
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<String>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
   @NotNull private final List<String> myRealFontFamilies = ContainerUtilRt.newArrayList();
+  
+  @Nullable Runnable myChangeListener;
 
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}. 
    */
   private int myTemplateFontSize = DEFAULT_FONT_SIZE;
-  
+
+  public void setChangeListener(@Nullable Runnable changeListener) {
+    myChangeListener = changeListener;
+  }
+
   public void clear() {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
     myFontSizes.clear();
+    if (myChangeListener != null) {
+      myChangeListener.run();
+    }
   }
 
   public void clearFonts() {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
+    if (myChangeListener != null) {
+      myChangeListener.run();
+    }
   }
   
   public boolean hasSize(@NotNull String fontName) {
@@ -76,6 +88,9 @@ public class FontPreferences {
   public void setSize(@NotNull String fontFamily, int size) {
     myFontSizes.put(fontFamily, size);
     myTemplateFontSize = size;
+    if (myChangeListener != null) {
+      myChangeListener.run();
+    }
   }
 
   /**
@@ -131,6 +146,9 @@ public class FontPreferences {
     String effectiveFontFamily = fallbackFontFamily == null ? fontFamily : fallbackFontFamily;
     if (!myEffectiveFontFamilies.contains(effectiveFontFamily)) {
       myEffectiveFontFamilies.add(effectiveFontFamily);
+    }
+    if (myChangeListener != null) {
+      myChangeListener.run();
     }
   }
   
@@ -201,6 +219,6 @@ public class FontPreferences {
     if (plainFont.getFamily().equals("Dialog") && !"Dialog".equals(fontName)) {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
     }
-    return fontName;
+    return null;
   }
 }
