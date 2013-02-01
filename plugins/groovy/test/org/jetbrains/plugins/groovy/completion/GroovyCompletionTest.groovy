@@ -1663,4 +1663,11 @@ package bar
 print new foo.Myclass()
 ''')
   }
+
+  public void "test def before assignment"() {
+    assert doContainsTest("def", """
+void foo() {
+  <caret> = baz
+}""")
+  }
 }
