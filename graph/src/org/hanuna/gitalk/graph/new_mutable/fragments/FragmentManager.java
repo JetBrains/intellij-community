@@ -17,19 +17,19 @@ import java.util.Map;
  */
 public class FragmentManager {
     private final MutableGraph graph;
-    private final FragmentGenerator fragmentGenerator;
+    private final ShortFragmentGenerator fragmentGenerator;
     private final Map<Edge, NewGraphFragment> hideFragments = new HashMap<Edge, NewGraphFragment>();
 
     public FragmentManager(MutableGraph graph) {
         this.graph = graph;
-        fragmentGenerator = new FragmentGenerator(graph);
+        fragmentGenerator = new ShortFragmentGenerator(graph);
     }
 
     @Nullable
     public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
         Node node = graphElement.getNode();
         if (node != null) {
-            NewGraphFragment fragment = fragmentGenerator.getShortFragment(node);
+            NewGraphFragment fragment = fragmentGenerator.getUpShortFragment(node);
             if (fragment != null && !fragment.getIntermediateNodes().isEmpty()){
                 return fragment;
             }

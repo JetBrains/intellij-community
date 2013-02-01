@@ -19,138 +19,302 @@ import static org.hanuna.gitalk.GraphTestUtils.parseInts;
  */
 public class ShortFragmentTest {
 
-    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, String unhiddenNodeRows) {
+    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, String unhiddenNodeRows, boolean down) {
         Set<Integer> unhiddenNodesRowIndex = parseInts(unhiddenNodeRows);
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
-        FragmentGenerator fragmentGenerator = new FragmentGenerator(graph);
+        ShortFragmentGenerator shortFragmentGenerator = new ShortFragmentGenerator(graph);
         Set<Node> unhiddenNodes = new HashSet<Node>();
         for (Integer i : unhiddenNodesRowIndex) {
             unhiddenNodes.add(getCommitNode(graph, i));
         }
-        fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
+        shortFragmentGenerator.setUnhiddenNodes(unhiddenNodes);
 
         Node commitNode = getCommitNode(graph, rowIndex);
-        NewGraphFragment fragment = fragmentGenerator.getShortFragment(commitNode);
+        NewGraphFragment fragment;
+        if (down) {
+            fragment = shortFragmentGenerator.getDownShortFragment(commitNode);
+        } else {
+            fragment = shortFragmentGenerator.getUpShortFragment(commitNode);
+        }
         assertEquals(fragmentStr, toStr(fragment));
     }
 
-    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr) {
-        runTest(inputGraph, rowIndex, fragmentStr, "");
+    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, boolean down) {
+        runTest(inputGraph, rowIndex, fragmentStr, "", down);
     }
 
 
 
     @Test
-    public void simpleTest() {
+    public void simpleDownTest() {
+        runTest(
+                "a0|-a1\n" +
+                        "a1|-a2\n" +
+                        "a2|-",
+                0,
+
+                "a0:0|-|-a1:1",
+                true
+        );
+    }
+
+    @Test
+    public void simpleUpTest() {
+        runTest(
+                "a0|-a1\n" +
+                "a1|-a2\n"  +
+                "a2|-",
+                1,
+
+                "a0:0|-|-a1:1",
+                false
+        );
+    }
+
+    @Test
+    public void simpleNullDown() {
+        runTest(
+                "a0|-a1\n" +
+                        "a1|-a2\n" +
+                        "a2|-",
+                2,
+                "null",
+                true
+        );
+    }
+
+    @Test
+    public void simpleNullUp() {
         runTest(
                 "a0|-a1\n" +
                 "a1|-a2\n"  +
                 "a2|-",
                 0,
-
-                "a0:0|-|-a1:1"
-                );
+                "null",
+                false
+        );
     }
 
+
+
     @Test
-    public void simpleNull() {
+    public void severalChildrenDown() {
         runTest(
-                "a0|-a1\n" +
+                "a0|-a1 a2\n" +
+                        "a1|-a2\n" +
+                        "a2|-",
+                0,
+                "a0:0|-a1:1|-a2:2",
+                true
+        );
+    }
+
+
+    @Test
+    public void severalChildrenUp() {
+        runTest(
+                "a0|-a1 a2\n" +
                 "a1|-a2\n"  +
                 "a2|-",
                 2,
-                "null"
-                );
-    }
-
-
-    @Test
-    public void severalChildren() {
-        runTest(
-                "a0|-a1 a2\n" +
-                "a1|-a2\n"  +
-                "a2|-",
-                0,
-                "a0:0|-a1:1|-a2:2"
+                "a0:0|-a1:1|-a2:2",
+                false
         );
     }
 
 
+
     @Test
-    public void badEndNode() {
+    public void badEndNodeDown() {
         runTest(
                 "a0|-a1 a3\n" +
-                "a1|-a3\n"  +
+                        "a1|-a3\n" +
+                        "a2|-a3\n" +
+                        "a3|-",
+                0,
+                "null",
+                true
+        );
+    }
+
+    @Test
+    public void badEndNodeUp() {
+        runTest(
+                "a0|-a2 a3 a1\n" +
+                "a1|-\n"  +
                 "a2|-a3\n" +
                 "a3|-",
-                0,
-                "null"
+                3,
+                "null",
+                false
         );
     }
 
 
+
     @Test
-    public void badIntermediateNode() {
+    public void badIntermediateNodeDown() {
         runTest(
                 "a0|-a2 a3\n" +
-                "a1|-a2\n"  +
-                "a2|-a3\n" +
-                "a3|-",
+                        "a1|-a2\n" +
+                        "a2|-a3\n" +
+                        "a3|-",
                 0,
-                "null"
+                "null",
+                true
         );
     }
 
     @Test
-    public void longEndNode() {
+    public void badIntermediateNodeUp() {
+        runTest(
+                "a0|-a1 a3\n" +
+                "a1|-a2 a3\n"  +
+                "a2|-\n" +
+                "a3|-",
+                3,
+                "null",
+                false
+        );
+    }
+
+
+    @Test
+    public void longEndNodeDown() {
         runTest(
                 "a0|-a1 a2\n" +
-                "a1|-a2\n"  +
+                        "a1|-a2\n" +
+                        "a2|-a3\n" +
+                        "a3|-",
+                0,
+                "a0:0|-a1:1|-a2:2",
+                true
+        );
+    }
+
+    @Test
+    public void longEndNodeUp() {
+        runTest(
+                "a0|-a1\n" +
+                "a1|-a2 a3\n"  +
                 "a2|-a3\n" +
                 "a3|-",
-                0,
-                "a0:0|-a1:1|-a2:2"
+                3,
+                "a1:1|-a2:2|-a3:3",
+                false
         );
     }
 
 
     @Test
-    public void edgeNodes() {
+    public void edgeNodesDown() {
+        runTest(
+                "a0|-a3 a1\n" +
+                        "a1|-a2 a3\n" +
+                        "a2|-a3\n" +
+                        "a3|-",
+                0,
+                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                true
+        );
+    }
+
+    @Test
+    public void edgeNodesUp() {
         runTest(
                 "a0|-a3 a1\n" +
                 "a1|-a2 a3\n"  +
                 "a2|-a3\n" +
                 "a3|-",
-                0,
-                "a0:0|-a1:1 a2:2 a3:2|-a3:3"
+                3,
+                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                false
         );
     }
 
     @Test
-    public void unhiddenMiddleTest() {
+    public void unhiddenMiddleTestDown() {
         runTest(
                 "a0|-a3 a1\n" +
-                        "a1|-a2 a3\n"  +
+                        "a1|-a2 a3\n" +
                         "a2|-a3\n" +
                         "a3|-",
                 0,
                 "null",
-                "1"
+                "1",
+                true
+        );
+    }
+
+
+    @Test
+    public void unhiddenMiddleTestUp() {
+        runTest(
+                "a0|-a3 a1\n" +
+                "a1|-a2 a3\n" +
+                "a2|-a3\n" +
+                "a3|-",
+                3,
+                "null",
+                "1",
+                false
         );
     }
 
     @Test
-    public void unhiddenEndTest() {
+    public void unhiddenEndTestDown() {
         runTest(
                 "a0|-a3 a1\n" +
-                        "a1|-a2 a3\n"  +
+                        "a1|-a2 a3\n" +
                         "a2|-a3\n" +
                         "a3|-",
                 0,
                 "a0:0|-a1:1 a2:2 a3:2|-a3:3",
-                "3"
+                "0 3",
+                true
         );
     }
+
+
+    @Test
+    public void unhiddenEndTestUp() {
+        runTest(
+                "a0|-a3 a1\n" +
+                "a1|-a2 a3\n" +
+                "a2|-a3\n" +
+                "a3|-",
+                3,
+                "a0:0|-a1:1 a2:2 a3:2|-a3:3",
+                "0 3",
+                false
+        );
+    }
+
+
+    @Test
+    public void doubleLineEndTestDown() {
+        runTest(
+                "a0|-a2 a1\n" +
+                "a1|-\n" +
+                "a2|-",
+                0,
+                "a0:0|-a1:1|-a2:2",
+                true
+        );
+    }
+
+    @Test
+    public void doubleLineEndTestUp() {
+        runTest(
+                "a0|-a2\n" +
+                "a1|-a2\n" +
+                "a2|-",
+                2,
+                "a0:0|-a1:1|-a2:2",
+                false
+        );
+    }
+
 
 
 
