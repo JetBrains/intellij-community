@@ -77,7 +77,7 @@ public class PyOverrideImplementUtil {
     List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
-      if (name == null) {
+      if (name == null || PyUtil.isClassPrivateName(name)) {
         continue;
       }
       if (pyClass.findMethodByName(name, false) == null) {
@@ -96,7 +96,7 @@ public class PyOverrideImplementUtil {
             @Nullable
             @Override
             public Iterable<TextRange> matchingFragments(String pattern, String text) {
-              return super.matchingFragments(PyMethodMember.trimUnderscores(pattern), text);    //To change body of overridden methods use File | Settings | File Templates.
+              return super.matchingFragments(PyMethodMember.trimUnderscores(pattern), text);
             }
           };
         }
