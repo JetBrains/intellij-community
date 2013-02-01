@@ -10,7 +10,7 @@ import java.util.Collection;
  */
 public interface NewGraphFragment {
 
-    public boolean isHideFragment();
+    public boolean isVisible();
 
     public void setVisibility(boolean visibility);
 

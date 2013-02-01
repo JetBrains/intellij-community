@@ -4,41 +4,29 @@ import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.NewGraph;
-import org.hanuna.gitalk.graph.elements.GraphElement;
-import org.hanuna.gitalk.graph.elements.GraphFragment;
 import org.hanuna.gitalk.graph.elements.NodeRow;
+import org.hanuna.gitalk.graph.new_mutable.fragments.FragmentManager;
+import org.hanuna.gitalk.graph.new_mutable.fragments.GraphFragmentControllerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static org.hanuna.gitalk.graph.GraphStrUtils.toStr;
 
 /**
  * @author erokhins
  */
 public class GraphAdapter implements Graph {
-    private final NewGraph graph;
+    private final MutableGraph graph;
     private final List<NodeRow> nodeRows;
-    private final GraphFragmentController graphFragmentController = new GraphFragmentController() {
-        @Override
-        public GraphFragment relateFragment(@NotNull GraphElement graphElement) {
-            return null;
-        }
+    private final FragmentManager fragmentManager;
+    private final GraphFragmentController graphFragmentController;
 
-        @NotNull
-        @Override
-        public Replace setVisible(@NotNull GraphFragment fragment, boolean visible) {
-            return Replace.ID_REPLACE;
-        }
-
-        @Override
-        public boolean isVisible(@NotNull GraphFragment fragment) {
-            return false;
-        }
-    };
-
-    public GraphAdapter(final NewGraph graph) {
+    public GraphAdapter(MutableGraph graph) {
         this.graph = graph;
         nodeRows = graph.getNodeRows();
+        fragmentManager = new FragmentManager(graph);
+        graphFragmentController = new GraphFragmentControllerAdapter(fragmentManager);
     }
 
     @NotNull
@@ -66,5 +54,10 @@ public class GraphAdapter implements Graph {
     @Override
     public void removeAllListeners() {
         graph.removeAllListeners();
+    }
+
+    @Override
+    public String toString() {
+        return toStr(this);
     }
 }

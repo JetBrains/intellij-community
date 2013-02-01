@@ -61,7 +61,7 @@ public class MutableGraph implements NewGraph {
         }
     }
 
-    public void intermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
+    public Replace intermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
         int prevUpIndex = upNode.getRowIndex();
         int prevDownIndex = downNode.getRowIndex();
         updateVisibleRows();
@@ -71,6 +71,7 @@ public class MutableGraph implements NewGraph {
         int newDownIndex = downNode.getRowIndex();
         Replace replace = Replace.buildFromToInterval(prevUpIndex, prevDownIndex, prevUpIndex, newDownIndex);
         runUpdate(replace);
+        return replace;
     }
 
     @Override

@@ -21,8 +21,8 @@ public class SimpleGraphFragment implements NewGraphFragment {
     }
 
     @Override
-    public boolean isHideFragment() {
-        return !visibility;
+    public boolean isVisible() {
+        return visibility;
     }
 
     @Override
