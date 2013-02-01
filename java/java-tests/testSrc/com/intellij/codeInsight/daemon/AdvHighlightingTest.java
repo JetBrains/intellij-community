@@ -286,20 +286,24 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
   }
 
-  public void testPackageAndClassConflict1() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash/pkg/sub/Test.java", BASE_PATH + "/packageClassClash", false, false);
+  public void testPackageAndClassConflict11() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash1/pkg/sub/Test.java", BASE_PATH + "/packageClassClash1", false, false);
   }
 
-  public void testPackageAndClassConflict2() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash/pkg/sub.java", BASE_PATH + "/packageClassClash", false, false);
+  public void testPackageAndClassConflict12() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash1/pkg/sub.java", BASE_PATH + "/packageClassClash1", false, false);
   }
 
-  /*public void testPackageAndClassConflict3() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash/pkg/Sub.java", BASE_PATH + "/packageClassClash", false, false);
-  }*/
+  public void testPackageAndClassConflict21() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash2/pkg/sub/Test.java", BASE_PATH + "/packageClassClash2", false, false);
+  }
+
+  public void testPackageAndClassConflict22() throws Exception {
+    doTest(BASE_PATH + "/packageClassClash2/pkg/Sub.java", BASE_PATH + "/packageClassClash2", false, false);
+  }
 
   public void testDefaultPackageAndClassConflict() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash/java/lang.java", false, false);
+    doTest(BASE_PATH + "/lang.java", false, false);
   }
 
   public void testPackageObscuring() throws Exception {
