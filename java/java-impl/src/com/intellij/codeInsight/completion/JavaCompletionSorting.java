@@ -60,13 +60,15 @@ public class JavaCompletionSorting {
 
     List<LookupElementWeigher> afterPriority = new ArrayList<LookupElementWeigher>();
     if (!smart) {
-      ContainerUtil.addIfNotNull(afterPriority, preferStatics(position, expectedTypes));
     }
     else {
       afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
     ContainerUtil.addIfNotNull(afterPriority, recursion(parameters, expectedTypes));
     afterPriority.add(new PreferSimilarlyEnding(expectedTypes, prefix));
+    if (smart) {
+      afterPriority.add(new PreferByKindWeigher(type, position, true));
+    }
 
     List<LookupElementWeigher> afterProximity = new ArrayList<LookupElementWeigher>();
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
@@ -83,8 +85,8 @@ public class JavaCompletionSorting {
     }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
-    if (smart) {
-      afterPriority.add(new PreferByKindWeigher(type, position, true));
+    if (!smart) {
+      ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
     }
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
