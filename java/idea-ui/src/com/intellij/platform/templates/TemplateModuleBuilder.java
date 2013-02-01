@@ -23,6 +23,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,6 +89,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
     return myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
+  }
+
+  @Nullable
+  @Override
+  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+    return super.modifySettingsStep(settingsStep);
   }
 
   @Override

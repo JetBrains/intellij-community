@@ -54,10 +54,10 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
   private static final String SAMPLES_GALLERY = "Samples Gallery";
   private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
-  private final ClearableLazyValue<MultiMap<String, ProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ProjectTemplate>>() {
+  private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
-    protected MultiMap<String, ProjectTemplate> compute() {
+    protected MultiMap<String, ArchivedProjectTemplate> compute() {
       return getTemplates();
     }
   };
@@ -72,11 +72,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(String group, WizardContext context) {
-    Collection<ProjectTemplate> templates = myTemplates.getValue().get(group);
+    Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
     return templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
-  private static MultiMap<String, ProjectTemplate> getTemplates() {
+  private static MultiMap<String, ArchivedProjectTemplate> getTemplates() {
     InputStream stream = null;
     HttpURLConnection connection = null;
     String code = ApplicationInfo.getInstance().getBuild().getProductCode();
@@ -103,17 +103,19 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @SuppressWarnings("unchecked")
-  public static MultiMap<String, ProjectTemplate> createFromText(String text) throws IOException, JDOMException {
+  public static MultiMap<String, ArchivedProjectTemplate> createFromText(String text) throws IOException, JDOMException {
 
     Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
     List<Element> groups = rootElement.getChildren("group", NAMESPACE);
-    MultiMap<String, ProjectTemplate> map = new MultiMap<String, ProjectTemplate>();
+    MultiMap<String, ArchivedProjectTemplate> map = new MultiMap<String, ArchivedProjectTemplate>();
     if (groups.isEmpty()) { // sample gallery by default
       map.put(SAMPLES_GALLERY, createGroupTemplates(rootElement, Namespace.NO_NAMESPACE));
     }
     else {
       for (Element group : groups) {
-        map.put(group.getChildText("name", NAMESPACE), createGroupTemplates(group, NAMESPACE));
+        if (checkRequiredPlugins(group, NAMESPACE)) {
+          map.put(group.getChildText("name", NAMESPACE), createGroupTemplates(group, NAMESPACE));
+        }
       }
     }
 
@@ -121,20 +123,14 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @SuppressWarnings("unchecked")
-  private static List<ProjectTemplate> createGroupTemplates(Element groupElement, final Namespace ns) {
+  private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement, final Namespace ns) {
     List<Element> elements = groupElement.getChildren("template", ns);
 
-    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ProjectTemplate>() {
+    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ArchivedProjectTemplate>() {
       @Override
-      public ProjectTemplate fun(final Element element) {
+      public ArchivedProjectTemplate fun(final Element element) {
 
-        List<Element> plugins = element.getChildren("requiredPlugin", ns);
-        for (Element plugin : plugins) {
-          String id = plugin.getTextTrim();
-          if (!PluginManager.isPluginInstalled(PluginId.getId(id))) {
-            return null;
-          }
-        }
+        if (!checkRequiredPlugins(element, ns)) return null;
         String type = element.getChildText("moduleType");
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
         return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns)) {
@@ -164,6 +160,17 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         };
       }
     });
+  }
+
+  private static boolean checkRequiredPlugins(Element element, Namespace ns) {
+    @SuppressWarnings("unchecked") List<Element> plugins = element.getChildren("requiredPlugin", ns);
+    for (Element plugin : plugins) {
+      String id = plugin.getTextTrim();
+      if (!PluginManager.isPluginInstalled(PluginId.getId(id))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static HttpURLConnection getConnection(String path) throws IOException {
