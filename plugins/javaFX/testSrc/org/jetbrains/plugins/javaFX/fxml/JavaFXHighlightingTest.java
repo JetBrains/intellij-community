@@ -147,6 +147,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testValueOfAcceptance() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

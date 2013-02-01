@@ -16,14 +16,12 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +46,7 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
     @Nullable
     @Override
     public PsiElement resolve() {
-      final PsiClass psiClass = getTagClass(getElement());
+      final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
         final PsiMethod[] psiMethods = psiClass.findMethodsByName(getElement().getValue(), false);
         for (PsiMethod method : psiMethods) {
@@ -64,27 +62,10 @@ class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
       return method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() == 0;
     }
 
-    @Nullable
-    private static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
-      if (xmlAttributeValue == null) return null;
-      final PsiElement xmlAttribute = xmlAttributeValue.getParent();
-      final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
-      if (xmlTag != null) {
-        final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
-        if (descriptor != null) {
-          final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiClass) {
-            return (PsiClass)declaration;
-          }
-        }
-      }
-      return null;
-    }
-
     @NotNull
     @Override
     public Object[] getVariants() {
-      final PsiClass psiClass = getTagClass(getElement());
+      final PsiClass psiClass = JavaFxPsiUtil.getTagClass(getElement());
       if (psiClass != null) {
         final List<PsiMethod> methods = new ArrayList<PsiMethod>();
         for (PsiMethod method : psiClass.getMethods()) {

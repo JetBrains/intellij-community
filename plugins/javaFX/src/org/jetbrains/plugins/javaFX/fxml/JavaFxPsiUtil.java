@@ -220,4 +220,21 @@ public class JavaFxPsiUtil {
     }
     return true;
   }
+
+  @Nullable
+  public static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue == null) return null;
+    final PsiElement xmlAttribute = xmlAttributeValue.getParent();
+    final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
+    if (xmlTag != null) {
+      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      }
+    }
+    return null;
+  }
 }
