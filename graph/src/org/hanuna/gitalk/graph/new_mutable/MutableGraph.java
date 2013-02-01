@@ -3,6 +3,7 @@ package org.hanuna.gitalk.graph.new_mutable;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.new_mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,18 @@ public class MutableGraph implements NewGraph {
         for (Executor<Replace> listener : listenerList) {
             listener.execute(replace);
         }
+    }
+
+    public void intermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
+        int prevUpIndex = upNode.getRowIndex();
+        int prevDownIndex = downNode.getRowIndex();
+        updateVisibleRows();
+        if (upNode.getRowIndex() != prevUpIndex) {
+            throw new IllegalStateException("bad intermediateUpdate: up:" + upNode + " down:" + downNode);
+        }
+        int newDownIndex = downNode.getRowIndex();
+        Replace replace = Replace.buildFromToInterval(prevUpIndex, prevDownIndex, prevUpIndex, newDownIndex);
+        runUpdate(replace);
     }
 
     @Override

@@ -14,11 +14,12 @@ public class EdgeController {
 
 
 
-    public void createEdge(@NotNull Node upNode, @NotNull Node downNode,
+    public Edge createEdge(@NotNull Node upNode, @NotNull Node downNode,
                            @NotNull Branch edgeBranch, @NotNull Edge.Type type) {
         Edge edge = new SimpleEdge(upNode, downNode, type, edgeBranch);
         ((MutableNode) upNode).getInnerDownEdges().add(edge);
         ((MutableNode) downNode).getInnerUpEdges().add(edge);
+        return edge;
     }
 
 

@@ -2,7 +2,6 @@ package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
@@ -31,7 +30,7 @@ public class NewGraphBuilderTest {
     }
 
     public Graph buildGraph(List<Commit> commits) {
-        NewGraph graph = GraphBuilder.build(commits);
+        MutableGraph graph = GraphBuilder.build(commits);
         return new GraphAdapter(graph);
     }
 
