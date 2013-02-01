@@ -389,31 +389,24 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final int[] offsets = new int[attributedText.size() + 1];
     int i = 0;
-    offsets[i] = 0;
-    final StringBuilder sb = new StringBuilder();
+    final Document history = myHistoryViewer.getDocument();
+    offsets[i] = history.getTextLength();
     for (final Pair<String, TextAttributes> pair : attributedText) {
       final String str = StringUtil.convertLineSeparators(pair.getFirst());
-      final int lastOffset = offsets[i];
-      offsets[++i] = lastOffset + str.length();
-      sb.append(str);
+      appendToHistoryDocument(history, str);
+      offsets[++i] = history.getTextLength();
     }
     LOG.debug("printToHistory(): text processed");
-    final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    final int oldHistoryLength = history.getTextLength();
-    appendToHistoryDocument(history, sb.toString());
-    if ((oldHistoryLength + offsets[i]) != history.getTextLength()) {
-      assert false : "Last offset - " + offsets[i] + " history length: old " + oldHistoryLength + ", new - " + history.getTextLength()
-        + ", history - " + history;
-    }
-    LOG.debug("printToHistory(): text added");
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
-      markupModel.addRangeHighlighter(oldHistoryLength + offsets[i],
-                                      oldHistoryLength + offsets[i+1],
-                                      HighlighterLayer.SYNTAX,
-                                      pair.getSecond(),
-                                      HighlighterTargetArea.EXACT_RANGE);
+      markupModel.addRangeHighlighter(
+        offsets[i],
+        offsets[i+1],
+        HighlighterLayer.SYNTAX,
+        pair.getSecond(),
+        HighlighterTargetArea.EXACT_RANGE
+      );
       ++i;
     }
     LOG.debug("printToHistory(): markup added");
