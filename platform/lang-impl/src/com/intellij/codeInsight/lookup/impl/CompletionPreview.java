@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -87,6 +90,11 @@ public class CompletionPreview implements Disposable {
       return;
     }
 
+    final EditorImpl editor = getEditorImpl();
+    if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) {
+      return;
+    }
+
     String text = getPreviewText(item);
 
     int prefixLength = myLookup.getPrefixLength(item);
@@ -103,7 +111,7 @@ public class CompletionPreview implements Disposable {
       prefixLength = arrayList.get(arrayList.size() - 1).getEndOffset();
     }
 
-    final EditorImpl editor = getEditorImpl();
+
     editor.setCustomImage(null);
     BufferedImage previewImage = createPreviewImage(text.substring(prefixLength));
     editor.setCustomImage(Pair.create(getCaretPoint(), previewImage));
