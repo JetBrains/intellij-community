@@ -202,7 +202,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     if (changeBrowserSettings != null) {
       args = new ArrayList<String>();
       if (changeBrowserSettings.USE_CHANGE_AFTER_FILTER) {
-        args.add("-r " + changeBrowserSettings.getChangeAfterFilter());
+        args.add("-r " + changeBrowserSettings.getChangeAfterFilter() + ":");
       }
     }
     List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
