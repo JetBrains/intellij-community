@@ -30,7 +30,7 @@ public final class Branch {
     }
 
     public int getBranchNumber() {
-        return upCommit.hashCode() + downCommit.hashCode();
+        return upCommit.hashCode() + 73 * downCommit.hash().hashCode();
     }
 
     @Override
