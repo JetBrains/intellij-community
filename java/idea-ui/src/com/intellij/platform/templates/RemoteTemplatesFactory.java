@@ -17,6 +17,7 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -132,8 +134,15 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
         if (!checkRequiredPlugins(element, ns)) return null;
         String type = element.getChildText("moduleType");
+
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns)) {
+        List<Element> fields = element.getChildren();
+        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns), ContainerUtil.map(fields, new Function<Element, WizardInputField>() {
+          @Override
+          public WizardInputField fun(Element element) {
+            return WizardInputField.getFieldById(element.getText());
+          }
+        })) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
