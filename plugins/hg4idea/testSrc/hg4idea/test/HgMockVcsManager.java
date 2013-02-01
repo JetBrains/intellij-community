@@ -251,12 +251,7 @@ public class HgMockVcsManager extends ProjectLevelVcsManager {
   @NotNull
   @Override
   public VcsRoot[] getAllVcsRoots() {
-    List<VcsRoot> vcsRoots = new ArrayList<VcsRoot>();
-    List<VirtualFile> repositories = myPlatformFacade.getRepositoryManager(myProject).getRepositories();
-    for (VirtualFile repository : repositories) {
-      vcsRoots.add(new VcsRoot(getVcsFor(repository), repository));
-    }
-    return vcsRoots.toArray(new VcsRoot[0]);
+    throw new UnsupportedOperationException();
   }
 
   @Override
