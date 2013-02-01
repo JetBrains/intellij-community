@@ -396,8 +396,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
               }
               else if (newPsiFile != null) {
                 myFileManager.cacheViewProvider(vFile, fileViewProvider);
-                treeEvent.setChild(newPsiFile);
-                myManager.childAdded(treeEvent);
+                if (parentDir != null) {
+                  treeEvent.setChild(newPsiFile);
+                  myManager.childAdded(treeEvent);
+                }
               }
             }
           }
