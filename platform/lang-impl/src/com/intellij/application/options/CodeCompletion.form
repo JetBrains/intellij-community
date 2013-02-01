@@ -109,9 +109,7 @@
               <component id="28a18" class="javax.swing.JTextField" binding="myAutocompletionDelayField">
                 <constraints>
                   <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="50" height="-1"/>
-                    <preferred-size width="144" height="28"/>
-                    <maximum-size width="50" height="-1"/>
+                    <preferred-size width="150" height="-1"/>
                   </grid>
                 </constraints>
                 <properties>
@@ -137,7 +135,9 @@
               </component>
               <component id="a1f3b" class="javax.swing.JTextField" binding="myAutopopupJavaDocField">
                 <constraints>
-                  <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
                 </constraints>
                 <properties>
                   <columns value="4"/>
