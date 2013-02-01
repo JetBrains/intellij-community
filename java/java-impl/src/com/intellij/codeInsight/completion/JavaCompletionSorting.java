@@ -404,7 +404,7 @@ public class JavaCompletionSorting {
     public Comparable weigh(@NotNull LookupElement element) {
       final PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
-        return lookupItem.getBracketsCount();
+        return lookupItem.getBracketsCount() * 10 + (lookupItem.isAddArrayInitializer() ? 1 : 0);
       }
       if (element.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
         return 239;

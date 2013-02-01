@@ -155,9 +155,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     String tailText = StringUtil.notNullize((String) item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
     PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
 
-    if (item instanceof PsiTypeLookupItem && ((PsiTypeLookupItem)item).isIndicateAnonymous() &&
-        (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
-      tailText = "{...}" + tailText;
+    if (item instanceof PsiTypeLookupItem) {
+      if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
+          (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) ||
+          ((PsiTypeLookupItem)item).isAddArrayInitializer()) {
+        tailText = "{...}" + tailText;
+      }
     }
     if (substitutor == null && !diamond && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
