@@ -159,6 +159,18 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRootTag() throws Exception {
+    doTest();
+  }
+
+  public void testUnresolvedRootTag() throws Exception {
+    doTest();
+  }
+
+  public void testRootTagWithoutType() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

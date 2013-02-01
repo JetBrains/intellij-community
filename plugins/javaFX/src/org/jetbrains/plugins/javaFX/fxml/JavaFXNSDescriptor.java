@@ -9,6 +9,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 
 /**
 * User: anna
@@ -22,7 +23,9 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final String name = tag.getName();
 
-    if (JavaFxPsiUtil.isClassTag(name)) {
+    if (tag.getName().equals(FxmlConstants.FX_ROOT)) {
+      return new JavaFxDefaultPropertyElementDescriptor(name, tag);
+    } else if (JavaFxPsiUtil.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, tag);
     }
     else {
