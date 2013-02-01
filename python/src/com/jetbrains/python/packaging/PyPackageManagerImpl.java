@@ -31,19 +31,19 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.remotesdk.RemoteCredentials;
+import com.intellij.remotesdk.RemoteFile;
+import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.remotesdk.RemoteFile;
-import com.intellij.remotesdk.RemoteSdkData;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.remote.*;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -625,13 +625,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return getProcessOutput(helperPath, args, askForSudo, parentDir);
   }
 
+  @Nullable
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof RemoteCredentials) {
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
-      helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
-                                  helper).getPath();
+      if (!StringUtil.isEmpty(remoteSdkData.getHelpersPath())) {
+        helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
+                                    helper).getPath();
+      }
+      else {
+        helperPath = null;
+      }
     }
     else {
       helperPath = PythonHelpersLocator.getHelperPath(helper);

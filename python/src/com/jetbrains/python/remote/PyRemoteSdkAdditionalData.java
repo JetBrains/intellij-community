@@ -3,7 +3,6 @@ package com.jetbrains.python.remote;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remotesdk.RemoteSdkAdditionalData;
-import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -217,6 +216,16 @@ public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData imp
   }
 
   @Override
+  public boolean isInitialized() {
+    return myRemoteSdkDataHolder.isInitialized();
+  }
+
+  @Override
+  public void setInitialized(boolean initialized) {
+    myRemoteSdkDataHolder.setInitialized(initialized);
+  }
+
+  @Override
   public void completeInitialization() {
   }
 
@@ -308,6 +317,10 @@ public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData imp
 
     copy.setSkeletonsPath(getSkeletonsPath());
     copy.setRemoteRoots(getRemoteRoots());
+
+    copy.setInitialized(isInitialized());
+
+    copy.completeInitialization();
   }
 
   @Override
