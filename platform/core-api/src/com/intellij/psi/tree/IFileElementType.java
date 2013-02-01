@@ -31,6 +31,10 @@ public class IFileElementType extends ILazyParseableElementType {
     super(debugName, language);
   }
 
+  public IFileElementType(@NonNls @NotNull final String debugName, @Nullable final Language language, boolean register) {
+    super(debugName, language, register);
+  }
+
   @Nullable
   @Override
   public ASTNode parseContents(final ASTNode chameleon) {

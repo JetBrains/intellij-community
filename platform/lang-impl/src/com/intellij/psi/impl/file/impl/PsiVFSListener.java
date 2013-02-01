@@ -318,7 +318,8 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
     VirtualFile parent = vFile.getParent();
     final PsiDirectory parentDir = getCachedDirectory(parent);
-    if (parentDir == null) {
+    // do not suppress reparse request for light files
+    if (parentDir == null && !FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
       boolean fire = VirtualFile.PROP_NAME.equals(propertyName) && vFile.isDirectory();
       if (fire) {
         PsiDirectory psiDir = myFileManager.getCachedDirectory(vFile);
