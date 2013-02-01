@@ -63,7 +63,12 @@ public class FragmentManager {
                 assert fragment != null;
                 return fragment;
             } else {
-                return getFragment(node);
+                NewGraphFragment fragment = getFragment(node);
+                if (fragment != null && fragment.getDownNode().getRowIndex() >= node.getRowIndex()) {
+                    return fragment;
+                } else {
+                    return null;
+                }
             }
         } else {
             Edge edge = graphElement.getEdge();
@@ -72,7 +77,12 @@ public class FragmentManager {
                 assert fragment != null;
                 return fragment;
             } else {
-                return getFragment(edge.getUpNode());
+                NewGraphFragment fragment = getFragment(edge.getUpNode());
+                if (fragment != null && fragment.getDownNode().getRowIndex() >= edge.getDownNode().getRowIndex()) {
+                    return fragment;
+                } else {
+                    return null;
+                }
             }
         }
     }
@@ -153,6 +163,9 @@ public class FragmentManager {
                 }
             }
             rowIndex++;
+            if (rowIndex % 100 == 0) {
+                System.out.println(rowIndex);
+            }
         }
     }
 
