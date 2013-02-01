@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -45,8 +46,6 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -62,6 +61,7 @@ public class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
 
   private SvnUtil() { }
 
@@ -583,23 +583,15 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getUrl(final File file) {
-    SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+  public static SVNURL getUrl(final SvnVcs vcs, final File file) {
     try {
-      wcAccess.probeOpen(file, false, 0);
-      SVNEntry entry = wcAccess.getVersionedEntry(file, false);
-      return entry.getSVNURL();
-    } catch (SVNException e) {
-      //
-    } finally {
-      try {
-        wcAccess.close();
-      }
-      catch (SVNException e) {
-        //
-      }
+      final SVNInfo info = vcs.createWCClient().doInfo(file, SVNRevision.UNDEFINED);
+      return info == null ? null : info.getURL(); // todo for moved items?
     }
-    return null;
+    catch (SVNException e) {
+      LOG.debug(e);
+      return null;
+    }
   }
 
   public static boolean doesRepositorySupportMergeInfo(final SvnVcs vcs, final SVNURL url) {
