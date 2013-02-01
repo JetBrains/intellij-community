@@ -22,7 +22,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +64,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myFontSizeCombo.setEditable(true);
 
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
-    myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer(myComponent.myLafComboBox.getRenderer()));
+    myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -295,21 +294,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   public String getHelpTopic() {
     return "preferences.lookFeel";
-  }
-
-  private static final class MyLafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
-    public MyLafComboBoxRenderer(final ListCellRenderer listCellRenderer) {
-      super();
-    }
-
-    @Override
-    public void customize(final JList list,
-                          final UIManager.LookAndFeelInfo value,
-                          final int index,
-                          final boolean selected,
-                          final boolean cellHasFocus) {
-      setText(value.getName());
-    }
   }
 
   private static class MyComponent {

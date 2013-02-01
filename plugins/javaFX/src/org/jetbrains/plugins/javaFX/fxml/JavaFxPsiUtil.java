@@ -21,10 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -181,6 +183,57 @@ public class JavaFxPsiUtil {
     final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
     if (getters.length >= 1) {
       return getters[0];
+    }
+    return null;
+  }
+  
+  public static PsiClass getControllerClass(PsiFile containingFile) {
+    if (containingFile instanceof XmlFile) {
+      final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
+      if (rootTag != null) {
+        final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+        if (attribute != null) {
+          final String attributeValue = attribute.getValue();
+          if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
+            return  JavaPsiFacade.getInstance(containingFile.getProject()).findClass(attributeValue, containingFile.getResolveScope());
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean checkIfAttributeHandler(XmlAttribute attribute) {
+    final String attributeName = attribute.getName();
+    final XmlTag xmlTag = attribute.getParent();
+    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+    if (descriptor == null) return false;
+    final PsiElement currentTagClass = descriptor.getDeclaration();
+    if (!(currentTagClass instanceof PsiClass)) return false;
+    final PsiField handlerField = ((PsiClass)currentTagClass).findFieldByName(attributeName, true);
+    if (handlerField == null) {
+      return false;
+    }
+    final PsiClass objectPropertyClass = getPropertyClass(handlerField);
+    if (objectPropertyClass == null || !InheritanceUtil.isInheritor(objectPropertyClass, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue == null) return null;
+    final PsiElement xmlAttribute = xmlAttributeValue.getParent();
+    final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
+    if (xmlTag != null) {
+      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      }
     }
     return null;
   }

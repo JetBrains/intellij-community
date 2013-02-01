@@ -81,6 +81,14 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("NEGATIVE_INFINITY");
   }
 
+  public void testReferencedAttributes() throws Exception {
+    doTest("text");
+  }
+
+  public void testFactoryMethods() throws Exception {
+    doTest("observableArrayList");
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }

@@ -205,7 +205,7 @@ public class LowLevelSearchUtil {
       if (index > startOffset) {
         char c = textArray != null ? textArray[index - 1]:text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {
-          if (searcher.isHandleEscapeSequences() && (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2))) { //escape sequence
+          if (!searcher.isHandleEscapeSequences() || (index < 2 || !isNotEscapedBackslash(text, textArray, startOffset, index-2))) { //escape sequence
             continue;
           }
         }

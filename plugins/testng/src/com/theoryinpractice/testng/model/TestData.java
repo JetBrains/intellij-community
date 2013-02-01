@@ -239,7 +239,8 @@ public class TestData implements Cloneable
     element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
     if (element instanceof PsiMethod && TEST_OBJECT.equals(TestType.METHOD.getType())) {
       final PsiClass aClass = ((PsiMethod) element).getContainingClass();
-      return Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName(aClass)) &&
+      return aClass != null &&
+             Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName(aClass)) &&
           Comparing.strEqual(METHOD_NAME, ((PsiMethod) element).getName());
     } else if (element instanceof PsiClass && TEST_OBJECT.equals(TestType.CLASS.getType())) {
       return Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
