@@ -5,7 +5,6 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,18 +14,14 @@ import java.util.Set;
 public class FragmentGenerator {
     private static final int SEARCH_LIMIT = 20; // 20 nodes
 
-    private final NewGraph graph;
     private final ShortFragmentGenerator shortFragmentGenerator;
-    private Set<Node> unhiddenNodes = Collections.emptySet();
 
     public FragmentGenerator(NewGraph graph) {
-        this.graph = graph;
         shortFragmentGenerator = new ShortFragmentGenerator(graph);
     }
 
-    public void setUnhiddenNodes(Set<Node> unhiddenNodes) {
+    public void setUnhiddenNodes(UnhiddenNodeFunction unhiddenNodes) {
         shortFragmentGenerator.setUnhiddenNodes(unhiddenNodes);
-        this.unhiddenNodes = unhiddenNodes;
     }
 
     public NewGraphFragment getFragment(@NotNull Node node) {

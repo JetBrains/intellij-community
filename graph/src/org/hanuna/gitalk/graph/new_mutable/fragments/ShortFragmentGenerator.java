@@ -6,7 +6,6 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,13 +14,18 @@ import java.util.Set;
  */
 public class ShortFragmentGenerator {
     private final NewGraph graph;
-    private Set<Node> unhiddenNodes = Collections.emptySet();
+    private UnhiddenNodeFunction unhiddenNodes = new UnhiddenNodeFunction() {
+        @Override
+        public boolean isUnhiddenNode(@NotNull Node node) {
+            return false;
+        }
+    };
 
     public ShortFragmentGenerator(NewGraph graph) {
         this.graph = graph;
     }
 
-    public void setUnhiddenNodes(Set<Node> unhiddenNodes) {
+    public void setUnhiddenNodes(UnhiddenNodeFunction unhiddenNodes) {
         this.unhiddenNodes = unhiddenNodes;
     }
 
@@ -68,7 +72,7 @@ public class ShortFragmentGenerator {
                         isEnd = true;
                         break;
                     } else {
-                        if (!allUpNodeHere(upNodes, node) || unhiddenNodes.contains(node)) {
+                        if (!allUpNodeHere(upNodes, node) || unhiddenNodes.isUnhiddenNode(node)) {
                             isEnd = true;
                         }
                         upNodes.add(node);
@@ -129,7 +133,7 @@ public class ShortFragmentGenerator {
                         isEnd = true;
                         break;
                     } else {
-                        if (!allDownNodeHere(downNodes, node) || unhiddenNodes.contains(node)) {
+                        if (!allDownNodeHere(downNodes, node) || unhiddenNodes.isUnhiddenNode(node)) {
                             isEnd = true;
                         }
                         downNodes.add(node);

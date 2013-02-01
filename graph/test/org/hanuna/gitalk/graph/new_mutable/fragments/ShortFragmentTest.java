@@ -19,15 +19,20 @@ import static org.hanuna.gitalk.GraphTestUtils.parseInts;
  */
 public class ShortFragmentTest {
 
-    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, String unhiddenNodeRows, boolean down) {
+    public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, final String unhiddenNodeRows, boolean down) {
         Set<Integer> unhiddenNodesRowIndex = parseInts(unhiddenNodeRows);
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
         ShortFragmentGenerator shortFragmentGenerator = new ShortFragmentGenerator(graph);
-        Set<Node> unhiddenNodes = new HashSet<Node>();
+        final Set<Node> unhiddenNodes = new HashSet<Node>();
         for (Integer i : unhiddenNodesRowIndex) {
             unhiddenNodes.add(getCommitNode(graph, i));
         }
-        shortFragmentGenerator.setUnhiddenNodes(unhiddenNodes);
+        shortFragmentGenerator.setUnhiddenNodes(new UnhiddenNodeFunction() {
+            @Override
+            public boolean isUnhiddenNode(@NotNull Node node) {
+                return unhiddenNodes.contains(node);
+            }
+        });
 
         Node commitNode = getCommitNode(graph, rowIndex);
         NewGraphFragment fragment;

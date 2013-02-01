@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -31,7 +32,7 @@ public class NewGraphBuilderTest {
 
     public Graph buildGraph(List<Commit> commits) {
         MutableGraph graph = GraphBuilder.build(commits);
-        return new GraphAdapter(graph);
+        return new GraphAdapter(graph, Collections.<Commit>emptyList());
     }
 
 

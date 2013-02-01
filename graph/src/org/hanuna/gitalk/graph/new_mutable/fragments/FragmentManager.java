@@ -25,6 +25,10 @@ public class FragmentManager {
         fragmentGenerator = new FragmentGenerator(graph);
     }
 
+    public void setUnhiddenNodes(UnhiddenNodeFunction unhiddenNodes) {
+        fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
+    }
+
     @Nullable
     public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
         Node node = graphElement.getNode();
