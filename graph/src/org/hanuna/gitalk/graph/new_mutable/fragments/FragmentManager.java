@@ -17,26 +17,28 @@ import java.util.Map;
  */
 public class FragmentManager {
     private final MutableGraph graph;
-    private final ShortFragmentGenerator fragmentGenerator;
+    private final FragmentGenerator fragmentGenerator;
     private final Map<Edge, NewGraphFragment> hideFragments = new HashMap<Edge, NewGraphFragment>();
 
     public FragmentManager(MutableGraph graph) {
         this.graph = graph;
-        fragmentGenerator = new ShortFragmentGenerator(graph);
+        fragmentGenerator = new FragmentGenerator(graph);
     }
 
     @Nullable
     public NewGraphFragment relateFragment(@NotNull GraphElement graphElement) {
         Node node = graphElement.getNode();
         if (node != null) {
-            NewGraphFragment fragment = fragmentGenerator.getUpShortFragment(node);
+            NewGraphFragment fragment = fragmentGenerator.getFragment(node);
             if (fragment != null && !fragment.getIntermediateNodes().isEmpty()){
                 return fragment;
             }
         } else {
             Edge edge = graphElement.getEdge();
             if (edge != null && edge.getType() == Edge.Type.HIDE_FRAGMENT) {
-                return hideFragments.get(edge);
+                NewGraphFragment fragment = hideFragments.get(edge);
+                assert fragment != null;
+                return fragment;
             }
         }
         return null;

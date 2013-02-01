@@ -63,7 +63,6 @@ public class DataPack {
         }
         newGraph.getVisibilityController().setVisibleCommits(showCommits);
         newGraph.updateVisibleRows();
-        graph = new GraphAdapter(newGraph);
         //graph = GraphBuilder.build(Collections.unmodifiableList(showCommits), refsModel);
         updatePrintModel();
     }
