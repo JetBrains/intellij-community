@@ -138,7 +138,7 @@ public abstract class RadComponent extends PropertiesContainer {
     return null;
   }
 
-  public InputTool getDragTracker() {
+  public InputTool getDragTracker(Point location, boolean isTree) {
     return new DragTracker(this);
   }
 

@@ -47,7 +47,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       createFirstInsertFeedback();
       createInsertFeedback();
 
-      if (myContainer.getChildren().isEmpty()) {
+      if (getChildren().isEmpty()) {
         layer.add(myFirstInsertFeedback);
       }
       else {
@@ -55,6 +55,10 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
       layer.repaint();
     }
+  }
+
+  protected List<RadComponent> getChildren() {
+    return myContainer.getChildren();
   }
 
   protected void createInsertFeedback() {
@@ -71,13 +75,13 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
   public void showFeedback() {
     createFeedback();
 
-    if (!myContainer.getChildren().isEmpty()) {
+    if (!getChildren().isEmpty()) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       Point location = myContext.getLocation();
       myChildTarget = null;
 
       if (myHorizontal) {
-        for (RadComponent child : myContainer.getChildren()) {
+        for (RadComponent child : getChildren()) {
           Rectangle childBounds = getBounds(child, layer);
           if (childBounds.x <= location.x && location.x <= childBounds.getMaxX()) {
             myChildTarget = child;
@@ -86,7 +90,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
         }
       }
       else {
-        for (RadComponent child : myContainer.getChildren()) {
+        for (RadComponent child : getChildren()) {
           Rectangle childBounds = getBounds(child, layer);
           if (childBounds.y <= location.y && location.y <= childBounds.getMaxY()) {
             myChildTarget = child;
@@ -131,7 +135,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
 
   private RadComponent getSideChildTarget() {
     Point location = myContext.getLocation();
-    List<RadComponent> children = myContainer.getChildren();
+    List<RadComponent> children = getChildren();
     RadComponent lastChild = children.get(children.size() - 1);
     Rectangle childBounds = lastChild.getBounds(myContext.getArea().getFeedbackLayer());
 
