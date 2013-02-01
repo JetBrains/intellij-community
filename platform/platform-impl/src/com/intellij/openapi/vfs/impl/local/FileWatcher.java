@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -83,6 +84,7 @@ public class FileWatcher {
 
   private final ManagingFS myManagingFS;
   private final File myExecutable;
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
   private volatile MyProcessHandler myProcessHandler;
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
@@ -101,12 +103,21 @@ public class FileWatcher {
     myExecutable = getExecutable();
 
     if (disabled) {
+      myInitialized.set(true);
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
+      myInitialized.set(true);
       LOG.info("Native file watcher is not supported on this platform");
     }
-    else if (!myExecutable.exists()) {
+  }
+
+  private void init() {
+    if (!myInitialized.compareAndSet(false, true)) {
+      return;
+    }
+
+    if (!myExecutable.exists()) {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
@@ -244,7 +255,7 @@ public class FileWatcher {
   }
 
   public boolean isOperational() {
-    return myProcessHandler != null;
+    return !myInitialized.get() || myProcessHandler != null;
   }
 
   public boolean isSettingRoots() {
@@ -280,6 +291,7 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(final List<String> recursive, final List<String> flat) {
+    init();
     setWatchRoots(recursive, flat, false);
   }
 
@@ -309,8 +321,7 @@ public class FileWatcher {
         writeLine("#");
       }
       catch (IOException e) {
-        LOG.error(e);
-        shutdownProcess();
+        LOG.warn(e);
       }
 
       myRecursiveWatchRoots = recursive;
