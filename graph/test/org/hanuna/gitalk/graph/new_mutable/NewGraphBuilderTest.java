@@ -1,10 +1,8 @@
-package org.hanuna.gitalk.graph.builder;
+package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.NewGraph;
-import org.hanuna.gitalk.graph.new_mutable.GraphAdapter;
-import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
@@ -13,7 +11,7 @@ import java.io.StringReader;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.GraphTestUtils.toStr;
+import static org.hanuna.gitalk.GraphStrUtils.toStr;
 
 /**
  * @author erokhins

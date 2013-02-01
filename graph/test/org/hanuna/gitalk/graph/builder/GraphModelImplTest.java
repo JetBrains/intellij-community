@@ -15,8 +15,8 @@ import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
-import static org.hanuna.gitalk.GraphTestUtils.getNode;
-import static org.hanuna.gitalk.GraphTestUtils.toStr;
+import static org.hanuna.gitalk.GraphStrUtils.toStr;
+import static org.hanuna.gitalk.GraphTestUtils.getCommitNode;
 
 /**
  * @author erokhins
@@ -62,7 +62,7 @@ public class GraphModelImplTest {
         );
 
         GraphFragmentController graphController = graph.getFragmentController();
-        GraphFragment fragment = graphController.relateFragment(getNode(graph, 1));
+        GraphFragment fragment = graphController.relateFragment(getCommitNode(graph, 1));
         assertTrue(fragment != null);
         Replace replace = graphController.setVisible(fragment, false);
         assertEquals(1, replace.from());

@@ -19,6 +19,16 @@ public final class Branch {
         this(commit, commit);
     }
 
+    @NotNull
+    public Commit getUpCommit() {
+        return upCommit;
+    }
+
+    @NotNull
+    public Commit getDownCommit() {
+        return downCommit;
+    }
+
     public int getBranchNumber() {
         return upCommit.hashCode() + downCommit.hashCode();
     }

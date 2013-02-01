@@ -11,7 +11,7 @@ import java.io.StringReader;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.GraphTestUtils.toStr;
+import static org.hanuna.gitalk.GraphStrUtils.toStr;
 
 /**
  * @author erokhins

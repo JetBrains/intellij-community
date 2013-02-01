@@ -1,14 +1,9 @@
 package org.hanuna.gitalk;
 
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author erokhins
@@ -16,67 +11,8 @@ import java.util.List;
 public class GraphTestUtils {
 
 
-    public static String toShortStr(Edge edge) {
-        StringBuilder s = new StringBuilder();
-        s.append(edge.getUpNode().getCommit().hash().toStrHash()).append(":");
-        s.append(edge.getDownNode().getCommit().hash().toStrHash()).append(":");
-        s.append(edge.getType()).append(":");
-        s.append(edge.getBranch());
-        return s.toString();
-    }
-    public static String toShortStr(List<Edge> edges) {
-        StringBuilder s = new StringBuilder();
-        List<String> edgeStrs = new ArrayList<String>();
-        for (Edge edge : edges) {
-            edgeStrs.add(toShortStr(edge));
-        }
-
-        Collections.sort(edgeStrs);
-        if (edgeStrs.size() > 0) {
-            s.append(edgeStrs.get(0));
-        }
-        for (int i = 1; i < edges.size(); i++) {
-            s.append(" ").append(edgeStrs.get(i));
-        }
-        return s.toString();
-    }
-
-    public static String toStr(Node node) {
-        StringBuilder s = new StringBuilder();
-        s.append(node.getCommit().hash().toStrHash()).append("|-");
-        s.append(toShortStr(node.getUpEdges())).append("|-");
-        s.append(toShortStr(node.getDownEdges())).append("|-");
-        s.append(node.getType()).append("|-");
-        s.append(node.getBranch()).append("|-");
-        s.append(node.getRowIndex());
-        return s.toString();
-    }
-    public static String toStr(NodeRow row) {
-        StringBuilder s = new StringBuilder();
-        List<Node> nodes = row.getNodes();
-        if (nodes.size() > 0) {
-            s.append(toStr(nodes.get(0)));
-        }
-        for (int i = 1; i < nodes.size(); i++) {
-            s.append("\n   ").append(toStr(nodes.get(i)));
-        }
-        return s.toString();
-    }
-
-    public static String toStr(Graph graph) {
-        StringBuilder s = new StringBuilder();
-        List<NodeRow> rows = graph.getNodeRows();
-        if (rows.size() > 0)  {
-            s.append(toStr(rows.get(0)));
-        }
-        for (int i = 1; i < rows.size(); i++) {
-            s.append("\n").append(toStr(rows.get(i)));
-        }
-        return s.toString();
-    }
-
     @NotNull
-    public static Node getNode(Graph graph, int rowIndex) {
+    public static Node getCommitNode(Graph graph, int rowIndex) {
         NodeRow row = graph.getNodeRows().get(rowIndex);
         for (Node node : row.getNodes()) {
             if (node.getType() == Node.Type.COMMIT_NODE) {
@@ -85,5 +21,4 @@ public class GraphTestUtils {
         }
         throw new IllegalArgumentException();
     }
-
 }

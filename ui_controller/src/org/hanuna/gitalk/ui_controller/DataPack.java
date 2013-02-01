@@ -5,7 +5,9 @@ import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.new_mutable.GraphAdapter;
+import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
 import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
@@ -13,7 +15,10 @@ import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -23,6 +28,7 @@ public class DataPack {
     private final RefsModel refsModel;
     private final List<Commit> commits;
     private final CommitDataGetter commitDataGetter;
+    private MutableGraph newGraph;
     private Graph graph;
     private GraphPrintCellModel printCellModel;
 
@@ -31,7 +37,9 @@ public class DataPack {
         this.commits = commits;
         this.commitDataGetter = commitDataGetter;
         MyTimer graphTimer = new MyTimer("graph build");
-        graph = GraphBuilder.build(commits, refsModel);
+        //graph = GraphBuilder.build(commits, refsModel);
+        newGraph = GraphBuilder.build(commits);
+        graph = new GraphAdapter(newGraph);
         graphTimer.print();
 
         updatePrintModel();
@@ -53,7 +61,10 @@ public class DataPack {
                 }
             }
         }
-        graph = GraphBuilder.build(Collections.unmodifiableList(showCommits), refsModel);
+        newGraph.getVisibilityController().setVisibleCommits(showCommits);
+        newGraph.updateVisibleRows();
+        graph = new GraphAdapter(newGraph);
+        //graph = GraphBuilder.build(Collections.unmodifiableList(showCommits), refsModel);
         updatePrintModel();
     }
 
