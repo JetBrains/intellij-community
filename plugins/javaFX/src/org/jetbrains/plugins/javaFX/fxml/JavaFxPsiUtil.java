@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
@@ -245,5 +246,10 @@ public class JavaFxPsiUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isVisibleInFxml(PsiMember psiMember) {
+    return psiMember.hasModifierProperty(PsiModifier.PUBLIC) || 
+           AnnotationUtil.isAnnotated(psiMember, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false);
   }
 }
