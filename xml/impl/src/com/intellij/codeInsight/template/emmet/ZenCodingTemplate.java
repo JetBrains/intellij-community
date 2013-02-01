@@ -325,7 +325,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return findApplicableDefaultGenerator(element, wrapping) != null;
   }
 
-  protected static void doWrap(final String selection,
+  public static void doWrap(final String selection,
                                final String abbreviation,
                                final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);

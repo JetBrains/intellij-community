@@ -23,16 +23,18 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class CommentZenCodingFilter extends ZenCodingFilter {
   private static String buildCommentString(@Nullable String classAttr, @Nullable String idAttr) {
     StringBuilder builder = new StringBuilder();
-    if (idAttr != null) {
+    if (!isNullOrEmpty(idAttr)) {
       builder.append('#').append(idAttr);
     }
-    if (classAttr != null) {
+    if (!isNullOrEmpty(classAttr)) {
       builder.append('.').append(classAttr);
     }
     return builder.toString();
@@ -47,9 +49,9 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
       if (tag != null) {
         String classAttr = tag.getAttributeValue("class");
         String idAttr = tag.getAttributeValue("id");
-        if (classAttr != null || idAttr != null) {
+        if (!isNullOrEmpty(classAttr) || !isNullOrEmpty(idAttr)) {
           String commentString = buildCommentString(classAttr, idAttr);
-          return "<!-- " + commentString + " -->\n" + text + "\n<!-- /" + commentString + " -->";
+          return text + "\n<!-- /" + commentString + " -->";
         }
       }
     }

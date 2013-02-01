@@ -41,12 +41,11 @@ public class XslZenCodingFilter extends ZenCodingFilter {
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     TemplateToken token = node.getTemplateToken();
     if (token != null) {
-      TemplateToken xmlToken = token;
-      XmlDocument document = xmlToken.getFile().getDocument();
+      XmlDocument document = token.getFile().getDocument();
       if (document != null) {
         final XmlTag tag = document.getRootTag();
         if (tag != null) {
-          for (Pair<String, String> pair : xmlToken.getAttribute2Value()) {
+          for (Pair<String, String> pair : token.getAttribute2Value()) {
             if (SELECT_ATTR_NAME.equals(pair.first)) {
               return node;
             }
