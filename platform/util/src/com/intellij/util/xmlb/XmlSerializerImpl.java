@@ -45,7 +45,7 @@ class XmlSerializerImpl {
       throw e;
     }
     catch (Exception e) {
-      throw new XmlSerializationException(e);
+      throw new XmlSerializationException("Can't serialize instance of " + object.getClass(), e);
     }
   }
 
