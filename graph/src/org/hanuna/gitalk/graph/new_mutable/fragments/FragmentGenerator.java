@@ -37,8 +37,12 @@ public class FragmentGenerator {
         return true;
     }
 
+    public void setUnhiddenNodes(Set<Node> unhiddenNodes) {
+        this.unhiddenNodes = unhiddenNodes;
+    }
+
     @Nullable
-    public NewGraphFragment getShortSmallFragment(@NotNull Node startNode) {
+    public NewGraphFragment getShortFragment(@NotNull Node startNode) {
         if (startNode.getType() != Node.Type.COMMIT_NODE) {
             throw new IllegalArgumentException("small fragment may start only with COMMIT_NODE, but this node is: " + startNode);
         }
@@ -64,7 +68,7 @@ public class FragmentGenerator {
                         isEnd = true;
                         break;
                     } else {
-                        if (!allUpNodeHere(upNodes, node)) {
+                        if (!allUpNodeHere(upNodes, node) || unhiddenNodes.contains(node)) {
                             isEnd = true;
                         }
                         upNodes.add(node);
@@ -80,5 +84,7 @@ public class FragmentGenerator {
             return new SimpleGraphFragment(startNode, endNode, upNodes);
         }
     }
+
+
 
 }

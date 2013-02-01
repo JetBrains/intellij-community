@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -52,5 +55,19 @@ public class GraphTestUtils {
             throw new IllegalStateException();
         }
         return GraphBuilder.build(commits);
+    }
+
+    // "1 20 3" -> {1,20,3}
+    @NotNull
+    public static Set<Integer> parseInts(@NotNull String str) {
+        if (str.length() == 0) {
+            return Collections.emptySet();
+        }
+        String[] strings = str.split(" ");
+        Set<Integer> integers = new HashSet<Integer>();
+        for (String s : strings) {
+            integers.add(Integer.parseInt(s));
+        }
+        return integers;
     }
 }
