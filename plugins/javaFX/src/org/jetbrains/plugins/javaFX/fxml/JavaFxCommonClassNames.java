@@ -31,4 +31,5 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_EVENT_EVENT_HANDLER = "javafx.event.EventHandler";
   @NonNls public static final String JAVAFX_SCENE_NODE = "javafx.scene.Node";
   @NonNls public static final String JAVAFX_SCENE_PAINT = "javafx.scene.paint.Paint";
+  @NonNls public static final String JAVAFX_FXML_BUILDER = "javafx.util.Builder";
 }
