@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.plugins.api.MavenSoftAwareReferenceProvider;
 
 /**
+ * Adds references to string like "groupId:artifactId:version"
  * @author Sergey Evdokimov
  */
 public class MavenDependencyReferenceProvider extends PsiReferenceProvider implements MavenSoftAwareReferenceProvider {
