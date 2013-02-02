@@ -47,7 +47,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       createFirstInsertFeedback();
       createInsertFeedback();
 
-      if (myContainer.getChildren().isEmpty()) {
+      if (getChildren().isEmpty()) {
         layer.add(myFirstInsertFeedback);
       }
       else {
@@ -55,6 +55,10 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       }
       layer.repaint();
     }
+  }
+
+  protected List<RadComponent> getChildren() {
+    return myContainer.getChildren();
   }
 
   protected void createInsertFeedback() {
@@ -71,28 +75,17 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
   public void showFeedback() {
     createFeedback();
 
-    if (!myContainer.getChildren().isEmpty()) {
+    List<RadComponent> children = getChildren();
+    if (!children.isEmpty()) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
       Point location = myContext.getLocation();
       myChildTarget = null;
 
       if (myHorizontal) {
-        for (RadComponent child : myContainer.getChildren()) {
-          Rectangle childBounds = getBounds(child, layer);
-          if (childBounds.x <= location.x && location.x <= childBounds.getMaxX()) {
-            myChildTarget = child;
-            break;
-          }
-        }
+        handleHorizontal(children, layer, location);
       }
       else {
-        for (RadComponent child : myContainer.getChildren()) {
-          Rectangle childBounds = getBounds(child, layer);
-          if (childBounds.y <= location.y && location.y <= childBounds.getMaxY()) {
-            myChildTarget = child;
-            break;
-          }
-        }
+        handleVertical(children, layer, location);
       }
       if (myChildTarget == null) {
         myChildTarget = getSideChildTarget();
@@ -103,6 +96,26 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
       setInsertFeedbackBounds(targetBounds);
 
       layer.repaint();
+    }
+  }
+
+  protected void handleHorizontal(List<RadComponent> children, FeedbackLayer layer, Point location) {
+    for (RadComponent child : children) {
+      Rectangle childBounds = getBounds(child, layer);
+      if (childBounds.x <= location.x && location.x <= childBounds.getMaxX()) {
+        myChildTarget = child;
+        break;
+      }
+    }
+  }
+
+  protected void handleVertical(List<RadComponent> children, FeedbackLayer layer, Point location) {
+    for (RadComponent child : children) {
+      Rectangle childBounds = getBounds(child, layer);
+      if (childBounds.y <= location.y && location.y <= childBounds.getMaxY()) {
+        myChildTarget = child;
+        break;
+      }
     }
   }
 
@@ -131,7 +144,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
 
   private RadComponent getSideChildTarget() {
     Point location = myContext.getLocation();
-    List<RadComponent> children = myContainer.getChildren();
+    List<RadComponent> children = getChildren();
     RadComponent lastChild = children.get(children.size() - 1);
     Rectangle childBounds = lastChild.getBounds(myContext.getArea().getFeedbackLayer());
 

@@ -21,6 +21,8 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class RoundRectangleFeedback extends RectangleFeedback {
+  private static final BasicStroke STROKE = new BasicStroke(2);
+
   private final int myRadius;
 
   public RoundRectangleFeedback(Color color, int line, int radius) {
@@ -30,9 +32,15 @@ public class RoundRectangleFeedback extends RectangleFeedback {
 
   @Override
   protected void paintFeedback(Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
+
+    Stroke oldStroke = g2d.getStroke();
+    g2d.setStroke(STROKE);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
     Dimension size = getSize();
-    for (int i = 0; i < myLine; i++) {
-      g.drawRoundRect(i, i, size.width - i - i - 1, size.height - i - i - 1, myRadius, myRadius);
-    }
+    g.drawRoundRect(0, 0, size.width - 1, size.height - 1, myRadius, myRadius);
+
+    g2d.setStroke(oldStroke);
   }
 }

@@ -282,10 +282,14 @@ public class HighlightClassUtil {
     PsiElement file = aClass.getParent();
     if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
       PsiElement directory = file.getParent();
-      if (directory instanceof PsiDirectory && ((PsiDirectory)directory).findSubdirectory(aClass.getName()) != null) {
-        String message = JavaErrorMessages.message("class.clashes.with.package", name);
-        TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, message);
+      if (directory instanceof PsiDirectory) {
+        String simpleName = aClass.getName();
+        PsiDirectory subDirectory = ((PsiDirectory)directory).findSubdirectory(simpleName);
+        if (subDirectory != null && simpleName.equals(subDirectory.getName())) {
+          String message = JavaErrorMessages.message("class.clashes.with.package", name);
+          TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, message);
+        }
       }
     }
 
@@ -691,7 +695,7 @@ public class HighlightClassUtil {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.STATIC, false, false);
           QuickFixAction.registerQuickFixAction(info, fix);
         }
-        
+
       } else if (aClass instanceof PsiAnonymousClass) {
         final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
         if (baseClass != null && baseClass.isInterface()) {
@@ -982,7 +986,7 @@ public class HighlightClassUtil {
           PsiNewExpression newExpression =
             (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);
           newExpression = (PsiNewExpression)startElement.replace(newExpression);
-          final PsiClass psiClass = newExpression.getAnonymousClass(); 
+          final PsiClass psiClass = newExpression.getAnonymousClass();
           if (psiClass == null) return;
           PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
           PsiClass resolve = baseClassType.resolve();

@@ -2,7 +2,10 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
@@ -87,16 +90,32 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
 
   public PsiField getEnumConstant(String attrValue) {
     if (isEnumerated()) {
-      final String fieldNameIgnoreCase = StringUtil.stripQuotesAroundValue(attrValue);
       final PsiClass aClass = getEnum();
-      return aClass.findFieldByName(fieldNameIgnoreCase.toUpperCase(), false);
+      return aClass.findFieldByName(attrValue.toUpperCase(), false);
     }
     return null;
   }
-  
+
   @Nullable
   @Override
   public String validateValue(XmlElement context, String value) {
+    if (context instanceof XmlAttributeValue) {
+      final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)context;
+      final PsiElement parent = xmlAttributeValue.getParent();
+      if (parent instanceof XmlAttribute && JavaFxPsiUtil.checkIfAttributeHandler((XmlAttribute)parent)) {
+        final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(context.getContainingFile());
+        if (value.startsWith("#")) {
+          if (controllerClass == null) {
+            return "No controller specified for top level element";
+          }
+        }
+        else {
+          if (JavaFxPsiUtil.parseInjectedLanguages((XmlFile)context.getContainingFile()).isEmpty()) {
+            return "Page language not specified.";
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -116,7 +135,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   @Override
-  public void init(PsiElement element) {}
+  public void init(PsiElement element) {
+  }
 
   @Override
   public Object[] getDependences() {

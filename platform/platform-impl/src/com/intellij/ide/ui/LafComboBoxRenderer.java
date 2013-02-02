@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea;
+package com.intellij.ide.ui;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.ListCellRendererWrapper;
 
-import java.util.List;
+import javax.swing.*;
 
-/**
- * @author Nadya Zabrodina
- */
-public interface HgRepositoryManager {
-  /**
-   * @return all repositories tracked by the manager.
-   */
-  @NotNull
-  List<VirtualFile> getRepositories();
+public class LafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
+  @Override
+  public void customize(final JList list,
+                        final UIManager.LookAndFeelInfo value,
+                        final int index,
+                        final boolean selected,
+                        final boolean cellHasFocus) {
+    setText(value.getName());
+  }
 }

@@ -23,11 +23,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ide.ui.LafComboBoxRenderer;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
@@ -37,11 +41,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.ui.AbstractTitledSeparatorWithIcon;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,6 +71,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JCheckBox myCreateEntryCheckBox;
   private JCheckBox myGlobalEntryCheckBox;
   private JPanel myCreateEntryPanel;
+  private ComboBox myAppearanceComboBox;
   private String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
@@ -80,6 +88,33 @@ public class InitialConfigurationDialog extends DialogWrapper {
         keymaps.add(keymap);
       }
     }
+
+    myAppearanceComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
+    myAppearanceComboBox.setRenderer(new LafComboBoxRenderer());
+    myAppearanceComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        UIManager.LookAndFeelInfo selectedLaf = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
+        if (selectedLaf.getName().contains("Darcula")) {
+          myColorSchemeComboBox.setSelectedItem(EditorColorsManager.getInstance().getScheme("Darcula"));
+        }
+      }
+    });
+    myColorSchemeComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        EditorColorsScheme scheme = (EditorColorsScheme) myColorSchemeComboBox.getSelectedItem();
+        if (scheme.getName().equals("Darcula")) {
+          UIManager.LookAndFeelInfo[] lafs = LafManager.getInstance().getInstalledLookAndFeels();
+          for (UIManager.LookAndFeelInfo laf : lafs) {
+            if (laf.getName().contains("Darcula")) {
+              myAppearanceComboBox.setSelectedItem(laf);
+              break;
+            }
+          }
+        }
+      }
+    });
 
     myKeymapComboBox.setModel(new DefaultComboBoxModel(keymaps.toArray(new Keymap[keymaps.size()])));
     myKeymapComboBox.setRenderer(new ListCellRendererWrapper() {
@@ -333,6 +368,20 @@ public class InitialConfigurationDialog extends DialogWrapper {
           indicator.setFraction(1.0);
         }
       });
+    }
+    UIManager.LookAndFeelInfo info = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
+    LafManagerImpl lafManager = (LafManagerImpl)LafManager.getInstance();
+    if (info.getName().contains("Darcula")) {
+      lafManager.setLookAndFeelAfterRestart(info);
+      int rc = Messages.showYesNoDialog(project, "IDE appearance settings will be applied after restart. Would you like to restart now?",
+                                        "IDE Appearance", Messages.getQuestionIcon());
+      if (rc == Messages.YES) {
+        ((ApplicationImpl) ApplicationManager.getApplication()).restart(true);
+      }
+    }
+    else if (!info.equals(lafManager.getCurrentLookAndFeel())) {
+      lafManager.setCurrentLookAndFeel(info);
+      lafManager.updateUI();
     }
   }
 

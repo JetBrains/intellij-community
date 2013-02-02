@@ -15,9 +15,11 @@
  */
 package hg4idea.test.diff;
 
+import com.intellij.dvcs.test.Executor;
 import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import hg4idea.test.HgExecutor;
 import hg4idea.test.HgLightTest;
 import org.junit.After;
 import org.junit.Test;
@@ -53,28 +55,28 @@ public class HgGetDiffForDirTest extends HgLightTest {
 
   @Test
   public void testDiffForDir() {
-    cd(myProjectRoot);
-    touch("A.txt", "dsfdfdsf");
-    hg("add A.txt");
-    touch("B.txt");
-    hg("add B.txt");
-    hg("commit -m 2files_added");
-    mkdir("dir");
-    cd("dir");
-    touch("C.txt");
-    touch("D.txt");
-    hg("add C.txt");
-    hg("add D.txt");
-    hg("commit -m createDir");
+    Executor.cd(myProjectRoot);
+    Executor.touch("A.txt", "dsfdfdsf");
+    HgExecutor.hg("add A.txt");
+    Executor.touch("B.txt");
+    HgExecutor.hg("add B.txt");
+    HgExecutor.hg("commit -m 2files_added");
+    Executor.mkdir("dir");
+    Executor.cd("dir");
+    Executor.touch("C.txt");
+    Executor.touch("D.txt");
+    HgExecutor.hg("add C.txt");
+    HgExecutor.hg("add D.txt");
+    HgExecutor.hg("commit -m createDir");
     File dirFile = new File(myProjectRoot, "dir");
-    String[] hash1 = hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
+    String[] hash1 = HgExecutor.hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
     HgRevisionNumber r1number = HgRevisionNumber.getInstance(hash1[0], hash1[1]);
     HgFileRevision rev1 =
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r1number, "", null, "", "", null, null, null, null);
-    echo("C.txt", "aaaa");
-    echo("D.txt", "dddd");
-    hg("commit -m modifyDir");
-    String[] hash2 = hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
+    Executor.echo("C.txt", "aaaa");
+    Executor.echo("D.txt", "dddd");
+    HgExecutor.hg("commit -m modifyDir");
+    String[] hash2 = HgExecutor.hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
     HgRevisionNumber r2number = HgRevisionNumber.getInstance(hash2[0], hash2[1]);
     HgFileRevision rev2 =
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r2number, "", null, "", "", null, null, null, null);

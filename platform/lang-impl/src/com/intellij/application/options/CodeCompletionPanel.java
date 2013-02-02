@@ -65,7 +65,10 @@ public class CodeCompletionPanel {
      new ActionListener() {
        @Override
        public void actionPerformed(ActionEvent event) {
-         myAutocompletionDelayField.setEnabled(myCbAutocompletion.isSelected());
+         boolean selected = myCbAutocompletion.isSelected();
+         myAutocompletionDelayField.setEnabled(selected);
+         myFocusLookup.setEnabled(selected);
+         myCbSelectByChars.setEnabled(selected);
        }
      }
    );

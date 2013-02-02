@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -75,7 +76,8 @@ public class SelectionTool extends InputTool {
         }
       }
       else {
-        setTracker(component.getDragTracker());
+        Point location = component.convertPoint(myArea.getNativeComponent(), myCurrentScreenX, myCurrentScreenY);
+        setTracker(component.getDragTracker(location, myArea.isTree()));
       }
     }
   }

@@ -173,12 +173,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
       @Override
       public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
-        if (myRootComponent != null) {
-          FindComponentVisitor visitor = new FindComponentVisitor(myLayeredPane, filter, x, y);
-          myRootComponent.accept(visitor, false);
-          return visitor.getResult();
-        }
-        return null;
+        return DesignerEditorPanel.this.findTarget(x, y, filter);
       }
 
       @Override
@@ -727,10 +722,21 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public abstract String getPlatformTarget();
 
+  protected RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
+    if (myRootComponent != null) {
+      FindComponentVisitor visitor = new FindComponentVisitor(myLayeredPane, filter, x, y);
+      myRootComponent.accept(visitor, false);
+      return visitor.getResult();
+    }
+    return null;
+  }
+
   protected abstract ComponentDecorator getRootSelectionDecorator();
 
   @Nullable
-  protected abstract EditOperation processRootOperation(OperationContext context);
+  protected EditOperation processRootOperation(OperationContext context) {
+    return null;
+  }
 
   protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
 

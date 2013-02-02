@@ -58,6 +58,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testInitializerWithNew() throws Exception {
     doTestField();
   }
+
+  public void testInitializerWithReference() throws Exception {
+    doTestField();
+  }
   
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
@@ -80,6 +84,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
     String htmlText = FileUtil.loadFile(htmlPath);
     String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(null);
+    assertNotNull(docInfo);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
   }
 
@@ -90,6 +95,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     final String info =
       new JavaDocInfoGenerator(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
+    assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(info.trim()));
   }
 

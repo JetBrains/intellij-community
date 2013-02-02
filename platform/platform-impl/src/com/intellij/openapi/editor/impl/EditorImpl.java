@@ -83,7 +83,6 @@ import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -5685,7 +5684,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyColorSchemeDelegate implements EditorColorsScheme {
 
-    private final FontPreferences                            myFontPreferences = new FontPreferences();
+    private final FontPreferences                        myFontPreferences = new FontPreferences();
     private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
     private final Map<ColorKey, Color>                   myOwnColors       = ContainerUtilRt.newHashMap();
     private final EditorColorsScheme myCustomGlobalScheme;
@@ -5805,7 +5804,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public FontPreferences getFontPreferences() {
-      return myFontPreferences.getFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
+      return myFontPreferences.getEffectiveFontFamilies().isEmpty() ? getGlobal().getFontPreferences() : myFontPreferences;
+    }
+
+    @Override
+    public void setFontPreferences(@NotNull FontPreferences preferences) {
+      preferences.copyTo(myFontPreferences);
+      initFonts();
     }
 
     @Override
@@ -5875,7 +5880,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public FontPreferences getConsoleFontPreferences() {
       return getGlobal().getConsoleFontPreferences();
     }
-    
+
+    @Override
+    public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
+      getGlobal().setConsoleFontPreferences(preferences);
+    }
+
     @Override
     public String getConsoleFontName() {
       return getGlobal().getConsoleFontName();

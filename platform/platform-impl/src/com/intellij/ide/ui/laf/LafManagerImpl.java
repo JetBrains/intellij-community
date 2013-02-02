@@ -379,6 +379,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     checkLookAndFeel(lookAndFeelInfo, false);
   }
 
+  public void setLookAndFeelAfterRestart(UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    myCurrentLaf = lookAndFeelInfo;
+  }
+
   @Nullable
   private static Icon getAquaMenuDisabledIcon() {
     final Icon arrowIcon = (Icon)UIManager.get("Menu.arrowIcon");

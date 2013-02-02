@@ -3,7 +3,7 @@
 <GridPane xmlns:fx="http://javafx.com/fxml">
   <ImageView>
     <image>
-      <fx:reference source="myImage"/>
+      <fx:reference source="<error descr="Cannot resolve symbol 'myImage'">myImage</error>"/>
     </image>
   </ImageView>
   <fx:include source="<error descr="Cannot resolve file 'my_button.fxml'">my_button.fxml</error>"/>

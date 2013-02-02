@@ -223,7 +223,9 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
         }
 
         private void report16DirDiff(SvnVcs vcs, SVNURL url) throws SVNException {
-          SVNWCAccess wcAccess = vcs.createWCAccess();
+          // here there's 1.6 copy so ok to use SVNWCAccess
+          final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+          wcAccess.setOptions(vcs.getSvnOptions());
           SVNRepository repository = null;
           SVNRepository repository2 = null;
           try {

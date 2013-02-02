@@ -24,6 +24,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -48,6 +49,10 @@ public class XmlDuplicatedIdInspection extends LocalInspectionTool {
         }
         final PsiFile file = value.getContainingFile();
         if (!(file instanceof XmlFile)) {
+          return;
+        }
+        PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(file);
+        if (baseFile != file && !(baseFile instanceof XmlFile)) {
           return;
         }
         final XmlRefCountHolder refHolder = XmlRefCountHolder.getRefCountHolder(value);

@@ -59,10 +59,7 @@ public class JavaCompletionSorting {
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
 
     List<LookupElementWeigher> afterPriority = new ArrayList<LookupElementWeigher>();
-    if (!smart) {
-      ContainerUtil.addIfNotNull(afterPriority, preferStatics(position, expectedTypes));
-    }
-    else {
+    if (smart) {
       afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
     ContainerUtil.addIfNotNull(afterPriority, recursion(parameters, expectedTypes));
@@ -83,13 +80,13 @@ public class JavaCompletionSorting {
     }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
-    if (smart) {
-      afterPriority.add(new PreferByKindWeigher(type, position, true));
+    if (!smart) {
+      ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
     }
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
     }
-    afterPrefix.add(new PreferByKindWeigher(type, position, false));
+    afterPrefix.add(new PreferByKindWeigher(type, position));
     Collections.addAll(afterPrefix, new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(),
                        new PreferEnumConstants(parameters));
     
@@ -132,7 +129,9 @@ public class JavaCompletionSorting {
       public Comparable weigh(@NotNull LookupElement element) {
         final Object o = element.getObject();
         if (o instanceof PsiKeyword) return -3;
-        if (!(o instanceof PsiMember)) return 0;
+        if (!(o instanceof PsiMember) || element.getUserData(JavaOverrideCompletionContributor.OVERRIDE_ELEMENT) != null) {
+          return 0;
+        }
 
         if (((PsiMember)o).hasModifierProperty(PsiModifier.STATIC) && !hasNonVoid(infos)) {
           if (o instanceof PsiMethod) return -5;
@@ -405,7 +404,7 @@ public class JavaCompletionSorting {
     public Comparable weigh(@NotNull LookupElement element) {
       final PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
-        return lookupItem.getBracketsCount();
+        return lookupItem.getBracketsCount() * 10 + (lookupItem.isAddArrayInitializer() ? 1 : 0);
       }
       if (element.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
         return 239;

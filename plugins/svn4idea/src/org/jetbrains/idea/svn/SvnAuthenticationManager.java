@@ -170,27 +170,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myPersistentAuthenticationProviderProxy;
   }
 
-  @Override
-  public void acknowledgeAuthentication(boolean accepted,
-                                        String kind,
-                                        String realm,
-                                        SVNErrorMessage errorMessage,
-                                        SVNAuthentication authentication) throws SVNException {
-    boolean successSaving = false;
-    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
-    try {
-      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
-      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
-      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
-      successSaving = true;
-    } finally {
-      mySavePermissions.remove();
-      if (myArtificialSaving) {
-        throw new CredentialsSavedException(successSaving);
-      }
-    }
-  }
-
   private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
     private final ISVNAuthenticationProvider myDelegate;
     private final ISVNGnomeKeyringPasswordProvider myISVNGnomeKeyringPasswordProvider;
@@ -391,6 +370,19 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    boolean successSaving = false;
+    myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
+    try {
+      final boolean authStorageEnabled = getHostOptionsProvider().getHostOptions(authentication.getURL()).isAuthStorageEnabled();
+      final SVNAuthentication proxy = ProxySvnAuthentication.proxy(authentication, authStorageEnabled, myArtificialSaving);
+      super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, proxy);
+      successSaving = true;
+    } finally {
+      mySavePermissions.remove();
+      if (myArtificialSaving) {
+        throw new CredentialsSavedException(successSaving);
+      }
+    }
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {

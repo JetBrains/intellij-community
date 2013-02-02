@@ -59,8 +59,7 @@ public class JavaFxAnnotator implements Annotator {
       for (PsiReference reference : references) {
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiMember) {
-          if (!((PsiMember)resolve).hasModifierProperty(PsiModifier.PUBLIC) &&
-              !AnnotationUtil.isAnnotated((PsiMember)resolve, Collections.singleton(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION))) {
+          if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
             final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
             final Annotation annotation = holder.createErrorAnnotation(element, 
                                                                        symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));

@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.AbstractEditOperation;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -66,13 +67,8 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     }
   }
 
-  private boolean isChildren(RadComponent component) {
-    for (Object child : myContainer.getTreeChildren()) {
-      if (child == component) {
-        return true;
-      }
-    }
-    return false;
+  protected final boolean isChildren(RadComponent component) {
+    return ArrayUtil.indexOf(myContainer.getTreeChildren(), component) != -1;
   }
 
   @Override

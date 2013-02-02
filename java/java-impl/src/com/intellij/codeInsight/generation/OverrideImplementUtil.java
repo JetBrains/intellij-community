@@ -61,6 +61,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +96,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
    * @return list of method prototypes
    */
   @NotNull
-  public static Collection<PsiMethod> overrideOrImplementMethod(PsiClass aClass, PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
+  public static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass, PsiMethod method, boolean toCopyJavaDoc) throws IncorrectOperationException {
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass != null);
     PsiSubstitutor substitutor = aClass.isInheritor(containingClass, true)
@@ -126,11 +127,18 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  private static Collection<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
+  private static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
                                                        PsiMethod method,
                                                        PsiSubstitutor substitutor,
                                                        boolean toCopyJavaDoc,
                                                        boolean insertOverrideIfPossible) throws IncorrectOperationException {
+    return overrideOrImplementMethod(aClass, method, substitutor, createDefaultDecorator(aClass, method, toCopyJavaDoc, insertOverrideIfPossible));
+  }
+
+  public static List<PsiMethod> overrideOrImplementMethod(PsiClass aClass,
+      PsiMethod method,
+      PsiSubstitutor substitutor,
+      Consumer<PsiMethod> decorator) throws IncorrectOperationException {
     if (!method.isValid() || !substitutor.isValid()) return Collections.emptyList();
 
     List<PsiMethod> results = new ArrayList<PsiMethod>();
@@ -141,13 +149,14 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       }
       else {
         for (PsiMethod prototype : prototypes) {
-          results.add(decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, prototype));
+          decorator.consume(prototype);
+          results.add(prototype);
         }
       }
     }
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
-      
+
       PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
       if (PsiUtil.isAnnotationMethod(result)) {
@@ -161,7 +170,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
           defaultValue.getParent().deleteChildRange(defaultKeyword, defaultValue);
         }
       }
-      results.add(decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result));
+      decorator.consume(result);
+      results.add(result);
     }
 
     for (Iterator<PsiMethod> iterator = results.iterator(); iterator.hasNext();) {
@@ -173,6 +183,18 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return results;
   }
 
+  public static Consumer<PsiMethod> createDefaultDecorator(final PsiClass aClass,
+                                                           final PsiMethod method,
+                                                           final boolean toCopyJavaDoc,
+                                                           final boolean insertOverrideIfPossible) {
+    return new Consumer<PsiMethod>() {
+      @Override
+      public void consume(PsiMethod result) {
+        decorateMethod(aClass, method, toCopyJavaDoc, insertOverrideIfPossible, result);
+      }
+    };
+  }
+
   private static PsiMethod decorateMethod(PsiClass aClass,
                                           PsiMethod method,
                                           boolean toCopyJavaDoc,
@@ -182,10 +204,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
 
     if (!toCopyJavaDoc){
-      PsiDocComment comment = result.getDocComment();
-      if (comment != null){
-        comment.delete();
-      }
+      deleteDocComment(result);
     }
 
     //method type params are not allowed when overriding from raw type
@@ -229,6 +248,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     result = (PsiMethod)codeStyleManager.reformat(result);
     javaSettings.KEEP_LINE_BREAKS = keepBreaks;
     return result;
+  }
+
+  public static void deleteDocComment(PsiMethod result) {
+    PsiDocComment comment = result.getDocComment();
+    if (comment != null){
+      comment.delete();
+    }
   }
 
   public static void annotateOnOverrideImplement(PsiMethod method, PsiClass targetClass, PsiMethod overridden) {

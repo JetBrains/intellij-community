@@ -1316,5 +1316,20 @@ class XInternalError {}
     assert lookup.items.size() == 1
   }
 
+  public void testImplementViaCompletion() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'private', 'protected', 'public', 'public void run'
+    def item = lookup.items[3]
+
+    def p = LookupElementPresentation.renderElement(item)
+    assert p.itemText == 'public void run'
+    assert p.tailText == '(s, myInt) {...}'
+    assert p.typeText == 'Foo'
+
+    lookup.currentItem = item
+    myFixture.type('\n')
+    checkResult()
+  }
+
 
 }

@@ -113,7 +113,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     }
 
     private PsiDirectory getDirectory() {
-      return PsiManager.getInstance(myProject).findDirectory(myDir);
+      return myDir.isValid() ? PsiManager.getInstance(myProject).findDirectory(myDir) : null;
     }
     @Override
     public boolean canNavigate() {

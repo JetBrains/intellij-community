@@ -77,6 +77,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   private transient final Object myLock = new Object();
   private IdeaWideProxySelector mySelector;
   private IdeaWideAuthenticator myAuthenticator;
+  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
+  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);
@@ -187,9 +189,18 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myTestGenericAuthRunnable.get();
+    }
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
+        if (isGenericPasswordCanceled(host, port)) return;
+        final PasswordAuthentication password = getGenericPassword(host, port);
+        if (password != null) {
+          value[0] = password;
+          return;
+        }
         final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
                                                                   "Please enter credentials for: " + prompt, "", "", remember);
         dlg.show();
@@ -218,10 +229,18 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
         ApplicationManager.getApplication().isDisposed()) return null;
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myTestGenericAuthRunnable.get();
+    }
     final String login = PROXY_LOGIN == null ? "" : PROXY_LOGIN;
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     final Runnable runnable = new Runnable() {
       public void run() {
+        if (AUTHENTICATION_CANCELLED) return;
+        if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
+          value[0] = new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
+          return;
+        }
         final AuthenticationDialog dlg = new AuthenticationDialog(PopupUtil.getActiveComponent(), "Proxy authentication: " + host,
                                                                   "Please enter credentials for: " + prompt, login, "", KEEP_PROXY_PASSWORD);
         dlg.show();

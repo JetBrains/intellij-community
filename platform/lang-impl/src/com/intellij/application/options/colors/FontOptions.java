@@ -264,7 +264,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myLineSpacingField.setText(Float.toString(getLineSpacing()));
     mySelectedFontsModel.clear();
     FontPreferences fontPreferences = getFontPreferences();
-    List<String> fontFamilies = fontPreferences.getFontFamilies();
+    List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
     Set<String> selectedFonts = ContainerUtilRt.newHashSet();
     Object selectedValue = mySelectedFontsList.getSelectedValue();
     mySelectedFontsModel.clear();
