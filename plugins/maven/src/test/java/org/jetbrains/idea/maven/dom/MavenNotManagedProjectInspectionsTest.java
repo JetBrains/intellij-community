@@ -37,15 +37,15 @@ public class MavenNotManagedProjectInspectionsTest extends MavenDomTestCase {
                      "<version>1</version>" +
 
                      "<modules>" +
-                     "  <module><error>m1</error></module>" +
-                     "  <module><error>m2</error></module>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
                      "</modules>" +
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <groupId><error>xxx</error></groupId>" +
-                     "    <artifactId><error>yyy</error></artifactId>" +
-                     "    <version><error>zzz</error></version>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>yyy</artifactId>" +
+                     "    <version>zzz</version>" +
                      "  </dependency>" +
                      "</dependencies>");
 
