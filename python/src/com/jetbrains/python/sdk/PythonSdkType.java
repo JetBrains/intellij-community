@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import icons.PythonIcons;
@@ -812,12 +813,13 @@ public class PythonSdkType extends SdkType {
 
 
   @Nullable
-  public static Sdk findLocalPython(@Nullable Module module) {
+  public static Sdk findLocalCPython(@Nullable Module module) {
     Sdk moduleSDK = findPythonSdk(module);
-    if (moduleSDK != null && !isRemote(moduleSDK)) {
+    if (moduleSDK != null && !isRemote(moduleSDK) && PythonSdkFlavor.getFlavor(moduleSDK) instanceof CPythonSdkFlavor) {
       return moduleSDK;
     }
     List<Sdk> allSdks = getAllSdks();
+    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
       if (!isRemote(sdk)) {
         return sdk;

@@ -77,9 +77,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
       return null;
     }
     final Property property = containingClass.findPropertyByCallable(function);
-    final PyTargetExpression site;
     if (property != null) {
-      site = property.getDefinitionSite();
+      final PyTargetExpression site = property.getDefinitionSite();
       if (site != null) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return site;

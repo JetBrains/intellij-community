@@ -320,7 +320,6 @@ private layoutFull(Map args, String target, Set usedJars) {
     }
   }
   patchPropertiesFile(target, args + [appendices: ["$home/build/conf/ideaJNC.properties"]])
-  superLayouts.packJetBrainsChromeExtension(target)
   return result
 }
 

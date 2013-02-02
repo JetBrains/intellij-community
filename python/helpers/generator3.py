@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.122" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.123" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -832,11 +832,6 @@ class ModuleRedeclarator(object):
     if version >= (2, 7):
         PREDEFINED_BUILTIN_SIGS[("enumerate", "__init__")] = "(self, iterable, start=0)" # dosctring omits this completely.
 
-    if sys.platform.startswith("darwin"): # OS X
-        bin_collections_name = 'collections'
-    else:
-        bin_collections_name = '_collections' # Win / Lin
-
     if version < (3, 3):
         datetime_mod = "datetime"
     else:
@@ -853,9 +848,6 @@ class ModuleRedeclarator(object):
         ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
 
         ("time", None, "ctime"): ("(seconds=None)", DEFAULT_STR_LIT),
-
-        (bin_collections_name, "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
-        (bin_collections_name, "defaultdict", "__init__"): ("(self, default_factory=None, **kwargs)", None), # doc string incomplete
 
         ("_struct", None, "pack"): ("(fmt, *args)", BYTES_LIT),
         ("_struct", None, "pack_into"): ("(fmt, buffer, offset, *args)", None),
@@ -923,6 +915,12 @@ class ModuleRedeclarator(object):
         ("numpy.core.multiarray", None, "arange") : ("(start=None, stop=None, step=None, dtype=None)", None), # same as range()
         ("numpy.core.multiarray", None, "set_numeric_ops") : ("(**ops)", None),
     }
+
+    bin_collections_names = ['collections', '_collections']
+
+    for name in bin_collections_names:
+        PREDEFINED_MOD_CLASS_SIGS[(name, "deque", "__init__")] = ("(self, iterable=(), maxlen=None)", None)
+        PREDEFINED_MOD_CLASS_SIGS[(name, "defaultdict", "__init__")] = ("(self, default_factory=None, **kwargs)", None)
 
     if version[0] < 3:
         PREDEFINED_MOD_CLASS_SIGS[("exceptions", "BaseException", "__unicode__")] = ("(self)", UNICODE_LIT)
@@ -1101,7 +1099,7 @@ class ModuleRedeclarator(object):
     # We list all such Ys keyed by X, all fully-qualified names:
     # {"real_definer_module": ("fake_reexporter_module",..)}
     KNOWN_FAKE_REEXPORTERS = {
-        bin_collections_name: ('collections',),
+        "_collections": ('collections',),
         "_functools": ('functools',),
         "_socket": ('socket',), # .error, etc
         "pyexpat": ('xml.parsers.expat',),
