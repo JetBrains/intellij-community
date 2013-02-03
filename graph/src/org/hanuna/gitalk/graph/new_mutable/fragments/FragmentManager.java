@@ -19,6 +19,8 @@ public class FragmentManager {
     private final MutableGraph graph;
     private final FragmentGenerator fragmentGenerator;
     private final Map<Edge, NewGraphFragment> hideFragments = new HashMap<Edge, NewGraphFragment>();
+    private boolean updateGraph = true;
+
 
     public FragmentManager(MutableGraph graph) {
         this.graph = graph;
@@ -123,7 +125,11 @@ public class FragmentManager {
             graph.getVisibilityController().showEdge(upDownEdge);
         }
         fragment.setVisibility(true);
-        return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
+        if (updateGraph) {
+            return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
+        } else {
+            return Replace.ID_REPLACE;
+        }
     }
 
     public Replace hide(@NotNull NewGraphFragment fragment) {
@@ -139,7 +145,11 @@ public class FragmentManager {
         hideFragments.put(edge, fragment);
         graph.getVisibilityController().hide(fragment.getIntermediateNodes());
         fragment.setVisibility(false);
-        return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
+        if (updateGraph) {
+            return graph.intermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
+        } else {
+            return Replace.ID_REPLACE;
+        }
     }
 
     @Nullable
@@ -154,6 +164,7 @@ public class FragmentManager {
 
     public void hideAll() {
         int rowIndex = 0;
+        updateGraph = false;
         while (rowIndex < graph.getNodeRows().size()) {
             Node node = commitNodeInRow(rowIndex);
             if (node != null) {
@@ -163,10 +174,9 @@ public class FragmentManager {
                 }
             }
             rowIndex++;
-            if (rowIndex % 100 == 0) {
-                System.out.println(rowIndex);
-            }
         }
+        updateGraph = true;
+        graph.updateVisibleRows();
     }
 
 }
