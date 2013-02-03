@@ -16,7 +16,6 @@ public interface NewGraph {
     public List<NodeRow> getNodeRows();
 
 
-    public void addUpdateListener(@NotNull Executor<Replace> listener);
-    public void removeAllListeners();
+
 
 }

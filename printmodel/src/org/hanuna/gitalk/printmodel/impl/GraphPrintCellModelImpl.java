@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.printmodel.impl;
 
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.printmodel.*;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     private final LayoutModel layoutModel;
     private final SelectController selectController;
 
-    public GraphPrintCellModelImpl(Graph graph) {
+    public GraphPrintCellModelImpl(NewGraph graph) {
         this.layoutModel = new LayoutModel(graph);
         this.selectController = new SelectController();
     }

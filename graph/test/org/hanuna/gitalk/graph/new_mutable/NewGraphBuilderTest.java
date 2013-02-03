@@ -1,13 +1,11 @@
 package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
@@ -26,14 +24,10 @@ public class NewGraphBuilderTest {
         } catch (IOException e) {
             throw new IllegalStateException();
         }
-        Graph model = buildGraph(commits);
-        assertEquals(out, toStr(model));
+        MutableGraph graph = GraphBuilder.build(commits);
+        assertEquals(out, toStr(graph));
     }
 
-    public Graph buildGraph(List<Commit> commits) {
-        MutableGraph graph = GraphBuilder.build(commits);
-        return new GraphAdapter(graph, Collections.<Commit>emptyList());
-    }
 
 
     @Test

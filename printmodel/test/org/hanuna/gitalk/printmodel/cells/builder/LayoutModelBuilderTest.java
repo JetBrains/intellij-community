@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
 import org.junit.Test;

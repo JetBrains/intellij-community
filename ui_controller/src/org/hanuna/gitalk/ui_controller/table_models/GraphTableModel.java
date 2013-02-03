@@ -1,16 +1,16 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.log.commit.CommitData;
-import org.hanuna.gitalk.log.commit.CommitDataGetter;
-import org.hanuna.gitalk.ui_controller.DataPack;
-import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
+import org.hanuna.gitalk.ui_controller.DataPack;
 import org.hanuna.gitalk.ui_controller.DateConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final RefsModel refsModel;
     private final CommitDataGetter commitDataGetter;
-    private Graph graph;
+    private NewGraph graph;
     private GraphPrintCellModel graphPrintCellModel;
 
     public GraphTableModel(@NotNull DataPack dataPack) {

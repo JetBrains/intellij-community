@@ -4,7 +4,7 @@ import org.hanuna.gitalk.common.compressedlist.CompressedList;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
-import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
@@ -16,12 +16,12 @@ import java.util.List;
  * @author erokhins
  */
 public class LayoutModel {
-    private final Graph graph;
+    private final NewGraph graph;
     private CompressedList<LayoutRow> layoutRowCompressedList;
     private final Generator<LayoutRow> generator;
 
 
-    public LayoutModel(@NotNull Graph graph) {
+    public LayoutModel(@NotNull NewGraph graph) {
         this.graph = graph;
         this.generator = new LayoutRowGenerator(graph);
         build();

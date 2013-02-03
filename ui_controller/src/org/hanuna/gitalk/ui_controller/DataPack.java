@@ -1,12 +1,13 @@
 package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.new_mutable.GraphAdapter;
+import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.new_mutable.GraphModel;
 import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
 import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
@@ -29,7 +30,7 @@ public class DataPack {
     private final List<Commit> commits;
     private final CommitDataGetter commitDataGetter;
     private MutableGraph newGraph;
-    private GraphAdapter graph;
+    private GraphModel graph;
     private GraphPrintCellModel printCellModel;
 
     public DataPack(RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
@@ -40,7 +41,7 @@ public class DataPack {
         //graph = GraphBuilder.build(commits, refsModel);
         newGraph = GraphBuilder.build(commits);
         newGraph.getVisibilityController().setVisibleCommits(commits);
-        graph = new GraphAdapter(newGraph, refsModel.getOrderedLogTrackedCommit());
+        graph = new GraphModel(newGraph, refsModel.getOrderedLogTrackedCommit());
         graphTimer.print();
 
         updatePrintModel();
@@ -74,8 +75,8 @@ public class DataPack {
     }
 
     @NotNull
-    public Graph getGraph() {
-        return graph;
+    public NewGraph getGraph() {
+        return newGraph;
     }
 
     @NotNull
@@ -98,21 +99,21 @@ public class DataPack {
     }
 
     public void hideAll() {
-        graph.removeAllListeners();
+        newGraph.removeAllListeners();
         graph.getFragmentManager().hideAll();
         updatePrintModel();
     }
 
     public void updatePrintModel() {
         MyTimer printModelTimer = new MyTimer("print model build");
-        printCellModel = new GraphPrintCellModelImpl(graph);
+        printCellModel = new GraphPrintCellModelImpl(newGraph);
         printModelTimer.print();
 
         graph.removeAllListeners();
-        graph.addUpdateListener(new Graph.GraphUpdateListener() {
+        graph.addUpdateListener(new Executor<Replace>() {
             @Override
-            public void doReplace(@NotNull Replace replace) {
-                printCellModel.recalculate(replace);
+            public void execute(Replace key) {
+                printCellModel.recalculate(key);
             }
         });
     }
