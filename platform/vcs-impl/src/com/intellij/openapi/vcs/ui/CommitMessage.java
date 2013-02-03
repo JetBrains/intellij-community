@@ -126,6 +126,9 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
       features.add(new RightMarginEditorFeature(false, -1));
     }
 
+    features.add(new SoftWrapsEditorFeature(true));
+    features.add(new AdditionalPageAtBottomEditorFeature(false));
+
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
