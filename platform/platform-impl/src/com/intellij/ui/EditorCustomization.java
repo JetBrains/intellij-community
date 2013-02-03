@@ -19,43 +19,51 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * Defines contract for functionality that is able to customize editors.
  * <p/>
- * It's assumed that it works in terms of {@link Feature features} that can be applied to editors, i.e. every
- * customization implementation is assumed to be able to provide support for <code>[1; *]</code> features.
+ * It's assumed that it works in terms of {@link EditorFeature features} that can be applied to editors, i.e. every
+ * customization implementation is assumed to have a corresponding {@link EditorFeature} implementation which
+ * enables/disables it and potentially provides some configuration.  This indirection allows us to have customizer
+ * extensions provided by other modules (see {@link SpellCheckingEditorFeature} for example)
  *
  * @author Denis Zhdanov
  * @since Aug 20, 2010 4:26:04 PM
  */
-public interface EditorCustomization {
+public abstract class EditorCustomization {
 
-  enum Feature {
-    SOFT_WRAP, SPELL_CHECK, HORIZONTAL_SCROLLBAR, ONE_LINE, ADDITIONAL_PAGE_AT_BOTTOM
+  public static ExtensionPointName<EditorCustomization> EP_NAME = ExtensionPointName.create("com.intellij.editorCustomization");
+
+  /**
+   * Apply the given feature to the given editor.
+   *
+   * Validates the given {@link EditorFeature} configures this customization, and hence can safely be
+   * called on all {@link EditorCustomization} extension points for any {@link EditorFeature}
+   *
+   * @param editor The editor to customize
+   * @param feature The feature configuration
+   */
+  public void doProcessCustomization(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
+    if (!getFeatureClass().isAssignableFrom(feature.getClass())) {
+      return;
+    }
+
+    customize(editor, feature);
   }
 
-  ExtensionPointName<EditorCustomization> EP_NAME = ExtensionPointName.create("com.intellij.editorCustomization");
-
   /**
-   * @return    set of editor customization features supported by the current class
-   */
-  Set<Feature> getSupportedFeatures();
-
-  /**
-   * Asks to perform customization of the given editor for the given feature.
+   * All subclass must declare an {@link EditorFeature} class which configures them.
    *
-   * @param editor      editor to customize
-   * @param feature     feature to apply to the given editor
+   * @return The {@link EditorFeature} class which corresponds to this {@link EditorCustomization}
    */
-  void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
+  protected abstract Class<? extends EditorFeature> getFeatureClass();
 
   /**
-   * Asks to un-apply customization performed earlier during {@link #addCustomization(EditorEx, Feature)} processing (if any).
-   * 
-   * @param editor      editor to customize
-   * @param feature     feature to un-apply to the given editor
+   * Subclasses should apply their customizations in this method.  Parameter "feature" is
+   * guaranteed by {@link #doProcessCustomization} to match the type returned by {@link #getFeatureClass}
+   *
+   * @param editor The editor to customize
+   * @param feature The feature configuration
    */
-  void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
+  protected abstract void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature);
 }
