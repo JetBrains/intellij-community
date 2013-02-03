@@ -147,7 +147,8 @@ public class MvcRunTargetDialog extends DialogWrapper {
     return (String)myTargetField.getEditor().getItem();
   }
 
-  public String[] getTargetArguments() {
+  @NotNull
+  public String getTargetArguments() {
     String text = getSelectedText();
 
     text = text.trim();
@@ -155,12 +156,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
       text = text.substring(GRAILS_PREFIX.length());
     }
 
-    Iterable<String> iterable = StringUtil.tokenize(text, " ");
-    ArrayList<String> args = new ArrayList<String>();
-    for (String s : iterable) {
-      args.add(s);
-    }
-    return ArrayUtil.toStringArray(args);
+    return text;
   }
 
   protected JComponent createCenterPanel() {

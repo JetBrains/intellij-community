@@ -166,7 +166,7 @@ public abstract class MvcFramework {
       return null;
     }
 
-    return createCommandAndShowErrors(null, module, true, result == 0 ? "create-app" : "create-plugin");
+    return createCommandAndShowErrors(null, module, true, new MvcCommand(result == 0 ? "create-app" : "create-plugin"));
   }
 
   public abstract void updateProjectStructure(@NotNull final Module module);
@@ -316,32 +316,12 @@ public abstract class MvcFramework {
     from.remove(extension.getCompilerOutputPathForTests());
   }
 
-
-  public static Pair<String, String[]> parsedCmd(String cmdLine) {
-    return parsedCmd(ParametersList.parse(cmdLine));
-  }
-
-  public static Pair<String, String[]> parsedCmd(String[] args) {
-    if (args.length == 0) {
-      return new Pair<String, String[]>("", ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-    if (args.length == 1) {
-      return new Pair<String, String[]>(args[0], ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-
-    String[] array = new String[args.length - 1];
-    System.arraycopy(args, 1, array, 0, array.length);
-
-    return new Pair<String, String[]>(args[0], array);
-  }
-
   public abstract JavaParameters createJavaParameters(@NotNull Module module,
                                                       boolean forCreation,
                                                       boolean forTests,
                                                       boolean classpathFromDependencies,
                                                       @Nullable String jvmParams,
-                                                      @NotNull String command,
-                                                      @NotNull String... args) throws ExecutionException;
+                                                      @NotNull MvcCommand command) throws ExecutionException;
 
   protected static void ensureRunConfigurationExists(Module module, ConfigurationType configurationType, String name) {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
@@ -373,19 +353,24 @@ public abstract class MvcFramework {
   public abstract String getSdkHomePropertyName();
 
   @Nullable
-  public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull String command, @NotNull String... args) {
-    return createCommandAndShowErrors(null, module, command, args);
+  public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull String command, String... args) {
+    return createCommandAndShowErrors(null, module, new MvcCommand(command, args));
   }
 
   @Nullable
-  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, @NotNull String command, @NotNull String... args) {
-    return createCommandAndShowErrors(vmOptions, module, false, command, args);
+  public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull MvcCommand command) {
+    return createCommandAndShowErrors(null, module, command);
   }
 
   @Nullable
-  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, final boolean forCreation, @NotNull String command, @NotNull String... args) {
+  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, @NotNull MvcCommand command) {
+    return createCommandAndShowErrors(vmOptions, module, false, command);
+  }
+
+  @Nullable
+  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, final boolean forCreation, @NotNull MvcCommand command) {
     try {
-      return createCommand(module, vmOptions, forCreation, command, args);
+      return createCommand(module, vmOptions, forCreation, command);
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to run grails command: " + command);
@@ -397,9 +382,8 @@ public abstract class MvcFramework {
   public GeneralCommandLine createCommand(@NotNull Module module,
                                           @Nullable String jvmParams,
                                           final boolean forCreation,
-                                          @NotNull String command,
-                                          @NotNull String... args) throws ExecutionException {
-    final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command, args);
+                                          @NotNull MvcCommand command) throws ExecutionException {
+    final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command);
     addJavaHome(params, module);
 
     final GeneralCommandLine commandLine = createCommandLine(params);
