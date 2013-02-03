@@ -1,6 +1,6 @@
 package org.hanuna.gitalk;
 
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -105,7 +105,7 @@ public class GraphStrUtils {
      * next row ...
      */
 
-    public static String toStr(NewGraph graph) {
+    public static String toStr(Graph graph) {
         StringBuilder s = new StringBuilder();
         List<NodeRow> rows = graph.getNodeRows();
         if (rows.size() > 0)  {

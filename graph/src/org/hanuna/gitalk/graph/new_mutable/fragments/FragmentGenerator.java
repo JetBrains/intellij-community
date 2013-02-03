@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.new_mutable.fragments;
 
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class FragmentGenerator {
         }
     };
 
-    public FragmentGenerator(NewGraph graph) {
+    public FragmentGenerator(Graph graph) {
         shortFragmentGenerator = new ShortFragmentGenerator(graph);
     }
 

@@ -4,8 +4,8 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.GraphFragmentController;
-import org.hanuna.gitalk.graph.NewGraph;
 import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.new_mutable.GraphModel;
 import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
@@ -75,7 +75,7 @@ public class DataPack {
     }
 
     @NotNull
-    public NewGraph getGraph() {
+    public Graph getGraph() {
         return newGraph;
     }
 

@@ -2,7 +2,7 @@ package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.new_mutable.elements.MutableNodeRow;
@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class MutableGraph implements NewGraph {
+public class MutableGraph implements Graph {
     private final EdgeController edgeController = new EdgeController();
     private final ElementVisibilityController visibilityController = new ElementVisibilityController();
     private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();

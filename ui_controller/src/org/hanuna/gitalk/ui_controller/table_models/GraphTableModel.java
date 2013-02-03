@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
 import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.CommitData;
@@ -28,7 +28,7 @@ public class GraphTableModel extends AbstractTableModel {
     private final String[] columnNames = {"Subject", "Author", "Date"};
     private final RefsModel refsModel;
     private final CommitDataGetter commitDataGetter;
-    private NewGraph graph;
+    private Graph graph;
     private GraphPrintCellModel graphPrintCellModel;
 
     public GraphTableModel(@NotNull DataPack dataPack) {

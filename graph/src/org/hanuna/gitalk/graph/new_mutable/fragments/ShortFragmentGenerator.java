@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.new_mutable.fragments;
 
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.Set;
  * @author erokhins
  */
 public class ShortFragmentGenerator {
-    private final NewGraph graph;
+    private final Graph graph;
     private UnhiddenNodeFunction unhiddenNodes = new UnhiddenNodeFunction() {
         @Override
         public boolean isUnhiddenNode(@NotNull Node node) {
@@ -21,7 +21,7 @@ public class ShortFragmentGenerator {
         }
     };
 
-    public ShortFragmentGenerator(NewGraph graph) {
+    public ShortFragmentGenerator(Graph graph) {
         this.graph = graph;
     }
 

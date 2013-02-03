@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.printmodel.layout;
 
 import org.hanuna.gitalk.common.compressedlist.generator.AbstractGenerator;
-import org.hanuna.gitalk.graph.NewGraph;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -14,9 +14,9 @@ import java.util.*;
  * @author erokhins
  */
 class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> {
-    private final NewGraph graph;
+    private final Graph graph;
 
-    public LayoutRowGenerator(@NotNull NewGraph graph) {
+    public LayoutRowGenerator(@NotNull Graph graph) {
         this.graph = graph;
     }
 
