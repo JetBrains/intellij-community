@@ -43,13 +43,43 @@ public class PySignature {
     return myArgs;
   }
 
+  @NotNull
+  public PySignature merge(@NotNull PySignature signature) {
+    for (NamedParameter param : signature.getArgs()) {
+      NamedParameter ourParam = getArgForName(param.getName());
+      if (ourParam != null) {
+        ourParam.addTypes(param.getTypesList());
+      }
+    }
+    return this;
+  }
+
+  @Nullable
+  private NamedParameter getArgForName(String name) {
+    for (NamedParameter param : myArgs) {
+      if (param.getName().equals(name)) {
+        return param;
+      }
+    }
+
+    return null;
+  }
+
+
   public static class NamedParameter {
     private final String myName;
-    private final String myType;
+    private final List<String> myTypes;
 
-    private NamedParameter(String name, String type) {
+    private NamedParameter(@NotNull String name, @NotNull String type) {
       myName = name;
-      myType = type;
+
+      myTypes = parseTypes(type);
+    }
+
+    @NotNull
+    private static List<String> parseTypes(@NotNull String type) {
+      String[] parts = type.split(" or ");
+      return Lists.newArrayList(parts);
     }
 
     public String getName() {
@@ -57,7 +87,37 @@ public class PySignature {
     }
 
     public String getTypeQualifiedName() {
-      return myType;
+      if (myTypes.size() == 1) {
+        return myTypes.get(0);
+      }
+      else {
+        StringBuilder sb = new StringBuilder();
+        boolean notFirst = false;
+        for (String type : myTypes) {
+          if (notFirst) {
+            sb.append(" or ");
+          }
+          sb.append(type);
+          notFirst = true;
+        }
+        return sb.toString();
+      }
+    }
+
+    public void addType(String type) {
+      if (!myTypes.contains(type)) {
+        myTypes.add(type);
+      }
+    }
+
+    public void addTypes(List<String> newTypes) {
+      for (String type : newTypes) {
+        addType(type);
+      }
+    }
+
+    public List<String> getTypesList() {
+      return myTypes;
     }
   }
 

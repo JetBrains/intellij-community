@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -23,6 +24,8 @@ import java.util.List;
  */
 public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   protected static final Logger LOG = Logger.getInstance(PySignatureCacheManagerImpl.class.getName());
+
+  private final static boolean SHOULD_OVERWRITE_TYPES = false;
 
   public static final FileAttribute CALL_SIGNATURES_ATTRIBUTE = new FileAttribute("call.signatures.attribute", 1, true);
 
@@ -65,15 +68,21 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       String[] parts = sign.split("\t");
       if (parts.length > 0 && parts[0].equals(signature.getFunctionName())) {
         found = true;
-        lines[i] = signatureToString(signature);
+        if (SHOULD_OVERWRITE_TYPES) {
+          lines[i] = signatureToString(signature);
+        }
+        else {
+          //noinspection ConstantConditions
+          lines[i] = signatureToString(stringToSignature(file.
+            getCanonicalPath(), lines[i]).merge(signature));
+        }
       }
       i++;
     }
     if (!found) {
       String[] lines2 = new String[lines.length + 1];
-      for (int j = 0; j < lines.length; j++) {
-        lines2[j] = lines[j];
-      }
+      System.arraycopy(lines, 0, lines2, 0, lines.length);
+
       lines2[lines2.length - 1] = signatureToString(signature);
       lines = lines2;
     }
@@ -165,6 +174,26 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       }
     }
 
+    return null;
+  }
+
+
+  @Nullable
+  private static PySignature stringToSignature(String path, String string) {
+    String[] parts = string.split("\t");
+    if (parts.length > 0) {
+      PySignature signature = new PySignature(path, parts[0]);
+      for (int i = 1; i < parts.length; i++) {
+        String[] var = parts[i].split(":");
+        if (var.length == 2) {
+          signature = signature.addArgumentVar(var[0], var[1]);
+        }
+        else {
+          throw new IllegalStateException("Should be <name>:<type> format. " + parts[i] + " instead.");
+        }
+      }
+      return signature;
+    }
     return null;
   }
 
