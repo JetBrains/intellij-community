@@ -11,8 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.debugger.PyDebuggerConfigurable;
-import com.jetbrains.python.debugger.PyDebuggerSettings;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,12 +27,13 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JBLabel myScriptParametersLabel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
+  private final Project myProject;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
-    Project project = configuration.getProject();
+    myProject = configuration.getProject();
 
     FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -43,7 +43,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     //chooserDescriptor.setRoot(s.getProject().getBaseDir());
 
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, project,
+      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, myProject,
                                                                            chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
 
         protected void onFileChoosen(VirtualFile chosenFile) {
@@ -87,7 +87,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   public boolean isMultiprocessMode() {
-    return PyDebuggerSettings.getInstance().getState().isAttachToSubprocess();
+    return PyDebuggerOptionsProvider.getInstance(myProject).isAttachToSubprocess();
   }
 
   public void setMultiprocessMode(boolean multiprocess) {

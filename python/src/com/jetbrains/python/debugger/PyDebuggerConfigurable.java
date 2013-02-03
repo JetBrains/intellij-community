@@ -3,25 +3,33 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author traff
  */
 public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final PyDebuggerSettings mySettings;
+  private final PyDebuggerOptionsProvider mySettings;
   private JPanel myMainPanel;
   private JCheckBox myAttachToSubprocess;
   private JCheckBox mySaveSignatures;
+  private JButton myClearCacheButton;
 
-  public PyDebuggerConfigurable(final PyDebuggerSettings settings) {
+  private final Project myProject;
+
+  public PyDebuggerConfigurable(Project project, final PyDebuggerOptionsProvider settings) {
+    myProject = project;
     mySettings = settings;
   }
 
   public String getDisplayName() {
-    return "Python";
+    return "Python Debugger";
   }
 
   public String getHelpTopic() {
@@ -38,25 +46,28 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   }
 
   public JComponent createComponent() {
+    myClearCacheButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        PySignatureCacheManager.getInstance(myProject).clearCache();
+      }
+    });
     return myMainPanel;
   }
 
   public boolean isModified() {
-    final PyDebuggerSettings.PyDebuggerSettingsState state = mySettings.getState();
-    return myAttachToSubprocess.isSelected() != state.isAttachToSubprocess() || mySaveSignatures.isSelected() != state.isSaveCallSignatures();
+    return myAttachToSubprocess.isSelected() != mySettings.isAttachToSubprocess() ||
+           mySaveSignatures.isSelected() != mySettings.isSaveCallSignatures();
   }
 
   public void apply() throws ConfigurationException {
-    PyDebuggerSettings.PyDebuggerSettingsState state = mySettings.getState();
-
-    state.setAttachToSubprocess(myAttachToSubprocess.isSelected());
-    state.setSaveCallSignatures(mySaveSignatures.isSelected());
+    mySettings.setAttachToSubprocess(myAttachToSubprocess.isSelected());
+    mySettings.setSaveCallSignatures(mySaveSignatures.isSelected());
   }
 
   public void reset() {
-    final PyDebuggerSettings.PyDebuggerSettingsState state = mySettings.getState();
-    myAttachToSubprocess.setSelected(state.isAttachToSubprocess());
-    mySaveSignatures.setSelected(state.isSaveCallSignatures());
+    myAttachToSubprocess.setSelected(mySettings.isAttachToSubprocess());
+    mySaveSignatures.setSelected(mySettings.isSaveCallSignatures());
   }
 
   public void disposeUIResources() {

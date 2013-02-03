@@ -3,11 +3,18 @@ package com.jetbrains.python.debugger;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.ProjectFileIndexFacade;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.jetbrains.django.util.VirtualFileUtil;
@@ -89,6 +96,10 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
     String attrString = StringUtil.join(lines, "\n");
 
+    writeAttribute(file, attrString);
+  }
+
+  private static void writeAttribute(@NotNull VirtualFile file, @NotNull String attrString) {
     try {
       CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(file, attrString.getBytes());
     }
@@ -146,16 +157,10 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
   @Nullable
   private static PySignature readSignatureAttributeFromFile(@NotNull VirtualFile file, @NotNull String name) {
-    byte[] data;
-    try {
-      data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
-    }
-    catch (Exception e) {
-      data = null;
-    }
+    String content = readAttribute(file);
 
-    if (data != null) {
-      String[] lines = (new String(data)).split("\n");
+    if (content != null) {
+      String[] lines = content.split("\n");
       for (String sign : lines) {
         String[] parts = sign.split("\t");
         if (parts.length > 0 && parts[0].equals(name)) {
@@ -175,6 +180,26 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static String readAttribute(VirtualFile file) {
+    byte[] data;
+    try {
+      data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
+    }
+    catch (Exception e) {
+      data = null;
+    }
+
+    String content;
+    if (data != null && data.length > 0) {
+      content = new String(data);
+    }
+    else {
+      content = null;
+    }
+    return content;
   }
 
 
@@ -207,5 +232,29 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     PsiFile file = function.getContainingFile();
 
     return file != null ? file.getOriginalFile().getVirtualFile() : null;
+  }
+
+
+  @Override
+  public void clearCache() {
+    final Ref<Boolean> deleted = Ref.create(false);
+    ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        if (readAttribute(fileOrDir) != null) {
+          writeAttribute(fileOrDir, "");
+          deleted.set(true);
+        }
+        return true;
+      }
+    });
+
+    String message;
+    if (deleted.get()) {
+      message = "Collected signatures were deleted";
+    } else {
+      message = "Nothing to delete";
+    }
+    Messages.showInfoMessage(myProject, message, "Delete Cache");
   }
 }

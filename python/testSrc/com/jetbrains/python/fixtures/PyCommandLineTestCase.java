@@ -60,7 +60,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
       final PythonCommandLineState state = (PythonCommandLineState)configuration.getState(executor, new ExecutionEnvironment());
       PyDebugRunner debugRunner = (PyDebugRunner)RunnerRegistry.getInstance().findRunnerById(PyDebugRunner.PY_DEBUG_RUNNER);
       final GeneralCommandLine generalCommandLine =
-        state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(state, configuration, PORT));
+        state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT));
       return generalCommandLine.getParametersList().getList();
     }
     catch (ExecutionException e) {

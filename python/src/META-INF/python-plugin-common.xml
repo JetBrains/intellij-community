@@ -113,7 +113,6 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
-    <xdebugger.settings implementation="com.jetbrains.python.debugger.PyDebuggerSettings"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
 
@@ -443,6 +442,9 @@
 
     <projectConfigurable instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+
+    <projectConfigurable instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"/>
+    <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 
     <codeBlockProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyCodeBlockProvider"/>
 

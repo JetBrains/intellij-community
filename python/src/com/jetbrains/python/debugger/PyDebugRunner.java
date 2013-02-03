@@ -66,7 +66,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = env.getRunProfile();
-    final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(pyState, profile, serverLocalPort));
+    final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(project, pyState, profile, serverLocalPort));
 
     final XDebugSession session = XDebuggerManager.getInstance(project).
       startSession(this, env, contentToReuse, new XDebugProcessStarter() {
@@ -133,13 +133,13 @@ public class PyDebugRunner extends GenericProgramRunner {
     return runConfigPatcher;
   }
 
-  public static CommandLinePatcher[] createCommandLinePatchers(final PythonCommandLineState state,
+  public static CommandLinePatcher[] createCommandLinePatchers(final Project project, final PythonCommandLineState state,
                                                                RunProfile profile,
                                                                final int serverLocalPort) {
-    return new CommandLinePatcher[]{createDebugServerPatcher(state, serverLocalPort), createRunConfigPatcher(state, profile)};
+    return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
-  private static CommandLinePatcher createDebugServerPatcher(final PythonCommandLineState pyState, final int serverLocalPort) {
+  private static CommandLinePatcher createDebugServerPatcher(final Project project, final PythonCommandLineState pyState, final int serverLocalPort) {
     return new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
 
@@ -160,12 +160,12 @@ public class PyDebugRunner extends GenericProgramRunner {
           }
         }
 
-        fillDebugParameters(debugParams, serverLocalPort, pyState);
+        fillDebugParameters(project, debugParams, serverLocalPort, pyState);
       }
     };
   }
 
-  private static void fillDebugParameters(ParamsGroup debugParams, int serverLocalPort, PythonCommandLineState pyState) {
+  private static void fillDebugParameters(Project project, ParamsGroup debugParams, int serverLocalPort, PythonCommandLineState pyState) {
     debugParams.addParameter(PythonHelpersLocator.getHelperPath(DEBUGGER_MAIN));
     if (pyState.isMultiprocessDebug()) {
       debugParams.addParameter("--multiproc");
@@ -175,7 +175,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       debugParams.addParameter("--DEBUG");
     }
 
-    if (PyDebuggerSettings.getInstance().getState().isSaveCallSignatures()) {
+    if (PyDebuggerOptionsProvider.getInstance(project).isSaveCallSignatures()) {
       debugParams.addParameter("--save-signatures");
     }
 

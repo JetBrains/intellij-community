@@ -32,7 +32,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PyDebuggerSettings;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
@@ -432,7 +432,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       return myMultiprocessDebug;
     }
     else {
-      return PyDebuggerSettings.getInstance().getState().isAttachToSubprocess();
+      return PyDebuggerOptionsProvider.getInstance(myConfig.getProject()).isAttachToSubprocess();
     }
   }
 
