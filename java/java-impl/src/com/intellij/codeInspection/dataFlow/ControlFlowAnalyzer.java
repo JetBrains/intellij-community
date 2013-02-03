@@ -1608,7 +1608,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return (PsiVariable)target;
     }
     if (target instanceof PsiMethod) {
-      return PropertyUtils.getSimplyReturnedField((PsiMethod)target, PropertyUtils.getSingleReturnValue((PsiMethod)target));
+      PsiMethod method = (PsiMethod)target;
+      if (PropertyUtils.isSimpleGetter(method)) {
+        return PropertyUtils.getSimplyReturnedField(method, PropertyUtils.getSingleReturnValue(method));
+      }
     }
     return null;
   }
