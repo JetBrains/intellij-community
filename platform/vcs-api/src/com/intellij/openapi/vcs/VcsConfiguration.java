@@ -90,7 +90,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  public boolean USE_COMMIT_MESSAGE_MARGIN = true;
+  public boolean USE_COMMIT_MESSAGE_MARGIN = false;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
 
   public enum StandardOption {
