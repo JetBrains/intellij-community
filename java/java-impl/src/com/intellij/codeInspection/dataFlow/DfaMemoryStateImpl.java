@@ -77,15 +77,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       newState.myEqClasses.add(aClass != null ? new SortedIntSet(aClass.toNativeArray()) : null);
     }
 
-    try {
-      for (Object o : myVariableStates.keySet()) {
-        DfaVariableValue dfaVariableValue = (DfaVariableValue)o;
-        DfaVariableState clone = (DfaVariableState)myVariableStates.get(dfaVariableValue).clone();
-        newState.myVariableStates.put(dfaVariableValue, clone);
-      }
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
+    for (DfaVariableValue dfaVariableValue : myVariableStates.keySet()) {
+      newState.myVariableStates.put(dfaVariableValue, myVariableStates.get(dfaVariableValue).clone());
     }
     return newState;
   }
@@ -280,13 +273,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
-        try {
-          DfaVariableState newState = (DfaVariableState)getVariableState((DfaVariableValue)value).clone();
-          myVariableStates.put(var, newState);
-        }
-        catch (CloneNotSupportedException e) {
-          LOG.error(e);
-        }
+        myVariableStates.put(var, getVariableState((DfaVariableValue)value).clone());
       }
     }
 

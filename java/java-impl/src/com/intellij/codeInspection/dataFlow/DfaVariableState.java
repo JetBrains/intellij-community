@@ -114,7 +114,7 @@ public class DfaVariableState implements Cloneable {
            myNullable == aState.myNullable;
   }
 
-  protected Object clone() throws CloneNotSupportedException {
+  protected DfaVariableState clone() {
     return new DfaVariableState(this);
   }
 
