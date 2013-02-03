@@ -72,6 +72,10 @@ public class MethodCallInstruction extends Instruction {
     }
   }
 
+  public void setShouldFlushFields(boolean shouldFlushFields) {
+    myShouldFlushFields = shouldFlushFields;
+  }
+
   @Nullable
   public PsiType getResultType() {
     return myType;

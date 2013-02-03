@@ -156,4 +156,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testTryWithResourcesInstanceOf() { doTest(); }
   public void testOmnipresentExceptions() { doTest(); }
 
+  public void testEqualsHasNoSideEffects() { doTest(); }
+
 }

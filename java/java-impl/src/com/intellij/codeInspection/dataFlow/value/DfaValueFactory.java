@@ -154,7 +154,7 @@ public class DfaValueFactory {
     return null;
   }
 
-  private static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
+  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
     PsiExpression qualifier = refExpression.getQualifierExpression();
     if (qualifier == null) {
       return true;
