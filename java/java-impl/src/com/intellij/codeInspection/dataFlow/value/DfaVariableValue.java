@@ -118,7 +118,7 @@ public class DfaVariableValue extends DfaValue {
 
   @Nullable
   public PsiType getVariableType() {
-    return myVariable == null ? null : myVariable.getType();
+    return myVarType;
   }
 
   public boolean isNegated() {
