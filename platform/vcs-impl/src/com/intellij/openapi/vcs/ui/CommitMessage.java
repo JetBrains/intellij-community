@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -33,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
 
@@ -114,37 +115,19 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
    * @return a commit message editor
    */
   public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
-    final boolean checkSpelling;
-    final boolean useCommitMessageMargin;
-    final int commitMessageMarginSize;
+    Set<EditorFeature> features = new HashSet<EditorFeature>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-
     if (configuration != null) {
-      checkSpelling = forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
-      useCommitMessageMargin = configuration.USE_COMMIT_MESSAGE_MARGIN;
-      commitMessageMarginSize = configuration.COMMIT_MESSAGE_MARGIN_SIZE;
+      features.add(new SpellCheckingEditorFeature(forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING));
+      features.add(new RightMarginEditorFeature(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
     } else {
-      checkSpelling = true;
-      useCommitMessageMargin = false;
-      commitMessageMarginSize = -1;
+      features.add(new SpellCheckingEditorFeature(true));
+      features.add(new RightMarginEditorFeature(false, -1));
     }
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(),
-                                  project,
-                                  new EditorTextFieldProvider.AdHocEditorCustomizer() {
-                                    @Override
-                                    public void customize(EditorEx editor) {
-                                      toggleEditorSpellchecking(project, editor, checkSpelling);
-
-                                      if (useCommitMessageMargin) {
-                                        editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
-                                        editor.getSettings().setRightMarginShown(true);
-                                        editor.getSettings().setRightMargin(commitMessageMarginSize);
-                                      }
-                                    }
-                                  });
+    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
 
   @Nullable
@@ -195,16 +178,10 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
   private static void toggleEditorSpellchecking(Project project, EditorEx editorEx, boolean spellCheckingEnabled) {
     EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
-    EditorCustomization.Feature spellCheckFeature = EditorCustomization.Feature.SPELL_CHECK;
+    SpellCheckingEditorFeature spellCheckFeature = new SpellCheckingEditorFeature(spellCheckingEnabled);
+
     for (EditorCustomization customization : customizations) {
-      if (customization.getSupportedFeatures().contains(spellCheckFeature)) {
-        if (spellCheckingEnabled) {
-          customization.addCustomization(editorEx, spellCheckFeature);
-        }
-        else {
-          customization.removeCustomization(editorEx, spellCheckFeature);
-        }
-      }
+      customization.doProcessCustomization(editorEx, spellCheckFeature);
     }
   }
 

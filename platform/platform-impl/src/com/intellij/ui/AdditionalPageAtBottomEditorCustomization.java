@@ -19,19 +19,18 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link EditorCustomization} for {@link EditorCustomization.Feature#ADDITIONAL_PAGE_AT_BOTTOM}.
- * 
  * @author Denis Zhdanov
  * @since 1/21/11 4:06 PM
  */
-public class AdditionalPageAtBottomEditorCustomization extends AbstractEditorCustomization {
+public class AdditionalPageAtBottomEditorCustomization extends EditorCustomization {
 
-  public AdditionalPageAtBottomEditorCustomization() {
-    super(Feature.ADDITIONAL_PAGE_AT_BOTTOM);
+  @Override
+  protected Class<? extends EditorFeature> getFeatureClass() {
+    return AdditionalPageAtBottomEditorFeature.class;
   }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
-    editor.getSettings().setAdditionalPageAtBottom(apply);
+  protected void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
+    editor.getSettings().setAdditionalPageAtBottom(feature.isEnabled());
   }
 }

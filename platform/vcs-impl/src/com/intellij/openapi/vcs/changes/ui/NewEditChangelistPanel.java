@@ -25,14 +25,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.ui.EditorCustomization;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
   private EditorTextField myNameTextField;
@@ -162,15 +161,17 @@ public abstract class NewEditChangelistPanel extends JPanel {
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
-    final EnumSet<EditorCustomization.Feature> enabledFeatures = EnumSet.of(EditorCustomization.Feature.SPELL_CHECK);
-    final EnumSet<EditorCustomization.Feature> disabledFeatures = EnumSet.noneOf(EditorCustomization.Feature.class);
+
+    final Set<EditorFeature> editorFeatures = new HashSet<EditorFeature>();
+    editorFeatures.add(new SpellCheckingEditorFeature(true));
+
     if (defaultLines == 1) {
-      disabledFeatures.add(EditorCustomization.Feature.HORIZONTAL_SCROLLBAR);
-      enabledFeatures.add(EditorCustomization.Feature.ONE_LINE);
+      editorFeatures.add(new HorizontalScrollBarEditorFeature(false));
+      editorFeatures.add(new OneLineEditorFeature(true));
     } else {
-      enabledFeatures.add(EditorCustomization.Feature.SOFT_WRAP);
+      editorFeatures.add(new SoftWrapsEditorFeature(true));
     }
-    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, enabledFeatures, disabledFeatures);
+    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
     editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
     return editorField;
