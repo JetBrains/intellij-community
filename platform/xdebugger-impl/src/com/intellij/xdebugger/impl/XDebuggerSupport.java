@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public class XDebuggerSupport extends DebuggerSupport {
   private final XBreakpointPanelProvider myBreakpointPanelProvider;
   private final XToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
+  private final XToggleLineBreakpointActionHandler myToggleTemporaryLineBreakpointActionHandler;
   private final XDebuggerSuspendedActionHandler myStepOverHandler;
   private final XDebuggerSuspendedActionHandler myStepIntoHandler;
   private final XDebuggerSuspendedActionHandler myStepOutHandler;
@@ -57,7 +58,8 @@ public class XDebuggerSupport extends DebuggerSupport {
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
-    myToggleLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler();
+    myToggleLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(false);
+    myToggleTemporaryLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(true);
     myAddToWatchesActionHandler = new XAddToWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
@@ -168,6 +170,12 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getToggleLineBreakpointHandler() {
     return myToggleLineBreakpointActionHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+    return myToggleTemporaryLineBreakpointActionHandler;
   }
 
   @NotNull
