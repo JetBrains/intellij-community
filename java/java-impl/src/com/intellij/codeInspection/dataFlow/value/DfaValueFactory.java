@@ -24,11 +24,11 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +51,8 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
   }
 
-  public DfaValue createTypeValueWithNullability(@Nullable PsiType type, @Nullable Boolean nullability) {
-    return nullability == Boolean.FALSE ? getNotNullFactory().create(type) : getTypeFactory().create(type, nullability == Boolean.TRUE);
+  public DfaValue createTypeValueWithNullability(@Nullable PsiType type, Nullness nullability) {
+    return nullability == Nullness.NOT_NULL ? getNotNullFactory().create(type) : getTypeFactory().create(type, nullability == Nullness.NULLABLE);
   }
 
    int createID() {

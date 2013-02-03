@@ -40,27 +40,23 @@ import java.util.Set;
 public class DfaVariableState implements Cloneable {
   private final Set<DfaTypeValue> myInstanceofValues;
   private final Set<DfaTypeValue> myNotInstanceofValues;
-  private boolean myNullable = false;
-  private final boolean myVariableIsDeclaredNotNull;
+  private Nullness myNullability;
 
   public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
 
-    Boolean nullability = dfaVar.getInherentNullability();
-    myNullable = nullability == Boolean.TRUE;
-    myVariableIsDeclaredNotNull = nullability == Boolean.FALSE;
+    myNullability = dfaVar.getInherentNullability();
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
     myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
     myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
-    myNullable = toClone.myNullable;
-    myVariableIsDeclaredNotNull = toClone.myVariableIsDeclaredNotNull;
+    myNullability = toClone.myNullability;
   }
 
   public boolean isNullable() {
-    return myNullable;
+    return myNullability == Nullness.NULLABLE;
   }
 
   private boolean checkInstanceofValue(DfaTypeValue dfaType) {
@@ -78,7 +74,9 @@ public class DfaVariableState implements Cloneable {
   }
 
   public boolean setInstanceofValue(DfaTypeValue dfaType) {
-    myNullable |= dfaType.isNullable();
+    if (dfaType.isNullable()) {
+      myNullability = Nullness.NULLABLE;
+    }
 
     if (dfaType.getType() instanceof PsiPrimitiveType) return true;
 
@@ -111,7 +109,7 @@ public class DfaVariableState implements Cloneable {
     DfaVariableState aState = (DfaVariableState) obj;
     return myInstanceofValues.equals(aState.myInstanceofValues) &&
            myNotInstanceofValues.equals(aState.myNotInstanceofValues) &&
-           myNullable == aState.myNullable;
+           myNullability == aState.myNullability;
   }
 
   protected DfaVariableState clone() {
@@ -134,16 +132,18 @@ public class DfaVariableState implements Cloneable {
       buf.append("{").append(dfaTypeValue).append("}");
       if (iterator.hasNext()) buf.append(", ");
     }
-    buf.append(", nullable=").append(myNullable);
+    buf.append(", nullable=").append(myNullability);
     return buf.toString();
   }
 
   public boolean isNotNull() {
-    return myVariableIsDeclaredNotNull;
+    return myNullability == Nullness.NOT_NULL;
   }
 
   public void setNullable(final boolean nullable) {
-    myNullable = nullable;
+    if (myNullability != Nullness.NOT_NULL) {
+      myNullability = nullable ? Nullness.NULLABLE : Nullness.UNKNOWN;
+    }
   }
 
   public void setValue(DfaValue value) {

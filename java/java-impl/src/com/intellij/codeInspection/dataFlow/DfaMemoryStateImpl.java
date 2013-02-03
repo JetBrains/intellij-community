@@ -28,7 +28,9 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -769,18 +771,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void flushFields(DataFlowRunner runner) {
     for (DfaVariableValue field : runner.getFields()) {
       if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
-        flushVariable(field);
-        getVariableState(field).setNullable(false);
+        if (!DfaUtil.isFinalField(field.getPsiVariable())) {
+          flushWithDependencies(field);
+          getVariableState(field).setNullable(false);
+        }
       }
     }
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    PsiVariable psiVariable = variable.getPsiVariable();
-    if (DfaUtil.isFinalField(psiVariable)) {
-      return;
-    }
-
     flushWithDependencies(variable);
   }
 
