@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -283,15 +284,7 @@ public class CommonProxy extends ProxySelector {
   }
 
   private static URI createUri(final URL url) {
-    final URI uri;
-    try {
-      uri = new URI(url.toString());
-    }
-    catch (URISyntaxException e) {
-      LOG.info(e);
-      throw new RuntimeException(e);
-    }
-    return uri;
+    return VfsUtil.toUri(url.toString());
   }
 
   public static class HostInfo {

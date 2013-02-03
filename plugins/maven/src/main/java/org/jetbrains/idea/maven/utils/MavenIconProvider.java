@@ -15,23 +15,31 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.ide.IconProvider;
+import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VirtualFile;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 
 /**
  * @author peter
  */
-public class MavenIconProvider extends IconProvider implements DumbAware {
+public class MavenIconProvider implements DumbAware, FileIconProvider {
   @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int flags) {
-    if (element instanceof PsiFile && MavenDomUtil.isMavenFile((PsiFile)element)) return icons.MavenIcons.MavenLogo;
+  @Override
+  public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+    if(project == null) return null;
+
+    if (MavenProjectsManager.getInstance(project).findProject(file) != null) {
+      return MavenIcons.MavenLogo;
+    }
+
     return null;
   }
 }

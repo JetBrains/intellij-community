@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 
 /**
@@ -39,7 +38,20 @@ class EnumeratedAttributeReferenceProvider extends PsiReferenceProvider {
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor instanceof JavaFxPropertyAttributeDescriptor && descriptor.isEnumerated()) {
-          return new PsiReference[] {new PsiReferenceBase.Immediate<XmlAttributeValue>(xmlAttributeValue, ((JavaFxPropertyAttributeDescriptor)descriptor).getEnumConstant(xmlAttributeValue.getValue()))};
+          final PsiField enumConstant = ((JavaFxPropertyAttributeDescriptor)descriptor).getEnumConstant(xmlAttributeValue.getValue());
+          return new PsiReference[] {new PsiReferenceBase<XmlAttributeValue>(xmlAttributeValue){
+            @Nullable
+            @Override
+            public PsiElement resolve() {
+              return enumConstant;
+            }
+
+            @NotNull
+            @Override
+            public Object[] getVariants() {
+              return ArrayUtil.EMPTY_OBJECT_ARRAY;
+            }
+          }};
         }
       }
     }

@@ -15,12 +15,14 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,7 +84,11 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClass findPsiClass(String name, XmlTag tag) {
-    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+    final Project project = tag.getProject();
+    if (!StringUtil.getShortName(name).equals(name)) {
+      return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    }
+    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, project);
   }
 
   private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
@@ -155,7 +161,11 @@ public class JavaFxPsiUtil {
 
   public static boolean isClassTag(String name) {
     final String shortName = StringUtil.getShortName(name);
-    return StringUtil.isCapitalized(name) && name.equals(shortName);
+    final boolean capitalized = StringUtil.isCapitalized(name);
+    if (name.equals(shortName)) {
+      return capitalized;
+    }
+    return !capitalized;
   }
 
   public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
@@ -219,5 +229,27 @@ public class JavaFxPsiUtil {
       return false;
     }
     return true;
+  }
+
+  @Nullable
+  public static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue == null) return null;
+    final PsiElement xmlAttribute = xmlAttributeValue.getParent();
+    final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
+    if (xmlTag != null) {
+      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isVisibleInFxml(PsiMember psiMember) {
+    return psiMember.hasModifierProperty(PsiModifier.PUBLIC) || 
+           AnnotationUtil.isAnnotated(psiMember, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false);
   }
 }

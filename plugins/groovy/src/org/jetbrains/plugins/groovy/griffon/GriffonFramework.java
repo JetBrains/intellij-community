@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.griffon;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.AccessToken;
@@ -41,17 +42,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.mvc.MvcFramework;
-import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureUtil;
-import org.jetbrains.plugins.groovy.mvc.MvcPathMacros;
-import org.jetbrains.plugins.groovy.mvc.MvcProjectStructure;
+import org.jetbrains.plugins.groovy.mvc.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -105,7 +102,7 @@ public class GriffonFramework extends MvcFramework {
       return null;
     }
 
-    return createCommandAndShowErrors(null, module, true, dialog.getCommand(), dialog.getArguments());
+    return createCommandAndShowErrors(null, module, true, dialog.getCommand());
   }
 
   @Override
@@ -231,8 +228,7 @@ public class GriffonFramework extends MvcFramework {
   public JavaParameters createJavaParameters(@NotNull Module module, boolean forCreation, boolean forTests,
                                              boolean classpathFromDependencies,
                                              @Nullable String jvmParams,
-                                             @NotNull String command,
-                                             @NotNull String... args) throws ExecutionException {
+                                             @NotNull MvcCommand command) throws ExecutionException {
     JavaParameters params = new JavaParameters();
 
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -284,7 +280,8 @@ public class GriffonFramework extends MvcFramework {
         throw new ExecutionException("Failed to initialize griffon module: module " + module.getName() + " contains more than one root");
       }
 
-      args = ArrayUtil.mergeArrays(new String[]{roots[0].getName()}, args);
+      command.getArgs().add(0, roots[0].getName());
+
       rootFile = roots[0].getParent();
     }
     else {
@@ -331,8 +328,9 @@ public class GriffonFramework extends MvcFramework {
 
     params.setWorkingDirectory(workDir);
 
-    String argsString = args.length == 0 ? command : command + ' ' + StringUtil.join(args, " ");
-    params.getProgramParametersList().add(argsString);
+    ParametersList paramList = new ParametersList();
+    command.addToParametersList(paramList);
+    params.getProgramParametersList().add(paramList.getParametersString());
 
     params.setDefaultCharset(module.getProject());
 

@@ -29,12 +29,4 @@ public interface HgPlatformFacade extends DvcsPlatformFacade {
   @NotNull
   HgVcs getVcs(@NotNull Project project);
 
-  @NotNull
-  HgRepositoryManager getRepositoryManager(@NotNull Project project);
-
-  //@NotNull
-  //HgProjectSettings getSettings(Project project);
-  //
-  //@NotNull
-  //HgCommandResultNotifier getNotificator(@NotNull Project project);
 }

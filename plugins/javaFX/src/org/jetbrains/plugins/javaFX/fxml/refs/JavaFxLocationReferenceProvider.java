@@ -32,8 +32,16 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
                                                @NotNull ProcessingContext context) {
     final String value = ((XmlAttributeValue)element).getValue();
-    final String relativePathToResource = value.substring(1);
-    final FileReferenceSet set = new FileReferenceSet(relativePathToResource, element, 2, null, true);
+    final FileReferenceSet set;
+    if (value.startsWith("@")) {
+      set = new FileReferenceSet(value.substring(1), element, 2, null, true);
+    }
+    else {
+      set = new FileReferenceSet(value, element, 1, null, true);
+      if (value.startsWith("/")) {
+        set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
+      }
+    }
     return set.getAllReferences();
   }
 }
