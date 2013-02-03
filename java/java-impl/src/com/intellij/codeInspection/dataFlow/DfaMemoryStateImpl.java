@@ -790,7 +790,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
     PsiVariable psiVariable = variable.getPsiVariable();
-    if (DfaVariableState.isFinalField(psiVariable)) {
+    if (DfaUtil.isFinalField(psiVariable)) {
       return;
     }
 

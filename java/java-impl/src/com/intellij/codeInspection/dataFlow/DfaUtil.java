@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Ref;
@@ -86,7 +87,7 @@ public class DfaUtil {
   }
 
   @Nullable
-  static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+  public static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     if (owner == null) {
       return null;
     }
@@ -112,6 +113,38 @@ public class DfaUtil {
     }
 
     return null;
+  }
+
+  public static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
+    if (!isFinalField(var)) {
+      return false;
+    }
+
+    List<PsiExpression> initializers = NullableStuffInspection.findAllConstructorInitializers((PsiField)var);
+    if (initializers.isEmpty()) {
+      return false;
+    }
+
+    for (PsiExpression expression : initializers) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (!(target instanceof PsiParameter)) {
+        return false;
+      }
+      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
+        return true;
+      }
+      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
+        return false;
+      }
+    }
+    return !nullable;
+  }
+
+  public static boolean isFinalField(PsiVariable var) {
+    return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
   public static enum Nullness {

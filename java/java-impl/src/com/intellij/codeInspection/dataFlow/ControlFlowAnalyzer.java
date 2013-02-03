@@ -1592,7 +1592,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
     }
 
-    if (DfaVariableState.isFinalField(var)) {
+    if (DfaUtil.isFinalField(var)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, isCall || qualifierValue.isViaMethods());

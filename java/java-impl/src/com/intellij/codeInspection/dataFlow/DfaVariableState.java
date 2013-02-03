@@ -24,11 +24,9 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 public class DfaVariableState implements Cloneable {
@@ -49,10 +46,10 @@ public class DfaVariableState implements Cloneable {
   public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
-    PsiVariable var = dfaVar.getPsiVariable();
-    Boolean nullability = DfaUtil.getElementNullability(dfaVar.getVariableType(), var);
-    myNullable = nullability == Boolean.TRUE || var != null && isNullableInitialized(var, true);
-    myVariableIsDeclaredNotNull = nullability == Boolean.FALSE || var != null && isNullableInitialized(var, false);
+
+    Boolean nullability = dfaVar.getInherentNullability();
+    myNullable = nullability == Boolean.TRUE;
+    myVariableIsDeclaredNotNull = nullability == Boolean.FALSE;
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
@@ -60,38 +57,6 @@ public class DfaVariableState implements Cloneable {
     myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
     myNullable = toClone.myNullable;
     myVariableIsDeclaredNotNull = toClone.myVariableIsDeclaredNotNull;
-  }
-
-  private static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
-    if (!isFinalField(var)) {
-      return false;
-    }
-
-    List<PsiExpression> initializers = NullableStuffInspection.findAllConstructorInitializers((PsiField)var);
-    if (initializers.isEmpty()) {
-      return false;
-    }
-
-    for (PsiExpression expression : initializers) {
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      if (!(target instanceof PsiParameter)) {
-        return false;
-      }
-      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
-        return true;
-      }
-      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
-        return false;
-      }
-    }
-    return !nullable;
-  }
-
-  public static boolean isFinalField(PsiVariable var) {
-    return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
   public boolean isNullable() {
