@@ -1,5 +1,5 @@
 class Test {
   public void foo() {
-    Runnable r = () -> {<caret>};
+    Runnable r = () -> {n<caret>};
   }
 }

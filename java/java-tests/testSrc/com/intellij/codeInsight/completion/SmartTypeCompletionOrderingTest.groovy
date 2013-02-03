@@ -95,7 +95,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDontPreferKeywords() throws Throwable {
-    checkPreferredItems(0, "o1", "foo", "name", "this", "getClass");
+    checkPreferredItems(0, "o1", "foo", "name", "this");
   }
 
   public void testEnumValueOf() throws Throwable {
@@ -129,11 +129,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testSmartEquals2() throws Throwable {
-    checkPreferredItems(0, "foo", "this", "o", "s", "getClass");
+    checkPreferredItems(0, "foo", "this", "o", "s");
   }
 
   public void testSmartEquals3() throws Throwable {
-    checkPreferredItems(0, "b", "this", "a", "z", "getClass");
+    checkPreferredItems(0, "b", "this", "a", "z");
   }
 
   public void testSmartCollectionsNew() throws Throwable {
@@ -222,7 +222,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testFactoryMethodForDefaultType() throws Throwable {
-    checkPreferredItems(0, "create", "this", "getClass");
+    checkPreferredItems(0, "create", "this");
   }
 
   public void testLocalVarsBeforeClassLiterals() throws Throwable {

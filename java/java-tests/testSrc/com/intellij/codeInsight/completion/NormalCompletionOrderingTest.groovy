@@ -195,7 +195,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDeclaredMembersGoFirst() throws Exception {
     invokeCompletion(getTestName(false) + ".java");
-    assertStringItems("fromThis", "overridden", "fromSuper", "equals", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait",
+    assertStringItems("fromThis", "overridden", "fromSuper", "equals", "hashCode", "toString", "getClass", "notify", "notifyAll", "wait",
                       "wait", "wait");
   }
 
