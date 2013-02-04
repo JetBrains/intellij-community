@@ -291,9 +291,8 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         final PsiMethod noArgConstructor = myPsiClass
           .findMethodBySignature(factory.createConstructor(myPsiClass.getName()), false);
         if (noArgConstructor == null) {
-          final PsiMethod valueOfPattern = factory.createMethodFromText("void valueOf(java.lang.String s){}", myPsiClass);
-          final PsiMethod valueOf = myPsiClass.findMethodBySignature(valueOfPattern, false);
-          if (valueOf == null || !valueOf.hasModifierProperty(PsiModifier.STATIC) || !myPsiClass.equals(PsiUtil.resolveClassInType(valueOf.getReturnType()))) {
+          final PsiMethod valueOf = JavaFxPsiUtil.findValueOfMethod(myPsiClass);
+          if (valueOf == null) {
             final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
                                                                                        GlobalSearchScope.allScope(project));
             if (builderClass != null) {

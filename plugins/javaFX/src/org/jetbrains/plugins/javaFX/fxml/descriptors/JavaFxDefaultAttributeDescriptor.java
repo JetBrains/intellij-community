@@ -20,9 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -35,7 +32,6 @@ import java.util.List;
  */
 public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultAttributeDescriptor.class.getName());
-  public static final String VALUE_OF = "valueOf";
 
   private String myDefaultPropertyName = null;
   public JavaFxDefaultAttributeDescriptor(String name, PsiClass psiClass) {
@@ -85,7 +81,7 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
         if (FxmlConstants.FX_VALUE.equals(attribute.getName())) {
           final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
           if (tagClass != null) {
-            final PsiMethod method = getValueOfMethod(tagClass);
+            final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
             if (method == null) {
               return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
             }
@@ -94,21 +90,5 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
       }
     }
     return super.validateValue(context, value);
-  }
-
-  private static PsiMethod getValueOfMethod(PsiClass tagClass) {
-    final PsiMethod[] methods = tagClass.findMethodsByName(VALUE_OF, false);
-    for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length == 1) {
-          final PsiType type = parameters[0].getType();
-          if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            return method;
-          }
-        }
-      }
-    }
-    return null;
   }
 }
