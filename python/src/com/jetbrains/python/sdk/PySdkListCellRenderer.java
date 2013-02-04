@@ -23,7 +23,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
   public void customize(JList list, Sdk sdk, int index, boolean selected, boolean hasFocus) {
     if (sdk != null) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.getHomePath());
-      final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType) sdk.getSdkType()).getIcon();
+      final Icon icon = flavor != null ? flavor.getIcon() : ((SdkType)sdk.getSdkType()).getIcon();
 
       final String name;
       if (mySdkModifiers != null && mySdkModifiers.containsKey(sdk)) {
@@ -37,7 +37,7 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
         setText("[invalid] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
       }
-      if (PythonSdkType.isIncompleteRemote(sdk)) {
+      else if (PythonSdkType.isIncompleteRemote(sdk)) {
         setText("[incomplete] " + name);
         setIcon(wrapIconWithWarningDecorator(icon));
       }
