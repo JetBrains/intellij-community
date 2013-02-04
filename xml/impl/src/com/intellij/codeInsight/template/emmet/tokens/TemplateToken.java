@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet.tokens;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,7 @@ public class TemplateToken extends ZenCodingToken {
     myTemplate = template;
   }
 
+  @Nullable
   public TemplateImpl getTemplate() {
     return myTemplate;
   }

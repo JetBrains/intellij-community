@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
+import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
@@ -116,9 +117,14 @@ public class GenerationNode {
                                 boolean insertSurroundedText) {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
+    boolean singleLineFilterEnabled = false;
+
     GenerationNode generationNode = this;
     for (ZenCodingFilter filter : filters) {
       generationNode = filter.filterNode(generationNode);
+      if(filter instanceof SingleLineEmmetFilter) {
+        singleLineFilterEnabled = true;
+      }
     }
 
     if (generationNode != this) {
@@ -165,12 +171,12 @@ public class GenerationNode {
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
-    String tabStr;
+    String indentStr;
     if (callback.isInInjectedFragment()) {
-      tabStr = "";
+      indentStr = "";
     }
     else if (settings.useTabCharacter(callback.getFileType())) {
-      tabStr = "\t";
+      indentStr = "\t";
     }
     else {
       StringBuilder tab = new StringBuilder();
@@ -178,7 +184,7 @@ public class GenerationNode {
       while (tabSize-- > 0) {
         tab.append(' ');
       }
-      tabStr = tab.toString();
+      indentStr = tab.toString();
     }
 
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
@@ -187,17 +193,17 @@ public class GenerationNode {
 
       boolean blockTag = child.isBlockTag();
 
-      if (blockTag && !isNewLineBefore(builder.getText(), offset)) {
-        builder.insertText(offset, "\n" + tabStr, false);
-        offset += tabStr.length() + 1;
+      if (!singleLineFilterEnabled && blockTag && !isNewLineBefore(builder.getText(), offset)) {
+        builder.insertText(offset, "\n" + indentStr, false);
+        offset += indentStr.length() + 1;
       }
 
       int e = builder.insertTemplate(offset, childTemplate, null);
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
-      if (blockTag && !isNewLineAfter(builder.getText(), offset)) {
-        builder.insertText(offset, "\n" + tabStr, false);
-        offset += tabStr.length() + 1;
+      if (!singleLineFilterEnabled && blockTag && !isNewLineAfter(builder.getText(), offset)) {
+        builder.insertText(offset, "\n" + indentStr, false);
+        offset += indentStr.length() + 1;
       }
 
       if (end == -1 && e < offset) {
@@ -207,6 +213,9 @@ public class GenerationNode {
     /*if (end != -1) {
       builder.insertVariableSegment(end, TemplateImpl.END);
     }*/
+    if(singleLineFilterEnabled) {
+      builder.setIsToReformat(false);
+    }
     return builder.buildTemplate();
   }
 

@@ -4,6 +4,10 @@ import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -28,8 +32,24 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String filterText(@NotNull String text, @NotNull TemplateToken token) {
-    if(token == TemplateToken.EMPTY_TEMPLATE_TOKEN) {
-      return PATTERN.matcher(text).replaceAll("");
+    XmlDocument document = token.getFile().getDocument();
+    if (document != null) {
+      XmlTag tag = document.getRootTag();
+      if (tag != null && !tag.getText().isEmpty()) {
+        new XmlElementVisitor() {
+          @Override
+          public void visitXmlTag(XmlTag tag) {
+            if(!tag.isEmpty()) {
+              XmlTagValue tagValue = tag.getValue();
+              tagValue.setText(PATTERN.matcher(tagValue.getText()).replaceAll(""));
+            }
+            tag.acceptChildren(this);
+          }
+        }.visitXmlTag(tag);
+        return tag.getText();
+      } else {
+        return PATTERN.matcher(document.getText()).replaceAll("");
+      }
     }
     return text;
   }

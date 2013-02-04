@@ -36,6 +36,7 @@ public abstract class ZenCodingFilter {
     new XslZenCodingFilter(),
     new CommentZenCodingFilter(),
     new EscapeZenCodingFilter(),
+    new SingleLineEmmetFilter(),
     new TrimZenCodingFilter()
   };
 

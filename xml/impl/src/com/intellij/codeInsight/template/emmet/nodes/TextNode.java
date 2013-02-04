@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ public class TextNode extends ZenCodingNode {
                                      String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    final TemplateToken templateToken = TemplateToken.EMPTY_TEMPLATE_TOKEN;
+    final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
     final boolean containsSurroundedTextMarker = ZenCodingUtil.containsSurroundedTextMarker(myText);
 
     final String text = ZenCodingUtil.replaceMarkers(myText.replace("${nl}", "\n"), numberInIteration, surroundedText);
