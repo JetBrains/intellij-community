@@ -16,6 +16,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,9 @@ public class ThrownExceptionValueDescriptorImpl extends ValueDescriptorImpl{
   public ThrownExceptionValueDescriptorImpl(Project project, @NotNull ObjectReference exceptionObj) {
     super(project);
     myExceptionObj = exceptionObj;
+    // deliberately force default renderer as it does not invoke methods for rendering
+    // calling methods on exception object at this moment may lead to VM hang
+    setRenderer(DebugProcessImpl.getDefaultRenderer(exceptionObj));
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
