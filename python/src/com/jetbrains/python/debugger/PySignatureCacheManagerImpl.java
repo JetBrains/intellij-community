@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -224,21 +225,32 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   @Override
   public void clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
-    ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (readAttribute(fileOrDir) != null) {
-          writeAttribute(fileOrDir, "");
-          deleted.set(true);
-        }
-        return true;
+      public void run() {
+        ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+          @Override
+          public boolean processFile(VirtualFile fileOrDir) {
+            if (readAttribute(fileOrDir) != null) {
+              writeAttribute(fileOrDir, "");
+              deleted.set(true);
+            }
+            if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
+              return false;
+            }
+            return true;
+          }
+        });
       }
-    });
+    }, "Cleaning the cache of dynamically collected types", true, myProject);
+
 
     String message;
     if (deleted.get()) {
       message = "Collected signatures were deleted";
-    } else {
+    }
+    else {
       message = "Nothing to delete";
     }
     Messages.showInfoMessage(myProject, message, "Delete Cache");
