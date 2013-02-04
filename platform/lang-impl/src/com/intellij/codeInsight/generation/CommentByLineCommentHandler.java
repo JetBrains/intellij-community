@@ -44,6 +44,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
@@ -417,43 +418,53 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  public void doDefaultCommenting(Commenter commenter) {
-    for (int line = myEndLine; line >= myStartLine; line--) {
-      int offset = myDocument.getLineStartOffset(line);
-      commentLine(line, offset, commenter);
-    }
-  }
-
-  private void doIndentCommenting(Commenter commenter) {
-    CharSequence chars = myDocument.getCharsSequence();
-    final FileType fileType = myFile.getFileType();
-    Indent minIndent = computeMinIndent(myStartLine, myEndLine, chars, myCodeStyleManager, fileType);
-
-    for (int line = myEndLine; line >= myStartLine; line--) {
-      int lineStart = myDocument.getLineStartOffset(line);
-      int offset = lineStart;
-      final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-      try {
-        while (true) {
-          String space = buffer.toString();
-          Indent indent = myCodeStyleManager.getIndent(space, fileType);
-          if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
-          char c = chars.charAt(offset);
-          if (c != ' ' && c != '\t') {
-            String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
-            myDocument.replaceString(lineStart, offset, newSpace);
-            offset = lineStart + newSpace.length();
-            break;
-          }
-          buffer.append(c);
-          offset++;
+  public void doDefaultCommenting(final Commenter commenter) {
+    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+      @Override
+      public void run() {
+        for (int line = myEndLine; line >= myStartLine; line--) {
+          int offset = myDocument.getLineStartOffset(line);
+          commentLine(line, offset, commenter);
         }
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(buffer);
+    });
+  }
+
+  private void doIndentCommenting(final Commenter commenter) {
+    final CharSequence chars = myDocument.getCharsSequence();
+    final FileType fileType = myFile.getFileType();
+    final Indent minIndent = computeMinIndent(myStartLine, myEndLine, chars, myCodeStyleManager, fileType);
+
+    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+      @Override
+      public void run() {
+        for (int line = myEndLine; line >= myStartLine; line--) {
+          int lineStart = myDocument.getLineStartOffset(line);
+          int offset = lineStart;
+          final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+          try {
+            while (true) {
+              String space = buffer.toString();
+              Indent indent = myCodeStyleManager.getIndent(space, fileType);
+              if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
+              char c = chars.charAt(offset);
+              if (c != ' ' && c != '\t') {
+                String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
+                myDocument.replaceString(lineStart, offset, newSpace);
+                offset = lineStart + newSpace.length();
+                break;
+              }
+              buffer.append(c);
+              offset++;
+            }
+          }
+          finally {
+            StringBuilderSpinAllocator.dispose(buffer);
+          }
+          commentLine(line, offset, commenter);
+        }
       }
-      commentLine(line, offset, commenter);
-    }
+    });
   }
 
   private void uncommentRange(int startOffset, int endOffset, @NotNull Commenter commenter) {
