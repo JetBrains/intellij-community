@@ -4,6 +4,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -26,6 +28,12 @@ public abstract class TypeIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     updateText(false);
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
+        return false;
+      }
+    }
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
     if (isAvailableForReturn(elementAt)) return true;
@@ -141,6 +149,16 @@ public abstract class TypeIntention implements IntentionAction {
             if (reference instanceof PsiPolyVariantReference) {
               final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
               if (results.length == 1) {
+                final PsiElement result = results[0].getElement();
+                if (result == null) return false;
+                final PsiFile psiFile = result.getContainingFile();
+                if (psiFile == null) return false;
+                final VirtualFile virtualFile = psiFile.getVirtualFile();
+                if (virtualFile != null) {
+                  if (ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
+                    return false;
+                  }
+                }
                 updateText(true);
                 return true;
               }
