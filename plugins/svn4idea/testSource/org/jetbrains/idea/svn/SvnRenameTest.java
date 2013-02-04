@@ -55,7 +55,7 @@ public class SvnRenameTest extends Svn17TestCase {
     checkin();
 
     renameFileInCommand(a, "b.txt");
-    verify(runSvn("status"), "A + b.txt", "D a.txt");
+    verifySorted(runSvn("status"), "A + b.txt", "D a.txt");
   }
 
   // IDEADEV-18844
@@ -79,7 +79,7 @@ public class SvnRenameTest extends Svn17TestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
     renameFileInCommand(dir, "newchild");
-    verify(runSvn("status"), "A newchild", "A newchild" + File.separatorChar + "a.txt");
+    verifySorted(runSvn("status"), "A newchild", "A newchild" + File.separatorChar + "a.txt");
   }
 
   // IDEADEV-8091
@@ -91,7 +91,7 @@ public class SvnRenameTest extends Svn17TestCase {
 
     renameFileInCommand(a, "b.txt");
     renameFileInCommand(a, "c.txt");
-    verify(runSvn("status"), "A + c.txt", "D a.txt");
+    verifySorted(runSvn("status"), "A + c.txt", "D a.txt");
   }
 
   // IDEADEV-15876
@@ -101,7 +101,11 @@ public class SvnRenameTest extends Svn17TestCase {
 
     renameFileInCommand(child, "childnew");
     final ProcessOutput result = runSvn("status");
-    verify(result, "D child", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D child" + File.separatorChar + "a.txt", "A + childnew");
+    verifySorted(result, "A + childnew",
+                 "D child",
+                 "D child" + File.separatorChar + "a.txt",
+                 "D child" + File.separatorChar + "grandChild",
+                 "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
 
     refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -236,7 +240,7 @@ public class SvnRenameTest extends Svn17TestCase {
     final VirtualFile unversioned = createFileInCommand(child, "u.txt", "u");
     final VirtualFile unversionedDir = createDirInCommand(child, "uc");
     createFileInCommand(unversionedDir, "c.txt", "c");
-    
+
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     insideInitializedChangeListManager(changeListManager, new Runnable() {
       @Override

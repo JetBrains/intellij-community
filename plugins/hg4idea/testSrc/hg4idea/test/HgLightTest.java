@@ -15,7 +15,6 @@
  */
 package hg4idea.test;
 
-import com.intellij.dvcs.test.Executor;
 import com.intellij.dvcs.test.MockProject;
 import com.intellij.dvcs.test.MockVirtualFile;
 import com.intellij.openapi.application.PluginPathManager;
@@ -27,6 +26,8 @@ import org.junit.Before;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.dvcs.test.Executor.*;
+import static hg4idea.test.HgExecutor.hg;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -63,11 +64,11 @@ public class HgLightTest {
     catch (IOException e) {
       fail("Can not start test case!\n");  //todo change
     }
-    Executor.cd(myTestRoot);
-    myProjectRoot = Executor.mkdir("project");
+    cd(myTestRoot);
+    myProjectRoot = mkdir("project");
     myProject = new MockProject(myProjectRoot);
     myPlatformFacade = new HgTestPlatformFacade();
-    Executor.cd(".hg");
+    cd(".hg");
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
     String pathToHgrc = "testData\\repo\\dot_hg";
     File hgrcFile = new File(new File(pluginRoot, FileUtil.toSystemIndependentName(pathToHgrc)), "hgrc");
@@ -99,10 +100,10 @@ public class HgLightTest {
   }
 
   private static void initRepo(String repoRoot) {
-    Executor.cd(repoRoot);
-    HgExecutor.hg("init");
-    Executor.touch("file.txt");
-    HgExecutor.hg("add file.txt");
-    HgExecutor.hg("commit -m initial");
+    cd(repoRoot);
+    hg("init");
+    touch("file.txt");
+    hg("add file.txt");
+    hg("commit -m initial");
   }
 }

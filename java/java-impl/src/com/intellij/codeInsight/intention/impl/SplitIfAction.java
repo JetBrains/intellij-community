@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,25 +126,28 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiExpression getROperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(separator.getNextSibling(), PsiWhiteSpace.class, PsiComment.class);
+    PsiElement next = PsiTreeUtil.skipSiblingsForward(separator, PsiWhiteSpace.class, PsiComment.class);
+    final int offsetInParent;
     if (next == null) {
-      throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' at '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
+      offsetInParent = separator.getStartOffsetInParent() + separator.getTextLength();
+    } else {
+      offsetInParent = next.getStartOffsetInParent();
     }
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    String rOperands = expression.getText().substring(next.getStartOffsetInParent());
+    String rOperands = expression.getText().substring(offsetInParent);
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
   private static PsiExpression getLOperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement next = separator;
-    if (next.getPrevSibling() instanceof PsiWhiteSpace) next = next.getPrevSibling();
-    if (next == null) {
+    PsiElement prev = separator;
+    if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
+    if (prev == null) {
       throw new IncorrectOperationException("Unable to split '"+expression.getText()+"' left to '"+separator+"' (offset "+separator.getStartOffsetInParent()+")");
     }
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-    String rOperands = expression.getText().substring(0, next.getStartOffsetInParent());
+    String rOperands = expression.getText().substring(0, prev.getStartOffsetInParent());
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 

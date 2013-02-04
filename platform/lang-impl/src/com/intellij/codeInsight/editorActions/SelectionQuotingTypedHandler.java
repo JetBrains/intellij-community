@@ -47,11 +47,13 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     // beforeCharTyped always works with removed selection
     SelectionModel selectionModel = editor.getSelectionModel();
     if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED &&  selectionModel.hasSelection() && isDelimiter(c)) {
-      CaretModel caretModel = editor.getCaretModel();
       String selectedText = selectionModel.getSelectedText();
       if (selectedText.length() < 1) {
         return super.checkAutoPopup(c, project, editor, psiFile);
       }
+      
+      final int selectionStart = selectionModel.getSelectionStart();
+      final int selectionEnd = selectionModel.getSelectionEnd();
       if (selectedText.length() > 1) {
         final char firstChar = selectedText.charAt(0);
         if (isSimilarDelimiters(firstChar, c) &&
@@ -73,7 +75,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         myRestoreStickySelection = false;
       }
       selectionModel.removeSelection();
-      editor.getDocument().replaceString(caretOffset, caretOffset + selectedText.length(), newText);
+      editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
       if (Registry.is("editor.smarterSelectionQuoting")) {
         myReplacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
       } else {

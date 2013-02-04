@@ -251,12 +251,21 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final PsiElement element = descriptor.getPsiElement();
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      final String methodRefText = createMethodReferenceText(element, lambdaExpression.getFunctionalInterfaceType());
+      final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+      final String methodRefText = createMethodReferenceText(element, functionalInterfaceType);
 
       if (methodRefText != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiExpression psiExpression =
-          JavaPsiFacade.getElementFactory(project).createExpressionFromText(methodRefText, lambdaExpression);
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.replace(psiExpression));
+          factory.createExpressionFromText(methodRefText, lambdaExpression);
+        PsiElement replace = lambdaExpression.replace(psiExpression);
+        if (((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType() == null) { //ambiguity
+          final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
+          cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
+          cast.getOperand().replace(replace);
+          replace = replace.replace(cast);
+        }
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
       }
     }
   }

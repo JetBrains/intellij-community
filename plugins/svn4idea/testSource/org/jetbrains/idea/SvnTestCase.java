@@ -46,6 +46,8 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -68,6 +70,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
+  protected boolean myUseNativeAcceleration;
 
   private final String myTestDataDir;
   private File myRepoRoot;
@@ -168,6 +171,14 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       changeListManager.ensureUpToDate(false);
+    }
+  }
+
+  @Override
+  protected void projectCreated() {
+    if (myUseNativeAcceleration) {
+      SvnConfiguration.getInstance(myProject).myUseAcceleration = SvnConfiguration.UseAcceleration.commandLine;
+      SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
     }
   }
 

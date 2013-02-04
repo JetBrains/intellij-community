@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
@@ -400,7 +401,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       return attributes;
     }
     if (type == ArrangementSettingType.MODIFIER) {
-      return getAttributes(scheme, SyntaxHighlighterColors.KEYWORD);
+      return getAttributes(scheme, JavaHighlightingColors.KEYWORD);
     }
     else if (type == ArrangementSettingType.TYPE) {
       return getAttributes(scheme, CodeInsightColors.CLASS_NAME_ATTRIBUTES, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);

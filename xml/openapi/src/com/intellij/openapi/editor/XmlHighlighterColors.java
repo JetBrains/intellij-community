@@ -25,33 +25,38 @@ public class XmlHighlighterColors {
   }
 
   public static final TextAttributesKey
-    XML_PROLOGUE = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_PROLOGUE");
+    XML_PROLOGUE = TextAttributesKey.createTextAttributesKey("XML_PROLOGUE", HighlighterColors.TEXT);
   public static final TextAttributesKey
-    XML_COMMENT = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_COMMENT");
-  public static final TextAttributesKey XML_TAG = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_TAG");
+    XML_COMMENT = TextAttributesKey.createTextAttributesKey("XML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  public static final TextAttributesKey XML_TAG =
+    TextAttributesKey.createTextAttributesKey("XML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
   public static final TextAttributesKey
-    XML_TAG_NAME = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_TAG_NAME");
+    XML_TAG_NAME = TextAttributesKey.createTextAttributesKey("XML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey
-    XML_ATTRIBUTE_NAME = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_NAME");
+    XML_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey
-    XML_ATTRIBUTE_VALUE = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_VALUE");
+    XML_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.STRING);
   public static final TextAttributesKey
-    XML_TAG_DATA = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_TAG_DATA");
+    XML_TAG_DATA = TextAttributesKey.createTextAttributesKey("XML_TAG_DATA", HighlighterColors.TEXT);
   public static final TextAttributesKey
-    XML_ENTITY_REFERENCE = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("XML_ENTITY_REFERENCE");
+    XML_ENTITY_REFERENCE =
+    TextAttributesKey.createTextAttributesKey("XML_ENTITY_REFERENCE", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
 
   public static final TextAttributesKey
-    HTML_COMMENT = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_COMMENT");
-  public static final TextAttributesKey HTML_TAG = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_TAG");
+    HTML_COMMENT = TextAttributesKey.createTextAttributesKey("HTML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  public static final TextAttributesKey HTML_TAG =
+    TextAttributesKey.createTextAttributesKey("HTML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
   public static final TextAttributesKey
-    HTML_TAG_NAME = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME");
+    HTML_TAG_NAME = TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey
-    HTML_ATTRIBUTE_NAME = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME");
+    HTML_ATTRIBUTE_NAME =
+    TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey
-    HTML_ATTRIBUTE_VALUE = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_VALUE");
+    HTML_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.STRING);
   public static final TextAttributesKey
-    HTML_ENTITY_REFERENCE = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("HTML_ENTITY_REFERENCE");
+    HTML_ENTITY_REFERENCE =
+    TextAttributesKey.createTextAttributesKey("HTML_ENTITY_REFERENCE", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
 
   public static final TextAttributesKey HTML_CODE =
-    TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT.getDefaultAttributes());
+    TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT);
 }

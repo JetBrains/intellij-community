@@ -13,14 +13,13 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
@@ -38,7 +37,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class HgIntegrateDialog implements Configurable {
+public class HgMergeDialog extends DialogWrapper {
 
   private final Project project;
 
@@ -55,7 +54,8 @@ public class HgIntegrateDialog implements Configurable {
 
   private HgRevisionNumber otherHead;
 
-  public HgIntegrateDialog(Project project, Collection<FilePath> roots) {
+  public HgMergeDialog(Project project, Collection<FilePath> roots) {
+    super(project, false);
     this.project = project;
     hgRepositorySelectorComponent.setRoots(pathsToFiles(roots));
     hgRepositorySelectorComponent.setTitle("Select repository to integrate");
@@ -74,7 +74,7 @@ public class HgIntegrateDialog implements Configurable {
     tagOption.addChangeListener(changeListener);
     revisionOption.addChangeListener(changeListener);
     otherHeadRadioButton.addChangeListener(changeListener);
-
+    init();
     updateRepository();
   }
 
@@ -96,29 +96,6 @@ public class HgIntegrateDialog implements Configurable {
 
   public HgRevisionNumber getOtherHead() {
     return otherHeadRadioButton.isSelected() ? otherHead : null;
-  }
-
-  @Nls
-  public String getDisplayName() {
-    return null;
-  }
-
-  public String getHelpTopic() {
-    return null;
-  }
-
-  public JComponent createComponent() {
-    return contentPanel;
-  }
-
-  public boolean isModified() {
-    return true;
-  }
-
-  public void apply() throws ConfigurationException {
-  }
-
-  public void reset() {
   }
 
   private void updateRepository() {
@@ -208,7 +185,7 @@ public class HgIntegrateDialog implements Configurable {
     });
   }
 
-  private List<VirtualFile> pathsToFiles(Collection<FilePath> paths) {
+  private static List<VirtualFile> pathsToFiles(Collection<FilePath> paths) {
     List<VirtualFile> files = new LinkedList<VirtualFile>();
     for (FilePath path : paths) {
       files.add(path.getVirtualFile());
@@ -216,7 +193,10 @@ public class HgIntegrateDialog implements Configurable {
     return files;
   }
 
-  public void disposeUIResources() {
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
+    return contentPanel;
   }
 
 }

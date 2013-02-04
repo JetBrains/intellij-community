@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
@@ -330,7 +331,7 @@ public abstract class ImportLayoutPanel extends JPanel {
           append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
         }
         else {
-          TextAttributes attributes = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes();
+          TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
           append("import", SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
