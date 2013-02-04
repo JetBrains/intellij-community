@@ -210,7 +210,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                              int currentIndex,
                              int oldIndex,
                              PyExpression[] arguments) {
-    final String paramName = info.getName();
+    final String paramName = info.getOldName();
     final PyKeywordArgument keywordArgument = argumentList.getKeywordArgument(paramName);
     if (keywordArgument != null) {
       params.add(keywordArgument.getText());
