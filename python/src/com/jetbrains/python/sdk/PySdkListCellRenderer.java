@@ -35,17 +35,25 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
 
       if (PythonSdkType.isInvalid(sdk)) {
         setText("[invalid] " + name);
-        final LayeredIcon layered = new LayeredIcon(2);
-        layered.setIcon(icon, 0);
-        // TODO: Create a separate invalid SDK overlay icon
-        final Icon overlay = AllIcons.Actions.Cancel;
-        layered.setIcon(overlay, 1);
-        setIcon(layered);
+        setIcon(wrapIconWithWarningDecorator(icon));
+      }
+      if (PythonSdkType.isIncompleteRemote(sdk)) {
+        setText("[incomplete] " + name);
+        setIcon(wrapIconWithWarningDecorator(icon));
       }
       else {
         setText(name);
         setIcon(icon);
       }
     }
+  }
+
+  private LayeredIcon wrapIconWithWarningDecorator(Icon icon) {
+    final LayeredIcon layered = new LayeredIcon(2);
+    layered.setIcon(icon, 0);
+    // TODO: Create a separate invalid SDK overlay icon (DSGN-497)
+    final Icon overlay = AllIcons.Actions.Cancel;
+    layered.setIcon(overlay, 1);
+    return layered;
   }
 }
