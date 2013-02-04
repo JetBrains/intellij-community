@@ -428,6 +428,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myInheritanceLabel.setText("X");
       myInheritanceLabel.setIcon(null);
       myInheritanceLabel.setDisabledIcon(null);
+      myInheritanceLabel.setEnabled(true);
       myInheritanceLabel.setForeground(myLabelFont.getBackground());
     }
   }
