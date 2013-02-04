@@ -84,6 +84,9 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("invalid_esc_seq", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
     TAG_HIGHLIGHTING_MAP.put("predefined", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
     TAG_HIGHLIGHTING_MAP.put("metadata", DefaultLanguageHighlighterColors.METADATA);
+    TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
+    TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
+    TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -157,8 +160,16 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       OptionsBundle.message("options.language.defaults.static.method"), DefaultLanguageHighlighterColors.STATIC_METHOD),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.static.field"), DefaultLanguageHighlighterColors.STATIC_FIELD),
+
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.markup.tag"), DefaultLanguageHighlighterColors.MARKUP_TAG),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.markup.attribute"), DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.markup.entity"), DefaultLanguageHighlighterColors.MARKUP_ENTITY),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
+    
   };
 
   @Nullable
@@ -207,7 +218,10 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
       "    instance <inst_field>field</inst_field>\n" +
       "    static <static_method>method</static_method>\n" +
       "    static <static_field>field</static_field>\n" +
-      "<template_language>{% Template language %}</template_language>";
+      "\n" +
+      "<tag><keyword>@TAG</keyword> <attribute>attribute</attribute>=<string>Value</string></tag>\n" +
+      "    Entity: <entity>&amp;</entity>\n" +
+      "    <template_language>{% Template language %}</template_language>";
   }
 
   @Nullable

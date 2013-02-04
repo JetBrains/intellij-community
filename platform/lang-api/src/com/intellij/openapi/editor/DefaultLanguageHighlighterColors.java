@@ -102,4 +102,11 @@ public class DefaultLanguageHighlighterColors {
 
   public final static TextAttributesKey METADATA =
     TextAttributesKey.createTextAttributesKey("DEFAULT_METADATA", HighlighterColors.TEXT);
+  
+  public final static TextAttributesKey MARKUP_TAG =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_TAG", HighlighterColors.TEXT);
+  public final static TextAttributesKey MARKUP_ATTRIBUTE =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_ATTRIBUTE", IDENTIFIER);
+  public final static TextAttributesKey MARKUP_ENTITY =
+    TextAttributesKey.createTextAttributesKey("DEFAULT_ENTITY", IDENTIFIER);
 }
