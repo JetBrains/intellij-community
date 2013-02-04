@@ -32,11 +32,14 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -74,6 +77,13 @@ public class JavaFxAnnotator implements Annotator {
         if (attributeValueText.startsWith("#")) {
           attachColorIcon(element, holder, attributeValueText);
         }
+      }
+    } else if (element instanceof XmlAttribute) {
+      final String attributeName = ((XmlAttribute)element).getName();
+      if (!FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName) && 
+          !((XmlAttribute)element).isNamespaceDeclaration() &&
+          JavaFxPsiUtil.isReadOnly(attributeName,  ((XmlAttribute)element).getParent())) {
+        holder.createErrorAnnotation(element.getNavigationElement(), "Property '" + attributeName + "' is read-only");
       }
     }
   }
