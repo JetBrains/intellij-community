@@ -20,19 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgPlatformFacade;
+import org.zmlx.hg4idea.HgProjectSettings;
+import org.zmlx.hg4idea.HgVcs;
 
 /**
  * @author Nadya Zabrodina
  */
-class HgTestPlatformFacade extends DvcsTestPlatformFacade implements HgPlatformFacade {
+public class HgTestPlatformFacade extends DvcsTestPlatformFacade implements HgPlatformFacade {
   private HgMockVcs myVcs;
   private HgMockVcsManager myVcsManager;
-  private HgTestRepositoryManager myRepositoryManager;
-
-  HgTestPlatformFacade() {
-    myRepositoryManager = new HgTestRepositoryManager();
-  }
 
   @NotNull
   @Override
@@ -43,6 +41,7 @@ class HgTestPlatformFacade extends DvcsTestPlatformFacade implements HgPlatformF
     }
     return myVcs;
   }
+
 
   @NotNull
   @Override
@@ -57,12 +56,6 @@ class HgTestPlatformFacade extends DvcsTestPlatformFacade implements HgPlatformF
   @Override
   public void showDialog(@NotNull DialogWrapper dialog) {
     throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public HgRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return myRepositoryManager;
   }
 }
 

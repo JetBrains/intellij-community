@@ -12,28 +12,28 @@ public class BrokenAlignment {
     data = new Data(null, <warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
     System.out.println(<warning descr="Method invocation 'data.getText().hashCode()' may produce 'java.lang.NullPointerException'">data.getText().hashCode()</warning>);
 
-    if (data.inner() != null) {
-      System.out.println(data.inner().hashCode());
-      System.out.println(<warning descr="Method invocation 'data.inner().getText().hashCode()' may produce 'java.lang.NullPointerException'">data.inner().getText().hashCode()</warning>);
-      if (data.inner() != null) {
-        System.out.println(data.inner().hashCode());
+    if (data.getInner() != null) {
+      System.out.println(data.getInner().hashCode());
+      System.out.println(<warning descr="Method invocation 'data.getInner().getText().hashCode()' may produce 'java.lang.NullPointerException'">data.getInner().getText().hashCode()</warning>);
+      if (data.getInner() != null) {
+        System.out.println(data.getInner().hashCode());
       }
 
       data = new Data(null, <warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
-      System.out.println(<warning descr="Method invocation 'data.inner().hashCode()' may produce 'java.lang.NullPointerException'">data.inner().hashCode()</warning>);
+      System.out.println(<warning descr="Method invocation 'data.getInner().hashCode()' may produce 'java.lang.NullPointerException'">data.getInner().hashCode()</warning>);
     }
   }
 
   void main2(Data data) {
-    if (data.inner() != null && data.inner().getText() != null) {
-      System.out.println(data.inner().hashCode());
-      System.out.println(data.inner().getText().hashCode());
+    if (data.getInner() != null && data.getInner().getText() != null) {
+      System.out.println(data.getInner().hashCode());
+      System.out.println(data.getInner().getText().hashCode());
     }
   }
 
   void main3(Data data) {
-    if (data.innerOverridden() != null) {
-      System.out.println(data.innerOverridden().hashCode());
+    if (data.getInnerOverridden() != null) {
+      System.out.println(data.getInnerOverridden().hashCode());
     }
     if (data.something() != null) {
       System.out.println(<warning descr="Method invocation 'data.something().hashCode()' may produce 'java.lang.NullPointerException'">data.something().hashCode()</warning>);
@@ -55,12 +55,12 @@ public class BrokenAlignment {
     }
 
     @Nullable
-    public Data inner() {
+    public Data getInner() {
       return inner;
     }
 
     @Nullable
-    public Data innerOverridden() {
+    public Data getInnerOverridden() {
       return inner;
     }
 
@@ -77,8 +77,8 @@ public class BrokenAlignment {
 
     @Nullable
     @Override
-    public Data innerOverridden() {
-      return super.innerOverridden();
+    public Data getInnerOverridden() {
+      return super.getInnerOverridden();
     }
   }
 }

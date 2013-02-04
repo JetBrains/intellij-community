@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -33,6 +35,13 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
+
+  private final boolean myTemporary;
+
+  public XToggleLineBreakpointActionHandler(boolean temporary) {
+    //To change body of created methods use File | Settings | File Templates.
+    myTemporary = temporary;
+  }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
@@ -60,8 +69,11 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     VirtualFile file = position.getFile();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(type, file, line) != null) {
-        XDebuggerUtil.getInstance().toggleLineBreakpoint(project, type, file, line);
+      final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+      if (breakpoint != null && myTemporary && !breakpoint.isTemporary()) {
+        breakpoint.setTemporary(true);
+      } else if (type.canPutAt(file, line, project) || breakpoint != null) {
+        XDebuggerUtil.getInstance().toggleLineBreakpoint(project, type, file, line, myTemporary);
         return;
       }
     }

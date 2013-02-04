@@ -129,6 +129,7 @@ public class RootsToWorkingCopies implements VcsListener {
     try {
       workingCopyRoot = SVNWCUtil.getWorkingCopyRoot(ioFile, true);
       if (workingCopyRoot != null) {
+        // ok to use low-level 1.6 API, 1.7 is checked below
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
           wcAccess.probeOpen(workingCopyRoot, false, 0);

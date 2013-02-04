@@ -15,6 +15,7 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -43,7 +45,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   public LocalArchivedTemplate(String displayName,
                                URL archivePath) {
-    super(displayName);
+    super(displayName, Collections.<WizardInputField>emptyList());
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);

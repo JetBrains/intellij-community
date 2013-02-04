@@ -32,11 +32,11 @@ class Foo {
     System.out.println(data.hashCode());
   }
   
-  void dontWarnWhenDoubleChecked(Foo f) {
+  void warnWhenDoubleChecked(Foo f) {
     if (f.data == null) {
       return;
     }
-    if (f.data == null) {
+    if (<warning descr="Condition 'f.data == null' is always 'false'">f.data == null</warning>) {
       return;
     }
     System.out.println(f.data.hashCode());
@@ -53,13 +53,13 @@ class Foo {
     }
     System.out.println(data.hashCode());
   }
-  
-  void dontWarnWhenDoubleChecked_This_WithMethodCall() {
+
+  void warnWhenDoubleChecked_This_WithMethodCall() {
     if (data == null) {
       return;
     }
     System.out.println(data.hashCode());
-    if (data == null) {
+    if (<warning descr="Condition 'data == null' is always 'false'">data == null</warning>) {
       return;
     }
     System.out.println(data.hashCode());

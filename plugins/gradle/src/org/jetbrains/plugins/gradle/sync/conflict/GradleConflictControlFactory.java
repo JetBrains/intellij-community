@@ -67,6 +67,7 @@ public class GradleConflictControlFactory {
 
       @Override
       public void visit(@NotNull LibraryOrderEntry libraryDependency) {
+        result.set(myCommonDependencyFactory.getControl(libraryDependency, changes));
       }
 
       @Override

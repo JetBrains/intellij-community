@@ -72,10 +72,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return myLineBreakpointTypes;
   }
 
-  public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line) {
+  public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project)) {
-        toggleLineBreakpoint(project, type, file, line);
+        toggleLineBreakpoint(project, type, file, line, temporary);
         return;
       }
     }
@@ -91,8 +91,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return false;
   }
 
-  public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project, @NotNull final XLineBreakpointType<P> type, @NotNull final VirtualFile file,
-                                                                     final int line) {
+  public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project,
+                                                                     @NotNull final XLineBreakpointType<P> type,
+                                                                     @NotNull final VirtualFile file,
+                                                                     final int line,
+                                                                     final boolean temporary) {
     new WriteAction() {
       protected void run(final Result result) {
         XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
@@ -102,7 +105,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         else {
           P properties = type.createBreakpointProperties(file, line);
-          breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties);
+          breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary);
         }
       }
     }.execute();

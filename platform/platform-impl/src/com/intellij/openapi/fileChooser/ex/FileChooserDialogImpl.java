@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     show();
     if (myChosenFiles.length > 0) {
       callback.consume(Arrays.asList(myChosenFiles));
-    } else if (callback instanceof FileChooser.FileChooserConsumer){
+    }
+    else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }
@@ -357,13 +358,21 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myFileSystemTree.registerMouseListener(group);
   }
 
+  @Nullable
   private VirtualFile[] getSelectedFilesInt() {
     if (myTreeIsUpdating || !myUiUpdater.isEmpty()) {
-      if (!isTextFieldActive() || StringUtil.isEmpty(myPathTextField.getTextFieldText()))
-        return VirtualFile.EMPTY_ARRAY;
-      final LocalFsFinder.VfsFile toFind = (LocalFsFinder.VfsFile)myPathTextField.getFile();
-      return toFind == null || !toFind.exists() ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{toFind.getFile()};
+      if (isTextFieldActive() && !StringUtil.isEmpty(myPathTextField.getTextFieldText())) {
+        LookupFile toFind = myPathTextField.getFile();
+        if (toFind instanceof LocalFsFinder.VfsFile && toFind.exists()) {
+          VirtualFile file = ((LocalFsFinder.VfsFile)toFind).getFile();
+          if (file != null) {
+            return new VirtualFile[]{file};
+          }
+        }
+      }
+      return VirtualFile.EMPTY_ARRAY;
     }
+
     final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
     return VfsUtilCore.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));
   }

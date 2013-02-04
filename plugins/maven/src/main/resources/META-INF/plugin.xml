@@ -56,7 +56,7 @@
 
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
-    <iconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
+    <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.idea.maven.utils.MavenProblemFileHighlighter"/>

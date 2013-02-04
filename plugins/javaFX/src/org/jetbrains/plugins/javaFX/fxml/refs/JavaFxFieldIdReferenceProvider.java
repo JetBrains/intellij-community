@@ -15,14 +15,13 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +50,7 @@ class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvi
         final PsiField[] fields = aClass.getFields();
         for (PsiField psiField : fields) {
           if (!psiField.hasModifierProperty(PsiModifier.STATIC)) {
-            if (psiField.hasModifierProperty(PsiModifier.PUBLIC) || AnnotationUtil.isAnnotated(psiField, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false)) {
+            if (JavaFxPsiUtil.isVisibleInFxml(psiField)) {
               fieldsToSuggest.add(psiField);
             }
           }

@@ -15,8 +15,23 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.SystemProperties;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Writer;
 import java.util.Properties;
@@ -27,12 +42,73 @@ import java.util.Properties;
  */
 public class ResourceBundleUtil {
 
+  private static final String NATIVE_2_ASCII_CONVERSION_PATTERN = SystemProperties.getBooleanProperty("idea.native2ascii.lowercase", false)
+                                                                  ? "\\u%04x" : "\\u%04X";
+
   private static final TIntHashSet SYMBOLS_TO_ESCAPE = new TIntHashSet(new int[]{'#', '!', '=', ':'});
+  private static final TIntHashSet UNICODE_SYMBOLS   = new TIntHashSet(new int[]{
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'A', 'a', 'A', 'b', 'B', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F'
+  });
   private static final char        ESCAPE_SYMBOL     = '\\';
-  
+
   private ResourceBundleUtil() {
   }
 
+  /**
+   * Tries to derive {@link com.intellij.lang.properties.ResourceBundle resource bundle} related to the given context.
+   *
+   * @param dataContext   target context
+   * @return              {@link com.intellij.lang.properties.ResourceBundle resource bundle} related to the given context if any;
+   *                      <code>null</code> otherwise
+   */
+  @Nullable
+  public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element instanceof IProperty) return null; //rename property
+    final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
+    if (bundles != null && bundles.length == 1) return bundles[0];
+    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (virtualFile == null) {
+      return null;
+    }
+    if (virtualFile instanceof ResourceBundleAsVirtualFile) {
+      return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
+    }
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project != null) {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      if (psiFile instanceof PropertiesFile) {
+        return ((PropertiesFile)psiFile).getResourceBundle();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Tries to derive {@link ResourceBundleEditor resource bundle editor} identified by the given context. 
+   *
+   * @param dataContext     target data context
+   * @return resource bundle editor identified by the given context; <code>null</code> otherwise
+   */
+  @Nullable
+  public static ResourceBundleEditor getEditor(@NotNull DataContext dataContext) {
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if (virtualFile == null) {
+      return null;
+    }
+    FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
+    if (editors.length != 1 || (!(editors[0] instanceof ResourceBundleEditor))) {
+      return null;
+    }
+
+    return (ResourceBundleEditor)editors[0];
+  }
+  
   /**
    * Allows to map given 'raw' property value text to the 'user-friendly' text to show at the resource bundle editor.
    * <p/>
@@ -41,6 +117,7 @@ public class ResourceBundleUtil {
    * @param text  'raw' property value text
    * @return      'user-friendly' text to show at the resource bundle editor
    */
+  @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static String fromPropertyValueToValueEditor(@NotNull String text) {
     StringBuilder buffer = new StringBuilder();
@@ -48,7 +125,14 @@ public class ResourceBundleUtil {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (c == ESCAPE_SYMBOL && !escaped) {
-        escaped = true;
+        char[] unicodeSymbols = parseUnicodeLiteral(text, i + 1);
+        if (unicodeSymbols != null) {
+          buffer.append(unicodeSymbols);
+          i += 5;
+        }
+        else {
+          escaped = true;
+        }
         continue;
       }
       if (escaped && c == 'n') {
@@ -58,6 +142,45 @@ public class ResourceBundleUtil {
       escaped = false;
     }
     return buffer.toString();
+  }
+
+  /**
+   * Tries to parse unicode literal contained at the given text at the given offset:
+   * <pre>
+   *   "my string to process \uABCD - with unicode literal"
+   *                          ^
+   *                          |
+   *                       offset
+   * </pre>
+   * I.e. this method checks if given text contains u[0123456789AaBbCcDdEeFf]{4} at the given offset; parses target unicode symbol
+   * and returns in case of the positive answer.
+   * 
+   * @param text  text to process
+   * @param i     offset which might point to 'u' part of unicode literal contained at the given text
+   * @return      16-bit char symbols for the target unicode code point located at the given text at the given offset if any;
+   *              <code>null</code> otherwise
+   */
+  @Nullable
+  private static char[] parseUnicodeLiteral(@NotNull String text, int i) {
+    if (text.length() < i + 5) {
+      return null;
+    }
+    char c = text.charAt(i);
+    if (c != 'u' && c != 'U') {
+      return null;
+    }
+    for (int j = i + 1; j < i + 5; j++) {
+      if (!UNICODE_SYMBOLS.contains(text.charAt(j))) {
+        return null;
+      }
+    }
+    try {
+      int codePoint = Integer.parseInt(text.substring(i + 1, i + 5), 16);
+      return Character.toChars(codePoint);
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   /**
@@ -78,8 +201,7 @@ public class ResourceBundleUtil {
       {
         buffer.append(ESCAPE_SYMBOL);
       } 
-      else if (c == ESCAPE_SYMBOL)            // Escaped 'escape' symbol) 
-      {
+      else if (c == ESCAPE_SYMBOL) {           // Escaped 'escape' symbol) 
         if (text.length() > i + 1) {
           final char nextChar = text.charAt(i + 1);
           if (nextChar != 'n') {
@@ -88,6 +210,10 @@ public class ResourceBundleUtil {
         } else {
           buffer.append(ESCAPE_SYMBOL);
         }
+      }
+      else if (c > 127) { // Non-ascii symbol
+        buffer.append(String.format(NATIVE_2_ASCII_CONVERSION_PATTERN, (int)c));
+        continue;
       }
       buffer.append(c);
     }

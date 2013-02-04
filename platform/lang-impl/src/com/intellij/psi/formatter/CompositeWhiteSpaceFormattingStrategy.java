@@ -109,6 +109,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
 
   @Override
   public boolean containsWhitespacesOnly(@NotNull ASTNode node) {
+    for (WhiteSpaceFormattingStrategy strategy : myStrategies) {
+      if (strategy.containsWhitespacesOnly(node)) {
+        return true;
+      }
+    }
     return false;
   }
 

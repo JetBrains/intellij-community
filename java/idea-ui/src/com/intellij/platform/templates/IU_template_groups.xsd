@@ -4,16 +4,18 @@
   <xs:element name="template-groups" type="template-groupsType"/>
   <xs:complexType name="groupType">
     <xs:sequence>
-      <xs:element type="xs:string" name="name"/>
-      <xs:element type="xs:string" name="path"/>
+      <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="path" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="requiredPlugin" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element type="templateType" name="template"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="templateType">
     <xs:sequence>
-      <xs:element type="xs:string" name="name"/>
-      <xs:element type="xs:string" name="description"/>
-      <xs:element type="xs:string" name="path"/>
+      <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="description" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="path" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="requiredPlugin" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element name="input-field" maxOccurs="unbounded" minOccurs="0">
         <xs:simpleType>
           <xs:restriction base="xs:string">

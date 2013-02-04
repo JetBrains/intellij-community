@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       final String name = FileUtil.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {
-        MultiMap.emptyInstance();
+        return MultiMap.emptyInstance();
       }
       final MultiMap<PsiElement, String> conflicts = new MultiMap();
       conflicts.putValue(aClass, IntentionPowerPackBundle.message(

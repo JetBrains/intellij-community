@@ -631,6 +631,7 @@
               icon="AllIcons.Debugger.ShowCurrentFrame"/>
       <separator/>
       <action id="ToggleLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction"/>
+      <action id="ToggleTemporaryLineBreakpoint" class="com.intellij.xdebugger.impl.actions.ToggleTemporaryLineBreakpointAction"/>
       <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="AllIcons.Debugger.ViewBreakpoints"/>
       <separator/>
 

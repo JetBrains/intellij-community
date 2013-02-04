@@ -135,8 +135,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testConstantDoubleComparisons() { doTest(); }
   
-  public void _testMutableNullableFieldsTreatment() { doTest(); }
-  public void _testMutableVolatileNullableFieldsTreatment() { doTest(); }
+  public void testMutableNullableFieldsTreatment() { doTest(); }
+  public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
@@ -155,5 +155,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
   public void testOmnipresentExceptions() { doTest(); }
+
+  public void testEqualsHasNoSideEffects() { doTest(); }
 
 }

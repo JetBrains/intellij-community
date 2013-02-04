@@ -91,7 +91,6 @@ import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -734,12 +733,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return client;
   }
 
-  public SVNWCAccess createWCAccess() {
-    final SVNWCAccess access = SVNWCAccess.newInstance(null);
-    access.setOptions(myConfiguration.getOptions(myProject));
-    return access;
-  }
-
   public ISVNOptions getSvnOptions() {
     return myConfiguration.getOptions(myProject);
   }
@@ -1128,7 +1121,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final File ioFile = new File(vf.getPath());
       SVNURL url = mapping.getUrlForFile(ioFile);
       if (url == null) {
-        url = SvnUtil.getUrl(ioFile);
+        url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
           notMatched.add(s);
           continue;

@@ -54,10 +54,10 @@ import java.util.List;
 
 public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
-  private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
+  private static final Key<Long>                   LAST_TIME_INDENTS_BUILT           = Key.create("LAST_TIME_INDENTS_BUILT");
 
   private final EditorEx myEditor;
-  private final PsiFile myFile;
+  private final PsiFile  myFile;
   public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange o1, TextRange o2) {
@@ -74,7 +74,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     @SuppressWarnings({"AssignmentToForLoopParameter"})
     public void paint(@NotNull Editor editor,
                       @NotNull RangeHighlighter highlighter,
-                      @NotNull Graphics g) {
+                      @NotNull Graphics g)
+    {
       int startOffset = highlighter.getStartOffset();
       final Document doc = highlighter.getDocument();
       if (startOffset >= doc.getTextLength()) return;
@@ -96,7 +97,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
       final VisualPosition startPosition = editor.offsetToVisualPosition(off);
       int indentColumn = startPosition.column;
-      
+
       // It's considered that indent guide can cross not only white space but comments, javadocs etc. Hence, there is a possible
       // case that the first indent guide line is, say, single-line comment where comment symbols ('//') are located at the first
       // visual column. We need to calculate correct indent guide column then.
@@ -131,10 +132,13 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
       int maxY = end.y;
+      if (endPosition.line == editor.offsetToVisualPosition(doc.getTextLength()).line) {
+        maxY += editor.getLineHeight();
+      }
 
       Rectangle clip = g.getClipBounds();
       if (clip != null) {
-        if (clip.y >= end.y || clip.y + clip.height <= start.y) {
+        if (clip.y >= maxY || clip.y + clip.height <= start.y) {
           return;
         }
         maxY = Math.min(maxY, clip.y + clip.height);
@@ -142,7 +146,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
       final EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(selected ? scheme.getColor(EditorColors.SELECTED_INDENT_GUIDE_COLOR) : scheme.getColor(EditorColors.INDENT_GUIDE_COLOR));
-      
+
       // There is a possible case that indent line intersects soft wrap-introduced text. Example:
       //     this is a long line <soft-wrap>
       // that| is soft-wrapped
@@ -187,14 +191,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
             i = doc.getLineNumber(foldRegion.getEndOffset());
           }
         }
-        
+
         if (y < maxY) {
           g.drawLine(start.x + 2, y, start.x + 2, maxY);
         }
       }
     }
   };
-  private volatile List<TextRange> myRanges;
+  private volatile List<TextRange>             myRanges;
   private volatile List<IndentGuideDescriptor> myDescriptors;
 
   public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -213,7 +217,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     ArrayList<TextRange> ranges = new ArrayList<TextRange>();
     for (IndentGuideDescriptor descriptor : myDescriptors) {
       ProgressManager.checkCanceled();
-      int endOffset = descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
+      int endOffset =
+        descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
       ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
     }
 

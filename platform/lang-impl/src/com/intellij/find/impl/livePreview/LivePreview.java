@@ -480,8 +480,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
             if (SearchResults.insideVisibleArea(myEditor, cur)) {
               showReplacementPreview();
               final VisibleAreaListener visibleAreaListener = this;
-              myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
-              myVisibleAreaListenersToRemove.remove(visibleAreaListener);
+              final boolean remove = myVisibleAreaListenersToRemove.remove(visibleAreaListener);
+              if (remove) {
+                myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
+              }
             }
           }
         };

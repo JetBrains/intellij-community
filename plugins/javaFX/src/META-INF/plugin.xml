@@ -18,5 +18,6 @@
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference$JavaFxUnresolvedTagRefsProvider"/>
     <multiHostInjector implementation="org.jetbrains.plugins.javaFX.fxml.ScriptLanguageInjector"/>
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
   </extensions>
 </idea-plugin>

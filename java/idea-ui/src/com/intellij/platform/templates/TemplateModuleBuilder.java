@@ -21,9 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -53,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
@@ -72,12 +71,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   public static final String UTF_8 = "UTF-8";
 
   private final ModuleType myType;
+  private List<WizardInputField> myAdditionalFields;
   private ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, List<WizardInputField> additionalFields) {
     myTemplate = template;
     myType = moduleType;
+    myAdditionalFields = additionalFields;
   }
 
   @Override
@@ -88,6 +89,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
     return myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
+  }
+
+  @Override
+  protected List<WizardInputField> getAdditionalFields() {
+    return myAdditionalFields;
   }
 
   @Override

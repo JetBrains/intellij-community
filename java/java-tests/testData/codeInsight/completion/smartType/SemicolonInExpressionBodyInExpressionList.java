@@ -1,5 +1,5 @@
 class Test {
   public void foo() {
-    new Thread(() -> <caret>);
+    new Thread(() -> n<caret>);
   }
 }

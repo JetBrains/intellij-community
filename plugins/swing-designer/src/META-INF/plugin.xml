@@ -1,9 +1,0 @@
-<idea-plugin version="2">
-  <name>Swing Designer</name>
-  <id>com.intellij.swing-designer</id>
-  <vendor>JetBrains</vendor>
-  <resource-bundle>messages.SwingDesignerBundle</resource-bundle>
-  <depends>com.intellij.java-i18n</depends>
-  <depends>com.intellij.properties</depends>
-  <depends>com.intellij.ui-designer-new</depends>
-</idea-plugin>

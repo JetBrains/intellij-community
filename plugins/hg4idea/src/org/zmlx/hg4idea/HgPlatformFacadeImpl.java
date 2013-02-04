@@ -27,12 +27,6 @@ public class HgPlatformFacadeImpl extends DvcsPlatformFacadeImpl implements HgPl
 
   @NotNull
   @Override
-  public HgRepositoryManager getRepositoryManager(@NotNull Project project) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
   public HgVcs getVcs(@NotNull Project project) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return (HgVcs)vcsManager.findVcsByName(HgVcs.VCS_NAME);
