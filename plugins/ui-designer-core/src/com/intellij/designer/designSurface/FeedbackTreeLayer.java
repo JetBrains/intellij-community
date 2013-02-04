@@ -16,7 +16,6 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
