@@ -37,6 +37,10 @@ public final class HgCommandResultNotifier {
     HgVcs.NOTIFICATION_GROUP.createNotification(title, successDescription, NotificationType.INFORMATION, null).notify(myProject);
   }
 
+  public void notifyWarning(@NotNull String title, @NotNull String warningDescription) {
+    HgVcs.NOTIFICATION_GROUP.createNotification(title, warningDescription, NotificationType.WARNING, null).notify(myProject);
+  }
+
   public void notifyError(@Nullable HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
     notifyError(result, failureTitle, failureDescription, null);
   }

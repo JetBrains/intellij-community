@@ -54,7 +54,6 @@ import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
-import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
@@ -94,7 +93,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
-  private final HgIntegrateEnvironment integrateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
@@ -129,7 +127,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
-    integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
@@ -198,7 +195,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
-    return integrateEnvironment;
+    return null;
   }
 
   @Override
