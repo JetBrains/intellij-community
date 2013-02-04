@@ -51,6 +51,10 @@ public class PyResolveContext {
     return new PyResolveContext(myAllowImplicits, myAllowProperties, context);
   }
 
+  public PyResolveContext withoutImplicits() {
+    return new PyResolveContext(false, myAllowProperties, myTypeEvalContext);
+  }
+
   public TypeEvalContext getTypeEvalContext() {
     return myTypeEvalContext != null ? myTypeEvalContext : TypeEvalContext.fastStubOnly(null);
   }

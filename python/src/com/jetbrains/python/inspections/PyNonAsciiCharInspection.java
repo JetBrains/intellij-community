@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
     }
     
     private void checkString(PsiElement node, String value) {
+      if (LanguageLevel.forElement(node).isPy3K()) return;
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file.getText());
