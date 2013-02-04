@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,16 +92,7 @@ public class PySignature {
         return myTypes.get(0);
       }
       else {
-        StringBuilder sb = new StringBuilder();
-        boolean notFirst = false;
-        for (String type : myTypes) {
-          if (notFirst) {
-            sb.append(" or ");
-          }
-          sb.append(type);
-          notFirst = true;
-        }
-        return sb.toString();
+        return StringUtil.join(myTypes, " or ");
       }
     }
 
