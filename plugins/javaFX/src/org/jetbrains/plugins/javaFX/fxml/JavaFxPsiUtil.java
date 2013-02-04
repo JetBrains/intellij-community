@@ -268,4 +268,32 @@ public class JavaFxPsiUtil {
     }
     return null;
   }
+  
+  public static boolean isReadOnly(String attributeName, XmlTag tag) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (descriptor != null) {
+      final PsiElement declaration = descriptor.getDeclaration();
+      if (declaration instanceof PsiClass) {
+        final PsiClass psiClass = (PsiClass)declaration;
+        final PsiField psiField = psiClass.findFieldByName(attributeName, true);
+        if (psiField != null) {
+          if (findPropertySetter(attributeName, (PsiClass)declaration) == null &&
+              findPropertySetter(attributeName, tag) == null) {
+            //todo read only condition?
+            final PsiMethod[] constructors = psiClass.getConstructors();
+            for (PsiMethod constructor : constructors) {
+              for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
+                if (psiField.getType().equals(parameter.getType())) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+    
+  }
 }
