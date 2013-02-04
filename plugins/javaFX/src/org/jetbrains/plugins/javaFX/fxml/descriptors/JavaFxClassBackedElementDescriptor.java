@@ -287,23 +287,27 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (myPsiClass != null && myPsiClass.isValid()) {
       if(myPsiClass.getConstructors().length > 0) {
         final Project project = myPsiClass.getProject();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiMethod noArgConstructor = myPsiClass
-          .findMethodBySignature(JavaPsiFacade.getElementFactory(project).createConstructor(myPsiClass.getName()), false);
+          .findMethodBySignature(factory.createConstructor(myPsiClass.getName()), false);
         if (noArgConstructor == null) {
-          final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
-                                                                                     GlobalSearchScope.allScope(project));
-          if (builderClass != null) {
-            //todo cache this info
-            final PsiTypeParameter typeParameter = builderClass.getTypeParameters()[0];
-            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass aClass) {
-                final PsiType initType =
-                  TypeConversionUtil.getSuperClassSubstitutor(builderClass, aClass, PsiSubstitutor.EMPTY).substitute(typeParameter);
-                return !Comparing.equal(myPsiClass, PsiUtil.resolveClassInClassTypeOnly(initType));
+          final PsiMethod valueOf = JavaFxPsiUtil.findValueOfMethod(myPsiClass);
+          if (valueOf == null) {
+            final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
+                                                                                       GlobalSearchScope.allScope(project));
+            if (builderClass != null) {
+              //todo cache this info
+              final PsiTypeParameter typeParameter = builderClass.getTypeParameters()[0];
+              if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+                @Override
+                public boolean process(PsiClass aClass) {
+                  final PsiType initType =
+                    TypeConversionUtil.getSuperClassSubstitutor(builderClass, aClass, PsiSubstitutor.EMPTY).substitute(typeParameter);
+                  return !Comparing.equal(myPsiClass, PsiUtil.resolveClassInClassTypeOnly(initType));
+                }
+              })) {
+                host.addMessage(context, "Unable to instantiate", ValidationHost.ErrorType.ERROR);
               }
-            })) {
-              host.addMessage(context, "Unable to instantiate", ValidationHost.ErrorType.ERROR);
             }
           }
         }

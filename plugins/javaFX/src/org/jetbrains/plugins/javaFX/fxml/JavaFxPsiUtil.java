@@ -23,12 +23,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -251,5 +249,23 @@ public class JavaFxPsiUtil {
   public static boolean isVisibleInFxml(PsiMember psiMember) {
     return psiMember.hasModifierProperty(PsiModifier.PUBLIC) || 
            AnnotationUtil.isAnnotated(psiMember, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false);
+  }
+
+  public static PsiMethod findValueOfMethod(@NotNull final PsiClass tagClass) {
+    final PsiMethod[] methods = tagClass.findMethodsByName(JavaFxCommonClassNames.VALUE_OF, false);
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1) {
+          final PsiType type = parameters[0].getType();
+          if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            if (method.hasModifierProperty(PsiModifier.STATIC) && tagClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
+              return method;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }

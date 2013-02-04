@@ -91,7 +91,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   public PsiField getEnumConstant(String attrValue) {
     if (isEnumerated()) {
       final PsiClass aClass = getEnum();
-      return aClass.findFieldByName(attrValue.toUpperCase(), false);
+      final PsiField fieldByName = aClass.findFieldByName(attrValue, false);
+      return fieldByName != null ? fieldByName : aClass.findFieldByName(attrValue.toUpperCase(), false);
     }
     return null;
   }
