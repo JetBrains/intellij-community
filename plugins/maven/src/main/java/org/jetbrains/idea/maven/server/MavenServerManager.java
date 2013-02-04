@@ -249,14 +249,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         SimpleJavaParameters params = createJavaParameters();
         Sdk sdk = params.getJdk();
 
-        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(
-          ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params, false);
-        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
-          @Override
-          public Charset getCharset() {
-            return commandLine.getCharset();
-          }
-        };
+        GeneralCommandLine commandLine =
+          JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk), params, false);
+
+        OSProcessHandler processHandler =
+          new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+
+        processHandler.setShouldDestroyProcessRecursively(false);
+
         return processHandler;
       }
     };
