@@ -622,7 +622,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean isUpToDate() {
-    return !myIsInUpdate;
+    return !myIsInUpdate && !myReportCaretMoves;
   }
 
   @Override
