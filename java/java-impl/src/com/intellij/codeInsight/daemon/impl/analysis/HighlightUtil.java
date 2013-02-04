@@ -161,7 +161,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
     Set<String> incompatibles = incompatibleModifiersHash.get(modifier);
     if (incompatibles == null) return null;
+    final boolean level8OrHigher = PsiUtil.isLanguageLevel8OrHigher(modifierList);
     for (@PsiModifier.ModifierConstant String incompatible : incompatibles) {
+      if (level8OrHigher) {
+        if (modifier.equals(PsiModifier.STATIC) && incompatible.equals(PsiModifier.ABSTRACT)){
+          continue;
+        }
+      }
       if (modifierList.hasModifierProperty(incompatible)) {
         return incompatible;
       }
