@@ -10,13 +10,14 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyGenericType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,11 +45,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPyCallExpression(PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyQualifiedExpression) {
-        final PyQualifiedExpression qualified = (PyQualifiedExpression)callee;
-        if (isResolvedToSeveralMethods(qualified)) {
-          return;
-        }
-        checkCallSite(qualified);
+        checkCallSite((PyQualifiedExpression)callee);
       }
     }
 
@@ -61,40 +58,6 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPySubscriptionExpression(PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
       checkCallSite(node);
-    }
-
-    /**
-     * Hack for skipping type checking for method calls of union members if there are several call alternatives.
-     *
-     * TODO: Multi-resolve callees when analysing calls. This requires multi-resolving in followAssignmentsChain.
-     */
-    private boolean isResolvedToSeveralMethods(@NotNull PyQualifiedExpression callee) {
-      final PyExpression qualifier = callee.getQualifier();
-      if (qualifier != null) {
-        final PyType qualifierType = qualifier.getType(myTypeEvalContext);
-        if (qualifierType instanceof PyUnionType) {
-          final PyUnionType unionType = (PyUnionType)qualifierType;
-          final String name = callee.getName();
-          int sameNameCount = 0;
-          for (PyType member : unionType.getMembers()) {
-            if (member != null) {
-              final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ,
-                                                                                      resolveWithoutImplicits());
-              if (results != null && !results.isEmpty()) {
-                sameNameCount++;
-              }
-            }
-          }
-          if (sameNameCount > 1) {
-            return true;
-          }
-        }
-        final PyExpression qualifierExpr = qualifier instanceof PyCallExpression ? ((PyCallExpression)qualifier).getCallee() : qualifier;
-        if (qualifierExpr instanceof PyQualifiedExpression) {
-          return isResolvedToSeveralMethods((PyQualifiedExpression)qualifierExpr);
-        }
-      }
-      return false;
     }
 
     private void checkCallSite(@Nullable PyQualifiedExpression callSite) {

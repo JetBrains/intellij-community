@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,8 @@ import java.util.*;
  * @author yole
  */
 public class PyQualifiedReference extends PyReferenceImpl {
+  private static final Logger LOG = Logger.getInstance(PyQualifiedReference.class);
+
   public PyQualifiedReference(PyQualifiedExpression element, PyResolveContext context) {
     super(element, context);
   }
@@ -385,10 +388,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
     }
-    for (ResolveResult result : multiResolve(false)) {
-      if (result instanceof ImplicitResolveResult) {
-        continue;
-      }
+    for (ResolveResult result : copyWithoutImplicits().multiResolve(false)) {
+      LOG.assertTrue(!(result instanceof ImplicitResolveResult));
       PsiElement resolveResult = result.getElement();
       if (isResolvedToResult(element, resolveResult)) {
         return true;
@@ -396,6 +397,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
 
     return false;
+  }
+
+  protected PyQualifiedReference copyWithoutImplicits() {
+    return new PyQualifiedReference(myElement, myContext.withoutImplicits());
   }
 
   private boolean isResolvedToResult(PsiElement element, PsiElement resolveResult) {

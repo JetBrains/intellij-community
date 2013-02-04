@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,6 +320,13 @@ public class PyTypeChecker {
 
   @Nullable
   public static AnalyzeCallResults analyzeCall(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression callee = call.getCallee();
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualified = (PyQualifiedExpression)callee;
+      if (isResolvedToSeveralMethods(qualified, context)) {
+        return null;
+      }
+    }
     final PyArgumentList args = call.getArgumentList();
     if (args != null) {
       final CallArgumentsMapping mapping = args.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context));
@@ -327,7 +335,6 @@ public class PyTypeChecker {
       if (markedCallee != null) {
         final Callable callable = markedCallee.getCallable();
         if (callable instanceof PyFunction) {
-          final PyExpression callee = call.getCallee();
           final PyExpression receiver = callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
           return new AnalyzeCallResults(callable, receiver, arguments);
         }
@@ -462,6 +469,40 @@ public class PyTypeChecker {
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
     return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
+  }
+
+  /**
+   * Hack for skipping type checking for method calls of union members if there are several call alternatives.
+   *
+   * TODO: Multi-resolve callees when analysing calls. This requires multi-resolving in followAssignmentsChain.
+   */
+  public static boolean isResolvedToSeveralMethods(@NotNull PyQualifiedExpression callee, @NotNull TypeEvalContext context) {
+    final PyExpression qualifier = callee.getQualifier();
+    if (qualifier != null) {
+      final PyType qualifierType = qualifier.getType(context);
+      if (qualifierType instanceof PyUnionType) {
+        final PyUnionType unionType = (PyUnionType)qualifierType;
+        final String name = callee.getName();
+        int sameNameCount = 0;
+        for (PyType member : unionType.getMembers()) {
+          if (member != null) {
+            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext);
+            if (results != null && !results.isEmpty()) {
+              sameNameCount++;
+            }
+          }
+        }
+        if (sameNameCount > 1) {
+          return true;
+        }
+      }
+      final PyExpression qualifierExpr = qualifier instanceof PyCallExpression ? ((PyCallExpression)qualifier).getCallee() : qualifier;
+      if (qualifierExpr instanceof PyQualifiedExpression) {
+        return isResolvedToSeveralMethods((PyQualifiedExpression)qualifierExpr, context);
+      }
+    }
+    return false;
   }
 
   public static class AnalyzeCallResults {
