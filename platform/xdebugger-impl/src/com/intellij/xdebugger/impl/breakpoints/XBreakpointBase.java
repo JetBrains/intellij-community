@@ -34,10 +34,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
@@ -98,6 +95,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public final void fireBreakpointChanged() {
+    clearIcon();
     myBreakpointManager.fireBreakpointChanged(this);
   }
 
@@ -278,11 +276,16 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected void updateIcon() {
-    myIcon = calculateIcon();
+    final Icon icon = calculateSpecialIcon();
+    myIcon = icon != null ? icon : getType().getEnabledIcon();
   }
 
-  @NotNull
-  private Icon calculateIcon() {
+  protected void setIcon(Icon icon) {
+    myIcon = icon;
+  }
+
+  @Nullable
+  protected final Icon calculateSpecialIcon() {
     if (!isEnabled()) {
       // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
       // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
@@ -316,7 +319,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
         return icon;
       }
     }
-    return getType().getEnabledIcon();
+    return null;
   }
 
   public Icon getIcon() {

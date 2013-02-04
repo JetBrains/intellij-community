@@ -44,6 +44,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.io.File;
@@ -218,10 +219,23 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Override
   public void setTemporary(boolean temporary) {
-    myState.setTemporary(temporary);
+    if (isTemporary() != temporary) {
+      myState.setTemporary(temporary);
+      fireBreakpointChanged();
+    }
   }
 
   protected List<? extends AnAction> getAdditionalPopupMenuActions(final XDebugSession session) {
     return getType().getAdditionalPopupMenuActions(this, session);
+  }
+
+  @Override
+  protected void updateIcon() {
+    final Icon icon = calculateSpecialIcon();
+    if (icon != null) {
+      setIcon(icon);
+      return;
+    }
+    setIcon(isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon());
   }
 }
