@@ -159,7 +159,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.length];
       for (int i = 0; i < highlightVisitors.length; i++) {
         HighlightVisitor highlightVisitor = highlightVisitors[i];
-        clones[i] = highlightVisitor.clone();
+        HighlightVisitor cloned = highlightVisitor.clone();
+        assert cloned != null;
+        assert cloned.getClass() == highlightVisitor.getClass() : highlightVisitor.getClass()+".clone() must return a copy of "+highlightVisitor.getClass()+"; but got: "+cloned+" of "+cloned.getClass();
+        clones[i] = cloned;
       }
       highlightVisitors = clones;
     }
