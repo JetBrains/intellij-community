@@ -58,7 +58,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           final int line = document.getLineNumber(selectionModel.getSelectionStart());
           final int lineOffset = getLineStartSafeOffset(document, line);
           final PsiElement ws = file.findElementAt(lineOffset);
-          int offset = ws instanceof PsiWhiteSpace? ws.getTextRange().getEndOffset() : lineOffset;
+          int offset = ws instanceof PsiWhiteSpace? ws.getTextRange().getEndOffset() : caretOffset;
           if (text.equals(selectionModel.getSelectedText())) return text;
           caretModel.moveToOffset(offset);
           selectionModel.setSelection(offset, selectionModel.getSelectionEnd());

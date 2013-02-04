@@ -259,6 +259,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testTwoIndentedLines() {    //PY-8693
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 
