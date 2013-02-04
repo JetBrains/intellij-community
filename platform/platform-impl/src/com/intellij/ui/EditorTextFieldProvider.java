@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,19 +28,16 @@ import org.jetbrains.annotations.NotNull;
 public interface EditorTextFieldProvider {
 
   /**
-   * It's possible either {@link EditorCustomization#addCustomization(EditorEx, EditorCustomization.Feature) apply} or
-   * {@link EditorCustomization#removeCustomization(EditorEx, EditorCustomization.Feature) remove} customizations from
-   * editor. This factory method allows to create editor where some customizations are explicitly enabled and
-   * another customizations are explicitly disabled.
-   * 
-   * @param language          target language used by document that will be displayed by returned editor
-   * @param project           target project
-   * @param enabledFeatures   explicitly enabled features for returned editor
-   * @param disabledFeatures  explicitly disabled features for returned editor
+   * This factory method allows creation of an editor where some customizations are explicitly enabled and
+   * other customizations are explicitly disabled using the given {@link EditorFeature} objects.
+   *
+   * @param language   target language used by document that will be displayed by returned editor
+   * @param project    target project
+   * @param features   {@link EditorFeature} objects which explicitly enable (and possibly configure) or disable features
    * @return
    */
   @NotNull
   EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project,
-                                 @NotNull Iterable<EditorCustomization.Feature> enabledFeatures,
-                                 @NotNull Iterable<EditorCustomization.Feature> disabledFeatures);
+                                 @NotNull Iterable<EditorFeature> features);
+
 }

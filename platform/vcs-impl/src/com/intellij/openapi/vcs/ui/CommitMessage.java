@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 public class CommitMessage extends AbstractDataProviderPanel implements Disposable, CommitMessageI {
@@ -50,12 +50,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
   public CommitMessage(Project project, final boolean withSeparator) {
     super(new BorderLayout());
-    boolean checkSpelling = true;
-    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-    if (configuration != null) {
-      checkSpelling = configuration.CHECK_COMMIT_MESSAGE_SPELLING;
-    }
-    myEditorField = createEditorField(project, checkSpelling);
+    myEditorField = createEditorField(project);
     myProject = project;
     
     // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
@@ -105,24 +100,37 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     setText(currentDescription);
   }
 
-  private static EditorTextField createEditorField(final Project project, final boolean checkSpelling) {
-    EditorTextField editorField = createCommitTextEditor(project, checkSpelling);
+  private static EditorTextField createEditorField(final Project project) {
+    EditorTextField editorField = createCommitTextEditor(project, false);
     editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
     return editorField;
   }
 
-  public static EditorTextField createCommitTextEditor(Project project, boolean checkSpelling) {
-    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    Set<EditorCustomization.Feature> enabledFeatures = EnumSet.of(EditorCustomization.Feature.SOFT_WRAP);
-    Set<EditorCustomization.Feature> disabledFeatures = EnumSet.of(EditorCustomization.Feature.ADDITIONAL_PAGE_AT_BOTTOM);
-    if (checkSpelling) {
-      enabledFeatures.add(EditorCustomization.Feature.SPELL_CHECK);
-    }
-    else {
-      disabledFeatures.add(EditorCustomization.Feature.SPELL_CHECK);
+  /**
+   * Creates a text editor appropriate for creating commit messages.
+   *
+   * @param project project this commit message editor is intended for
+   * @param forceSpellCheckOn if false, {@link com.intellij.openapi.vcs.VcsConfiguration#CHECK_COMMIT_MESSAGE_SPELLING} will control
+   *                          whether or not the editor has spell check enabled
+   * @return a commit message editor
+   */
+  public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
+    Set<EditorFeature> features = new HashSet<EditorFeature>();
+
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    if (configuration != null) {
+      features.add(new SpellCheckingEditorFeature(forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING));
+      features.add(new RightMarginEditorFeature(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
+    } else {
+      features.add(new SpellCheckingEditorFeature(true));
+      features.add(new RightMarginEditorFeature(false, -1));
     }
 
-    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, enabledFeatures, disabledFeatures);
+    features.add(new SoftWrapsEditorFeature(true));
+    features.add(new AdditionalPageAtBottomEditorFeature(false));
+
+    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
+    return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
   }
 
   @Nullable
@@ -168,20 +176,18 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
       return;
     }
     EditorEx editorEx = (EditorEx)editor;
-    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, myProject);
-    EditorCustomization.Feature feature = EditorCustomization.Feature.SPELL_CHECK;
+    toggleEditorSpellchecking(myProject, editorEx, check);
+  }
+
+  private static void toggleEditorSpellchecking(Project project, EditorEx editorEx, boolean spellCheckingEnabled) {
+    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
+    SpellCheckingEditorFeature spellCheckFeature = new SpellCheckingEditorFeature(spellCheckingEnabled);
+
     for (EditorCustomization customization : customizations) {
-      if (customization.getSupportedFeatures().contains(feature)) {
-        if (check) {
-          customization.addCustomization(editorEx, feature);
-        }
-        else {
-          customization.removeCustomization(editorEx, feature);
-        }
-      }
+      customization.doProcessCustomization(editorEx, spellCheckFeature);
     }
   }
-  
+
   public void dispose() {
   }
 

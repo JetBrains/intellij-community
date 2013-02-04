@@ -75,31 +75,19 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @Override
   public EditorTextField getEditorField(@NotNull Language language,
                                         @NotNull Project project,
-                                        @NotNull final Iterable<EditorCustomization.Feature> enabledFeatures,
-                                        @NotNull final Iterable<EditorCustomization.Feature> disabledFeatures) {
+                                        @NotNull final Iterable<EditorFeature> features) {
     return new MyEditorTextField(language, project) {
       @Override
       protected void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor) {
-        for (EditorCustomization.Feature feature : enabledFeatures) {
+        for (EditorFeature feature : features) {
           for (EditorCustomization customization : customizations) {
-            if (customization.getSupportedFeatures().contains(feature)) {
-              customization.addCustomization(editor, feature);
-              break;
-            }
-          }
-        }
-        for (EditorCustomization.Feature feature : disabledFeatures) {
-          for (EditorCustomization customization : customizations) {
-            if (customization.getSupportedFeatures().contains(feature)) {
-              customization.removeCustomization(editor, feature);
-              break;
-            }
+              customization.doProcessCustomization(editor, feature);
           }
         }
       }
     };
   }
-  
+
   private abstract static class MyEditorTextField extends LanguageTextField {
 
     MyEditorTextField(Language language, @NotNull Project project) {

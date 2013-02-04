@@ -21,14 +21,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class OneLineEditorCustomization extends AbstractEditorCustomization {
+public class OneLineEditorCustomization extends EditorCustomization {
 
-  public OneLineEditorCustomization() {
-    super(Feature.ONE_LINE);
+  @Override
+  protected Class<? extends EditorFeature> getFeatureClass() {
+    return OneLineEditorFeature.class;
   }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
-    editor.setOneLineMode(apply);
+  protected void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
+    editor.setOneLineMode(feature.isEnabled());
   }
 }
