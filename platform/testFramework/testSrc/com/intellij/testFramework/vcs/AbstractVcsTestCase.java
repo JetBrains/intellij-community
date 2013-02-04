@@ -102,6 +102,8 @@ public abstract class AbstractVcsTestCase {
       myProjectFixture.setUp();
       myProject = myProjectFixture.getProject();
 
+      projectCreated();
+
       if (myInitChangeListManager) {
         ((ProjectComponent) ChangeListManager.getInstance(myProject)).projectOpened();
       }
@@ -121,6 +123,9 @@ public abstract class AbstractVcsTestCase {
         System.clearProperty(key);
       }
     }
+  }
+
+  protected void projectCreated() {
   }
 
   protected void activateVCS(final String vcsName) {
