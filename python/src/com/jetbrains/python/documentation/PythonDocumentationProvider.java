@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -460,7 +460,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
                                                "Python External Documentation",
                                                Messages.getQuestionIcon());
           if (rc == 0) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, PythonDocumentationConfigurable.class);
+            ShowSettingsUtilImpl.showSettingsDialog(project, PythonDocumentationConfigurable.ID, "");
           }
         }
       }, ModalityState.NON_MODAL);
