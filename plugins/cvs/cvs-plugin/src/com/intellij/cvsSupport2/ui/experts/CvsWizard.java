@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
  * author: lesya
  */
 public class CvsWizard extends AbstractWizard<WizardStep> {
+
   protected CvsWizard(String title, Project project) {
     super(title, project);
   }
@@ -33,12 +34,12 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
 
   @Override
   protected void doNextAction() {
-    final boolean lastStep = isLastStep();
-    if (!lastStep) {
+    if (!isLastStep()) {
       final WizardStep nextStep = mySteps.get(getNextStep());
       if (!nextStep.preNextCheck()) {
         return;
       }
+      nextStep.activate();
       nextStep.focus();
     }
     super.doNextAction();
@@ -56,25 +57,17 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
   }
 
   @Override
+  public void updateButtons() {
+    super.updateButtons();
+  }
+
+  @Override
   protected boolean canGoNext() {
     final int numberOfSteps = getNumberOfSteps();
     if (numberOfSteps == 0) return false;
 
     final WizardStep currentStep = getCurrentStepObject();
-    currentStep.activate();
     return currentStep.nextIsEnabled();
-  }
-
-  public void disableNext() {
-    if (getNextButton().isEnabled()) {
-      updateStep();
-    }
-  }
-
-  public void enableNext() {
-    if ((!getNextButton().isEnabled())) {
-      updateStep();
-    }
   }
 
   @Override

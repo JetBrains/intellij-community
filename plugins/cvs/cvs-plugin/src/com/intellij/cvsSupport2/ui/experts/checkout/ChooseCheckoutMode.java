@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -54,39 +55,31 @@ public class ChooseCheckoutMode extends WizardStep {
   private final JCheckBox myMakeNewFilesReadOnly = new JCheckBox(CvsBundle.message("checkbox.make.new.files.read.only"));
   private final JCheckBox myPruneEmptyDirectories = new JCheckBox(CvsBundle.message("checkbox.prune.empty.directories"));
   private final ChangeKeywordSubstitutionPanel myChangeKeywordSubstitutionPanel;
-  private final CheckoutWizard myWizard;
 
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
 
-  private static final Icon FOLDER_ICON = PlatformIcons.DIRECTORY_CLOSED_ICON;
-
   @NonNls public static final String LIST = "LIST";
   @NonNls public static final String MESSAGE = "MESSSAGE";
-  private final JLabel myMessage = new JLabel(DUMMY_LABEL_TEXT);
-  @NonNls private static final String DUMMY_LABEL_TEXT = "XXX";
-
+  @NonNls private final JLabel myMessage = new JLabel("XXX");
 
   public ChooseCheckoutMode(CheckoutWizard wizard) {
     super("###", wizard);
-    myWizard = wizard;
     myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)value;
-        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(Font.PLAIN,
-                                                                                        list.getForeground()));
-        setIcon(FOLDER_ICON);
+        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
     });
     myCheckoutModeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        myWizard.updateStep();
+        getWizard().updateButtons();
       }
     });
 
     myCheckoutModeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
     final CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
     myMakeNewFilesReadOnly.setSelected(config.MAKE_CHECKED_OUT_FILES_READONLY);
     myPruneEmptyDirectories.setSelected(config.CHECKOUT_PRUNE_EMPTY_DIRECTORIES);
@@ -101,6 +94,11 @@ public class ChooseCheckoutMode extends WizardStep {
     myCenterPanel.add(MESSAGE, ScrollPaneFactory.createScrollPane(messagePanel));
 
     init();
+  }
+
+  @Override
+  protected CheckoutWizard getWizard() {
+    return (CheckoutWizard)super.getWizard();
   }
 
   @Override
@@ -134,11 +132,10 @@ public class ChooseCheckoutMode extends WizardStep {
 
   @Override
   public void activate() {
-    final File selectedLocation = myWizard.getSelectedLocation();
+    final File selectedLocation = getWizard().getSelectedLocation();
     final Collection<File> cvsPaths = getSelectedFiles();
 
-    if (selectedLocation != null && (!selectedLocation.equals(mySelectedLocation) ||
-        !Comparing.equal(cvsPaths, myCvsPaths))) {
+    if (!FileUtil.filesEqual(selectedLocation, mySelectedLocation) || !Comparing.equal(cvsPaths, myCvsPaths)) {
       mySelectedLocation = selectedLocation;
       myCvsPaths.clear();
       myCvsPaths.addAll(cvsPaths);
@@ -152,32 +149,26 @@ public class ChooseCheckoutMode extends WizardStep {
         final StringBuilder message = composeLocationsMessage();
         myMessage.setText(message.toString());
         show(MESSAGE);
-        getWizard().enableNext();
+        getWizard().updateButtons();
       }
     }
     else if (selectedLocation == null) {
-      getWizard().disableNext();
+      getWizard().updateButtons();
     }
   }
 
   private StringBuilder composeLocationsMessage() {
-    @NonNls final StringBuilder message = new StringBuilder();
-    message.append("<html>");
-    message.append("<p>");
-    message.append(mySelectedLocation.getAbsolutePath());
-    message.append("</p>");
+    @NonNls final StringBuilder message = new StringBuilder("<html><p>");
+    message.append(mySelectedLocation.getAbsolutePath()).append("</p>");
     for (File file : myCvsPaths) {
-      message.append("<p>");
-      message.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-");
-      message.append(file.getPath());
-      message.append("</p>");
+      message.append("<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-").append(file.getPath()).append("</p>");
     }
     return message;
   }
 
   private Collection<File> getSelectedFiles() {
     final Collection<File> allFiles = new HashSet<File>();
-    final CvsElement[] selection = myWizard.getSelectedElements();
+    final CvsElement[] selection = getWizard().getSelectedElements();
     if (selection == null) return allFiles;
     for (CvsElement cvsElement : selection) {
       allFiles.add(new File(cvsElement.getCheckoutPath()));
@@ -201,7 +192,7 @@ public class ChooseCheckoutMode extends WizardStep {
   private static boolean hasParentIn(Collection<File> allFiles, File file) {
     final String filePath = file.getPath();
     for (File file1 : allFiles) {
-      if (file1.equals(file)) continue;
+      if (FileUtil.filesEqual(file1, file)) continue;
       if (filePath.startsWith(file1.getPath())) return true;
     }
     return false;
@@ -212,9 +203,8 @@ public class ChooseCheckoutMode extends WizardStep {
     setStepTitle(CvsBundle.message("dialog.title.check.out.to", selected));
     myCheckoutModeModel.removeAllElements();
 
-    final CheckoutStrategy[] strategies = CheckoutStrategy.createAllStrategies(mySelectedLocation,
-                                                                         selected,
-                                                                         myWizard.getSelectedElements()[0] instanceof CvsFile);
+    final boolean forFile = getWizard().getSelectedElements()[0] instanceof CvsFile;
+    final CheckoutStrategy[] strategies = CheckoutStrategy.createAllStrategies(mySelectedLocation, selected, forFile);
     final Collection<File> results = new HashSet();
     final List<CheckoutStrategy> resultModes = new ArrayList();
     for (CheckoutStrategy strategy : strategies) {
@@ -226,11 +216,9 @@ public class ChooseCheckoutMode extends WizardStep {
     }
 
     Collections.sort(resultModes);
-
     for (CheckoutStrategy resultMode : resultModes) {
       myCheckoutModeModel.addElement(resultMode);
     }
-
     myCheckoutModeList.setSelectedIndex(0);
   }
 
