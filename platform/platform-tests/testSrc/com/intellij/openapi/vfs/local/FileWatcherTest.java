@@ -76,7 +76,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   };
   private final Object myWaiter = new Object();
   private int myTimeout = NATIVE_PROCESS_DELAY;
-  private final List<VFileEvent> myEvents = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   @Override
   protected void setUp() throws Exception {
@@ -100,7 +100,9 @@ public class FileWatcherTest extends PlatformLangTestCase {
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        myEvents.addAll(events);
+        synchronized (myEvents) {
+          myEvents.addAll(events);
+        }
       }
     });
 
@@ -671,8 +673,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
 
     myFileSystem.refresh(false);
-    final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
-    myEvents.clear();
+    final ArrayList<VFileEvent> result;
+    synchronized (myEvents) {
+      result = new ArrayList<VFileEvent>(myEvents);
+      myEvents.clear();
+    }
     LOG.debug("** events: " + result.size());
     return result;
   }
