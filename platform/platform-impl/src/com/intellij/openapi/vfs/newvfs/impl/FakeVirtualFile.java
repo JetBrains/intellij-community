@@ -17,9 +17,8 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -34,7 +33,7 @@ public class FakeVirtualFile extends StubVirtualFile {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public VirtualFile getParent() {
     return myParent;
   }
