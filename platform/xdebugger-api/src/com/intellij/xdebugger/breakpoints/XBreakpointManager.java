@@ -35,7 +35,11 @@ public interface XBreakpointManager {
   XBreakpoint<T> addBreakpoint(XBreakpointType<XBreakpoint<T>, T> type, @Nullable T properties);
 
   @NotNull <T extends XBreakpointProperties>
-  XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type, @NotNull String fileUrl, int line, @Nullable T properties);
+  XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
+                                       @NotNull String fileUrl,
+                                       int line,
+                                       @Nullable T properties,
+                                       boolean temporary);
   
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 

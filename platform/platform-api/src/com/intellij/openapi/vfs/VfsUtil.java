@@ -417,7 +417,7 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     if (SystemInfo.isWindows || SystemInfo.isOS2) {
-      while (path.length() > 0 && path.charAt(0) == '/') {
+      while (!path.isEmpty() && path.charAt(0) == '/') {
         path = path.substring(1, path.length());
       }
     }
@@ -540,7 +540,7 @@ public class VfsUtil extends VfsUtilCore {
    * @return correct URI, must be used only for external communication
    */
   @Nullable
-  public static URI toUri(@NotNull String uri) {
+  public static URI toUri(@NonNls @NotNull String uri) {
     int index = uri.indexOf("://");
     if (index < 0) {
       // true URI, like mailto:
@@ -646,7 +646,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   public static boolean isBadName(String name) {
-    return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
+    return name == null || name.isEmpty() || "/".equals(name) || "\\".equals(name);
   }
 
   public static VirtualFile createDirectories(@NotNull final String dir) throws IOException {

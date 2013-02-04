@@ -19,7 +19,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
 
   public void testHighlighting1() {
     createProjectPom("""
-  <groupId>mavenParent</groupId>
+  <groupId>my.group</groupId>
   <artifactId>childA</artifactId>
   <version>1.0</version>
 """)
@@ -34,9 +34,25 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
   <version>1.0</version>
 
   <parent>
-    <groupId><error>mavenParent</error></groupId>
-    <artifactId><error>childA</error></artifactId>
-    <version><error>1.0</error></version>
+    <groupId>my.group</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.0</version>
+  </parent>
+""")
+
+    checkHighlighting()
+  }
+
+  public void testHighlighting3() {
+    createProjectPom("""
+  <warning><groupId>my.group</groupId></warning>
+  <artifactId>childA</artifactId>
+  <version>1.0</version>
+
+  <parent>
+    <groupId>my.group</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.0</version>
   </parent>
 """)
 

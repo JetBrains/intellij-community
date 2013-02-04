@@ -24,6 +24,8 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
@@ -92,6 +94,7 @@ public class DfaVariableValue extends DfaValue {
   @Nullable private DfaVariableValue myQualifier;
   private boolean myIsNegated;
   private boolean myViaMethods;
+  private Nullness myInherentNullability;
 
   private DfaVariableValue(PsiVariable variable, PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
     super(factory);
@@ -115,7 +118,7 @@ public class DfaVariableValue extends DfaValue {
 
   @Nullable
   public PsiType getVariableType() {
-    return myVariable == null ? null : myVariable.getType();
+    return myVarType;
   }
 
   public boolean isNegated() {
@@ -147,4 +150,25 @@ public class DfaVariableValue extends DfaValue {
   public boolean isViaMethods() {
     return myViaMethods;
   }
+
+  public Nullness getInherentNullability() {
+    if (myInherentNullability != null) {
+      return myInherentNullability;
+    }
+
+    PsiVariable var = getPsiVariable();
+    Nullness nullability = DfaUtil.getElementNullability(getVariableType(), var);
+    if (nullability == Nullness.UNKNOWN && var != null) {
+      if (DfaUtil.isNullableInitialized(var, true)) {
+        nullability = Nullness.NULLABLE;
+      } else if (DfaUtil.isNullableInitialized(var, false)) {
+        nullability = Nullness.NOT_NULL;
+      }
+    }
+
+    myInherentNullability = nullability;
+
+    return nullability;
+  }
+
 }

@@ -67,7 +67,7 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
       return myValue;
     }
 
-    protected Object clone() throws CloneNotSupportedException {
+    protected ValuableDfaVariableState clone() {
       return new ValuableDfaVariableState(this);
     }
   }

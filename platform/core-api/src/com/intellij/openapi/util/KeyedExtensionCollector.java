@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public abstract class KeyedExtensionCollector<T, KeyT> {
+public class KeyedExtensionCollector<T, KeyT> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
 
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
@@ -95,8 +95,13 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     }
   }
 
-  protected abstract String keyToString(KeyT key);
+  protected String keyToString(KeyT key) {
+    return key.toString();
+  }
 
+  /**
+   * @see #findSingle(Object)
+   */
   @NotNull
   public List<T> forKey(KeyT key) {
     final String stringKey = keyToString(key);
@@ -106,6 +111,11 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     cache = buildExtensions(stringKey, key);
     cache = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cache);
     return cache;
+  }
+
+  public T findSingle(KeyT key) {
+    List<T> list = forKey(key);
+    return list.isEmpty() ? null : list.get(0);
   }
 
   protected List<T> buildExtensions(final String stringKey, final KeyT key) {

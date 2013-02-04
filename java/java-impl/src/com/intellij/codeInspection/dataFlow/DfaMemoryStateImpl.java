@@ -28,7 +28,9 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,15 +79,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       newState.myEqClasses.add(aClass != null ? new SortedIntSet(aClass.toNativeArray()) : null);
     }
 
-    try {
-      for (Object o : myVariableStates.keySet()) {
-        DfaVariableValue dfaVariableValue = (DfaVariableValue)o;
-        DfaVariableState clone = (DfaVariableState)myVariableStates.get(dfaVariableValue).clone();
-        newState.myVariableStates.put(dfaVariableValue, clone);
-      }
-    }
-    catch (CloneNotSupportedException e) {
-      LOG.error(e);
+    for (DfaVariableValue dfaVariableValue : myVariableStates.keySet()) {
+      newState.myVariableStates.put(dfaVariableValue, myVariableStates.get(dfaVariableValue).clone());
     }
     return newState;
   }
@@ -280,13 +275,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
-        try {
-          DfaVariableState newState = (DfaVariableState)getVariableState((DfaVariableValue)value).clone();
-          myVariableStates.put(var, newState);
-        }
-        catch (CloneNotSupportedException e) {
-          LOG.error(e);
-        }
+        myVariableStates.put(var, getVariableState((DfaVariableValue)value).clone());
       }
     }
 
@@ -782,18 +771,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void flushFields(DataFlowRunner runner) {
     for (DfaVariableValue field : runner.getFields()) {
       if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
-        flushVariable(field);
-        getVariableState(field).setNullable(false);
+        if (!DfaUtil.isFinalField(field.getPsiVariable())) {
+          flushWithDependencies(field);
+          getVariableState(field).setNullable(false);
+        }
       }
     }
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    PsiVariable psiVariable = variable.getPsiVariable();
-    if (DfaVariableState.isFinalField(psiVariable)) {
-      return;
-    }
-
     flushWithDependencies(variable);
   }
 

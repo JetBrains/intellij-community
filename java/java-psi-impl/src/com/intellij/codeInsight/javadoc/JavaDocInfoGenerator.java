@@ -467,7 +467,7 @@ public class JavaDocInfoGenerator {
   }
 
   // not a javadoc in fact..
-  private void generateVariableJavaDoc(@NonNls StringBuilder buffer, PsiVariable variable, boolean generatePrologueAndEpilogue) {
+  private static void generateVariableJavaDoc(@NonNls StringBuilder buffer, PsiVariable variable, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue)
       generatePrologue(buffer);
 
@@ -604,7 +604,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateAnnotations (@NonNls StringBuilder buffer, PsiModifierListOwner owner) {
+  private static void generateAnnotations(@NonNls StringBuilder buffer, PsiModifierListOwner owner) {
     final PsiModifierList ownerModifierList = owner.getModifierList();
     if (ownerModifierList == null) return;
     PsiAnnotation[] annotations = ownerModifierList.getAnnotations();
@@ -1859,6 +1859,11 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
+      myBuffer.append(expression.getText());
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       myBuffer.append(expression.getText());
     }
   }

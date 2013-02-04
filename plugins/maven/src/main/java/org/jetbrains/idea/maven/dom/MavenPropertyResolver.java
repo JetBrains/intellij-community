@@ -153,7 +153,7 @@ public class MavenPropertyResolver {
 
     VirtualFile file = MavenDomUtil.getVirtualFile(element);
     if (file == null) return text;
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(element.getProject());
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(projectDom.getManager().getProject());
 
     MavenProject mavenProject = manager.findProject(file);
     if (mavenProject == null) return text;

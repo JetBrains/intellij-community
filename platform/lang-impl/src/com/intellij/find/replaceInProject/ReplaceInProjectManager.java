@@ -332,6 +332,7 @@ public class ReplaceInProjectManager {
   private boolean doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
     boolean success = true;
     int replacedCount = 0;
+    ensureUsagesWritable(usages);
     for (final Usage usage : usages) {
       try {
         doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet(), false);
@@ -431,19 +432,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    Set<VirtualFile> readOnlyFiles = null;
-    for (final Usage usage : selectedUsages) {
-      final VirtualFile file = ((UsageInFile)usage).getFile();
-
-      if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
-        readOnlyFiles.add(file);
-      }
-    }
-
-    if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
-    }
+    ensureUsagesWritable(selectedUsages);
 
     if (hasReadOnlyUsages(selectedUsages)) {
       int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
@@ -465,6 +454,22 @@ public class ReplaceInProjectManager {
         usageView.getComponent().requestFocus();
       }
     }, FindBundle.message("find.replace.command"), null);
+  }
+
+  private void ensureUsagesWritable(Collection<Usage> selectedUsages) {
+    Set<VirtualFile> readOnlyFiles = null;
+    for (final Usage usage : selectedUsages) {
+      final VirtualFile file = ((UsageInFile)usage).getFile();
+
+      if (file != null && !file.isWritable()) {
+        if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
+        readOnlyFiles.add(file);
+      }
+    }
+
+    if (readOnlyFiles != null) {
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
+    }
   }
 
   private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {

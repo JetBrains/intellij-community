@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Ref;
@@ -85,17 +86,17 @@ public class DfaUtil {
     return expressions == null ? Collections.<PsiExpression>emptyList() : expressions;
   }
 
-  @Nullable
-  static Boolean getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+  @NotNull
+  public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     if (owner == null) {
-      return null;
+      return Nullness.UNKNOWN;
     }
 
     if (NullableNotNullManager.isNullable(owner)) {
-      return Boolean.TRUE;
+      return Nullness.NULLABLE;
     }
     if (NullableNotNullManager.isNotNull(owner)) {
-      return Boolean.FALSE;
+      return Nullness.NOT_NULL;
     }
 
     if (resultType != null) {
@@ -103,19 +104,51 @@ public class DfaUtil {
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
         String qualifiedName = annotation.getQualifiedName();
         if (nnn.getNullables().contains(qualifiedName)) {
-          return Boolean.TRUE;
+          return Nullness.NULLABLE;
         }
         if (nnn.getNotNulls().contains(qualifiedName)) {
-          return Boolean.FALSE;
+          return Nullness.NOT_NULL;
         }
       }
     }
 
-    return null;
+    return Nullness.UNKNOWN;
   }
 
-  public static enum Nullness {
-    NOT_NULL,NULL,UNKNOWN
+  public static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
+    if (!isFinalField(var)) {
+      return false;
+    }
+
+    List<PsiExpression> initializers = NullableStuffInspection.findAllConstructorInitializers((PsiField)var);
+    if (initializers.isEmpty()) {
+      return false;
+    }
+
+    for (PsiExpression expression : initializers) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (!(target instanceof PsiParameter)) {
+        return false;
+      }
+      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
+        return true;
+      }
+      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
+        return false;
+      }
+    }
+    return !nullable;
+  }
+
+  public static boolean isPlainMutableField(PsiVariable var) {
+    return !var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE) && var instanceof PsiField;
+  }
+
+  public static boolean isFinalField(PsiVariable var) {
+    return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
   @NotNull
@@ -131,7 +164,7 @@ public class DfaUtil {
     if (result != RunnerResult.OK) {
       return Nullness.UNKNOWN;
     }
-    if (visitor.myNulls.contains(variable) && !visitor.myNotNulls.contains(variable)) return Nullness.NULL;
+    if (visitor.myNulls.contains(variable) && !visitor.myNotNulls.contains(variable)) return Nullness.NULLABLE;
     if (visitor.myNotNulls.contains(variable) && !visitor.myNulls.contains(variable)) return Nullness.NOT_NULL;
     return Nullness.UNKNOWN;
   }

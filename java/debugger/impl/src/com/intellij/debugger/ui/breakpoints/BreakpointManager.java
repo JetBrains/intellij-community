@@ -175,7 +175,7 @@ public class BreakpointManager implements JDOMExternalizable {
       @Nullable private EditorMouseEvent myMousePressedEvent;
 
       @Nullable
-      private Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line) {
+      private Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line, boolean temporary) {
         final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
         if (editor == null) {
           return null;
@@ -223,6 +223,7 @@ public class BreakpointManager implements JDOMExternalizable {
           }
 
           if (breakpoint != null) {
+            breakpoint.REMOVE_AFTER_HIT = temporary;
             RequestManagerImpl.createRequests(breakpoint);
           }
           return breakpoint;
@@ -305,10 +306,13 @@ public class BreakpointManager implements JDOMExternalizable {
               DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
                 @Override
                 public void run() {
-                  final Breakpoint breakpoint = toggleBreakpoint(e.getMouseEvent().isAltDown(), line);
+                  final boolean suitingBreakpoint = e.getMouseEvent().isAltDown() && !e.getMouseEvent().isShiftDown();
+                  final boolean temporary = e.getMouseEvent().isAltDown() && e.getMouseEvent().isShiftDown();
+
+                  final Breakpoint breakpoint = toggleBreakpoint(suitingBreakpoint, line, temporary);
 
 
-                  if (e.getMouseEvent().isShiftDown() && breakpoint != null) {
+                  if (!e.getMouseEvent().isAltDown() && e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
                     String selection = editor.getSelectionModel().getSelectedText();
                     String text = selection != null ? selection : DebuggerBundle.message("breakpoint.log.message",

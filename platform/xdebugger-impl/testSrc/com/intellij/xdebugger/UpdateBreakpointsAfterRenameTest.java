@@ -51,7 +51,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<?> putBreakpoint(final VirtualFile file) {
-    return getBreakpointManager().addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null);
+    return getBreakpointManager().addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false);
   }
 
   private VirtualFile createFile(String path) {

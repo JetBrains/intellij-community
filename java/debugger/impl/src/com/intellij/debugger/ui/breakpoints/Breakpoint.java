@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Value;
@@ -52,6 +53,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public boolean ENABLED = true;
   public boolean LOG_ENABLED = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
+  public boolean REMOVE_AFTER_HIT = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
@@ -204,6 +206,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   }
 
   private void runAction(final EvaluationContextImpl context, LocatableEvent event) {
+    final DebugProcessImpl debugProcess = context.getDebugProcess();
     if (LOG_ENABLED || LOG_EXPRESSION_ENABLED) {
       final StringBuilder buf = StringBuilderSpinAllocator.alloc();
       try {
@@ -211,7 +214,6 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           buf.append(getEventMessage(event));
           buf.append("\n");
         }
-        final DebugProcessImpl debugProcess = context.getDebugProcess();
         final TextWithImports expressionToEvaluate = getLogMessage();
         if (LOG_EXPRESSION_ENABLED && expressionToEvaluate != null && !"".equals(expressionToEvaluate.getText())) {
           if(!debugProcess.isAttached()) {
@@ -245,6 +247,20 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       finally {
         StringBuilderSpinAllocator.dispose(buf);
       }
+    }
+    if (REMOVE_AFTER_HIT) {
+      debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+        @Override
+        public void resumed(SuspendContext suspendContext) {
+          DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+            @Override
+            public void run() {
+              DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
+            }
+          });
+          debugProcess.removeDebugProcessListener(this);
+        }
+      });
     }
   }
 

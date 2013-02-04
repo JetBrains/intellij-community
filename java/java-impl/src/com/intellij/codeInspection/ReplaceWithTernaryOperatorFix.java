@@ -49,7 +49,15 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+    PsiElement element = descriptor.getPsiElement();
+    while (true) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) {
+        element = parent;
+      } else {
+        break;
+      }
+    }
     if (!(element instanceof PsiExpression)) {
       return;
     }

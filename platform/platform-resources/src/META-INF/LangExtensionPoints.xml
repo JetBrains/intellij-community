@@ -436,6 +436,8 @@
                   beanClass="com.intellij.openapi.module.ModuleTypeEP"/>
   <extensionPoint name="moduleBuilder"
                   beanClass="com.intellij.ide.util.projectWizard.ModuleBuilderFactory"/>
+  <extensionPoint name="wizardInputField"
+                  beanClass="com.intellij.ide.util.projectWizard.WizardInputField$Bean"/>
   <extensionPoint name="facetType"
                   interface="com.intellij.facet.FacetType"/>
   <extensionPoint name="facet.toolWindow"

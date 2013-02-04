@@ -89,10 +89,32 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
 
+  /**
+   * Typically delegates to ModuleType (e.g. JavaModuleType) that is more generic than ModuleBuilder
+   *
+   * @param settingsStep step to be modified
+   * @return callback ({@link com.intellij.ide.util.projectWizard.ModuleWizardStep#validate()}
+   *         and {@link com.intellij.ide.util.projectWizard.ModuleWizardStep#updateDataModel()}
+   *         will be invoked)
+   */
   @Nullable
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
-    return type == null ? null : type.modifySettingsStep(settingsStep, this);
+    List<WizardInputField> fields = getAdditionalFields();
+    if (type == null) {
+      return null;
+    }
+    else {
+      ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      for (WizardInputField field : fields) {
+        field.addToSettings(settingsStep);
+      }
+      return step;
+    }
+  }
+
+  protected List<WizardInputField> getAdditionalFields() {
+    return Collections.emptyList();
   }
 
   public void setName(String name) {

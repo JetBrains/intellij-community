@@ -19,6 +19,7 @@ import com.intellij.codeInsight.actions.ReformatAndOptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -254,12 +255,12 @@ public class FormatterUtil {
     if (node == null) return false;
 
     if (isWhitespaceOrEmpty(node)) return true;
-    for (WhiteSpaceFormattingStrategy strategy : WhiteSpaceFormattingStrategyFactory.getAllStrategies()) {
-      if (strategy.containsWhitespacesOnly(node)) {
-        return true;
-      }
+    PsiElement psi = node.getPsi();
+    if (psi == null) {
+      return false;
     }
-    return false;
+    Language language = psi.getLanguage();
+    return WhiteSpaceFormattingStrategyFactory.getStrategy(language).containsWhitespacesOnly(node);
   }
 
   /**

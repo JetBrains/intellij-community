@@ -211,6 +211,16 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
+  @Override
+  public boolean isTemporary() {
+    return myState.isTemporary();
+  }
+
+  @Override
+  public void setTemporary(boolean temporary) {
+    myState.setTemporary(temporary);
+  }
+
   protected List<? extends AnAction> getAdditionalPopupMenuActions(final XDebugSession session) {
     return getType().getAdditionalPopupMenuActions(this, session);
   }

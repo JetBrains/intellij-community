@@ -193,11 +193,22 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @NotNull
-  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type, @NotNull final String fileUrl,
-                                                                            final int line, @Nullable final T properties) {
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
+                                                                                @NotNull final String fileUrl,
+                                                                                final int line,
+                                                                                @Nullable final T properties) {
+    return addLineBreakpoint(type, fileUrl, line, properties, false);
+  }
+
+  @NotNull
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
+                                                                                @NotNull final String fileUrl,
+                                                                                final int line,
+                                                                                @Nullable final T properties,
+                                                                                boolean temporary) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<T>(type, this, properties,
-                                                                   new LineBreakpointState<T>(true, type.getId(), fileUrl, line, myTime++));
+                                                                   new LineBreakpointState<T>(true, type.getId(), fileUrl, line, temporary, myTime++));
     addBreakpoint(breakpoint, false, true);
     return breakpoint;
   }

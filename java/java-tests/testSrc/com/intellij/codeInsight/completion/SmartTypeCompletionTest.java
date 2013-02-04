@@ -471,7 +471,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testVoidExpectedType() throws Throwable {
     configureByTestName();
-    assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "getClass", "equals", "hashCode", "toString");
+    assertStringItems("notify", "notifyAll", "wait", "wait", "wait", "equals", "hashCode", "toString", "getClass");
     type("eq");
     assertEquals("equals", assertOneElement(getLookup().getItems()).getLookupString());
     select();

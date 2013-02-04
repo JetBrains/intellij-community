@@ -893,21 +893,60 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting();
   }
 
-  public void testDoNotHighlightProblemsInNotLoadedProject() throws Throwable {
-    VirtualFile m = createModulePom("not-a-module",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>project</artifactId>" +
-                                    "<version>1</version>" +
+  public void testDontHighlightProblemsInNonManagedPom1() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
+                     "<properties>" +
+                     "  <junitVersion>4.0</junitVersion>" +
+                     "</properties>");
+
+    VirtualFile m = createModulePom("m1",
+                                    "<artifactId>m1</artifactId>" +
+
+                                    "<parent>" +
+                                    "  <groupId>test</groupId>" +
+                                    "  <artifactId>project</artifactId>" +
+                                    "  <version>1</version>" +
+                                    "</parent>" +
                                     "<dependencies>" +
-                                    "  <dependency>" +
-                                    "    <groupId><error>xxx</error></groupId>" +
-                                    "    <artifactId><error>xxx</error></artifactId>" +
-                                    "    <version><error>xxx</error></version>" +
-                                    "  </dependency>" +
+                                    " <dependency>" +
+                                    " <groupId>junit</groupId>" +
+                                    " <artifactId>junit</artifactId>" +
+                                    " <version>${junitVersion}</version>" +
+                                    " </dependency>" +
                                     "</dependencies>");
 
-    checkHighlighting(m);
+    importProject();
+
+    checkHighlighting(m, true, false, true);
+  }
+
+  public void testDontHighlightProblemsInNonManagedPom2() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <junitVersion>4.0</junitVersion>" +
+                     "</properties>");
+
+    VirtualFile m = createModulePom("m1",
+                                    "<artifactId>m1</artifactId>" +
+
+                                    "<parent>" +
+                                    "  <groupId>test</groupId>" +
+                                    "  <artifactId>project</artifactId>" +
+                                    "  <version>1</version>" +
+                                    "</parent>" +
+                                    "<properties>" +
+                                    " <aaa>${junitVersion}</aaa>" +
+                                    "</properties>");
+
+    importProject();
+
+    checkHighlighting(m, true, false, true);
   }
 
   public void testUpdateIndicesIntention() throws Throwable {

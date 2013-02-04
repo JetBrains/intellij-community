@@ -252,7 +252,8 @@ public class XLineBreakpointManager {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (!myProject.isDisposed() && myProject.isInitialized() && file.isValid()) {
-                  XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line);
+
+                  XDebuggerUtil.getInstance().toggleLineBreakpoint(myProject, file, line, mouseEvent.isAltDown());
                 }
               }
             });
