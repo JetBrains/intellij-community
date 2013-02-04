@@ -27,7 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
-final class HgHeadMerger {
+public final class HgHeadMerger {
 
   private static final Logger LOG = Logger.getInstance(HgHeadMerger.class.getName());
   private final Project project;
