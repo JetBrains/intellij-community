@@ -584,6 +584,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (map1.size() == 1 && map2.size() == 1) {
       final PsiType t1 = map1.values().iterator().next();
       final PsiType t2 = map2.values().iterator().next();
+
+      boolean raw1 = t1 instanceof PsiClassType && ((PsiClassType)t1).hasParameters();
+      boolean raw2 = t2 instanceof PsiClassType && ((PsiClassType)t2).hasParameters();
+      if (!raw1 && raw2) return Specifics.FIRST;
+      if (raw1 && !raw2) return Specifics.SECOND;
+
       final Specifics substArraySpecifics = chooseHigherDimension(t1, t2);
       if (substArraySpecifics != null) {
         return substArraySpecifics;
