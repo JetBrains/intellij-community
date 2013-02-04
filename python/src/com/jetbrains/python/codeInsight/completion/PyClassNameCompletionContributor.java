@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -111,6 +112,11 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
   };
 
   private static void addImportForLookupElement(final InsertionContext context, final LookupElement item, final int tailOffset) {
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(context.getProject());
+    Document document = manager.getDocument(context.getFile());
+    if (document != null) {
+      manager.commitDocument(document);
+    }
     final PsiReference ref = context.getFile().findReferenceAt(tailOffset);
     if (ref == null || ref.resolve() == item.getObject()) {
       // no import statement needed
