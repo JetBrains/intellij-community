@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ import javax.swing.*;
 public class RncFileType extends LanguageFileType  {
   public static final String RNC_EXT = "rnc";
 
-  public static final FileType INSTANCE = new RncFileType();
+  private static final FileType INSTANCE = new RncFileType();
 
   private RncFileType() {
     super(RngCompactLanguage.INSTANCE);
@@ -71,10 +70,6 @@ public class RncFileType extends LanguageFileType  {
   public static class Factory extends FileTypeFactory {
     public void createFileTypes(@NotNull FileTypeConsumer fileTypeConsumer) {
       fileTypeConsumer.consume(INSTANCE, RNC_EXT);
-    }
-
-    public void createFileTypes(@NotNull PairConsumer<FileType, String> consumer) {
-      consumer.consume(INSTANCE, RNC_EXT);
     }
   }
 }

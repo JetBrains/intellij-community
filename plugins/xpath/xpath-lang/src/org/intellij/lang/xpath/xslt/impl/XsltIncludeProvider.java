@@ -55,7 +55,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
         boolean isXsltTag = XsltSupport.XSLT_NS.equals(nsURI);
         if (!isXslt) { // analyzing start tag
           if (!isXsltTag) {
-            throw new NanoXmlUtil.ParserStoppedException();
+            stop();
           } else {
             isXslt = true;
           }

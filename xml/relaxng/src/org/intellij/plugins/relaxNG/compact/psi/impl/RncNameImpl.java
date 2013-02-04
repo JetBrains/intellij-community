@@ -211,7 +211,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       final String prefix = myReference.getPrefix();
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",
-                                                                  RncFileType.INSTANCE,
+                                                                  RncFileType.getInstance(),
                                                                    myReference.getKind().name().toLowerCase() + " " + prefix + " = \"###\"");
       final RncFile rncFile = (RncFile)myReference.getContainingFile();
       final RncDecl[] declarations = rncFile.getDeclarations();

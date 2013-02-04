@@ -6,6 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -142,7 +143,8 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         if (file.getFileSystem() instanceof JarFileSystem) {
           return false; // there is lots and lots of custom XML inside zip files
         }
-        return file.getFileType() == StdFileTypes.XML || file.getFileType() == RncFileType.getInstance();
+        final FileType fileType = file.getFileType();
+        return fileType == StdFileTypes.XML || fileType == RncFileType.getInstance();
       }
     };
   }
