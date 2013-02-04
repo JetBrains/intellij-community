@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -37,20 +39,31 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                @NotNull ProcessingContext context) {
     final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
-    final String referencesId = xmlAttributeValue.getValue();
+    final XmlTag currentTag = PsiTreeUtil.getParentOfType(xmlAttributeValue, XmlTag.class);
+    final String value = xmlAttributeValue.getValue();
+    final boolean startsWithDollar = value.startsWith("$");
+    final String referencesId = startsWithDollar ? value.substring(1) : value;
     final Map<String, XmlAttributeValue> fileIds = new HashMap<String, XmlAttributeValue>();
     xmlAttributeValue.getContainingFile().accept(new XmlRecursiveElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
-        final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ID);
-        if (attribute != null) {
-          fileIds.put(attribute.getValue(), attribute.getValueElement());
+        if (currentTag != tag) {
+          final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ID);
+          if (attribute != null) {
+            fileIds.put(attribute.getValue(), attribute.getValueElement());
+          }
         }
       }
     });
 
     return new PsiReference[]{new PsiReferenceBase<XmlAttributeValue>(xmlAttributeValue) {
+      @Override
+      public TextRange getRangeInElement() {
+        final TextRange rangeInElement = super.getRangeInElement();
+        return startsWithDollar ? new TextRange(rangeInElement.getStartOffset() + 1, rangeInElement.getEndOffset()) : rangeInElement;
+      }
+
       @Nullable
       @Override
       public PsiElement resolve() {

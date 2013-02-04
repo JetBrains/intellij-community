@@ -122,6 +122,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testVariables() throws Exception {
+    doTest();
+  }
+
   public void testDefineAttributes() throws Exception {
     doTest();
   }
