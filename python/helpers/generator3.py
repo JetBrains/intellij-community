@@ -2468,12 +2468,12 @@ if sys.platform == 'cli':
         def elapsed(self):
             return (DateTime.Now - self.started).TotalMilliseconds
 else:
-    from time import time
+    import time
     class Timer(object):
         def __init__(self):
-            self.started = time()
+            self.started = time.time()
         def elapsed(self):
-            return int((time() - self.started)*1000)
+            return int((time.time() - self.started)*1000)
 
 
 # command-line interface
