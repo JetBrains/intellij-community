@@ -2,6 +2,7 @@
 <?import java.lang.String?>
 <?import javafx.collections.FXCollections?>
 <?import java.util.ArrayList?>
+<?import java.lang.Double?>
 <GridPane xmlns:fx="http://javafx.com/fxml">
   <fx:define>
     <FXCollections fx:factory="observableArrayList">
@@ -10,6 +11,7 @@
 
     <FXCollections fx:factory="observableArrayList">
       <String fx:value="A"/>
+      <Double value="5"/>
     </FXCollections>
 
   </fx:define>
