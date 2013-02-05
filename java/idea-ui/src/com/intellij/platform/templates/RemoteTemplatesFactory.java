@@ -56,6 +56,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
   public static final String SAMPLES_GALLERY = "Samples Gallery";
   private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
+  private static final Function<Element,WizardInputField> INPUT_FIELD_FUNCTION = new Function<Element, WizardInputField>() {
+    @Override
+    public WizardInputField fun(Element element) {
+      return WizardInputField.getFieldById(element.getText());
+    }
+  };
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
@@ -137,12 +143,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
         List<Element> fields = element.getChildren("input-field", ns);
-        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns), ContainerUtil.map(fields, new Function<Element, WizardInputField>() {
-          @Override
-          public WizardInputField fun(Element element) {
-            return WizardInputField.getFieldById(element.getText());
-          }
-        })) {
+        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns), ContainerUtil.map(fields, INPUT_FIELD_FUNCTION)) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
