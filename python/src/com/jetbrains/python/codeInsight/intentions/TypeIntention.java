@@ -28,12 +28,7 @@ public abstract class TypeIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     updateText(false);
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
-        return false;
-      }
-    }
+
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
     if (isAvailableForReturn(elementAt)) return true;
@@ -47,6 +42,12 @@ public abstract class TypeIntention implements IntentionAction {
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       if (results.length != 1) return false;
+    }
+    final VirtualFile virtualFile = problemElement.getContainingFile().getVirtualFile();
+    if (virtualFile != null) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
+        return false;
+      }
     }
     return isTypeUndefined(problemElement);
   }
