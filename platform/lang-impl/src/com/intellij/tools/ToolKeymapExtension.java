@@ -26,6 +26,10 @@ public class ToolKeymapExtension extends BaseToolKeymapExtension {
     myToolManager = ToolManager.getInstance();
   }
 
+  @Override
+  protected String getActionIdPrefix() {
+    return Tool.ACTION_ID_PREFIX;
+  }
 
   protected String getGroupByActionId(String id) {
     return myToolManager.getGroupByActionId(id);
