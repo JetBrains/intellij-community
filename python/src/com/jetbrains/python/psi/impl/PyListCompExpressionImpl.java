@@ -26,12 +26,12 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
 
   @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass list = cache.getClass("list");
     if (resultExpr != null && list != null) {
-      final PyType elementType = resultExpr.getType(context);
+      final PyType elementType = context.getType(resultExpr);
       return new PyCollectionTypeImpl(list, false, elementType);
     }
     return cache.getListType();

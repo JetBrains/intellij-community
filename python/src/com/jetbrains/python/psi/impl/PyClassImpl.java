@@ -55,7 +55,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private volatile Map<String, Property> myPropertyCache;
 
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
   }
 
@@ -276,7 +276,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           result.add(new PyClassRef(element));
         }
         else {
-          final PyType type = expression.getType(context);
+          final PyType type = context.getType(expression);
           if (type instanceof PyClassType) {
             result.add(new PyClassRef((PyClassType)type));
           }

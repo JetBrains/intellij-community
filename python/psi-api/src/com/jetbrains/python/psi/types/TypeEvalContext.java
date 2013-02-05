@@ -14,6 +14,12 @@ import java.util.*;
  * @author yole
  */
 public class TypeEvalContext {
+  public static class Key {
+    private static final Key INSTANCE = new Key();
+
+    private Key() {}
+  }
+
   private final boolean myAllowDataFlow;
   private final boolean myAllowStubToAST;
   private List<String> myTrace;
@@ -116,7 +122,7 @@ public class TypeEvalContext {
     }
     evaluating.add(element);
     try {
-      PyType result = element.getType(this);
+      PyType result = element.getType(this, Key.INSTANCE);
       if (result != null) {
         result.assertValid(element.toString());
       }

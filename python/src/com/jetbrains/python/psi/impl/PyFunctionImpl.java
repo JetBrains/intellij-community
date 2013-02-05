@@ -193,7 +193,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   private static boolean isDynamicallyEvaluated(@NotNull Collection<PyNamedParameter> parameters, @NotNull TypeEvalContext context) {
     for (PyNamedParameter parameter : parameters) {
-      final PyType type = parameter.getType(context);
+      final PyType type = context.getType(parameter);
       if (type instanceof PyDynamicallyEvaluatedType) {
         return true;
       }
@@ -245,7 +245,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       statements.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyYieldExpression(PyYieldExpression node) {
-          final PyType type = node.getType(context);
+          final PyType type = context.getType(node);
           if (node.isDelegating() && type instanceof PyCollectionType) {
             final PyCollectionType collectionType = (PyCollectionType)type;
             types.add(collectionType.getElementType(context));
@@ -330,7 +330,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyFunctionType type = new PyFunctionType(this);
     if (getDecoratorList() != null) {
       return PyUnionType.createWeakType(type);

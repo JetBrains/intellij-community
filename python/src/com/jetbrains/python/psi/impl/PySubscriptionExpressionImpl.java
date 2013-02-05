@@ -38,7 +38,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyType res = null;
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (ref != null) {

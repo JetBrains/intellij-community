@@ -167,7 +167,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  private static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
+  public static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
     final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override

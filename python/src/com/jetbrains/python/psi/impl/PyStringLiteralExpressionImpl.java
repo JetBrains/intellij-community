@@ -291,7 +291,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return true;
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final List<ASTNode> nodes = getStringNodes();
     if (nodes.size() > 0) {
       String text = getStringNodes().get(0).getText();

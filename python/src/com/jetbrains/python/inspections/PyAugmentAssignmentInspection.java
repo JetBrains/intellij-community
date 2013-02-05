@@ -75,7 +75,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                 registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
               }
               else {
-                final PyType type = rightExpression.getType(myTypeEvalContext);
+                final PyType type = myTypeEvalContext.getType(rightExpression);
                 if (type != null) {
                   final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
                   if (PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext) ||

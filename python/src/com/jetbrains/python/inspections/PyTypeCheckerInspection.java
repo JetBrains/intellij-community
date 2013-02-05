@@ -71,8 +71,8 @@ public class PyTypeCheckerInspection extends PyInspection {
             // TODO: Support *args, **kwargs
             continue;
           }
-          final PyType argType = entry.getKey().getType(myTypeEvalContext);
-          final PyType paramType = p.getType(myTypeEvalContext);
+          final PyType argType = myTypeEvalContext.getType(entry.getKey());
+          final PyType paramType = myTypeEvalContext.getType(p);
           checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);
         }
       }

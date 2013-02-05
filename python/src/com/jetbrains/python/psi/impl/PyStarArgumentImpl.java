@@ -15,7 +15,7 @@ public class PyStarArgumentImpl extends PyElementImpl implements PyStarArgument 
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 

@@ -177,7 +177,7 @@ public class PyDynamicMember {
       myContext = context;
     }
 
-    public PyType getType(@NotNull TypeEvalContext context) {
+    public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);
       }

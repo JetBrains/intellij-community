@@ -187,7 +187,7 @@ public class PyTypeModelBuilder {
                                                                                 if (np != null) {
                                                                                   TypeModel paramType =
                                                                                     _(UNKNOWN);
-                                                                                  final PyType t = np.getType(myContext);
+                                                                                  final PyType t = myContext.getType(np);
                                                                                   if (t != null) {
                                                                                     paramType = build(t, true);
                                                                                   }

@@ -15,7 +15,7 @@ public class PySetLiteralExpressionImpl extends PyElementImpl implements PySetLi
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyBuiltinCache.createLiteralCollectionType(this, "set");
   }
 

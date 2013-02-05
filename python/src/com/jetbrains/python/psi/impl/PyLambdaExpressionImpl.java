@@ -23,7 +23,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     pyVisitor.visitPyLambdaExpression(this);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyFunctionType(this);
   }
 
@@ -41,7 +41,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     final PyExpression body = getBody();
-    if (body != null) return body.getType(context);
+    if (body != null) return context.getType(body);
     else return null;
   }
 

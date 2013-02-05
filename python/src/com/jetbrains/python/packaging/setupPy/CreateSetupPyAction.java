@@ -1,6 +1,7 @@
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
+import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
@@ -38,6 +39,12 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
   public CreateSetupPyAction() {
     super(FileTemplateManager.getInstance().getInternalTemplate("Setup Script"));
     getTemplatePresentation().setText("Create setup.py");
+  }
+
+  @Override
+  public FileTemplate getTemplate() {
+    // to ensure changes are picked up, reload the template on every call (PY-6681)
+    return FileTemplateManager.getInstance().getInternalTemplate("Setup Script");
   }
 
   @Override

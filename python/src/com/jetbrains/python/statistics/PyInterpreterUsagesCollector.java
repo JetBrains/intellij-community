@@ -27,7 +27,10 @@ public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesColle
     for(Module m: ModuleManager.getInstance(project).getModules()) {
       Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
-        result.add(new UsageDescriptor(pythonSdk.getVersionString(), 1));
+        String versionString = pythonSdk.getVersionString();
+        if (versionString != null) {
+          result.add(new UsageDescriptor(versionString, 1));
+        }
       }
     }
     return result;

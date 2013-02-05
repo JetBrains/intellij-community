@@ -62,7 +62,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       }
       if (expression instanceof PyStringLiteralExpression)
         continue;
-      final PyType type = expression.getType(TypeEvalContext.fastStubOnly(file));
+      final PyType type = TypeEvalContext.fastStubOnly(file).getType(expression);
       final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
                                                             type, TypeEvalContext.fastStubOnly(file)) && type != null;
       if (!isStringReference) {
