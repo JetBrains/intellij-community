@@ -448,7 +448,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           // we shadow their name or they shadow ours (PY-6241)
           if (resolveResult instanceof PsiNamedElement && resolveResult instanceof ScopeOwner && element instanceof ScopeOwner &&
-              ourScopeOwner == ScopeUtil.getScopeOwner(resolveResult)) {
+              theirScopeOwner == ScopeUtil.getScopeOwner(resolveResult)) {
             return true;
           }
 
