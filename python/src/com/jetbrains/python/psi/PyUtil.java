@@ -609,6 +609,12 @@ public class PyUtil {
     }
   }
 
+  public static String getElementNameWithoutExtension(PsiNamedElement psiNamedElement) {
+    return psiNamedElement instanceof PyFile
+           ? FileUtil.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
+           : psiNamedElement.getName();
+  }
+
   public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
     for (PyClassRef classRef : cls.iterateAncestors()) {
       if (classRef.getPyClass() == null && classRef.getType() == null) {

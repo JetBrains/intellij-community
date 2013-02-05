@@ -226,14 +226,17 @@ public class AddImportHelper {
     if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
       addImportStatement(file, path, null, priority);
     }
-    else if (useQualified) {
-      addImportStatement(file, path, null, priority);
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), qName + "." + target.getName()));
-    }
     else {
       final PyQualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
-      addImportFrom(file, null, toImportQName.toString(), target.getName(), null, priority);
+      if (useQualified) {
+        addImportStatement(file, path, null, priority);
+        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
+        final String targetName = PyUtil.getElementNameWithoutExtension(target);
+        element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), toImportQName + "." + targetName));
+      }
+      else {
+        addImportFrom(file, null, toImportQName.toString(), target.getName(), null, priority);
+      }
     }
   }
 
