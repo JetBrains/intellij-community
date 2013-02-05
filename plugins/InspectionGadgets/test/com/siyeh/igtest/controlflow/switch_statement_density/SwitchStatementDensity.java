@@ -1,10 +1,10 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.controlflow.switch_statement_density;
 
-public class SwitchStatementDensityInspection
+public class SwitchStatementDensity
 {
     private int m_bar;
 
-    public SwitchStatementDensityInspection()
+    public SwitchStatementDensity()
     {
         m_bar = 0;
     }
@@ -28,6 +28,14 @@ public class SwitchStatementDensityInspection
                 System.out.println("3");
                 System.out.println("3");
                 System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
+                System.out.println("3");
                 break;
             case 6:
                 System.out.println("4");
@@ -35,7 +43,7 @@ public class SwitchStatementDensityInspection
             default:
                 break;
         }
-
+        switch(bar) {}
 
     }
 }
