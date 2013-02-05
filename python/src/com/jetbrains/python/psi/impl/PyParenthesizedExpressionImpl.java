@@ -26,7 +26,7 @@ public class PyParenthesizedExpressionImpl extends PyElementImpl implements PyPa
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression expr = getContainedExpression();
     return expr != null ? context.getType(expr) : null;
   }

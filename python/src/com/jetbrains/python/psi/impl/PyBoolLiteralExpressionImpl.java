@@ -15,7 +15,7 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyBuiltinCache.getInstance(this).getBoolType();
   }
 

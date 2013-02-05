@@ -68,7 +68,8 @@ public abstract class TypeIntention implements IntentionAction {
   protected abstract void updateText(boolean isReturn);
 
   private static boolean isTypeUndefined(PyExpression problemElement) {
-    final PyType type = problemElement.getType(TypeEvalContext.fastStubOnly(problemElement.getContainingFile()));
+    final TypeEvalContext context = TypeEvalContext.fastStubOnly(problemElement.getContainingFile());
+    final PyType type = context.getType(problemElement);
     if (type == null || type instanceof PyReturnTypeReference || type instanceof PyDynamicallyEvaluatedType) {
       PsiReference reference = problemElement.getReference();
       if (problemElement instanceof PyQualifiedExpression) {

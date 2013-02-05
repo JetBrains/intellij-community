@@ -38,7 +38,7 @@ public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction
     
     if (expression != null && expression.isCalleeText("dict")) {
       final TypeEvalContext context = TypeEvalContext.fast();
-      PyType type = expression.getType(context);
+      PyType type = context.getType(expression);
       if (type != null && type.isBuiltin(context)) {
         PyExpression[] argumentList = expression.getArguments();
         for (PyExpression argument : argumentList) {

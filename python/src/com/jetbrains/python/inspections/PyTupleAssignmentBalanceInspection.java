@@ -45,7 +45,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
         lhsExpression = ((PyParenthesizedExpression)lhsExpression).getContainedExpression();
 
       if (assignedValue == null) return;
-      PyType type = assignedValue.getType(myTypeEvalContext);
+      PyType type = myTypeEvalContext.getType(assignedValue);
       if (assignedValue instanceof PyReferenceExpression && !(type instanceof PyTupleType)) return;
       if (lhsExpression instanceof PyTupleExpression && type != null && !(type instanceof PyReturnTypeReference)){
         int valuesLength = PyUtil.getElementsCount(assignedValue, myTypeEvalContext);

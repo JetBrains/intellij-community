@@ -38,7 +38,7 @@ public class PyBroadExceptionInspection extends PyInspection {
   }
 
   public static boolean equalsException(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final PyType type = cls.getType(context);
+    final PyType type = context.getType(cls);
     return "Exception".equals(cls.getName()) && type != null && type.isBuiltin(context);
   }
 
@@ -56,7 +56,7 @@ public class PyBroadExceptionInspection extends PyInspection {
         registerProblem(node.getFirstChild(), "Too broad exception clause");
       }
       if (exceptClass != null) {
-        final PyType type = exceptClass.getType(myTypeEvalContext);
+        final PyType type = myTypeEvalContext.getType(exceptClass);
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final PyExpression target = node.getTarget();

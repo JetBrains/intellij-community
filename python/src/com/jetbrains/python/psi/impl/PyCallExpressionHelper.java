@@ -360,12 +360,12 @@ public class PyCallExpressionHelper {
           final PyExpression[] args = call.getArguments();
           if (args.length == 1) {
             final PyExpression arg = args[0];
-            final PyType argType = arg.getType(context);
+            final PyType argType = context.getType(arg);
             if (argType instanceof PyClassType) {
               final PyClassType classType = (PyClassType)argType;
               if (!classType.isDefinition()) {
                 final PyClass cls = classType.getPyClass();
-                return cls.getType(context);
+                return context.getType(cls);
               }
             }
             else {

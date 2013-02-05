@@ -27,7 +27,7 @@ public class PyLiteralCollectionType extends PyClassTypeImpl implements PyCollec
       return null;
     }
     for (int i = 1; i < elements.length; i++) {
-      PyType elementType = elements [i].getType(context);
+      PyType elementType = context.getType(elements[i]);
       if (elementType == null || !elementType.equals(result)) {
         return null;
       }

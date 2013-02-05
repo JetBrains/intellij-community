@@ -125,7 +125,7 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
     return new BigInteger(text, radix);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     ASTNode node = getNode();
     IElementType type = node.getElementType();
     if (type == PyElementTypes.INTEGER_LITERAL_EXPRESSION) {

@@ -171,7 +171,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         return;
       }
       if (resolved instanceof PyTypedElement) {
-        final PyType type = ((PyTypedElement)resolved).getType(myTypeEvalContext);
+        final PyType type = myTypeEvalContext.getType((PyTypedElement)resolved);
         final Boolean isCallable = PyTypeChecker.isCallable(type);
         if (isCallable != null && !isCallable) {
           registerProblem(element, PyBundle.message("INSP.strange.arg.want.callable"));

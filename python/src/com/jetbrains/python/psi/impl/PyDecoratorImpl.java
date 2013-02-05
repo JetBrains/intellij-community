@@ -166,7 +166,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context);
   }
 }

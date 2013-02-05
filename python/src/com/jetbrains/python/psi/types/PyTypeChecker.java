@@ -261,8 +261,8 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = collectCallGenerics(function, receiver, context);
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
-      final PyType argType = entry.getKey().getType(context);
-      final PyType paramType = p.getType(context);
+      final PyType argType = context.getType(entry.getKey());
+      final PyType paramType = context.getType(p);
       if (!match(paramType, argType, context, substitutions)) {
         return null;
       }
@@ -276,7 +276,7 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
     // Collect generic params of object type
     final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();
-    final PyType qualifierType = receiver != null ? receiver.getType(context) : null;
+    final PyType qualifierType = receiver != null ? context.getType(receiver) : null;
     collectGenerics(qualifierType, context, generics, new HashSet<PyType>());
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
@@ -352,7 +352,7 @@ public class PyTypeChecker {
       final PsiElement resolved = result.getElement();
       if (resolved instanceof PyTypedElement) {
         final PyTypedElement typedElement = (PyTypedElement)resolved;
-        final PyType type = typedElement.getType(context);
+        final PyType type = context.getType(typedElement);
         if (!(type instanceof PyFunctionType)) {
           return null;
         }
@@ -370,7 +370,7 @@ public class PyTypeChecker {
             if (firstResults == null) {
               firstResults = results;
             }
-            if (match(param.getType(context), arg.getType(context), context)) {
+            if (match(context.getType(param), context.getType(arg), context)) {
               return results;
             }
           }
@@ -388,7 +388,7 @@ public class PyTypeChecker {
     final PsiReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final PsiElement resolved = ref.resolve();
     if (resolved instanceof PyTypedElement) {
-      final PyType type = ((PyTypedElement)resolved).getType(context);
+      final PyType type = context.getType((PyTypedElement)resolved);
       if (type instanceof PyFunctionType) {
         final Callable callable = ((PyFunctionType)type).getCallable();
         final PyParameter[] parameters = callable.getParameterList().getParameters();
@@ -479,7 +479,7 @@ public class PyTypeChecker {
   public static boolean isResolvedToSeveralMethods(@NotNull PyQualifiedExpression callee, @NotNull TypeEvalContext context) {
     final PyExpression qualifier = callee.getQualifier();
     if (qualifier != null) {
-      final PyType qualifierType = qualifier.getType(context);
+      final PyType qualifierType = context.getType(qualifier);
       if (qualifierType instanceof PyUnionType) {
         final PyUnionType unionType = (PyUnionType)qualifierType;
         final String name = callee.getName();

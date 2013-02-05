@@ -22,7 +22,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
 
   @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = context.getType(getOperand());
     // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
     if (type instanceof PyTupleType) {

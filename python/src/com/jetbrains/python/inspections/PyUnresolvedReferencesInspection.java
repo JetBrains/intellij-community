@@ -574,7 +574,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (reference instanceof PyOperatorReference && element instanceof PyQualifiedExpression) {
         final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
         if (receiver != null) {
-          final PyType type = receiver.getType(context);
+          final PyType type = context.getType(receiver);
           if (type instanceof PyClassType) {
             final String name = ((PyClassType)type).getClassQName();
             if (name != null) {
@@ -589,7 +589,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final String exprName = expr.getName();
         if (exprName != null) {
           if (qualifier != null) {
-            final PyType type = qualifier.getType(context);
+            final PyType type = context.getType(qualifier);
             if (type instanceof PyClassType) {
               final String name = ((PyClassType)type).getClassQName();
               if (name != null) {
@@ -810,7 +810,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Nullable
     private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name) {
       final TypeEvalContext context = TypeEvalContext.fastStubOnly(null);
-      final PyType type = cls.getType(context);
+      final PyType type = context.getType(cls);
       if (type != null) {
         final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
                                                                               PyResolveContext.noImplicits().withTypeEvalContext(context));

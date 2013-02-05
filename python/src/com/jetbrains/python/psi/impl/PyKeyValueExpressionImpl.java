@@ -18,12 +18,12 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
-    final PyType keyType = getKey().getType(context);
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType keyType = context.getType(getKey());
     final PyExpression value = getValue();
     PyType valueType = null;
     if (value != null) {
-      valueType = value.getType(context);
+      valueType = context.getType(value);
     }
     return PyTupleType.create(this, new PyType[] {keyType, valueType});
   }

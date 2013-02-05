@@ -12,5 +12,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyTypedElement extends PyElement {
   @Nullable
-  PyType getType(@NotNull TypeEvalContext context);
+  PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key);
 }

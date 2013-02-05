@@ -22,7 +22,7 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
     return childrenToPsi(KEY_VALUE_EXPRESSIONS, PyKeyValueExpression.EMPTY_ARRAY);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyBuiltinCache.createLiteralCollectionType(this, "dict");
   }
 
