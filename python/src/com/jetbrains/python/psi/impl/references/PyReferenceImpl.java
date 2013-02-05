@@ -446,6 +446,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             return true;
           }
 
+          // we shadow their name or they shadow ours (PY-6241)
+          if (resolveResult instanceof PsiNamedElement && resolveResult instanceof ScopeOwner && element instanceof ScopeOwner &&
+              ourScopeOwner == PsiTreeUtil.getParentOfType(resolveResult, ScopeOwner.class)) {
+            return true;
+          }
+
           if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
             if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
           }

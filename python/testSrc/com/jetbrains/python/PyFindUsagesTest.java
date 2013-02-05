@@ -127,6 +127,11 @@ public class PyFindUsagesTest extends PyTestCase {
     }
   }
 
+  public void testNameShadowing() {  // PY-6241
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/NameShadowing.py");
+    assertEquals(2, usages.size());
+  }
+
   private Collection<UsageInfo> findMultiFileUsages(String filename) {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject("findUsages/" + testName, "");
