@@ -173,7 +173,11 @@ public class ToolEditorDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("preferences.externalToolsEdit");
+    HelpManager.getInstance().invokeHelp(getIdForHelpAction());
+  }
+
+  protected String getIdForHelpAction() {
+    return "preferences.externalToolsEdit";
   }
 
   protected ToolEditorDialog(JComponent parent, String title) {
