@@ -2,19 +2,16 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.ProjectFileIndexFacade;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.jetbrains.django.util.VirtualFileUtil;
@@ -164,17 +161,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       for (String sign : lines) {
         String[] parts = sign.split("\t");
         if (parts.length > 0 && parts[0].equals(name)) {
-          PySignature signature = new PySignature(file.getCanonicalPath(), name);
-          for (int i = 1; i < parts.length; i++) {
-            String[] var = parts[i].split(":");
-            if (var.length == 2) {
-              signature = signature.addArgumentVar(var[0], var[1]);
-            }
-            else {
-              throw new IllegalStateException("Should be <name>:<type> format. " + parts[i] + " instead.");
-            }
-          }
-          return signature;
+          return stringToSignature(file.getCanonicalPath(), sign);
         }
       }
     }
@@ -238,21 +225,32 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   @Override
   public void clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
-    ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        if (readAttribute(fileOrDir) != null) {
-          writeAttribute(fileOrDir, "");
-          deleted.set(true);
-        }
-        return true;
+      public void run() {
+        ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+          @Override
+          public boolean processFile(VirtualFile fileOrDir) {
+            if (readAttribute(fileOrDir) != null) {
+              writeAttribute(fileOrDir, "");
+              deleted.set(true);
+            }
+            if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
+              return false;
+            }
+            return true;
+          }
+        });
       }
-    });
+    }, "Cleaning the cache of dynamically collected types", true, myProject);
+
 
     String message;
     if (deleted.get()) {
       message = "Collected signatures were deleted";
-    } else {
+    }
+    else {
       message = "Nothing to delete";
     }
     Messages.showInfoMessage(myProject, message, "Delete Cache");

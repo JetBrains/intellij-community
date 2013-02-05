@@ -331,7 +331,9 @@ public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData imp
     PyRemoteSdkAdditionalData data = (PyRemoteSdkAdditionalData)o;
 
     if (!myRemoteSdkDataHolder.equals(data.myRemoteSdkDataHolder)) return false;
-    if (!mySkeletonsPath.equals(data.mySkeletonsPath)) return false;
+    if (!StringUtil.equals(mySkeletonsPath, data.mySkeletonsPath)) {
+      return false;
+    }
 
     return true;
   }

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
@@ -862,6 +863,16 @@ public class PythonSdkType extends SdkType {
     else {
       return WIN_BINARY_NAMES;
     }
+  }
+
+  public static boolean isIncompleteRemote(Sdk sdk) {
+    if (sdk.getSdkAdditionalData() instanceof RemoteSdkData) {
+      //noinspection ConstantConditions
+      if (!((RemoteSdkData)sdk.getSdkAdditionalData()).isInitialized()) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.intentions.PyGenerateDocstringIntention;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -47,10 +48,10 @@ public class DocstringQuickFix implements LocalQuickFix {
     if (myMissing != null) {
       return PyBundle.message("QFIX.docstring.add.$0", myMissingText);
     }
-    else if (myUnexpected != null){
+    else if (myUnexpected != null) {
       return PyBundle.message("QFIX.docstring.remove.$0", myUnexpected);
     }
-    else  {
+    else {
       return PyBundle.message("QFIX.docstring.insert.stub");
     }
   }
@@ -67,8 +68,9 @@ public class DocstringQuickFix implements LocalQuickFix {
       final EditorFactory instance = EditorFactory.getInstance();
       if (instance == null) return null;
       Editor[] editors = instance.getEditors(document);
-      if (editors.length > 0)
+      if (editors.length > 0) {
         return editors[0];
+      }
     }
     return null;
   }
@@ -79,8 +81,8 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
     if (docStringExpression == null && myMissing == null && myUnexpected == null) {
       if (docStringOwner instanceof PyFunction) {
-        PythonDocumentationProvider.insertDocStub((PyFunction)docStringOwner, project,
-                                                  getEditor(project, docStringOwner.getContainingFile()));
+        PyGenerateDocstringIntention
+          .generateDocstringForFunction(project, getEditor(project, docStringOwner.getContainingFile()), (PyFunction)docStringOwner);
       }
       if (docStringOwner instanceof PyClass) {
         PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
@@ -90,26 +92,27 @@ public class DocstringQuickFix implements LocalQuickFix {
       }
       return;
     }
-    if (docStringExpression == null) return;
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
-    if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
-      myPrefix = "@";
-    }
-    else {
-      myPrefix = ":";
-    }
+    if (docStringExpression != null) {
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+      if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
+        myPrefix = "@";
+      }
+      else {
+        myPrefix = ":";
+      }
 
-    String replacement = docStringExpression.getText();
-    if (myMissing != null) {
-      replacement = createMissingReplacement(docStringOwner);
-    }
-    if (myUnexpected != null) {
-      replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
-    }
-    if (!replacement.equals(docStringExpression.getText()) && !StringUtil.isEmptyOrSpaces(replacement)) {
-      PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
-      docStringExpression.replace(str);
+      String replacement = docStringExpression.getText();
+      if (myMissing != null) {
+        replacement = createMissingReplacement(docStringOwner);
+      }
+      if (myUnexpected != null) {
+        replacement = PythonDocCommentUtil.removeParamFromDocstring(replacement, myPrefix, myUnexpected);
+      }
+      if (!replacement.equals(docStringExpression.getText()) && !StringUtil.isEmptyOrSpaces(replacement)) {
+        PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
+        docStringExpression.replace(str);
+      }
     }
   }
 
