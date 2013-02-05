@@ -352,7 +352,7 @@ public class PyTypeChecker {
       final PsiElement resolved = result.getElement();
       if (resolved instanceof PyTypedElement) {
         final PyTypedElement typedElement = (PyTypedElement)resolved;
-        final PyType type = typedElement.getType(context);
+        final PyType type = context.getType(typedElement);
         if (!(type instanceof PyFunctionType)) {
           return null;
         }
@@ -370,7 +370,7 @@ public class PyTypeChecker {
             if (firstResults == null) {
               firstResults = results;
             }
-            if (match(param.getType(context), arg.getType(context), context)) {
+            if (match(context.getType(param), context.getType(arg), context)) {
               return results;
             }
           }
