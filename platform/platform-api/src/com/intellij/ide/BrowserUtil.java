@@ -162,18 +162,17 @@ public class BrowserUtil {
         try {
           Desktop.getDesktop().browse(uri);
           LOG.debug("Browser launched using JDK 1.6 API");
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        return;
-      }
-      else {
-        List<String> command = getDefaultBrowserCommand();
-        if (command != null) {
-          launchBrowserByCommand(uri, command);
           return;
         }
+        catch (Exception e) {
+          LOG.warn("Error while using Desktop API, fallback to CLI", e);
+        }
+      }
+
+      List<String> command = getDefaultBrowserCommand();
+      if (command != null) {
+        launchBrowserByCommand(uri, command);
+        return;
       }
     }
 
