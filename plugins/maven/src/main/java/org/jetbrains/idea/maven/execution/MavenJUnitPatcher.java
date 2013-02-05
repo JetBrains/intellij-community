@@ -46,7 +46,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     if (paths.isEmpty()) return;
 
-    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());;
+    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
     for (String path : paths) {
       if (domModel != null) {
