@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 
 public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
   public ToggleBookmarkAction() {
-    getTemplatePresentation().setText(IdeBundle.message("action.toggle.bookmark"));
+    getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle"));
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -53,6 +53,6 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
                                         PlatformDataKeys.EDITOR.getData(dataContext) != null ||
                                         PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
 
-    event.getPresentation().setText(IdeBundle.message("action.toggle.bookmark"));
+    event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle"));
   }
 }

@@ -24,15 +24,15 @@ import java.awt.*;
  * Time: 2:03 PM
  */
 public enum Flag {
-  orange(new Color(255,128,0)),
-  blue(new Color(0,102,204)),
-  green(new Color(0, 130,130)),
-  red(new Color(255,45,45)),
-  brown(new Color(128,64,0)),
-  magenta(new Color(255,0,255)),
-  violet(new Color(128,0,255)),
-  yellow(new Color(255,255,0)),
-  grey(new Color(140,140,140));
+  orange(new Color(255, 128, 0)),
+  blue(new Color(0, 102, 204)),
+  green(new Color(0, 130, 130)),
+  red(new Color(255, 45, 45)),
+  brown(new Color(128, 64, 0)),
+  magenta(new Color(255, 0, 255)),
+  violet(new Color(128, 0, 255)),
+  yellow(new Color(255, 255, 0)),
+  grey(new Color(140, 140, 140));
 
   private final Color myColor;
 

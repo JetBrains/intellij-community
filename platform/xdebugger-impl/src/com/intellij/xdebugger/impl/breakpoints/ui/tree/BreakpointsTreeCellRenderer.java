@@ -15,27 +15,25 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 
 import javax.swing.*;
 
 class BreakpointsTreeCellRenderer  {
-  private static void customizeRenderer(JTree tree,
-                                       Object value,
-                                       boolean selected,
-                                       boolean expanded,
-                                       boolean leaf,
-                                       int row,
-                                       boolean hasFocus,
-                                       ColoredTreeCellRenderer renderer) {
+  private static void customizeRenderer(Project project,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        ColoredTreeCellRenderer renderer) {
     if (value instanceof BreakpointItemNode) {
       BreakpointItemNode node = (BreakpointItemNode)value;
       BreakpointItem breakpoint = node.getBreakpointItem();
-      breakpoint.setupRenderer(renderer);
+      breakpoint.setupRenderer(renderer, project, selected);
     }
     else if (value instanceof BreakpointsGroupNode) {
       XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
@@ -45,13 +43,24 @@ class BreakpointsTreeCellRenderer  {
   }
 
   public static class BreakpointsCheckboxTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
+    private final Project myProject;
+
+    public BreakpointsCheckboxTreeCellRenderer(Project project) {
+      myProject = project;
+    }
+
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      BreakpointsTreeCellRenderer.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus, getTextRenderer());
+      BreakpointsTreeCellRenderer.customizeRenderer(myProject, value, selected, expanded, getTextRenderer());
     }
   }
 
   public static class BreakpointsSimpleTreeCellRenderer extends ColoredTreeCellRenderer {
+    private final Project myProject;
+
+    public BreakpointsSimpleTreeCellRenderer(Project project) {
+      myProject = project;
+    }
 
     @Override
     public void customizeCellRenderer(JTree tree,
@@ -61,7 +70,7 @@ class BreakpointsTreeCellRenderer  {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      BreakpointsTreeCellRenderer.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus, this);
+      customizeRenderer(myProject, value, selected, expanded, this);
     }
   }
 }

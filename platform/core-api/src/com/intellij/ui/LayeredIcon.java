@@ -47,6 +47,20 @@ public class LayeredIcon implements Icon {
     }
   }
 
+  public static LayeredIcon createHorizontalIcon(Icon... icons) {
+    LayeredIcon icon = new LayeredIcon(icons.length);
+    int hShift = 0;
+    int maxHeight = 0;
+    for (int i = 0; i < icons.length; i++) {
+      maxHeight = Math.max(maxHeight, icons[i].getIconHeight());
+    }
+    for (int i = 0; i < icons.length; i++) {
+      icon.setIcon(icons[i], i, hShift, (maxHeight - icons[i].getIconHeight()) / 2);
+      hShift +=icons[i].getIconWidth() + 1;
+    }
+    return icon;
+  }
+
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LayeredIcon)) return false;

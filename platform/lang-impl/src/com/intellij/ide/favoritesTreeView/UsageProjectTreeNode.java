@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  * User: Irina.Chernushina
  * Date: 6/6/12
  * Time: 7:24 PM
- *
  */
 public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageInfo> {
   private final UsagePresentation myUsagePresentation;

@@ -22,16 +22,18 @@ import com.intellij.ide.favoritesTreeView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.hash.HashMap;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author anna
@@ -41,16 +43,27 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
   private static final Logger LOG = Logger.getInstance("#" + DeleteFromFavoritesAction.class.getName());
 
   public DeleteFromFavoritesAction() {
-    super(IdeBundle.message("action.remove.from.current.favorites"));
+    super(IdeBundle.message("action.remove.from.current.favorites"), IconUtil.getRemoveIcon());
   }
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    Project project = e.getProject();
+    FavoritesViewTreeBuilder builder = FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY.getData(dataContext);
+    if (project == null || builder == null) {
+      return;
+    }
+    Set<Object> selection = builder.getSelectedElements();
+    if (selection.isEmpty()) {
       return;
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    FavoritesListProvider provider = favoritesManager.getListProvider(listName);
+    if (provider != null && provider.willHandle(CommonActionsPanel.Buttons.REMOVE, project, selection)) {
+      provider.handle(CommonActionsPanel.Buttons.REMOVE, project, selection);
+      return;
+    }
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
     final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
 
@@ -65,46 +78,69 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
         final FavoritesListNode listNode = FavoritesTreeUtil.extractParentList(root);
         LOG.assertTrue(listNode != null);
         final String name = listNode.getName();
-        if (! toRemove.containsKey(name)) {
+        if (!toRemove.containsKey(name)) {
           toRemove.put(name, new ArrayList<AbstractTreeNode>());
         }
         toRemove.get(name).add(node);
       }
     }
 
-    for (String key : toRemove.keySet()) {
-      favoritesManager.removeRoot(key, toRemove.get(key));
+    for (String name : toRemove.keySet()) {
+      favoritesManager.removeRoot(name, toRemove.get(name));
     }
   }
 
   public void updateButton(AnActionEvent e) {
+    e.getPresentation().setText(getTemplatePresentation().getText());
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    Project project = e.getProject();
+    FavoritesViewTreeBuilder builder = FavoritesTreeViewPanel.FAVORITES_TREE_BUILDER_KEY.getData(dataContext);
+    if (project == null || builder == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
-    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
-    if (roots == null || roots.length == 0) {
-      e.getPresentation().setEnabled(false);
+    Set<Object> selection = builder.getSelectedElements();
+    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+
+    FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+    FavoritesListProvider provider = favoritesManager.getListProvider(listName);
+    if (provider != null) {
+      boolean willHandle = provider.willHandle(CommonActionsPanel.Buttons.REMOVE, project, selection);
+      e.getPresentation().setEnabled(willHandle);
+      if (willHandle) {
+        e.getPresentation().setText(provider.getCustomName(CommonActionsPanel.Buttons.REMOVE));
+      }
       return;
     }
 
-    final FavoritesManager fm = FavoritesManager.getInstance(project);
-    for (FavoritesTreeNodeDescriptor root : roots) {
-      if (! FavoritesTreeUtil.extractParentList(root).isAllowsTree()) {
-        if (!(root.getElement() instanceof FavoritesListNode) && root.getParentDescriptor() != null && (! (root.getParentDescriptor().getElement() instanceof FavoritesListNode))) {
+    FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+
+    if (roots == null || roots.length == 0 || selection.isEmpty()) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    for (Object o : selection) {
+      if (o instanceof AbstractTreeNode) {
+        AbstractTreeNode node = (AbstractTreeNode)o;
+        int deep = getDeep(node);
+        if (deep != 2 && deep != 3) {//favorite list or it's nested "root"
           e.getPresentation().setEnabled(false);
           return;
         }
       }
+      else {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
     }
-    if (roots.length == 1
-        && roots[0].getElement() instanceof FavoritesListNode
-        && fm.isReadOnly(((FavoritesListNode) roots[0].getElement()).getName())) {
-      e.getPresentation().setEnabled(false);
-      return;
+  }
+
+  private static int getDeep(AbstractTreeNode node) {
+    int result = 0;
+    while (node != null) {
+      node = node.getParent();
+      result++;
     }
-    e.getPresentation().setEnabled(true);
+    return result;
   }
 }

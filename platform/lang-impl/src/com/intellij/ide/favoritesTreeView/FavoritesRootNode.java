@@ -22,27 +22,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesRootNode extends AbstractTreeNode<String> {
-  private Collection<AbstractTreeNode> myFavoritesRoots;
-  private final Project myProject;
+  private List<AbstractTreeNode> myFavoritesRoots;
 
   public FavoritesRootNode(Project project) {
     super(project, "");
-    myProject = project;
   }
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (myFavoritesRoots == null) {
-      myFavoritesRoots = new ArrayList<AbstractTreeNode>();
-      final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
-      for (String list : favoritesManager.getAvailableFavoritesListNames()) {
-        myFavoritesRoots.add(new FavoritesListNode(myProject, list, favoritesManager.allowsTree(list)));
-      }
+      myFavoritesRoots = new ArrayList<AbstractTreeNode>(FavoritesManager.getInstance(myProject).createRootNodes());
     }
     return myFavoritesRoots;
   }

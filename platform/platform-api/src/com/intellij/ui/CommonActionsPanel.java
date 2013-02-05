@@ -41,7 +41,7 @@ public class CommonActionsPanel extends JPanel {
 
     public static Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
-    Icon getIcon() {
+    public Icon getIcon() {
       switch (this) {
         case ADD:    return IconUtil.getAddIcon();
         case EDIT:    return IconUtil.getEditIcon();

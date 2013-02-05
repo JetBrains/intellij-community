@@ -61,10 +61,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
                                   JTree tree,
                                   DefaultTreeModel treeModel,
                                   ProjectAbstractTreeStructureBase treeStructure) {
-    super(project, 
-          tree, 
-          treeModel, 
-          treeStructure, 
+    super(project,
+          tree,
+          treeModel,
+          treeStructure,
           new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
@@ -85,9 +85,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
       @Override
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
-        if (findNodeByElement(parent) == null){
+        if (findNodeByElement(parent) == null) {
           queueUpdate(true);
-        } else {
+        }
+        else {
           super.childrenChanged(parent, true);
         }
       }
@@ -106,10 +107,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
     myFavoritesListener = new FavoritesListener() {
       @Override
-      public void rootsChanged(String listName) {
-        //if (myListName.equals(listName)) { //todo[kb]: add optimizations?
-          updateFromRoot();
-        //}
+      public void rootsChanged() {
+        updateFromRoot();
       }
 
       @Override
@@ -122,8 +121,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         updateFromRoot();
       }
     };
-    FavoritesManager.getInstance(myProject).addFavoritesListener(myFavoritesListener);
     initRootNode();
+    FavoritesManager.getInstance(myProject).addFavoritesListener(myFavoritesListener);
   }
 
   @NotNull
@@ -132,7 +131,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     assert structure instanceof FavoritesTreeStructure;
     return (FavoritesTreeStructure)structure;
   }
-  
+
   public AbstractTreeNode getRoot() {
     final Object rootElement = getRootElement();
     assert rootElement instanceof AbstractTreeNode;
@@ -157,7 +156,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   @Override
   public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
     final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
-    if (node != null){
+    if (node != null) {
       return TreeUtil.selectInTree(node, requestFocus, getTree());
     }
     return super.select(element, file, requestFocus);
@@ -183,13 +182,13 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     if (node != null) return node;
     return super.findNodeByElement(element);
   }
-  
+
   @Nullable
   DefaultMutableTreeNode findSmartFirstLevelNodeByElement(final Object element) {
     for (Object child : getRoot().getChildren()) {
       AbstractTreeNode favorite = (AbstractTreeNode)child;
       Object currentValue = favorite.getValue();
-      if (currentValue instanceof SmartPsiElementPointer){
+      if (currentValue instanceof SmartPsiElementPointer) {
         currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
       }
        /*else if (currentValue instanceof PsiJavaFile) {
@@ -198,9 +197,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           currentValue = classes[0];
         }
       }*/
-      if (Comparing.equal(element, currentValue)){
-        final DefaultMutableTreeNode nodeWithObject = findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
-        if (nodeWithObject != null){
+      if (Comparing.equal(element, currentValue)) {
+        final DefaultMutableTreeNode nodeWithObject =
+          findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
+        if (nodeWithObject != null) {
           return nodeWithObject;
         }
       }
@@ -246,11 +246,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      if (!getUpdater().addSubtreeToUpdateByElement(element) && element instanceof PsiFile && ((PsiFile) element).getFileType() == StdFileTypes.JAVA) {
+      if (!getUpdater().addSubtreeToUpdateByElement(element) &&
+          element instanceof PsiFile &&
+          ((PsiFile)element).getFileType() == StdFileTypes.JAVA) {
         getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
   }
-
 }
 

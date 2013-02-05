@@ -88,7 +88,7 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   }
 
   @Override
-  public void setupRenderer(ColoredTreeCellRenderer renderer) {
+  public void setupRenderer(ColoredTreeCellRenderer renderer, Project project, boolean selected) {
     boolean plainView = renderer.getTree().getClientProperty("plainView") != null;
     setupGenericRenderer(renderer, plainView);
   }

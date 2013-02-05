@@ -25,7 +25,7 @@ import javax.swing.*;
 public abstract class ItemWrapper {
   public abstract void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
 
-  public abstract void setupRenderer(ColoredTreeCellRenderer renderer);
+  public abstract void setupRenderer(ColoredTreeCellRenderer renderer, Project project, boolean selected);
 
   public abstract void updateAccessoryView(JComponent label);
 

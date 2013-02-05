@@ -52,7 +52,8 @@ import java.util.*;
  * Time: 6:51 PM
  */
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
-  private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables = new HashMap<String, TreeSet<WorkingSetSerializable>>();
+  private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables =
+    new HashMap<String, TreeSet<WorkingSetSerializable>>();
   private final static Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR =
     new ProxyComparator<String, VirtualFile>(new Convertor<VirtualFile, String>() {
       @Override
@@ -104,12 +105,14 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
       for (Usage usage : usages) {
         if (usage instanceof UsageInFile) {
           map.putValue(((UsageInFile)usage).getFile(), usage);
-        } else if (usage instanceof UsageInFiles) {
+        }
+        else if (usage instanceof UsageInFiles) {
           final VirtualFile[] files = ((UsageInFiles)usage).getFiles();
           for (VirtualFile file : files) {
             map.putValue(file, usage);
           }
-        } else {
+        }
+        else {
           nonMapped.add(usage);
         }
       }
@@ -125,9 +128,11 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
             final UsageProjectTreeNode node =
               new UsageProjectTreeNode(project, ((UsageInfo2UsageAdapter)usage).getUsageInfo(), viewSettings);
             grouping.addChild(node);
-          } else if (NullUsage.INSTANCE.equals(usage)) {
+          }
+          else if (NullUsage.INSTANCE.equals(usage)) {
             continue;
-          } else {
+          }
+          else {
             grouping.addChild(new NoteProjectNode(project, new NoteNode(usage.getPresentation().getPlainText(), true), viewSettings));
           }
         }
@@ -137,9 +142,11 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
           final UsageProjectTreeNode node =
             new UsageProjectTreeNode(project, ((UsageInfo2UsageAdapter)usage).getUsageInfo(), viewSettings);
           result.add(node);
-        } else if (NullUsage.INSTANCE.equals(usage)) {
+        }
+        else if (NullUsage.INSTANCE.equals(usage)) {
           continue;
-        } else {
+        }
+        else {
           result.add(new NoteProjectNode(project, new NoteNode(usage.getPresentation().getPlainText(), true), viewSettings));
         }
       }
@@ -153,11 +160,14 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   public AbstractTreeNode createNode(Project project, Object element, ViewSettings viewSettings) {
     if (element instanceof UsageInfo) {
       return new UsageProjectTreeNode(project, (UsageInfo)element, viewSettings);
-    } else if (element instanceof InvalidUsageNoteNode) {
+    }
+    else if (element instanceof InvalidUsageNoteNode) {
       return new InvalidUsageNoteProjectNode(project, (InvalidUsageNoteNode)element, viewSettings);
-    } else if (element instanceof NoteNode) {
+    }
+    else if (element instanceof NoteNode) {
       return new NoteProjectNode(project, (NoteNode)element, viewSettings);
-    } else if (element instanceof File) {
+    }
+    else if (element instanceof File) {
       return new FileGroupingProjectNode(project, (File)element, viewSettings);
     }
     return super.createNode(project, element, viewSettings);
@@ -190,7 +200,8 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
         return ClassPresentationUtil.getNameForClass(parent, true);
       }*/
       return file.getPresentation().getPresentableText();//+-      // todo do smthg for invalid usage
-    } else if (element instanceof File) {
+    }
+    else if (element instanceof File) {
       return ((File)element).getParent();
     }
     return null;
@@ -215,31 +226,31 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public String getElementUrl(Object element) {
     //if (element instanceof UsageInfo) {
-      final TreeSet<WorkingSetSerializable> serializables = ourSerializables.get(element.getClass().getName());
-      if (serializables != null && ! serializables.isEmpty()) {
-        final WorkingSetSerializable last = serializables.last();
-        //final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-          //final ObjectOutputStream os = new ObjectOutputStream(baos);
-          final StringBuilder sb = new StringBuilder();
-          sb.append(last.getId());
-          sb.append(' ');
-          sb.append("" + last.getVersion());
-          sb.append(' ');
+    final TreeSet<WorkingSetSerializable> serializables = ourSerializables.get(element.getClass().getName());
+    if (serializables != null && !serializables.isEmpty()) {
+      final WorkingSetSerializable last = serializables.last();
+      //final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        //final ObjectOutputStream os = new ObjectOutputStream(baos);
+        final StringBuilder sb = new StringBuilder();
+        sb.append(last.getId());
+        sb.append(' ');
+        sb.append("" + last.getVersion());
+        sb.append(' ');
 
-          //os.writeUTF(last.getId());
-          //os.writeInt(last.getVersion());
-          last.serializeMe(element, sb);
-          //os.close();
-          //final byte[] bytes = baos.toByteArray();
-          return sb.toString();
-          //return new String(bytes, 4, bytes.length - 4);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          return null;
-        }
+        //os.writeUTF(last.getId());
+        //os.writeInt(last.getVersion());
+        last.serializeMe(element, sb);
+        //os.close();
+        //final byte[] bytes = baos.toByteArray();
+        return sb.toString();
+        //return new String(bytes, 4, bytes.length - 4);
       }
+      catch (IOException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
     //}
     return null;
   }
@@ -247,10 +258,10 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public String getElementModuleName(Object element) {
     if (element instanceof UsageInfo) {
-     Module module = ModuleUtil.findModuleForPsiElement(((UsageInfo)element).getElement());
-     return module != null ? module.getName() : null;
-   }
-   return null;
+      Module module = ModuleUtil.findModuleForPsiElement(((UsageInfo)element).getElement());
+      return module != null ? module.getName() : null;
+    }
+    return null;
   }
 
   @Override
@@ -271,7 +282,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
 
       final String id = parts.get(0);
       final TreeSet<WorkingSetSerializable> set = ourSerializables.get(id);
-      if (set != null && ! set.isEmpty()) {
+      if (set != null && !set.isEmpty()) {
         final int version = Integer.parseInt(parts.get(1));
         final String cut = StringUtil.join(parts.subList(2, parts.size()), " ");
         for (java.util.Iterator<WorkingSetSerializable> iterator = set.descendingIterator(); iterator.hasNext(); ) {
@@ -295,7 +306,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
     if (obj == null) {
       obj = serializable.deserializeMeInvalid(project, is);
     }
-    return obj == null ? null : new Object[] {obj};
+    return obj == null ? null : new Object[]{obj};
     /*Object obj = serializable.deserializeMe(project, is);
     if (obj == null) {
       is.close();

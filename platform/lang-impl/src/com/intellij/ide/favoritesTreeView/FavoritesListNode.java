@@ -35,40 +35,46 @@ import java.util.List;
  */
 public class FavoritesListNode extends AbstractTreeNode<String> {
   private final Project myProject;
-  private final String myListName;
-  private final boolean myAllowsTree;
+  private final String myDescription;
 
-  public FavoritesListNode(Project project, String listName, boolean tree) {
+  public FavoritesListNode(Project project, String listName, String description) {
     super(project, listName);
     myProject = project;
-    myListName = listName;
-    myAllowsTree = tree;
+    myName = listName;
+    myDescription = description;
   }
 
-  public boolean isAllowsTree() {
-    return myAllowsTree;
+  public FavoritesListNode(Project project, String listName) {
+    this(project, listName, null);
+  }
+
+  public FavoritesListProvider getProvider() {
+    return null;
   }
 
   @NotNull
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
-    return getFavoritesRoots(myProject, myListName, this);
+    return getFavoritesRoots(myProject, myName, this);
   }
 
   @Override
   protected void update(PresentationData presentation) {
     presentation.setIcon(AllIcons.Toolwindows.ToolWindowFavorites);
-    presentation.setPresentableText(myListName);
+    presentation.setPresentableText(myName);
+    presentation.setLocationString(myDescription);
   }
-  
-  @NotNull public static Collection<AbstractTreeNode> getFavoritesRoots(Project project, String listName, final FavoritesListNode listNode) {
-    final Collection<TreeItem<Pair<AbstractUrl,String>>> pairs = FavoritesManager.getInstance(project).getFavoritesListRootUrls(listName);
-    if (pairs == null) return Collections.emptyList();
+
+  @NotNull
+  public static Collection<AbstractTreeNode> getFavoritesRoots(Project project, String listName, final FavoritesListNode listNode) {
+    final Collection<TreeItem<Pair<AbstractUrl, String>>> pairs = FavoritesManager.getInstance(project).getFavoritesListRootUrls(listName);
+    if (pairs.isEmpty()) return Collections.emptyList();
     return createFavoriteRoots(project, pairs, listNode);
   }
-  
-  @NotNull 
-  private static Collection<AbstractTreeNode> createFavoriteRoots(Project project, @NotNull Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
+
+  @NotNull
+  private static Collection<AbstractTreeNode> createFavoriteRoots(Project project,
+                                                                  @NotNull Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
                                                                   final AbstractTreeNode me) {
     Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     processUrls(project, urls, result, me);
@@ -98,7 +104,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
 
         if (node instanceof ProjectViewNodeWithChildrenList) {
           final List<TreeItem<Pair<AbstractUrl, String>>> children = pair.getChildren();
-          if (children != null && ! children.isEmpty()) {
+          if (children != null && !children.isEmpty()) {
             Collection<AbstractTreeNode> childList = new ArrayList<AbstractTreeNode>();
             processUrls(project, children, childList, node);
             for (AbstractTreeNode treeNode : childList) {
@@ -106,7 +112,8 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
             }
           }
         }
-      } catch (Exception ignored) {
+      }
+      catch (Exception ignored) {
       }
     }
   }

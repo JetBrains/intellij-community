@@ -56,13 +56,13 @@ public class ImportUsagesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final boolean enabled = isEnabled(dc);
-    if (! enabled) return;
+    if (!enabled) return;
 
     final Project project = PlatformDataKeys.PROJECT.getData(dc);
 
     final Collection<AbstractTreeNode> nodes = new UsageFavoriteNodeProvider().getFavoriteNodes(dc, ViewSettings.DEFAULT);
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    if (nodes != null && ! nodes.isEmpty()) {
+    if (nodes != null && !nodes.isEmpty()) {
       favoritesManager.addRoots(TaskDefaultFavoriteListProvider.CURRENT_TASK, nodes);
     }
   }
