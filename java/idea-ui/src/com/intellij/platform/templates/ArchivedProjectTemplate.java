@@ -34,11 +34,9 @@ import java.util.zip.ZipInputStream;
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
 
   protected final String myDisplayName;
-  private List<WizardInputField> myAdditionalFields;
 
-  public ArchivedProjectTemplate(String displayName, List<WizardInputField> additionalFields) {
+  public ArchivedProjectTemplate(String displayName) {
     myDisplayName = displayName;
-    myAdditionalFields = additionalFields;
   }
 
   @NotNull
@@ -52,8 +50,10 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return new TemplateModuleBuilder(this, getModuleType(), myAdditionalFields);
+    return new TemplateModuleBuilder(this, getModuleType(), getInputFields());
   }
+
+  public abstract List<WizardInputField> getInputFields();
 
   @Nullable
   @Override

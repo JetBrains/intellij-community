@@ -142,11 +142,17 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         String type = element.getChildText("moduleType");
 
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-        List<Element> fields = element.getChildren("input-field", ns);
-        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns), ContainerUtil.map(fields, INPUT_FIELD_FUNCTION)) {
+
+        final List<WizardInputField> inputFields = getFields(element, ns);
+        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns)) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
+          }
+
+          @Override
+          public List<WizardInputField> getInputFields() {
+            return inputFields;
           }
 
           @Override
@@ -170,6 +176,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         };
       }
     });
+  }
+
+  static List<WizardInputField> getFields(Element templateElement, Namespace ns) {
+    //noinspection unchecked
+    return ContainerUtil.map(templateElement.getChildren("input-field", ns), INPUT_FIELD_FUNCTION);
   }
 
   private static boolean checkRequiredPlugins(Element element, Namespace ns) {
