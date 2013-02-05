@@ -271,15 +271,15 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     doCheckResult(myFullDataPath, targetDataName, text);
   }
 
-  private static void doCheckResult(String myFullDataPath, String targetDataName, String text) throws IOException {
+  public static void doCheckResult(String fullPath, String targetDataName, String text) throws IOException {
     text = text.trim();
-    String expectedFileName = myFullDataPath + File.separatorChar + targetDataName;
+    String expectedFileName = fullPath + File.separatorChar + targetDataName;
     if (OVERWRITE_TESTDATA) {
       VfsTestUtil.overwriteTestData(expectedFileName, text);
       System.out.println("File " + expectedFileName + " created.");
     }
     try {
-      String expectedText = doLoadFile(myFullDataPath, targetDataName);
+      String expectedText = doLoadFile(fullPath, targetDataName);
       if (!Comparing.equal(expectedText, text)) {
         throw new FileComparisonFailure(targetDataName, expectedText, text, expectedFileName);
       }
@@ -304,7 +304,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return text;
   }
 
-  private static void ensureParsed(PsiFile file) {
+  public static void ensureParsed(PsiFile file) {
     file.accept(new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {

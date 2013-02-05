@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.AxisProperties;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jdom.Element;
@@ -113,6 +114,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private HttpClient login() throws Exception {
 
     HttpClient client = getHttpClient();
+    client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     if (myJira4) {
       PostMethod postMethod = getLoginMethodFor4x();
       client.executeMethod(postMethod);
