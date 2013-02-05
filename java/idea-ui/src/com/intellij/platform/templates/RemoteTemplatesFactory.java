@@ -54,7 +54,7 @@ import java.util.zip.ZipInputStream;
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
-  private static final String SAMPLES_GALLERY = "Samples Gallery";
+  public static final String SAMPLES_GALLERY = "Samples Gallery";
   private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
@@ -136,7 +136,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         String type = element.getChildText("moduleType");
 
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-        List<Element> fields = element.getChildren();
+        List<Element> fields = element.getChildren("input-field", ns);
         return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns), ContainerUtil.map(fields, new Function<Element, WizardInputField>() {
           @Override
           public WizardInputField fun(Element element) {
