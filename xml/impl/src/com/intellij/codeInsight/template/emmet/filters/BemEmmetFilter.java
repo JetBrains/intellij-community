@@ -46,25 +46,24 @@ import static com.google.common.collect.Lists.newLinkedList;
  * And documentation here: http://docs.emmet.io/filters/bem/
  */
 public class BemEmmetFilter extends ZenCodingFilter {
-
-  private static final Key<String> BEM_BLOCK = Key.create("BEM_BLOCK");
-  private static final Key<String> BEM_ELEMENT = Key.create("BEM_ELEMENT");
-  private static final Key<String> BEM_MODIFIER = Key.create("BEM_MODIFIER");
+  private static final Key<BemState> BEM_STATE = Key.create("BEM_STATE");
 
   private static final String ELEMENT_SEPARATOR = "__";
-  private static final Splitter ELEMENTS_SPLITTER = Splitter.on(ELEMENT_SEPARATOR);
   private static final String MODIFIER_SEPARATOR = "_";
-  private static final Splitter MODIFIERS_SPLITTER = Splitter.on(MODIFIER_SEPARATOR).limit(2);
   private static final String SHORT_ELEMENT_PREFIX = "-";
+
+  private static final Splitter ELEMENTS_SPLITTER = Splitter.on(ELEMENT_SEPARATOR);
+  private static final Splitter MODIFIERS_SPLITTER = Splitter.on(MODIFIER_SEPARATOR).limit(2);
+  private static final Splitter CLASS_NAME_SPLITTER = Splitter.on(' ').trimResults().omitEmptyStrings();
+  private static final Joiner CLASS_NAME_JOINER = Joiner.on(' ');
+
   private static final Function<String, String> CLASS_NAME_NORMALIZER = new Function<String, String>() {
     @Override
-    public String apply(String input) {
+    public String apply(@NotNull String input) {
       return input.replaceAll(Pattern.quote(SHORT_ELEMENT_PREFIX), ELEMENT_SEPARATOR);
     }
   };
 
-  private static final Splitter CLASS_NAME_SPLITTER = Splitter.on(' ').trimResults().omitEmptyStrings();
-  private static final Joiner CLASS_NAME_JOINER = Joiner.on(' ');
   private static final Predicate<String> BLOCK_NAME_PREDICATE = new Predicate<String>() {
     @Override
     public boolean apply(String className) {
@@ -84,6 +83,16 @@ public class BemEmmetFilter extends ZenCodingFilter {
     return "bem";
   }
 
+  @Override
+  public boolean isAppliedByDefault(@NotNull PsiElement context) {
+    return false; //todo: add setting for enabling this filter by default
+  }
+
+  @Override
+  public boolean isMyContext(@NotNull PsiElement context) {
+    return context.getLanguage() instanceof XMLLanguage;
+  }
+
   @NotNull
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
@@ -91,55 +100,11 @@ public class BemEmmetFilter extends ZenCodingFilter {
     Pair<String, String> classNamePair = getClassPair(attribute2Value);
     if (classNamePair != null) {
       Iterable<String> classNames = extractClasses(classNamePair.second);
-      final String defaultBlockName = suggestBlockName(classNames);
-      node.putUserData(BEM_BLOCK, defaultBlockName);
+      BEM_STATE.set(node, new BemState(suggestBlockName(classNames), null, null));
       final Set<String> newClassNames = ImmutableSet.copyOf(concat(transform(classNames, new Function<String, Iterable<String>>() {
         @Override
         public Iterable<String> apply(String className) {
-          className = fillWithBemElements(className, node);
-          className = fillWithBemModifiers(className, node);
-
-          String block = null, element = null, modifier = null;
-
-          List<String> result = newLinkedList();
-          if (className.contains(ELEMENT_SEPARATOR)) {
-            List<String> blockElements = newLinkedList(ELEMENTS_SPLITTER.split(className));
-            block = getFirst(blockElements, "");
-            if (blockElements.size() > 1) {
-              List<String> elementModifiers = newLinkedList(MODIFIERS_SPLITTER.split(blockElements.get(1)));
-              element = getFirst(elementModifiers, "");
-              if (elementModifiers.size() > 1) {
-                modifier = getLast(elementModifiers, "");
-              }
-            }
-          }
-          else if (className.contains(MODIFIER_SEPARATOR)) {
-            Iterable<String> blockModifiers = MODIFIERS_SPLITTER.split(className);
-            block = getFirst(blockModifiers, "");
-            modifier = getLast(blockModifiers, "");
-          }
-          if (block != null || element != null || modifier != null) {
-            if (isNullOrEmpty(block)) {
-              block = nullToEmpty(node.getUserData(BEM_BLOCK));
-            }
-            String prefix = block;
-            if (!isNullOrEmpty(element)) {
-              prefix += ELEMENT_SEPARATOR + element;
-            }
-            result.add(prefix);
-
-            if (!isNullOrEmpty(modifier)){
-              result.add(prefix + MODIFIER_SEPARATOR + modifier);
-            }
-
-            node.putUserData(BEM_BLOCK, block);
-            node.putUserData(BEM_ELEMENT, element);
-            node.putUserData(BEM_MODIFIER, modifier);
-          }
-          else {
-            result.add(className);
-          }
-          return result;
+          return processClassName(className, node);
         }
       })));
       attribute2Value.add(Pair.create("class", CLASS_NAME_JOINER.join(newClassNames)));
@@ -147,15 +112,79 @@ public class BemEmmetFilter extends ZenCodingFilter {
     return node;
   }
 
-  private static String fillWithBemElements(String className, GenerationNode node) {
+  private static Iterable<String> processClassName(String className, GenerationNode node) {
+    className = fillWithBemElements(className, node);
+    className = fillWithBemModifiers(className, node);
+
+    BemState nodeBemState = BEM_STATE.get(node);
+    BemState bemState = extractBemStateFromClassName(className);
+    List<String> result = newLinkedList();
+    if (!bemState.isEmpty()) {
+      String block = bemState.getBlock();
+      if (isNullOrEmpty(block)) {
+        block = nullToEmpty(nodeBemState != null ? nodeBemState.getBlock() : null);
+        bemState.setBlock(block);
+      }
+      String prefix = block;
+      String element = bemState.getElement();
+      if (!isNullOrEmpty(element)) {
+        prefix += ELEMENT_SEPARATOR + element;
+      }
+      result.add(prefix);
+      String modifier = bemState.getModifier();
+      if (!isNullOrEmpty(modifier)) {
+        result.add(prefix + MODIFIER_SEPARATOR + modifier);
+      }
+      BEM_STATE.set(node, bemState.copy());
+    }
+    else {
+      result.add(className);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static BemState extractBemStateFromClassName(@NotNull String className) {
+    BemState result = new BemState();
+    if (className.contains(ELEMENT_SEPARATOR)) {
+      List<String> blockElements = newLinkedList(ELEMENTS_SPLITTER.split(className));
+      result.setBlock(getFirst(blockElements, ""));
+      if (blockElements.size() > 1) {
+        List<String> elementModifiers = newLinkedList(MODIFIERS_SPLITTER.split(blockElements.get(1)));
+        result.setElement(getFirst(elementModifiers, ""));
+        if (elementModifiers.size() > 1) {
+          result.setModifier(getLast(elementModifiers, ""));
+        }
+      }
+    }
+    else if (className.contains(MODIFIER_SEPARATOR)) {
+      Iterable<String> blockModifiers = MODIFIERS_SPLITTER.split(className);
+      result.setBlock(getFirst(blockModifiers, ""));
+      result.setModifier(getLast(blockModifiers, ""));
+    }
+    return result;
+  }
+
+  @NotNull
+  private static String fillWithBemElements(@NotNull String className, @NotNull GenerationNode node) {
     return transformClassNameToBemFormat(className, ELEMENT_SEPARATOR, node);
   }
 
-  private static String fillWithBemModifiers(String className, GenerationNode node) {
+  @NotNull
+  private static String fillWithBemModifiers(@NotNull String className, @NotNull GenerationNode node) {
     return transformClassNameToBemFormat(className, MODIFIER_SEPARATOR, node);
   }
 
-  private static String transformClassNameToBemFormat(String className, String separator, GenerationNode node) {
+  /**
+   * Adduction className to BEM format according to tags structure.
+   *
+   * @param className
+   * @param separator handling separator
+   * @param node      current node
+   * @return class name in BEM format
+   */
+  @NotNull
+  private static String transformClassNameToBemFormat(@NotNull String className, @NotNull String separator, @NotNull GenerationNode node) {
     Pair<String, Integer> cleanStringAndDepth = getCleanStringAndDepth(className, separator);
     Integer depth = cleanStringAndDepth.second;
     if (depth > 0) {
@@ -165,19 +194,30 @@ public class BemEmmetFilter extends ZenCodingFilter {
         depth--;
       }
 
-      String prefix = donor.getUserData(BEM_BLOCK);
-      if (!isNullOrEmpty(prefix)) {
-        String element = donor.getUserData(BEM_ELEMENT);
-        if (MODIFIER_SEPARATOR.equals(separator) && !isNullOrEmpty(element)) {
-          prefix = prefix + separator + element;
+      BemState bemState = BEM_STATE.get(donor);
+      if (bemState != null) {
+        String prefix = bemState.getBlock();
+        if (!isNullOrEmpty(prefix)) {
+          String element = bemState.getElement();
+          if (MODIFIER_SEPARATOR.equals(separator) && !isNullOrEmpty(element)) {
+            prefix = prefix + separator + element;
+          }
+          return prefix + separator + cleanStringAndDepth.first;
         }
-        return prefix + separator + cleanStringAndDepth.first;
       }
     }
     return className;
   }
 
-  private static Pair<String, Integer> getCleanStringAndDepth(String name, String separator) {
+  /**
+   * Counts separators at the start of className and retrieve className without these separators.
+   *
+   * @param name
+   * @param separator
+   * @return pair like <name_without_separator_at_the_start, count_of_separators_at_the_start_of_string>
+   */
+  @NotNull
+  private static Pair<String, Integer> getCleanStringAndDepth(@NotNull String name, @NotNull String separator) {
     int result = 0;
     while (name.startsWith(separator)) {
       result++;
@@ -186,16 +226,38 @@ public class BemEmmetFilter extends ZenCodingFilter {
     return Pair.create(name, result);
   }
 
+  /**
+   * Extract all normalized class names from class attribute value
+   *
+   * @param classAttributeValue
+   * @return collection of normalized class names
+   */
+  @NotNull
   private static Iterable<String> extractClasses(String classAttributeValue) {
     return transform(CLASS_NAME_SPLITTER.split(classAttributeValue), CLASS_NAME_NORMALIZER);
   }
 
+  /**
+   * Suggest block name by class names.
+   * Returns first class started with pattern [a-z]-
+   * or first class started with letter.
+   *
+   * @param classNames
+   * @return suggested block name for given classes. Empty string if name can't be suggested.
+   */
+  @NotNull
   private static String suggestBlockName(Iterable<String> classNames) {
     return find(classNames, BLOCK_NAME_PREDICATE, find(classNames, STARTS_WITH_LETTER, ""));
   }
 
+  /**
+   * Retrieve pair "class" => classAttributeValue from node attributeList
+   *
+   * @param attribute2Value node's attributes
+   * @return pointer to pair
+   */
   @Nullable
-  private static Pair<String, String> getClassPair(List<Pair<String, String>> attribute2Value) {
+  private static Pair<String, String> getClassPair(@NotNull List<Pair<String, String>> attribute2Value) {
     for (int i = 0; i < attribute2Value.size(); i++) {
       Pair<String, String> pair = attribute2Value.get(i);
       if ("class".equals(pair.first) && !isNullOrEmpty(pair.second)) {
@@ -205,13 +267,53 @@ public class BemEmmetFilter extends ZenCodingFilter {
     return null;
   }
 
-  @Override
-  public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return false; //todo: add setting for enabling this filter by default
-  }
+  private static class BemState {
+    @Nullable private String block;
+    @Nullable private String element;
+    @Nullable private String modifier;
 
-  @Override
-  public boolean isMyContext(@NotNull PsiElement context) {
-    return context.getLanguage() instanceof XMLLanguage;
+    private BemState() {
+    }
+
+    private BemState(@Nullable String block, @Nullable String element, @Nullable String modifier) {
+      this.block = block;
+      this.element = element;
+      this.modifier = modifier;
+    }
+
+    public void setModifier(@Nullable String modifier) {
+      this.modifier = modifier;
+    }
+
+    public void setElement(@Nullable String element) {
+      this.element = element;
+    }
+
+    public void setBlock(@Nullable String block) {
+      this.block = block;
+    }
+
+    @Nullable
+    public String getBlock() {
+      return block;
+    }
+
+    @Nullable
+    public String getElement() {
+      return element;
+    }
+
+    @Nullable
+    public String getModifier() {
+      return modifier;
+    }
+
+    public boolean isEmpty() {
+      return isNullOrEmpty(block) && isNullOrEmpty(element) && isNullOrEmpty(modifier);
+    }
+
+    public BemState copy() {
+      return new BemState(block, element, modifier);
+    }
   }
 }
