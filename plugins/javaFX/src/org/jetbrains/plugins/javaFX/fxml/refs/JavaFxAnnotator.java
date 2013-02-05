@@ -59,15 +59,17 @@ public class JavaFxAnnotator implements Annotator {
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
       final PsiReference[] references = element.getReferences();
-      for (PsiReference reference : references) {
-        final PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiMember) {
-          if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
-            final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
-            final Annotation annotation = holder.createErrorAnnotation(element, 
-                                                                       symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
-            if (!(resolve instanceof PsiClass)) {
-              annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+      if (!JavaFxPsiUtil.isExpressionBinding(((XmlAttributeValue)element).getValue())) {
+        for (PsiReference reference : references) {
+          final PsiElement resolve = reference.resolve();
+          if (resolve instanceof PsiMember) {
+            if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
+              final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
+              final Annotation annotation = holder.createErrorAnnotation(element, 
+                                                                         symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
+              if (!(resolve instanceof PsiClass)) {
+                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+              }
             }
           }
         }
