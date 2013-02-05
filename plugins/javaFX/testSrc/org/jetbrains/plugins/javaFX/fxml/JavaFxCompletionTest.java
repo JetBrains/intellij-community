@@ -93,6 +93,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest();
   }
 
+  public void testExpressionBinding() throws Exception {
+    doTest("text");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

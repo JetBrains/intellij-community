@@ -77,7 +77,7 @@ public class FavoritesPanel {
           return new DnDDragStartBean("");
         }
       })
-      // todo process drag-and-drop here for tasks
+        // todo process drag-and-drop here for tasks
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {

@@ -22,6 +22,9 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,11 +70,19 @@ class EmmetParser {
   }};
 
   private int myIndex = 0;
+  private boolean hasTagContext = false;
 
   EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     myTokens = tokens;
     myCallback = callback;
     myGenerator = generator;
+
+    PsiElement context = callback.getContext();
+    XmlTag parentTag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
+    if (parentTag != null) {
+      hasTagContext = true;
+      tagLevel.push(parentTag.getName());
+    }
   }
 
   public int getIndex() {
@@ -122,6 +133,7 @@ class EmmetParser {
     if (sign == '^') {
       myIndex++;
       mul = mul != null ? mul : ZenEmptyNode.INSTANCE;
+      popTagLevel();
       ZenCodingNode climbUp2 = parseAddOrMore();
       if (climbUp2 == null) {
         return null;
@@ -152,11 +164,17 @@ class EmmetParser {
         return null;
       }
       if (hasParent) {
-        tagLevel.pop();
+        popTagLevel();
       }
       return new MoreOperationNode(mul, more2);
     }
     return null;
+  }
+
+  private void popTagLevel() {
+    if (tagLevel.size() > (hasTagContext ? 1 : 0)) {
+      tagLevel.pop();
+    }
   }
 
   @Nullable

@@ -15,12 +15,13 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 
 public class BreakpointsSimpleTree extends Tree {
-  public BreakpointsSimpleTree(BreakpointItemsTreeController controller) {
+  public BreakpointsSimpleTree(Project project, BreakpointItemsTreeController controller) {
     super(controller.getRoot());
-    setCellRenderer(new BreakpointsTreeCellRenderer.BreakpointsSimpleTreeCellRenderer());
+    setCellRenderer(new BreakpointsTreeCellRenderer.BreakpointsSimpleTreeCellRenderer(project));
     setRootVisible(false);
   }
 }

@@ -30,7 +30,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class FavoritesToolbarButtonAction extends AnActionButton implements Toggleable{
+public abstract class FavoritesToolbarButtonAction extends AnActionButton implements Toggleable {
   private FavoritesViewTreeBuilder myBuilder;
   private FavoritesViewSettings mySettings;
 
@@ -47,8 +47,9 @@ public abstract class FavoritesToolbarButtonAction extends AnActionButton implem
       }
     });
   }
-  
+
   public abstract boolean isOptionEnabled();
+
   public abstract void setOption(boolean enabled);
 
   public FavoritesViewSettings getViewSettings() {

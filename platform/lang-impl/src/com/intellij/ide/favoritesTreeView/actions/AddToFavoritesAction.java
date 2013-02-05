@@ -18,6 +18,7 @@ package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -75,7 +76,7 @@ public class AddToFavoritesAction extends AnAction {
     Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
     Collection<AbstractTreeNode> nodesToAdd = null;
-    for(FavoriteNodeProvider provider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
+    for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
       nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
       if (nodesToAdd != null) {
         break;
@@ -92,17 +93,18 @@ public class AddToFavoritesAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      e.getPresentation().setEnabled(false);
-    }
-    else {
-      e.getPresentation().setEnabled(canCreateNodes(dataContext, e));
-    }
+    e.getPresentation().setEnabled(canCreateNodes(e));
   }
 
-  public static boolean canCreateNodes(final DataContext dataContext, final AnActionEvent e) {
+  public static boolean canCreateNodes(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    if (e.getProject() == null) {
+      return false;
+    }
+    if (e.getPlace().equals(ActionPlaces.FAVORITES_VIEW_POPUP)
+        && FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext) == null) {
+      return false;
+    }
     final boolean inProjectView = e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
                                   e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
                                   e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP);
@@ -129,7 +131,11 @@ public class AddToFavoritesAction extends AnAction {
 
   public static
   @NotNull
-  Collection<AbstractTreeNode> createNodes(Project project, Module moduleContext, Object object, boolean inProjectView, ViewSettings favoritesConfig) {
+  Collection<AbstractTreeNode> createNodes(Project project,
+                                           Module moduleContext,
+                                           Object object,
+                                           boolean inProjectView,
+                                           ViewSettings favoritesConfig) {
     if (project == null) return Collections.emptyList();
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
@@ -203,7 +209,7 @@ public class AddToFavoritesAction extends AnAction {
     if (object instanceof Module) object = new Module[]{(Module)object};
     if (object instanceof Module[]) {
       for (Module module1 : (Module[])object) {
-          result.add(new ProjectViewModuleNode(project, module1, favoritesConfig));
+        result.add(new ProjectViewModuleNode(project, module1, favoritesConfig));
       }
       return result;
     }
@@ -227,9 +233,9 @@ public class AddToFavoritesAction extends AnAction {
   }
 
   private static void addPsiElementNode(PsiElement psiElement,
-                                       final Project project,
-                                       final ArrayList<AbstractTreeNode> result,
-                                       final ViewSettings favoritesConfig) {
+                                        final Project project,
+                                        final ArrayList<AbstractTreeNode> result,
+                                        final ViewSettings favoritesConfig) {
 
     Class<? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
     if (klass == null) {
@@ -261,5 +267,4 @@ public class AddToFavoritesAction extends AnAction {
     }
     return klass;
   }
-
 }

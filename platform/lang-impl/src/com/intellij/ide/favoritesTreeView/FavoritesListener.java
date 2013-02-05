@@ -16,10 +16,12 @@
 package com.intellij.ide.favoritesTreeView;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ */
 public interface FavoritesListener {
-  void rootsChanged(String listName);
+  void rootsChanged();
+
   void listAdded(String listName);
+
   void listRemoved(String listName);
 }

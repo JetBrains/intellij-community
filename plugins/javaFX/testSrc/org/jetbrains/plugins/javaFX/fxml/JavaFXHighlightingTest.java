@@ -179,6 +179,15 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testScriptSource() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "s1.js");
+    doDoTest(false, false);
+  }
+
+  public void testExpressionBinding() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

@@ -19,6 +19,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -65,7 +66,7 @@ public class FavoritesTreeUtil {
       final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
       if (uo instanceof FavoritesTreeNodeDescriptor) {
         AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
-        while ((! (treeNode instanceof FavoritesListNode)) && treeNode != null) {
+        while ((!(treeNode instanceof FavoritesListNode)) && treeNode != null) {
 //          final int idx = getIndex(treeNode.getParent().getChildren(), treeNode);
 //          if (idx == -1) return null;
           result.add(treeNode.getIndex());
@@ -96,7 +97,7 @@ public class FavoritesTreeUtil {
       final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
       if (uo instanceof FavoritesTreeNodeDescriptor) {
         AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
-        while ((! (treeNode instanceof FavoritesListNode)) && treeNode != null) {
+        while ((!(treeNode instanceof FavoritesListNode)) && treeNode != null) {
           result.add(treeNode);
           treeNode = treeNode.getParent();
         }
@@ -107,14 +108,27 @@ public class FavoritesTreeUtil {
     return Collections.emptyList();
   }
 
+  @Nullable
   public static FavoritesListNode extractParentList(FavoritesTreeNodeDescriptor descriptor) {
     final AbstractTreeNode node = descriptor.getElement();
     AbstractTreeNode current = node;
     while (current != null) {
       if (current instanceof FavoritesListNode) {
-        return (FavoritesListNode) current;
+        return (FavoritesListNode)current;
       }
       current = current.getParent();
+    }
+    return null;
+  }
+
+  static FavoritesListProvider getProvider(@NotNull FavoritesManager manager, @NotNull FavoritesTreeNodeDescriptor descriptor) {
+    AbstractTreeNode treeNode = descriptor.getElement();
+    while (treeNode != null && (!(treeNode instanceof FavoritesListNode))) {
+      treeNode = treeNode.getParent();
+    }
+    if (treeNode != null) {
+      final String name = ((FavoritesListNode)treeNode).getValue();
+      return manager.getListProvider(name);
     }
     return null;
   }

@@ -296,4 +296,27 @@ public class JavaFxPsiUtil {
     return false;
     
   }
+
+  public static boolean isExpressionBinding(String value) {
+    if (!value.startsWith("$")) return false;
+    value = value.substring(1);
+    return value.startsWith("{") && value.endsWith("}") && value.contains(".");
+  }
+
+  @Nullable
+  public static PsiType getPropertyType(final PsiType type, final Project project) {
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass != null) {
+      final PsiClass propertyClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY,
+                                                                                  GlobalSearchScope.allScope(project));
+      if (propertyClass != null) {
+        final PsiSubstitutor substitutor =
+          TypeConversionUtil.getClassSubstitutor(propertyClass, psiClass, PsiSubstitutor.EMPTY);
+        if (substitutor != null) {
+          return substitutor.substitute(propertyClass.getTypeParameters()[0]);
+        }
+      }
+    }
+    return null;
+  }
 }

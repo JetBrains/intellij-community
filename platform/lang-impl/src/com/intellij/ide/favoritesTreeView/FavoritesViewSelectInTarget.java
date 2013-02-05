@@ -73,14 +73,14 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public static ActionCallback select(@NotNull Project project,
-                            final Object toSelect,
-                            @Nullable final String viewId,
-                            @Nullable final String subviewId,
-                            final VirtualFile virtualFile,
-                            final boolean requestFocus) {
+                                      final Object toSelect,
+                                      @Nullable final String viewId,
+                                      @Nullable final String subviewId,
+                                      final VirtualFile virtualFile,
+                                      final boolean requestFocus) {
     final ActionCallback result = new ActionCallback();
 
-    ToolWindowManager windowManager=ToolWindowManager.getInstance(project);
+    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     final ToolWindow favoritesToolWindow = windowManager.getToolWindow(ToolWindowId.FAVORITES_VIEW);
 
     if (favoritesToolWindow != null) {
@@ -96,7 +96,8 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
 
         if (requestFocus) {
           favoritesToolWindow.activate(runnable, false);
-        } else {
+        }
+        else {
           favoritesToolWindow.show(runnable);
         }
       }
@@ -110,13 +111,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public static String findSuitableFavoritesList(VirtualFile file, Project project, final String currentSubId) {
-    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-    if (currentSubId != null && favoritesManager.contains(currentSubId, file)) return currentSubId;
-    final String[] lists = favoritesManager.getAvailableFavoritesListNames();
-    for (String name : lists) {
-      if (favoritesManager.contains(name, file)) return name;
-    }
-    return null;
+    return FavoritesManager.getInstance(project).getFavoriteListName(currentSubId, file);
   }
 
   public String getMinorViewId() {

@@ -66,7 +66,8 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
       os.append(separator);
       append(os, "-1");
       os.append(separator);
-    } else {
+    }
+    else {
       append(os, String.valueOf(rangeInElement.getStartOffset()));
       os.append(separator);
       append(os, String.valueOf(rangeInElement.getEndOffset()));
@@ -142,7 +143,7 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
       final UsageInfo info = new UsageInfo(element, start, end, nonCodeUsage);
       info.setDynamicUsage(dynamicUsage);
 
-        return info;
+      return info;
       /*final String newText = new UsageInfo2UsageAdapter(info).getPlainText();
       if (! Comparing.equal(newText, text)) {
         LOG.info("Usage not restored, oldText:\n'" + text + "'\nnew text: '\n" + newText + "'");
