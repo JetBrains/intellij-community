@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -207,14 +208,15 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       @Override
       public void run() {
         VirtualFile file = getSelectedFile();
-        Charset charset = cachedCharsetFromContent(file);
+        String fromBytes = file == null ? null : LoadTextUtil.wasCharsetDetectedFromBytes(file);
+        Charset charset = fromBytes == null ? cachedCharsetFromContent(file) : null;
         if (charset == null && file != null) charset = file.getCharset();
 
         String text = charset == null ? "" : charset.displayName();
-        actionEnabled = encodingActionsPair.areActionsEnabled(null,getEditor(), (Component)myStatusBar, file, getProject());
+        String failReason = file == null ? null : EncodingActionsPair.checkSomeActionEnabled(file);
+        actionEnabled = file != null && failReason == null;
 
         Pair<Charset,String> check = file == null ? null : ChooseFileEncodingAction.checkCanReload(file);
-        String failReason = check == null ? null : check.second;
         String toolTip = "File Encoding" +
                          (check == null || check.first == null ? "" : ": "+check.first.displayName()) +
                          (failReason == null ? "" : actionEnabled ? " ("+failReason+")" : " (change disabled: " + failReason + ")");

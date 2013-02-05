@@ -32,7 +32,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +54,15 @@ import java.util.Arrays;
  * @author cdr
 */
 public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAware {
-  protected String text;
-
   public ReloadFileInOtherEncodingAction() {
-    text = "Reload in...";
+    this("Reload in...");
+  }
+  protected ReloadFileInOtherEncodingAction(String text) {
+    super(text);
   }
 
   @Nullable("null means disabled, otherwise it's the document and the action description")
-  protected Pair<Document, String> checkEnabled(@NotNull VirtualFile virtualFile) {
+  public Pair<Document, String> checkEnabled(@NotNull VirtualFile virtualFile) {
     String failReason = ChooseFileEncodingAction.checkCanReload(virtualFile).second;
     if (failReason != null) return null;
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -82,7 +83,6 @@ public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAwa
     e.getPresentation().setEnabled(pair != null);
     if (pair != null) {
       e.getPresentation().setDescription(pair.second);
-      e.getPresentation().setText(text);
     }
   }
 
@@ -112,9 +112,9 @@ public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAwa
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        return createGroup(null, "Reload file ''{0}'' in''{1}''", myFile.getCharset(), new Condition<Charset>() {
+        return createGroup(null, myFile.getCharset(), new Function<Charset, String>() {
           @Override
-          public boolean value(Charset charset) {
+          public String fun(Charset charset) {
             return isCompatibleCharset(myFile, bytes, document.getText(), charset);
           }
         }); // no 'clear'
@@ -129,8 +129,8 @@ public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAwa
     }
     .createPopupActionGroup(null);
 
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      text, group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
+      group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
     popup.showInBestPositionFor(e.getDataContext());
   }
 
@@ -176,8 +176,8 @@ public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAwa
                                                    @NotNull String text,
                                                    @NotNull Charset charset,
                                                    @NotNull String action) {
-    if (!isCompatibleCharset(virtualFile, bytes, text, charset)) {
-      int res = Messages.showDialog("Encoding '" + charset.displayName() + "' does not support some characters from the text.",
+    if (isCompatibleCharset(virtualFile, bytes, text, charset) == null) {
+      int res = Messages.showDialog("File '"+virtualFile.getName()+"' most likely wasn't stored in the '" + charset.displayName() + "' encoding.",
                                     "Incompatible Encoding: " + charset.displayName(), new String[]{action + " anyway", "Cancel"}, 1,
                                     AllIcons.General.WarningDialog);
       if (res != 0) return false;
@@ -209,7 +209,8 @@ public class ReloadFileInOtherEncodingAction extends AnAction implements DumbAwa
   }
 
   // charset filter
-  public boolean isCompatibleCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] bytesOnDisk, @NotNull String text, @NotNull Charset charset) {
-    return canBeLoadedIn(virtualFile, bytesOnDisk, charset);
+  @Nullable("null means incompatible")
+  public String isCompatibleCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] bytesOnDisk, @NotNull String text, @NotNull Charset charset) {
+    return canBeLoadedIn(virtualFile, bytesOnDisk, charset) ? "Reload file '" + virtualFile.getName() + "' in '" + charset + "'" : null;
   }
 }

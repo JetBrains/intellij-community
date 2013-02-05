@@ -15,42 +15,27 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.ConvertFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.ReloadFileInOtherEncodingAction;
+import com.intellij.openapi.vfs.encoding.SaveFileInEncodingAction;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.InputEvent;
-
 public class EncodingActionsPair {
-  private final ConvertFileEncodingAction convert = new ConvertFileEncodingAction();
+  private final SaveFileInEncodingAction save = new SaveFileInEncodingAction();
   private final ReloadFileInOtherEncodingAction reload = new ReloadFileInOtherEncodingAction();
 
-  public boolean areActionsEnabled(InputEvent e,Editor editor, Component component, VirtualFile selectedFile, Project project) {
-    DataContext dataContext = createDataContext(editor, component, selectedFile, project);
-    convert.update(new AnActionEvent(e, dataContext, "", convert.getTemplatePresentation(), ActionManager.getInstance(), 0));
-    reload.update(new AnActionEvent(e, dataContext, "", reload.getTemplatePresentation(), ActionManager.getInstance(), 0));
-    return convert.getTemplatePresentation().isEnabled() || reload.getTemplatePresentation().isEnabled();
-  }
-
-  @NotNull
-  public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
-    DataContext parent = DataManager.getInstance().getDataContext(component);
-    return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile,
-           SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project,
-           SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(),
-                                              parent)));
+  // null means enabled, error description otherwise
+  public static String checkSomeActionEnabled(@NotNull VirtualFile selectedFile) {
+    String saveError = SaveFileInEncodingAction.checkCanConvert(selectedFile);
+    String reloadError = ChooseFileEncodingAction.checkCanReload(selectedFile).second;
+    return saveError == null ? reloadError : saveError;
   }
 
   public DefaultActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(convert);
+    group.add(save);
     group.add(reload);
 
     return group;
