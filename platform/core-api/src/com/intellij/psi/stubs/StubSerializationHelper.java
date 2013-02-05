@@ -38,8 +38,6 @@ import java.util.List;
  * Author: dmitrylomov
  */
 public class StubSerializationHelper {
-
-  private final static Logger LOG = Logger.getInstance(StubSerializationHelper.class);
   private AbstractStringEnumerator myNameStorage;
 
   protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<ObjectStubSerializer>();
@@ -100,7 +98,7 @@ public class StubSerializationHelper {
     return idValue;
   }
 
-  private final RecentStringInterner myStringInterner = new RecentStringInterner(8192);
+  private final RecentStringInterner myStringInterner = new RecentStringInterner();
 
   public Stub deserialize(InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
@@ -116,6 +114,10 @@ public class StubSerializationHelper {
       ++i;
     }
     return deserialize(inputStream, null);
+  }
+
+  String intern(String str) {
+    return myStringInterner.get(str);
   }
 
   private Stub deserialize(StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
