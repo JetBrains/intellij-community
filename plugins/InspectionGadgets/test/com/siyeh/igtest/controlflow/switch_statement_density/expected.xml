@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SwitchStatementDensity.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'switch' statement with too low of a branch density</problem_class>
+    <description>&lt;code&gt;switch&lt;/code&gt; has too low of a branch density (19%) #loc</description>
+  </problem>
+</problems>

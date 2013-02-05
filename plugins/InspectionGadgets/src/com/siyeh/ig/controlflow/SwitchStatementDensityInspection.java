@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.JavaRecursiveElementVisitor;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -31,34 +28,26 @@ import javax.swing.*;
 public class SwitchStatementDensityInspection extends BaseInspection {
 
   private static final int DEFAULT_DENSITY_LIMIT = 20;
-  /**
-   * this is public for the DefaultJDOMExternalizer thingy
-   *
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_DENSITY_LIMIT;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "switch.statement.density.display.name");
+    return InspectionGadgetsBundle.message("switch.statement.density.display.name");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "switch.statement.density.min.option"), this,
-      "m_limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.density.min.option"), this, "m_limit");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer intDensity = (Integer)infos[0];
-    return InspectionGadgetsBundle.message(
-      "switch.statement.density.problem.descriptor", intDensity);
+    return InspectionGadgetsBundle.message("switch.statement.density.problem.descriptor", intDensity);
   }
 
   @Override
@@ -66,17 +55,19 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     return new SwitchStatementDensityVisitor();
   }
 
-  private class SwitchStatementDensityVisitor
-    extends BaseInspectionVisitor {
+  private class SwitchStatementDensityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;
       }
-      final double density = calculateDensity(statement);
+      final int branchCount = SwitchUtils.calculateBranchCount(statement);
+      if (branchCount == 0) {
+        return;
+      }
+      final double density = calculateDensity(body, branchCount);
       final int intDensity = (int)(density * 100.0);
       if (intDensity > m_limit) {
         return;
@@ -84,32 +75,28 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       registerStatementError(statement, Integer.valueOf(intDensity));
     }
 
-    private double calculateDensity(PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return -1.0;
-      }
-      final int numBranches = SwitchUtils.calculateBranchCount(statement);
+    private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {
       final StatementCountVisitor visitor = new StatementCountVisitor();
       body.accept(visitor);
-      final int numStatements = visitor.getNumStatements();
-      return (double)numBranches / (double)numStatements;
+      return (double)branchCount / (double)visitor.getStatementCount();
     }
   }
 
-  private static class StatementCountVisitor
-    extends JavaRecursiveElementVisitor {
+  private static class StatementCountVisitor extends JavaRecursiveElementVisitor {
 
-    private int numStatements = 0;
+    private int statementCount = 0;
 
     @Override
-    public void visitStatement(@NotNull PsiStatement psiStatement) {
-      super.visitStatement(psiStatement);
-      numStatements++;
+    public void visitStatement(@NotNull PsiStatement statement) {
+      super.visitStatement(statement);
+      if (statement instanceof PsiSwitchLabelStatement || statement instanceof PsiBreakStatement) {
+        return;
+      }
+      statementCount++;
     }
 
-    public int getNumStatements() {
-      return numStatements;
+    public int getStatementCount() {
+      return statementCount;
     }
   }
 }
