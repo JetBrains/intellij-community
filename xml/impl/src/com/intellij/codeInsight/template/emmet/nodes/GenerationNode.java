@@ -250,7 +250,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       for (Pair<String, String> pair : attr2value) {
-        if (Strings.isNullOrEmpty(pair.second) && template.getSegmentsCount() > template.getVariableCount()) {
+        if (Strings.isNullOrEmpty(pair.second)) {
           template.addVariable(pair.first, "", "", true);
         }
       }
@@ -344,6 +344,8 @@ public class GenerationNode extends UserDataHolderBase {
       String varName = template.getVariableNameAt(i);
       if (!segments.contains(varName)) {
         template.removeVariable(i);
+      } else {
+        segments.remove(varName);
       }
     }
   }
