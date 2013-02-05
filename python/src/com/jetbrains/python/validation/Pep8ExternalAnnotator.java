@@ -11,6 +11,9 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -47,6 +50,7 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.State> {
+  private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
 
   public static class Problem {
     private final int myLine;
@@ -127,6 +131,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           collectedInfo.problems.add(problem);
         }
       }
+    }
+    else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+      LOG.info("Error running pep8.py: " + output.getStderr());
     }
     return collectedInfo;
   }
