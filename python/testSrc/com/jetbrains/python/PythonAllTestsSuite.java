@@ -106,7 +106,8 @@ public class PythonAllTestsSuite {
     PyStatementListTest.class,
     PyChangeSignatureTest.class,
     PyCommenterTest.class,
-    PyRegexpTest.class
+    PyRegexpTest.class,
+    PyAddImportTest.class
   };
 
   public static TestSuite suite() {

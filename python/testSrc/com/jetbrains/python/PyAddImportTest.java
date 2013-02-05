@@ -20,14 +20,22 @@ public class PyAddImportTest extends PyTestCase {
     myFixture.checkResultByFile("addImport/addBuiltin.after.py");
   }
 
-  public void testImportInParens() {  // PY-7400
-    myFixture.configureByFile("addImport/parens.py");
+  public void testParens() {  // PY-7400
+    doAddImportFrom("urllib", "unquote_plus");
+  }
+
+  public void testComment() {  // PY-8034
+    doAddImportFrom("urllib", "unquote_plus");
+  }
+
+  private void doAddImportFrom(final String path, final String name) {
+    myFixture.configureByFile("addImport/" + getTestName(true) + ".py");
     new WriteCommandAction(myFixture.getProject(), myFixture.getFile()) {
       @Override
       protected void run(Result result) throws Throwable {
-        AddImportHelper.addImportFrom(myFixture.getFile(), null, "urllib", "unquote_plus", null, AddImportHelper.ImportPriority.BUILTIN);
+        AddImportHelper.addImportFrom(myFixture.getFile(), null, path, name, null, AddImportHelper.ImportPriority.BUILTIN);
       }
     }.execute();
-    myFixture.checkResultByFile("addImport/parens.after.py");
+    myFixture.checkResultByFile("addImport/" + getTestName(true) + ".after.py");
   }
 }
