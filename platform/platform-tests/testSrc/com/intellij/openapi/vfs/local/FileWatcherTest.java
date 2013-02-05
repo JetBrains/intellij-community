@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -290,11 +291,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryOverlapping() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File fileInTopDir = new File(topDir, "file1.txt"); FileUtil.createIfNotExists(fileInTopDir);
+    final File fileInTopDir = new File(topDir, "file1.txt"); FileUtilRt.createIfNotExists(fileInTopDir);
     final File subDir = new File(topDir, "sub");  FileUtil.createDirectory(subDir);
-    final File fileInSubDir = new File(subDir, "file2.txt"); FileUtil.createIfNotExists(fileInSubDir);
+    final File fileInSubDir = new File(subDir, "file2.txt"); FileUtilRt.createIfNotExists(fileInSubDir);
     final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File fileInSideDir = new File(sideDir, "file3.txt"); FileUtil.createIfNotExists(fileInSideDir);
+    final File fileInSideDir = new File(sideDir, "file3.txt"); FileUtilRt.createIfNotExists(fileInSideDir);
     refresh(topDir);
     refresh(sideDir);
 
