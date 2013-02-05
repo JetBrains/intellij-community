@@ -1,10 +1,10 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.controlflow.switch_statements_without_default;
 
-public class SwitchStatementsWithoutDefaultInspection
+public class SwitchStatementsWithoutDefault
 {
     private int m_bar;
 
-    public SwitchStatementsWithoutDefaultInspection()
+    public SwitchStatementsWithoutDefault()
     {
         m_bar = 0;
     }
@@ -58,5 +58,10 @@ public class SwitchStatementsWithoutDefaultInspection
             case baz:
                 break;
         }
+        switch (var)
+    }
+
+    enum MyEnum {
+        foo, bar, baz;
     }
 }
