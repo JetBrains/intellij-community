@@ -1,10 +1,10 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.controlflow.fallthru_in_switch_statement;
 
-public class FallthruInSwithInspection
+public class FallthruInSwitch
 {
     private int m_bar;
 
-    public FallthruInSwithInspection()
+    public FallthruInSwitch()
     {
         m_bar = 0;
     }
@@ -15,6 +15,8 @@ public class FallthruInSwithInspection
         switch(bar)
         {
             case (3):
+              System.out.println();
+              // falls through
             case (4):
                 System.out.println("3");
             case (5):

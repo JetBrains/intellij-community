@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>FallthruInSwitch.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Fallthrough in 'switch' statement</problem_class>
+    <description>&lt;code&gt;case (5):&lt;/code&gt; fallthrough in 'switch' statement #loc</description>
+  </problem>
+
+  <problem>
+    <file>FallthruInSwitch.java</file>
+    <line>23</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Fallthrough in 'switch' statement</problem_class>
+    <description>&lt;code&gt;case (6):&lt;/code&gt; fallthrough in 'switch' statement #loc</description>
+  </problem>
+
+</problems>
