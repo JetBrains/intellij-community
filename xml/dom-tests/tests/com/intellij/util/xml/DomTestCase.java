@@ -39,12 +39,6 @@ public abstract class DomTestCase extends LightIdeaTestCase {
     getDomManager().addDomEventListener(myListener, myTestRootDisposable);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    DomApplicationComponent.getInstance().clearCachesInTests();
-    super.tearDown();
-  }
-
   protected void assertCached(final DomElement element, final XmlElement xmlElement) {
     assertNotNull(xmlElement);
     assertSame(element.getXmlTag(), xmlElement);
