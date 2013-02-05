@@ -127,7 +127,10 @@ public class HtmlUtil {
   };
 
   // flow elements are block or inline, so they shuld not close <p> for example
-  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = {"object", "applet", "ins", "del", "button", "nobr"};
+  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = {"a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
+    "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
+    "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
+    "strong", "sub", "sup", "textarea", "tt", "u", "var"};
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
