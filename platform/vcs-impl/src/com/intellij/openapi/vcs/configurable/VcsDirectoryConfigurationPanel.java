@@ -35,6 +35,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -176,6 +177,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
             return myVcsComboBox;
           }
         };
+      }
+
+      @Nullable
+      @Override
+      public String getMaxStringValue() {
+        String maxString = null;
+        for (String name : myAllVcss.keySet()) {
+          if (maxString == null || maxString.length() < name.length()) {
+            maxString = name;
+          }
+        }
+        return maxString;
+      }
+
+      @Override
+      public int getAdditionalWidth() {
+        return UIUtil.DEFAULT_HGAP;
       }
     };
 
