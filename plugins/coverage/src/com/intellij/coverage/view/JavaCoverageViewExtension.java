@@ -251,7 +251,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             }
           });
           for (PsiClass aClass : classes) {
-            if (getClassCoverageInfo(aClass) == null) continue;
+            if (!(node instanceof CoverageListRootNode) && getClassCoverageInfo(aClass) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }
@@ -260,7 +260,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
         for (CoverageSuite suite : mySuitesBundle.getSuites()) {
           final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
           for (PsiClass aClass : classes) {
-            if (getClassCoverageInfo(aClass) == null) continue;
             children.add(new CoverageListNode(aClass, mySuitesBundle, myStateBean));
           }
         }

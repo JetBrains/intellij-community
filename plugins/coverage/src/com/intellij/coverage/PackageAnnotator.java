@@ -391,7 +391,7 @@ public class PackageAnnotator {
         return;
       }
     } else {
-      collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo);
+      if (!collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo)) return;
     }
 
     ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
