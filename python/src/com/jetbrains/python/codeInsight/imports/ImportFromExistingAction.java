@@ -135,7 +135,11 @@ public class ImportFromExistingAction implements QuestionAction {
     else {
       String qualifiedName = item.getPath().toString();
       if (myUseQualifiedImport) {
-        AddImportHelper.addImportStatement(file, qualifiedName, null, priority);
+        String nameToImport = qualifiedName;
+        if (item.getImportable() instanceof PsiFileSystemItem) {
+          nameToImport += "." + myName;
+        }
+        AddImportHelper.addImportStatement(file, nameToImport, null, priority);
         myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
       else {
