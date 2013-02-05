@@ -175,7 +175,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return "PyReferenceExpression: " + getReferencedName();
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }

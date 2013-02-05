@@ -28,7 +28,7 @@ public class PyReprExpressionImpl extends PyElementImpl implements PyReprExpress
     pyVisitor.visitPyReprExpression(this);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 }

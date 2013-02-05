@@ -31,7 +31,7 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
     return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression[] elements = getElements();
     final PyType[] types = new PyType[elements.length];
     for (int i = 0; i < types.length; i++) {

@@ -42,9 +42,9 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
     return getClass().getSimpleName() + ": " + getKeyword();
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression e = getValueExpression();
-    return e != null ? e.getType(context) : null;
+    return e != null ? context.getType(e) : null;
   }
 
   @Override

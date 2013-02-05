@@ -37,7 +37,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
         final ReturnTypeCallback typeCallback = myStringToReturnTypeMap.get(containingClass.getQualifiedName());
         if (typeCallback != null) {
           final PyExpression qualifier = callSite != null ? callSite.getQualifier() : null;
-          PyType qualifierType = qualifier != null ? qualifier.getType(context) : null;
+          PyType qualifierType = qualifier != null ? context.getType(qualifier) : null;
           return typeCallback.getType(callSite, qualifierType, context);
         }
       }

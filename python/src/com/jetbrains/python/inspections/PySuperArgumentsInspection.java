@@ -70,7 +70,7 @@ public class PySuperArgumentsInspection extends PyInspection {
       PyClass firstClass = null;
       if (firstElement instanceof PyClass) firstClass = (PyClass)firstElement;
       else if (firstElement instanceof PyExpression) {
-        PyType first_type = ((PyExpression)firstElement).getType(myTypeEvalContext);
+        PyType first_type = myTypeEvalContext.getType((PyExpression)firstElement);
         if (first_type instanceof PyClassType) {
           firstClass = ((PyClassType)first_type).getPyClass();
         }

@@ -83,7 +83,7 @@ public class PyImportReference extends PyReferenceImpl {
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
-      PyType type = qualifier.getType(TypeEvalContext.fast());
+      PyType type = TypeEvalContext.fast().getType(qualifier);
       if (type != null) {
         Object[] variants = getTypeCompletionVariants(myElement, type);
         if (!alreadyHasImportKeyword()) {
@@ -177,7 +177,7 @@ public class PyImportReference extends PyReferenceImpl {
             addImportedNames(from_import.getImportElements()); // don't propose already imported items
             // try to collect submodules
             PyExpression module = (PyExpression)mod_candidate;
-            PyType qualifierType = module.getType(TypeEvalContext.fast());
+            PyType qualifierType = TypeEvalContext.fast().getType(module);
             if (qualifierType != null) {
               ProcessingContext ctx = new ProcessingContext();
               ctx.put(PyType.CTX_NAMES, myNamesAlready);

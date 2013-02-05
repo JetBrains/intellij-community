@@ -26,7 +26,7 @@ public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpress
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 

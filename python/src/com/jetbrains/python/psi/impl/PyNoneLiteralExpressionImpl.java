@@ -16,7 +16,7 @@ public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNone
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyNoneType.INSTANCE;
   }
 

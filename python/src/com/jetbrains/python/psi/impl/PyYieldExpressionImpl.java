@@ -34,8 +34,8 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   }
 
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression e = getExpression();
-    return e != null ? e.getType(context) : null;
+    return e != null ? context.getType(e) : null;
   }
 }

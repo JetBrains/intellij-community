@@ -153,7 +153,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     return null; // we're not a tuple
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiElement parent = getStubOrPsiParent();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;

@@ -20,7 +20,7 @@ public class PyConditionalExpressionImpl extends PyElementImpl implements PyCond
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression truePart = getTruePart();
     final PyExpression falsePart = getFalsePart();
     if (truePart == null || falsePart == null) {
