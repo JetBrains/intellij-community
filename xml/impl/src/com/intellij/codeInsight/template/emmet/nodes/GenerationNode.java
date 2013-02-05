@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -54,7 +55,7 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * @author Eugene.Kudelevsky
  */
-public class GenerationNode {
+public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren = newArrayList();
   private final int myNumberInIteration;
