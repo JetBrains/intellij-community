@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,16 +91,16 @@ public class CvsFieldValidator {
   public static boolean checkField(JTextField field,
                                    JTextField[] shouldDifferFrom,
                                    boolean shouldStartFromLetter,
-                                   JLabel errorMessage, TagNameFieldOwner tagNameFieldOwner) {
+                                   JLabel errorLabel, TagNameFieldOwner tagNameFieldOwner) {
     final String text = field.getText().trim();
     if (text.isEmpty()) {
-      reportError(errorMessage, CvsBundle.message("error.message.field.cannot.be.empty"), tagNameFieldOwner);
+      reportError(errorLabel, CvsBundle.message("error.message.field.cannot.be.empty"), tagNameFieldOwner);
       return false;
     }
 
     for (char invalidCharacter : INVALID_CHARACTERS) {
       if (text.indexOf(invalidCharacter) != -1) {
-        reportError(errorMessage, CvsBundle.message("error.message.field.contains.invalid.characters"), tagNameFieldOwner);
+        reportError(errorLabel, CvsBundle.message("error.message.field.contains.invalid.characters"), tagNameFieldOwner);
         return false;
       }
     }
@@ -108,17 +108,17 @@ public class CvsFieldValidator {
     for (JTextField jTextField : shouldDifferFrom) {
       if (jTextField == field) continue;
       if (jTextField.getText().trim().equals(text)) {
-        reportError(errorMessage, CvsBundle.message("error.message.duplicate.field.value"), tagNameFieldOwner);
+        reportError(errorLabel, CvsBundle.message("error.message.duplicate.field.value"), tagNameFieldOwner);
         return false;
       }
     }
 
     if (shouldStartFromLetter && !Character.isLetter(text.charAt(0))) {
-      reportError(errorMessage, CvsBundle.message("error.message.field.value.must.start.with.a.letter"), tagNameFieldOwner);
+      reportError(errorLabel, CvsBundle.message("error.message.field.value.must.start.with.a.letter"), tagNameFieldOwner);
       return false;
     }
 
-    errorMessage.setText(" ");
+    errorLabel.setText(" ");
     return true;
   }
 }
