@@ -25,6 +25,7 @@ import javax.swing.*;
  */
 public abstract class WizardInputField<T extends JComponent> {
 
+  public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
   private final String myId;
 
   protected WizardInputField(String id) {

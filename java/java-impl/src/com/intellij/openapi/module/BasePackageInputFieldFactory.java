@@ -26,12 +26,10 @@ import javax.swing.*;
  */
 public class BasePackageInputFieldFactory implements WizardInputFieldFactory {
 
-  private static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
-
   @Override
   public WizardInputField createField(String id, final String initialValue) {
 
-    return IJ_BASE_PACKAGE.equals(id) ? new WizardInputField<JTextField>(IJ_BASE_PACKAGE) {
+    return WizardInputField.IJ_BASE_PACKAGE.equals(id) ? new WizardInputField<JTextField>(WizardInputField.IJ_BASE_PACKAGE) {
 
       private final JTextField myField = new JTextField(initialValue);
 
