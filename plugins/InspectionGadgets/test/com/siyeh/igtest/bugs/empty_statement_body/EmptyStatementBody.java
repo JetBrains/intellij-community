@@ -1,8 +1,8 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.bugs.empty_statement_body;
 
-public class EmptyStatementBodyInspection
+public class EmptyStatementBody
 {
-    private void foo()
+    private void foo(int j)
     {
         while(bar());
         while(bar()){
@@ -29,6 +29,7 @@ public class EmptyStatementBodyInspection
         }
         else;
 
+        switch (j) {}
     }
 
     private boolean bar()
