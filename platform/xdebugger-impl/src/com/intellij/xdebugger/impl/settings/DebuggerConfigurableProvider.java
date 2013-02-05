@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 
 import java.util.ArrayList;
@@ -60,7 +61,10 @@ public class DebuggerConfigurableProvider extends ConfigurableProvider {
       return null;
     }
 
-    if (rootConfigurable == null && configurables.size() == 1) {
+    //Perhaps we always should have a root node 'Debugger' with separate nodes for language-specific settings under it.
+    //However for AppCode there is only one language which is clearly associated with the product
+    //This code should removed when we extract the common debugger settings to the root node.
+    if (PlatformUtils.isAppCode() && rootConfigurable == null && configurables.size() == 1) {
       rootConfigurable = configurables.get(0);
       configurables = Collections.emptyList();
     }
