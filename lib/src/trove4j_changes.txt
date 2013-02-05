@@ -1,3 +1,8 @@
+Date: 4 Feb 2013
+   Changed classes:
+     gnu.trove.THashMap - fixed bug in the Entry.setValue()
+     gnu.trove.benchmark.* - moved to the util/gnu.trove.benchmark package
+
 Date: 5 May 2012
    Changed classes:
      gnu.trove.TPrimitiveHash - fixed manual setUp in constructor (capacity, load_fator) as proper super call will do it properly
