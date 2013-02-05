@@ -249,7 +249,7 @@ public class Tool implements SchemeElement {
   }
 
   public String getActionId() {
-    StringBuffer name = new StringBuffer(ACTION_ID_PREFIX);
+    StringBuilder name = new StringBuilder(getActionIdPrefix());
     if (myGroup != null) {
       name.append(myGroup);
       name.append('_');
@@ -282,31 +282,7 @@ public class Tool implements SchemeElement {
         OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         handler.startNotify();
-        /*
-        ContentManager contentManager = RunManager.getInstance(project).getViewProvider();
-        ExecutionView.Descriptor descriptor = new ExecutionView.Descriptor(project, getName(), contentManager,
-                                                                           ToolWindowId.RUN);
-        descriptor.canBreak = false;
-        Content contentToReuse = RunManager.getInstance(project).getContentToReuse();
-        executionView = ExecutionView.openExecutionView(descriptor, contentToReuse, true, DefaultConsoleViewFactory.getInstance());
-        executionView.addAction(new EditToolAction(executionView), 1);
-        WindowManager.getInstance().getStatusBar(project).setInfo("External tool '" + getName() + "' started");
-        if (executionView.enterCriticalSection()) {
-          OSProcessHandler handler = commandLine.createProcessHandler();
-          executionView.getConsoleView().print(handler.getCommandLine() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-          executionView.setProcessHandler(handler);
-          handler.addProcessListener(new MyProcessAdapter(executionView, project));
-          // Add filters;
-          for (int i = 0; i < myOutputFilters.size(); i++) {
-            RegexpFilter filter = myOutputFilters.get(i);
-            if (filter != null) {
-              executionView.getConsoleView().addMessageFilter(filter);
-            }
-          }
-          handler.startNotify();
-        }
-        */
-      }
+     }
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
@@ -366,5 +342,9 @@ public class Tool implements SchemeElement {
   @Override
   public String toString() {
     return myGroup + ": " + myName;
+  }
+
+  public String getActionIdPrefix() {
+    return ACTION_ID_PREFIX;
   }
 }

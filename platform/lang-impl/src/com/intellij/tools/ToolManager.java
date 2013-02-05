@@ -51,6 +51,11 @@ public class ToolManager extends BaseToolManager<Tool> {
     };
   }
 
+  @Override
+  protected String getActionIdPrefix() {
+    return Tool.ACTION_ID_PREFIX;
+  }
+
   public static ToolManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
   }
