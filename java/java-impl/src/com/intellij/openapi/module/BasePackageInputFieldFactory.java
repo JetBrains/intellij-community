@@ -17,6 +17,8 @@ package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.ide.util.projectWizard.WizardInputFieldFactory;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.impl.PsiNameHelperImpl;
 
 import javax.swing.*;
 
@@ -46,6 +48,14 @@ public class BasePackageInputFieldFactory implements WizardInputFieldFactory {
       @Override
       public String getValue() {
         return myField.getText();
+      }
+
+      @Override
+      public boolean validate() throws ConfigurationException {
+        if (!PsiNameHelperImpl.getInstance().isQualifiedName(getValue())) {
+          throw new ConfigurationException(getValue() + " is not a valid package name");
+        }
+        return true;
       }
     } : null;
   }

@@ -104,12 +104,34 @@ public abstract class ModuleBuilder extends ProjectBuilder{
       return null;
     }
     else {
-      ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
-      List<WizardInputField> fields = getAdditionalFields();
+      final ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      final List<WizardInputField> fields = getAdditionalFields();
       for (WizardInputField field : fields) {
         field.addToSettings(settingsStep);
       }
-      return step;
+      return new ModuleWizardStep() {
+        @Override
+        public JComponent getComponent() {
+          return null;
+        }
+
+        @Override
+        public void updateDataModel() {
+          if (step != null) {
+            step.updateDataModel();
+          }
+        }
+
+        @Override
+        public boolean validate() throws ConfigurationException {
+          for (WizardInputField field : fields) {
+            if (!field.validate()) {
+              return false;
+            }
+          }
+          return step == null || step.validate();
+        }
+      };
     }
   }
 
