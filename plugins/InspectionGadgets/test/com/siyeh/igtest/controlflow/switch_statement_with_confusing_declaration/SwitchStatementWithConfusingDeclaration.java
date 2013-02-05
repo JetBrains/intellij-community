@@ -1,4 +1,4 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.controlflow.switch_statement_with_confusing_declaration;
 
 public class SwitchStatementWithConfusingDeclaration
 {
