@@ -16,8 +16,6 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.KeyedExtensionCollector;
-import com.intellij.util.KeyedLazyInstanceEP;
 
 import javax.swing.*;
 
@@ -27,26 +25,36 @@ import javax.swing.*;
  */
 public abstract class WizardInputField<T extends JComponent> {
 
-  private static final String EP_NAME = "com.intellij.wizardInputField";
+  private final String myId;
+
+  protected WizardInputField(String id) {
+    myId = id;
+  }
+
+  public String getId() {
+    return myId;
+  }
 
   public abstract String getLabel();
 
-  public abstract T createComponent();
+  public abstract T getComponent();
 
-  public abstract String getValue(T component);
+  public abstract String getValue();
 
   public boolean validate() throws ConfigurationException { return true; }
 
-  private static KeyedExtensionCollector<WizardInputField, String> COLLECTOR =
-    new KeyedExtensionCollector<WizardInputField, String>(EP_NAME);
-
-  public static WizardInputField getFieldById(String id) {
-    return COLLECTOR.findSingle(id);
+  public static WizardInputField getFieldById(String id, String initialValue) {
+    WizardInputFieldFactory[] extensions = WizardInputFieldFactory.EP_NAME.getExtensions();
+    for (WizardInputFieldFactory extension : extensions) {
+      WizardInputField field = extension.createField(id, initialValue);
+      if (field != null) {
+        return field;
+      }
+    }
+    return null;
   }
 
   public void addToSettings(SettingsStep settingsStep) {
-    settingsStep.addSettingsField(getLabel(), createComponent());
+    settingsStep.addSettingsField(getLabel(), getComponent());
   }
-
-  public static class Bean extends KeyedLazyInstanceEP<WizardInputField> {}
 }

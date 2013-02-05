@@ -209,7 +209,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private static byte[] processTemplates(String s) throws IOException {
+  private byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);

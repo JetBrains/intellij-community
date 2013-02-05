@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module;
+package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.projectWizard.WizardInputField;
-
-import javax.swing.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/1/13
+ *         Date: 2/5/13
  */
-public class BasePackageInputField extends WizardInputField<JTextField> {
+public interface WizardInputFieldFactory {
 
-  @Override
-  public String getLabel() {
-    return "Base package:";
-  }
+  ExtensionPointName<WizardInputFieldFactory> EP_NAME = ExtensionPointName.create("com.intellij.wizardInputFieldFactory");
 
-  @Override
-  public JTextField createComponent() {
-    return new JTextField();
-  }
-
-  @Override
-  public String getValue(JTextField component) {
-    return component.getText();
-  }
+  @Nullable
+  WizardInputField createField(String id, String initialValue);
 }

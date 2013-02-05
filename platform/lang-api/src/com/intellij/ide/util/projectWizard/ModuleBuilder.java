@@ -100,12 +100,12 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   @Nullable
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
-    List<WizardInputField> fields = getAdditionalFields();
     if (type == null) {
       return null;
     }
     else {
       ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      List<WizardInputField> fields = getAdditionalFields();
       for (WizardInputField field : fields) {
         field.addToSettings(settingsStep);
       }
