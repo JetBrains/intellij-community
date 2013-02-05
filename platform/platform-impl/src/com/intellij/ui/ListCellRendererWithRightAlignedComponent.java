@@ -31,6 +31,7 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
   private String myLeftText;
   private String myRightText;
   private Icon myIcon;
+  private Icon myRightIcon;
   private Color myRightForeground;
 
   public ListCellRendererWithRightAlignedComponent() {
@@ -46,6 +47,7 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
       @Override
       public void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
         setText(StringUtil.notNullize(myRightText));
+        setIcon(myRightIcon);
         setForeground(myRightForeground);
       }
     };
@@ -65,6 +67,14 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
     myPanel.add(myLeftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.CENTER);
     myPanel.add(myRightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus), BorderLayout.EAST);
     return myPanel;
+  }
+
+  protected Icon getRightIcon() {
+    return myRightIcon;
+  }
+
+  protected void setRightIcon(Icon rightIcon) {
+    myRightIcon = rightIcon;
   }
 
   protected final void setLeftText(String text) {
