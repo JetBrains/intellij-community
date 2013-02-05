@@ -54,13 +54,13 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @NotNull
     @Override
     public Module[] getModules() {
-      return ((AbstractPythonRunConfiguration)getConfiguration()).getModules();
+      return ((AbstractPythonRunConfiguration)getPeer()).getModules();
     }
 
     @Nullable
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-      final AbstractPythonRunConfiguration configuration = ((AbstractPythonRunConfiguration)getConfiguration());
+      final AbstractPythonRunConfiguration configuration = ((AbstractPythonRunConfiguration)getPeer());
       final PythonCommandLineState state = new FailedPythonTestCommandLineStateBase(configuration, env,
                                                             (PythonTestCommandLineStateBase)configuration.getState(executor, env));
       return state;
