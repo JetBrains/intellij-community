@@ -55,7 +55,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String s = readEntry(new Condition<ZipEntry>() {
       @Override
       public boolean value(ZipEntry entry) {
-        return "input-fields.xml".equals(entry.getName());
+        return entry.getName().endsWith("/.idea/input-fields.xml");
       }
     });
     if (s != null) {
