@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +51,16 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
       return PlatformIcons.DIRECTORY_CLOSED_ICON;
     }
     return FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName()).getIcon();
+  }
+
+  @Override
+  protected boolean acceptFilter(Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
+    VirtualFile file = getFilePointer().getFile();
+    if (file != null && filter.first.contains(file, filter.second)) {
+      applyFilter(true);
+      return true;
+    }
+    return false;
   }
 
   @NotNull
