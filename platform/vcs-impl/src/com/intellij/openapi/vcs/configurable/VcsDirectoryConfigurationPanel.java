@@ -418,6 +418,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         errorPanel.add(vcsRootErrorLabel);
       }
     }
+    if (errorPanel.getComponentCount() == 0) {
+      pane.setVisible(false);
+    }
     pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
     pane.setMaximumSize(new Dimension(-1, DEFAULT_HEIGHT));
     return pane;
