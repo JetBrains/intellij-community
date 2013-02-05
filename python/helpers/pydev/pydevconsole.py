@@ -165,6 +165,9 @@ class InterpreterInterface(BaseInterpreterInterface):
     def close(self):
         sys.exit(0)
 
+    def get_greeting_msg(self):
+        return 'PyDev console: starting.\n'
+
 
 def process_exec_queue(interpreter):
     while 1:
@@ -277,6 +280,9 @@ def start_server(host, port, interpreter):
         print(port)
         print(client_port)
 
+
+    sys.stderr.write(interpreter.get_greeting_msg())
+
     server.serve_forever()
 
     return server
@@ -295,8 +301,6 @@ def StartServer(host, port, client_port):
     server_thread.setDaemon(True)
     server_thread.start()
 
-    if not IPYTHON:
-        sys.stderr.write('PyDev console: starting.\n')
     process_exec_queue(interpreter)
 
 

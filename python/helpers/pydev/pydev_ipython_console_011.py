@@ -144,3 +144,6 @@ class PyDevFrontEnd:
     def is_automagic(self):
         return self.ipython.automagic
 
+    def get_greeting_msg(self):
+        sys.stderr.write('PyDev console: using IPython %s\n' % self.version)
+

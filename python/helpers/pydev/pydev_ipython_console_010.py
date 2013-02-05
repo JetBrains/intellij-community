@@ -124,3 +124,6 @@ class PyDevFrontEnd(PrefilterFrontEnd):
         else:
             return False
 
+    def get_greeting_msg(self):
+        return 'PyDev console: using IPython 0.10\n'
+
