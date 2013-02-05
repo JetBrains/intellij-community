@@ -100,6 +100,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
         }
       }
     });
+    myAppearanceComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myColorSchemeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
