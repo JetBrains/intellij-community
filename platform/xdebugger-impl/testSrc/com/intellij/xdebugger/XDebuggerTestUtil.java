@@ -410,6 +410,21 @@ public class XDebuggerTestUtil {
     }.execute();
   }
 
+  public static void assertVariable(Pair<XValue, String> varAndErrorMessage,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value,
+                                    @Nullable Boolean hasChildren) throws InterruptedException {
+    Assert.assertNull(varAndErrorMessage.second);
+    assertVariable(varAndErrorMessage.first, name, type, value, hasChildren);
+  }
+
+  public static String assertVariableExpression(XValue desc, String expectedExpression) {
+    String expression = desc.getEvaluationExpression();
+    Assert.assertEquals(expectedExpression, expression);
+    return expression;
+  }
+
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {
     public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
       addChildren(stackFrames, last);
