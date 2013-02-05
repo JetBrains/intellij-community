@@ -385,18 +385,47 @@ public class MavenProject {
 
   @NotNull
   public ProcMode getProcMode() {
-    Element compilerConfiguration = getCompilerConfig();
+    Element compilerConfiguration = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile");
+    if (compilerConfiguration == null) {
+      compilerConfiguration = getCompilerConfig();
+    }
+
     if (compilerConfiguration == null) {
       return ProcMode.BOTH;
     }
+
     Element procElement = compilerConfiguration.getChild("proc");
-    if (procElement == null) {
-      return ProcMode.BOTH;
-    }
-    else {
+    if (procElement != null) {
       String procMode = procElement.getValue();
       return ("only".equalsIgnoreCase(procMode)) ? ProcMode.ONLY : ("none".equalsIgnoreCase(procMode)) ? ProcMode.NONE : ProcMode.BOTH;
     }
+
+    String compilerArgument = compilerConfiguration.getChildTextTrim("compilerArgument");
+    if ("-proc:none".equals(compilerArgument)) {
+      return ProcMode.NONE;
+    }
+    if ("-proc:only".equals(compilerArgument)) {
+      return ProcMode.ONLY;
+    }
+
+    //Element compilerArguments = compilerConfiguration.getChild("compilerArguments");
+    //if (compilerArguments != null) {
+    //  for (Element element : (List<Element>)compilerArguments.getChildren()) {
+    //    String argName = element.getName();
+    //    if (argName.startsWith("-")) {
+    //      argName = argName.substring(1);
+    //    }
+    //
+    //    if ("proc:none".equals(argName)) {
+    //      return ProcMode.NONE;
+    //    }
+    //    if ("proc:only".equals(argName)) {
+    //      return ProcMode.ONLY;
+    //    }
+    //  }
+    //}
+
+    return ProcMode.BOTH;
   }
 
   //@Nullable
@@ -434,6 +463,10 @@ public class MavenProject {
     if (compilerArguments != null) {
       for (Element e : (Collection<Element>)compilerArguments.getChildren()){
         String name = e.getName();
+        if (name.startsWith("-")) {
+          name = name.substring(1);
+        }
+
         if (name.length() > 1 && name.charAt(0) == 'A') {
           if (res == null) {
             res = new LinkedHashMap<String, String>();
@@ -860,24 +893,26 @@ public class MavenProject {
 
   @Nullable
   public Element getPluginConfiguration(@Nullable String groupId, @Nullable String artifactId) {
-    return doGetPluginOrGoalConfiguration(groupId, artifactId, null);
+    return getPluginGoalConfiguration(groupId, artifactId, null);
   }
 
   @Nullable
   public Element getPluginGoalConfiguration(@Nullable String groupId, @Nullable String artifactId, @Nullable String goal) {
-    return doGetPluginOrGoalConfiguration(groupId, artifactId, goal);
-  }
-
-  @Nullable
-  private Element doGetPluginOrGoalConfiguration(@Nullable String groupId, @Nullable String artifactId, @Nullable String goalOrNull) {
     MavenPlugin plugin = findPlugin(groupId, artifactId);
     if (plugin == null) return null;
 
-    if (goalOrNull == null) {
+    if (goal == null) {
       return plugin.getConfigurationElement();
     }
 
-    return plugin.getGoalConfiguration(goalOrNull);
+    return plugin.getGoalConfiguration(goal);
+  }
+
+  public Element getPluginExecutionConfiguration(@Nullable String groupId, @Nullable String artifactId, @NotNull String executionId) {
+    MavenPlugin plugin = findPlugin(groupId, artifactId);
+    if (plugin == null) return null;
+
+    return plugin.getExecutionConfiguration(executionId);
   }
 
   @Nullable

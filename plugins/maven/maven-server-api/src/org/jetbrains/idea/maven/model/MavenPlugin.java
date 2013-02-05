@@ -98,6 +98,16 @@ public class MavenPlugin implements Serializable {
     return null;
   }
 
+  public Element getExecutionConfiguration(@NotNull String executionId) {
+    for (MavenPlugin.Execution each : getExecutions()) {
+      if (executionId.equals(each.getExecutionId())) {
+        return each.getConfigurationElement();
+      }
+    }
+
+    return null;
+  }
+
   public String getDisplayString() {
     StringBuilder builder = new StringBuilder();
 
@@ -146,10 +156,16 @@ public class MavenPlugin implements Serializable {
   public static class Execution implements Serializable {
     private final List<String> myGoals;
     private final Element myConfiguration;
+    private final String myExecutionId;
 
-    public Execution(List<String> goals, Element configuration) {
+    public Execution(String executionId, List<String> goals, Element configuration) {
       myGoals = goals;
       myConfiguration = configuration;
+      myExecutionId = executionId;
+    }
+
+    public String getExecutionId() {
+      return myExecutionId;
     }
 
     public List<String> getGoals() {
@@ -169,6 +185,7 @@ public class MavenPlugin implements Serializable {
       Execution that = (Execution)o;
 
       if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
+      if (myExecutionId != null ? !myExecutionId.equals(that.myExecutionId) : that.myExecutionId != null) return false;
       if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
 
       return true;
@@ -177,7 +194,10 @@ public class MavenPlugin implements Serializable {
     @Override
     public int hashCode() {
       int result = myGoals != null ? myGoals.hashCode() : 0;
-      result = 31 * result + (myConfiguration != null ? JDOMUtil.getTreeHash(myConfiguration) : 0);
+      if (myExecutionId != null) {
+        result = 31 * result + myExecutionId.hashCode();
+      }
+
       return result;
     }
   }
