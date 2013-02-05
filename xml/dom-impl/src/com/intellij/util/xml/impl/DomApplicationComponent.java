@@ -18,6 +18,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
@@ -60,18 +61,20 @@ public class DomApplicationComponent {
     }
   };
 
-  private final ConcurrentFactoryMap<Type, StaticGenericInfo> myGenericInfos = new ConcurrentFactoryMap<Type, StaticGenericInfo>() {
+  private final SofterCache<Type, StaticGenericInfo> myGenericInfos = SofterCache.create(new NotNullFunction<Type, StaticGenericInfo>() {
     @NotNull
-    protected StaticGenericInfo create(final Type type) {
+    @Override
+    public StaticGenericInfo fun(Type type) {
       return new StaticGenericInfo(type);
     }
-  };
-  private final ConcurrentFactoryMap<Class, InvocationCache> myInvocationCaches = new ConcurrentFactoryMap<Class, InvocationCache>() {
+  });
+  private final SofterCache<Class, InvocationCache> myInvocationCaches = SofterCache.create(new NotNullFunction<Class, InvocationCache>() {
     @NotNull
-    protected InvocationCache create(final Class key) {
+    @Override
+    public InvocationCache fun(Class key) {
       return new InvocationCache(key);
     }
-  };
+  });
   private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
       @NotNull
@@ -161,21 +164,15 @@ public class DomApplicationComponent {
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.get(type);
+    return myGenericInfos.getCachedValue(type);
   }
 
   final InvocationCache getInvocationCache(final Class type) {
-    return myInvocationCaches.get(type);
+    return myInvocationCaches.getCachedValue(type);
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
     return myVisitorDescriptions.get(aClass);
   }
 
-  @TestOnly
-  public void clearCachesInTests() {
-    myInvocationCaches.clear();
-    myGenericInfos.clear();
-    myCachedImplementationClasses.clear();
-  }
 }

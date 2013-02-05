@@ -87,6 +87,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected Icon getSetIcon(boolean isMuted) {
+    if (REMOVE_AFTER_HIT) {
+      return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
+    }
     return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
   }
 
@@ -95,6 +98,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected Icon getVerifiedIcon(boolean isMuted) {
+    if (REMOVE_AFTER_HIT) {
+      return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
+    }
     return isMuted? AllIcons.Debugger.Db_muted_verified_breakpoint : AllIcons.Debugger.Db_verified_breakpoint;
   }
 

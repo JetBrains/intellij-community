@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class ParametersListUtil {
   }
 
   /**
-   * <p>Converts single parameter string (as created by {@link #join(java.util.List)}) into list of parameters.</p>
+   * <p>Splits single parameter string (as created by {@link #join(List)}) into list of parameters.</p>
    * <p/>
    * <p>
    * <strong>Conversion rules:</strong>
@@ -90,11 +90,16 @@ public class ParametersListUtil {
    * <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
    * </p>
    *
-   * @param string parameter string to split.
+   * @param parameterString parameter string to split.
    * @return array of parameters.
    */
   @NotNull
   public static List<String> parse(@NotNull String parameterString) {
+    return parse(parameterString, false);
+  }
+
+  @NotNull
+  public static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
     parameterString = parameterString.trim();
 
     final ArrayList<String> params = ContainerUtilRt.newArrayList();
@@ -110,7 +115,9 @@ public class ParametersListUtil {
         if (!escapedQuote) {
           inQuotes = !inQuotes;
           nonEmpty = true;
-          continue;
+          if (!keepQuotes) {
+            continue;
+          }
         }
         escapedQuote = false;
       }
@@ -127,7 +134,9 @@ public class ParametersListUtil {
       else if (ch == '\\') {
         if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
           escapedQuote = true;
-          continue;
+          if (!keepQuotes) {
+            continue;
+          }
         }
       }
 

@@ -1,0 +1,5 @@
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<GridPane xmlns:fx="http://javafx.com/fxml">
+  <Region <error descr="Property 'backgroundFills' is read-only">backgroundFills=""</error>/>
+</GridPane>

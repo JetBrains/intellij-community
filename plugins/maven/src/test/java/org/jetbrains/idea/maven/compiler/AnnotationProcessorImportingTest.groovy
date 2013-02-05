@@ -68,6 +68,28 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
   </build>
 """)
 
+    createModulePom("module3_1", """
+<groupId>test</groupId>
+<artifactId>module3_1</artifactId>
+<version>1</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                      <configuration>
+                        <compilerArgument> -proc:none</compilerArgument>
+                      </configuration>
+                    </execution>
+                </executions>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
     createModulePom("module4", """
 <groupId>test</groupId>
 <artifactId>module4</artifactId>
@@ -106,6 +128,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["module1"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module2').getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module3') == null
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module3_1') == null
   }
 
   public void testOverrideGeneratedOutputDir() {

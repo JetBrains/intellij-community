@@ -93,6 +93,11 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
   public void initComponent() {
     final FacetManagerListener facetListener = new FacetManagerAdapter() {
       @Override
+      public void facetAdded(@NotNull Facet facet) {
+        refreshPointers(facet.getModule());
+      }
+
+      @Override
       public void beforeFacetRenamed(@NotNull Facet facet) {
         final FacetPointerImpl pointer = myPointers.get(constructId(facet));
         if (pointer != null) {
@@ -204,6 +209,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
       final MessageBusConnection connection = module.getMessageBus().connect();
       myModule2Connection.put(module, connection);
       connection.subscribe(FacetManager.FACETS_TOPIC, myFacetListener);
+      refreshPointers(module);
     }
 
     public void moduleRemoved(Project project, final Module module) {

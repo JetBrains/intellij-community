@@ -395,7 +395,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     boolean oldCaretPositionSaved = myCaretPositionSaved;
 
-    if (moveCaretFromCollapsedRegion) {
+    if (moveCaretFromCollapsedRegion && myEditor.getCaretModel().isUpToDate()) {
       if (offsetToUse >= 0) {
         myEditor.getCaretModel().moveToOffset(offsetToUse);
       }

@@ -94,6 +94,7 @@ public class DefaultXmlExtension extends XmlExtension {
         assert nsDescriptor != null;
         final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
+          LOG.assertTrue(elementDescriptor != null, "Null returned from " + nsDescriptor);
           if (hasTag(elementDescriptor, tagName, new HashSet<XmlElementDescriptor>())) {
             set.add(namespace);
             break;
@@ -104,7 +105,7 @@ public class DefaultXmlExtension extends XmlExtension {
     return set;
   }
 
-  private static boolean hasTag(XmlElementDescriptor elementDescriptor, String tagName, Set<XmlElementDescriptor> visited) {
+  private static boolean hasTag(@NotNull XmlElementDescriptor elementDescriptor, String tagName, Set<XmlElementDescriptor> visited) {
     final String name = elementDescriptor.getDefaultName();
     if (name.equals(tagName)) {
       return true;

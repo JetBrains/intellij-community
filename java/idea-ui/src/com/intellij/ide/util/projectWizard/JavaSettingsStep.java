@@ -52,34 +52,38 @@ public class JavaSettingsStep extends SdkSettingsStep {
     myModuleBuilder = moduleBuilder;
 
     if (moduleBuilder instanceof JavaModuleBuilder) {
-      Project project = settingsStep.getContext().getProject();
-      ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-        new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
-          IdeBundle.message("prompt.select.source.directory"), null, mySourcePath, project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-          @Override
-          protected void onFileChoosen(VirtualFile chosenFile) {
-            String contentEntryPath = myModuleBuilder.getContentEntryPath();
-            String path = chosenFile.getPath();
-            if (contentEntryPath != null) {
-
-              int i = StringUtil.commonPrefixLength(contentEntryPath, path);
-              mySourcePath.setText(path.substring(i));
-            }
-            else {
-              mySourcePath.setText(path);
-            }
-          }
-        };
-      mySourcePath.addBrowseFolderListener(project, listener);
-      myCreateSourceRoot.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          mySourcePath.setEnabled(myCreateSourceRoot.isSelected());
-        }
-      });
-      settingsStep.addExpertPanel(myPanel);
+      addSourcePath(settingsStep);
     }
+  }
+
+  private void addSourcePath(SettingsStep settingsStep) {
+    Project project = settingsStep.getContext().getProject();
+    ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
+      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
+        IdeBundle.message("prompt.select.source.directory"), null, mySourcePath, project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
+        TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+        @Override
+        protected void onFileChoosen(VirtualFile chosenFile) {
+          String contentEntryPath = myModuleBuilder.getContentEntryPath();
+          String path = chosenFile.getPath();
+          if (contentEntryPath != null) {
+
+            int i = StringUtil.commonPrefixLength(contentEntryPath, path);
+            mySourcePath.setText(path.substring(i));
+          }
+          else {
+            mySourcePath.setText(path);
+          }
+        }
+      };
+    mySourcePath.addBrowseFolderListener(project, listener);
+    myCreateSourceRoot.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        mySourcePath.setEnabled(myCreateSourceRoot.isSelected());
+      }
+    });
+    settingsStep.addExpertPanel(myPanel);
   }
 
   @Override

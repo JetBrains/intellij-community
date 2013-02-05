@@ -35,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
+import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
@@ -208,7 +209,10 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       final String prefix = myReference.getPrefix();
-      final RncFile psiFile = (RncFile)PsiFileFactory.getInstance(myReference.getProject()).createFileFromText("dummy.rnc", myReference.getKind().name().toLowerCase() + " " + prefix + " = \"###\"");
+      final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
+      final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",
+                                                                  RncFileType.getInstance(),
+                                                                   myReference.getKind().name().toLowerCase() + " " + prefix + " = \"###\"");
       final RncFile rncFile = (RncFile)myReference.getContainingFile();
       final RncDecl[] declarations = rncFile.getDeclarations();
       final RncDecl decl = psiFile.getDeclarations()[0];
@@ -232,7 +236,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
 
       CodeStyleManager.getInstance(e.getManager().getProject()).reformatNewlyAddedElement(blockNode, newNode);
 
-      final SmartPsiElementPointer<RncDecl> p = SmartPointerManager.getInstance(project).createLazyPointer(e);
+      final SmartPsiElementPointer<RncDecl> p = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(e);
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 
       final RncDecl d = p.getElement();

@@ -10,51 +10,45 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 public class SplitIfActionTest extends LightCodeInsightTestCase {
   public void test1() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).ELSE_ON_NEW_LINE= true;
-    configureByFile("/codeInsight/splitIfAction/before1.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/after1.java");
+    doTest();
   }
 
   public void test2() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/before2.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/after2.java");
+    doTest();
   }
 
   public void test3() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/before3.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/after3.java");
+    doTest();
   }
 
   public void test4() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/before4.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/after4.java");
+    doTest();
   }
 
   public void test5() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/before5.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/after5.java");
+    doTest();
   }
 
-  public void test6() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/beforeParenthesis.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/afterParenthesis.java");
+  public void testParenthesis() throws Exception {
+    doTest();
   }
 
-  public void test7() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/beforeOrParenthesis.java");
-    perform();
-    checkResultByFile("/codeInsight/splitIfAction/afterOrParenthesis.java");
+  public void testOrParenthesis() throws Exception {
+    doTest();
   }
 
   public void testComment() throws Exception {
-    configureByFile("/codeInsight/splitIfAction/beforeComment.java");
+    doTest();
+  }
+
+  public void testWithoutSpaces() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
+    configureByFile("/codeInsight/splitIfAction/before" + getTestName(false)+ ".java");
     perform();
-    checkResultByFile("/codeInsight/splitIfAction/afterComment.java");
+    checkResultByFile("/codeInsight/splitIfAction/after" + getTestName(false) + ".java");
   }
 
    public void test8() throws Exception {
@@ -62,7 +56,6 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
     SplitIfAction action = new SplitIfAction();
     assertFalse(action.isAvailable(getProject(), getEditor(), getFile()));
   }
-
 
 
   private void perform() throws Exception {

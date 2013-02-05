@@ -15,15 +15,18 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -79,7 +82,11 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClass findPsiClass(String name, XmlTag tag) {
-    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, tag.getProject());
+    final Project project = tag.getProject();
+    if (!StringUtil.getShortName(name).equals(name)) {
+      return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    }
+    return findPsiClass(name, parseImports((XmlFile)tag.getContainingFile()), tag, project);
   }
 
   private static PsiClass findPsiClass(String name, List<String> imports, XmlTag tag, Project project) {
@@ -144,6 +151,169 @@ public class JavaFxPsiUtil {
               }
             }
           }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isClassTag(String name) {
+    final String shortName = StringUtil.getShortName(name);
+    final boolean capitalized = StringUtil.isCapitalized(name);
+    if (name.equals(shortName)) {
+      return capitalized;
+    }
+    return !capitalized;
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
+    final String packageName = StringUtil.getPackageName(attributeName);
+    if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
+      final PsiClass classWithStaticProperty = findPsiClass(packageName, context);
+      if (classWithStaticProperty != null) {
+        return findPropertySetter(attributeName, classWithStaticProperty);
+      }
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertySetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String setterName = PropertyUtil.suggestSetterName(StringUtil.getShortName(attributeName));
+    final PsiMethod[] setters = classWithStaticProperty.findMethodsByName(setterName, true);
+    if (setters.length == 1) {
+      return setters[0];
+    }
+    return null;
+  }
+
+  public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
+    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
+    final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
+    if (getters.length >= 1) {
+      return getters[0];
+    }
+    return null;
+  }
+  
+  public static PsiClass getControllerClass(PsiFile containingFile) {
+    if (containingFile instanceof XmlFile) {
+      final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
+      if (rootTag != null) {
+        final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+        if (attribute != null) {
+          final String attributeValue = attribute.getValue();
+          if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
+            return  JavaPsiFacade.getInstance(containingFile.getProject()).findClass(attributeValue, containingFile.getResolveScope());
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean checkIfAttributeHandler(XmlAttribute attribute) {
+    final String attributeName = attribute.getName();
+    final XmlTag xmlTag = attribute.getParent();
+    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+    if (descriptor == null) return false;
+    final PsiElement currentTagClass = descriptor.getDeclaration();
+    if (!(currentTagClass instanceof PsiClass)) return false;
+    final PsiField handlerField = ((PsiClass)currentTagClass).findFieldByName(attributeName, true);
+    if (handlerField == null) {
+      return false;
+    }
+    final PsiClass objectPropertyClass = getPropertyClass(handlerField);
+    if (objectPropertyClass == null || !InheritanceUtil.isInheritor(objectPropertyClass, JavaFxCommonClassNames.JAVAFX_EVENT_EVENT_HANDLER)) {
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public static PsiClass getTagClass(XmlAttributeValue xmlAttributeValue) {
+    if (xmlAttributeValue == null) return null;
+    final PsiElement xmlAttribute = xmlAttributeValue.getParent();
+    final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
+    if (xmlTag != null) {
+      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isVisibleInFxml(PsiMember psiMember) {
+    return psiMember.hasModifierProperty(PsiModifier.PUBLIC) || 
+           AnnotationUtil.isAnnotated(psiMember, JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, false);
+  }
+
+  public static PsiMethod findValueOfMethod(@NotNull final PsiClass tagClass) {
+    final PsiMethod[] methods = tagClass.findMethodsByName(JavaFxCommonClassNames.VALUE_OF, false);
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1) {
+          final PsiType type = parameters[0].getType();
+          if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            if (method.hasModifierProperty(PsiModifier.STATIC) && tagClass.equals(PsiUtil.resolveClassInType(method.getReturnType()))) {
+              return method;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
+  public static boolean isReadOnly(String attributeName, XmlTag tag) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (descriptor != null) {
+      final PsiElement declaration = descriptor.getDeclaration();
+      if (declaration instanceof PsiClass) {
+        final PsiClass psiClass = (PsiClass)declaration;
+        final PsiField psiField = psiClass.findFieldByName(attributeName, true);
+        if (psiField != null) {
+          if (findPropertySetter(attributeName, (PsiClass)declaration) == null &&
+              findPropertySetter(attributeName, tag) == null) {
+            //todo read only condition?
+            final PsiMethod[] constructors = psiClass.getConstructors();
+            for (PsiMethod constructor : constructors) {
+              for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
+                if (psiField.getType().equals(parameter.getType())) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+    
+  }
+
+  public static boolean isExpressionBinding(String value) {
+    if (!value.startsWith("$")) return false;
+    value = value.substring(1);
+    return value.startsWith("{") && value.endsWith("}") && value.contains(".");
+  }
+
+  @Nullable
+  public static PsiType getPropertyType(final PsiType type, final Project project) {
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass != null) {
+      final PsiClass propertyClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY,
+                                                                                  GlobalSearchScope.allScope(project));
+      if (propertyClass != null) {
+        final PsiSubstitutor substitutor =
+          TypeConversionUtil.getClassSubstitutor(propertyClass, psiClass, PsiSubstitutor.EMPTY);
+        if (substitutor != null) {
+          return substitutor.substitute(propertyClass.getTypeParameters()[0]);
         }
       }
     }

@@ -77,7 +77,7 @@ public class MvcTargetDialogCompletionUtils {
 
     List<LookupElement> res = new ArrayList<LookupElement>();
 
-    if (text.substring(0, offset).matches("\\s*(grails\\s*)?(?:(:?-\\S+|dev|prod|test)\\s+)*\\S*")) {
+    if (text.substring(0, offset).matches("\\s*(grails\\s*)?(?:(:?-D\\S+|dev|prod|test)\\s+)*\\S*")) {
       // Complete command name because command name is not typed.
       for (String completionVariant : getAllTargetNames(module)) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(completionVariant), TailType.SPACE));

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,11 +35,9 @@ public class MvcRunTarget extends MvcActionBase {
 
     Module selectedModule = dialog.getSelectedModule();
 
-    String[] targetArgs = dialog.getTargetArguments();
+    MvcCommand cmd = MvcCommand.parse(dialog.getTargetArguments());
 
-    Pair<String, String[]> parsedCmd = MvcFramework.parsedCmd(targetArgs);
-
-    final GeneralCommandLine commandLine = framework.createCommandAndShowErrors(dialog.getVmOptions(), selectedModule, parsedCmd.first, parsedCmd.second);
+    final GeneralCommandLine commandLine = framework.createCommandAndShowErrors(dialog.getVmOptions(), selectedModule, cmd);
     if (commandLine == null) return;
 
     MvcConsole.executeProcess(selectedModule, commandLine, null, false);

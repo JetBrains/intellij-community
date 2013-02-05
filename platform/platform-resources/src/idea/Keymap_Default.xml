@@ -73,7 +73,8 @@
   <action id="EditorChooseLookupItemCompleteStatement">
     <keyboard-shortcut first-keystroke="control shift ENTER"/>
   </action>
-  <action id="EditorChooseLookupItemDot"><keyboard-shortcut first-keystroke="control PERIOD"/></action>
+  <action id="EditorChooseLookupItemDot">
+    <keyboard-shortcut first-keystroke="control PERIOD"/></action>
   <action id="EditorCompleteStatement">
     <keyboard-shortcut first-keystroke="control shift ENTER"/>
   </action>
@@ -595,6 +596,9 @@
   <action id="ValidateXml"/>
   <action id="ToggleLineBreakpoint">
     <keyboard-shortcut first-keystroke="control F8"/>
+  </action>
+  <action id="ToggleTemporaryLineBreakpoint">
+    <keyboard-shortcut first-keystroke="control shift alt F8"/>
   </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>

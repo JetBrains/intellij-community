@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ public class ParametersList implements Cloneable {
     for (ListIterator<String> iterator = myParameters.listIterator(); iterator.hasNext(); ) {
       final String param = iterator.next();
       if (param.startsWith(parameterPrefix)) {
-        if ("".equals(replacement)) {
+        if (replacement != null && replacement.isEmpty()) {
           iterator.remove();
         }
         else {
@@ -203,7 +203,7 @@ public class ParametersList implements Cloneable {
         return;
       }
     }
-    if (!"".equals(replacement)) {
+    if (replacement != null && !replacement.isEmpty()) {
       myParameters.add(position, replacement);
     }
   }
@@ -211,7 +211,7 @@ public class ParametersList implements Cloneable {
   public void replaceOrPrepend(final @NonNls String parameter, final @NonNls String replacement) {
     replaceOrAdd(parameter, replacement, 0);
   }
-  
+
   public void set(int ind, final @NonNls String value) {
     myParameters.set(ind, value);
   }

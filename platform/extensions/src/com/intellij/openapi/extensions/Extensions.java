@@ -18,16 +18,12 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class Extensions {
@@ -36,8 +32,6 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
-  private static Map<AreaInstance,String> ourAreaInstance2class = new THashMap<AreaInstance, String>();
   private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
@@ -50,18 +44,6 @@ public class Extensions {
   }
 
   private Extensions() {
-  }
-
-  public static void setSynchronized() {
-    assert ourAreaInstance2area.isEmpty();
-    assert ourAreaClass2instances.isEmpty();
-    assert ourAreaInstance2class.isEmpty();
-    assert ourAreaClass2Configuration.isEmpty();
-
-    ourAreaInstance2area = new ConcurrentHashMap<AreaInstance, ExtensionsAreaImpl>();
-    ourAreaClass2instances = new ConcurrentMultiMap<String, AreaInstance>();
-    ourAreaInstance2class = new ConcurrentHashMap<AreaInstance, String>();
-    ourAreaClass2Configuration = new ConcurrentHashMap<String, AreaClassConfiguration>();
   }
 
   @NotNull
@@ -156,10 +138,7 @@ public class Extensions {
     }
     ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer(), ourLogger);
     ourAreaInstance2area.put(areaInstance, area);
-    ourAreaClass2instances.putValue(areaClass, areaInstance);
-    ourAreaInstance2class.put(areaInstance, areaClass);
-    AreaListener[] listeners = getAreaListeners();
-    for (AreaListener listener : listeners) {
+    for (AreaListener listener : getAreaListeners()) {
       listener.areaCreated(areaClass, areaInstance);
     }
   }
@@ -187,26 +166,17 @@ public class Extensions {
   public static void disposeArea(@NotNull AreaInstance areaInstance) {
     assert ourAreaInstance2area.containsKey(areaInstance);
 
-    AreaListener[] listeners = getAreaListeners();
-    String areaClass = ourAreaInstance2class.get(areaInstance);
+    String areaClass = ourAreaInstance2area.get(areaInstance).getAreaClass();
     if (areaClass == null) {
       throw new IllegalArgumentException("Area class is null (area never instantiated?). Instance: " + areaInstance);
     }
     try {
-      for (AreaListener listener : listeners) {
+      for (AreaListener listener : getAreaListeners()) {
         listener.areaDisposing(areaClass, areaInstance);
       }
     } finally {
       ourAreaInstance2area.remove(areaInstance);
-      ourAreaClass2instances.removeValue(ourAreaInstance2class.remove(areaInstance), areaInstance);
-      ourAreaInstance2class.remove(areaInstance);
     }
-  }
-
-  @NotNull
-  public static AreaInstance[] getAllAreas(String areaClass) {
-    Collection<AreaInstance> instances = ourAreaClass2instances.get(areaClass);
-    return instances.toArray(new AreaInstance[instances.size()]);
   }
 
   private static boolean equals(@Nullable Object object1, @Nullable Object object2) {

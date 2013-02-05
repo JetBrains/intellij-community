@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,53 +26,45 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchStatementWithTooFewBranchesInspection
-  extends BaseInspection {
+public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
-  /**
-   * this is public for the DefaultJDOMExternalizer thingy
-   *
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "switch.statement.with.too.few.branches.display.name");
+    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.display.name");
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "switch.statement.with.too.few.branches.min.option"),
-      this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
+                                              this, "m_limit");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer branchCount = (Integer)infos[0];
-    return InspectionGadgetsBundle.message(
-      "switch.statement.with.too.few.branches.problem.descriptor",
-      branchCount);
+    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.problem.descriptor", branchCount);
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new SwitchStatementWithTooFewBranchesVisitor();
   }
 
-  private class SwitchStatementWithTooFewBranchesVisitor
-    extends BaseInspectionVisitor {
+  private class SwitchStatementWithTooFewBranchesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;
       }
       final int branchCount = SwitchUtils.calculateBranchCount(statement);
+      if (branchCount == 0) {
+        return; // // do not warn when no switch branches are present at all
+      }
       if (branchCount >= m_limit) {
         return;
       }

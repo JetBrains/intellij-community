@@ -65,7 +65,7 @@ public class IntroduceLocalVariableTest extends GrIntentionTestCase {
 
     @Override
     void show() {
-      // nop
+      close(0)
     }
 
     @Override

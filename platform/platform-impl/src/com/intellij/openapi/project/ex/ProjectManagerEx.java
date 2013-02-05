@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
@@ -56,8 +57,10 @@ public abstract class ProjectManagerEx extends ProjectManager {
 
   @TestOnly
   public abstract void openTestProject(@NotNull Project project);
+
   @TestOnly
-  public abstract void closeTestProject(@NotNull Project project);
+  // returns remaining open test projects
+  public abstract Collection<Project> closeTestProject(@NotNull Project project);
 
   // returns true on success
   public abstract boolean closeAndDispose(@NotNull Project project);

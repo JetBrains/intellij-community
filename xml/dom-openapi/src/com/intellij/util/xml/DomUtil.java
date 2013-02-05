@@ -221,7 +221,6 @@ public class DomUtil {
         }
       });
       return result;
-
     }
 
     ProgressManager.checkCanceled();
@@ -241,21 +240,25 @@ public class DomUtil {
       if (attributes) {
         for (final XmlAttribute attribute : tag.getAttributes()) {
           if (!attribute.isValid()) {
-            throw new AssertionError("Invalid attr: parent.valid=" + tag.isValid());
+            LOG.error("Invalid attr: parent.valid=" + tag.isValid());
+            continue;
           }
           GenericAttributeValue element = domManager.getDomElement(attribute);
-          checkHasXml(attribute, element);
-          ContainerUtil.addIfNotNull(element, result);
+          if (checkHasXml(attribute, element)) {
+            ContainerUtil.addIfNotNull(element, result);
+          }
         }
       }
       if (tags) {
         for (final XmlTag subTag : tag.getSubTags()) {
           if (!subTag.isValid()) {
-            throw new AssertionError("Invalid subtag: parent.valid=" + tag.isValid());
+            LOG.error("Invalid subtag: parent.valid=" + tag.isValid());
+            continue;
           }
           DomElement element = domManager.getDomElement(subTag);
-          checkHasXml(subTag, element);
-          ContainerUtil.addIfNotNull(element, result);
+          if (checkHasXml(subTag, element)) {
+            ContainerUtil.addIfNotNull(element, result);
+          }
         }
       }
       return result;
@@ -263,10 +266,12 @@ public class DomUtil {
     return Collections.emptyList();
   }
 
-  private static void checkHasXml(XmlElement psi, DomElement dom) {
+  private static boolean checkHasXml(XmlElement psi, DomElement dom) {
     if (dom != null && dom.getXmlElement() == null) {
-      throw new AssertionError("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
+      LOG.error("No xml for dom " + dom + "; attr=" + psi + ", physical=" + psi.isPhysical());
+      return false;
     }
+    return true;
   }
 
   public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type, boolean tags, boolean attributes) {

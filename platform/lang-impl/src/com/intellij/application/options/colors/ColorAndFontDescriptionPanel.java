@@ -64,7 +64,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private ActionListener myActionListener;
   private JLabel myLabelFont;
 
-  private JLabel myInheritanceLabel = new JLabel();
+  private JLabel myInheritanceLabel = new JLabel("X");
   private final static Icon INHERITED_ICON = AllIcons.Ide.Link;
 
 
@@ -428,6 +428,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myInheritanceLabel.setText("X");
       myInheritanceLabel.setIcon(null);
       myInheritanceLabel.setDisabledIcon(null);
+      myInheritanceLabel.setEnabled(true);
       myInheritanceLabel.setForeground(myLabelFont.getBackground());
     }
   }

@@ -15,16 +15,12 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 /**
  * User: anna
@@ -38,21 +34,8 @@ public abstract class JavaFxControllerBasedReferenceProvider extends PsiReferenc
     final PsiFile containingFile = xmlAttrVal.getContainingFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return PsiReference.EMPTY_ARRAY;
 
-    final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
-    if (rootTag != null) {
-      final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
-      if (attribute != null) {
-        final String attributeValue = attribute.getValue();
-        if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
-          final PsiClass controllerClass =
-            JavaPsiFacade.getInstance(xmlAttrVal.getProject()).findClass(attributeValue, xmlAttrVal.getResolveScope());
-          if (controllerClass != null) {
-            return getReferencesByElement(controllerClass, xmlAttrVal, context);
-          }
-        }
-      }
-    }
-    return PsiReference.EMPTY_ARRAY;
+    final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(containingFile);
+    return controllerClass != null ? getReferencesByElement(controllerClass, xmlAttrVal, context) : PsiReference.EMPTY_ARRAY;
   }
 
   protected abstract PsiReference[] getReferencesByElement(@NotNull PsiClass controllerClass, XmlAttributeValue element, ProcessingContext context);

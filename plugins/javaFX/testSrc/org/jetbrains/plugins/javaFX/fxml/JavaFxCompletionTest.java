@@ -81,6 +81,37 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("NEGATIVE_INFINITY");
   }
 
+  public void testReferencedAttributes() throws Exception {
+    doTest("text");
+  }
+
+  public void testFactoryMethods() throws Exception {
+    doTest("observableArrayList");
+  }
+
+  public void testVariableCompletion() throws Exception {
+    doTest();
+  }
+
+  public void testExpressionBinding() throws Exception {
+    doTest("text");
+  }
+
+  public void testReadOnly() throws Exception {
+    configureByFile(getTestName(true) + ".fxml");
+    assertTrue(myItems.length > 0);
+    LookupElement selectionElement = null;
+    for (LookupElement item : myItems) {
+      if (item.getLookupString().equals("backgroundFills")) {
+        selectionElement = item;
+        break;
+      }
+    }
+    if (selectionElement != null) {
+      fail("Read only attribute was suggested");
+    }
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }

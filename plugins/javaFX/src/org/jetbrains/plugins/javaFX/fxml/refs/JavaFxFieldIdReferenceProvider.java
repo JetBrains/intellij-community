@@ -21,6 +21,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * User: anna
@@ -28,31 +32,31 @@ import org.jetbrains.annotations.Nullable;
 */
 class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
   @Override
-  protected PsiReference[] getReferencesByElement(@NotNull PsiClass aClass,
-                                                  XmlAttributeValue xmlAttributeValue,
+  protected PsiReference[] getReferencesByElement(@NotNull final PsiClass aClass,
+                                                  final XmlAttributeValue xmlAttributeValue,
                                                   ProcessingContext context) {
     final PsiField field = aClass.findFieldByName(xmlAttributeValue.getValue(), false);
-    return field == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{new JavaFxIdReference(xmlAttributeValue, field)};
-  }
+    return new PsiReference[] {new PsiReferenceBase<XmlAttributeValue>(xmlAttributeValue) {
+      @Nullable
+      @Override
+      public PsiElement resolve() {
+        return field != null ? field : xmlAttributeValue;
+      }
 
-  private static class JavaFxIdReference extends PsiReferenceBase<XmlAttributeValue> {
-    private final PsiField myField;
-
-    public JavaFxIdReference(XmlAttributeValue xmlAttributeValue, PsiField field) {
-      super(xmlAttributeValue);
-      myField = field;
-    }
-
-    @Nullable
-    @Override
-    public PsiElement resolve() {
-      return myField;
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
+      @NotNull
+      @Override
+      public Object[] getVariants() {
+        final List<Object> fieldsToSuggest = new ArrayList<Object>();
+        final PsiField[] fields = aClass.getFields();
+        for (PsiField psiField : fields) {
+          if (!psiField.hasModifierProperty(PsiModifier.STATIC)) {
+            if (JavaFxPsiUtil.isVisibleInFxml(psiField)) {
+              fieldsToSuggest.add(psiField);
+            }
+          }
+        }
+        return ArrayUtil.toObjectArray(fieldsToSuggest);
+      }
+    }};
   }
 }

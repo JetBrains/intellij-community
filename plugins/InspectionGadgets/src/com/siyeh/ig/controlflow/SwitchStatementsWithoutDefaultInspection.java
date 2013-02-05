@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,18 +24,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchStatementsWithoutDefaultInspection
-  extends BaseInspection {
+public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_ignoreFullyCoveredEnums = true;
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "switch.statements.without.default.display.name");
+    return InspectionGadgetsBundle.message("switch.statements.without.default.display.name");
   }
 
   @NotNull
@@ -45,13 +41,11 @@ public class SwitchStatementsWithoutDefaultInspection
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "switch.statements.without.default.problem.descriptor");
+    return InspectionGadgetsBundle.message("switch.statements.without.default.problem.descriptor");
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "switch.statement.without.default.ignore.option"),
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option"),
                                           this, "m_ignoreFullyCoveredEnums");
   }
 
@@ -59,57 +53,53 @@ public class SwitchStatementsWithoutDefaultInspection
     return new SwitchStatementsWithoutDefaultVisitor();
   }
 
-  private class SwitchStatementsWithoutDefaultVisitor
-    extends BaseInspectionVisitor {
+  private class SwitchStatementsWithoutDefaultVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
       if (switchStatementHasDefault(statement)) {
         return;
       }
-      if (m_ignoreFullyCoveredEnums &&
-          switchStatementIsFullyCoveredEnum(statement)) {
+      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
         return;
       }
       registerStatementError(statement);
     }
 
-    private boolean switchStatementHasDefault(
-      PsiSwitchStatement statement) {
+    private boolean switchStatementHasDefault(PsiSwitchStatement statement) {
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
-        return false;
+        return true; // do not warn about incomplete code
       }
       final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return true; // do not warn when no switch branches are present at all
+      }
       for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement &&
-            ((PsiSwitchLabelStatement)child).isDefaultCase()) {
+        if (!(child instanceof PsiSwitchLabelStatement)) {
+          continue;
+        }
+        final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)child;
+        if (switchLabelStatement.isDefaultCase()) {
           return true;
         }
       }
       return false;
     }
 
-    private boolean switchStatementIsFullyCoveredEnum(
-      PsiSwitchStatement statement) {
+    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
       final PsiExpression expression = statement.getExpression();
       if (expression == null) {
         return false;
       }
       final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
       if (!(type instanceof PsiClassType)) {
         return false;
       }
-      final PsiClass aClass = ((PsiClassType)type).resolve();
-      if (aClass == null) {
-        return false;
-      }
-      if (!aClass.isEnum()) {
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (aClass == null || !aClass.isEnum()) {
         return false;
       }
       final PsiCodeBlock body = statement.getBody();

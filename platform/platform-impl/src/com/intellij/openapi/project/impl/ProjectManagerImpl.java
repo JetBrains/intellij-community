@@ -780,23 +780,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void closeTestProject(@NotNull Project project) {
+  public Collection<Project> closeTestProject(@NotNull Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myTestProjects.remove(project);
-  }
-
-  @TestOnly
-  public void assertTestProjectsClosed() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    if (!myTestProjects.isEmpty()) {
-      try {
-        Project project = myTestProjects.iterator().next();
-        throw new AssertionError("Test project is not disposed: " + project);
-      }
-      finally {
-        myTestProjects.clear();
-      }
-    }
+    return myTestProjects;
   }
 
   @Override

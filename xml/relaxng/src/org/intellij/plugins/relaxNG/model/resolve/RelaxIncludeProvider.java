@@ -81,7 +81,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
       boolean isRngTag = ApplicationLoader.RNG_NAMESPACE.equals(nsURI);
       if (!isRNG) { // analyzing start tag
         if (!isRngTag) {
-          throw new NanoXmlUtil.ParserStoppedException();
+          stop();
         } else {
           isRNG = true;
         }

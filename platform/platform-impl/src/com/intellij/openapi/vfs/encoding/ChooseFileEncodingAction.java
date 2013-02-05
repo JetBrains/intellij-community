@@ -33,10 +33,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,13 +81,16 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
                                   @Nullable VirtualFile virtualFile,
                                   @NotNull List<Charset> charsets,
-                                  @Nullable final Condition<Charset> charsetFilter,
-                                  @NotNull String pattern) {
+                                  @NotNull final Function<Charset, String> charsetFilter) {
     for (final Charset slave : charsets) {
-      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave, pattern) {
+      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave) {
         {
-          if (charsetFilter != null && !charsetFilter.value(slave)) {
+          String description = charsetFilter.fun(slave);
+          if (description == null) {
             getTemplatePresentation().setIcon(AllIcons.General.Warning);
+          }
+          else {
+            getTemplatePresentation().setDescription(description);
           }
         }
 
@@ -170,9 +173,8 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   @NotNull
   public DefaultActionGroup createGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
-                                        @NotNull String pattern,
                                         Charset alreadySelected,
-                                        @Nullable Condition<Charset> charsetFilter) {
+                                        @NotNull Function<Charset, String> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
@@ -184,14 +186,14 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       group.add(new ClearThisFileEncodingAction(myVirtualFile, clearItemText));
     }
     if (favorites.isEmpty() && clearItemText == null) {
-      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter, pattern);
+      fillCharsetActions(group, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
     }
     else {
-      fillCharsetActions(group, myVirtualFile, favorites, charsetFilter, pattern);
+      fillCharsetActions(group, myVirtualFile, favorites, charsetFilter);
 
       DefaultActionGroup more = new DefaultActionGroup("more", true);
       group.add(more);
-      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter, pattern);
+      fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()), charsetFilter);
     }
     return group;
   }

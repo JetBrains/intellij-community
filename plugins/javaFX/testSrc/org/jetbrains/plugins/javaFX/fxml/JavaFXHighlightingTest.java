@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -18,6 +21,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   protected void setUpModule() {
     super.setUpModule();
     PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+  }
+
+  @Override
+  protected LocalInspectionTool[] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {new XmlPathReferenceInspection(), new RequiredAttributesInspection() };
   }
 
   public void testLoginForm() throws Exception {
@@ -107,6 +115,76 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSourceAttrRecognition() throws Exception {
+    doTest();
+  }
+
+  public void testReferenceAttributes() throws Exception {
+    doTest();
+  }
+
+  public void testVariables() throws Exception {
+    doTest();
+  }
+
+  public void testDefineAttributes() throws Exception {
+    doTest();
+  }
+
+  public void testDefinedElements() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyElementsWithAnyAttributes() throws Exception {
+    doTest();
+  }
+
+  public void testHandlerWithoutController() throws Exception {
+    doTest();
+  }
+
+  public void testHandlerWithoutPageLanguage() throws Exception {
+    doTest();
+  }
+
+  public void testIncludeBtn() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "btn.fxml");
+    doDoTest(false, false);
+  }
+
+  public void testValueOfAcceptance() throws Exception {
+    doTest();
+  }
+
+  public void testInstantiationAcceptance() throws Exception {
+    doTest();
+  }
+
+  public void testFQNtagNames() throws Exception {
+    doTest();
+  }
+
+  public void testRootTag() throws Exception {
+    doTest();
+  }
+
+  public void testUnresolvedRootTag() throws Exception {
+    doTest();
+  }
+
+  public void testRootTagWithoutType() throws Exception {
+    doTest();
+  }
+
+  public void testReadOnly() throws Exception {
+    doTest();
+  }
+
+  public void testScriptSource() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "s1.js");
+    doDoTest(false, false);
+  }
+
+  public void testExpressionBinding() throws Exception {
     doTest();
   }
 

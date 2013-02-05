@@ -21,9 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -35,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
@@ -52,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
 
@@ -68,14 +68,18 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       return s.contains(".idea") ? null : s;
     }
   };
+  public static final String UTF_8 = "UTF-8";
+  private static final String SRC = "src/";
 
   private final ModuleType myType;
+  private List<WizardInputField> myAdditionalFields;
   private ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, List<WizardInputField> additionalFields) {
     myTemplate = template;
     myType = moduleType;
+    myAdditionalFields = additionalFields;
   }
 
   @Override
@@ -89,6 +93,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
+  protected List<WizardInputField> getAdditionalFields() {
+    return myAdditionalFields;
+  }
+
+  @Override
   public Module commitModule(@NotNull final Project project, ModifiableModuleModel model) {
     if (myProjectMode) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -99,17 +108,30 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           public void run() {
             try {
               setupModule(module);
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
             }
             catch (ConfigurationException e) {
               LOG.error(e);
             }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+          }
+        });
+
+        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                  modifiableModuleModel.renameModule(module, module.getProject().getName());
+                  modifiableModuleModel.commit();
+                  fixModuleName(module);
+                }
+                catch (ModuleWithNameAlreadyExists exists) {
+                  // do nothing
+                }
+              }
+            });
           }
         });
         return module;
@@ -149,12 +171,34 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private void unzip(String path, boolean moduleMode) {
+  private String getBasePackage() {
+    List<WizardInputField> fields = getAdditionalFields();
+    for (WizardInputField field : fields) {
+      if (WizardInputField.IJ_BASE_PACKAGE.equals(field.getId())) {
+        return field.getValue();
+      }
+    }
+    return null;
+  }
+
+  private void unzip(String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
+    final String basePackage = getBasePackage();
     try {
       zipInputStream = myTemplate.getStream();
-      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null, new ZipUtil.ContentProcessor() {
+      NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
+        @Nullable
+        @Override
+        public String fun(String s) {
+          if (moduleMode && s.contains(".idea")) return null;
+          if (basePackage != null && s.startsWith(SRC)) {
+            return SRC + basePackage.replace('.', '/') + s.substring(SRC.length() - 1);
+          }
+          return s;
+        }
+      };
+      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
         @Override
         public byte[] processContent(byte[] content, String fileName) throws IOException {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
@@ -188,10 +232,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private static byte[] processTemplates(String s) throws IOException {
+  private byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+    for (WizardInputField field : myAdditionalFields) {
+      properties.put(field.getId(), field.getValue());
+    }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
-    return merged.replace("\\$", "$").replace("\\#", "#").getBytes();
+    return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
 
   @Nullable

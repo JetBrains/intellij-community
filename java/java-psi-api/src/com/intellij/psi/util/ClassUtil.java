@@ -244,7 +244,7 @@ public class ClassUtil {
   }
 
   @Nullable
-  public static String getJVMClassName(PsiClass aClass) {
+  public static String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
       String parentName = getJVMClassName(containingClass);

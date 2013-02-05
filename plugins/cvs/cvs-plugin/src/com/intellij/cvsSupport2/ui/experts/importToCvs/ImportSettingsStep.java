@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.config.ImportConfiguration;
 import com.intellij.cvsSupport2.ui.experts.CvsWizard;
 import com.intellij.cvsSupport2.ui.experts.WizardStep;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
@@ -39,13 +40,6 @@ public class ImportSettingsStep extends WizardStep {
   private JTextField myVendor;
   private JTextField myReleaseTag;
   private JTextArea myLogMessage;
-
-  private boolean myIsInitialized = false;
-  private File myDirectoryToImport;
-
-  private final SelectImportLocationStep mySelectImportLocationStep;
-  private final ImportConfiguration myImportConfiguration;
-
   private JCheckBox myCheckoutAfterImport;
   private JCheckBox myMakeCheckedOutFilesReadOnly;
   private JLabel myModuleNameErrorMessage;
@@ -56,6 +50,11 @@ public class ImportSettingsStep extends WizardStep {
   private JLabel myReleaseTagLabel;
   private JLabel myLogMessageLabel;
   private JButton myKeywordExpansionButton;
+
+  private final SelectImportLocationStep mySelectImportLocationStep;
+  private final ImportConfiguration myImportConfiguration;
+
+  private File myDirectoryToImport;
 
   public ImportSettingsStep(final Project project,
                             CvsWizard wizard,
@@ -72,23 +71,30 @@ public class ImportSettingsStep extends WizardStep {
     mySelectImportLocationStep = selectImportLocationStep;
     myImportConfiguration = importConfiguration;
 
+    myModuleNameLabel.setLabelFor(myModuleName);
+    myReleaseTagLabel.setLabelFor(myReleaseTag);
+    myVendorLabel.setLabelFor(myVendor);
+    myLogMessageLabel.setLabelFor(myLogMessage);
+
+    myLogMessage.setWrapStyleWord(true);
+    myLogMessage.setLineWrap(true);
+
+    myReleaseTag.setText(myImportConfiguration.RELEASE_TAG);
+    myVendor.setText(myImportConfiguration.VENDOR);
+    myLogMessage.setText(myImportConfiguration.LOG_MESSAGE);
+    myCheckoutAfterImport.setSelected(myImportConfiguration.CHECKOUT_AFTER_IMPORT);
+    myMakeCheckedOutFilesReadOnly.setSelected(myImportConfiguration.MAKE_NEW_FILES_READ_ONLY);
+    updateCheckoutSettingsVisibility();
+    selectAll();
     final DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        checkFields();
+        getWizard().updateButtons();
       }
     };
     myModuleName.getDocument().addDocumentListener(listener);
     myVendor.getDocument().addDocumentListener(listener);
     myReleaseTag.getDocument().addDocumentListener(listener);
-
-    myLogMessageLabel.setLabelFor(myLogMessage);
-    myModuleNameLabel.setLabelFor(myModuleName);
-    myReleaseTagLabel.setLabelFor(myReleaseTag);
-    myVendorLabel.setLabelFor(myVendor);
-
-    myLogMessage.setWrapStyleWord(true);
-    myLogMessage.setLineWrap(true);
 
     myKeywordExpansionButton.addActionListener(new ActionListener() {
       @Override
@@ -117,13 +123,15 @@ public class ImportSettingsStep extends WizardStep {
     myImportConfiguration.MAKE_NEW_FILES_READ_ONLY = myMakeCheckedOutFilesReadOnly.isSelected();
   }
 
-  private boolean isValidInput() {
+  @Override
+  public boolean nextIsEnabled() {
     final JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
     boolean result = CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
     result &= CvsFieldValidator.checkField(myReleaseTag, fields, true, myReleaseTagErrorMessage, null);
     final String moduleName = myModuleName.getText().trim();
     if (moduleName.isEmpty()) {
       CvsFieldValidator.reportError(myModuleNameErrorMessage, CvsBundle.message("error.message.field.cannot.be.empty"), null);
+      return false;
     }
     else {
       myModuleNameErrorMessage.setText(" ");
@@ -131,38 +139,10 @@ public class ImportSettingsStep extends WizardStep {
     return result;
   }
 
-  private void checkFields() {
-    final CvsWizard wizard = getWizard();
-    if (!isValidInput()) {
-      wizard.disableNext();
-    }
-    else {
-      wizard.enableNext();
-    }
-  }
-
-  @Override
-  public boolean nextIsEnabled() {
-    return isValidInput();
-  }
-
   @Override
   public void activate() {
-    if (!myIsInitialized) {
-      myIsInitialized = true;
-      myReleaseTag.setText(myImportConfiguration.RELEASE_TAG);
-      myVendor.setText(myImportConfiguration.VENDOR);
-      myLogMessage.setText(myImportConfiguration.LOG_MESSAGE);
-      myCheckoutAfterImport.setSelected(myImportConfiguration.CHECKOUT_AFTER_IMPORT);
-      myMakeCheckedOutFilesReadOnly.setSelected(myImportConfiguration.MAKE_NEW_FILES_READ_ONLY);
-      updateCheckoutSettingsVisibility();
-      selectAll();
-      myModuleName.selectAll();
-      myModuleName.requestFocus();
-    }
-
     final File selectedFile = mySelectImportLocationStep.getSelectedFile();
-    if (selectedFile != null && !selectedFile.equals(myDirectoryToImport)) {
+    if (!FileUtil.filesEqual(selectedFile, myDirectoryToImport)) {
       myDirectoryToImport = selectedFile;
       myModuleName.setText(myDirectoryToImport.getName());
       myModuleName.selectAll();

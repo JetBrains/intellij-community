@@ -196,8 +196,15 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile {
+  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile,
+                                                                                       WrappingRunConfiguration<RunConfigurationBase> {
+    @Deprecated
     public RunConfigurationBase getConfiguration() {
+      return getPeer();
+    }
+
+    @Override
+    public RunConfigurationBase getPeer() {
       return myConfiguration;
     }
 

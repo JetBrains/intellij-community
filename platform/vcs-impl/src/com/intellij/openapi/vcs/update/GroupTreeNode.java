@@ -19,10 +19,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -109,7 +113,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   @NotNull
   @Override
   public SimpleTextAttributes getAttributes() {
-    return SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
+    return myFilterAttributes == null ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : myFilterAttributes;
   }
 
   @Override
@@ -121,22 +125,31 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     myFilePaths.add(filePath);
   }
 
-  public void rebuild(boolean groupByPackages) {
+  public void rebuild(boolean groupByPackages, @Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
+    myFilterAttributes = null;
     if (containsGroups()) {
-      rebuildGroups(groupByPackages);
+      rebuildGroups(groupByPackages, filter, showOnlyFilteredItems);
     }
     else {
-      rebuildFiles(groupByPackages);
+      rebuildFiles(groupByPackages, filter, showOnlyFilteredItems);
     }
   }
 
-  private void rebuildGroups(boolean groupByPackages) {
+  private void rebuildGroups(boolean groupByPackages,
+                             @Nullable Pair<PackageSetBase, NamedScopesHolder> filter,
+                             boolean showOnlyFilteredItems) {
+    boolean apply = false;
     for (int i = 0; i < getChildCount(); i++) {
-      ((GroupTreeNode)getChildAt(i)).rebuild(groupByPackages);
+      GroupTreeNode childGroup = (GroupTreeNode)getChildAt(i);
+      childGroup.rebuild(groupByPackages, filter, showOnlyFilteredItems);
+      apply |= childGroup.myFilterAttributes != null;
     }
+    applyFilter(apply);
   }
 
-  private void rebuildFiles(boolean groupByPackages) {
+  private void rebuildFiles(boolean groupByPackages,
+                            @Nullable Pair<PackageSetBase, NamedScopesHolder> filter,
+                            boolean showOnlyFilteredItems) {
     for (int i = getChildCount() - 1; i >= 0; i--) {
       final TreeNode node = getChildAt(i);
       if (node instanceof Disposable) {
@@ -147,9 +160,10 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     if (groupByPackages) {
       buildPackages();
+      acceptFilter(filter, showOnlyFilteredItems);
     }
     else {
-      buildFiles();
+      buildFiles(filter, showOnlyFilteredItems);
     }
 
     setTreeModel(myTreeModel);
@@ -168,6 +182,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     List<File> roots = groupByPackages.getRoots();
     addFiles(this, roots, files, groupByPackages, null);
+
   }
 
   private void addFiles(@NotNull AbstractTreeNode parentNode,
@@ -197,7 +212,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     }
   }
 
-  private void buildFiles() {
+  private void buildFiles(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
     Collections.sort(myFilePaths, new Comparator<String>() {
       @Override
       public int compare(String path1, String path2) {
@@ -205,8 +220,18 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
       }
     });
 
+    boolean apply = false;
+
     for (final String filePath : myFilePaths) {
       final FileTreeNode child = new FileTreeNode(filePath, myInvalidAttributes, myProject, null);
+      if (filter != null) {
+        if (child.acceptFilter(filter, showOnlyFilteredItems)) {
+          apply = true;
+        }
+        else if (showOnlyFilteredItems) {
+          continue;
+        }
+      }
       final String error = myErrorsMap.get(filePath);
       if (error != null) {
         child.setErrorText(error);
@@ -214,6 +239,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
       add(child);
       Disposer.register(this, child);
     }
+
+    applyFilter(apply);
   }
 
   private boolean containsGroups() {

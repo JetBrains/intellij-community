@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -72,17 +73,23 @@ public class TestFinderHelper {
 
   public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending) {
+    return getSortedElements(elementsWithWeights, weightsAscending, null);
+  }
+
+  public static List<PsiElement> getSortedElements(final List<Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
+                                                   final boolean weightsAscending,
+                                                   @Nullable final Comparator<PsiElement> sameNameComparator) {
     Collections.sort(elementsWithWeights, new Comparator<Pair<? extends PsiNamedElement, Integer>>() {
       public int compare(Pair<? extends PsiNamedElement, Integer> o1, Pair<? extends PsiNamedElement, Integer> o2) {
         int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
-        if (result == 0) {
-          result = Comparing.compare(o1.first.getName(), o2.first.getName());
-        }
+        if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());
+        if (result == 0 && sameNameComparator != null) result = sameNameComparator.compare(o1.first, o2.first);
+
         return result;
       }
     });
 
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<PsiElement>(elementsWithWeights.size());
     for (Pair<? extends PsiNamedElement, Integer> each : elementsWithWeights) {
       result.add(each.first);
     }

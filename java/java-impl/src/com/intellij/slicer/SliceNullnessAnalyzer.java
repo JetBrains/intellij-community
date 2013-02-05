@@ -18,6 +18,7 @@ package com.intellij.slicer;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
@@ -174,16 +175,16 @@ public class SliceNullnessAnalyzer {
         else {
           SliceUsage sliceUsage = element.getValue();
           final PsiElement value = sliceUsage.getElement();
-          DfaUtil.Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<DfaUtil.Nullness>() {
+          Nullness nullness = ApplicationManager.getApplication().runReadAction(new Computable<Nullness>() {
             @Override
-            public DfaUtil.Nullness compute() {
+            public Nullness compute() {
               return checkNullness(value);
             }
           });
-          if (nullness == DfaUtil.Nullness.NULL) {
+          if (nullness == Nullness.NULLABLE) {
             group(element, map, NullAnalysisResult.NULLS).add(value);
           }
-          else if (nullness == DfaUtil.Nullness.NOT_NULL) {
+          else if (nullness == Nullness.NOT_NULL) {
             group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
@@ -210,26 +211,26 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  private static DfaUtil.Nullness checkNullness(final PsiElement element) {
+  private static Nullness checkNullness(final PsiElement element) {
     // null
     PsiElement value = element;
     if (value instanceof PsiExpression) {
       value = PsiUtil.deparenthesizeExpression((PsiExpression)value);
     }
     if (value instanceof PsiLiteralExpression) {
-      return ((PsiLiteralExpression)value).getValue() == null ? DfaUtil.Nullness.NULL : DfaUtil.Nullness.NOT_NULL;
+      return ((PsiLiteralExpression)value).getValue() == null ? Nullness.NULLABLE : Nullness.NOT_NULL;
     }
 
     // not null
-    if (value instanceof PsiNewExpression) return DfaUtil.Nullness.NOT_NULL;
-    if (value instanceof PsiThisExpression) return DfaUtil.Nullness.NOT_NULL;
+    if (value instanceof PsiNewExpression) return Nullness.NOT_NULL;
+    if (value instanceof PsiThisExpression) return Nullness.NOT_NULL;
     if (value instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
-      if (method != null && NullableNotNullManager.isNotNull(method)) return DfaUtil.Nullness.NOT_NULL;
-      if (method != null && NullableNotNullManager.isNullable(method)) return DfaUtil.Nullness.NULL;
+      if (method != null && NullableNotNullManager.isNotNull(method)) return Nullness.NOT_NULL;
+      if (method != null && NullableNotNullManager.isNullable(method)) return Nullness.NULLABLE;
     }
     if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
-      return DfaUtil.Nullness.NOT_NULL; // "xxx" + var
+      return Nullness.NOT_NULL; // "xxx" + var
     }
 
     // unfortunately have to resolve here, since there can be no subnodes
@@ -243,23 +244,23 @@ public class SliceNullnessAnalyzer {
     }
     if (value instanceof PsiParameter && ((PsiParameter)value).getDeclarationScope() instanceof PsiCatchSection) {
       // exception thrown is always not null
-      return DfaUtil.Nullness.NOT_NULL;
+      return Nullness.NOT_NULL;
     }
 
     if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
-      DfaUtil.Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
-      if (result != DfaUtil.Nullness.UNKNOWN) {
+      Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
+      if (result != Nullness.UNKNOWN) {
         return result;
       }
     }
 
     if (value instanceof PsiModifierListOwner) {
-      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return DfaUtil.Nullness.NOT_NULL;
-      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return DfaUtil.Nullness.NULL;
+      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return Nullness.NOT_NULL;
+      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return Nullness.NULLABLE;
     }
 
-    if (value instanceof PsiEnumConstant) return DfaUtil.Nullness.NOT_NULL;
-    return DfaUtil.Nullness.UNKNOWN;
+    if (value instanceof PsiEnumConstant) return Nullness.NOT_NULL;
+    return Nullness.UNKNOWN;
   }
 
   public static class NullAnalysisResult {

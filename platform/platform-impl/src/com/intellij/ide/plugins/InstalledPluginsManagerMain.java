@@ -57,27 +57,14 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     super(uiSettings);
     init();
     myActionsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+    final JButton jbButton = new JButton("Install JetBrains plugin...");
+    jbButton.setMnemonic('j');
+    jbButton.addActionListener(new BrowseRepoListener("JetBrains"));
+    myActionsPanel.add(jbButton);
+
     final JButton button = new JButton("Browse repositories...");
     button.setMnemonic('b');
-    button.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final PluginManagerConfigurable configurable = createAvailableConfigurable();
-        final SingleConfigurableEditor configurableEditor =
-          new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
-            {
-              setOKButtonText(CommonBundle.message("close.action.name"));
-              setOKButtonMnemonic('C');
-            }
-
-            @Override
-            protected Action[] createActions() {
-              return new Action[]{getOKAction()};
-            }
-          };
-        configurableEditor.show();
-      }
-    });
+    button.addActionListener(new BrowseRepoListener(null));
     myActionsPanel.add(button);
 
     final JButton installPluginFromFileSystem = new JButton("Install plugin from disk...");
@@ -202,16 +189,16 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   protected void propagateUpdates(ArrayList<IdeaPluginDescriptor> list) {
   }
 
-  private PluginManagerConfigurable createAvailableConfigurable() {
+  private PluginManagerConfigurable createAvailableConfigurable(final String vendorFilter) {
     return new PluginManagerConfigurable(PluginManagerUISettings.getInstance(), true) {
       @Override
       protected PluginManagerMain createPanel() {
-        return new AvailablePluginsManagerMain(InstalledPluginsManagerMain.this, myUISettings);
+        return new AvailablePluginsManagerMain(InstalledPluginsManagerMain.this, myUISettings, vendorFilter);
       }
 
       @Override
       public String getDisplayName() {
-        return "Browse Repositories";
+        return vendorFilter != null ? "Browse " + vendorFilter + " Plugins " : "Browse Repositories";
       }
     };
   }
@@ -381,4 +368,30 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
   }
 
+  private class BrowseRepoListener implements ActionListener {
+
+    private final String myVendor;
+
+    public BrowseRepoListener(String vendor) {
+      myVendor = vendor;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      final PluginManagerConfigurable configurable = createAvailableConfigurable(myVendor);
+      final SingleConfigurableEditor configurableEditor =
+        new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
+          {
+            setOKButtonText(CommonBundle.message("close.action.name"));
+            setOKButtonMnemonic('C');
+          }
+
+          @Override
+          protected Action[] createActions() {
+            return new Action[]{getOKAction()};
+          }
+        };
+      configurableEditor.show();
+    }
+  }
 }

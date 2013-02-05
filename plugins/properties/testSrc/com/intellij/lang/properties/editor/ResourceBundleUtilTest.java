@@ -36,6 +36,9 @@ public class ResourceBundleUtilTest {
     { "\\ \t  starting from white spaces and tabs", " \t  starting from white spaces and tabs" },
     { "first line \\\nsecond line", "first line \nsecond line" },
     
+    // Non-ascii symbols.
+    { "wei\\u00DF", "weiß" },
+    
     // All together.
     { "\\\t text with \\\nspecial symbols\\:\\\n\\#", "\t text with \nspecial symbols:\n#" }
   };

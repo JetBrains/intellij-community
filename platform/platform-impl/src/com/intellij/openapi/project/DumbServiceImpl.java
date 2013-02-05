@@ -244,8 +244,10 @@ public class DumbServiceImpl extends DumbService {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+        if (ideFrame != null) {
+          StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+          statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+        }
       }
     });
   }

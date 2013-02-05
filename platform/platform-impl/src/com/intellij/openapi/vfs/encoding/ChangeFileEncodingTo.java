@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.text.MessageFormat;
 
 /**
  * @author cdr
@@ -32,8 +31,8 @@ abstract class ChangeFileEncodingTo extends AnAction implements DumbAware {
   private final VirtualFile myFile;
   private final Charset myCharset;
 
-  ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset, @NotNull String pattern) {
-    super(charset.displayName(), MessageFormat.format(pattern, file == null ? null : file.getName(), charset.displayName()), null);
+  ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset) {
+    super(charset.displayName());
     myFile = file;
     myCharset = charset;
   }

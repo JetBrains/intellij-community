@@ -64,6 +64,12 @@ public class AuthenticationDialog extends DialogWrapper {
   }
 
   @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return panel.getPreferredFocusedComponent();
+  }
+
+  @Nullable
   protected JComponent createCenterPanel() {
     return panel;
   }

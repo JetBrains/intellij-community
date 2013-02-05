@@ -41,15 +41,49 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
 
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue()
+                                          .withParent(XmlPatterns.xmlAttribute().withName("type")
+                                                        .withParent(XmlPatterns.xmlTag().withName(FxmlConstants.FX_ROOT)))
+                                          .and(attributeValueInFxml),
+                                        CLASS_REFERENCE_PROVIDER);
+
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
                                           .and(attributeValueInFxml),
                                         new JavaFxFieldIdReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_INCLUDE)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxSourceReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_SCRIPT)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxSourceReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_REFERENCE)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxComponentIdReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_FACTORY))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxFactoryReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("#"))
                                           .and(attributeValueInFxml),
                                         new JavaFxEventHandlerReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("@")).and(attributeValueInFxml),
+                                        new JavaFxLocationReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withValue(string().startsWith("$")).and(attributeValueInFxml),
+                                        new JavaFxComponentIdReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName("url")).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider());
 
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlTokenType.XML_TAG_CHARACTERS).inFile(inFxmlElementPattern()), new ImportReferenceProvider());

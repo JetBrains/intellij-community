@@ -12,7 +12,12 @@
     </ImageView>
     <ImageView>
       <image>
-        <Image url="<error descr="Cannot resolve symbol '@unknownIcon.png'">@unknownIcon.png</error>"/>
+        <Image url="appIcon.png"/>
+      </image>
+    </ImageView>
+    <ImageView>
+      <image>
+        <Image url="@<error descr="Cannot resolve file 'unknownIcon.png'">unknownIcon.png</error>"/>
       </image>
     </ImageView>
   </children>

@@ -39,6 +39,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
+  private final boolean myTemporary;
+
+  public ToggleLineBreakpointActionHandler(boolean temporary) {
+
+    myTemporary = temporary;
+  }
+
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     PlaceInDocument place = getPlace(project, event);
     if (place != null) {
@@ -78,10 +85,16 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     if(breakpoint == null) {
       LineBreakpoint lineBreakpoint = manager.addLineBreakpoint(document, line);
       if(lineBreakpoint != null) {
+        lineBreakpoint.REMOVE_AFTER_HIT = myTemporary;
         RequestManagerImpl.createRequests(lineBreakpoint);
       }
     } else {
-      manager.removeBreakpoint(breakpoint);
+      if (!breakpoint.REMOVE_AFTER_HIT && myTemporary) {
+        breakpoint.REMOVE_AFTER_HIT = true;
+        breakpoint.updateUI();
+      } else {
+        manager.removeBreakpoint(breakpoint);
+      }
     }
   }
 

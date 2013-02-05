@@ -1254,7 +1254,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
-      addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression)));
+      MethodCallInstruction callInstruction = new MethodCallInstruction(expression, createChainedVariableValue(expression));
+      if (!DfaValueFactory.isEffectivelyUnqualified(methodExpression)) {
+        callInstruction.setShouldFlushFields(false);
+      }
+      addInstruction(callInstruction);
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());
@@ -1592,7 +1596,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
     }
 
-    if (DfaVariableState.isFinalField(var)) {
+    if (DfaUtil.isFinalField(var) || DfaUtil.isPlainMutableField(var)) {
       DfaVariableValue qualifierValue = createChainedVariableValue(qualifier);
       if (qualifierValue != null) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, qualifierValue, isCall || qualifierValue.isViaMethods());
@@ -1608,7 +1612,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       return (PsiVariable)target;
     }
     if (target instanceof PsiMethod) {
-      return PropertyUtils.getSimplyReturnedField((PsiMethod)target, PropertyUtils.getSingleReturnValue((PsiMethod)target));
+      PsiMethod method = (PsiMethod)target;
+      if (PropertyUtils.isSimpleGetter(method)) {
+        return PropertyUtils.getSimplyReturnedField(method, PropertyUtils.getSingleReturnValue(method));
+      }
     }
     return null;
   }

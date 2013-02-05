@@ -12,13 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
@@ -75,7 +75,7 @@ public final class HgConflictResolver {
 
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) { return; }
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
       }

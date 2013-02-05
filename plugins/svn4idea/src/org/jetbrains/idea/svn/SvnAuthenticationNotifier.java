@@ -37,6 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
@@ -47,10 +48,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
@@ -316,16 +317,40 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
                                         final String realm,
                                         final String kind, boolean interactive) {
     // we should also NOT show proxy credentials dialog if at least fixed proxy was used, so
-    if (configuration.isIsUseDefaultProxy()) {
+    Proxy proxyToRelease = null;
+    if (! interactive && configuration.isIsUseDefaultProxy()) {
       final HttpConfigurable instance = HttpConfigurable.getInstance();
       if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (StringUtil.isEmptyOrSpaces(instance.PROXY_LOGIN) ||
                                                                        StringUtil.isEmptyOrSpaces(instance.getPlainProxyPassword()))) {
         return false;
       }
+      if (instance.USE_PROXY_PAC) {
+        final List<Proxy> select;
+        try {
+          select = CommonProxy.getInstance().select(new URI(url.toString()));
+        }
+        catch (URISyntaxException e) {
+          LOG.info("wrong URL: " + url.toString());
+          return false;
+        }
+        if (select != null && ! select.isEmpty()) {
+          for (Proxy proxy : select) {
+            if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
+              final InetSocketAddress address = (InetSocketAddress)proxy.address();
+              final PasswordAuthentication password =
+                HttpConfigurable.getInstance().getGenericPassword(address.getHostName(), address.getPort());
+              if (password == null) {
+                CommonProxy.getInstance().noAuthentication("http", address.getHostName(), address.getPort());
+                proxyToRelease = proxy;
+              }
+            }
+          }
+        }
+      }
     }
     SvnInteractiveAuthenticationProvider.clearCallState();
     try {
-      new SVNWCClient(manager, configuration.getOptions(project)).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+      SvnVcs.getInstance(project).createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
     } catch (SVNAuthenticationException e) {
       log(e);
       return false;
@@ -339,32 +364,14 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
       LOG.info("some other exc", e);
       if (interactive) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR,
-                                                          new NamedRunnable(SvnBundle.message("confirmation.title.clear.authentication.cache")) {
-                                                            @Override
-                                                            public void run() {
-                                                              SvnConfigurable.clearAuthenticationCache(project, null, configuration.getConfigurationDirectory());
-                                                            }
-                                                          },
-                                                          new NamedRunnable(SvnBundle.message("action.title.select.configuration.directory")) {
-                                                            @Override
-                                                            public void run() {
-                                                              SvnConfigurable.selectConfigirationDirectory(configuration.getConfigurationDirectory(),
-                                                                new Consumer<String>() {
-                                                                  @Override
-                                                                  public void consume(String s) {
-                                                                    configuration.setConfigurationDirParameters(false, s);
-                                                                  }
-                                                                }, project, null);
-                                                            }
-                                                          });
-          }
-        }, ModalityState.NON_MODAL, project.getDisposed());
+        showAuthenticationFailedWithHotFixes(project, configuration, e);
       }
       return false; /// !!!! any exception means user should be notified that authorization failed
+    } finally {
+      if (! interactive && configuration.isIsUseDefaultProxy() && proxyToRelease != null) {
+        final InetSocketAddress address = (InetSocketAddress)proxyToRelease.address();
+        CommonProxy.getInstance().noAuthentication("http", address.getHostName(), address.getPort());
+      }
     }
 
     if (! checkWrite) {
@@ -392,5 +399,39 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       return true;
     }
     return false;
+  }
+
+  private static void showAuthenticationFailedWithHotFixes(final Project project,
+                                                           final SvnConfiguration configuration,
+                                                           final SVNException e) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR,
+                                                      new NamedRunnable(
+                                                        SvnBundle.message("confirmation.title.clear.authentication.cache")) {
+                                                        @Override
+                                                        public void run() {
+                                                          SvnConfigurable.clearAuthenticationCache(project, null, configuration
+                                                            .getConfigurationDirectory());
+                                                        }
+                                                      },
+                                                      new NamedRunnable(SvnBundle.message("action.title.select.configuration.directory")) {
+                                                        @Override
+                                                        public void run() {
+                                                          SvnConfigurable
+                                                            .selectConfigirationDirectory(configuration.getConfigurationDirectory(),
+                                                                                          new Consumer<String>() {
+                                                                                            @Override
+                                                                                            public void consume(String s) {
+                                                                                              configuration
+                                                                                                .setConfigurationDirParameters(false, s);
+                                                                                            }
+                                                                                          }, project, null);
+                                                        }
+                                                      }
+        );
+      }
+    }, ModalityState.NON_MODAL, project.getDisposed());
   }
 }

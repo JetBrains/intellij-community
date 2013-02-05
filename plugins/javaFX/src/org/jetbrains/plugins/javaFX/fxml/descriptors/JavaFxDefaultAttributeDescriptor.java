@@ -16,10 +16,15 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -28,8 +33,14 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private static final Logger LOG = Logger.getInstance("#" + JavaFxDefaultAttributeDescriptor.class.getName());
 
+  private String myDefaultPropertyName = null;
   public JavaFxDefaultAttributeDescriptor(String name, PsiClass psiClass) {
     super(name, psiClass);
+  }
+
+  public JavaFxDefaultAttributeDescriptor(String name, String defaultPropertyName) {
+    super(name, null);
+    myDefaultPropertyName = defaultPropertyName;
   }
 
   @Override
@@ -43,11 +54,41 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
   }
 
   @Override
+  public boolean isRequired() {
+    if (myDefaultPropertyName != null) {
+      final List<String> requiredAttrs = FxmlConstants.FX_REQUIRED_ELEMENT_ATTRIBUTES.get(myDefaultPropertyName);
+      if (requiredAttrs != null && requiredAttrs.contains(getName())) return true;
+    }
+    return false;
+  }
+
+  @Override
   protected PsiClass getEnum() {
     return isEnumerated() ? getPsiClass() : null ;
   }
 
   protected boolean isConstant(PsiField field) {
     return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.PUBLIC);
+  }
+
+  @Nullable
+  @Override
+  public String validateValue(XmlElement context, String value) {
+    if (context instanceof XmlAttributeValue) {
+      final PsiElement parent = context.getParent();
+      if (parent instanceof XmlAttribute) {
+        final XmlAttribute attribute = (XmlAttribute)parent;
+        if (FxmlConstants.FX_VALUE.equals(attribute.getName())) {
+          final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
+          if (tagClass != null) {
+            final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
+            if (method == null) {
+              return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
+            }
+          }
+        }
+      }
+    }
+    return super.validateValue(context, value);
   }
 }

@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Set;
 
 public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBase {
-  private static final Set<Character> NATURAL = ContainerUtil.newTroveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']');
+  private static final Set<Character> NATURAL = ContainerUtil.newTroveSet(
+    '(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']', '_'
+  );
   private static final Set<Character> SENTENCE_END = ContainerUtil.newTroveSet('.', '!', '?');
 
   @Override

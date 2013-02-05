@@ -48,12 +48,14 @@ public class KnownElementWeigher extends ProximityWeigher {
       final PsiMethod method = (PsiMethod)element;
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
-        if ("finalize".equals(method.getName()) || "registerNatives".equals(method.getName())) {
+        String methodName = method.getName();
+        if ("finalize".equals(methodName) || "registerNatives".equals(methodName) || "getClass".equals(methodName) ||
+            methodName.startsWith("wait") || methodName.startsWith("notify")) {
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
             return -1;
           }
         }
-        if ("subSequence".equals(method.getName())) {
+        if ("subSequence".equals(methodName)) {
           if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
             return -1;
           }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SwitchStatementWithTooFewBranches.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'switch' statement with too few branches</problem_class>
+    <description>&lt;code&gt;switch&lt;/code&gt; has too few branches (1), and should probably be replaced with an 'if' statement #loc</description>
+  </problem>
+</problems>

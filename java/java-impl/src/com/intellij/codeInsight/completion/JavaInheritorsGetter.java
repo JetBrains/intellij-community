@@ -50,6 +50,14 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     myConstructorInsertHandler = constructorInsertHandler;
   }
 
+  private static boolean shouldAddArrayInitializer(PsiElement position) {
+    if (!JavaCompletionContributor.isInJavaContext(position) || !JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      return false;
+    }
+    PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class);
+    return newExpression != null && newExpression.getParent() instanceof PsiExpressionList;
+  }
+
   @Override
   public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
@@ -88,14 +96,24 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
     for (final PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
       if (type instanceof PsiArrayType) {
-        final LookupItem item = PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), identifierCopy);
-        if (item.getObject() instanceof PsiClass) {
-          JavaCompletionUtil.setShowFQN(item);
+        consumer.consume(createNewArrayItem(identifierCopy, type));
+
+        if (shouldAddArrayInitializer(identifierCopy)) {
+          PsiTypeLookupItem item = createNewArrayItem(identifierCopy, type);
+          item.setAddArrayInitializer();
+          consumer.consume(item);
         }
-        item.setInsertHandler(new DefaultInsertHandler()); //braces & shortening
-        consumer.consume(item);
       }
     }
+  }
+
+  private static PsiTypeLookupItem createNewArrayItem(PsiElement identifierCopy, PsiType type) {
+    PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), identifierCopy);
+    if (item.getObject() instanceof PsiClass) {
+      JavaCompletionUtil.setShowFQN(item);
+    }
+    item.setInsertHandler(new DefaultInsertHandler()); //braces & shortening
+    return item;
   }
 
   private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {

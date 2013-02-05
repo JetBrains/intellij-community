@@ -134,8 +134,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     new SynchronousQueue<Runnable>(),
     new ThreadFactory() {
       int i;
+      @NotNull
       @Override
-      public Thread newThread(Runnable r) {
+      public Thread newThread(@NotNull Runnable r) {
         final int count = myAliveThreads.incrementAndGet();
         final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+i++) {
           @Override
@@ -1108,7 +1109,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void runEdtSafeAction(@NotNull Runnable runnable) {
     Integer value = ourEdtSafe.get();
     if (value == null) {
-      value = Integer.valueOf(0);
+      value = 0;
     }
 
     ourEdtSafe.set(value + 1);

@@ -91,7 +91,6 @@ import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
@@ -667,6 +666,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return client;
   }
 
+  public SVNUpdateClient createUpdateClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
+    return client;
+  }
+
   public SVNStatusClient createStatusClient() {
     SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
@@ -677,6 +682,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SVNWCClient createWCClient() {
     final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
+  }
+
+  public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
 
@@ -698,6 +709,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return client;
   }
 
+  public SVNLogClient createLogClient(@NotNull ISVNAuthenticationManager manager) {
+    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(manager);
+    return client;
+  }
+
   public SVNCommitClient createCommitClient() {
     final SVNCommitClient client = new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
@@ -714,12 +731,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final SVNChangelistClient client = new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
     return client;
-  }
-
-  public SVNWCAccess createWCAccess() {
-    final SVNWCAccess access = SVNWCAccess.newInstance(null);
-    access.setOptions(myConfiguration.getOptions(myProject));
-    return access;
   }
 
   public ISVNOptions getSvnOptions() {
@@ -1110,7 +1121,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final File ioFile = new File(vf.getPath());
       SVNURL url = mapping.getUrlForFile(ioFile);
       if (url == null) {
-        url = SvnUtil.getUrl(ioFile);
+        url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
           notMatched.add(s);
           continue;

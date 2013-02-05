@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -52,6 +53,12 @@ public class SuggestVariableNameMacro extends Macro {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
+  }
+
+  @Nullable
+  @Override
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+    return calculateResult(params, context);
   }
 
   @Override

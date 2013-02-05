@@ -46,7 +46,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
                       psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
   static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
     or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
-       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
+       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class)
+                                .withSuperParent(3, PsiCatchSection.class)));
   static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
     psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
   static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
@@ -55,15 +56,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
-  private final boolean myLocal;
   private final Set<PsiField> myNonInitializedFields;
   @NotNull private final Condition<PsiClass> myRequiredSuper;
 
-  public PreferByKindWeigher(CompletionType completionType, final PsiElement position, boolean local) {
-    super("kind" + (local ? "Local" : "Global"));
+  public PreferByKindWeigher(CompletionType completionType, final PsiElement position) {
+    super("kind");
     myCompletionType = completionType;
     myPosition = position;
-    myLocal = local;
     myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
     myRequiredSuper = createSuitabilityCondition(position);
   }
@@ -153,10 +152,6 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
         return MyResult.localOrParameter;
       }
-    }
-
-    if (myLocal) {
-      return MyResult.normal;
     }
 
     if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {

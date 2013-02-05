@@ -29,6 +29,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
+import static hg4idea.test.HgExecutor.*;
 import static junit.framework.Assert.assertEquals;
 
 /**

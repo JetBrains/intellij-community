@@ -76,7 +76,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected File myDataStorageRoot;
   private TestProjectBuilderLogger myLogger;
 
-  protected Map<String, String> myBuildParams = new HashMap<String, String>();
+  protected Map<String, String> myBuildParams;
 
   @Override
   protected void setUp() throws Exception {
@@ -85,6 +85,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
     myLogger = new TestProjectBuilderLogger();
+    myBuildParams = new HashMap<String, String>();
   }
 
   @Override

@@ -79,6 +79,9 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract DebuggerActionHandler getToggleLineBreakpointHandler();
 
+  @NotNull
+  public abstract DebuggerActionHandler getToggleTemporaryLineBreakpointHandler();
+
 
   @NotNull
   public abstract DebuggerActionHandler getShowExecutionPointHandler();

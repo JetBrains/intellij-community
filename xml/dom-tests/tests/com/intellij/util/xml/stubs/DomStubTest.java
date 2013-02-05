@@ -58,12 +58,6 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    DomApplicationComponent.getInstance().clearCachesInTests();
-    super.tearDown();
-  }
-
-  @Override
   protected String getBasePath() {
     return "/xml/dom-tests/testData/stubs";
   }

@@ -543,7 +543,7 @@ public class XDebugSessionImpl implements XDebugSession {
     return breakpointReached(breakpoint, null, suspendContext);
   }
 
-  public boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
+  public boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext) {
     XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
     String condition = breakpoint.getCondition();
@@ -586,6 +586,21 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myActiveNonLineBreakpoint = !(breakpoint instanceof XLineBreakpoint<?>) ? breakpoint : null;
     positionReached(suspendContext);
+
+    if (breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
+      addSessionListener(new XDebugSessionAdapter() {
+        @Override
+        public void sessionResumed() {
+          DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+            @Override
+            public void run() {
+              XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
+            }
+          });
+          removeSessionListener(this);
+        }
+      });
+    }
     return true;
   }
 

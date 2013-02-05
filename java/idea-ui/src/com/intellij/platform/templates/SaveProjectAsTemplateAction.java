@@ -175,7 +175,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                   String s = VfsUtilCore.loadText(virtualFile);
                   String result = convertTemplates(s, pattern, templateText);
 
-                  return new ByteArrayInputStream(result.getBytes(virtualFile.getCharset()));
+                  return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
                 }
               });
             }

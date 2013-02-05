@@ -15,45 +15,26 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author yole
-*/
-public class CollectionComboBoxModel extends AbstractListModel implements ComboBoxModel {
+ */
+public class CollectionComboBoxModel extends AbstractCollectionComboBoxModel {
   private final List myItems;
-  private Object mySelection;
 
   public CollectionComboBoxModel(final List items, @Nullable final Object selection) {
-    myItems = items;
-    mySelection = selection;
+    super(selection);
+    myItems = Collections.unmodifiableList(items);
   }
 
-  public int getSize() {
-    return myItems.size();
-  }
 
-  public Object getElementAt(final int index) {
-    return myItems.get(index);
-  }
-
-  public void setSelectedItem(@Nullable final Object anItem) {
-    mySelection = anItem;
-  }
-
-  @Nullable
-  public Object getSelectedItem() {
-    return mySelection;
-  }
-
-  public void update() {
-    super.fireContentsChanged(this, -1, -1);
-  }
-
-  public boolean contains(Object item) {
-    return myItems.contains(item);
+  @NotNull
+  final protected List getItems() {
+    return myItems;
   }
 }

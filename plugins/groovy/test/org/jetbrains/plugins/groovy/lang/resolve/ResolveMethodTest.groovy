@@ -1508,4 +1508,23 @@ myEnum = MyEnum.va<caret>lueOf('FOO')
 
     assertEquals(valueof.parameterList.parametersCount, 1)
   }
+
+  void testResolveOverloadedReturnType() {
+    myFixture.addClass('class PsiModifierList {}')
+    myFixture.addClass('class GrModifierList extends PsiModifierList {}')
+    myFixture.addClass('class GrMember {' +
+                       '  GrModifierList get();' +
+                       '}')
+    myFixture.addClass('class PsiClass {' +
+                       '  PsiModifierList get();' +
+                       '}')
+
+    myFixture.addClass('class GrTypeDefinition extends PsiClass, GrMember {}')
+
+    final PsiMethod method = resolveByText('new GrTypeDefinition().ge<caret>t()', PsiMethod)
+
+    assertTrue(method.getReturnType().getCanonicalText() == 'GrModifierList')
+
+
+  }
 }

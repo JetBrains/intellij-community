@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -65,7 +66,16 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
       myFilePath = localPath;
     }
     else {
-      myFilePath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myPath, false);
+      FilePath local;
+      try {
+        final String fullPath = SvnUtil.appendMultiParts(repositoryRoot, myPath);
+        local = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(fullPath, false);
+      }
+      catch (SVNException e) {
+        // todo what to do safely?
+        local = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(repositoryRoot, false);
+      }
+      myFilePath = local;
     }
     myRevision = revision;
   }

@@ -196,4 +196,33 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
             'lib1 (1 -> 2)' ('outdated')
     } } } }
   }
+  
+  @Test
+  void "outdated library dependencies at one module and gradle-local at another"() {
+    init(
+      gradle: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib-2')} }
+          module ('module2') {
+            dependencies {
+              library('lib-2')} } } },
+      intellij: {
+        project {
+          module('module1') {
+            dependencies {
+              library('lib-1')} }
+          module('module2') {
+            dependencies()} } }
+    )
+    checkTree {
+      project {
+        module1 {
+          dependencies {
+            'lib (1 -> 2)'('outdated') } }
+        module2 {
+          dependencies {
+            'lib-2'('gradle') } } } }
+  }
 }

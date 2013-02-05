@@ -15,13 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.griffon;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.mvc.MvcCommand;
 
 import javax.swing.*;
 
@@ -50,20 +49,29 @@ public class GriffonCreateProjectDialog extends DialogWrapper {
     return myComponent;
   }
 
-  String getCommand() {
-    if (myCreateAddon.isSelected()) return "create-addon";
-    if (myCreateApp.isSelected()) return "create-app";
-    if (myCreateArchetype.isSelected()) return "create-archetype";
-    if (myCreatePlugin.isSelected()) return "create-plugin";
-    throw new AssertionError("No selection");
-  }
+  MvcCommand getCommand() {
+    String cmd;
 
-  String[] getArguments() {
-    String text = myOptionField.getText();
-    if (StringUtil.isEmptyOrSpaces(text)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (myCreateAddon.isSelected()) {
+      cmd = "create-addon";
     }
-    return text.split(" ");
+    else if (myCreateApp.isSelected()) {
+      cmd = "create-app";
+    }
+    else if (myCreateArchetype.isSelected()) {
+      cmd = "create-archetype";
+    }
+    else if (myCreatePlugin.isSelected()) {
+      cmd = "create-plugin";
+    }
+    else {
+      throw new AssertionError("No selection");
+    }
+
+    String text = myOptionField.getText();
+    if (text == null) text = "";
+
+    return new MvcCommand(cmd, ParametersList.parse(text));
   }
 
 }

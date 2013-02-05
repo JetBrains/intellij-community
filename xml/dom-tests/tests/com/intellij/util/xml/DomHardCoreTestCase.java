@@ -35,12 +35,6 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
     }, myProject);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    DomApplicationComponent.getInstance().clearCachesInTests();
-    super.tearDown();
-  }
-
   protected DomManagerImpl getDomManager() {
     return DomManagerImpl.getDomManager(getProject());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.todo;
 
 import com.intellij.ide.todo.nodes.SummaryNode;
@@ -29,39 +28,46 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 /**
+ * todo: replace this highlightable crap with regular NodeRenderer
  * @author Vladimir Kondratyev
  */
-final class TodoCompositeRenderer implements TreeCellRenderer{
+final class TodoCompositeRenderer implements TreeCellRenderer {
   private final NodeRenderer myNodeRenderer;
   private final HighlightableCellRenderer myColorTreeCellRenderer;
 
-  public TodoCompositeRenderer(){
-    myNodeRenderer=new NodeRenderer();
-    myColorTreeCellRenderer=new HighlightableCellRenderer();
+  public TodoCompositeRenderer() {
+    myNodeRenderer = new NodeRenderer();
+    myColorTreeCellRenderer = new HighlightableCellRenderer();
   }
 
-  public Component getTreeCellRendererComponent(JTree tree,Object obj,boolean selected,boolean expanded,boolean leaf,int row,boolean hasFocus){
-    Object userObject=((DefaultMutableTreeNode)obj).getUserObject();
-    if(userObject instanceof SummaryNode){
-      myNodeRenderer.getTreeCellRendererComponent(tree,userObject.toString(),selected,expanded,leaf,row,hasFocus);
+  public Component getTreeCellRendererComponent(JTree tree, Object obj, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    Component result;
+
+    Object userObject = ((DefaultMutableTreeNode)obj).getUserObject();
+    if (userObject instanceof SummaryNode) {
+      myNodeRenderer.getTreeCellRendererComponent(tree, userObject.toString(), selected, expanded, leaf, row, hasFocus);
       myNodeRenderer.setFont(UIUtil.getTreeFont().deriveFont(Font.BOLD));
       myNodeRenderer.setIcon(null);
-      return myNodeRenderer;
-    }else if(userObject instanceof HighlightedRegionProvider){
-      NodeDescriptor descriptor=(NodeDescriptor)userObject;
-      HighlightedRegionProvider regionProvider=(HighlightedRegionProvider)userObject;
-      myColorTreeCellRenderer.getTreeCellRendererComponent(tree,obj,selected,expanded,leaf,row,hasFocus);
-      for (HighlightedRegion highlightedRegion : regionProvider.getHighlightedRegions()) {
-        myColorTreeCellRenderer.addHighlighter(
-            highlightedRegion.startOffset,
-            highlightedRegion.endOffset,
-            highlightedRegion.textAttributes
-        );
+      result = myNodeRenderer;
+    }
+    else if (userObject instanceof NodeDescriptor && userObject instanceof HighlightedRegionProvider) {
+      NodeDescriptor descriptor = (NodeDescriptor)userObject;
+      HighlightedRegionProvider regionProvider = (HighlightedRegionProvider)userObject;
+      myColorTreeCellRenderer.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
+      for (HighlightedRegion region : regionProvider.getHighlightedRegions()) {
+        myColorTreeCellRenderer.addHighlighter(region.startOffset, region.endOffset, region.textAttributes);
       }
       myColorTreeCellRenderer.setIcon(descriptor.getIcon());
-      return myColorTreeCellRenderer;
-    }else{
-      return myNodeRenderer.getTreeCellRendererComponent(tree,null,selected,expanded,leaf,row,hasFocus);
+      result = myColorTreeCellRenderer;
     }
+    else {
+      result = myNodeRenderer.getTreeCellRendererComponent(tree, null, selected, expanded, leaf, row, hasFocus);
+    }
+
+    if (result instanceof JComponent) {
+      ((JComponent)result).setOpaque(!selected);
+    }
+
+    return result;
   }
 }

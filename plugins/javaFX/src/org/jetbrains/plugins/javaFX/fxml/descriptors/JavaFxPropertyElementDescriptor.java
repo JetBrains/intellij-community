@@ -2,12 +2,10 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -17,9 +15,11 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +89,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
       return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
     }
-    if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
+    if (JavaFxPsiUtil.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
     else if (myPsiClass != null) {
@@ -106,6 +106,13 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
   @Nullable
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
+    final PsiElement element = getDeclaration();
+    if (element instanceof PsiField) {
+      final PsiType type = ((PsiField)element).getType();
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+        return new AnyXmlAttributeDescriptor(attributeName);
+      }
+    }
     return null;
   }
 
@@ -144,7 +151,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (field != null) {
       return field;
     }
-    return JavaFxClassBackedElementDescriptor.findPropertySetter(myName, myPsiClass);
+    return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
   }
 
   @Override

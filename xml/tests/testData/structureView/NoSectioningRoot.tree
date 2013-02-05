@@ -1,0 +1,9 @@
+-HtmlFile:NoSectioningRoot.html
+ [1 2 3 4]
+ blockquote
+ body
+ details
+ dialog
+ fieldset
+ figure
+ td

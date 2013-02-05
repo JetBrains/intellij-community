@@ -26,6 +26,8 @@ import org.junit.Before;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.dvcs.test.Executor.*;
+import static hg4idea.test.HgExecutor.hg;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -33,7 +35,7 @@ import static org.junit.Assume.assumeTrue;
 /**
  * @author Nadya Zabrodina
  */
-public class HgLightTest extends HgExecutor {
+public class HgLightTest {
 
   //private static final String USER_NAME = "John Doe";
   //private static final String USER_EMAIL = "John.Doe@example.com";
@@ -68,7 +70,8 @@ public class HgLightTest extends HgExecutor {
     myPlatformFacade = new HgTestPlatformFacade();
     cd(".hg");
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
-    File hgrcFile = new File(new File(pluginRoot, "testData\\repo\\dot_hg"), "hgrc");
+    String pathToHgrc = "testData\\repo\\dot_hg";
+    File hgrcFile = new File(new File(pluginRoot, FileUtil.toSystemIndependentName(pathToHgrc)), "hgrc");
     File hgrc = new File(new File(myProjectRoot, ".hg"), "hgrc");
     try {
       FileUtil.copy(hgrcFile, hgrc);
@@ -96,7 +99,7 @@ public class HgLightTest extends HgExecutor {
     return new MockVirtualFile(rootDir);
   }
 
-  private void initRepo(String repoRoot) {
+  private static void initRepo(String repoRoot) {
     cd(repoRoot);
     hg("init");
     touch("file.txt");

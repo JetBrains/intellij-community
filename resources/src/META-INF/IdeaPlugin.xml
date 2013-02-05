@@ -254,6 +254,8 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaMethodMergingContributor" id="methodMerger"
                             order="before javaLegacy, before default"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor" id="javaMemberName"
+                            order="before javaOverride"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaOverrideCompletionContributor" id="javaOverride"
                             order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
@@ -1340,6 +1342,8 @@
     -->
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateProjectFromSourcesMode" id="CreateProjectFromSourcesMode" order="after CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateModuleFromSourcesMode" id="CreateModuleFromSourcesMode" order="after CreateProjectFromSourcesMode"/>
+
+    <wizardInputFieldFactory implementation="com.intellij.openapi.module.BasePackageInputFieldFactory"/>
 
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
 

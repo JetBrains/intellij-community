@@ -63,7 +63,7 @@ public class Maven3WorkspaceReader implements WorkspaceReader {
       if (equals(id.getArtifactId(), artifact.getArtifactId()) && equals(id.getGroupId(), artifact.getGroupId())) {
         String version = id.getVersion();
 
-        if (version != null && !"LATEST".equals(version) && !"RELEASE".equals(version)) {
+        if (version != null) {
           res.add(version);
         }
       }

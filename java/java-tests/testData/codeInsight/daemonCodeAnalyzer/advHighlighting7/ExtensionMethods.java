@@ -50,7 +50,7 @@ class D {
 }
 
 interface IllegalMods {
-  <error descr="Illegal combination of modifiers: 'static' and 'abstract'">static</error> void m1();
+  <error descr="Static methods in interfaces should have a body">static void m1()</error>;
   <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> void m2() default { }
   <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers: 'default' and 'static'">default</error> void m3() { }
 

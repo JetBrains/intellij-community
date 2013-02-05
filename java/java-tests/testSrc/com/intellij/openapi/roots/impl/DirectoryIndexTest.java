@@ -168,6 +168,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     });
 
     myIndex = DirectoryIndex.getInstance(myProject);
+    // to not interfere with previous test firing vfs events
+    VirtualFileManager.getInstance().syncRefresh();
   }
 
   private CompilerProjectExtension getCompilerProjectExtension() {

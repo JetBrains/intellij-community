@@ -64,7 +64,8 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final ForceRunToCursorActionHandler myForceRunToCursorActionHandler = new ForceRunToCursorActionHandler();
   private final ResumeActionHandler myResumeActionHandler = new ResumeActionHandler();
   private final PauseActionHandler myPauseActionHandler = new PauseActionHandler();
-  private final ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
+  private final ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler(false);
+  private final ToggleLineBreakpointActionHandler myToggleTemporaryLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler(true);
   private final ShowExecutionPointActionHandler myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
   private final EvaluateActionHandler myEvaluateActionHandler = new EvaluateActionHandler();
   private final QuickEvaluateActionHandler myQuickEvaluateHandler = new QuickEvaluateActionHandler();
@@ -133,6 +134,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getToggleLineBreakpointHandler() {
     return myToggleLineBreakpointActionHandler;
+  }
+
+  @NotNull
+  @Override
+  public DebuggerActionHandler getToggleTemporaryLineBreakpointHandler() {
+    return myToggleTemporaryLineBreakpointActionHandler;
   }
 
   @NotNull

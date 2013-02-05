@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,8 +80,13 @@ public class BooleanConstructorInspection extends BaseInspection {
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
       final PsiExpressionList argumentList = expression.getArgumentList();
-      assert argumentList != null;
+      if (argumentList == null) {
+        return;
+      }
       final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
       final PsiExpression argument = arguments[0];
       final String text = argument.getText();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
@@ -119,6 +124,7 @@ public class BooleanConstructorInspection extends BaseInspection {
       replaceExpression(expression, newExpression);
     }
 
+    @NonNls
     private static String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
@@ -151,6 +157,14 @@ public class BooleanConstructorInspection extends BaseInspection {
         if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {
           return;
         }
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] expressions = argumentList.getExpressions();
+      if (expressions.length != 1) {
+        return;
       }
       registerError(expression);
     }

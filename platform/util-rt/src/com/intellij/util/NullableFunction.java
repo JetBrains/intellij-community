@@ -20,9 +20,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public interface NullableFunction<Dom, Img> extends Function<Dom,Img> {
+public interface NullableFunction<Param, Result> extends Function<Param, Result> {
   @Nullable
-  Img fun(final Dom dom);
+  Result fun(final Param param);
 
   /**
    * @see FunctionUtil#nullConstant()

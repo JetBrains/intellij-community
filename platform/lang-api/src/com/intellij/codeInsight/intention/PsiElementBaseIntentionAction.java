@@ -56,6 +56,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (file == null) return false;
     final PsiManager manager = file.getManager();
     if (manager == null) return false;
     if (!manager.isInProject(file)) return false;

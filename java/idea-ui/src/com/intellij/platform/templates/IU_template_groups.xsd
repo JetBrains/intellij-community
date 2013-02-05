@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.jetbrains.com/projectTemplates">
+  <xs:element name="template-groups" type="template-groupsType"/>
+  <xs:complexType name="groupType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="path" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="requiredPlugin" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element type="templateType" name="template"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="templateType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="name" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="description" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="path" minOccurs="1" maxOccurs="1"/>
+      <xs:element type="xs:string" name="requiredPlugin" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="input-field" maxOccurs="unbounded" minOccurs="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="IJ_BASE_PACKAGE"/>
+            <xs:enumeration value="IJ_APPLICATION_SERVER"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="template-groupsType">
+    <xs:sequence>
+      <xs:element type="groupType" name="group"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

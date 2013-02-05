@@ -264,7 +264,7 @@ public class MavenModelConverter {
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) throws RemoteException {
-    return new MavenPlugin.Execution(execution.getGoals(), convertConfiguration(execution.getConfiguration()));
+    return new MavenPlugin.Execution(execution.getId(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
   private static Element convertConfiguration(Object config) throws RemoteException {

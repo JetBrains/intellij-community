@@ -37,41 +37,55 @@ import java.util.*;
 
 
 public class GroovyCompilerWrapper {
-  private GroovyCompilerWrapper() {
+  private static final String LINKAGE_ERROR =
+    "A groovyc error occurred while trying to load one of the classes in project dependencies, please ensure it's present. " +
+    "See the message and the stack trace below for reference\n\n";
+  private final List<CompilerMessage> collector;
+  private final boolean forStubs;
+
+  public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
+    this.collector = collector;
+    this.forStubs = forStubs;
   }
 
-  public static List compile(List collector, boolean forStubs, final CompilationUnit unit) {
-    List compiledFiles = new ArrayList();
+  public List<OutputItem> compile(final CompilationUnit unit) {
+    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
     try {
       unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
       addCompiledFiles(unit, compiledFiles, forStubs);
     }
     catch (CompilationFailedException e) {
-      processCompilationException(e, collector, forStubs);
+      processCompilationException(e);
     }
     catch (IOException e) {
-      processException(e, collector, forStubs);
+      processException(e, "");
     }
     catch (GroovyBugError e) {
-      processException(e, collector, forStubs);
+      processException(e, "");
     }
     catch (NoClassDefFoundError e) {
       final String className = e.getMessage();
       if (className.startsWith("org/apache/ivy/")) {
-        addMessageWithoutLocation(collector, "Cannot @Grab without Ivy, please add it to your module dependencies (NoClassDefFoundError: " + className + ")", true);
+        addMessageWithoutLocation("Cannot @Grab without Ivy, please add it to your module dependencies (NoClassDefFoundError: " + className + ")", true);
       } else {
         throw e;
       }
 
     }
+    catch (TypeNotPresentException e) {
+      processException(e, LINKAGE_ERROR);
+    }
+    catch (LinkageError e) {
+      processException(e, LINKAGE_ERROR);
+    }
     finally {
-      addWarnings(unit.getErrorCollector(), collector);
+      addWarnings(unit.getErrorCollector());
     }
     return compiledFiles;
   }
 
   private static void addCompiledFiles(CompilationUnit compilationUnit,
-                                       final List compiledFiles,
+                                       final List<OutputItem> compiledFiles,
                                        final boolean forStubs) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
@@ -104,10 +118,11 @@ public class GroovyCompilerWrapper {
       return;
     }
 
-    final SortedSet allClasses = new TreeSet();
-    List listOfClasses = compilationUnit.getClasses();
-    for (int i = 0; i < listOfClasses.size(); i++) {
-      allClasses.add(((GroovyClass)listOfClasses.get(i)).getName());
+    final SortedSet<String> allClasses = new TreeSet<String>();
+    //noinspection unchecked
+    List<GroovyClass> listOfClasses = compilationUnit.getClasses();
+    for (GroovyClass listOfClass : listOfClasses) {
+      allClasses.add(listOfClass.getName());
     }
 
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
@@ -117,19 +132,19 @@ public class GroovyCompilerWrapper {
       //System.out.println("source: " + fileName);
       //System.out.print("classes:");
       final ModuleNode ast = sourceUnit.getAST();
-      final List topLevelClasses = ast.getClasses();
+      final List<ClassNode> topLevelClasses = ast.getClasses();
 
-      for (int i = 0; i < topLevelClasses.size(); i++) {
-        final ClassNode classNode = (ClassNode)topLevelClasses.get(i);
+      for (ClassNode classNode : topLevelClasses) {
         final String topLevel = classNode.getName();
         final String nested = topLevel + "$";
-        final SortedSet tail = allClasses.tailSet(topLevel);
-        for (Iterator tailIter = tail.iterator(); tailIter.hasNext();) {
-          String className = (String)tailIter.next();
+        final SortedSet<String> tail = allClasses.tailSet(topLevel);
+        for (Iterator<String> tailItr = tail.iterator(); tailItr.hasNext(); ) {
+          String className = tailItr.next();
           if (className.equals(topLevel) || className.startsWith(nested)) {
-            tailIter.remove();
+            tailItr.remove();
             compiledFiles.add(new OutputItem(outputPath + "/" + className.replace('.', '/') + ".class", fileName));
-          } else {
+          }
+          else {
             break;
           }
         }
@@ -137,43 +152,43 @@ public class GroovyCompilerWrapper {
     }
   }
 
-  private static void addWarnings(ErrorCollector errorCollector, List collector) {
+  private void addWarnings(ErrorCollector errorCollector) {
     for (int i = 0; i < errorCollector.getWarningCount(); i++) {
       WarningMessage warning = errorCollector.getWarning(i);
       collector.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, warning.getMessage(), null, -1, -1));
     }
   }
 
-  private static void processCompilationException(Exception exception, List collector, boolean forStubs) {
+  private void processCompilationException(Exception exception) {
     if (exception instanceof MultipleCompilationErrorsException) {
       MultipleCompilationErrorsException multipleCompilationErrorsException = (MultipleCompilationErrorsException) exception;
       ErrorCollector errorCollector = multipleCompilationErrorsException.getErrorCollector();
       for (int i = 0; i < errorCollector.getErrorCount(); i++) {
-        processException(errorCollector.getError(i), collector, forStubs);
+        processException(errorCollector.getError(i));
       }
     } else {
-      processException(exception, collector, forStubs);
+      processException(exception, "");
     }
   }
 
   /** @noinspection ThrowableResultOfMethodCallIgnored*/
-  private static void processException(Message message, List collector, boolean forStubs) {
+  private void processException(Message message) {
     if (message instanceof SyntaxErrorMessage) {
       SyntaxErrorMessage syntaxErrorMessage = (SyntaxErrorMessage) message;
-      addErrorMessage(syntaxErrorMessage.getCause(), collector);
+      addErrorMessage(syntaxErrorMessage.getCause());
     } else if (message instanceof ExceptionMessage) {
       ExceptionMessage exceptionMessage = (ExceptionMessage) message;
-      processException(exceptionMessage.getCause(), collector, forStubs);
+      processException(exceptionMessage.getCause(), "");
     } else if (message instanceof SimpleMessage) {
-      addErrorMessage((SimpleMessage) message, collector);
+      addErrorMessage((SimpleMessage) message);
     } else {
-      addMessageWithoutLocation(collector, "An unknown error occurred: " + message, true);
+      addMessageWithoutLocation("An unknown error occurred: " + message, true);
     }
   }
 
-  private static void processException(Throwable exception, List collector, boolean forStubs) {
+  private void processException(Throwable exception, String prefix) {
     if (exception instanceof GroovyRuntimeException) {
-      addErrorMessage((GroovyRuntimeException) exception, collector);
+      addErrorMessage((GroovyRuntimeException) exception);
       return;
     }
 
@@ -183,25 +198,26 @@ public class GroovyCompilerWrapper {
     }
 
     final StringWriter writer = new StringWriter();
+    writer.append(prefix);
     //noinspection IOResourceOpenedButNotSafelyClosed
     exception.printStackTrace(new PrintWriter(writer));
     collector.add(new CompilerMessage(forStubs ? GroovyCompilerMessageCategories.INFORMATION : GroovyCompilerMessageCategories.ERROR, writer.toString(), null, -1, -1));
   }
 
-  private static void addMessageWithoutLocation(List collector, String message, boolean error) {
+  private void addMessageWithoutLocation(String message, boolean error) {
     collector.add(new CompilerMessage(error ? GroovyCompilerMessageCategories.ERROR : GroovyCompilerMessageCategories.WARNING, message, null, -1, -1));
   }
 
   private static final String LINE_AT = " @ line ";
 
-  private static void addErrorMessage(SyntaxException exception, List collector) {
+  private void addErrorMessage(SyntaxException exception) {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
     collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, justMessage, exception.getSourceLocator(),
         exception.getLine(), exception.getStartColumn()));
   }
 
-  private static void addErrorMessage(GroovyRuntimeException exception, List collector) {
+  private void addErrorMessage(GroovyRuntimeException exception) {
     ASTNode astNode = exception.getNode();
     ModuleNode module = exception.getModule();
     if (module == null) {
@@ -237,8 +253,8 @@ public class GroovyCompilerWrapper {
     return null;
   }
 
-  private static void addErrorMessage(SimpleMessage message, List collector) {
-    addMessageWithoutLocation(collector, message.getMessage(), true);
+  private void addErrorMessage(SimpleMessage message) {
+    addMessageWithoutLocation(message.getMessage(), true);
   }
 
   public static class OutputItem {

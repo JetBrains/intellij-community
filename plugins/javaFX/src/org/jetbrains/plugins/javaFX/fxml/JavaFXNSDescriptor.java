@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
@@ -11,11 +9,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 
 /**
 * User: anna
@@ -29,7 +23,9 @@ public class JavaFXNSDescriptor implements XmlNSDescriptor, Validator<XmlDocumen
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final String name = tag.getName();
 
-    if (JavaFxClassBackedElementDescriptor.isClassTag(name)) {
+    if (tag.getName().equals(FxmlConstants.FX_ROOT)) {
+      return new JavaFxDefaultPropertyElementDescriptor(name, tag);
+    } else if (JavaFxPsiUtil.isClassTag(name)) {
       return new JavaFxClassBackedElementDescriptor(name, tag);
     }
     else {

@@ -116,6 +116,7 @@ public abstract class BreakpointPropertiesPanel {
   private JPanel myConditionsPanel;
   private JPanel myActionsPanel;
   private JBCheckBox myConditionCheckbox;
+  private JCheckBox myTemporaryCheckBox;
 
   ButtonGroup mySuspendPolicyGroup;
   public static final String CONTROL_LOG_MESSAGE = "logMessage";
@@ -378,6 +379,7 @@ public abstract class BreakpointPropertiesPanel {
     IJSwingUtilities.adjustComponentsOnMac(myCbSuspend);
     IJSwingUtilities.adjustComponentsOnMac(myLogExpressionCheckBox);
     IJSwingUtilities.adjustComponentsOnMac(myLogMessageCheckBox);
+    IJSwingUtilities.adjustComponentsOnMac(myTemporaryCheckBox);
   }
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
@@ -507,8 +509,10 @@ public abstract class BreakpointPropertiesPanel {
       }
     });
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
+    myTemporaryCheckBox.setSelected(breakpoint.REMOVE_AFTER_HIT);
+    myTemporaryCheckBox.setVisible(breakpoint instanceof LineBreakpoint);
     myLogExpressionCheckBox.setSelected(breakpoint.LOG_EXPRESSION_ENABLED);
-    if (breakpoint.LOG_ENABLED || breakpoint.LOG_EXPRESSION_ENABLED) {
+    if (breakpoint.LOG_ENABLED || breakpoint.LOG_EXPRESSION_ENABLED || (breakpoint instanceof LineBreakpoint && breakpoint.REMOVE_AFTER_HIT)) {
       actionsPanelVisible = true;
     }
 
@@ -622,6 +626,7 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
+    breakpoint.REMOVE_AFTER_HIT = myTemporaryCheckBox.isSelected();
     breakpoint.SUSPEND = myCbSuspend.isSelected();
     breakpoint.SUSPEND_POLICY = getSelectedSuspendPolicy();
     reloadInstanceFilters();

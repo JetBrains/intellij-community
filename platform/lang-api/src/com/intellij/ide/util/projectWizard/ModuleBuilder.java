@@ -89,10 +89,54 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
 
+  /**
+   * Typically delegates to ModuleType (e.g. JavaModuleType) that is more generic than ModuleBuilder
+   *
+   * @param settingsStep step to be modified
+   * @return callback ({@link com.intellij.ide.util.projectWizard.ModuleWizardStep#validate()}
+   *         and {@link com.intellij.ide.util.projectWizard.ModuleWizardStep#updateDataModel()}
+   *         will be invoked)
+   */
   @Nullable
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
-    return type == null ? null : type.modifySettingsStep(settingsStep, this);
+    if (type == null) {
+      return null;
+    }
+    else {
+      final ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      final List<WizardInputField> fields = getAdditionalFields();
+      for (WizardInputField field : fields) {
+        field.addToSettings(settingsStep);
+      }
+      return new ModuleWizardStep() {
+        @Override
+        public JComponent getComponent() {
+          return null;
+        }
+
+        @Override
+        public void updateDataModel() {
+          if (step != null) {
+            step.updateDataModel();
+          }
+        }
+
+        @Override
+        public boolean validate() throws ConfigurationException {
+          for (WizardInputField field : fields) {
+            if (!field.validate()) {
+              return false;
+            }
+          }
+          return step == null || step.validate();
+        }
+      };
+    }
+  }
+
+  protected List<WizardInputField> getAdditionalFields() {
+    return Collections.emptyList();
   }
 
   public void setName(String name) {

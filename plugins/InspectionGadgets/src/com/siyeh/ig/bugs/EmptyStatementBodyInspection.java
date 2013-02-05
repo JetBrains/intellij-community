@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_reportEmptyBlocks = false;
+  public boolean m_reportEmptyBlocks = true;
 
   @NotNull
   public String getID() {
@@ -38,14 +38,12 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "statement.with.empty.body.display.name");
+    return InspectionGadgetsBundle.message("statement.with.empty.body.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "statement.with.empty.body.problem.descriptor");
+    return InspectionGadgetsBundle.message("statement.with.empty.body.problem.descriptor");
   }
 
   public boolean isEnabledByDefault() {
@@ -53,10 +51,8 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   }
 
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "statement.with.empty.body.include.option"),
-      this, "m_reportEmptyBlocks");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"),
+                                          this, "m_reportEmptyBlocks");
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -66,50 +62,31 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   private class EmptyStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitDoWhileStatement(
-      @NotNull PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-        return;
-      }
-      final PsiStatement body = statement.getBody();
-      if (body == null || !isEmpty(body)) {
-        return;
-      }
-      registerStatementError(statement);
+      checkLoopStatement(statement);
     }
 
     @Override
     public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-        return;
-      }
-      final PsiStatement body = statement.getBody();
-      if (body == null || !isEmpty(body)) {
-        return;
-      }
-      registerStatementError(statement);
+      checkLoopStatement(statement);
     }
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-        return;
-      }
-      final PsiStatement body = statement.getBody();
-      if (body == null || !isEmpty(body)) {
-        return;
-      }
-      registerStatementError(statement);
+      checkLoopStatement(statement);
     }
 
     @Override
-    public void visitForeachStatement(
-      @NotNull PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      checkLoopStatement(statement);
+    }
+
+    private void checkLoopStatement(PsiLoopStatement statement) {
+      if (JspPsiUtil.isInJspFile(statement)) {
         return;
       }
       final PsiStatement body = statement.getBody();
@@ -122,7 +99,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+      if (JspPsiUtil.isInJspFile(statement)) {
         return;
       }
       final PsiStatement thenBranch = statement.getThenBranch();
@@ -140,26 +117,41 @@ public class EmptyStatementBodyInspection extends BaseInspection {
       }
     }
 
+    @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      if (JspPsiUtil.isInJspFile(statement)) {
+        return;
+      }
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null || !isEmpty(body)) {
+        return;
+      }
+      registerStatementError(statement);
+    }
+
     private boolean isEmpty(PsiElement body) {
       if (body instanceof PsiEmptyStatement) {
         return true;
       }
-      else if (m_reportEmptyBlocks &&
-               body instanceof PsiBlockStatement) {
+      else if (body instanceof PsiBlockStatement) {
         final PsiBlockStatement block = (PsiBlockStatement)body;
-        final PsiCodeBlock codeBlock = block.getCodeBlock();
-        return codeBlockIsEmpty(codeBlock);
+        return isEmpty(block.getCodeBlock());
       }
-      else if (body instanceof PsiCodeBlock) {
+      else if (m_reportEmptyBlocks && body instanceof PsiCodeBlock) {
         final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
-        return codeBlockIsEmpty(codeBlock);
+        final PsiStatement[] statements = codeBlock.getStatements();
+        if (statements.length == 0) {
+          return true;
+        }
+        for (PsiStatement statement : statements) {
+          if (!isEmpty(statement)) {
+            return false;
+          }
+        }
+        return true;
       }
       return false;
-    }
-
-    private boolean codeBlockIsEmpty(PsiCodeBlock codeBlock) {
-      final PsiStatement[] statements = codeBlock.getStatements();
-      return statements.length == 0;
     }
   }
 }

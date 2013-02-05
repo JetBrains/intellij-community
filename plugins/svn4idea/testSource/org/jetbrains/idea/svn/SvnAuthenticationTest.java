@@ -965,7 +965,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
         authentication = myAuthenticationManager.getNextAuthentication(kind, actualRealm, url);
       }
     } finally {
-      myAuthenticationManager.acknowledgeAuthentication(authentication != null, kind, actualRealm, null, authentication);
+      myAuthenticationManager.acknowledgeAuthentication(authentication != null, kind, actualRealm, null, authentication, url);
     }
   }
 

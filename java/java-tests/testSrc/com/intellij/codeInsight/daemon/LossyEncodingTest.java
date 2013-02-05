@@ -52,7 +52,9 @@ public class LossyEncodingTest extends LightDaemonAnalyzerTestCase {
 
   public void testText() throws Exception {
     doTest("Text.txt");
-    EncodingManager.getInstance().setEncoding(myVFile, Charset.forName("US-ASCII"));
+    Charset ascii = CharsetToolkit.forName("US-ASCII");
+    EncodingManager.getInstance().setEncoding(myVFile, ascii);
+    assertEquals(ascii, myVFile.getCharset());
     int start = myEditor.getCaretModel().getOffset();
     type((char)0x445);
     type((char)0x438);

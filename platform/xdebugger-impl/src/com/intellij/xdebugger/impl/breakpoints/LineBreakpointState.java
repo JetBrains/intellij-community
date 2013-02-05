@@ -29,14 +29,16 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
                                                                          BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
   private String myFileUrl;
   private int myLine;
+  private boolean myTemporary;
 
   public LineBreakpointState() {
   }
 
-  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, final long timeStamp) {
+  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary, final long timeStamp) {
     super(enabled, typeId, timeStamp);
     myFileUrl = fileUrl;
     myLine = line;
+    myTemporary = temporary;
   }
 
   @Tag("url")
@@ -55,6 +57,14 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
 
   public void setLine(final int line) {
     myLine = line;
+  }
+
+  public boolean isTemporary() {
+    return myTemporary;
+  }
+
+  public void setTemporary(boolean temporary) {
+    myTemporary = temporary;
   }
 
   public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(@NotNull final XLineBreakpointType<P> type, @NotNull XBreakpointManagerImpl breakpointManager) {

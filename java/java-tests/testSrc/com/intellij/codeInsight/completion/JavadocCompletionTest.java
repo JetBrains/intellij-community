@@ -74,7 +74,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSee0() throws Exception {
     configureByFile("See0.java");
-    assertStringItems("foo", "clone", "equals", "getClass", "hashCode", "notify", "notifyAll", "Object", "toString", "wait", "wait", "wait", "finalize", "registerNatives");
+    myFixture.assertPreferredCompletionItems(0, "foo", "clone", "equals", "hashCode");
   }
 
   public void testSee1() throws Exception {
