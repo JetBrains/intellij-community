@@ -42,11 +42,18 @@ public class TreeNodePartListener extends LinkMouseListenerBase {
       }
 
       if (myRenderedComp != null) {
-        final int compX = myRenderedComp.getX();
-        final int compY = myRenderedComp.getY();
-        if ((compX < e.getX()) && ((compX + myRenderedComp.getWidth()) > e.getX()) &&
-          (compY < e.getY()) && ((compY + myRenderedComp.getHeight()) > e.getY())) {
-          return myRenderer.getTag();
+        Rectangle bounds = tree.getPathBounds(path);
+        if (bounds != null) {
+          Component root =
+            tree.getCellRenderer().getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);
+          root.setSize(bounds.getSize());
+          root.doLayout();
+          final int compX = myRenderedComp.getX() + bounds.x;
+          final int compY = myRenderedComp.getY() + bounds.y;
+          if ((compX < e.getX()) && ((compX + myRenderedComp.getWidth()) > e.getX()) &&
+            (compY < e.getY()) && ((compY + myRenderedComp.getHeight()) > e.getY())) {
+            return myRenderer.getTag();
+          }
         }
       }
     }
