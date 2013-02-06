@@ -22,7 +22,7 @@ public class PySignature {
   }
 
   @Nullable
-  public String getArgTypeQualifiedName(String name) {
+  public String getArgTypeQualifiedName(@NotNull String name) {
     for (NamedParameter param : myArgs) {
       if (name.equals(param.getName())) {
         return param.getTypeQualifiedName();
