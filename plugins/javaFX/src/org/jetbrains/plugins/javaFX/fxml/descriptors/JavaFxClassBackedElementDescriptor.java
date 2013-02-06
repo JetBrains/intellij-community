@@ -216,6 +216,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         if (propertySetter != null) {
           return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
         }
+        final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(attributeName, myPsiClass);
+        if (getter != null) {
+          return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
+        }
         return null;
       }
     }

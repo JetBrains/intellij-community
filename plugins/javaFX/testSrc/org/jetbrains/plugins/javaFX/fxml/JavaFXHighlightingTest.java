@@ -188,6 +188,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPropertyWithoutField() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
