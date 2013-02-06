@@ -495,12 +495,18 @@ public class SrcFileAnnotator implements Disposable {
         final FileEditor[] editors = fileEditorManager.getAllEditors(vFile);
         for (final FileEditor editor : editors) {
           if (isCurrentEditor(editor)) {
-            EditorNotificationPanel panel = new EditorNotificationPanel() {
+            final EditorNotificationPanel panel = new EditorNotificationPanel() {
               {
                 myLabel.setIcon(AllIcons.General.ExclMark);
                 myLabel.setText(message);
               }
             };
+            panel.createActionLabel("Close", new Runnable() {
+              @Override
+              public void run() {
+                fileEditorManager.removeTopComponent(editor, panel);
+              }
+            });
             map.put(editor, panel);
             fileEditorManager.addTopComponent(editor, panel);
             break;
