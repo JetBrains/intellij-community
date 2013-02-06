@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.elements;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public interface Node extends GraphElement {
      * if type == END_COMMIT_NODE - parent of This Commit
      */
     @NotNull
-    public Commit getCommit();
+    public Hash getCommitHash();
 
     public static enum Type{
         COMMIT_NODE,

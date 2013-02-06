@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable.elements;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
@@ -16,16 +16,16 @@ import java.util.List;
  */
 public class MutableNode implements Node {
     private final Branch branch;
-    private final Commit commit;
+    private final Hash hash;
     private MutableNodeRow nodeRow = null;
     private Type type;
 
     private final List<Edge> upEdges = new OneElementList<Edge>();
     private final List<Edge> downEdges = new OneElementList<Edge>();
 
-    public MutableNode(Branch branch, Commit commit) {
+    public MutableNode(Branch branch, Hash hash) {
         this.branch = branch;
-        this.commit = commit;
+        this.hash = hash;
     }
 
     @NotNull
@@ -97,8 +97,8 @@ public class MutableNode implements Node {
 
     @NotNull
     @Override
-    public Commit getCommit() {
-        return commit;
+    public Hash getCommitHash() {
+        return hash;
     }
 
     @NotNull

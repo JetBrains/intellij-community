@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.graph.mutable;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
@@ -19,31 +20,32 @@ import static org.hanuna.gitalk.graph.elements.Node.Type.*;
  */
 public class GraphBuilder {
     public static MutableGraph build(@NotNull List<Commit> commits) {
-        Map<Commit, Integer> commitLogIndexes = new HashMap<Commit, Integer>(commits.size());
+        Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commits.size());
         for (int i = 0; i < commits.size(); i++) {
-            commitLogIndexes.put(commits.get(i), i);
+            commitLogIndexes.put(commits.get(i).getCommitHash(), i);
         }
         GraphBuilder builder = new GraphBuilder(commits.size() - 1, commitLogIndexes);
         return builder.runBuild(commits);
     }
 
     private final int lastLogIndex;
-    private final Map<Commit, Integer> commitLogIndexes;
+    private final Map<Hash, Integer> commitHashLogIndexes;
     private final MutableGraph graph = new MutableGraph();
 
-    private final Map<Commit, MutableNode> underdoneNodes = new HashMap<Commit, MutableNode>();
+    private final Map<Hash, MutableNode> underdoneNodes = new HashMap<Hash, MutableNode>();
     private MutableNodeRow nextRow;
 
-    private GraphBuilder(int lastLogIndex, @NotNull Map<Commit, Integer> commitLogIndexes) {
+    private GraphBuilder(int lastLogIndex, @NotNull Map<Hash, Integer> commitHashLogIndexes) {
         this.lastLogIndex = lastLogIndex;
-        this.commitLogIndexes = commitLogIndexes;
+        this.commitHashLogIndexes = commitHashLogIndexes;
     }
 
-    private int getLogIndexOfCommit(@NotNull Commit commit) {
-        if (commit.getParents() == null) {
+    private int getLogIndexOfCommit(@NotNull Hash commitHash) {
+        Integer index = commitHashLogIndexes.get(commitHash);
+        if (index == null) {
             return lastLogIndex + 1;
         } else {
-            return commitLogIndexes.get(commit);
+            return index;
         }
     }
 
@@ -55,10 +57,10 @@ public class GraphBuilder {
     }
 
 
-    private MutableNode addCurrentCommitAndFinishRow(@NotNull Commit commit) {
-        MutableNode node = underdoneNodes.remove(commit);
+    private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
+        MutableNode node = underdoneNodes.remove(commitHash);
         if (node == null) {
-            node = new MutableNode(new Branch(commit), commit);
+            node = new MutableNode(new Branch(commitHash), commitHash);
         }
         node.setType(COMMIT_NODE);
         node.setNodeRow(nextRow);
@@ -69,15 +71,15 @@ public class GraphBuilder {
         return node;
     }
 
-    private void addParent(MutableNode node, Commit parentCommit, Branch branch) {
-        MutableNode parentNode = underdoneNodes.remove(parentCommit);
+    private void addParent(MutableNode node, Hash parentHash, Branch branch) {
+        MutableNode parentNode = underdoneNodes.remove(parentHash);
         if (parentNode == null) {
-            parentNode = new MutableNode(branch, parentCommit);
+            parentNode = new MutableNode(branch, parentHash);
             createUsualEdge(node, parentNode, branch);
-            underdoneNodes.put(parentCommit, parentNode);
+            underdoneNodes.put(parentHash, parentNode);
         } else {
             createUsualEdge(node, parentNode, branch);
-            int parentRowIndex = getLogIndexOfCommit(parentCommit);
+            int parentRowIndex = getLogIndexOfCommit(parentHash);
 
             // i.e. we need of create EDGE_NODE node
             if (nextRow.getRowIndex() != parentRowIndex) {
@@ -85,28 +87,25 @@ public class GraphBuilder {
                 parentNode.setType(EDGE_NODE);
                 nextRow.getInnerNodeList().add(parentNode);
 
-                MutableNode newParentNode = new MutableNode(parentNode.getBranch(), parentCommit);
+                MutableNode newParentNode = new MutableNode(parentNode.getBranch(), parentHash);
                 createUsualEdge(parentNode, newParentNode, parentNode.getBranch());
-                underdoneNodes.put(parentCommit, newParentNode);
+                underdoneNodes.put(parentHash, newParentNode);
             } else {
                 // i.e. node must be added in nextRow, when addCurrentCommitAndFinishRow() will called in next time
-                underdoneNodes.put(parentCommit, parentNode);
+                underdoneNodes.put(parentHash, parentNode);
             }
         }
     }
 
     private void append(@NotNull Commit commit) {
-        MutableNode node = addCurrentCommitAndFinishRow(commit);
+        MutableNode node = addCurrentCommitAndFinishRow(commit.getCommitHash());
 
-        List<Commit> parents = commit.getParents();
-        if (parents == null) {
-            throw new IllegalStateException("commit was append, but commit parents is null");
-        }
+        List<Hash> parents = commit.getParentHashes();
         if (parents.size() == 1) {
             addParent(node, parents.get(0), node.getBranch());
         } else {
-            for (Commit parent : parents) {
-                addParent(node, parent, new Branch(node.getCommit(), parent));
+            for (Hash parentHash : parents) {
+                addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash));
             }
         }
     }
@@ -116,9 +115,9 @@ public class GraphBuilder {
     }
 
     private void lastActions() {
-        Set<Commit> notReadiedCommits = underdoneNodes.keySet();
-        for (Commit commit : notReadiedCommits) {
-            MutableNode underdoneNode = underdoneNodes.get(commit);
+        Set<Hash> notReadiedCommitHashes = underdoneNodes.keySet();
+        for (Hash hash : notReadiedCommitHashes) {
+            MutableNode underdoneNode = underdoneNodes.get(hash);
             underdoneNode.setNodeRow(nextRow);
             underdoneNode.setType(END_COMMIT_NODE);
             nextRow.getInnerNodeList().add(underdoneNode);

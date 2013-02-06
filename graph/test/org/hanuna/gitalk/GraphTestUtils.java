@@ -1,12 +1,12 @@
 package org.hanuna.gitalk;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Commit;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
-import org.hanuna.gitalk.parser.SimpleCommitListParser;
+import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

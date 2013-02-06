@@ -1,58 +1,58 @@
 package org.hanuna.gitalk.graph.elements;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
 public final class Branch {
-    private final Commit upCommit;
-    private final Commit downCommit;
+    private final Hash upCommitHash;
+    private final Hash downCommitHash;
 
-    public Branch(@NotNull Commit upCommit, @NotNull Commit downCommit) {
-        this.upCommit = upCommit;
-        this.downCommit = downCommit;
+    public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash) {
+        this.upCommitHash = upCommitHash;
+        this.downCommitHash = downCommitHash;
     }
 
-    public Branch(@NotNull Commit commit) {
+    public Branch(@NotNull Hash commit) {
         this(commit, commit);
     }
 
     @NotNull
-    public Commit getUpCommit() {
-        return upCommit;
+    public Hash getUpCommitHash() {
+        return upCommitHash;
     }
 
     @NotNull
-    public Commit getDownCommit() {
-        return downCommit;
+    public Hash getDownCommitHash() {
+        return downCommitHash;
     }
 
     public int getBranchNumber() {
-        return upCommit.hashCode() + 73 * downCommit.hash().hashCode();
+        return upCommitHash.hashCode() + 73 * downCommitHash.hashCode();
     }
 
     @Override
     public int hashCode() {
-        return upCommit.hashCode() + downCommit.hashCode();
+        return upCommitHash.hashCode() + 73 * downCommitHash.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj != null && obj.getClass() == Branch.class) {
             Branch anBranch = (Branch) obj;
-            return anBranch.upCommit == upCommit && anBranch.downCommit == downCommit;
+            return anBranch.upCommitHash == upCommitHash && anBranch.downCommitHash == downCommitHash;
         }
         return false;
     }
 
     @Override
     public String toString() {
-        if (upCommit == downCommit) {
-            return upCommit.hash().toStrHash();
+        if (upCommitHash == downCommitHash) {
+            return upCommitHash.toStrHash();
         } else {
-            return upCommit.hash().toStrHash() + '#' + downCommit.hash().toStrHash();
+            return upCommitHash.toStrHash() + '#' + downCommitHash.toStrHash();
         }
     }
 }

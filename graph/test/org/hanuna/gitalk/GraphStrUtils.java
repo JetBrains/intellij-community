@@ -5,7 +5,6 @@ import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,10 +16,10 @@ import java.util.List;
 public class GraphStrUtils {
 
     public static String toStr(Branch branch) {
-        if (branch.getUpCommit() == branch.getDownCommit()) {
-            return branch.getUpCommit().hash().toStrHash();
+        if (branch.getUpCommitHash() == branch.getDownCommitHash()) {
+            return branch.getUpCommitHash().toStrHash();
         } else {
-            return branch.getUpCommit().hash().toStrHash() + '#' + branch.getDownCommit().hash().toStrHash();
+            return branch.getUpCommitHash().toStrHash() + '#' + branch.getDownCommitHash().toStrHash();
         }
     }
 
@@ -33,8 +32,8 @@ public class GraphStrUtils {
      */
     public static String toStr(Edge edge) {
         StringBuilder s = new StringBuilder();
-        s.append(edge.getUpNode().getCommit().hash().toStrHash()).append(":");
-        s.append(edge.getDownNode().getCommit().hash().toStrHash()).append(":");
+        s.append(edge.getUpNode().getCommitHash().toStrHash()).append(":");
+        s.append(edge.getDownNode().getCommitHash().toStrHash()).append(":");
         s.append(edge.getType()).append(":");
         s.append(toStr(edge.getBranch()));
         return s.toString();
@@ -42,17 +41,17 @@ public class GraphStrUtils {
 
     public static String toStr(List<Edge> edges) {
         StringBuilder s = new StringBuilder();
-        List<String> edgeStrs = new ArrayList<String>();
+        List<String> edgeStrings = new ArrayList<String>();
         for (Edge edge : edges) {
-            edgeStrs.add(toStr(edge));
+            edgeStrings.add(toStr(edge));
         }
 
-        Collections.sort(edgeStrs);
-        if (edgeStrs.size() > 0) {
-            s.append(edgeStrs.get(0));
+        Collections.sort(edgeStrings);
+        if (edgeStrings.size() > 0) {
+            s.append(edgeStrings.get(0));
         }
         for (int i = 1; i < edges.size(); i++) {
-            s.append(" ").append(edgeStrs.get(i));
+            s.append(" ").append(edgeStrings.get(i));
         }
         return s.toString();
     }
@@ -66,13 +65,13 @@ public class GraphStrUtils {
      * a0|-|-a0:a1:USUAL:a0|-COMMIT_NODE|-a0|-0
      *
      * explanation:
-     * hash|-upEdges|-downEdges|-Type|-branch|-rowIndex
+     * getCommitHash|-upEdges|-downEdges|-Type|-branch|-rowIndex
      *
      */
 
     public static String toStr(Node node) {
         StringBuilder s = new StringBuilder();
-        s.append(node.getCommit().hash().toStrHash()).append("|-");
+        s.append(node.getCommitHash().toStrHash()).append("|-");
         s.append(toStr(node.getUpEdges())).append("|-");
         s.append(toStr(node.getDownEdges())).append("|-");
         s.append(node.getType()).append("|-");
@@ -115,11 +114,12 @@ public class GraphStrUtils {
         return s.toString();
     }
 
+     /*
     public static String toShortStr(@NotNull Node node) {
-        return node.getCommit().hash().toStrHash() + ":" + node.getRowIndex();
+        return node.getCommitHash().toStrHash() + ":" + node.getRowIndex();
     }
 
-    /*
+
     public static String toStr(@Nullable GraphFragment fragment) {
         if (fragment == null) {
             return "null";
