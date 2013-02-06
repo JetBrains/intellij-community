@@ -456,7 +456,7 @@ class EmmetParser {
     String value;
     do {
       token = nextToken();
-      value = token != null && token == ZenCodingTokens.SHARP ? token.toString() : getAttributeValueByToken(token);
+      value = getAttributeValueByToken(token);
       attrValueBuilder.append(value);
       if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
           && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA) {
@@ -469,7 +469,10 @@ class EmmetParser {
   }
 
   @NotNull
-  private static String getAttributeValueByToken(ZenCodingToken token) {
+  private static String getAttributeValueByToken(@Nullable ZenCodingToken token) {
+    if (token == null) {
+      return "";
+    }
     if (token instanceof StringLiteralToken) {
       final String text = ((StringLiteralToken)token).getText();
       return text.substring(1, text.length() - 1);
@@ -480,7 +483,7 @@ class EmmetParser {
     else if (token instanceof NumberToken) {
       return Integer.toString(((NumberToken)token).getNumber());
     }
-    else if (token == ZenCodingTokens.DOT) {
+    else if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
       return token.toString();
     }
     return "";

@@ -64,12 +64,12 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
                                       boolean hasChildren,
                                       int numberInIteration,
-                                      @Nullable String surroundedText) {
+                                      int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
     for (Iterator<Pair<String, String>> it = attribute2value.iterator(); it.hasNext();) {
       Pair<String, String> pair = it.next();
       String name = pair.first;
-      String value = ZenCodingUtil.getValue(pair.second, numberInIteration, surroundedText);
+      String value = ZenCodingUtil.getValue(pair.second, numberInIteration, totalIterations, surroundedText);
       result.append(getAttributeString(name, value));
       if (it.hasNext()) {
         result.append(' ');

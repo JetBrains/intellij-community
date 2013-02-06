@@ -41,7 +41,7 @@ public class LoremNode extends ZenCodingNode {
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
-                                     String surroundedText,
+                                     int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
 
@@ -51,7 +51,7 @@ public class LoremNode extends ZenCodingNode {
     ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
 
     final GenerationNode node = new GenerationNode(templateToken, numberInIteration,
-                                                   surroundedText, insertSurroundedTextAtTheEnd, parent);
+                                                   totalIterations, surroundedText, insertSurroundedTextAtTheEnd, parent);
     return Collections.singletonList(node);
   }
 
