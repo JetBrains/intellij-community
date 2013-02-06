@@ -179,12 +179,12 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
         if ("properties".equals(name)) {
           accepted = true;
         }
-        else throw new NanoXmlUtil.ParserStoppedException();
+        else throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
       }
       else {
         insideEntry = "entry".equals(name);
       }
-      if (myStopIfAccepted) throw new NanoXmlUtil.ParserStoppedException();
+      if (myStopIfAccepted) throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
     }
 
     @Override
