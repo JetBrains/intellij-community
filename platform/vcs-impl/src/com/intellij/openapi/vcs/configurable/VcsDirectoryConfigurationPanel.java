@@ -20,12 +20,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,6 +38,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -77,6 +81,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JCheckBox myShowVcsRootErrorNotification;
   private JCheckBox myShowChangedRecursively;
   private VcsLimitHistoryConfigurable myLimitHistory;
+  private JComboBox myScopeFilterCombo;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -177,6 +182,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
           }
         };
       }
+
+      @Nullable
+      @Override
+      public String getMaxStringValue() {
+        String maxString = null;
+        for (String name : myAllVcss.keySet()) {
+          if (maxString == null || maxString.length() < name.length()) {
+            maxString = name;
+          }
+        }
+        return maxString;
+      }
+
+      @Override
+      public int getAdditionalWidth() {
+        return UIUtil.DEFAULT_HGAP;
+      }
     };
 
   public VcsDirectoryConfigurationPanel(final Project project) {
@@ -263,6 +285,23 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myLimitHistory.reset();
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+
+    myScopeFilterCombo.removeAllItems();
+    myScopeFilterCombo.addItem("[None]");
+    boolean selection = false;
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
+      for (NamedScope scope : holder.getEditableScopes()) {
+        myScopeFilterCombo.addItem(scope.getName());
+        if (!selection && scope.getName().equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
+          selection = true;
+        }
+      }
+    }
+    if (selection) {
+      myScopeFilterCombo.setSelectedItem(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME);
+    } else {
+      myScopeFilterCombo.setSelectedIndex(0);
+    }
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {
@@ -346,6 +385,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createStoreBaseRevisionOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next());
+    panel.add(createScopeFilterOption(), gb.nextLine().next());
 
     return panel;
   }
@@ -418,6 +458,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         errorPanel.add(vcsRootErrorLabel);
       }
     }
+    if (errorPanel.getComponentCount() == 0) {
+      pane.setVisible(false);
+    }
     pane.setMinimumSize(new Dimension(-1, calcMinHeight(errorPanel, DEFAULT_HEIGHT)));
     pane.setMaximumSize(new Dimension(-1, DEFAULT_HEIGHT));
     return pane;
@@ -467,6 +510,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return myShowChangedRecursively;
   }
 
+  private JComponent createScopeFilterOption() {
+    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    panel.add(new JBLabel("Update Info Scope Filter:"));
+    panel.add(myScopeFilterCombo = new JComboBox());
+    return panel;
+  }
+
   public void reset() {
     initializeModel();
   }
@@ -478,12 +528,16 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS = myShowVcsRootErrorNotification.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
+    myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME = getScopeFilterName();
     initializeModel();
   }
 
   public boolean isModified() {
     if (myRecentlyChangedConfigurable.isModified()) return true;
     if (myLimitHistory.isModified()) return true;
+    if (!Comparing.equal(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME, getScopeFilterName())) {
+      return true;
+    }
     if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     if (myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS != myShowVcsRootErrorNotification.isSelected()) {
       return true;
@@ -492,6 +546,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
+  }
+
+  private String getScopeFilterName() {
+    return myScopeFilterCombo.getSelectedIndex() > 0 ? (String)myScopeFilterCombo.getSelectedItem() : null;
   }
 
   public void addVcsListener(final ModuleVcsListener moduleVcsListener) {

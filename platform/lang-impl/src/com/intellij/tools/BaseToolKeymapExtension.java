@@ -35,7 +35,7 @@ public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
+    String[] ids = actionManager.getActionIds(getActionIdPrefix());
     Arrays.sort(ids);
     Group group = new Group(getGroupName(), AllIcons.Nodes.KeymapTools);
 
@@ -69,6 +69,8 @@ public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
     return group;
   }
+
+  protected abstract String getActionIdPrefix();
 
   protected abstract String getGroupByActionId(String id);
 

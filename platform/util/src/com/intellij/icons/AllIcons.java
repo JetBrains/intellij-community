@@ -155,8 +155,8 @@ public class AllIcons {
     public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.png"); // 16x16
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
-    public static final Icon Up = IconLoader.getIcon("/actions/up.png"); // 16x16
-    
+    public static final Icon UP = IconLoader.getIcon("/actions/up.png"); // 16x16
+
   }
   
   public static class Ant {
@@ -236,6 +236,7 @@ public class AllIcons {
     public static final Icon Db_muted_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png"); // 12x12
     public static final Icon Db_muted_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png"); // 12x12
     public static final Icon Db_muted_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_temporary_breakpoint = IconLoader.getIcon("/debugger/db_muted_temporary_breakpoint.png"); // 16x16
     public static final Icon Db_muted_verified_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_breakpoint.png"); // 12x12
     public static final Icon Db_muted_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png"); // 12x12
     public static final Icon Db_muted_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_method_breakpoint.png"); // 12x12
@@ -243,6 +244,7 @@ public class AllIcons {
     public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.png"); // 12x12
     public static final Icon Db_primitive = IconLoader.getIcon("/debugger/db_primitive.png"); // 16x16
     public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.png"); // 12x12
+    public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_temporary_breakpoint.png"); // 16x16
     public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.png"); // 12x12
     public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png"); // 12x12
     public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png"); // 12x12

@@ -71,7 +71,7 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
   @Override
   public boolean lightVariant(boolean showAllOptions) {
     if (!showAllOptions && !myBreakpoint.isLogMessage() && myBreakpoint.getLogExpression() == null &&
-        (!(myBreakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)myBreakpoint).isTemporary()) ) {
+        (!(myBreakpoint instanceof XLineBreakpoint) || !((XLineBreakpoint)myBreakpoint).isTemporary()) ) {
       myMainPanel.setVisible(false);
       return true;
     } else {
@@ -115,6 +115,6 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       myBreakpoint.setLogExpression(logExpression);
       myLogExpressionComboBox.saveTextInHistory();
     }
-    //To change body of implemented methods use File | Settings | File Templates.
+
   }
 }

@@ -23,12 +23,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import org.jdom.Document;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -42,13 +44,28 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
+  private List<WizardInputField> myInputFields = Collections.emptyList();
 
   public LocalArchivedTemplate(String displayName,
                                URL archivePath) {
-    super(displayName, Collections.<WizardInputField>emptyList());
+    super(displayName);
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);
+    String s = readEntry(new Condition<ZipEntry>() {
+      @Override
+      public boolean value(ZipEntry entry) {
+        return entry.getName().endsWith("/.idea/input-fields.xml");
+      }
+    });
+    if (s != null) {
+      try {
+        myInputFields = RemoteTemplatesFactory.getFields(JDOMUtil.loadDocument(s).getRootElement(), Namespace.NO_NAMESPACE);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Override
@@ -104,6 +121,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Override
   protected ModuleType getModuleType() {
     return myModuleType;
+  }
+
+  @Override
+  public List<WizardInputField> getInputFields() {
+    return myInputFields;
   }
 
   @Override

@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -109,7 +110,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        return createGroup("<System Default>", "Choose encoding ''{1}''", selected.get(), null);
+        return createGroup("<System Default>", selected.get(), new Function<Charset, String>() {
+          @Override
+          public String fun(Charset charset) {
+            return "Choose encoding '"+charset+"'";
+          }
+        });
       }
     };
     parentPanel.removeAll();
@@ -161,7 +167,10 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
   @Override
   public void apply() throws ConfigurationException {
+    Charset projectCharset = mySelectedProjectCharset.get();
+
     Map<VirtualFile,Charset> result = myTreeView.getValues();
+    result.put(null, projectCharset);
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     encodingManager.setMapping(result);
     encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles.get());
@@ -170,8 +179,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
     Charset ideCharset = mySelectedIdeCharset.get();
     EncodingManager.getInstance().setDefaultCharsetName(ideCharset == null ? "" : ideCharset.name());
-    Charset projectCharset = mySelectedProjectCharset.get();
-    EncodingProjectManager.getInstance(myProject).setEncoding(null, projectCharset);
   }
 
   @Override

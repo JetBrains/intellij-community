@@ -681,23 +681,18 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void doPostponedFormatting(final Project project) {
-    try {
-      CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-            }
-          });
-        }
-      });
-    }
-    catch (Throwable e) {
-      // Way to go...
-    }
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+          }
+        });
+      }
+    });
   }
 
   protected static void checkAllTimersAreDisposed() {

@@ -53,48 +53,48 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1 = new HashMap<IElementType, TextAttributesKey>();
     ourMap2 = new HashMap<IElementType, TextAttributesKey>();
 
-    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, SyntaxHighlighterColors.KEYWORD);
-    fillMap(ourMap1, ElementType.LITERAL_BIT_SET, SyntaxHighlighterColors.KEYWORD);
-    fillMap(ourMap1, ElementType.OPERATION_BIT_SET, SyntaxHighlighterColors.OPERATION_SIGN);
+    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, JavaHighlightingColors .KEYWORD);
+    fillMap(ourMap1, ElementType.LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, ElementType.OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
 
     for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
-      ourMap1.put(type, SyntaxHighlighterColors.DOC_COMMENT);
+      ourMap1.put(type, JavaHighlightingColors.DOC_COMMENT);
     }
 
-    ourMap1.put(XmlTokenType.XML_DATA_CHARACTERS, SyntaxHighlighterColors.DOC_COMMENT);
-    ourMap1.put(XmlTokenType.XML_REAL_WHITE_SPACE, SyntaxHighlighterColors.DOC_COMMENT);
-    ourMap1.put(XmlTokenType.TAG_WHITE_SPACE, SyntaxHighlighterColors.DOC_COMMENT);
+    ourMap1.put(XmlTokenType.XML_DATA_CHARACTERS, JavaHighlightingColors.DOC_COMMENT);
+    ourMap1.put(XmlTokenType.XML_REAL_WHITE_SPACE, JavaHighlightingColors.DOC_COMMENT);
+    ourMap1.put(XmlTokenType.TAG_WHITE_SPACE, JavaHighlightingColors.DOC_COMMENT);
 
-    ourMap1.put(JavaTokenType.INTEGER_LITERAL, SyntaxHighlighterColors.NUMBER);
-    ourMap1.put(JavaTokenType.LONG_LITERAL, SyntaxHighlighterColors.NUMBER);
-    ourMap1.put(JavaTokenType.FLOAT_LITERAL, SyntaxHighlighterColors.NUMBER);
-    ourMap1.put(JavaTokenType.DOUBLE_LITERAL, SyntaxHighlighterColors.NUMBER);
-    ourMap1.put(JavaTokenType.STRING_LITERAL, SyntaxHighlighterColors.STRING);
-    ourMap1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, SyntaxHighlighterColors.VALID_STRING_ESCAPE);
-    ourMap1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, SyntaxHighlighterColors.INVALID_STRING_ESCAPE);
-    ourMap1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, SyntaxHighlighterColors.INVALID_STRING_ESCAPE);
-    ourMap1.put(JavaTokenType.CHARACTER_LITERAL, SyntaxHighlighterColors.STRING);
+    ourMap1.put(JavaTokenType.INTEGER_LITERAL, JavaHighlightingColors.NUMBER);
+    ourMap1.put(JavaTokenType.LONG_LITERAL, JavaHighlightingColors.NUMBER);
+    ourMap1.put(JavaTokenType.FLOAT_LITERAL, JavaHighlightingColors.NUMBER);
+    ourMap1.put(JavaTokenType.DOUBLE_LITERAL, JavaHighlightingColors.NUMBER);
+    ourMap1.put(JavaTokenType.STRING_LITERAL, JavaHighlightingColors.STRING);
+    ourMap1.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, JavaHighlightingColors.VALID_STRING_ESCAPE);
+    ourMap1.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, JavaHighlightingColors.INVALID_STRING_ESCAPE);
+    ourMap1.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, JavaHighlightingColors.INVALID_STRING_ESCAPE);
+    ourMap1.put(JavaTokenType.CHARACTER_LITERAL, JavaHighlightingColors.STRING);
 
-    ourMap1.put(JavaTokenType.LPARENTH, SyntaxHighlighterColors.PARENTHS);
-    ourMap1.put(JavaTokenType.RPARENTH, SyntaxHighlighterColors.PARENTHS);
+    ourMap1.put(JavaTokenType.LPARENTH, JavaHighlightingColors.PARENTHS);
+    ourMap1.put(JavaTokenType.RPARENTH, JavaHighlightingColors.PARENTHS);
 
-    ourMap1.put(JavaTokenType.LBRACE, SyntaxHighlighterColors.BRACES);
-    ourMap1.put(JavaTokenType.RBRACE, SyntaxHighlighterColors.BRACES);
+    ourMap1.put(JavaTokenType.LBRACE, JavaHighlightingColors.BRACES);
+    ourMap1.put(JavaTokenType.RBRACE, JavaHighlightingColors.BRACES);
 
-    ourMap1.put(JavaTokenType.LBRACKET, SyntaxHighlighterColors.BRACKETS);
-    ourMap1.put(JavaTokenType.RBRACKET, SyntaxHighlighterColors.BRACKETS);
+    ourMap1.put(JavaTokenType.LBRACKET, JavaHighlightingColors.BRACKETS);
+    ourMap1.put(JavaTokenType.RBRACKET, JavaHighlightingColors.BRACKETS);
 
-    ourMap1.put(JavaTokenType.COMMA, SyntaxHighlighterColors.COMMA);
-    ourMap1.put(JavaTokenType.DOT, SyntaxHighlighterColors.DOT);
-    ourMap1.put(JavaTokenType.SEMICOLON, SyntaxHighlighterColors.JAVA_SEMICOLON);
+    ourMap1.put(JavaTokenType.COMMA, JavaHighlightingColors.COMMA);
+    ourMap1.put(JavaTokenType.DOT, JavaHighlightingColors.DOT);
+    ourMap1.put(JavaTokenType.SEMICOLON, JavaHighlightingColors.JAVA_SEMICOLON);
 
-    ourMap1.put(JavaTokenType.C_STYLE_COMMENT, SyntaxHighlighterColors.JAVA_BLOCK_COMMENT);
-    ourMap1.put(JavaDocElementType.DOC_COMMENT, SyntaxHighlighterColors.DOC_COMMENT);
-    ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, SyntaxHighlighterColors.LINE_COMMENT);
+    ourMap1.put(JavaTokenType.C_STYLE_COMMENT, JavaHighlightingColors.JAVA_BLOCK_COMMENT);
+    ourMap1.put(JavaDocElementType.DOC_COMMENT, JavaHighlightingColors.DOC_COMMENT);
+    ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, JavaHighlightingColors.LINE_COMMENT);
     ourMap1.put(TokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-    ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT);
-    ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, SyntaxHighlighterColors.DOC_COMMENT_TAG);
+    ourMap1.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT);
+    ourMap2.put(JavaDocTokenType.DOC_TAG_NAME, JavaHighlightingColors.DOC_COMMENT_TAG);
 
     IElementType[] javaDocMarkup = new IElementType[]{XmlTokenType.XML_START_TAG_START,
                                         XmlTokenType.XML_END_TAG_START,
@@ -110,8 +110,8 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
                                         XmlTokenType.XML_EQ};
 
     for (IElementType idx : javaDocMarkup) {
-      ourMap1.put(idx, SyntaxHighlighterColors.DOC_COMMENT);
-      ourMap2.put(idx, SyntaxHighlighterColors.DOC_COMMENT_MARKUP);
+      ourMap1.put(idx, JavaHighlightingColors.DOC_COMMENT);
+      ourMap2.put(idx, JavaHighlightingColors.DOC_COMMENT_MARKUP);
     }
   }
 

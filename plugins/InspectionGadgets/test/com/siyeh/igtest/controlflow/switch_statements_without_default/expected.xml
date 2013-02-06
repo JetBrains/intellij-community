@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>SwitchStatementsWithoutDefault.java</file>
+    <line>32</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'switch' statement without 'default' branch</problem_class>
+    <description>&lt;code&gt;switch&lt;/code&gt; statement without 'default' branch #loc</description>
+  </problem>
+
+  <problem>
+    <file>SwitchStatementsWithoutDefault.java</file>
+    <line>55</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'switch' statement without 'default' branch</problem_class>
+    <description>&lt;code&gt;switch&lt;/code&gt; statement without 'default' branch #loc</description>
+  </problem>
+
+</problems>

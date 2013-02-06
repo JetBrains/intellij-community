@@ -356,7 +356,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   boolean finishCommit(@NotNull final Document document,
                        @NotNull final List<Processor<Document>> finishProcessors,
                        final boolean synchronously,
-                       @NotNull Object reason) {
+                       @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     final boolean[] ok = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
@@ -416,7 +416,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         @Override
         public void visitElement(PsiElement element) {
           if (!element.isValid()) {
-            LOG.error("Commit to '" + psiFile.getVirtualFile() + "' lead to invalid element: " + element + "; Reason: '" + reason + "'");
+            throw new AssertionError("Commit to '" + psiFile.getVirtualFile() + "' has led to invalid element: " + element + "; Reason: '" + reason + "'");
           }
         }
       });

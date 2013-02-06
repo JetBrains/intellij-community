@@ -15,12 +15,16 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.CommonActionsPanel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeCellRenderer;
+import javax.swing.*;
 import java.util.Comparator;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,24 +32,28 @@ import java.util.Comparator;
  * Date: 6/7/12
  * Time: 4:17 PM
  */
-public interface FavoritesListProvider {
+public interface FavoritesListProvider extends Comparator<FavoritesTreeNodeDescriptor> {
   ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<FavoritesListProvider>("com.intellij.favoritesListProvider");
 
   String getListName(final Project project);
-  boolean canBeRemoved();
-  boolean isTreeLike();
 
-  Comparator<FavoritesTreeNodeDescriptor> getNodeDescriptorComparator();
+  @Nullable
+  String getCustomName(@NotNull CommonActionsPanel.Buttons type);
 
-  Operation getCustomDeleteOperation();
-  Operation getCustomAddOperation();
-  Operation getCustomEditOperation();
+  boolean willHandle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects);
 
-  TreeCellRenderer getTreeCellRenderer();
+  void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects);
 
-  interface Operation {
-    boolean willHandle(final DnDAwareTree tree);
-    String getCustomName();
-    void handle(Project project, final DnDAwareTree tree);
-  }
+
+  @Nullable
+  FavoritesListNode createFavoriteListNode(Project project);
+
+  void customizeRenderer(ColoredTreeCellRenderer renderer,
+                         JTree tree,
+                         Object value,
+                         boolean selected,
+                         boolean expanded,
+                         boolean leaf,
+                         int row,
+                         boolean hasFocus);
 }

@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
-class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer, Disposable {
+class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
 
   private final VirtualFilePointerListener myListener;

@@ -51,6 +51,7 @@ public class FxmlConstants {
   static {
     FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID));
     FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_SCRIPT, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
   }
 

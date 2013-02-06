@@ -103,6 +103,11 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     myNameStorage.force();
   }
 
+  @Override
+  public String internString(String string) {
+    return myStubSerializationHelper.intern(string);
+  }
+
   protected void nameStorageCrashed() {
     myNameStorageCrashed.set(true);
   }

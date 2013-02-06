@@ -69,6 +69,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   };
   public static final String UTF_8 = "UTF-8";
+  private static final String SRC = "src/";
 
   private final ModuleType myType;
   private List<WizardInputField> myAdditionalFields;
@@ -170,12 +171,34 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private void unzip(String path, boolean moduleMode) {
+  private String getBasePackage() {
+    List<WizardInputField> fields = getAdditionalFields();
+    for (WizardInputField field : fields) {
+      if (WizardInputField.IJ_BASE_PACKAGE.equals(field.getId())) {
+        return field.getValue();
+      }
+    }
+    return null;
+  }
+
+  private void unzip(String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
+    final String basePackage = getBasePackage();
     try {
       zipInputStream = myTemplate.getStream();
-      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, moduleMode ? PATH_CONVERTOR : null, new ZipUtil.ContentProcessor() {
+      NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
+        @Nullable
+        @Override
+        public String fun(String s) {
+          if (moduleMode && s.contains(".idea")) return null;
+          if (basePackage != null && s.startsWith(SRC)) {
+            return SRC + basePackage.replace('.', '/') + s.substring(SRC.length() - 1);
+          }
+          return s;
+        }
+      };
+      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
         @Override
         public byte[] processContent(byte[] content, String fileName) throws IOException {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
@@ -209,8 +232,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private static byte[] processTemplates(String s) throws IOException {
+  private byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+    for (WizardInputField field : myAdditionalFields) {
+      properties.putAll(field.getValues());
+    }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }

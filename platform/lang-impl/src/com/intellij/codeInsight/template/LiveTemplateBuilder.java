@@ -38,6 +38,10 @@ public class LiveTemplateBuilder {
   private String myLastEndVarName;
   private boolean myIsToReformat = false;
 
+  public void setIsToReformat(boolean isToReformat) {
+    myIsToReformat = isToReformat;
+  }
+
   public CharSequence getText() {
     return myText;
   }

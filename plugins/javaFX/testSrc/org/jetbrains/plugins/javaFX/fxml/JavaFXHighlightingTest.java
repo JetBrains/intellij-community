@@ -69,10 +69,6 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
-  private void doTest() throws Exception {
-    doTest(false, false, getTestName(true) + ".fxml");
-  }
-
   public void testControllerIdRef() throws Exception {
     doTestIdController();
   }
@@ -173,6 +169,27 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testRootTagWithoutType() throws Exception {
     doTest();
+  }
+
+  public void testReadOnly() throws Exception {
+    doTest();
+  }
+
+  public void testScriptSource() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "s1.js");
+    doDoTest(false, false);
+  }
+
+  public void testExpressionBinding() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyWithoutField() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
+    doTest(false, false, getTestName(true) + ".fxml");
   }
 
   @NotNull

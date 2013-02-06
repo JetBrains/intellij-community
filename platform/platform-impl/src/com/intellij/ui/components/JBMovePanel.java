@@ -373,7 +373,7 @@ public class JBMovePanel extends JBPanel {
   private class UpAction extends AnAction {
     
     UpAction() {
-      getTemplatePresentation().setIcon(AllIcons.Actions.Up);
+      getTemplatePresentation().setIcon(AllIcons.Actions.UP);
     }
 
     @Override

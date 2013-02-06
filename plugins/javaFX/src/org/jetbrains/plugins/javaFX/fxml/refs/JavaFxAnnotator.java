@@ -32,11 +32,14 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -56,15 +59,17 @@ public class JavaFxAnnotator implements Annotator {
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
       final PsiReference[] references = element.getReferences();
-      for (PsiReference reference : references) {
-        final PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiMember) {
-          if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
-            final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
-            final Annotation annotation = holder.createErrorAnnotation(element, 
-                                                                       symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
-            if (!(resolve instanceof PsiClass)) {
-              annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+      if (!JavaFxPsiUtil.isExpressionBinding(((XmlAttributeValue)element).getValue())) {
+        for (PsiReference reference : references) {
+          final PsiElement resolve = reference.resolve();
+          if (resolve instanceof PsiMember) {
+            if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
+              final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
+              final Annotation annotation = holder.createErrorAnnotation(element, 
+                                                                         symbolPresentation + (resolve instanceof PsiClass ? " should be public" : " should be public or annotated with @FXML"));
+              if (!(resolve instanceof PsiClass)) {
+                annotation.registerUniversalFix(new AddAnnotationFix(JavaFxCommonClassNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve, ArrayUtil.EMPTY_STRING_ARRAY), null, null);
+              }
             }
           }
         }
@@ -74,6 +79,13 @@ public class JavaFxAnnotator implements Annotator {
         if (attributeValueText.startsWith("#")) {
           attachColorIcon(element, holder, attributeValueText);
         }
+      }
+    } else if (element instanceof XmlAttribute) {
+      final String attributeName = ((XmlAttribute)element).getName();
+      if (!FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName) && 
+          !((XmlAttribute)element).isNamespaceDeclaration() &&
+          JavaFxPsiUtil.isReadOnly(attributeName,  ((XmlAttribute)element).getParent())) {
+        holder.createErrorAnnotation(element.getNavigationElement(), "Property '" + attributeName + "' is read-only");
       }
     }
   }

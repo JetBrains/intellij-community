@@ -221,6 +221,9 @@ public class UnixProcessManager {
 
       StringBuilder errorStr = new StringBuilder();
       while ((s = stdError.readLine()) != null) {
+        if (s.contains("DYLD_ environment variables being ignored")) {  // PY-8160
+          continue;
+        }
         errorStr.append(s).append("\n");
       }
       if (throwOnError && errorStr.length() > 0) {

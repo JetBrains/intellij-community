@@ -348,7 +348,6 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     final Document doc = myDocument;
     CharSequence chars = doc.getCharsSequence();
     int[] lineIndents = new int[doc.getLineCount()];
-    boolean[] indentStartedInComment = new boolean[lineIndents.length];
     TokenSet comments = LanguageParserDefinitions.INSTANCE.forLanguage(myFile.getLanguage()).getCommentTokens();
 
     int prevColumn = -1;
@@ -365,22 +364,16 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         final int column = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
         if (column != prevColumn) {
           final HighlighterIterator it = highlighter.createIterator(nonWhitespaceOffset);
-          boolean comment = comments.contains(it.getTokenType());
-          if (column > prevColumn && comment) {
-            indentStartedInComment[line] = true;
-          }
-          else if (column < prevColumn && comment) {
-            boolean startInComment = false;
-            for (int i = line - 1; i >= 0 && (lineIndents[i] < 0 || lineIndents[i] >= column); i--) {
-              if (indentStartedInComment[i]) {
-                startInComment = true;
-                break;
+          if (comments.contains(it.getTokenType())) {
+            final int commentIndentStartOffset = CharArrayUtil.shiftForwardUntil(chars, Math.max(it.getStart(), lineStart), " \t");
+            if (commentIndentStartOffset < it.getEnd() && commentIndentStartOffset < lineEnd) {
+              final int indentOffsetInsideComment = CharArrayUtil.shiftForward(chars, commentIndentStartOffset, " \t");
+              if (indentOffsetInsideComment < it.getEnd() && indentOffsetInsideComment < lineEnd) {
+                lineIndents[line] = myEditor.calcColumnNumber(indentOffsetInsideComment, line);
+                continue;
               }
             }
-            if (!startInComment) {
-              lineIndents[line] = -1;
-              continue;
-            }
+            continue;
           }
         }
 

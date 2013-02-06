@@ -205,32 +205,40 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
         boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        methodRefText = (isReceiverType ? containingClass.getQualifiedName() : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
+        methodRefText = (isReceiverType ? getClassReferenceName(containingClass) : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
         methodRefText =
-          (psiMethod.hasModifierProperty(PsiModifier.STATIC) ? containingClass.getQualifiedName() : "this") + "::" + methodReferenceName;
+          (psiMethod.hasModifierProperty(PsiModifier.STATIC) ? getClassReferenceName(containingClass) : "this") + "::" + methodReferenceName;
       }
     }
     else if (element instanceof PsiNewExpression) {
       final PsiMethod constructor = ((PsiNewExpression)element).resolveConstructor();
+      PsiClass containingClass = null;
       if (constructor != null) {
-        final PsiClass containingClass = constructor.getContainingClass();
+        containingClass = constructor.getContainingClass();
         LOG.assertTrue(containingClass != null);
-        methodRefText = containingClass.getQualifiedName() + "::new";
       }
       else {
         final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
         if (classReference != null) {
           final JavaResolveResult resolve = classReference.advancedResolve(false);
-          final PsiElement containingClass = resolve.getElement();
-          if (containingClass instanceof PsiClass) {
-            methodRefText = ((PsiClass)containingClass).getQualifiedName() + "::new";
+          final PsiElement resolveElement = resolve.getElement();
+          if (resolveElement instanceof PsiClass) {
+            containingClass = (PsiClass)resolveElement;
           }
         }
       }
+      if (containingClass != null) {
+        methodRefText = getClassReferenceName(containingClass) + "::new";
+      }
     }
     return methodRefText;
+  }
+
+  private static String getClassReferenceName(PsiClass containingClass) {
+    final String qualifiedName = containingClass.getQualifiedName();
+    return qualifiedName != null ? qualifiedName : containingClass.getName();
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {

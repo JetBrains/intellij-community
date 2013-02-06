@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.util.Function;
 import com.intellij.util.ui.tree.AbstractFileTreeTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +95,12 @@ class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
           @NotNull
           @Override
           protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-            return createGroup("<Clear>", "Encoding ''{1}''", null, null);
+            return createGroup("<Clear>", null, new Function<Charset, String>() {
+              @Override
+              public String fun(Charset charset) {
+                return "Choose encoding '"+charset+"'";
+              }
+            });
           }
 
           @Override

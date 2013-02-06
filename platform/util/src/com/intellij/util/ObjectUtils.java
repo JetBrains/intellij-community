@@ -54,4 +54,12 @@ public class ObjectUtils {
     }
     return null;
   }
+
+  @Nullable
+  public static <T, K extends T> T nullizeIfSubtype(@Nullable T obj, @NotNull Class<K> clazz) {
+    if (clazz.isInstance(obj)) {
+      return null;
+    }
+    return obj;
+  }
 }

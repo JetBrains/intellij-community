@@ -90,7 +90,8 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       }
     } else {
       if (!breakpoint.REMOVE_AFTER_HIT && myTemporary) {
-        breakpoint.REMOVE_AFTER_HIT = myTemporary;
+        breakpoint.REMOVE_AFTER_HIT = true;
+        breakpoint.updateUI();
       } else {
         manager.removeBreakpoint(breakpoint);
       }

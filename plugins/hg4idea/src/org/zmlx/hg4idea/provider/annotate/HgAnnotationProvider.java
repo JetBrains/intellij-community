@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.List;
 
@@ -51,7 +52,13 @@ public class HgAnnotationProvider implements AnnotationProvider {
     }
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, revision);
-    final List<HgFileRevision> logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
+    final List<HgFileRevision> logResult;
+    try {
+      logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
+    }
+    catch (HgCommandException e) {
+      throw new VcsException("Can not annotate, log command failed ", e);
+    }
     VcsRevisionNumber revisionNumber = revision == null ?
                                        new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot) :
                                        revision.getRevisionNumber();

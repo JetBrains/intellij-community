@@ -52,28 +52,31 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
 
   public Object[] getChildElements(Object element) {
-    if (! (element instanceof AbstractTreeNode)) {
+    if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    
+
     final AbstractTreeNode favTreeElement = (AbstractTreeNode)element;
     try {
       if (!(element instanceof FavoritesListNode)) {
         return super.getChildElements(favTreeElement);
-      }      
-    
+      }
+
       final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
       final FavoritesListNode listNode = (FavoritesListNode)element;
+      if (listNode.getProvider() != null) {
+        return ArrayUtil.toObjectArray(listNode.getChildren());
+      }
       final Collection<AbstractTreeNode> roots = FavoritesListNode.getFavoritesRoots(myProject, listNode.getName(), listNode);
       for (AbstractTreeNode<?> abstractTreeNode : roots) {
         final Object value = abstractTreeNode.getValue();
 
         if (value == null) continue;
-        if (value instanceof PsiElement && !((PsiElement)value).isValid())  continue;
-        if (value instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)value).getElement() == null)  continue;
+        if (value instanceof PsiElement && !((PsiElement)value).isValid()) continue;
+        if (value instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)value).getElement() == null) continue;
 
         boolean invalid = false;
-        for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+        for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
           if (nodeProvider.isInvalidElement(value)) {
             invalid = true;
             break;

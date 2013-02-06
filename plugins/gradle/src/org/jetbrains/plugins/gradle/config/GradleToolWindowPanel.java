@@ -165,7 +165,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
    */
   public void update() {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
-    String cardToShow = settings.getLinkedProjectPath() == null ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
+    String cardToShow = StringUtil.isEmpty(settings.getLinkedProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
     boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
     for (JComponent component : getToolbarControls()) {

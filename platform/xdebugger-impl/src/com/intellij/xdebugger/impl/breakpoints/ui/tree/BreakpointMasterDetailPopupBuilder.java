@@ -150,7 +150,7 @@ public class BreakpointMasterDetailPopupBuilder {
 
     myTreeController = new BreakpointItemsTreeController(myRulesEnabled);
 
-    JTree tree = myIsViewer ? new BreakpointsSimpleTree(myTreeController) : new BreakpointsCheckboxTree(myTreeController);
+    JTree tree = myIsViewer ? new BreakpointsSimpleTree(myProject, myTreeController) : new BreakpointsCheckboxTree(myProject, myTreeController);
 
     if (myPlainView) {
       tree.putClientProperty("plainView", Boolean.TRUE);

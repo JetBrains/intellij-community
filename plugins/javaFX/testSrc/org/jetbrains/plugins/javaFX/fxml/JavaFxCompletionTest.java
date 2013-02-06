@@ -93,6 +93,25 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest();
   }
 
+  public void testExpressionBinding() throws Exception {
+    doTest("text");
+  }
+
+  public void testReadOnly() throws Exception {
+    configureByFile(getTestName(true) + ".fxml");
+    assertTrue(myItems.length > 0);
+    LookupElement selectionElement = null;
+    for (LookupElement item : myItems) {
+      if (item.getLookupString().equals("backgroundFills")) {
+        selectionElement = item;
+        break;
+      }
+    }
+    if (selectionElement != null) {
+      fail("Read only attribute was suggested");
+    }
+  }
+
   private void doTest() throws Exception {
     doTest(null);
   }

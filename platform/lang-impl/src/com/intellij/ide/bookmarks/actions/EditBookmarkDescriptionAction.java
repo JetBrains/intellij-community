@@ -16,14 +16,13 @@
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 
@@ -35,7 +34,8 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
   private JBPopup myPopup;
 
   EditBookmarkDescriptionAction(Project project, JList list) {
-    super("Edit Description", "Assign short description for the bookmark to be shown along the file name", AllIcons.Actions.Edit);
+    super(IdeBundle.message("action.bookmark.edit.description"),
+          IdeBundle.message("action.bookmark.edit.description.description"), AllIcons.Actions.Edit);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta ENTER" : "control ENTER")), list);
@@ -48,23 +48,10 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Bookmark b = BookmarksAction.getSelectedBookmarks(myList).get(0);
+    Bookmark bookmark = BookmarksAction.getSelectedBookmarks(myList).get(0);
     myPopup.setUiVisible(false);
 
-    String description = Messages
-      .showInputDialog(myProject, "Enter short bookmark description", "Bookmark Description", Messages.getQuestionIcon(),
-                       b.getDescription(), new InputValidator() {
-        public boolean checkInput(String inputString) {
-          return true;
-        }
-
-        public boolean canClose(String inputString) {
-          return true;
-        }
-      });
-    if (description != null) {
-      BookmarkManager.getInstance(myProject).setDescription(b, description);
-    }
+    BookmarkManager.getInstance(myProject).editDescription(bookmark);
 
     myPopup.setUiVisible(true);
     final JComponent content = myPopup.getContent();

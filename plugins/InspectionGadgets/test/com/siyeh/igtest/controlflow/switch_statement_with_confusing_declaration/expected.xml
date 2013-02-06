@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SwitchStatementWithConfusingDeclaration.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Local variable used and declared in different 'switch' branches</problem_class>
+    <description>Local variable &lt;code&gt;x&lt;/code&gt; declared in one 'switch' branch and used in another #loc</description>
+  </problem>
+</problems>

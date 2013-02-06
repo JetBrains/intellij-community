@@ -39,25 +39,31 @@ import org.jetbrains.annotations.Nullable;
 public class WatchItemDescriptor extends EvaluationDescriptor {
 
   @Nullable
-  private String myCustomName = null;
+  private final String myCustomName;
 
   public WatchItemDescriptor(Project project, TextWithImports text) {
+    this(project, text, (String)null);
+  }
+
+  public WatchItemDescriptor(Project project, TextWithImports text, @Nullable String customName) {
     super(text, project);
+    myCustomName = customName;
     setValueLabel("");
   }
 
   public WatchItemDescriptor(Project project, TextWithImports text, Value value) {
+    this(project, text, value, null);
+  }
+
+  public WatchItemDescriptor(Project project, TextWithImports text, Value value, @Nullable String customName) {
     super(text, project, value);
+    myCustomName = customName;
     setValueLabel("");
   }
 
   public String getName() {
     final String customName = myCustomName;
     return customName == null? getEvaluationText().getText() : customName;
-  }
-
-  public void setCustomName(@Nullable String customName) {
-    myCustomName = customName;
   }
 
   public void setNew() {

@@ -44,7 +44,7 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public void setupRenderer(ColoredTreeCellRenderer renderer) {
+  public void setupRenderer(ColoredTreeCellRenderer renderer, Project project, boolean selected) {
     setupGenericRenderer(renderer, false);
   }
 

@@ -33,7 +33,11 @@ public class PsiNameHelperImpl extends PsiNameHelper {
 
   @Override
   public boolean isIdentifier(@Nullable String text) {
-    return isIdentifier(text, myLanguageLevelExtension.getLanguageLevel());
+    return isIdentifier(text, getLanguageLevel());
+  }
+
+  protected LanguageLevel getLanguageLevel() {
+    return myLanguageLevelExtension.getLanguageLevel();
   }
 
   @Override
@@ -43,7 +47,7 @@ public class PsiNameHelperImpl extends PsiNameHelper {
 
   @Override
   public boolean isKeyword(@Nullable String text) {
-    return text != null && JavaLexer.isKeyword(text, myLanguageLevelExtension.getLanguageLevel());
+    return text != null && JavaLexer.isKeyword(text, getLanguageLevel());
   }
 
   @Override
@@ -57,5 +61,18 @@ public class PsiNameHelperImpl extends PsiNameHelper {
       if (index1 == text.length()) return true;
       index = index1 + 1;
     }
+  }
+
+  public static PsiNameHelper getInstance() {
+    return new PsiNameHelperImpl() {
+      @Override
+      protected LanguageLevel getLanguageLevel() {
+        return LanguageLevel.HIGHEST;
+      }
+    };
+  }
+
+  private PsiNameHelperImpl() {
+    myLanguageLevelExtension = null;
   }
 }

@@ -100,6 +100,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
         }
       }
     });
+    myAppearanceComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myColorSchemeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -187,12 +188,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   private void preselectKeyMap(ArrayList<Keymap> keymaps) {
     final Keymap defaultKeymap = KeymapManager.getInstance().getActiveKeymap();
-    if (defaultKeymap != null) {
-      for (Keymap keymap : keymaps) {
-        if (keymap.equals(defaultKeymap)) {
-          myKeymapComboBox.setSelectedItem(keymap);
-          break;
-        }
+    for (Keymap keymap : keymaps) {
+      if (SystemInfo.isMac ? keymap.getName().contains("10.5+") : keymap.equals(defaultKeymap)) {
+        myKeymapComboBox.setSelectedItem(keymap);
+        break;
       }
     }
   }

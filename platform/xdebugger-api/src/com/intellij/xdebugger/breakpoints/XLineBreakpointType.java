@@ -16,20 +16,20 @@
 
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -106,5 +106,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
     return Collections.emptyList();
+  }
+
+  public Icon getTemporaryIcon() {
+    return AllIcons.Debugger.Db_temporary_breakpoint;
   }
 }

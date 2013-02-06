@@ -18,10 +18,8 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.status.EncodingActionsPair;
 import com.intellij.pom.Navigatable;
@@ -55,9 +53,7 @@ public class FileChangeEncodingGroup extends DefaultActionGroup implements DumbA
       virtualFile = null;
     }
 
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    boolean enabled =
-      encodingActionsPair.areActionsEnabled(null, editor, editor == null ? null : editor.getComponent(), virtualFile, getEventProject(e));
+    boolean enabled = virtualFile != null && EncodingActionsPair.checkSomeActionEnabled(virtualFile) == null;
     removeAll();
     if (enabled) {
       addAll(encodingActionsPair.createActionGroup());

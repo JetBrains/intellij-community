@@ -62,7 +62,8 @@ public abstract class ProjectViewNodeWithChildrenList<T> extends ProjectViewNode
     }
     if (idx == -1) {
       addChild(newNode);
-    } else {
+    }
+    else {
       myChildren.add(idx, newNode);
     }
   }

@@ -951,6 +951,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NotNull
   @Override
   public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
+    if (settings instanceof WrappingRunConfiguration) {
+      return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer(), taskProviderID);
+    }
     List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
     if (tasks == null) {
       tasks = getBeforeRunTasks(settings);
@@ -967,6 +970,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @Override
   @NotNull
   public List<BeforeRunTask> getBeforeRunTasks(final RunConfiguration settings) {
+    if (settings instanceof WrappingRunConfiguration) {
+      return getBeforeRunTasks(((WrappingRunConfiguration)settings).getPeer());
+    }
     final List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
     if (tasks != null) {
       return getCopies(tasks);

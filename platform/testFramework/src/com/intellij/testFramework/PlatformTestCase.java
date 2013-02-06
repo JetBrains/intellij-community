@@ -47,6 +47,8 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -256,7 +258,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  public static String getCreationPlace(Project project) {
+  @NotNull
+  public static String getCreationPlace(@NotNull Project project) {
     String place = project.getUserData(CREATION_PLACE);
     Object base;
     try {
@@ -411,6 +414,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     try {
       Project project = getProject();
+      DirectoryIndexImpl directoryIndex =
+      project != null ? (DirectoryIndexImpl)DirectoryIndex.getInstance(project) : null;
       disposeProject(result);
 
       if (project != null) {
@@ -463,6 +468,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       catch (Throwable error) {
         result.add(error);
       }
+      //if (directoryIndex != null) {
+      //  directoryIndex.assertAncestorConsistent();
+      //}
     }
     finally {
       myProjectManager = null;
@@ -492,8 +500,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             Disposer.dispose(myProject);
             ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
             if (projectManager instanceof ProjectManagerImpl) {
-              projectManager.closeTestProject(myProject);
-              ((ProjectManagerImpl)projectManager).assertTestProjectsClosed();
+              Collection<Project> projectsStillOpen = projectManager.closeTestProject(myProject);
+              if (!projectsStillOpen.isEmpty()) {
+                Project project = projectsStillOpen.iterator().next();
+                projectsStillOpen.clear();
+                throw new AssertionError("Test project is not disposed: " + project+";\n created in: "+getCreationPlace(project));
+              }
             }
           }
         });
@@ -623,12 +635,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             myAssertionsInTestDetected = false;
           }
           finally {
-            try {
-              tearDown();
-            }
-            catch (Throwable th) {
-              th.printStackTrace();
-            }
+            tearDown();
           }
         }
         catch (Throwable throwable) {

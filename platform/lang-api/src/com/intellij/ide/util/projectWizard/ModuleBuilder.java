@@ -100,16 +100,38 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   @Nullable
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
-    List<WizardInputField> fields = getAdditionalFields();
     if (type == null) {
       return null;
     }
     else {
-      ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      final ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
+      final List<WizardInputField> fields = getAdditionalFields();
       for (WizardInputField field : fields) {
         field.addToSettings(settingsStep);
       }
-      return step;
+      return new ModuleWizardStep() {
+        @Override
+        public JComponent getComponent() {
+          return null;
+        }
+
+        @Override
+        public void updateDataModel() {
+          if (step != null) {
+            step.updateDataModel();
+          }
+        }
+
+        @Override
+        public boolean validate() throws ConfigurationException {
+          for (WizardInputField field : fields) {
+            if (!field.validate()) {
+              return false;
+            }
+          }
+          return step == null || step.validate();
+        }
+      };
     }
   }
 

@@ -22,7 +22,9 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Alexander Kireyev
@@ -95,29 +97,28 @@ public class ExtensionsComplexTest extends TestCase {
     "    <dependentThree area=\"area\"/>\n" +
     "  </extensions>";
 
+  private List<MyAreaInstance> myAreasToDispose;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myAreasToDispose = new ArrayList<MyAreaInstance>();
     Extensions.registerAreaClass("area", null);
     Extensions.registerAreaClass("child_area", "area");
   }
 
   @Override
   protected void tearDown() throws Exception {
-    disposeAreas("child_area");
-    disposeAreas("area");
+    for (MyAreaInstance instance : myAreasToDispose) {
+      Extensions.disposeArea(instance);
+    }
+    myAreasToDispose = null;
     for (ExtensionPoint extensionPoint : Extensions.getRootArea().getExtensionPoints()) {
       if (extensionPoint.getName().startsWith(PLUGIN_NAME) || extensionPoint.getName().startsWith(PLUGIN_NAME_2)) {
         Extensions.getRootArea().unregisterExtensionPoint(extensionPoint.getName());
       }
     }
     super.tearDown();
-  }
-
-  private static void disposeAreas(final @NonNls String areaClass) {
-    for (AreaInstance areaInstance : Extensions.getAllAreas(areaClass)) {
-      Extensions.disposeArea(areaInstance);
-    }
   }
 
   public void testPluginInit() throws Exception {
@@ -144,6 +145,7 @@ public class ExtensionsComplexTest extends TestCase {
 
     AreaInstance areaInstance = new MyAreaInstance();
     Extensions.instantiateArea("area", areaInstance, null);
+
     initExtensionPoints(
       PLUGIN_NAME,
       "<extensionPoints>\n" +
@@ -286,5 +288,9 @@ public class ExtensionsComplexTest extends TestCase {
     }
   }
 
-  private static class MyAreaInstance implements AreaInstance {}
+  private class MyAreaInstance implements AreaInstance {
+    private MyAreaInstance() {
+      myAreasToDispose.add(this);
+    }
+  }
 }

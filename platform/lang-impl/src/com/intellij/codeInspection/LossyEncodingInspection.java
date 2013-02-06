@@ -22,11 +22,14 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -38,7 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.ReloadFileInOtherEncodingAction;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.wm.impl.status.EncodingActionsPair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -48,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -215,10 +218,22 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       VirtualFile virtualFile = psiFile.getVirtualFile();
 
       Editor editor = PsiUtilBase.findEditor(psiFile);
-      DataContext dataContext =
-        EncodingActionsPair.createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
+      DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
       ReloadFileInOtherEncodingAction reloadAction = new ReloadFileInOtherEncodingAction();
       reloadAction.actionPerformed(new AnActionEvent(null, dataContext, "", reloadAction.getTemplatePresentation(), ActionManager.getInstance(), 0));
     }
+
+    @NotNull
+    public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
+      DataContext parent = DataManager.getInstance().getDataContext(component);
+      return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile,
+                                                SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project,
+                                                                                   SimpleDataContext.getSimpleContext(
+                                                                                     PlatformDataKeys.CONTEXT_COMPONENT.getName(),
+                                                                                     editor == null ? null : editor.getComponent(),
+                                                                                     parent)));
+    }
+
+
   }
 }

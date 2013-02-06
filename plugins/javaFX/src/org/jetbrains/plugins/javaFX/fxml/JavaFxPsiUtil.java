@@ -31,12 +31,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * User: anna
  */
 public class JavaFxPsiUtil {
+
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";
     final PsiElement child =
@@ -235,12 +237,17 @@ public class JavaFxPsiUtil {
     final PsiElement xmlAttribute = xmlAttributeValue.getParent();
     final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
     if (xmlTag != null) {
-      final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          return (PsiClass)declaration;
-        }
+      return getTagClass(xmlTag);
+    }
+    return null;
+  }
+
+  public static PsiClass getTagClass(XmlTag xmlTag) {
+    final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+    if (descriptor != null) {
+      final PsiElement declaration = descriptor.getDeclaration();
+      if (declaration instanceof PsiClass) {
+        return (PsiClass)declaration;
       }
     }
     return null;
@@ -264,6 +271,85 @@ public class JavaFxPsiUtil {
             }
           }
         }
+      }
+    }
+    return null;
+  }
+  
+  public static boolean isReadOnly(String attributeName, XmlTag tag) {
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (descriptor != null) {
+      final PsiElement declaration = descriptor.getDeclaration();
+      if (declaration instanceof PsiClass) {
+        final PsiClass psiClass = (PsiClass)declaration;
+        final PsiField psiField = psiClass.findFieldByName(attributeName, true);
+        if (psiField != null) {
+          if (findPropertySetter(attributeName, (PsiClass)declaration) == null &&
+              findPropertySetter(attributeName, tag) == null && 
+              !InheritanceUtil.isInheritor(psiField.getType(), "javafx.collections.ObservableList")) {
+            //todo read only condition?
+            final PsiMethod[] constructors = psiClass.getConstructors();
+            for (PsiMethod constructor : constructors) {
+              for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
+                if (psiField.getType().equals(parameter.getType())) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+    
+  }
+
+  public static boolean isExpressionBinding(String value) {
+    if (!value.startsWith("$")) return false;
+    value = value.substring(1);
+    return value.startsWith("{") && value.endsWith("}") && value.contains(".");
+  }
+
+  @Nullable
+  public static PsiType getPropertyType(final PsiType type, final Project project) {
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass != null) {
+      final PsiClass propertyClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY,
+                                                                                  GlobalSearchScope.allScope(project));
+      if (propertyClass != null) {
+        final PsiSubstitutor substitutor =
+          TypeConversionUtil.getClassSubstitutor(propertyClass, psiClass, PsiSubstitutor.EMPTY);
+        if (substitutor != null) {
+          return substitutor.substitute(propertyClass.getTypeParameters()[0]);
+        }
+      }
+    }
+    return null;
+  }
+
+  public static PsiType getDefaultPropertyExpectedType(PsiClass aClass) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(aClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+    if (annotation != null) {
+      final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
+      if (memberValue != null) {
+        final String propertyName = StringUtil.stripQuotesAroundValue(memberValue.getText());
+        final PsiMethod getter = findPropertyGetter(propertyName, aClass);
+        if (getter != null) {
+          return getter.getReturnType();
+        }
+      }
+    }
+    return null;
+  }
+  
+  public static String getDefaultPropertyName(PsiClass aClass) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(aClass, 
+                                                                              Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+    if (annotation != null) {
+      final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
+      if (memberValue != null) {
+        return StringUtil.stripQuotesAroundValue(memberValue.getText());
       }
     }
     return null;

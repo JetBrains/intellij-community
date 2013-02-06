@@ -75,8 +75,7 @@ public class WatchDebuggerTree extends DebuggerTree {
   public DebuggerTreeNodeImpl addWatch(TextWithImports text, @Nullable String customName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-    final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text);
-    descriptor.setCustomName(customName);
+    final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, customName);
     DebuggerTreeNodeImpl node = DebuggerTreeNodeImpl.createNodeNoUpdate(this, descriptor);
     root.add(node);
 
