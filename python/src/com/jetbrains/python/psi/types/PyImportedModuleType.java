@@ -35,7 +35,7 @@ public class PyImportedModuleType implements PyType {
 
   @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

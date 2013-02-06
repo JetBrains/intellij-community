@@ -38,7 +38,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @Override
-  public List<? extends RatedResolveResult> resolveMember(String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

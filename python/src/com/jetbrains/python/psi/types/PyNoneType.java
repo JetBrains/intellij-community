@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Nullable
-  public List<? extends RatedResolveResult> resolveMember(final String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

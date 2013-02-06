@@ -22,7 +22,7 @@ public class PyGenericType implements PyType {
 
   @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

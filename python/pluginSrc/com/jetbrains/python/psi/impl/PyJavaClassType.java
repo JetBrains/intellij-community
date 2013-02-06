@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class PyJavaClassType implements PyType {
   }
 
   @Nullable
-  public List<? extends RatedResolveResult> resolveMember(final String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

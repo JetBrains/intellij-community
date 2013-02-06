@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public interface PyType {
    *         or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
                                                    PyResolveContext resolveContext);
 
   /**
