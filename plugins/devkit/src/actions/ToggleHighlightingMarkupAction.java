@@ -122,7 +122,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
         new Processor<HighlightInfo>() {
           @Override
           public boolean process(HighlightInfo info) {
-            if (info.severity != HighlightSeverity.WARNING && info.severity != HighlightSeverity.ERROR) return true;
+            if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
             if (info.getStartOffset() >= endOffset) return false;
             if (info.getEndOffset() > startOffset) {
               offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
@@ -167,7 +167,8 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     if (info != null) {
       boolean found = false;
       for (HighlightInfo cur : infos) {
-        if (cur.getStartOffset() == info.getStartOffset() && cur.getEndOffset() == info.getEndOffset() && cur.severity == info.severity) {
+        if (cur.getStartOffset() == info.getStartOffset() && cur.getEndOffset() == info.getEndOffset() && cur.getSeverity() ==
+                                                                                                          info.getSeverity()) {
           found = true;
           break;
         }
@@ -211,10 +212,10 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     sb.append("<");
     if (!opening) sb.append("/");
     if (cur.isAfterEndOfLine) {
-      sb.append(cur.severity == HighlightSeverity.WARNING ? "EOLWarning" : "EOLError");
+      sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "EOLWarning" : "EOLError");
     }
     else {
-      sb.append(cur.severity == HighlightSeverity.WARNING ? "warning" : "error");
+      sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "warning" : "error");
     }
     if (opening && !compact) {
       sb.append(" descr=\"").append(cur.description).append("\"");

@@ -177,7 +177,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
               public boolean add(@Nullable HighlightInfo info) {
                 if (info == null) return true;
                 if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
-                if (info.severity == HighlightSeverity.INFORMATION) return true;
+                if (info.getSeverity() == HighlightSeverity.INFORMATION) return true;
 
                 result.add(Pair.create(file, info));
 
