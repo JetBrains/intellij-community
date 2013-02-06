@@ -1,8 +1,7 @@
-package org.hanuna.gitalk.parser;
+package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.commitmodel.Hash;
-import org.hanuna.gitalk.log.commit.CommitAndParentHashes;
-import org.hanuna.gitalk.log.commit.CommitParser;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -10,12 +9,12 @@ import static junit.framework.Assert.assertEquals;
 /**
  * @author erokhins
  */
-public class CommitParentHashesParserTest {
-    private String toStr(CommitAndParentHashes commitParentHashes) {
+public class CommitParserTest {
+    private String toStr(Commit commitParentHashes) {
         StringBuilder s = new StringBuilder();
         s.append(commitParentHashes.getCommitHash().toStrHash()).append("|-");
-        for (int i = 0; i < commitParentHashes.getParentsHash().size(); i++) {
-            Hash hash = commitParentHashes.getParentsHash().get(i);
+        for (int i = 0; i < commitParentHashes.getParentHashes().size(); i++) {
+            Hash hash = commitParentHashes.getParentHashes().get(i);
             if (i != 0) {
                 s.append(" ");
             }
@@ -25,7 +24,7 @@ public class CommitParentHashesParserTest {
     }
 
     private void runTest(String inputStr) {
-        CommitAndParentHashes commitParentHashes = CommitParser.parseParentHashes(inputStr);
+        Commit commitParentHashes = CommitParser.parseParentHashes(inputStr);
         assertEquals(inputStr, toStr(commitParentHashes));
     }
 

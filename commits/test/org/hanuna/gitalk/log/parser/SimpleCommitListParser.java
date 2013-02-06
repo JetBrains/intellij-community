@@ -1,12 +1,11 @@
-package org.hanuna.gitalk.parser;
+package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
-import org.hanuna.gitalk.log.commit.CommitParser;
+import org.hanuna.gitalk.log.commit.Commit;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,21 +13,18 @@ import java.util.List;
  */
 public class SimpleCommitListParser {
     private final BufferedReader bufferedReader;
-    private final CommitListBuilder builder = new CommitListBuilder();
-    
+
     public SimpleCommitListParser(StringReader bufferedReader) {
         this.bufferedReader = new BufferedReader(bufferedReader);
     }
 
     public List<Commit> readAllCommits() throws IOException {
         String line;
+        List<Commit> commits = new ArrayList<Commit>();
         while ((line = bufferedReader.readLine()) != null) {
-            builder.append(CommitParser.parseParentHashes(line));
+            commits.add(CommitParser.parseParentHashes(line));
         }
-        return builder.build();
+        return commits;
     }
 
-    public boolean allCommitsFound() {
-        return builder.allCommitsFound();
-    }
 }

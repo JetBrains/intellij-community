@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.commitmodel;
+package org.hanuna.gitalk.log.commit;
 
 import org.junit.Assert;
 import org.junit.Test;

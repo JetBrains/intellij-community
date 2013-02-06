@@ -1,6 +1,6 @@
-package org.hanuna.gitalk.log.commit;
+package org.hanuna.gitalk.log.commitdata;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Commit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
