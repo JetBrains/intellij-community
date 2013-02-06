@@ -15,5 +15,4 @@ public interface PyPositionConverter {
 
   @Nullable
   XSourcePosition convertFromPython(@NotNull final PySourcePosition position);
-
 }

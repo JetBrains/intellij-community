@@ -1,13 +1,11 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author traff
@@ -17,7 +15,6 @@ public class PySignature {
   private final String myFunctionName;
 
   private final List<NamedParameter> myArgs = Lists.newArrayList();
-  private final Map<String, String> myTypeMap = Maps.newHashMap();
 
   public PySignature(@NotNull String file, @NotNull String name) {
     myFile = file;
@@ -26,7 +23,12 @@ public class PySignature {
 
   @Nullable
   public String getArgTypeQualifiedName(String name) {
-    return myTypeMap.get(name);
+    for (NamedParameter param : myArgs) {
+      if (name.equals(param.getName())) {
+        return param.getTypeQualifiedName();
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -45,11 +47,14 @@ public class PySignature {
   }
 
   @NotNull
-  public PySignature merge(@NotNull PySignature signature) {
+  public PySignature addAllArgs(@NotNull PySignature signature) {
     for (NamedParameter param : signature.getArgs()) {
       NamedParameter ourParam = getArgForName(param.getName());
       if (ourParam != null) {
         ourParam.addTypes(param.getTypesList());
+      }
+      else {
+        addArgument(param);
       }
     }
     return this;
@@ -113,9 +118,13 @@ public class PySignature {
     }
   }
 
-  public PySignature addArgumentVar(String name, String type) {
-    myArgs.add(new NamedParameter(name, type));
-    myTypeMap.put(name, type);
+
+  public PySignature addArgument(String name, String type) {
+    return addArgument(new NamedParameter(name, type));
+  }
+
+  public PySignature addArgument(NamedParameter argument) {
+    myArgs.add(argument);
     return this;
   }
 }

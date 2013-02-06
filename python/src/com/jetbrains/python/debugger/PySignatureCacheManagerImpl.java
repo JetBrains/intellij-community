@@ -78,7 +78,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
         else {
           //noinspection ConstantConditions
           lines[i] = signatureToString(stringToSignature(file.
-            getCanonicalPath(), lines[i]).merge(signature));
+            getCanonicalPath(), lines[i]).addAllArgs(signature));
         }
       }
       i++;
@@ -198,7 +198,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       for (int i = 1; i < parts.length; i++) {
         String[] var = parts[i].split(":");
         if (var.length == 2) {
-          signature = signature.addArgumentVar(var[0], var[1]);
+          signature = signature.addArgument(var[0], var[1]);
         }
         else {
           throw new IllegalStateException("Should be <name>:<type> format. " + parts[i] + " instead.");

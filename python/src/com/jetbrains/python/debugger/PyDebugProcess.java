@@ -250,6 +250,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void recordSignature(PySignature signature) {
+    if (myPositionConverter instanceof PyRemotePositionConverter) {
+      String localPath = ((PyRemotePositionConverter)myPositionConverter).getPathMappingSettings().convertToLocal(signature.getFile());
+      signature = new PySignature(localPath, signature.getFunctionName()).addAllArgs(signature);
+    }
+
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(signature);
   }
 
@@ -612,8 +617,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler instanceof PythonProcessHandler) {
       ((PythonProcessHandler)myProcessHandler)
         .setShouldTryToKillSoftly(false);    //while process is suspended it can't terminate softly,
-                                             //multiple processes in debug mode also can not terminate properly
-                                             //so its better to kill all the tree in a hard way
+      //multiple processes in debug mode also can not terminate properly
+      //so its better to kill all the tree in a hard way
     }
   }
 
