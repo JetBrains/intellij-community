@@ -77,7 +77,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   private static class FallthroughInSwitchStatementVisitor extends BaseInspectionVisitor {
 
-    private final Pattern commentPattern = Pattern.compile("fall(s)*\\s*thr(u|ou)");
+    private final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
@@ -89,7 +89,6 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
       boolean switchLabelValid = true;
       final PsiStatement[] statements = body.getStatements();
       for (final PsiStatement child : statements) {
-
         if (child instanceof PsiSwitchLabelStatement) {
           if (switchLabelValid) {
             continue;

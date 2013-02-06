@@ -16,7 +16,7 @@ public class FallthruInSwitch
         {
             case (3):
               System.out.println();
-              // falls through
+              // Falls through
             case (4):
                 System.out.println("3");
             case (5):
