@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ public class ControlFlowUtils {
 
   private ControlFlowUtils() {}
 
-  public static boolean statementMayCompleteNormally(
-    @Nullable PsiStatement statement) {
+  public static boolean statementMayCompleteNormally(@Nullable PsiStatement statement) {
     if (statement == null) {
       return true;
     }
@@ -35,7 +34,8 @@ public class ControlFlowUtils {
       return false;
     }
     else if (statement instanceof PsiExpressionListStatement || statement instanceof PsiEmptyStatement ||
-             statement instanceof PsiAssertStatement || statement instanceof PsiDeclarationStatement) {
+             statement instanceof PsiAssertStatement || statement instanceof PsiDeclarationStatement ||
+             statement instanceof PsiSwitchLabelStatement) {
       return true;
     }
     else if (statement instanceof PsiExpressionStatement) {
@@ -93,7 +93,7 @@ public class ControlFlowUtils {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
     else {
-      // unknown statement type
+      assert false : "unknown statement type: " + statement.getClass();
       return true;
     }
   }
