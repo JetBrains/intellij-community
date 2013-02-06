@@ -48,8 +48,11 @@ public class PyTypeChecker {
     if (expected == null || actual == null) {
       return true;
     }
-    if (isObjectType(expected) || isObjectType(actual)) {
-      return true;
+    if (expected instanceof PyClassType) {
+      final PyClass c = ((PyClassType)expected).getPyClass();
+      if (c != null && "object".equals(c.getName())) {
+        return true;
+      }
     }
     if ((expected instanceof PyTypeReference || actual instanceof PyTypeReference) && !recursive) {
       return true;
@@ -154,16 +157,6 @@ public class PyTypeChecker {
         ("float".equals(superName) && (subIsBool || subIsInt || subIsLong)) ||
         ("complex".equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat))) {
       return true;
-    }
-    return false;
-  }
-
-  private static boolean isObjectType(@NotNull PyType type) {
-    if (type instanceof PyClassType) {
-      final PyClass c = ((PyClassType)type).getPyClass();
-      if ("object".equals(c.getName())) {
-        return true;
-      }
     }
     return false;
   }

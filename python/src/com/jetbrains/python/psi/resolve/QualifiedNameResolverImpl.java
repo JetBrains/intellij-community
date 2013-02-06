@@ -201,6 +201,9 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       addResultsFromRoots();
     }
 
+    mySourceResults.addAll(myLibResults);
+    myLibResults.clear();
+
     if (!myWithoutForeign) {
       for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
         PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext);
@@ -209,9 +212,6 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
         }
       }
     }
-
-    mySourceResults.addAll(myLibResults);
-    myLibResults.clear();
 
     return Lists.newArrayList(mySourceResults);
   }
