@@ -160,7 +160,7 @@ public class PyDocstringGenerator {
   private Collection<DocstringParam> collectParametersToAdd() {
     String text = getDocstringText();
 
-    StructuredDocString structuredDocString = StructuredDocString.parse(text);
+    StructuredDocString structuredDocString = StructuredDocString.parse(text); //TODO: do we need to cache it?
 
     return getParamsToAdd(structuredDocString, myParams);
   }
