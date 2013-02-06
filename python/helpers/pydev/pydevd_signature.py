@@ -1,5 +1,6 @@
 import inspect
-from trace import modname
+import trace
+trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
 import gc
 from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 import pydevd_vars
@@ -51,7 +52,7 @@ class SignatureFactory(object):
         code = frame.f_code
         filename = code.co_filename
         if filename:
-            modulename = modname(filename)
+            modulename = trace.modname(filename)
         else:
             modulename = None
 

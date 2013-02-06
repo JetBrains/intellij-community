@@ -91,7 +91,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  public List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
                                                           PyResolveContext resolveContext) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);

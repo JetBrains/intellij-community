@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public abstract class PyTypeReferenceImpl implements PyTypeReference {
   @NotNull
-  public List<? extends RatedResolveResult> resolveMember(String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {
