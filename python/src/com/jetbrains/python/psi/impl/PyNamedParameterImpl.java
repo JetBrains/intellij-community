@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.cython.psi.CythonClass;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -157,11 +158,10 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     final PsiElement parent = getStubOrPsiParent();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;
-      final PyParameter[] params = parameterList.getParameters();
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
         final PyFunction.Modifier modifier = func.getModifier();
-        if (params [0] == this && modifier != PyFunction.Modifier.STATICMETHOD) {
+        if (isSelf()) {
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
@@ -238,5 +238,30 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       return new LocalSearchScope(func);
     }
     return new LocalSearchScope(getContainingFile());
+  }
+
+  @Override
+  public boolean isSelf() {
+    if (isPositionalContainer() || isKeywordContainer()) {
+      return false;
+    }
+    PyFunction function = getStubOrPsiParentOfType(PyFunction.class);
+    if (function == null) {
+      return false;
+    }
+    final PyClass cls = function.getContainingClass();
+    if (cls != null && function.getParameterList().getParameters()[0] == this) {
+      if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
+        return false;
+      }
+      if (PyNames.NEW.equals(function.getName())) {
+        return true;
+      }
+      final PyFunction.Modifier modifier = function.getModifier();
+      if (modifier != PyFunction.Modifier.STATICMETHOD) {
+        return true;
+      }
+    }
+    return false;
   }
 }

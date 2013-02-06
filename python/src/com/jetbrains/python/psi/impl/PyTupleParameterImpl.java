@@ -60,4 +60,9 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
   public PyParameter[] getContents() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
+
+  @Override
+  public boolean isSelf() {
+    return false;
+  }
 }
