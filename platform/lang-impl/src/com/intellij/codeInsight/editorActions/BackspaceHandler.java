@@ -76,7 +76,6 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
         editor = injectedEditor;
         offset = injectedOffset - 1;
-        chars = editor.getDocument().getCharsSequence();
       }
     }
 
@@ -149,7 +148,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
     PsiFile injectedFile = ((EditorWindow)injectedEditor).getInjectedFile();
     InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(injectedFile.getProject());
-    TextRange rangeToEdit = new TextRange(injectedOffset - 1, injectedOffset);
+    TextRange rangeToEdit = new TextRange(injectedOffset - 1, injectedOffset+1);
     List<TextRange> editables = ilm.intersectWithAllEditableFragments(injectedFile, rangeToEdit);
 
     return editables.size() == 1 && editables.get(0).equals(rangeToEdit);
@@ -169,7 +168,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     // Decrease column down to indentation * n
     final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentSize(file.getFileType());
-    int column = ((caretPos.column - 1) / indent) * indent;
+    int column = (caretPos.column - 1) / indent * indent;
     if (column < 0) {
       column = 0;
     }
