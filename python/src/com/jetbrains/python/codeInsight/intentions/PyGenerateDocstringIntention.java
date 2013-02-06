@@ -81,13 +81,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
         assert paramName != null;
 
-        String type;
-        if (signature != null) {
-          type = signature.getArgTypeQualifiedName(paramName);
-        }
-        else {
-          type = null;
-        }
+        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+
         if (type != null) {
           docstringGenerator.withParamTypedByQualifiedName("type", paramName, type, function);
         }
