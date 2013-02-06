@@ -151,19 +151,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PsiElement definition = instruction.getElement();
       NameDefiner definer = null;
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
-      final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
-      if (definitionComprehension != null) {
-        final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
-        final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
-        if (!isListComprehension || isAtLeast30) {
-          if (true) {
-            final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
-            if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
-              continue;
-            }
-          }
-        }
-      }
+      if (isInnerComprehension(element, definition)) continue;
       if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
         definer = (NameDefiner)definition;
         definition = definer.getElementNamed(name);
@@ -199,6 +187,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return results;
+  }
+
+  private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
+    final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
+    if (definitionComprehension != null) {
+      final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
+      final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
+      if (!isListComprehension || isAtLeast30) {
+        final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
+        if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
