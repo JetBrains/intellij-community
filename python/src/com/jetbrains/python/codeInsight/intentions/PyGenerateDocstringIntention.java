@@ -84,8 +84,15 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private static void addFunctionArguments(PyFunction function, PySignature signature, PyDocstringGenerator docstringGenerator) {
     for (PySignature.NamedParameter param : signature.getArgs()) {
-      docstringGenerator.withParamTypedByQualifiedName("type", param.getName(), param.getTypeQualifiedName(), function);
+      if (!isSelfArgument(param)) {
+        docstringGenerator.withParamTypedByQualifiedName("type", param.getName(), param.getTypeQualifiedName(), function);
+      }
     }
+  }
+
+  private static boolean isSelfArgument(PySignature.NamedParameter param) {
+    //TODO: take in account whether it is a method and param is the first argument
+    return "self".equals(param.getName());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
