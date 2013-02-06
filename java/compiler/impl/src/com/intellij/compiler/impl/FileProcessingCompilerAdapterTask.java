@@ -18,8 +18,10 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +39,7 @@ import java.util.List;
  *         Date: 9/5/12
  */
 public class FileProcessingCompilerAdapterTask implements CompileTask{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.FileProcessingCompilerAdapterTask");
   private final FileProcessingCompiler myCompiler;
 
   public FileProcessingCompilerAdapterTask(FileProcessingCompiler compiler) {
@@ -104,18 +107,27 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
       CompilerUtil.runInContext(context, CompilerBundle.message("progress.updating.caches"), new ThrowableRunnable<IOException>() {
         public void run() throws IOException{
           final List<VirtualFile> vFiles = new ArrayList<VirtualFile>(processed.length);
-          for (FileProcessingCompiler.ProcessingItem item : processed) {
-            vFiles.add(item.getFile());
-          }
+          final List<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>> toUpdate = new ArrayList<Pair<FileProcessingCompiler.ProcessingItem, ValidityState>>(processed.length);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              for (FileProcessingCompiler.ProcessingItem item : processed) {
+                vFiles.add(item.getFile());
+                toUpdate.add(Pair.create(item, item.getValidityState()));
+              }
+            }
+          });
           LocalFileSystem.getInstance().refreshFiles(vFiles);
-          for (FileProcessingCompiler.ProcessingItem item : processed) {
-            cache.update(item.getFile(), item.getValidityState());
+
+          for (Pair<FileProcessingCompiler.ProcessingItem, ValidityState> pair : toUpdate) {
+            cache.update(pair.getFirst().getFile(), pair.getSecond());
           }
         }
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+      LOG.info(e);
     }
     return true;
   }

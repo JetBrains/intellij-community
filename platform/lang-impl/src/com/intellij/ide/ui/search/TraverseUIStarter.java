@@ -44,8 +44,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * User: anna
- * Date: 13-Feb-2006
+ * Used by Installer's build buildSearchableOptions step. In order to run locally use TraverseUi configuration. 
+ * Pass corresponding -Didea.platform.prefix=YOUR_IDE_PREFIX to vm options and choose main_YOUR_IDE module
  */
 @SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
 public class TraverseUIStarter implements ApplicationStarter {
