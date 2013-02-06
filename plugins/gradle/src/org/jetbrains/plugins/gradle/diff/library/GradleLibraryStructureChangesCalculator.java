@@ -78,7 +78,6 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
   @NotNull
   @Override
   public Object getGradleKey(@NotNull GradleLibrary entity, @NotNull GradleChangesCalculationContext context) {
-    // TODO den consider the known changes 
     return entity.getName();
   }
 }

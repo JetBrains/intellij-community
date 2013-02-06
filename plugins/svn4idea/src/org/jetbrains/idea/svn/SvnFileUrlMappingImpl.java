@@ -261,12 +261,14 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             myMoreRealMapping.copyFrom(groupedMapping);
           }
 
+          final MessageBus bus = myProject.getMessageBus();
           if (mappingsChanged || ! myInitedReloaded) {
             myInitedReloaded = true;
             // all listeners are asynchronous
-            final MessageBus bus = myProject.getMessageBus();
-            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).run();
+            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(true);
             bus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
+          } else {
+            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(false);
           }
         }
       });

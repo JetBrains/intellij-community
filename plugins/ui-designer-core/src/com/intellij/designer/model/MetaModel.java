@@ -18,6 +18,7 @@ package com.intellij.designer.model;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,6 +71,14 @@ public class MetaModel {
 
   public String getTag() {
     return myTag;
+  }
+
+  public boolean isTag(@NotNull String tag) {
+    return tag.equals(myTag);
+  }
+
+  public boolean isTag(String... tags) {
+    return ArrayUtil.contains(myTag, tags);
   }
 
   public String getCreation() {
