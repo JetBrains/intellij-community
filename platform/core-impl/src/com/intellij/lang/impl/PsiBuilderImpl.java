@@ -91,6 +91,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
   private Map<Key, Object> myUserData = null;
+  private IElementType myCachedTokenType;
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @Override
@@ -233,6 +234,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     myLexStarts[i] = myText.length();
 
     myLexemeCount = i;
+    clearCachedTokenType();
   }
 
   @Override
@@ -664,6 +666,18 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   @Override
   @Nullable
   public IElementType getTokenType() {
+    IElementType cached = myCachedTokenType;
+    if (cached == null) {
+      myCachedTokenType = cached = calcTokenType();
+    }
+    return cached;
+  }
+
+  private void clearCachedTokenType() {
+    myCachedTokenType = null;
+  }
+
+  private IElementType calcTokenType() {
     if (eof()) return null;
 
     if (myRemapper != null) {
@@ -680,11 +694,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   @Override
   public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
     myRemapper = remapper;
+    clearCachedTokenType();
   }
 
   @Override
   public void remapCurrentToken(IElementType type) {
     myLexTypes[myCurrentLexeme] = type;
+    clearCachedTokenType();
   }
 
   @Nullable
@@ -736,12 +752,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     myTokenTypeChecked = false;
     myCurrentLexeme++;
     ProgressIndicatorProvider.checkCanceled();
+    clearCachedTokenType();
   }
 
   private void skipWhitespace() {
     while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(myLexTypes[myCurrentLexeme])) {
       onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
       myCurrentLexeme++;
+      clearCachedTokenType();
     }
   }
 
@@ -777,6 +795,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     IElementType[] newTypes = new IElementType[newSize];
     System.arraycopy(myLexTypes, 0, newTypes, 0, count);
     myLexTypes = newTypes;
+    clearCachedTokenType();
   }
 
   private boolean whitespaceOrComment(IElementType token) {
@@ -824,6 +843,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
     myProduction.removeRange(idx, myProduction.size());
     START_MARKERS.recycle((StartMarker)marker);
+    clearCachedTokenType();
   }
 
   @SuppressWarnings({"SuspiciousMethodCalls"})
@@ -1126,6 +1146,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
     checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType);
 
+    clearCachedTokenType();
     return rootMarker;
   }
 
