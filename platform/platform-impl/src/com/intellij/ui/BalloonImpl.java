@@ -65,6 +65,10 @@ import static java.awt.event.MouseEvent.MOUSE_PRESSED;
 
 public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
+  private final Alarm myFadeoutAlarm = new Alarm(this);
+  private long myFadeoutRequestMillis = 0;
+  private int myFadeoutRequestDelay = 0;
+
   private MyComponent myComp;
   private JLayeredPane myLayeredPane;
   private AbstractPosition myPosition;
@@ -110,6 +114,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
           final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
           myLastMoveWasInsideBalloon = insideBalloon;
           if (moveChanged) {
+            if (insideBalloon && myFadeoutAlarm.getActiveRequestCount() > 0) { //Pause hiding timer when mouse is hover
+              myFadeoutAlarm.cancelAllRequests();
+              myFadeoutRequestDelay -= (System.currentTimeMillis() - myFadeoutRequestMillis);
+            }
+            if (!insideBalloon && myFadeoutRequestDelay > 0) {
+              startFadeoutTimer(myFadeoutRequestDelay);
+            }
             myComp.repaintButton();
           }
         }
@@ -666,13 +677,16 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     myAnimator.resume();
   }
 
-  public void startFadeoutTimer(final int fadeoutTime) {
-    if (fadeoutTime > 0) {
-      new Alarm(this).addRequest(new Runnable() {
+  public void startFadeoutTimer(final int fadeoutDelay) {
+    if (fadeoutDelay > 0) {
+      myFadeoutAlarm.cancelAllRequests();
+      myFadeoutRequestMillis = System.currentTimeMillis();
+      myFadeoutRequestDelay = fadeoutDelay;
+      myFadeoutAlarm.addRequest(new Runnable() {
         public void run() {
           hide();
         }
-      }, fadeoutTime, null);
+      }, fadeoutDelay, null);
     }
   }
 
