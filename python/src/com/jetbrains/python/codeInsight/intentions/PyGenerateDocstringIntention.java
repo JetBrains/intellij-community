@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,12 +12,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -48,15 +44,16 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     if (function == null) {
       return false;
     }
-    return isAvailableForFunction(project, elementAt, function);
+    return isAvailableForFunction(project, function);
   }
 
-  private boolean isAvailableForFunction(Project project, PsiElement elementAt, PyFunction function) {
+  private boolean isAvailableForFunction(Project project, PyFunction function) {
     if (function.getDocStringValue() != null) {
       PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
 
       PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-      addFunctionArguments(function, signature, docstringGenerator);
+
+      docstringGenerator.addFunctionArguments(function, signature);
 
 
       if (docstringGenerator.haveParametersToAdd()) {
@@ -70,26 +67,6 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     else {
       myText = PyBundle.message("INTN.doc.string.stub");
       return true;
-    }
-  }
-
-  private static void addFunctionArguments(@NotNull PyFunction function,
-                                           @Nullable PySignature signature,
-                                           @NotNull PyDocstringGenerator docstringGenerator) {
-    for (PyParameter functionParam : function.getParameterList().getParameters()) {
-      String paramName = functionParam.getName();
-      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
-        assert paramName != null;
-
-        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
-
-        if (type != null) {
-          docstringGenerator.withParamTypedByQualifiedName("type", paramName, type, function);
-        }
-        else {
-          docstringGenerator.withParam("param", paramName);
-        }
-      }
     }
   }
 
@@ -113,7 +90,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
     PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
 
-    addFunctionArguments(function, signature, docstringGenerator);
+    docstringGenerator.addFunctionArguments(function, signature);
 
     docstringGenerator.build();
   }

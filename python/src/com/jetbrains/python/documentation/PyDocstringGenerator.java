@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,25 @@ public class PyDocstringGenerator {
     }
     myProject = myDocStringOwner.getProject();
     myFile = myDocStringOwner.getContainingFile();
+  }
+
+  public void addFunctionArguments(@NotNull PyFunction function,
+                                   @Nullable PySignature signature) {
+    for (PyParameter functionParam : function.getParameterList().getParameters()) {
+      String paramName = functionParam.getName();
+      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
+        assert paramName != null;
+
+        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+
+        if (type != null) {
+          withParamTypedByQualifiedName("type", paramName, type, function);
+        }
+        else {
+          withParam("param", paramName);
+        }
+      }
+    }
   }
 
   public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
