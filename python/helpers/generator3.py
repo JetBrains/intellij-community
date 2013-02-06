@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.123" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.124" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1300,7 +1300,7 @@ class ModuleRedeclarator(object):
                         if found_name:
                             if found_name == as_name:
                                 notice = " # (!) real value is %r" % s
-                                s = "object()"
+                                s = "None"
                             else:
                                 notice = " # (!) forward: %s, real value is %r" % (found_name, s)
                         if SANE_REPR_RE.match(s):
@@ -1308,7 +1308,7 @@ class ModuleRedeclarator(object):
                         else:
                             if not found_name:
                                 notice = " # (!) real value is %r" % s
-                            out(indent, prefix, "object()", postfix, notice)
+                            out(indent, prefix, "None", postfix, notice)
 
 
     def getRetType(self, s):
