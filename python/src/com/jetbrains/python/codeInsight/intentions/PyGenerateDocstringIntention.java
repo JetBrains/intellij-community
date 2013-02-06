@@ -77,24 +77,22 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
                                            @Nullable PySignature signature,
                                            @NotNull PyDocstringGenerator docstringGenerator) {
     for (PyParameter functionParam : function.getParameterList().getParameters()) {
-      if (!functionParam.isSelf()) {
-        String paramName = functionParam.getName();
-        if (!StringUtil.isEmpty(paramName)) {
-          assert paramName != null;
+      String paramName = functionParam.getName();
+      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
+        assert paramName != null;
 
-          String type;
-          if (signature != null) {
-            type = signature.getArgTypeQualifiedName(paramName);
-          }
-          else {
-            type = null;
-          }
-          if (type != null) {
-            docstringGenerator.withParamTypedByQualifiedName("type", paramName, type, function);
-          }
-          else {
-            docstringGenerator.withParam("param", paramName);
-          }
+        String type;
+        if (signature != null) {
+          type = signature.getArgTypeQualifiedName(paramName);
+        }
+        else {
+          type = null;
+        }
+        if (type != null) {
+          docstringGenerator.withParamTypedByQualifiedName("type", paramName, type, function);
+        }
+        else {
+          docstringGenerator.withParam("param", paramName);
         }
       }
     }
