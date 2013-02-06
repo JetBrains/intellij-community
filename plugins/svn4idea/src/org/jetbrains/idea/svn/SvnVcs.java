@@ -54,6 +54,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
@@ -155,7 +156,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private SvnFileUrlMappingImpl myMapping;
   private final MyFrameStateListener myFrameStateListener;
 
-  public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
+  //Consumer<Boolean>
+  public static final Topic<Consumer> ROOTS_RELOADED = new Topic<Consumer>("ROOTS_RELOADED", Consumer.class);
   private VcsListener myVcsListener;
 
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
