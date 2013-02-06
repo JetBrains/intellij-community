@@ -1,5 +1,8 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -14,7 +17,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.ProjectScopeBuilder;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -23,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author traff
@@ -35,6 +40,17 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   public static final FileAttribute CALL_SIGNATURES_ATTRIBUTE = new FileAttribute("call.signatures.attribute", 1, true);
 
   private final Project myProject;
+
+  private final LoadingCache<VirtualFile, String> mySignatureCache = CacheBuilder.newBuilder()
+    .maximumSize(1000)
+    .expireAfterAccess(10, TimeUnit.MINUTES)
+    .build(
+      new CacheLoader<VirtualFile, String>() {
+        @Override
+        public String load(VirtualFile key) throws Exception {
+          return readAttributeFromFile(key);
+        }
+      });
 
   public PySignatureCacheManagerImpl(Project project) {
     myProject = project;
@@ -50,21 +66,15 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     }
   }
 
-  private static void recordSignature(VirtualFile file, PySignature signature) {
-    byte[] data;
-    try {
-      data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
-    }
-    catch (Exception e) {
-      data = null;
-    }
+  private void recordSignature(VirtualFile file, PySignature signature) {
+    String dataString = readAttribute(file);
 
     String[] lines;
-    if (data != null) {
-      lines = (new String(data)).split("\n");
+    if (dataString != null) {
+      lines = dataString.split("\n");
     }
     else {
-      lines = new String[0];
+      lines = ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
     boolean found = false;
@@ -97,7 +107,15 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     writeAttribute(file, attrString);
   }
 
-  private static void writeAttribute(@NotNull VirtualFile file, @NotNull String attrString) {
+  private void writeAttribute(@NotNull VirtualFile file, @NotNull String attrString) {
+    String cachedValue = mySignatureCache.asMap().get(file);
+    if (!attrString.equals(cachedValue)) {
+      mySignatureCache.put(file, attrString);
+      writeAttributeToAFile(file, attrString);
+    }
+  }
+
+  private static void writeAttributeToAFile(@NotNull VirtualFile file, @NotNull String attrString) {
     try {
       CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(file, attrString.getBytes());
     }
@@ -154,7 +172,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Nullable
-  private static PySignature readSignatureAttributeFromFile(@NotNull VirtualFile file, @NotNull String name) {
+  private PySignature readSignatureAttributeFromFile(@NotNull VirtualFile file, @NotNull String name) {
     String content = readAttribute(file);
 
     if (content != null) {
@@ -171,7 +189,21 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Nullable
-  private static String readAttribute(VirtualFile file) {
+  private String readAttribute(@NotNull VirtualFile file) {
+    try {
+      String attrContent = mySignatureCache.get(file);
+      if (!StringUtil.isEmpty(attrContent)) {
+        return attrContent;
+      }
+    }
+    catch (ExecutionException e) {
+      //pass
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String readAttributeFromFile(@NotNull VirtualFile file) {
     byte[] data;
     try {
       data = CALL_SIGNATURES_ATTRIBUTE.readAttributeBytes(file);
@@ -187,7 +219,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     else {
       content = null;
     }
-    return content;
+    return content != null ? content : "";
   }
 
 
