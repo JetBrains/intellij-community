@@ -37,6 +37,7 @@ import java.util.List;
  * User: anna
  */
 public class JavaFxPsiUtil {
+
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";
     final PsiElement child =
@@ -278,7 +279,8 @@ public class JavaFxPsiUtil {
         final PsiField psiField = psiClass.findFieldByName(attributeName, true);
         if (psiField != null) {
           if (findPropertySetter(attributeName, (PsiClass)declaration) == null &&
-              findPropertySetter(attributeName, tag) == null) {
+              findPropertySetter(attributeName, tag) == null && 
+              !InheritanceUtil.isInheritor(psiField.getType(), "javafx.collections.ObservableList")) {
             //todo read only condition?
             final PsiMethod[] constructors = psiClass.getConstructors();
             for (PsiMethod constructor : constructors) {

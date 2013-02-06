@@ -32,5 +32,6 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_SCENE_NODE = "javafx.scene.Node";
   @NonNls public static final String JAVAFX_SCENE_PAINT = "javafx.scene.paint.Paint";
   @NonNls public static final String JAVAFX_FXML_BUILDER = "javafx.util.Builder";
-  public static final String VALUE_OF = "valueOf";
+  @NonNls public static final String JAVAFX_BEANS_OBSERVABLE = "javafx.beans.Observable";
+  @NonNls public static final String VALUE_OF = "valueOf";
 }
