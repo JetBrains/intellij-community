@@ -143,16 +143,20 @@ public class CoreJavaFileManager implements JavaFileManager {
             int lookupStart = 0;
 
             while (true) {
-              if (lookupStart > className.length()) break;
+              if (lookupStart > className.length()) {
+                return newComponentStart != lookupStart ? null : curClass;
+              }
 
               int b = className.indexOf("$", lookupStart);
-              if (b < 0) b = className.length();
+              b =  b < 0 ? className.length(): b;
 
               String component = className.substring(newComponentStart, b);
               PsiClass inner = curClass.findInnerClassByName(component, false);
 
               lookupStart = b + 1;
-              if (inner == null) continue;
+              if (inner == null) {
+                continue;
+              }
 
               newComponentStart = lookupStart;
               curClass = inner;
