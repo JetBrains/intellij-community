@@ -286,9 +286,12 @@ public final class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData imp
 
   @Nullable
   @Override
-  public Object clone() throws CloneNotSupportedException {
+  public PyRemoteSdkAdditionalData clone() {
     try {
       final PyRemoteSdkAdditionalData copy = (PyRemoteSdkAdditionalData)super.clone();
+      if (copy == null) {
+        return null;
+      }
       copyTo(copy);
 
       return copy;
