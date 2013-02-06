@@ -27,6 +27,12 @@ public class OneElementList<E> extends AbstractList<E> {
         }
     }
 
+    public static <E> List<E> buildList(E e) {
+        List<E> list = new OneElementList<E>();
+        list.add(e);
+        return list;
+    }
+
     private Object elementOrList = null;
 
     private void checkRange(int index) {

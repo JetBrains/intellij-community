@@ -1,10 +1,10 @@
-package org.hanuna.gitalk.graph.new_mutable.elements;
+package org.hanuna.gitalk.graph.mutable.elements;
 
 import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.hanuna.gitalk.graph.new_mutable.ElementVisibilityController;
-import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
+import org.hanuna.gitalk.graph.mutable.GraphDecorator;
+import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,11 +14,11 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableNodeRow implements NodeRow {
-    private final List<Node> nodes = new OneElementList<Node>();
+    private final List<MutableNode> nodes = new OneElementList<MutableNode>();
     private final MutableGraph graph;
     private int rowIndex;
 
-    public MutableNodeRow(MutableGraph graph, int rowIndex) {
+    public MutableNodeRow(@NotNull MutableGraph graph, int rowIndex) {
         this.graph = graph;
         this.rowIndex = rowIndex;
     }
@@ -27,25 +27,22 @@ public class MutableNodeRow implements NodeRow {
         this.rowIndex = rowIndex;
     }
 
-    public void addNode(@NotNull Node node) {
-        nodes.add(node);
+    @NotNull
+    public GraphDecorator getGraphDecorator() {
+        return graph.getGraphDecorator();
     }
 
-    public MutableGraph getMutableGraph() {
-        return graph;
-    }
-
-    public boolean hasVisibleNodes() {
-        return !getNodes().isEmpty();
+    @NotNull
+    public List<MutableNode> getInnerNodeList() {
+        return nodes;
     }
 
     @NotNull
     @Override
     public List<Node> getNodes() {
         List<Node> visibleNodes = new ArrayList<Node>(nodes.size());
-        ElementVisibilityController visibilityController = graph.getVisibilityController();
         for (Node node : nodes) {
-            if (visibilityController.isVisible(node)) {
+            if (getGraphDecorator().isVisibleNode(node)) {
                 visibleNodes.add(node);
             }
         }

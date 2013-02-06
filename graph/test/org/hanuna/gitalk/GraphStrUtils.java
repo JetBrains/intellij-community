@@ -5,9 +5,7 @@ import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.hanuna.gitalk.graph.new_mutable.fragments.NewGraphFragment;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,8 +119,8 @@ public class GraphStrUtils {
         return node.getCommit().hash().toStrHash() + ":" + node.getRowIndex();
     }
 
-
-    public static String toStr(@Nullable NewGraphFragment fragment) {
+    /*
+    public static String toStr(@Nullable GraphFragment fragment) {
         if (fragment == null) {
             return "null";
         }
@@ -143,7 +141,7 @@ public class GraphStrUtils {
         s.append("|-").append(toShortStr(fragment.getDownNode()));
         return s.toString();
     }
-
+                         */
 
 
 }

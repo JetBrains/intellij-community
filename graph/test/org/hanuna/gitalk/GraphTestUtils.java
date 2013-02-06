@@ -4,8 +4,8 @@ import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
-import org.hanuna.gitalk.graph.new_mutable.GraphBuilder;
-import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
+import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class GraphTestUtils {
     @NotNull
     public static MutableGraph getNewMutableGraph(@NotNull String inputStr) {
         SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(inputStr));
-        List<Commit> commits = null;
+        List<Commit> commits;
         try {
             commits = parser.readAllCommits();
         } catch (IOException e) {

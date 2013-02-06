@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.graph.new_mutable.elements;
+package org.hanuna.gitalk.graph.mutable.elements;
 
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
@@ -8,16 +8,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class SimpleEdge implements Edge {
+public class UsualEdge implements Edge {
     private final Node upNode;
     private final Node downNode;
-    private final Type type;
     private final Branch branch;
 
-    public SimpleEdge(Node upNode, Node downNode, Type type, Branch branch) {
+    public UsualEdge(Node upNode, Node downNode, Branch branch) {
         this.upNode = upNode;
         this.downNode = downNode;
-        this.type = type;
         this.branch = branch;
     }
 
@@ -36,7 +34,7 @@ public class SimpleEdge implements Edge {
     @NotNull
     @Override
     public Type getType() {
-        return type;
+        return Type.USUAL;
     }
 
     @NotNull

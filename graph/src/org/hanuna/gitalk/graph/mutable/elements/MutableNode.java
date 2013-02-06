@@ -1,34 +1,31 @@
-package org.hanuna.gitalk.graph.new_mutable.elements;
+package org.hanuna.gitalk.graph.mutable.elements;
 
 import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.graph.new_mutable.ElementVisibilityController;
+import org.hanuna.gitalk.graph.mutable.GraphDecorator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class MutableNode implements Node {
-    private final MutableNodeRow nodeRow;
     private final Branch branch;
     private final Commit commit;
-    private final Type type;
+    private MutableNodeRow nodeRow = null;
+    private Type type;
 
     private final List<Edge> upEdges = new OneElementList<Edge>();
     private final List<Edge> downEdges = new OneElementList<Edge>();
 
-    public MutableNode(MutableNodeRow nodeRow, Branch branch, Commit commit, Type type) {
-        this.nodeRow = nodeRow;
+    public MutableNode(Branch branch, Commit commit) {
         this.branch = branch;
         this.commit = commit;
-        this.type = type;
     }
 
     @NotNull
@@ -46,6 +43,13 @@ public class MutableNode implements Node {
         return nodeRow.getRowIndex();
     }
 
+    public void setNodeRow(MutableNodeRow nodeRow) {
+        this.nodeRow = nodeRow;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
 
     @NotNull
     @Override
@@ -54,13 +58,20 @@ public class MutableNode implements Node {
     }
 
 
+
     @NotNull
-    private List<Edge> getVisibleEdges(@NotNull Collection<Edge> edges) {
-        ElementVisibilityController visibilityController = nodeRow.getMutableGraph().getVisibilityController();
+    @Override
+    public List<Edge> getUpEdges() {
+        GraphDecorator decorator = nodeRow.getGraphDecorator();
+        Edge edge = decorator.getHideFragmentUpEdge(this);
+        if (edge != null) {
+            return OneElementList.buildList(edge);
+        }
+
         List<Edge> visibleEdge = new ArrayList<Edge>();
-        for (Edge edge : edges) {
-            if (visibilityController.isVisible(edge)) {
-                visibleEdge.add(edge);
+        for (Edge upEdge : upEdges) {
+            if (decorator.isVisibleNode(upEdge.getUpNode())) {
+                visibleEdge.add(upEdge);
             }
         }
         return visibleEdge;
@@ -68,14 +79,20 @@ public class MutableNode implements Node {
 
     @NotNull
     @Override
-    public List<Edge> getUpEdges() {
-        return getVisibleEdges(upEdges);
-    }
-
-    @NotNull
-    @Override
     public List<Edge> getDownEdges() {
-        return getVisibleEdges(downEdges);
+        GraphDecorator decorator = nodeRow.getGraphDecorator();
+        Edge edge = decorator.getHideFragmentDownEdge(this);
+        if (edge != null) {
+            return OneElementList.buildList(edge);
+        }
+
+        List<Edge> visibleEdge = new ArrayList<Edge>();
+        for (Edge downEdge : downEdges) {
+            if (decorator.isVisibleNode(downEdge.getDownNode())) {
+                visibleEdge.add(downEdge);
+            }
+        }
+        return visibleEdge;
     }
 
     @NotNull

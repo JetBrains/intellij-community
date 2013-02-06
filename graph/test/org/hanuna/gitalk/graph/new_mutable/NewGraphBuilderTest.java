@@ -1,6 +1,8 @@
 package org.hanuna.gitalk.graph.new_mutable;
 
 import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.parser.SimpleCommitListParser;
 import org.junit.Test;
 
@@ -18,7 +20,7 @@ public class NewGraphBuilderTest {
 
     public void runTest(String input, String out) {
         SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
-        List<Commit> commits = null;
+        List<Commit> commits;
         try {
             commits = parser.readAllCommits();
         } catch (IOException e) {
