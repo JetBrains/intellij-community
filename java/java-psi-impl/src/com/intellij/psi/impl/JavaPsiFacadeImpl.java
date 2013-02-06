@@ -384,7 +384,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     @Override
     public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiDirectory> consumer) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
-      PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
+      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
         public boolean processInReadAction(final VirtualFile dir) {
           if (!scope.contains(dir)) return true;
@@ -392,7 +392,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           return psiDir == null || consumer.process(psiDir);
         }
       });
-      return true;
     }
   }
 
