@@ -15,9 +15,7 @@ import java.util.List;
  * @author erokhins
  */
 public class MutableGraph implements Graph {
-    private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();
-    private final List<MutableNodeRow> visibleRows = new ArrayList<MutableNodeRow>();
-    private GraphDecorator graphDecorator = new GraphDecorator() {
+    public static final GraphDecorator ID_DECORATOR = new GraphDecorator() {
         @Override
         public boolean isVisibleNode(@NotNull Node node) {
             return true;
@@ -33,6 +31,10 @@ public class MutableGraph implements Graph {
             return null;
         }
     };
+
+    private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();
+    private final List<MutableNodeRow> visibleRows = new ArrayList<MutableNodeRow>();
+    private GraphDecorator graphDecorator = ID_DECORATOR;
 
     public GraphDecorator getGraphDecorator() {
         return graphDecorator;

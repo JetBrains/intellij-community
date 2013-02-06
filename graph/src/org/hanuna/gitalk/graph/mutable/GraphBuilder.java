@@ -28,17 +28,42 @@ public class GraphBuilder {
         return builder.runBuild(commits);
     }
 
-    private final int lastLogIndex;
-    private final Map<Hash, Integer> commitHashLogIndexes;
-    private final MutableGraph graph = new MutableGraph();
+    public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<Commit> commits) {
+        new GraphAppendBuilder(graph).appendToGraph(commits);
+    }
 
-    private final Map<Hash, MutableNode> underdoneNodes = new HashMap<Hash, MutableNode>();
+    // local package
+    static void createUsualEdge(@NotNull MutableNode up, @NotNull MutableNode down, @NotNull Branch branch) {
+        UsualEdge edge = new UsualEdge(up, down, branch);
+        up.getInnerDownEdges().add(edge);
+        down.getInnerUpEdges().add(edge);
+    }
+
+    private final int lastLogIndex;
+    private final MutableGraph graph;
+    private final Map<Hash, MutableNode> underdoneNodes;
+    private Map<Hash, Integer> commitHashLogIndexes;
+
     private MutableNodeRow nextRow;
 
-    private GraphBuilder(int lastLogIndex, @NotNull Map<Hash, Integer> commitHashLogIndexes) {
+    public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph,
+                        Map<Hash, MutableNode> underdoneNodes, MutableNodeRow nextRow) {
         this.lastLogIndex = lastLogIndex;
         this.commitHashLogIndexes = commitHashLogIndexes;
+        this.graph = graph;
+        this.underdoneNodes = underdoneNodes;
+        this.nextRow = nextRow;
     }
+
+    public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph) {
+        this(lastLogIndex, commitHashLogIndexes, graph, new HashMap<Hash, MutableNode>(), new MutableNodeRow(graph, 0));
+    }
+
+    public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes) {
+        this(lastLogIndex, commitHashLogIndexes, new MutableGraph());
+    }
+
+
 
     private int getLogIndexOfCommit(@NotNull Hash commitHash) {
         Integer index = commitHashLogIndexes.get(commitHash);
@@ -49,12 +74,6 @@ public class GraphBuilder {
         }
     }
 
-
-    private void createUsualEdge(@NotNull MutableNode up, @NotNull MutableNode down, @NotNull Branch branch) {
-        UsualEdge edge = new UsualEdge(up, down, branch);
-        up.getInnerDownEdges().add(edge);
-        down.getInnerUpEdges().add(edge);
-    }
 
 
     private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
@@ -110,9 +129,6 @@ public class GraphBuilder {
         }
     }
 
-    private void prepare() {
-        nextRow = new MutableNodeRow(graph, 0);
-    }
 
     private void lastActions() {
         Set<Hash> notReadiedCommitHashes = underdoneNodes.keySet();
@@ -127,12 +143,12 @@ public class GraphBuilder {
         }
     }
 
+    // local package
     @NotNull
-    private MutableGraph runBuild(@NotNull List<Commit> commits) {
+    MutableGraph runBuild(@NotNull List<Commit> commits) {
         if (commits.size() == 0) {
             throw new IllegalArgumentException("Empty list commits");
         }
-        prepare();
         for (Commit commit : commits) {
             append(commit);
         }

@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.log.parser;
 
 import org.hanuna.gitalk.log.commit.Commit;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,6 +13,15 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitListParser {
+    public static List<Commit> parseCommitList(@NotNull String input) {
+        SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
+        try {
+            return parser.readAllCommits();
+        } catch (IOException e) {
+            throw new IllegalStateException();
+        }
+    }
+
     private final BufferedReader bufferedReader;
 
     public SimpleCommitListParser(StringReader bufferedReader) {

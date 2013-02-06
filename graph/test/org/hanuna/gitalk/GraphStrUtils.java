@@ -82,11 +82,17 @@ public class GraphStrUtils {
     public static String toStr(NodeRow row) {
         StringBuilder s = new StringBuilder();
         List<Node> nodes = row.getNodes();
-        if (nodes.size() > 0) {
-            s.append(toStr(nodes.get(0)));
+        List<String> nodesString = new ArrayList<String>();
+        for (Node node : nodes) {
+            nodesString.add(toStr(node));
         }
-        for (int i = 1; i < nodes.size(); i++) {
-            s.append("\n   ").append(toStr(nodes.get(i)));
+        Collections.sort(nodesString);
+
+        if (nodesString.size() > 0) {
+            s.append(nodesString.get(0));
+        }
+        for (int i = 1; i < nodesString.size(); i++) {
+            s.append("\n   ").append(nodesString.get(i));
         }
         return s.toString();
     }
@@ -113,35 +119,6 @@ public class GraphStrUtils {
         }
         return s.toString();
     }
-
-     /*
-    public static String toShortStr(@NotNull Node node) {
-        return node.getCommitHash().toStrHash() + ":" + node.getRowIndex();
-    }
-
-
-    public static String toStr(@Nullable GraphFragment fragment) {
-        if (fragment == null) {
-            return "null";
-        }
-        StringBuilder s = new StringBuilder();
-        s.append(toShortStr(fragment.getUpNode())).append("|-");
-
-        List<String> intermediateNodeStr = new ArrayList<String>();
-        for (Node intermediateNode : fragment.getIntermediateNodes()) {
-            intermediateNodeStr.add(toShortStr(intermediateNode));
-        }
-        Collections.sort(intermediateNodeStr);
-        for (int i = 0; i < intermediateNodeStr.size(); i++) {
-            if (i > 0) {
-                s.append(" ");
-            }
-            s.append(intermediateNodeStr.get(i));
-        }
-        s.append("|-").append(toShortStr(fragment.getDownNode()));
-        return s.toString();
-    }
-                         */
 
 
 }
