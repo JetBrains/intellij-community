@@ -144,9 +144,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @NotNull
-  private static ResolveResultList resolveToLatestDefs(@NotNull ScopeOwner owner, @NotNull PsiElement element, @NotNull String name) {
+  private static ResolveResultList resolveToLatestDefs(@NotNull List<ReadWriteInstruction> instructions, @NotNull PsiElement element, @NotNull String name) {
     final ResolveResultList ret = new ResolveResultList();
-    final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, name, element, false);
     for (ReadWriteInstruction instruction : instructions) {
       PsiElement definition = instruction.getElement();
       NameDefiner definer = null;
@@ -191,18 +190,26 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
     final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
-    if (definitionComprehension != null) {
-      final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
-      final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
-      if (!isListComprehension || isAtLeast30) {
-        final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
-        if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
-          return true;
-        }
+    if (definitionComprehension != null && isOwnScopeComprehension(definitionComprehension)) {
+      final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
+      if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
+        return true;
       }
     }
     return false;
   }
+
+  private static boolean isOwnScopeComprehension(PsiElement definitionComprehension) {
+    final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
+    final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
+    return !isListComprehension || isAtLeast30;
+  }
+
+  private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
+    PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
+    return comprehensionElement != null && isOwnScopeComprehension(comprehensionElement);
+  }
+
 
   /**
    * Does actual resolution of resolve().
@@ -251,15 +258,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             uexpr = null;
           }
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
-            final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
+            final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, referencedName, myElement, false);
+            final ResolveResultList latest = resolveToLatestDefs(instructions, myElement, referencedName);
             if (!latest.isEmpty()) {
               return latest;
             }
-            if (owner instanceof PyClass) {
-              final ScopeOwner classOwner = ScopeUtil.getScopeOwner(owner);
-              if (classOwner != null) {
+            if (owner instanceof PyClass || (instructions.isEmpty() && isInOwnScopeComprehension(uexpr))) {
+              final ScopeOwner parentOwner = ScopeUtil.getScopeOwner(owner);
+              if (parentOwner != null) {
                 processor = new ResolveProcessor(referencedName);
-                PyResolveUtil.scopeCrawlUp(processor, classOwner, referencedName, roof);
+                PyResolveUtil.scopeCrawlUp(processor, parentOwner, referencedName, roof);
                 uexpr = processor.getResult();
               }
             }
