@@ -14,6 +14,7 @@ import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,15 +85,11 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
   private static void addFunctionArguments(PyFunction function, PySignature signature, PyDocstringGenerator docstringGenerator) {
     for (PySignature.NamedParameter param : signature.getArgs()) {
-      if (!isSelfArgument(param)) {
+      PyParameter functionParameter = function.getParameterList().findParameterByName(param.getName());
+      if (functionParameter != null && !functionParameter.isSelf()) {
         docstringGenerator.withParamTypedByQualifiedName("type", param.getName(), param.getTypeQualifiedName(), function);
       }
     }
-  }
-
-  private static boolean isSelfArgument(PySignature.NamedParameter param) {
-    //TODO: take in account whether it is a method and param is the first argument
-    return "self".equals(param.getName());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
