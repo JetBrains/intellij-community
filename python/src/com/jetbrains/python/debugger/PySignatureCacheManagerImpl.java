@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.psi.PyClass;
@@ -41,7 +42,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
 
   @Override
   public void recordSignature(@NotNull PySignature signature) {
-    GlobalSearchScope scope = ProjectScopeBuilder.getInstance(myProject).buildProjectScope();
+    GlobalSearchScope scope = ProjectScope.getProjectScope(myProject);
 
     VirtualFile file = getFile(signature);
     if (file != null && scope.contains(file)) {
