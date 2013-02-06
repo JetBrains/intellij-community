@@ -235,7 +235,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
-      properties.put(field.getId(), field.getValue());
+      properties.putAll(field.getValues());
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);

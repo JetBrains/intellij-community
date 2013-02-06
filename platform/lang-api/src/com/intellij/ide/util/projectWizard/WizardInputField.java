@@ -18,6 +18,8 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.options.ConfigurationException;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -26,6 +28,7 @@ import javax.swing.*;
 public abstract class WizardInputField<T extends JComponent> {
 
   public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
+
   private final String myId;
 
   protected WizardInputField(String id) {
@@ -41,6 +44,10 @@ public abstract class WizardInputField<T extends JComponent> {
   public abstract T getComponent();
 
   public abstract String getValue();
+
+  public Map<String, String> getValues() {
+    return Collections.singletonMap(getId(), getValue());
+  }
 
   public boolean validate() throws ConfigurationException { return true; }
 

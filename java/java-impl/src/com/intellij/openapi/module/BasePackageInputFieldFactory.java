@@ -21,6 +21,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -48,6 +50,14 @@ public class BasePackageInputFieldFactory implements WizardInputFieldFactory {
       @Override
       public String getValue() {
         return myField.getText();
+      }
+
+      @Override
+      public Map<String, String> getValues() {
+        HashMap<String, String> map = new HashMap<String, String>(2);
+        map.put(getId(), getValue());
+        map.put("IJ_BASE_PACKAGE_DIR", getValue().replace('.', '/'));
+        return map;
       }
 
       @Override
