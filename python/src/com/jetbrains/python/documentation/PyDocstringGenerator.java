@@ -218,10 +218,6 @@ public class PyDocstringGenerator {
 
     int i = 0;
 
-    if (paramsToAdd.size() == 0) {
-      throw new IllegalArgumentException("At least one parameter should be added");
-    }
-
     for (DocstringParam param : paramsToAdd) {
       replacementText.append(getPrefix());
       replacementText.append(param.getKind());
