@@ -891,4 +891,29 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
               jar2()
               jar3('intellij') } } } } }
   }
+  
+  @Test
+  void "ide-local library jars are highlighted accordingly"() {
+    init(
+      gradle: {
+        project {
+          module() } },
+      intellij: {
+        project {
+          module {
+            dependencies {
+            library('lib', bin: ['jar']) } } } }
+    )
+    checkChanges {
+      presence {
+        libraryDependency(intellij: intellij.libraryDependencies.values().flatten())
+        jar(intellij: [findJarId('jar')])
+    } }
+    checkTree {
+      project {
+        module {
+          dependencies {
+            lib('intellij') {
+              jar('intellij') } } } } }
+  }
 }
