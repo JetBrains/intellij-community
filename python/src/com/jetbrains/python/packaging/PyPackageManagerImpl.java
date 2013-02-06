@@ -317,6 +317,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     finally {
+      clearCaches();
       FileUtil.delete(new File(dirName)); //TODO: remove temp directory for remote interpreter
     }
   }
