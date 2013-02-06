@@ -187,4 +187,28 @@ public class SvnExternalTests extends Svn17TestCase {
     Assert.assertNotNull(change);
     Assert.assertEquals(FileStatus.MODIFIED, change.getFileStatus());
   }
+
+  @Test
+  public void testUncommittedExternalCopyIsDetected() throws Exception {
+    prepareExternal(false, false);
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    imitUpdate(myProject);
+    myVcs.invokeRefreshSvnRoots(false);
+    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);
+
+    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
+    Assert.assertEquals(2, infos.size());
+    final Set<String> expectedUrls = new HashSet<String>();
+    expectedUrls.add(StringUtil.toLowerCase(myExternalURL));
+    expectedUrls.add(StringUtil.toLowerCase(myMainUrl));
+
+    for (RootUrlInfo info : infos) {
+      expectedUrls.remove(StringUtil.toLowerCase(info.getAbsoluteUrl()));
+    }
+    Assert.assertTrue(expectedUrls.isEmpty());
+  }
 }
