@@ -483,6 +483,9 @@ public class PyTypeChecker {
       if (qualifierType instanceof PyUnionType) {
         final PyUnionType unionType = (PyUnionType)qualifierType;
         final String name = callee.getName();
+        if (name == null) {
+          return false;
+        }
         int sameNameCount = 0;
         for (PyType member : unionType.getMembers()) {
           if (member != null) {
