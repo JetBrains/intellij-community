@@ -4,9 +4,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -53,7 +53,7 @@ public class PyImportedModuleType implements PyType {
 
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     List<LookupElement> result = new ArrayList<LookupElement>();
-    ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(location, ScopeOwner.class);
+    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
     assert scopeOwner != null;
     final List<PyImportElement> importTargets = PyModuleType.getVisibleImports(scopeOwner);
     final int imported = myImportedModule.getImportedPrefix().getComponentCount();
