@@ -17,7 +17,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -28,6 +31,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -151,5 +155,36 @@ public class SvnExternalTests extends Svn17TestCase {
 
     Assert.assertNotNull(change1.getAfterRevision());
     Assert.assertNotNull(change2.getAfterRevision());
+  }
+
+  @Test
+  public void testUpdatedCreatedExternalFromIDEA() throws Exception {
+    prepareExternal(false, false);
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    imitUpdate(myProject);
+
+    final File externalFile = new File(sourceDir, "external/t11.txt");
+    final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
+    Assert.assertNotNull(externalVf);
+  }
+
+  @Test
+  public void testUncommittedExternalStatus() throws Exception {
+    prepareExternal(false, true);
+
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
+    final File externalFile = new File(sourceDir, "external/t11.txt");
+    final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
+    Assert.assertNotNull(externalVf);
+    editFileInCommand(externalVf, "some new content");
+
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    clManager.ensureUpToDate(false);
+
+    final Change change = clManager.getChange(externalVf);
+    Assert.assertNotNull(change);
+    Assert.assertEquals(FileStatus.MODIFIED, change.getFileStatus());
   }
 }
