@@ -18,12 +18,14 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class Extensions {
@@ -32,9 +34,10 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
-
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
+  private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
+  private static final Map<AreaInstance,String> ourAreaInstance2class = new THashMap<AreaInstance, String>();
+  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
   @NotNull
   private static ExtensionsAreaImpl createRootArea() {
@@ -86,13 +89,13 @@ public class Extensions {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getExtensions(extensionPointName.getName(), null);
+    return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    return getExtensions(extensionPointName.getName(), areaInstance);
+    return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull
@@ -138,7 +141,10 @@ public class Extensions {
     }
     ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer(), ourLogger);
     ourAreaInstance2area.put(areaInstance, area);
-    for (AreaListener listener : getAreaListeners()) {
+    ourAreaClass2instances.putValue(areaClass, areaInstance);
+    ourAreaInstance2class.put(areaInstance, areaClass);
+    AreaListener[] listeners = getAreaListeners();
+    for (AreaListener listener : listeners) {
       listener.areaCreated(areaClass, areaInstance);
     }
   }
@@ -166,17 +172,26 @@ public class Extensions {
   public static void disposeArea(@NotNull AreaInstance areaInstance) {
     assert ourAreaInstance2area.containsKey(areaInstance);
 
-    String areaClass = ourAreaInstance2area.get(areaInstance).getAreaClass();
+    AreaListener[] listeners = getAreaListeners();
+    String areaClass = ourAreaInstance2class.get(areaInstance);
     if (areaClass == null) {
       throw new IllegalArgumentException("Area class is null (area never instantiated?). Instance: " + areaInstance);
     }
     try {
-      for (AreaListener listener : getAreaListeners()) {
+      for (AreaListener listener : listeners) {
         listener.areaDisposing(areaClass, areaInstance);
       }
     } finally {
       ourAreaInstance2area.remove(areaInstance);
+      ourAreaClass2instances.removeValue(ourAreaInstance2class.remove(areaInstance), areaInstance);
+      ourAreaInstance2class.remove(areaInstance);
     }
+  }
+
+  @NotNull
+  public static AreaInstance[] getAllAreas(String areaClass) {
+    Collection<AreaInstance> instances = ourAreaClass2instances.get(areaClass);
+    return instances.toArray(new AreaInstance[instances.size()]);
   }
 
   private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
