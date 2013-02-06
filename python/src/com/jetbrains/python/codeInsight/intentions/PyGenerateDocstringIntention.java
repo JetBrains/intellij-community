@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,9 +16,9 @@ import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * (with checked format)
  */
 public class PyGenerateDocstringIntention extends BaseIntentionAction {
-  private String myText = PyBundle.message("INTN.doc.string.stub");
+  private String myText;
 
   @NotNull
   public String getFamilyName() {
@@ -51,43 +52,50 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
   }
 
   private boolean isAvailableForFunction(Project project, PsiElement elementAt, PyFunction function) {
-    PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
-    if (signature != null) {
-      if (function.getDocStringValue() != null) {
-        PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
-        addFunctionArguments(function, signature, docstringGenerator);
+    if (function.getDocStringValue() != null) {
+      PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
+
+      PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(function);
+      addFunctionArguments(function, signature, docstringGenerator);
 
 
-        if (docstringGenerator.haveParametersToAdd()) {
-          myText = PyBundle.message("INTN.add.types.to.docstring");
-          return true;
-        }
+      if (docstringGenerator.haveParametersToAdd()) {
+        myText = PyBundle.message("INTN.add.parameters.to.docstring");
+        return true;
       }
       else {
-        myText = PyBundle.message("INTN.generate.docstring.with.types");
-        return true;
-      }
-    }
-
-    PyStatementList list = PsiTreeUtil.getParentOfType(elementAt, PyStatementList.class,
-                                                       false, PyFunction.class);
-    if (list == null) {
-      if (function.getDocStringExpression() != null) {
         return false;
       }
-      final PyStatementList statementList = function.getStatementList();
-      if (statementList != null && statementList.getStatements().length != 0) {
-        return true;
-      }
     }
-    return false;
+    else {
+      myText = PyBundle.message("INTN.doc.string.stub");
+      return true;
+    }
   }
 
-  private static void addFunctionArguments(PyFunction function, PySignature signature, PyDocstringGenerator docstringGenerator) {
-    for (PySignature.NamedParameter param : signature.getArgs()) {
-      PyParameter functionParameter = function.getParameterList().findParameterByName(param.getName());
-      if (functionParameter != null && !functionParameter.isSelf()) {
-        docstringGenerator.withParamTypedByQualifiedName("type", param.getName(), param.getTypeQualifiedName(), function);
+  private static void addFunctionArguments(@NotNull PyFunction function,
+                                           @Nullable PySignature signature,
+                                           @NotNull PyDocstringGenerator docstringGenerator) {
+    for (PyParameter functionParam : function.getParameterList().getParameters()) {
+      if (!functionParam.isSelf()) {
+        String paramName = functionParam.getName();
+        if (!StringUtil.isEmpty(paramName)) {
+          assert paramName != null;
+
+          String type;
+          if (signature != null) {
+            type = signature.getArgTypeQualifiedName(paramName);
+          }
+          else {
+            type = null;
+          }
+          if (type != null) {
+            docstringGenerator.withParamTypedByQualifiedName("type", paramName, type, function);
+          }
+          else {
+            docstringGenerator.withParam("param", paramName);
+          }
+        }
       }
     }
   }
@@ -112,14 +120,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
 
     PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
 
-    if (signature != null && function.getParameterList().getParameters().length > 0) {
+    addFunctionArguments(function, signature, docstringGenerator);
 
-      addFunctionArguments(function, signature, docstringGenerator);
-
-      docstringGenerator.build();
-    }
-    else {
-      PythonDocumentationProvider.insertDocStub(function, project, editor);
-    }
+    docstringGenerator.build();
   }
 }

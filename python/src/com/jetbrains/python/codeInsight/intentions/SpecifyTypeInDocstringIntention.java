@@ -35,21 +35,22 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     PyExpression problemElement = getProblemElement(elementAt);
-    PsiReference reference = problemElement == null? null : problemElement.getReference();
+    PsiReference reference = problemElement == null ? null : problemElement.getReference();
 
-    final PsiElement resolved = reference != null? reference.resolve() : null;
+    final PsiElement resolved = reference != null ? reference.resolve() : null;
     PyParameter parameter = getParameter(problemElement, resolved);
-    String kind = parameter != null? "type" : "rtype";
+    String kind = parameter != null ? "type" : "rtype";
 
     final Callable callable = getCallable(elementAt);
-    if (callable instanceof PyFunction)
+    if (callable instanceof PyFunction) {
       generateDocstring(kind, (PyFunction)callable, problemElement);
+    }
   }
 
   private static void generateDocstring(String kind,
                                         PyFunction pyFunction,
                                         PyExpression problemElement) {
-    String name = "rtype".equals(kind)? "" : StringUtil.notNullize(problemElement.getName());
+    String name = "rtype".equals(kind) ? "" : StringUtil.notNullize(problemElement.getName());
 
     PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
 
@@ -67,6 +68,6 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn? PyBundle.message("INTN.specify.return.type") : PyBundle.message("INTN.specify.type");
+    myText = isReturn ? PyBundle.message("INTN.specify.return.type") : PyBundle.message("INTN.specify.type");
   }
 }
