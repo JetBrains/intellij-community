@@ -31,8 +31,8 @@ public class Extensions {
 
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
-  private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
+  private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
+  private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
 
@@ -86,13 +86,13 @@ public class Extensions {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return (T[])getExtensions(extensionPointName.getName(), null);
+    return getExtensions(extensionPointName.getName(), null);
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
+    return getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull
