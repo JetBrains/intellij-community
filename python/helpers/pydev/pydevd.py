@@ -1461,7 +1461,10 @@ if __name__ == '__main__':
     debugger = PyDB()
 
     if setup['save-signatures']:
-       debugger.signature_factory = SignatureFactory()
+        if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON:
+            sys.stderr.write("Collecting run-time type information is not supported for Jython\n")
+        else:
+            debugger.signature_factory = SignatureFactory()
 
     debugger.connect(host, port)
 
