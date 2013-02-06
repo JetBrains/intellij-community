@@ -182,27 +182,6 @@ public class PySdkUtil {
     }
   }
 
-  /**
-   * Finds the first match in a list os Strings.
-   *
-   * @param lines list of lines, may be null.
-   * @param regex pattern to match to.
-   * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
-   */
-  @Nullable
-  public static String getFirstMatch(List<String> lines, Pattern regex) {
-    if (lines == null) return null;
-    for (String s : lines) {
-      Matcher m = regex.matcher(s);
-      if (m.matches()) {
-        if (m.groupCount() > 0) {
-          return m.group(1);
-        }
-      }
-    }
-    return null;
-  }
-
   public static boolean isRemote(@Nullable Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteCredentials;
   }
