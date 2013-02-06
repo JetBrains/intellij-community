@@ -36,7 +36,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.datatransfer.StringSelection;
@@ -205,8 +207,14 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
         args.add("-r " + changeBrowserSettings.getChangeAfterFilter() + ":");
       }
     }
-    List<HgFileRevision> localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
-
+    final List<HgFileRevision> localRevisions;
+    try {
+      localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
+    }
+    catch (HgCommandException e) {
+      new HgCommandResultNotifier(project).notifyError(null, "Error during log command execution", e.getMessage());
+      return result;
+    }
     Collections.reverse(localRevisions);
 
     for (HgFileRevision revision : localRevisions) {
@@ -318,7 +326,18 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     args.add("--follow");
     args.add("--rev");
     args.add(revision);
-    HgFileRevision localRevision = hgLogCommand.execute(hgFile, 1, true, args).get(0);
+    final List<HgFileRevision> revisions;
+    try {
+      revisions = hgLogCommand.execute(hgFile, 1, true, args);
+    }
+    catch (HgCommandException e) {
+      new HgCommandResultNotifier(project).notifyError(null, "Error during log command execution", e.getMessage());
+      return null;
+    }
+    if (revisions == null || revision.isEmpty()) {
+      return null;
+    }
+    HgFileRevision localRevision = revisions.get(0);
     HgRevisionNumber vcsRevisionNumber = localRevision.getRevisionNumber();
     HgRevisionNumber firstParent = vcsRevisionNumber.getParents().get(0);
     List<Change> changes = new ArrayList<Change>();
