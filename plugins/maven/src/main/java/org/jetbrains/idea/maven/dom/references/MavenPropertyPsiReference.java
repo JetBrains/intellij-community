@@ -18,7 +18,11 @@ package org.jetbrains.idea.maven.dom.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -185,6 +189,13 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       if (result != null) return result;
     }
 
+    if ("java.home".equals(myText)) {
+      PsiElement element = resolveToJavaHome(mavenProject);
+      if (element != null) {
+        return element;
+      }
+    }
+
     MavenPropertiesVirtualFileSystem mavenPropertiesVirtualFileSystem = MavenPropertiesVirtualFileSystem.getInstance();
 
     IProperty property = mavenPropertiesVirtualFileSystem.findSystemProperty(myProject, myText);
@@ -222,6 +233,26 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     return null;
+  }
+
+  @Nullable
+  private PsiElement resolveToJavaHome(@NotNull MavenProject mavenProject) {
+    Module module = myProjectsManager.findModule(mavenProject);
+    if (module == null) return null;
+
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk == null) return null;
+
+    VirtualFile homeDirectory = sdk.getHomeDirectory();
+    if (homeDirectory == null) return null;
+
+    VirtualFile jreDir = homeDirectory.findChild("jre");
+    if (jreDir == null) return null;
+
+    PsiFile propFile = PsiFileFactory.getInstance(myProject).createFileFromText("SystemProperties.properties", PropertiesLanguage.INSTANCE,
+                                                                                "java.home=" + jreDir.getPath());
+
+    return ((PropertiesFile)propFile).getProperties().get(0).getPsiElement();
   }
 
   private PsiDirectory getBaseDir(@NotNull MavenProject mavenProject) {
