@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="CSS" />
     <orderEntry type="module" module-name="java-indexing-api" />
+    <orderEntry type="module" module-name="css-api" />
   </component>
   <component name="copyright">
     <Base>

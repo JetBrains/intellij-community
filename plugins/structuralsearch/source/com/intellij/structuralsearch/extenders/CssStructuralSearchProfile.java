@@ -14,7 +14,7 @@ public class CssStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   protected String[] getVarPrefixes() {
-    return new String[] {"aaaaaaaaa"};
+    return new String[]{"aaaaaaaaa"};
   }
 
   @NotNull
