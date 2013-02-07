@@ -45,6 +45,9 @@ public class NotNullInnerClass extends PsiTestCase {
 
     PsiClass clazzInner$Wrong2 = manager.findClass("foo.Nested.Inner$$X", scope);
     assertNull(clazzInner$Wrong2);
+
+    PsiClass clazzInner$Wrong3 = manager.findClass("foo.Nested.Inner$$", scope);
+    assertNull(clazzInner$Wrong3);
   }
 
 }
