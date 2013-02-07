@@ -44,6 +44,7 @@ public class MainImpl {
     if (!StartupUtil.isHeadless) {
       AppUIUtil.updateFrameClass();
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+      AppUIUtil.registerBundledFonts();
 
       UIUtil.initDefaultLAF();
 

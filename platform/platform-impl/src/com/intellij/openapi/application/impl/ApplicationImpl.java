@@ -74,7 +74,6 @@ import org.picocontainer.MutablePicoContainer;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.*;
@@ -265,34 +264,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           });
         }
       });
-    }
-
-    registerFont("/fonts/Inconsolata.ttf");
-    registerFont("/fonts/SourceCodePro-Regular.ttf");
-    registerFont("/fonts/SourceCodePro-Bold.ttf");
-  }
-
-  private void registerFont(@NonNls String name) {
-    if (isHeadlessEnvironment()) return;
-
-    InputStream is = null;
-    try {
-      is = getClass().getResourceAsStream(name);
-      final Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-      GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-    }
-    catch (Exception e) {
-      LOG.info(e);
-    }
-    finally {
-      if (is != null) {
-        try {
-          is.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
   }
 
