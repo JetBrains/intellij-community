@@ -59,6 +59,8 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
     myProject = project;
 
     setTitle("Save Project As Template");
+    myName.setText(project.getName());
+
     Module[] modules = ModuleManager.getInstance(project).getModules();
     if (modules.length < 2) {
       myModuleLabel.setVisible(false);

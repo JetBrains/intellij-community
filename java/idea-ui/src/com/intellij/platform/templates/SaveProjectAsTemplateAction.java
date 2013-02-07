@@ -120,13 +120,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
     final Map<String, String> parameters = new HashMap<String, String>();
     if (replaceParameters) {
-      ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
-      for (ProjectTemplateParameterFactory extension : extensions) {
-        String value = extension.detectParameterValue(project);
-        if (value != null) {
-          parameters.put(value, extension.getParameterId());
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
+          for (ProjectTemplateParameterFactory extension : extensions) {
+            String value = extension.detectParameterValue(project);
+            if (value != null) {
+              parameters.put(value, extension.getParameterId());
+            }
+          }
         }
-      }
+      });
     }
     indicator.setText("Saving project...");
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
