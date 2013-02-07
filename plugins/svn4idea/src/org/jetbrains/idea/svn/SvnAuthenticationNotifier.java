@@ -146,7 +146,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {
     myCopiesPassiveResults.put(getKey(obj), true);
-    myVcs.invokeRefreshSvnRoots(false);
+    myVcs.invokeRefreshSvnRoots();
 
     final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();

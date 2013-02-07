@@ -78,7 +78,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     final File ioFile = new File(vf.getPath());
     final RootUrlInfo info = myMapping.getWcRootForFilePath(ioFile);
     if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && ! info.getAbsoluteUrlAsUrl().equals(url)) {
-      SvnVcs.getInstance(myProject).invokeRefreshSvnRoots(true);
+      SvnVcs.getInstance(myProject).invokeRefreshSvnRoots();
     }
   }
 
@@ -87,7 +87,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     private SVNURL myUrl;
     private WorkingCopyFormat myFormat;
     private final NestedCopyType myType;
-    private final SVNURL myRootURL;
+    private SVNURL myRootURL;
 
     MyPointInfo(@NotNull final VirtualFile file,
                 final SVNURL url,
@@ -148,6 +148,10 @@ public class NestedCopiesBuilder implements StatusReceiver {
     @Override
     public int hashCode() {
       return key(myFile).hashCode();
+    }
+
+    public void setRootURL(final SVNURL value) {
+      myRootURL = value;
     }
   }
 

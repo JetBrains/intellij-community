@@ -97,9 +97,9 @@ public class SvnExternalTests extends Svn17TestCase {
 
     // start change list manager again
     clManager.forceGoInTestMode();
-    myVcs.invokeRefreshSvnRoots(false);
-    clManager.ensureUpToDate(false);
-    clManager.ensureUpToDate(false);
+    refreshSvnMappingsSynchronously();
+    //clManager.ensureUpToDate(false);
+    //clManager.ensureUpToDate(false);
   }
 
   @Test

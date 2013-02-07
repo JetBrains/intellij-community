@@ -154,7 +154,7 @@ public class CopiesPanel {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myRefreshLabel.isEnabled()) {
-          myVcs.invokeRefreshSvnRoots(true);
+          myVcs.invokeRefreshSvnRoots();
           myRefreshLabel.setEnabled(false);
         }
       }

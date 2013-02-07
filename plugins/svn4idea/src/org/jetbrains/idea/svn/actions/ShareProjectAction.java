@@ -171,7 +171,7 @@ public class ShareProjectAction extends BasicAction {
               } catch (SVNException e) {
                 error[0] = e;
               } finally {
-                activeVcs.invokeRefreshSvnRoots(true);
+                activeVcs.invokeRefreshSvnRoots();
                 SvnWorkingCopyFormatHolder.setPresetFormat(null);
               }
             }

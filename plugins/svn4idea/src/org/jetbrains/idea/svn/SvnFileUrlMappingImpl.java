@@ -221,7 +221,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public void realRefresh() {
+  public void realRefresh(final Runnable callback) {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final VirtualFile[] roots = myHelper.executeDefended(myProject);
 
@@ -232,7 +232,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }
     });
     // do not send additional request for nested copies when in init state
-    copiesDetector.detectCopyRoots(roots, init());
+    copiesDetector.detectCopyRoots(roots, init(), callback);
   }
 
   private class CopiesApplier {
@@ -292,7 +292,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myRepositoryRoots = new RepositoryRoots(myVcs);
     }
 
-    public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState) {
+    public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState, Runnable callback) {
       final Getter<Boolean> cancelGetter = new Getter<Boolean>() {
         public Boolean get() {
           return myVcs.getProject().isDisposed();
@@ -300,6 +300,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       };
 
       for (final VirtualFile vcsRoot : roots) {
+        // go into nested = false => only find a working copys below passed roots, but not nested
         final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(vcsRoot, myVcs, false, cancelGetter);
         if (foundRoots.isEmpty()) {
           myLonelyRoots.add(vcsRoot);
@@ -317,10 +318,10 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         }
       }
 
-      addNestedRoots(clearState);
+      addNestedRoots(clearState, callback);
     }
 
-    private void addNestedRoots(final boolean clearState) {
+    private void addNestedRoots(final boolean clearState, final Runnable callback) {
       final List<VirtualFile> basicVfRoots = ObjectsConvertor.convert(myTopRoots, new Convertor<RootUrlInfo, VirtualFile>() {
         public VirtualFile convert(final RootUrlInfo real) {
           return real.getVirtualFile();
@@ -343,7 +344,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
               final File infoFile = new File(info.getFile().getPath());
               boolean copyFound = false;
               for (RootUrlInfo topRoot : myTopRoots) {
-                if (topRoot.getIoFile().equals(infoFile)) {
+                if (FileUtil.filesEqual(topRoot.getIoFile(), infoFile)) {
                   topRoot.setType(info.getType());
                   copyFound = true;
                   break;
@@ -357,6 +358,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
                 if (svnStatus.getURL() == null) continue;
                 info.setUrl(svnStatus.getURL());
                 info.setFormat(WorkingCopyFormat.getInstance(svnStatus.getWorkingCopyFormat()));
+                if (svnStatus.getRepositoryRootURL() != null) {
+                  info.setRootURL(svnStatus.getRepositoryRootURL());
+                }
               }
               catch (Exception e) {
                 continue;
@@ -365,7 +369,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             for (RootUrlInfo topRoot : myTopRoots) {
               if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
                 SVNURL repoRoot = info.getRootURL();
-                repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), true) : repoRoot;
+                repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
                 if (repoRoot != null) {
                   final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
                   rootInfo.setType(info.getType());
@@ -380,6 +384,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
           myTopRoots.addAll(nestedRoots);
           myApplier.apply(myVcs, myTopRoots, myLonelyRoots);
+
+          callback.run();
         }
       }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, new Consumer<VcsDirtyScopeManager>() {
         public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
@@ -404,22 +410,16 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       myRoots.add(url);
     }
 
-    public SVNURL ask(final SVNURL url, boolean allowRemote) {
+    public SVNURL ask(final SVNURL url, VirtualFile file) {
       for (SVNURL root : myRoots) {
         if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
           return root;
         }
       }
-      final SVNURL newUrl;
-      try {
-        newUrl = SvnUtil.getRepositoryRoot(myVcs, url, allowRemote);
-        if (newUrl != null) {
-          myRoots.add(newUrl);
-          return newUrl;
-        }
-      }
-      catch (SVNException e) {
-        //
+      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, new File(file.getPath()));
+      if (newUrl != null) {
+        myRoots.add(newUrl);
+        return newUrl;
       }
       return null;
     }

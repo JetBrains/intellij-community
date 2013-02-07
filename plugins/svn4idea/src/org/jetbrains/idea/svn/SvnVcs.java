@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -263,7 +262,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myVcsListener = new VcsListener() {
         @Override
         public void directoryMappingChanged() {
-          invokeRefreshSvnRoots(true);
+          invokeRefreshSvnRoots();
         }
       };
     }
@@ -289,7 +288,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public void postStartup() {
     if (myProject.isDefault()) return;
-    myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
+    myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl) getSvnFileUrlMapping());
     if (! myConfiguration.isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -299,54 +298,49 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         }
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     } else {
-      invokeRefreshSvnRoots(true);
+      invokeRefreshSvnRoots();
     }
 
     myWorkingCopiesContent.activate();
   }
 
   private void cleanup17copies() {
-    new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
-      @Override
-      protected void chanceToFillRoots() {
-        myCopiesRefreshManager.getCopiesRefresh().synchRequest();
-        final List<WCInfo> infos = getAllWcInfos();
-        final LocalFileSystem lfs = LocalFileSystem.getInstance();
-        final List<VirtualFile> roots = new ArrayList<VirtualFile>(infos.size());
-        for (WCInfo info : infos) {
-          if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-            final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
-            if (file == null) {
-              LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
-            } else {
-              roots.add(file);
+    final Runnable callCleanupWorker = new Runnable() {
+      public void run() {
+        new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
+          @Override
+          protected void chanceToFillRoots() {
+            final List<WCInfo> infos = getAllWcInfos();
+            final LocalFileSystem lfs = LocalFileSystem.getInstance();
+            final List<VirtualFile> roots = new ArrayList<VirtualFile>(infos.size());
+            for (WCInfo info : infos) {
+              if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+                final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+                if (file == null) {
+                  LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+                } else {
+                  roots.add(file);
+                }
+              }
             }
+            myRoots = roots.toArray(new VirtualFile[roots.size()]);
           }
-        }
-        myRoots = roots.toArray(new VirtualFile[roots.size()]);
+        }.execute();
       }
-    }.execute();
+    };
+
+    myCopiesRefreshManager.waitRefresh(new Runnable() {
+      @Override
+      public void run() {
+        callCleanupWorker.run();
+      }
+    });
   }
 
-  public void invokeRefreshSvnRoots(final boolean asynchronous) {
+  public void invokeRefreshSvnRoots() {
     REFRESH_LOG.debug("refresh: ", new Throwable());
     if (myCopiesRefreshManager != null) {
-      if (asynchronous) {
-        myCopiesRefreshManager.getCopiesRefresh().asynchRequest();
-      }
-      else {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            @Override
-            public void run() {
-              myCopiesRefreshManager.getCopiesRefresh().synchRequest();
-            }
-          }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);
-        }
-        else {
-          myCopiesRefreshManager.getCopiesRefresh().synchRequest();
-        }
-      }
+      myCopiesRefreshManager.asynchRequest();
     }
   }
 
