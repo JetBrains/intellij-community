@@ -567,6 +567,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         builder.append(offset);
       }
     }
+    builder.append(generateRaiseOrReturn(element, offset, prefix, checkReturn));
+    return builder.toString();
+  }
+
+  public static String generateRaiseOrReturn(PyFunction element, String offset, String prefix, boolean checkReturn) {
+    StringBuilder builder = new StringBuilder();
     if (checkReturn) {
       RaiseVisitor visitor = new RaiseVisitor();
       PyStatementList statementList = element.getStatementList();

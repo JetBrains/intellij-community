@@ -1,5 +1,6 @@
 def foo(a, b):
   """
+
   :type a: object
   """
   a.

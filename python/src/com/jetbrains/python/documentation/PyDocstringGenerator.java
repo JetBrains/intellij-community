@@ -51,6 +51,7 @@ public class PyDocstringGenerator {
 
   private final Map<String, Pair<Integer, Integer>> myParamTypesOffset = Maps.newHashMap();
   private PsiFile myFile;
+  private boolean myGenerateReturn;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -92,6 +93,10 @@ public class PyDocstringGenerator {
   public PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
     myParams.add(new DocstringParam(kind, name, type));
     return this;
+  }
+
+  public void withReturn() {
+    myGenerateReturn = true;
   }
 
   private PsiFile getFile() {
@@ -258,6 +263,14 @@ public class PyDocstringGenerator {
       i++;
       if (i < paramsToAdd.size()) {
         replacementText.append(ws);
+      }
+    }
+
+    if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
+      PyFunction function = (PyFunction)myDocStringOwner;
+      String returnType = PythonDocumentationProvider.generateRaiseOrReturn(function, " ", getPrefix(), true);
+      if (!returnType.isEmpty()) {
+        replacementText.append(ws).append(returnType);
       }
     }
 

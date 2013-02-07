@@ -91,6 +91,9 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
     PySignature signature = PySignatureCacheManager.getInstance(project).findSignature(function);
 
     docstringGenerator.addFunctionArguments(function, signature);
+    if (function.getDocStringValue() == null) {
+      docstringGenerator.withReturn();
+    }
 
     docstringGenerator.build();
   }
