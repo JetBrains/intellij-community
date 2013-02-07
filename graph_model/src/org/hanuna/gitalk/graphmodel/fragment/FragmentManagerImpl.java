@@ -37,7 +37,7 @@ public class FragmentManagerImpl implements FragmentManager {
     }
 
     public interface CallBackFunction {
-        public Replace runUpdate(@NotNull Node upNode, @NotNull Node downNode);
+        public Replace runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode);
         public void fullUpdate();
     }
 
@@ -127,7 +127,7 @@ public class FragmentManagerImpl implements FragmentManager {
         ((SimpleGraphFragment) fragment).setVisibility(true);
 
         if (updateFlag) {
-            return callBackFunction.runUpdate(fragment.getUpNode(), fragment.getDownNode());
+            return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
         } else {
             return Replace.ID_REPLACE;
         }
@@ -144,7 +144,7 @@ public class FragmentManagerImpl implements FragmentManager {
         ((SimpleGraphFragment) fragment).setVisibility(false);
 
         if (updateFlag) {
-            return callBackFunction.runUpdate(fragment.getUpNode(), fragment.getDownNode());
+            return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
         } else {
             return Replace.ID_REPLACE;
         }

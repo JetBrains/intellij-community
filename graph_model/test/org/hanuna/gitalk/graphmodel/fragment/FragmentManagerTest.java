@@ -22,7 +22,7 @@ public class FragmentManagerTest {
         final MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
         FragmentManagerImpl fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
             @Override
-            public Replace runUpdate(@NotNull Node upNode, @NotNull Node downNode) {
+            public Replace runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
                 graph.updateVisibleRows();
                 return Replace.ID_REPLACE;
             }
