@@ -16,6 +16,8 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -231,6 +233,22 @@ public class MavenPropertyResolver {
 
     if (unprefixed.equals("basedir") || (hasPrefix && mavenProject == selectedProject && unprefixed.equals("baseUri"))) {
       return selectedProject.getDirectory();
+    }
+
+    if ("java.home".equals(propName)) {
+      Module module = projectsManager.findModule(mavenProject);
+      if (module != null) {
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null) {
+          VirtualFile homeDirectory = sdk.getHomeDirectory();
+          if (homeDirectory != null) {
+            VirtualFile jreDir = homeDirectory.findChild("jre");
+            if (jreDir != null) {
+              return jreDir.getPath();
+            }
+          }
+        }
+      }
     }
 
     String result;

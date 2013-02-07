@@ -368,7 +368,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   @Nullable
   private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceExpression ref,
                                                       boolean compileStatic,
-                                                      @Nullable final String message) {
+                                                      @NotNull String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 

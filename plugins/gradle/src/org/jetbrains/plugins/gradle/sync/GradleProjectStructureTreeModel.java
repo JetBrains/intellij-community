@@ -224,7 +224,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
     GradleProject project = myChangesModel.getGradleProject();
     if (project != null) {
-      GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project);
+      GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project, false);
       processChanges(Collections.<GradleProjectStructureChange>emptyList(), context.getCurrentChanges());
       filterNodes(root);
     }

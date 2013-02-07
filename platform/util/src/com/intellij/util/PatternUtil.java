@@ -21,10 +21,12 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class PatternUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
@@ -76,5 +78,26 @@ public class PatternUtil {
       LOG.error(mask, e);
       return Pattern.compile("");
     }
+  }
+
+  /**
+   * Finds the first match in a list os Strings.
+   *
+   * @param lines list of lines, may be null.
+   * @param regex pattern to match to.
+   * @return pattern's first matched group, or entire matched string if pattern has no groups, or null.
+   */
+  @Nullable
+  public static String getFirstMatch(List<String> lines, Pattern regex) {
+    if (lines == null) return null;
+    for (String s : lines) {
+      Matcher m = regex.matcher(s);
+      if (m.matches()) {
+        if (m.groupCount() > 0) {
+          return m.group(1);
+        }
+      }
+    }
+    return null;
   }
 }

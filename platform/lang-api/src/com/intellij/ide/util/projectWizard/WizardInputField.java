@@ -30,13 +30,19 @@ public abstract class WizardInputField<T extends JComponent> {
   public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
 
   private final String myId;
+  private final String myDefaultValue;
 
-  protected WizardInputField(String id) {
+  protected WizardInputField(String id, String defaultValue) {
     myId = id;
+    myDefaultValue = defaultValue;
   }
 
   public String getId() {
     return myId;
+  }
+
+  public String getDefaultValue() {
+    return myDefaultValue;
   }
 
   public abstract String getLabel();
@@ -52,11 +58,10 @@ public abstract class WizardInputField<T extends JComponent> {
   public boolean validate() throws ConfigurationException { return true; }
 
   public static WizardInputField getFieldById(String id, String initialValue) {
-    WizardInputFieldFactory[] extensions = WizardInputFieldFactory.EP_NAME.getExtensions();
-    for (WizardInputFieldFactory extension : extensions) {
-      WizardInputField field = extension.createField(id, initialValue);
-      if (field != null) {
-        return field;
+    ProjectTemplateParameterFactory[] extensions = ProjectTemplateParameterFactory.EP_NAME.getExtensions();
+    for (ProjectTemplateParameterFactory extension : extensions) {
+      if (extension.getParameterId().equals(id)) {
+        return extension.createField(initialValue);
       }
     }
     return null;

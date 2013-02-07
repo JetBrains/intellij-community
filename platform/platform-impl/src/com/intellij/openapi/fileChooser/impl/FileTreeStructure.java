@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Yura Cangea
@@ -49,7 +50,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   public FileTreeStructure(Project project, FileChooserDescriptor chooserDescriptor) {
     myProject = project;
-    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(chooserDescriptor.getRoots());
+    final VirtualFile[] rootFiles = VfsUtilCore.toVirtualFileArray(chooserDescriptor.getRoots());
     final String name = rootFiles.length == 1 && rootFiles[0] != null ? rootFiles[0].getPresentableUrl() : chooserDescriptor.getTitle();
     myRootElement = new RootFileElement(rootFiles, name, chooserDescriptor.isShowFileSystemRoots());
     myChooserDescriptor = chooserDescriptor;
@@ -72,18 +73,12 @@ public class FileTreeStructure extends AbstractTreeStructure {
     return myRootElement;
   }
 
-  public Object[] getChildElements(Object element) {
-    if (element instanceof FileElement) {
-      return getFileChildren((FileElement) element);
+  public Object[] getChildElements(Object nodeElement) {
+    if (!(nodeElement instanceof FileElement)) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
 
-  public final FileChooserDescriptor getChooserDescriptor() {
-    return myChooserDescriptor;
-  }
-
-  private Object[] getFileChildren(FileElement element) {
+    FileElement element = (FileElement)nodeElement;
     VirtualFile file = element.getFile();
 
     if (file == null || !file.isValid()) {
@@ -100,7 +95,9 @@ public class FileTreeStructure extends AbstractTreeStructure {
       if (!(file.getFileSystem() instanceof JarFileSystem)) {
         file = JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
       }
-      if (file != null) children = file.getChildren();
+      if (file != null) {
+        children = file.getChildren();
+      }
     }
     else {
       children = file.getChildren();
@@ -110,7 +107,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    HashSet<FileElement> childrenSet = new HashSet<FileElement>();
+    Set<FileElement> childrenSet = new HashSet<FileElement>();
     for (VirtualFile child : children) {
       if (myChooserDescriptor.isFileVisible(child, myShowHidden)) {
         final FileElement childElement = new FileElement(child, child.getName());

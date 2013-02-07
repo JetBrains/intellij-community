@@ -16,16 +16,22 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 2/5/13
  */
-public interface WizardInputFieldFactory {
+public abstract class ProjectTemplateParameterFactory {
 
-  ExtensionPointName<WizardInputFieldFactory> EP_NAME = ExtensionPointName.create("com.intellij.wizardInputFieldFactory");
+  public static final ExtensionPointName<ProjectTemplateParameterFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplateParameterFactory");
+
+  public abstract String getParameterId();
 
   @Nullable
-  WizardInputField createField(String id, String initialValue);
+  public abstract WizardInputField createField(String defaultValue);
+
+  @Nullable
+  public abstract String detectParameterValue(Project project);
 }
