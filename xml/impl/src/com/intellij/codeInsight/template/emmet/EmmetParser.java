@@ -189,16 +189,11 @@ public abstract class EmmetParser {
   @Nullable
   protected ZenCodingNode parseTemplate() {
     ZenCodingToken token = getToken();
-    String templateKey = getDefaultTemplateKey();
-
-    if (token instanceof IdentifierToken) {
-      templateKey = ((IdentifierToken)token).getText();
-      advance();
-    }
-
-    if (templateKey == null) {
+    if (!(token instanceof IdentifierToken)) {
       return null;
     }
+    String templateKey = ((IdentifierToken)token).getText();
+    advance();
 
     TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
     if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
