@@ -234,6 +234,10 @@ public class PyDocstringGenerator {
     if (replacementText.length() > 0) {
       replacementText.deleteCharAt(replacementText.length() - 1);
     }
+    // if creating a new docstring, leave blank line where text will be entered
+    if (!StringUtil.containsAlphaCharacters(replacementText.toString())) {
+      replacementText.append("\n");
+    }
     replacementText.append(ws);
 
     int i = 0;
