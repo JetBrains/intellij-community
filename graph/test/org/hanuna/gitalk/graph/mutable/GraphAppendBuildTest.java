@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.GraphStrUtils.toStr;
+import static org.hanuna.gitalk.graph.GraphStrUtils.toStr;
 
 /**
  * @author erokhins

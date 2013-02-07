@@ -1,6 +1,5 @@
-package org.hanuna.gitalk;
+package org.hanuna.gitalk.graph;
 
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;

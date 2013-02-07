@@ -1,7 +1,6 @@
-package org.hanuna.gitalk;
+package org.hanuna.gitalk.graph;
 
 import org.hanuna.gitalk.log.commit.Commit;
-import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
@@ -47,7 +46,7 @@ public class GraphTestUtils {
 
     // "1 20 3" -> {1,20,3}
     @NotNull
-    public static Set<Integer> parseInts(@NotNull String str) {
+    public static Set<Integer> parseIntegers(@NotNull String str) {
         if (str.length() == 0) {
             return Collections.emptySet();
         }
