@@ -4,8 +4,10 @@ import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
+import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
+import org.hanuna.gitalk.graph.mutable.GraphDecorator;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphModel;
@@ -47,6 +49,25 @@ public class GraphModelImpl implements GraphModel {
             }
         });
         this.visibleNodes = new BranchVisibleNodes(graph);
+        visibleNodes.setVisibleBranchesNodes(isStartedBranchVisibilityNode);
+        graph.setGraphDecorator(new GraphDecorator() {
+            private final GraphDecorator decorator = fragmentManager.getGraphDecorator();
+            @Override
+            public boolean isVisibleNode(@NotNull Node node) {
+                return visibleNodes.isVisibleNode(node) && decorator.isVisibleNode(node);
+            }
+
+            @Override
+            public Edge getHideFragmentDownEdge(@NotNull Node node) {
+                return decorator.getHideFragmentDownEdge(node);
+            }
+
+            @Override
+            public Edge getHideFragmentUpEdge(@NotNull Node node) {
+                return decorator.getHideFragmentUpEdge(node);
+            }
+        });
+        graph.updateVisibleRows();
     }
 
     @NotNull
