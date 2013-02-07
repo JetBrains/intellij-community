@@ -1,8 +1,8 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
-import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.log.commit.CommitData;
-import org.hanuna.gitalk.log.commit.CommitDataGetter;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commitdata.CommitData;
+import org.hanuna.gitalk.log.commitdata.CommitDataGetter;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.hanuna.gitalk.ui_controller.DateConverter;
@@ -20,7 +20,7 @@ public class RefTableModel extends AbstractTableModel {
         List<Commit> orderedCommit = new ArrayList<Commit>();
         for (Commit commit : refsModel.getOrderedLogTrackedCommit()) {
             boolean hasBranchRef = false;
-            for (Ref ref : refsModel.refsToCommit(commit.hash())) {
+            for (Ref ref : refsModel.refsToCommit(commit.getCommitHash())) {
                 if (ref.getType() != Ref.Type.TAG) {
                     hasBranchRef = true;
                 }
@@ -69,12 +69,12 @@ public class RefTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Commit commit = orderedRefCommit.get(rowIndex);
-        CommitData data = commitDataGetter.getCommitData(commit);
+        CommitData data = commitDataGetter.getCommitData(commit.getCommitHash());
         switch (columnIndex) {
             case 0:
                 return checkedCommits.contains(commit);
             case 1:
-                return new CommitCell(data.getMessage(), refsModel.refsToCommit(commit.hash()));
+                return new CommitCell(data.getMessage(), refsModel.refsToCommit(commit.getCommitHash()));
             case 2:
                 return data.getAuthor();
             case 3:

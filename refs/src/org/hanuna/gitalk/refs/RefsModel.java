@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.refs;
 
-import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.Hash;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,8 +18,8 @@ public class RefsModel {
         Set<Hash> existedCommitsRefs = new HashSet<Hash>();
         List<Commit> orderedLogExistedCommits = new ArrayList<Commit>();
         for (Commit commit : commits) {
-            if (refCommits.contains(commit.hash())) {
-                existedCommitsRefs.add(commit.hash());
+            if (refCommits.contains(commit.getCommitHash())) {
+                existedCommitsRefs.add(commit.getCommitHash());
                 orderedLogExistedCommits.add(commit);
             }
         }

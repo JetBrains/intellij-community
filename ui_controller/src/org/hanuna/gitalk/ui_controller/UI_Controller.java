@@ -1,13 +1,14 @@
 package org.hanuna.gitalk.ui_controller;
 
-import org.hanuna.gitalk.commitmodel.Commit;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
-import org.hanuna.gitalk.graph.GraphFragmentController;
 import org.hanuna.gitalk.graph.elements.GraphElement;
-import org.hanuna.gitalk.graph.elements.GraphFragment;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
+import org.hanuna.gitalk.graphmodel.FragmentManager;
+import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui_controller.table_models.GraphTableModel;
 import org.hanuna.gitalk.ui_controller.table_models.RefTableModel;
@@ -55,7 +56,7 @@ public class UI_Controller {
 
     public void over(@Nullable GraphElement graphElement) {
         SelectController selectController = dataPack.getSelectController();
-        GraphFragmentController fragmentController = dataPack.getFragmentController();
+        FragmentManager fragmentController = dataPack.getFragmentManager();
         if (graphElement == prevGraphElement) {
             return;
         } else {
@@ -73,7 +74,7 @@ public class UI_Controller {
 
     public void click(@Nullable GraphElement graphElement) {
         SelectController selectController = dataPack.getSelectController();
-        GraphFragmentController fragmentController = dataPack.getFragmentController();
+        FragmentManager fragmentController = dataPack.getFragmentManager();
         selectController.deselectAll();
         if (graphElement == null) {
             return;
@@ -82,8 +83,12 @@ public class UI_Controller {
         if (fragment == null) {
             return;
         }
-        boolean visible = fragmentController.isVisible(fragment);
-        Replace replace = fragmentController.setVisible(fragment, !visible);
+        Replace replace;
+        if (fragment.isVisible()) {
+            replace = fragmentController.hide(fragment);
+        } else {
+            replace = fragmentController.show(fragment);
+        }
         events.runUpdateTable();
         events.runJumpToRow(replace.from());
     }
@@ -94,7 +99,11 @@ public class UI_Controller {
             MyTimer timer = new MyTimer("update branch shows");
 
             prevSelectionBranches = new HashSet<Commit>(checkedCommits);
-            dataPack.setShowBranches(checkedCommits);
+            Set<Hash> hashSet = new HashSet<Hash>();
+            for (Commit commit : checkedCommits) {
+                hashSet.add(commit.getCommitHash());
+            }
+            dataPack.setShowBranches(hashSet);
             graphTableModel.rewriteData(dataPack);
 
             events.runUpdateTable();

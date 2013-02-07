@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.controller;
 
-import org.hanuna.gitalk.commitmodel.Commit;
+import org.hanuna.gitalk.log.commit.Commit;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.controller.git.log.CacheCommitDataGetter;

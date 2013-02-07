@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.commitdata;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -10,9 +10,9 @@ import java.util.List;
  */
 public interface CommitDataGetter {
     @NotNull
-    public CommitData getCommitData(@NotNull Commit commit);
+    public CommitData getCommitData(@NotNull Hash commit);
 
-    public boolean wasLoadData(@NotNull Commit commit);
+    public boolean wasLoadData(@NotNull Hash commit);
 
-    public void preLoadCommitData(@NotNull List<Commit> commits);
+    public void preLoadCommitData(@NotNull List<Hash> commitHashes);
 }

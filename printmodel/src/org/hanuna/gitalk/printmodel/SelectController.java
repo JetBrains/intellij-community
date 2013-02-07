@@ -1,9 +1,9 @@
 package org.hanuna.gitalk.printmodel;
 
-import org.hanuna.gitalk.graph.elements.GraphFragment;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,24 +16,24 @@ import java.util.Set;
 public class SelectController {
     private final Set<GraphElement> selectedElements = new HashSet<GraphElement>();
 
-    public void select(@Nullable GraphFragment graphFragment) {
+    public void select(@Nullable GraphFragment fragment) {
         deselectAll();
-        if (graphFragment == null) {
+        if (fragment == null) {
             return;
         }
-        selectedElements.add(graphFragment.getUpNode());
-        selectedElements.add(graphFragment.getDownNode());
-        graphFragment.intermediateWalker(new GraphFragment.GraphElementRunnable() {
-            @Override
-            public void edgeRun(@NotNull Edge edge) {
-                selectedElements.add(edge);
+        selectedElements.add(fragment.getUpNode());
+        selectedElements.add(fragment.getDownNode());
+        for (Edge edge : fragment.getUpNode().getDownEdges()) {
+            selectedElements.add(edge);
+        }
+        if (fragment.isVisible()) {
+            selectedElements.addAll(fragment.getIntermediateNodes());
+            for (Node node : fragment.getIntermediateNodes()) {
+                for (Edge edge : node.getDownEdges()) {
+                    selectedElements.add(edge);
+                }
             }
-
-            @Override
-            public void nodeRun(@NotNull Node node) {
-                selectedElements.add(node);
-            }
-        });
+        }
     }
 
     public void deselectAll() {

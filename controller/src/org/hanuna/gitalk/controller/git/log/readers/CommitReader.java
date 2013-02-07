@@ -1,20 +1,20 @@
 package org.hanuna.gitalk.controller.git.log.readers;
 
-import org.hanuna.gitalk.commitmodel.Commit;
-import org.hanuna.gitalk.commitmodel.builder.CommitListBuilder;
 import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.log.commit.CommitParser;
+import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class CommitReader {
-    private final CommitListBuilder builder = new CommitListBuilder();
     private final ProcessOutputReader outputReader;
+    private final List<Commit> commits = new ArrayList<Commit>();
 
     public CommitReader(@NotNull Executor<Integer> progressUpdater){
         outputReader = new ProcessOutputReader(progressUpdater, new Executor<String>() {
@@ -26,24 +26,21 @@ public class CommitReader {
     }
 
     protected final void appendLine(@NotNull String line) {
-        builder.append(CommitParser.parseParentHashes(line));
+        commits.add(CommitParser.parseParentHashes(line));
     }
 
     @NotNull
     public List<Commit> readAllCommits() throws GitException, IOException {
         Process process = GitProcessFactory.allLog();
         outputReader.startRead(process);
-        if (! builder.allCommitsFound()) {
-            throw new GitException("Bad commit order. Not found several commits");
-        }
-        return builder.build();
+        return commits;
     }
 
     @NotNull
     public List<Commit> readLastCommits(int monthCount) throws GitException, IOException {
         Process process = GitProcessFactory.lastMonth(monthCount);
         outputReader.startRead(process);
-        return builder.build();
+        return commits;
     }
 
 
