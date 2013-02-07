@@ -80,8 +80,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
   private JCheckBox myShowVcsRootErrorNotification;
   private JCheckBox myShowChangedRecursively;
-  private VcsLimitHistoryConfigurable myLimitHistory;
-  private JComboBox myScopeFilterCombo;
+  private final VcsLimitHistoryConfigurable myLimitHistory;
+  private final JComboBox myScopeFilterCombo;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -216,6 +216,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
+    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
+    myScopeFilterCombo = new JComboBox();
 
     myCheckers = new HashMap<String, VcsRootChecker>();
     updateRootCheckers();
@@ -369,8 +371,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   protected JComponent createMainComponent() {
-    myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
-
     JPanel panel = new JPanel(new GridBagLayout());
     GridBag gb = new GridBag()
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
@@ -513,7 +513,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JComponent createScopeFilterOption() {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(new JBLabel("Update Info Scope Filter:"));
-    panel.add(myScopeFilterCombo = new JComboBox());
+    panel.add(myScopeFilterCombo);
     return panel;
   }
 
