@@ -37,7 +37,7 @@ public class ResourceBundleUtilTest {
     { "first line \\\nsecond line", "first line \nsecond line" },
     
     // Non-ascii symbols.
-    { "wei\\u00DF", "weiß" },
+    { "wei\\u00DF", "wei\u00DF" },
     
     // All together.
     { "\\\t text with \\\nspecial symbols\\:\\\n\\#", "\t text with \nspecial symbols:\n#" }
