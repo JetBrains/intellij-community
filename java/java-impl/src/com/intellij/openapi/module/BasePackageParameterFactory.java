@@ -15,25 +15,46 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
-import com.intellij.ide.util.projectWizard.WizardInputFieldFactory;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiNameHelperImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 2/1/13
  */
-public class BasePackageInputFieldFactory implements WizardInputFieldFactory {
+public class BasePackageParameterFactory extends ProjectTemplateParameterFactory {
+
+  private static final Condition<PsiPackage> PACKAGE_CONDITION = new Condition<PsiPackage>() {
+    @Override
+    public boolean value(PsiPackage aPackage) {
+      return JavaPsiFacade.getInstance(aPackage.getProject()).getNameHelper().isQualifiedName(aPackage.getQualifiedName()) &&
+             Character.isLowerCase(aPackage.getName().charAt(0));
+    }
+  };
 
   @Override
-  public WizardInputField createField(String id, final String initialValue) {
+  public String getParameterId() {
+    return WizardInputField.IJ_BASE_PACKAGE;
+  }
 
-    return WizardInputField.IJ_BASE_PACKAGE.equals(id) ? new WizardInputField<JTextField>(WizardInputField.IJ_BASE_PACKAGE) {
+  @Override
+  public WizardInputField createField(final String initialValue) {
+
+    return new WizardInputField<JTextField>(WizardInputField.IJ_BASE_PACKAGE) {
 
       private final JTextField myField = new JTextField(initialValue);
 
@@ -67,6 +88,19 @@ public class BasePackageInputFieldFactory implements WizardInputFieldFactory {
         }
         return true;
       }
-    } : null;
+    };
+  }
+
+  @Override
+  public String detectParameterValue(Project project) {
+    PsiPackage root = JavaPsiFacade.getInstance(project).findPackage("");
+    if (root == null) return null;
+    String name = getBasePackage(root, GlobalSearchScope.projectScope(project)).getQualifiedName();
+    return StringUtil.isEmpty(name) ? null : name;
+  }
+
+  private static PsiPackage getBasePackage(PsiPackage pack, GlobalSearchScope scope) {
+    List<PsiPackage> subPackages = ContainerUtil.filter(pack.getSubPackages(scope), PACKAGE_CONDITION);
+    return subPackages.size() == 1 ? getBasePackage(subPackages.get(0), scope) : pack;
   }
 }

@@ -56,6 +56,11 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
   public static final String SAMPLES_GALLERY = "Samples Gallery";
   private static final Namespace NAMESPACE = Namespace.getNamespace("http://www.jetbrains.com/projectTemplates");
+
+  public static final String INPUT_FIELD = "input-field";
+  public static final String TEMPLATE = "template";
+  public static final String INPUT_DEFAULT = "default";
+
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
@@ -126,7 +131,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @SuppressWarnings("unchecked")
   private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement, final Namespace ns) {
-    List<Element> elements = groupElement.getChildren("template", ns);
+    List<Element> elements = groupElement.getChildren(TEMPLATE, ns);
 
     return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ArchivedProjectTemplate>() {
       @Override
@@ -174,10 +179,10 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {
     //noinspection unchecked
-    return ContainerUtil.map(templateElement.getChildren("input-field", ns), new Function<Element, WizardInputField>() {
+    return ContainerUtil.map(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
       @Override
       public WizardInputField fun(Element element) {
-        return WizardInputField.getFieldById(element.getText(), element.getAttributeValue("default"));
+        return WizardInputField.getFieldById(element.getText(), element.getAttributeValue(INPUT_DEFAULT));
       }
     });
   }

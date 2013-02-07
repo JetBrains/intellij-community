@@ -472,6 +472,10 @@ public class JDOMUtil {
     }
   }
 
+  public static String writeElement(Element element) {
+    return writeElement(element, "\n");
+  }
+
   @NotNull
   public static String writeElement(Element element, String lineSeparator) {
     try {

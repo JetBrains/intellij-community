@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
   private EditorTextField myDescription;
   private JComboBox myModuleCombo;
   private JLabel myModuleLabel;
+  private JBCheckBox myReplaceParameters;
 
   protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
@@ -120,6 +122,10 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   String getDescription() {
     return myDescription.getText();
+  }
+
+  boolean isReplaceParameters() {
+    return myReplaceParameters.isSelected();
   }
 
   @Nullable

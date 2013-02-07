@@ -19,11 +19,13 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,6 +38,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,10 +47,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -84,7 +90,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Saving Project as Template", true, PerformInBackgroundOption.DEAF) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
-          saveProject(project, file, moduleToSave, description, indicator);
+          saveProject(project, file, moduleToSave, description, dialog.isReplaceParameters(), indicator);
         }
 
         @Override
@@ -106,11 +112,22 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static void saveProject(final Project project,
-                                  final File zipFile,
-                                  Module moduleToSave,
-                                  final String description,
-                                  final ProgressIndicator indicator) {
+                                 final File zipFile,
+                                 Module moduleToSave,
+                                 final String description,
+                                 boolean replaceParameters,
+                                 final ProgressIndicator indicator) {
 
+    final Map<String, String> parameters = new HashMap<String, String>();
+    if (replaceParameters) {
+      ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
+      for (ProjectTemplateParameterFactory extension : extensions) {
+        String value = extension.detectParameterValue(project);
+        if (value != null) {
+          parameters.put(value, extension.getParameterId());
+        }
+      }
+    }
     indicator.setText("Saving project...");
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -147,6 +164,12 @@ public class SaveProjectAsTemplateAction extends AnAction {
           }
         });
       }
+      if (replaceParameters) {
+        String text = getInputFieldsText(parameters);
+        stream.putNextEntry(new ZipEntry(dir.getName() + "/" + LocalArchivedTemplate.IDEA_INPUT_FIELDS_XML));
+        stream.write(text.getBytes());
+        stream.closeEntry();
+      }
 
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
@@ -174,7 +197,9 @@ public class SaveProjectAsTemplateAction extends AnAction {
 
                   String s = VfsUtilCore.loadText(virtualFile);
                   String result = convertTemplates(s, pattern, templateText);
-
+                  for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                    result = result.replace(entry.getKey(), "${" + entry.getValue() + "}");
+                  }
                   return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
                 }
               });
@@ -232,6 +257,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
       builder.append(c);
     }
     return builder.toString();
+  }
+
+  private static String getInputFieldsText(Map<String, String> parameters) {
+    Element element = new Element(RemoteTemplatesFactory.TEMPLATE);
+    for (Map.Entry<String, String> entry : parameters.entrySet()) {
+      Element field = new Element(RemoteTemplatesFactory.INPUT_FIELD);
+      field.setText(entry.getValue());
+      field.setAttribute(RemoteTemplatesFactory.INPUT_DEFAULT, entry.getKey());
+      element.addContent(field);
+    }
+    return JDOMUtil.writeElement(element);
   }
 
   @Override
