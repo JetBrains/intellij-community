@@ -680,8 +680,8 @@ public class Mappings {
   }
 
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
-    final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && c.name != scope.name;
-    final boolean packageLocality = Difference.isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
+    final boolean privacy = m.isPrivate() && c.name != scope.name;
+    final boolean packageLocality = m.isPackageLocal() && !c.getPackageName().equals(scope.getPackageName());
     return !privacy && !packageLocality;
   }
 
@@ -718,13 +718,13 @@ public class Mappings {
     final Util self = new Util();
 
     // Public branch --- hopeless
-    if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
+    if (member.isPublic()) {
       debug("Public access, switching to a non-incremental mode");
       return false;
     }
 
     // Protected branch
-    if ((member.access & Opcodes.ACC_PROTECTED) > 0) {
+    if (member.isProtected()) {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
       debug("Root class: ", owner);
 
@@ -993,16 +993,14 @@ public class Mappings {
       Ref<ClassRepr> oldItRef = null;
       for (final MethodRepr m : added) {
         debug("Method: ", m.name);
-        if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
-            (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
-            (m.access & Opcodes.ACC_ABSTRACT) > 0) {
+        if (it.isInterface() || it.isAbstract() || m.isAbstract()) {
           debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
           myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
         }
 
         TIntHashSet propagated = null;
 
-        if ((m.access & Opcodes.ACC_PRIVATE) == 0 && m.name != myInitName) {
+        if (!m.isPrivate() && m.name != myInitName) {
           if (oldItRef == null) {
             oldItRef = new Ref<ClassRepr>(getReprByName(null, it.name)); // lazy init
           }
@@ -1020,7 +1018,7 @@ public class Mappings {
           }
         }
 
-        if ((m.access & Opcodes.ACC_PRIVATE) == 0) {
+        if (!m.isPrivate()) {
           final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
           final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
 
@@ -1132,7 +1130,7 @@ public class Mappings {
           for (final Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
             final MethodRepr mm = overriden.first;
 
-            if (mm == MOCK_METHOD || !mm.myType.equals(m.myType) || !isEmpty(mm.signature) || !isEmpty(m.signature)) {
+            if (mm == MOCK_METHOD || !mm.myType.equals(m.myType) || !isEmpty(mm.signature) || !isEmpty(m.signature) || m.isMoreAccessibleThan(mm)) {
               clear = false;
               break loop;
             }
@@ -1156,7 +1154,7 @@ public class Mappings {
           }
         }
 
-        if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
+        if (!m.isAbstract()) {
           propagated.forEach(new TIntProcedure() {
             @Override
             public boolean execute(int p) {
@@ -1184,7 +1182,7 @@ public class Mappings {
                     }
 
                     visited = true;
-                    allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
+                    allAbstract = pp.first.isAbstract() || cc.isInterface();
 
                     if (!allAbstract) {
                       break;
@@ -1330,12 +1328,7 @@ public class Mappings {
       for (final FieldRepr f : added) {
         debug("Field: ", f.name);
 
-        final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
-        final boolean fProtected = (f.access & Opcodes.ACC_PROTECTED) > 0;
-        final boolean fPublic = (f.access & Opcodes.ACC_PUBLIC) > 0;
-        final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
-
-        if (!fPrivate) {
+        if (!f.isPrivate()) {
           final TIntHashSet subClasses = getAllSubclasses(classRepr.name);
           subClasses.forEach(new TIntProcedure() {
             @Override
@@ -1379,28 +1372,23 @@ public class Mappings {
           final FieldRepr ff = p.first;
           final ClassRepr cc = p.second;
 
-          final boolean ffPrivate = (ff.access & Opcodes.ACC_PRIVATE) > 0;
-          final boolean ffProtected = (ff.access & Opcodes.ACC_PROTECTED) > 0;
-          final boolean ffPublic = (ff.access & Opcodes.ACC_PUBLIC) > 0;
-          final boolean ffPLocal = Difference.isPackageLocal(ff.access);
-
-          if (!ffPrivate) {
+          if (!ff.isPrivate()) {
             final TIntHashSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
             final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
             debug("Affecting usages of overridden field in class ", cc.name);
             myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, state.myDependants);
 
-            if (fPrivate || (fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
-
+            if (f.isPrivate() || (f.isPublic() && (ff.isPublic() || ff.isPackageLocal())) || (f.isProtected() && ff.isProtected()) || (f.isPackageLocal() && ff.isPackageLocal())) {
+              // nothing
             }
             else {
               Util.UsageConstraint constaint;
 
-              if ((ffProtected && fPublic) || (fProtected && ffPublic) || (ffPLocal && fProtected)) {
+              if ((ff.isProtected() && f.isPublic()) || (f.isProtected() && ff.isPublic()) || (ff.isPackageLocal() && f.isProtected())) {
                 constaint = myFuture.new NegationConstraint(myFuture.new InheritanceConstraint(cc.name));
               }
-              else if (ffPublic && ffPLocal) {
+              else if (ff.isPublic() && ff.isPackageLocal()) {
                 constaint = myFuture.new NegationConstraint(myFuture.new PackageConstraint(cc.getPackageName()));
               }
               else {
@@ -1434,7 +1422,7 @@ public class Mappings {
       for (final FieldRepr f : removed) {
         debug("Field: ", f.name);
 
-        if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & DESPERATE_MASK) == DESPERATE_MASK && f.hasValue()) {
+        if (!f.isPrivate() && (f.access & DESPERATE_MASK) == DESPERATE_MASK && f.hasValue()) {
           debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
           if (myConstantSearch != null) {
             myDelayedWorks.addConstantWork(it.name, f, true, false);
@@ -1468,7 +1456,7 @@ public class Mappings {
 
         debug("Field: ", field.name);
 
-        if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & DESPERATE_MASK) == DESPERATE_MASK) {
+        if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK) {
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) > 0;
           final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) > 0;

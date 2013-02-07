@@ -65,6 +65,10 @@ public class ClassRepr extends Proto {
     return myUsages.add(usage);
   }
 
+  public boolean isInterface() {
+    return (access & Opcodes.ACC_INTERFACE) != 0;
+  }
+
   public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
 
@@ -271,10 +275,6 @@ public class ClassRepr extends Proto {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public boolean isAnnotation() {
-    return (access & Opcodes.ACC_ANNOTATION) > 0;
   }
 
   @Override
