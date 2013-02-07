@@ -1,13 +1,16 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static org.hanuna.gitalk.graph.GraphTestUtils.getCommitNode;
+import static org.hanuna.gitalk.graph.GraphTestUtils.parseIntegers;
 
 /**
  * @author erokhins
@@ -38,5 +41,20 @@ public class GraphModelUtils {
         }
         s.append("|-").append(toShortStr(fragment.getDownNode()));
         return s.toString();
+    }
+
+    public static Get<Node, Boolean> parseUnhiddenNodes(Graph graph, String unhiddenNodeRows) {
+        Set<Integer> unhiddenNodesRowIndex = parseIntegers(unhiddenNodeRows);
+        final Set<Node> unhiddenNodes = new HashSet<Node>();
+        for (Integer i : unhiddenNodesRowIndex) {
+            unhiddenNodes.add(getCommitNode(graph, i));
+        }
+        return new Get<Node, Boolean>() {
+            @NotNull
+            @Override
+            public Boolean get(@NotNull Node key) {
+                return unhiddenNodes.contains(key);
+            }
+        };
     }
 }

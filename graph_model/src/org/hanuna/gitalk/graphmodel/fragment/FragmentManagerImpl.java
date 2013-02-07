@@ -5,6 +5,7 @@ import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
+import org.hanuna.gitalk.graph.mutable.GraphDecorator;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
@@ -45,13 +46,12 @@ public class FragmentManagerImpl implements FragmentManager {
         fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
     }
 
-    @Nullable
-    public GraphFragment getFragment(@NotNull Node node) {
-        return fragmentGenerator.getFragment(node);
+    public GraphDecorator getGraphDecorator() {
+        return graphDecorator;
     }
 
     @Nullable
-    public Edge getHideEdge(@NotNull Node node) {
+    private Edge getHideEdge(@NotNull Node node) {
         for (Edge edge : node.getDownEdges()) {
             if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
                 return edge;
@@ -76,7 +76,7 @@ public class FragmentManagerImpl implements FragmentManager {
                 assert fragment != null;
                 return fragment;
             } else {
-                GraphFragment fragment = getFragment(node);
+                GraphFragment fragment = fragmentGenerator.getFragment(node);
                 if (fragment != null && fragment.getDownNode().getRowIndex() >= node.getRowIndex()) {
                     return fragment;
                 } else {
@@ -85,12 +85,13 @@ public class FragmentManagerImpl implements FragmentManager {
             }
         } else {
             Edge edge = graphElement.getEdge();
+            assert edge != null : "bad graphElement: edge & node is null";
             if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
                 GraphFragment fragment = hideFragments.get(edge);
                 assert fragment != null;
                 return fragment;
             } else {
-                GraphFragment fragment = getFragment(edge.getUpNode());
+                GraphFragment fragment = fragmentGenerator.getFragment(edge.getUpNode());
                 if (fragment != null && fragment.getDownNode().getRowIndex() >= edge.getDownNode().getRowIndex()) {
                     return fragment;
                 } else {

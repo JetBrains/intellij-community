@@ -1,19 +1,15 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
 import junit.framework.Assert;
-import org.hanuna.gitalk.GraphTestUtils;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.hanuna.gitalk.GraphTestUtils.getCommitNode;
-import static org.hanuna.gitalk.GraphTestUtils.parseInts;
+import static org.hanuna.gitalk.graph.GraphTestUtils.getCommitNode;
+import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.parseUnhiddenNodes;
 import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.toStr;
 
 /**
@@ -22,20 +18,9 @@ import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.toStr;
 public class ShortFragmentTest {
 
     public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, final String unhiddenNodeRows, boolean down) {
-        Set<Integer> unhiddenNodesRowIndex = parseInts(unhiddenNodeRows);
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
         ShortFragmentGenerator shortFragmentGenerator = new ShortFragmentGenerator(graph);
-        final Set<Node> unhiddenNodes = new HashSet<Node>();
-        for (Integer i : unhiddenNodesRowIndex) {
-            unhiddenNodes.add(getCommitNode(graph, i));
-        }
-        shortFragmentGenerator.setUnhiddenNodes(new Get<Node, Boolean>() {
-            @NotNull
-            @Override
-            public Boolean get(@NotNull Node key) {
-                return unhiddenNodes.contains(key);
-            }
-        });
+        shortFragmentGenerator.setUnhiddenNodes(parseUnhiddenNodes(graph, unhiddenNodeRows));
 
         Node commitNode = getCommitNode(graph, rowIndex);
         GraphFragment fragment;
