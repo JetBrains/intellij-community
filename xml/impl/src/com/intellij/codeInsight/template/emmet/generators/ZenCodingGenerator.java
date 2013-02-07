@@ -16,8 +16,11 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.emmet.EmmetParser;
+import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
+import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -153,5 +156,10 @@ public abstract class ZenCodingGenerator {
       return key.substring(lastWhitespaceIndex + 1);
     }
     return key;
+  }
+
+  @NotNull
+  public EmmetParser createParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+    return new XmlEmmetParser(tokens, callback, generator);
   }
 }

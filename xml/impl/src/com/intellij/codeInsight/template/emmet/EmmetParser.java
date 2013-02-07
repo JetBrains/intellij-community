@@ -15,74 +15,31 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.Stack;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
+import java.util.List;
 
 /**
  * User: zolotov
  * Date: 1/25/13
  */
-class EmmetParser {
-  private static final String ID = "id";
-  private static final String CLASS = "class";
-  private static final String DEFAULT_TAG = "div";
-  private static final int DEFAULT_LOREM_LENGTH = 30;
-  private static final Pattern LOREM_PATTERN = Pattern.compile("(lorem|lipsum)(\\d*)");
+public abstract class EmmetParser {
   private final List<ZenCodingToken> myTokens;
-  private final CustomTemplateCallback myCallback;
+  protected final CustomTemplateCallback myCallback;
   private final ZenCodingGenerator myGenerator;
-  private final Stack<String> tagLevel = new Stack<String>();
-
-  private static Map<String, String> parentChildTagMapping = new HashMap<String, String>() {{
-    put("p", "span");
-    put("ul", "li");
-    put("ol", "li");
-    put("table", "tr");
-    put("tr", "td");
-    put("tbody", "tr");
-    put("thead", "tr");
-    put("tfoot", "tr");
-    put("colgroup", "col");
-    put("select", "option");
-    put("optgroup", "option");
-    put("audio", "source");
-    put("video", "source");
-    put("object", "param");
-    put("map", "area");
-  }};
 
   private int myIndex = 0;
-  private boolean hasTagContext = false;
 
   EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     myTokens = tokens;
     myCallback = callback;
     myGenerator = generator;
-
-    PsiElement context = callback.getContext();
-    XmlTag parentTag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
-    if (parentTag != null) {
-      hasTagContext = true;
-      tagLevel.push(parentTag.getName());
-    }
   }
 
   public int getIndex() {
@@ -99,13 +56,13 @@ class EmmetParser {
     ZenCodingNode result = add;
 
     while (true) {
-      ZenCodingToken token = nextToken();
+      ZenCodingToken token = getToken();
       if (token != ZenCodingTokens.PIPE) {
         return result;
       }
 
-      myIndex++;
-      token = nextToken();
+      advance();
+      token = getToken();
       if (!(token instanceof IdentifierToken)) {
         return null;
       }
@@ -115,36 +72,29 @@ class EmmetParser {
         return null;
       }
 
-      myIndex++;
+      advance();
       result = new FilterNode(result, filterSuffix);
     }
   }
 
   @Nullable
-  private ZenCodingNode parseAddOrMore() {
+  protected ZenCodingNode parseAddOrMore() {
     ZenCodingNode mul = parseMul();
 
-    ZenCodingToken operationToken = nextToken();
+    ZenCodingToken operationToken = getToken();
     if (!(operationToken instanceof OperationToken)) {
       return mul;
     }
     char sign = ((OperationToken)operationToken).getSign();
 
     if (sign == '^') {
-      myIndex++;
-      mul = mul != null ? mul : ZenEmptyNode.INSTANCE;
-      popTagLevel();
-      ZenCodingNode climbUp2 = parseAddOrMore();
-      if (climbUp2 == null) {
-        return null;
-      }
-      return new ClimbUpOperationNode(mul, climbUp2);
+      return parseClimbUpOperation(mul);
     }
     if (mul == null) {
       return null;
     }
     if (sign == '+') {
-      myIndex++;
+      advance();
       ZenCodingNode add2 = parseAddOrMore();
       if (add2 == null) {
         return null;
@@ -152,43 +102,32 @@ class EmmetParser {
       return new AddOperationNode(mul, add2);
     }
     else if (sign == '>') {
-      myIndex++;
-      String parentTag = getParentTag(mul);
-      boolean hasParent = false;
-      if (!Strings.isNullOrEmpty(parentTag)) {
-        hasParent = true;
-        tagLevel.push(parentTag);
-      }
-      ZenCodingNode more2 = parseAddOrMore();
-      if (more2 == null) {
-        return null;
-      }
-      if (hasParent) {
-        popTagLevel();
-      }
-      return new MoreOperationNode(mul, more2);
+      return parseMoreOperation(mul);
     }
     return null;
   }
 
-  private void popTagLevel() {
-    if (tagLevel.size() > (hasTagContext ? 1 : 0)) {
-      tagLevel.pop();
+  protected ZenCodingNode parseClimbUpOperation(@Nullable ZenCodingNode leftPart) {
+    advance();
+    leftPart = leftPart != null ? leftPart : ZenEmptyNode.INSTANCE;
+    ZenCodingNode rigthPart = parseAddOrMore();
+    if (rigthPart == null) {
+      return null;
     }
+    return new ClimbUpOperationNode(leftPart, rigthPart);
   }
 
-  @Nullable
-  private static String getParentTag(ZenCodingNode node) {
-    if (node instanceof TemplateNode) {
-      return ((TemplateNode)node).getTemplateToken().getKey();
+  protected ZenCodingNode parseMoreOperation(@NotNull ZenCodingNode leftPart) {
+    advance();
+    ZenCodingNode rightPart = parseAddOrMore();
+    if (rightPart == null) {
+      return null;
     }
-    else if (node instanceof MulOperationNode) {
-      ZenCodingNode leftOperand = ((MulOperationNode)node).getLeftOperand();
-      if (leftOperand instanceof TemplateNode) {
-        return ((TemplateNode)leftOperand).getTemplateToken().getKey();
-      }
-    }
-    return null;
+    return new MoreOperationNode(leftPart, rightPart);
+  }
+
+  protected int advance() {
+    return myIndex++;
   }
 
   @Nullable
@@ -197,17 +136,17 @@ class EmmetParser {
     if (exp == null) {
       return null;
     }
-    ZenCodingToken operationToken = nextToken();
+    ZenCodingToken operationToken = getToken();
     if (!(operationToken instanceof OperationToken)) {
       return exp;
     }
     if (((OperationToken)operationToken).getSign() != '*') {
       return exp;
     }
-    myIndex++;
-    ZenCodingToken numberToken = nextToken();
+    advance();
+    ZenCodingToken numberToken = getToken();
     if (numberToken instanceof NumberToken) {
-      myIndex++;
+      advance();
       return new MulOperationNode(exp, ((NumberToken)numberToken).getNumber());
     }
     return new UnaryMulOperationNode(exp);
@@ -215,22 +154,22 @@ class EmmetParser {
 
   @Nullable
   private ZenCodingNode parseExpressionInBraces() {
-    ZenCodingToken token = nextToken();
+    ZenCodingToken token = getToken();
     if (token == ZenCodingTokens.OPENING_R_BRACKET) {
-      myIndex++;
+      advance();
       ZenCodingNode add = parseAddOrMore();
       if (add == null) {
         return null;
       }
-      ZenCodingToken closingBrace = nextToken();
+      ZenCodingToken closingBrace = getToken();
       if (closingBrace != ZenCodingTokens.CLOSING_R_BRACKET) {
         return null;
       }
-      myIndex++;
+      advance();
       return add;
     }
     else if (token instanceof TextToken) {
-      myIndex++;
+      advance();
       return new TextNode((TextToken)token);
     }
 
@@ -239,61 +178,22 @@ class EmmetParser {
       return null;
     }
 
-    token = nextToken();
+    token = getToken();
     if (token instanceof TextToken) {
-      myIndex++;
+      advance();
       return new MoreOperationNode(templateNode, new TextNode((TextToken)token));
     }
     return templateNode;
   }
 
   @Nullable
-  private ZenCodingNode parseLorem(String templateKey) {
-    Matcher matcher = LOREM_PATTERN.matcher(templateKey);
-    if (matcher.matches()) {
-      int loremWordsCount = DEFAULT_LOREM_LENGTH;
-      if (matcher.groupCount() > 1) {
-        String group = matcher.group(2);
-        loremWordsCount = group.isEmpty() ? DEFAULT_LOREM_LENGTH : Integer.parseInt(group);
-      }
-
-      final List<Pair<String, String>> attrList = parseSelectors();
-      ZenCodingToken token = nextToken();
-      boolean isRepeating = token instanceof OperationToken && ((OperationToken)token).getSign() == '*';
-      if (!attrList.isEmpty() || isRepeating) {
-        String wrapTag = suggestTagName();
-        TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
-        if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
-          return null;
-        }
-        final TemplateToken templateToken = new TemplateToken(wrapTag, attrList);
-        if (!setTemplate(templateToken, template)) {
-          return null;
-        }
-        return new MoreOperationNode(new TemplateNode(templateToken), new LoremNode(loremWordsCount));
-      }
-      else {
-        return new LoremNode(loremWordsCount);
-      }
-    }
-    else {
-      return null;
-    }
-  }
-
-  @Nullable
-  private ZenCodingNode parseTemplate() {
-    ZenCodingToken token = nextToken();
-    String templateKey = ZenCodingUtil.isHtml(myCallback) ? suggestTagName() : null;
-    boolean mustHaveSelector = true;
+  protected ZenCodingNode parseTemplate() {
+    ZenCodingToken token = getToken();
+    String templateKey = getDefaultTemplateKey();
 
     if (token instanceof IdentifierToken) {
       templateKey = ((IdentifierToken)token).getText();
-      myIndex++;
-      if (startsWithIgnoreCase(templateKey, "lorem") || startsWithIgnoreCase(templateKey, "lipsum")) {
-        return parseLorem(templateKey);
-      }
-      mustHaveSelector = false;
+      advance();
     }
 
     if (templateKey == null) {
@@ -305,110 +205,19 @@ class EmmetParser {
       return null;
     }
 
-    final List<Pair<String, String>> attrList = parseSelectors();
-    if (mustHaveSelector && attrList.size() == 0) {
-      return null;
-    }
-
-    final TemplateToken templateToken = new TemplateToken(templateKey, attrList);
+    final TemplateToken templateToken = new TemplateToken(templateKey);
     if (!setTemplate(templateToken, template)) {
       return null;
     }
     return new TemplateNode(templateToken);
   }
 
-  private String suggestTagName() {
-    if (!tagLevel.empty()) {
-      String parentTag = tagLevel.peek();
-      if (parentChildTagMapping.containsKey(parentTag)) {
-        return parentChildTagMapping.get(parentTag);
-      }
-      if (HtmlUtil.isPossiblyInlineTag(parentTag)) {
-        return "span";
-      }
-    }
-    return DEFAULT_TAG;
-  }
-
-  @SuppressWarnings("unchecked")
-  @NotNull
-  private List<Pair<String, String>> parseSelectors() {
-    final List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
-
-    int classAttrPosition = -1;
-    int idAttrPosition = -1;
-
-    final StringBuilder classAttrBuilder = new StringBuilder();
-    final StringBuilder idAttrBuilder = new StringBuilder();
-
-    while (true) {
-      final List<Pair<String, String>> attrList = parseSelector();
-      if (attrList == null) {
-        if (classAttrPosition != -1) {
-          result.set(classAttrPosition, new Pair<String, String>(CLASS, classAttrBuilder.toString()));
-        }
-        if (idAttrPosition != -1) {
-          result.set(idAttrPosition, new Pair<String, String>(ID, idAttrBuilder.toString()));
-        }
-        return result;
-      }
-
-      for (Pair<String, String> attr : attrList) {
-        if (CLASS.equals(attr.first)) {
-          if (classAttrBuilder.length() > 0) {
-            classAttrBuilder.append(' ');
-          }
-          classAttrBuilder.append(attr.second);
-          if (classAttrPosition == -1) {
-            classAttrPosition = result.size();
-            result.add(attr);
-          }
-        }
-        else if (ID.equals(attr.first)) {
-          if (idAttrBuilder.length() > 0) {
-            idAttrBuilder.append(' ');
-          }
-          idAttrBuilder.append(attr.second);
-          if (idAttrPosition == -1) {
-            idAttrPosition = result.size();
-            result.add(attr);
-          }
-        }
-        else {
-          result.add(attr);
-        }
-      }
-    }
-  }
-
   @Nullable
-  private List<Pair<String, String>> parseSelector() {
-    ZenCodingToken token = nextToken();
-    if (token == ZenCodingTokens.OPENING_SQ_BRACKET) {
-      myIndex++;
-      final List<Pair<String, String>> attrList = parseAttributeList();
-      if (attrList == null || nextToken() != ZenCodingTokens.CLOSING_SQ_BRACKET) {
-        return null;
-      }
-      myIndex++;
-      return attrList;
-    }
-
-    if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      final String name = token == ZenCodingTokens.DOT ? CLASS : ID;
-      myIndex++;
-      token = nextToken();
-      final String value = getAttributeValueByToken(token);
-      if (!value.isEmpty()) {
-        myIndex++;
-      }
-      return Collections.singletonList(new Pair<String, String>(name, value));
-    }
-
+  protected String getDefaultTemplateKey() {
     return null;
   }
 
-  private boolean setTemplate(final TemplateToken token, TemplateImpl template) {
+  protected boolean setTemplate(final TemplateToken token, TemplateImpl template) {
     if (template == null) {
       template = myGenerator.createTemplateByKey(token.getKey());
     }
@@ -419,78 +228,7 @@ class EmmetParser {
   }
 
   @Nullable
-  private List<Pair<String, String>> parseAttributeList() {
-    final List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
-    while (true) {
-      final Pair<String, String> attribute = parseAttribute();
-      if (attribute == null) {
-        return result;
-      }
-      result.add(attribute);
-
-      final ZenCodingToken token = nextToken();
-      if (token != ZenCodingTokens.COMMA && token != ZenCodingTokens.SPACE) {
-        return result;
-      }
-      myIndex++;
-    }
-  }
-
-  @Nullable
-  private Pair<String, String> parseAttribute() {
-    ZenCodingToken token = nextToken();
-    if (!(token instanceof IdentifierToken)) {
-      return null;
-    }
-
-    final String name = ((IdentifierToken)token).getText();
-
-    myIndex++;
-    token = nextToken();
-    if (token != ZenCodingTokens.EQ) {
-      return new Pair<String, String>(name, "");
-    }
-
-    myIndex++;
-    final StringBuilder attrValueBuilder = new StringBuilder();
-    String value;
-    do {
-      token = nextToken();
-      value = getAttributeValueByToken(token);
-      attrValueBuilder.append(value);
-      if (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
-          && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA) {
-        myIndex++;
-      }
-    }
-    while (token != null && token != ZenCodingTokens.CLOSING_SQ_BRACKET
-           && token != ZenCodingTokens.SPACE && token != ZenCodingTokens.COMMA);
-    return new Pair<String, String>(name, attrValueBuilder.toString());
-  }
-
-  @NotNull
-  private static String getAttributeValueByToken(@Nullable ZenCodingToken token) {
-    if (token == null) {
-      return "";
-    }
-    if (token instanceof StringLiteralToken) {
-      final String text = ((StringLiteralToken)token).getText();
-      return text.substring(1, text.length() - 1);
-    }
-    else if (token instanceof IdentifierToken) {
-      return ((IdentifierToken)token).getText();
-    }
-    else if (token instanceof NumberToken) {
-      return Integer.toString(((NumberToken)token).getNumber());
-    }
-    else if (token == ZenCodingTokens.DOT || token == ZenCodingTokens.SHARP) {
-      return token.toString();
-    }
-    return "";
-  }
-
-  @Nullable
-  private ZenCodingToken nextToken() {
+  protected ZenCodingToken getToken() {
     if (myIndex < myTokens.size()) {
       return myTokens.get(myIndex);
     }
