@@ -188,12 +188,23 @@ public class SaveProjectAsTemplateAction extends AnAction {
         @Override
         public boolean processFile(final VirtualFile virtualFile) {
           if (!virtualFile.isDirectory()) {
-            indicator.setText2(virtualFile.getName());
+            String name = virtualFile.getName();
+            indicator.setText2(name);
             try {
               String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir, '/');
               if (relativePath == null) {
                 throw new RuntimeException("Can't find relative path for " + virtualFile);
               }
+              boolean system = ".idea".equals(virtualFile.getParent().getName());
+              if (system) {
+                if (!name.equals("description.html") &&
+                    !name.equals("misc.xml") &&
+                    !name.equals("modules.xml") &&
+                    !name.equals("workspace.xml")) {
+                  return true;
+                }
+              }
+
               ZipUtil.addFileToZip(finalStream, new File(virtualFile.getPath()), dir.getName() + "/" + relativePath, null, null, new ZipUtil.FileContentProcessor() {
                 @Override
                 public InputStream getContent(File file) throws IOException {
@@ -213,8 +224,6 @@ public class SaveProjectAsTemplateAction extends AnAction {
             }
           }
           indicator.checkCanceled();
-          // if (!".idea".equals(fileName.getParent())) return true;
-          // todo filter out some garbage from .idea
           return true;
         }
       });
