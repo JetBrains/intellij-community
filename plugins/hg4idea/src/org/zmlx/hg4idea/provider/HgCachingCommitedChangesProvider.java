@@ -212,7 +212,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       localRevisions = hgLogCommand.execute(hgFile, maxCount == 0 ? -1 : maxCount, true, args);
     }
     catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, "Error during log command execution", e.getMessage());
+      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
       return result;
     }
     Collections.reverse(localRevisions);
@@ -331,7 +331,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
       revisions = hgLogCommand.execute(hgFile, 1, true, args);
     }
     catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, "Error during log command execution", e.getMessage());
+      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
       return null;
     }
     if (revisions == null || revision.isEmpty()) {
