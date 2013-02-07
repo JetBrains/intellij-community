@@ -100,11 +100,7 @@ public final class Hash {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : data) {
-            sb.append(b).append(' ');
-        }
-        return sb.toString();
+        return toStrHash();
     }
 
 }
