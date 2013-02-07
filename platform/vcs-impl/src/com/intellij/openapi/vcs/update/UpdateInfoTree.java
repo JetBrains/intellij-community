@@ -229,6 +229,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   private void updateTreeModel() {
     myRoot.rebuild(VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myShowOnlyFilteredItems);
+    if (myTreeModel != null) {
+      myTreeModel.reload();
+    }
   }
 
   public Object getData(String dataId) {

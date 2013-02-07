@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -91,9 +93,20 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       else {
         final PsiDocComment docComment = factory.createDocCommentFromText("/** */");
         final PsiComment resultComment = (PsiComment)method.addBefore(docComment, method.getModifierList());
-        final CodeDocumentationProvider documentationProvider =
-          (CodeDocumentationProvider)LanguageDocumentation.INSTANCE.forLanguage(method.getLanguage());
-        final String commentStub = documentationProvider.generateDocumentationContentStub(resultComment);
+        final DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(method.getLanguage());
+        final CodeDocumentationProvider codeDocumentationProvider;
+        if (documentationProvider instanceof CodeDocumentationProvider) {
+          codeDocumentationProvider = (CodeDocumentationProvider)documentationProvider;
+        } else if (documentationProvider instanceof CompositeDocumentationProvider) {
+          final CompositeDocumentationProvider compositeDocumentationProvider = (CompositeDocumentationProvider)documentationProvider;
+          codeDocumentationProvider = compositeDocumentationProvider.getFirstCodeDocumentationProvider();
+          if (codeDocumentationProvider == null) {
+            return;
+          }
+        } else {
+          return;
+        }
+        final String commentStub = codeDocumentationProvider.generateDocumentationContentStub(resultComment);
         final PsiDocComment newComment = factory.createDocCommentFromText("/**\n" + commentStub + "*/");
         resultComment.replace(newComment);
       }
