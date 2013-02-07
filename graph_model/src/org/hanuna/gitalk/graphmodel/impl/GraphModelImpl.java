@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
 import org.hanuna.gitalk.common.Executor;
+import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -13,9 +14,7 @@ import org.hanuna.gitalk.log.commit.Commit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author erokhins
@@ -26,7 +25,13 @@ public class GraphModelImpl implements GraphModel {
     private final BranchVisibleNodes visibleNodes;
     private final List<Executor<Replace>> listeners = new ArrayList<Executor<Replace>>();
 
-    private Set<Node> branchVisibilityStartedNodes = Collections.emptySet();
+    private Get<Node, Boolean> isStartedBranchVisibilityNode = new Get<Node, Boolean>() {
+        @NotNull
+        @Override
+        public Boolean get(@NotNull Node key) {
+            return true;
+        }
+    };
 
     public GraphModelImpl(MutableGraph graph) {
         this.graph = graph;
@@ -71,14 +76,14 @@ public class GraphModelImpl implements GraphModel {
     @Override
     public void appendCommitsToGraph(@NotNull List<Commit> commits) {
         GraphBuilder.addCommitsToGraph(graph, commits);
-        visibleNodes.setVisibleBranchesNodes(branchVisibilityStartedNodes);
+        visibleNodes.setVisibleBranchesNodes(isStartedBranchVisibilityNode);
         fullUpdate();
     }
 
     @Override
-    public void setVisibleBranchesNodes(@NotNull Set<Node> startedNodes) {
-        this.branchVisibilityStartedNodes = startedNodes;
-        visibleNodes.setVisibleBranchesNodes(startedNodes);
+    public void setVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode) {
+        this.isStartedBranchVisibilityNode = isStartedNode;
+        visibleNodes.setVisibleBranchesNodes(isStartedNode);
         fullUpdate();
     }
 
