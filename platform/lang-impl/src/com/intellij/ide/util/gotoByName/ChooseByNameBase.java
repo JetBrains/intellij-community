@@ -1036,7 +1036,7 @@ public abstract class ChooseByNameBase {
         int match = shortName != null && matcher instanceof MinusculeMatcher
                     ? ((MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
         int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (stats > best || stats == best && match > bestMatch) {
+        if (match > bestMatch || match == bestMatch && stats > best) {
           best = stats;
           bestPosition = i;
           bestMatch = match;
