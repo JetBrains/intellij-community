@@ -30,7 +30,7 @@ public abstract class ProjectTemplateParameterFactory {
   public abstract String getParameterId();
 
   @Nullable
-  public abstract WizardInputField createField(String initialValue);
+  public abstract WizardInputField createField(String defaultValue);
 
   @Nullable
   public abstract String detectParameterValue(Project project);

@@ -30,13 +30,19 @@ public abstract class WizardInputField<T extends JComponent> {
   public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
 
   private final String myId;
+  private final String myDefaultValue;
 
-  protected WizardInputField(String id) {
+  protected WizardInputField(String id, String defaultValue) {
     myId = id;
+    myDefaultValue = defaultValue;
   }
 
   public String getId() {
     return myId;
+  }
+
+  public String getDefaultValue() {
+    return myDefaultValue;
   }
 
   public abstract String getLabel();

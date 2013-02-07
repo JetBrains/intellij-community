@@ -171,11 +171,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private String getBasePackage() {
-    List<WizardInputField> fields = getAdditionalFields();
-    for (WizardInputField field : fields) {
+  private WizardInputField getBasePackageField() {
+    for (WizardInputField field : getAdditionalFields()) {
       if (WizardInputField.IJ_BASE_PACKAGE.equals(field.getId())) {
-        return field.getValue();
+        return field;
       }
     }
     return null;
@@ -184,18 +183,18 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private void unzip(String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
-    final String basePackage = getBasePackage();
+    final WizardInputField basePackage = getBasePackageField();
     try {
       zipInputStream = myTemplate.getStream();
       NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
         @Nullable
         @Override
-        public String fun(String s) {
-          if (moduleMode && s.contains(".idea")) return null;
-          if (basePackage != null && s.startsWith(SRC)) {
-            return SRC + basePackage.replace('.', '/') + s.substring(SRC.length() - 1);
+        public String fun(String path) {
+          if (moduleMode && path.contains(".idea")) return null;
+          if (basePackage != null) {
+            return path.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
           }
-          return s;
+          return path;
         }
       };
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
@@ -230,6 +229,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     finally {
       StreamUtil.closeStream(zipInputStream);
     }
+  }
+
+  private static String getPathFragment(String value) {
+    return "/" + value.replace('.', '/') + "/";
   }
 
   private byte[] processTemplates(String s) throws IOException {
