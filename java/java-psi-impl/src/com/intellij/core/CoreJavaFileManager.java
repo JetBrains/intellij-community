@@ -142,11 +142,7 @@ public class CoreJavaFileManager implements JavaFileManager {
             int newComponentStart = 0;
             int lookupStart = 0;
 
-            while (true) {
-              if (lookupStart > className.length()) {
-                return newComponentStart != lookupStart ? null : curClass;
-              }
-
+            while (lookupStart <= className.length()) {
               int b = className.indexOf("$", lookupStart);
               b =  b < 0 ? className.length(): b;
 
@@ -160,6 +156,10 @@ public class CoreJavaFileManager implements JavaFileManager {
 
               newComponentStart = lookupStart;
               curClass = inner;
+            }
+
+            if (lookupStart != newComponentStart) {
+              return null;
             }
           }
 
