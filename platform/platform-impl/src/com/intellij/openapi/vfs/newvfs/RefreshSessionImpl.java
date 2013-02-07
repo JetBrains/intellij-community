@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,18 +57,18 @@ public class RefreshSessionImpl extends RefreshSession {
   private volatile RefreshWorker myWorker = null;
   private volatile boolean myCancelled = false;
 
-  public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable) {
-    this(isAsync, recursively, finishRunnable, ModalityState.NON_MODAL);
+  public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
+    this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
   }
 
-  public RefreshSessionImpl(final boolean isAsync, final boolean recursively, final Runnable finishRunnable, ModalityState modalityState) {
-    myIsRecursive = recursively;
+  public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modalityState) {
+    myIsAsync = async;
+    myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
-    myIsAsync = isAsync;
     myModalityState = modalityState;
   }
 
-  public RefreshSessionImpl(final List<VFileEvent> events) {
+  public RefreshSessionImpl(@NotNull List<VFileEvent> events) {
     myIsAsync = false;
     myIsRecursive = false;
     myFinishRunnable = null;
