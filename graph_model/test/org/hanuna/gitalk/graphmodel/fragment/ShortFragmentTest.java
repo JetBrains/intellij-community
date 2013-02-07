@@ -1,18 +1,20 @@
-package org.hanuna.gitalk.graph.new_mutable.fragments;
+package org.hanuna.gitalk.graphmodel.fragment;
 
+import junit.framework.Assert;
 import org.hanuna.gitalk.GraphTestUtils;
+import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.graph.new_mutable.MutableGraph;
+import org.hanuna.gitalk.graph.mutable.MutableGraph;
+import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static junit.framework.Assert.assertEquals;
-import static org.hanuna.gitalk.GraphStrUtils.toStr;
 import static org.hanuna.gitalk.GraphTestUtils.getCommitNode;
 import static org.hanuna.gitalk.GraphTestUtils.parseInts;
+import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.toStr;
 
 /**
  * @author erokhins
@@ -27,21 +29,22 @@ public class ShortFragmentTest {
         for (Integer i : unhiddenNodesRowIndex) {
             unhiddenNodes.add(getCommitNode(graph, i));
         }
-        shortFragmentGenerator.setUnhiddenNodes(new UnhiddenNodeFunction() {
+        shortFragmentGenerator.setUnhiddenNodes(new Get<Node, Boolean>() {
+            @NotNull
             @Override
-            public boolean isUnhiddenNode(@NotNull Node node) {
-                return unhiddenNodes.contains(node);
+            public Boolean get(@NotNull Node key) {
+                return unhiddenNodes.contains(key);
             }
         });
 
         Node commitNode = getCommitNode(graph, rowIndex);
-        NewGraphFragment fragment;
+        GraphFragment fragment;
         if (down) {
             fragment = shortFragmentGenerator.getDownShortFragment(commitNode);
         } else {
             fragment = shortFragmentGenerator.getUpShortFragment(commitNode);
         }
-        assertEquals(fragmentStr, toStr(fragment));
+        Assert.assertEquals(fragmentStr, toStr(fragment));
     }
 
     public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, boolean down) {
