@@ -220,10 +220,13 @@ public interface Application extends ComponentManager {
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
-   * Causes {@code runnable.run()} to be executed synchronously on the
+   * <p>Causes {@code runnable.run()} to be executed synchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
    * state. This call blocks until all pending AWT events have been processed and (then)
-   * {@code runnable.run()} returns.
+   * {@code runnable.run()} returns.</p>
+   *
+   * <p>If current thread is an event dispatch thread then {@code runnable.run()}
+   * is executed immediately.</p>
    *
    * @param runnable the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.

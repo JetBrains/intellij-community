@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -732,7 +732,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
-      LOG.error("invokeAndWait must not be called from event queue thread");
       runnable.run();
       return;
     }
