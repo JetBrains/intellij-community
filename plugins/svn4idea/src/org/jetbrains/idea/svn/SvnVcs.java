@@ -140,6 +140,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private EditFileProvider myEditFilesProvider;
   private SvnCommittedChangesProvider myCommittedChangesProvider;
   private final VcsShowSettingOption myCheckoutOptions;
+  private final static SSLExceptionsHelper myHelper = new SSLExceptionsHelper();
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -274,6 +275,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     // remove used some time before old notification group ids
     correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
+    myConfiguration.getAuthenticationManager(this).setHelper(myHelper);
   }
 
   private void correctNotificationIds() {
@@ -964,11 +966,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     @Override
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
       if (th instanceof SSLHandshakeException) {
-        if (th.getCause() instanceof CertificateException) {
-          final long time = System.currentTimeMillis();
-          if ((time - myPreviousTime) > ourMaxFrequency) {
-            myPreviousTime = time;
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + th.getCause().getMessage(), MessageType.ERROR);
+        final long time = System.currentTimeMillis();
+        if ((time - myPreviousTime) > ourMaxFrequency) {
+          myPreviousTime = time;
+          String info = myHelper.getAddInfo();
+          info = info == null ? "" : " (" + info + ") ";
+          if (th.getCause() instanceof CertificateException) {
+            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
+          } else {
+            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)";
+            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
           }
         }
       }

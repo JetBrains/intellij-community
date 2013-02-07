@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.popup.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -153,6 +154,7 @@ public class PopupUtil {
   public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
                                              final boolean atTop) {
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
+      balloonBuilder.setDisposable(ApplicationManager.getApplication());
       Balloon balloon = balloonBuilder.createBalloon();
       Dimension size = component.getSize();
       Balloon.Position position;
