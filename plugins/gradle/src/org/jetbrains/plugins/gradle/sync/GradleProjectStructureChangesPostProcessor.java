@@ -39,8 +39,12 @@ public interface GradleProjectStructureChangesPostProcessor {
    * <b>Note:</b> this callback is assumed to be called from EDT, in order to allow synchronous processing such as
    * given changes collection's modification is immediately visible to the calling code.
    * 
-   * @param changes  current changes which might be adjusted
-   * @param project  current intellij project
+   * @param changes                      current changes which might be adjusted
+   * @param project                      current intellij project
+   * @param onIdeProjectStructureChange  a flag which identifies if current update is triggered by ide project structure
+   *                                     change (an alternative is a manual project structure changes refresh implied by a user)
    */
-  void processChanges(@NotNull Collection<GradleProjectStructureChange> changes, @NotNull Project project);
+  void processChanges(@NotNull Collection<GradleProjectStructureChange> changes,
+                      @NotNull Project project,
+                      boolean onIdeProjectStructureChange);
 }

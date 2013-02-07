@@ -108,7 +108,7 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
     GradleProject project = myChangesModel.getGradleProject();
     if (project != null) {
       myNewChangesDetected.set(false);
-      myChangesModel.update(project);
+      myChangesModel.update(project, true);
       if (!myNewChangesDetected.get()) {
         return;
       }
