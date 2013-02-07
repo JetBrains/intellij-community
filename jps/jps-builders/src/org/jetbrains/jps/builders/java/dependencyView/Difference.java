@@ -25,14 +25,15 @@ import java.util.*;
  * Date: 01.03.11
  */
 abstract class Difference {
-  public static boolean isPackageLocal(final int access) {
-    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
-  }
 
   public static boolean weakerAccess(final int me, final int then) {
     return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
            ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
            (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
+  }
+
+  private static boolean isPackageLocal(final int access) {
+    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
   }
 
   public static final int NONE = 0;
