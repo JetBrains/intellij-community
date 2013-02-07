@@ -553,4 +553,16 @@ public class NameUtilTest extends UsefulTestCase {
       }
     }).cpuBound().assertTiming();
   }
+
+  public void testRepeatedLetterPerformance() {
+    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, new ThrowableRunnable() {
+      @Override
+      public void run() {
+        String big = StringUtil.repeat("Aaaaaa", 50);
+        assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
+        assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
+      }
+    }).cpuBound().assertTiming();
+  }
+
 }
