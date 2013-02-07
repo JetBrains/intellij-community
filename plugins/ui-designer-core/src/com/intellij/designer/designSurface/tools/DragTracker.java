@@ -93,12 +93,7 @@ public class DragTracker extends SelectionTracker {
 
       @Override
       protected void updateContext(RadComponent target) {
-        if (myContext.getComponents().get(0).getParent() == target) {
-          myContext.setType(OperationContext.MOVE);
-        }
-        else {
-          myContext.setType(OperationContext.ADD);
-        }
+        updateContextType(target);
       }
     };
     RadComponent target = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, filter);
@@ -109,6 +104,15 @@ public class DragTracker extends SelectionTracker {
     }
     else {
       myTargetOperation.setComponents(myContext.getComponents());
+    }
+  }
+
+  protected void updateContextType(RadComponent target) {
+    if (myContext.getComponents().get(0).getParent() == target) {
+      myContext.setType(OperationContext.MOVE);
+    }
+    else {
+      myContext.setType(OperationContext.ADD);
     }
   }
 
