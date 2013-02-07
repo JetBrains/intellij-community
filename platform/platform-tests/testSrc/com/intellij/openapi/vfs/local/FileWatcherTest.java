@@ -584,7 +584,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) {
     final Ref<LocalFileSystem.WatchRequest> request = Ref.create();
-    getEvents(new Runnable() {
+    getEvents("events to add watch "+watchFile, new Runnable() {
       @Override
       public void run() {
         request.set(myFileSystem.addRootToWatch(watchFile.getAbsolutePath(), recursive));
@@ -596,7 +596,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   private void unwatch(final LocalFileSystem.WatchRequest... requests) {
-    getEvents(new Runnable() {
+    getEvents("events to stop watching", new Runnable() {
       @Override
       public void run() {
         myFileSystem.removeWatchedRoots(Arrays.asList(requests));
@@ -634,7 +634,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   private void assertEvent(final Class<? extends VFileEvent> type, final String... paths) {
-    final List<VFileEvent> events = getEvents(null);
+    final List<VFileEvent> events = getEvents(type+"",null);
     assertEquals(events.toString(), paths.length, events.size());
 
     final Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {
@@ -654,8 +654,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
-  private List<VFileEvent> getEvents(@Nullable final Runnable action) {
-    LOG.debug("** waiting...");
+  private List<VFileEvent> getEvents(String msg, @Nullable final Runnable action) {
+    LOG.debug("** waiting for " + msg + "...");
     myAccept = true;
 
     if (action != null) {
@@ -673,6 +673,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       LOG.warn(e);
     }
 
+    LOG.debug("** waited for " + timeout);
     myFileSystem.refresh(false);
     final ArrayList<VFileEvent> result;
     synchronized (myEvents) {

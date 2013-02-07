@@ -44,12 +44,12 @@ public class MulOperationNode extends ZenCodingNode {
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
-                                     String surroundedText,
+                                     int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     List<GenerationNode> result = new ArrayList<GenerationNode>();
     for (int i = 0; i < myRightOperand; i++) {
-      result.addAll(myLeftOperand.expand(i, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
+      result.addAll(myLeftOperand.expand(i, myRightOperand, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
     }
     return result;
   }

@@ -122,7 +122,14 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
 
   @Override
   public PsiElement getDeclaration() {
-    return myPsiClass != null ? myPsiClass.findFieldByName(myName, true) : null;
+    if (myPsiClass != null) {
+      final PsiField field = myPsiClass.findFieldByName(myName, true);
+      if (field != null) {
+        return field;
+      }
+      return JavaFxPsiUtil.findPropertySetter(myName, myPsiClass);
+    }
+    return null;
   }
 
   @Override

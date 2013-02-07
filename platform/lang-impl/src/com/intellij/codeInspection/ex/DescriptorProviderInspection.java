@@ -465,6 +465,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   public boolean isProblemResolved(RefEntity refEntity, CommonProblemDescriptor descriptor) {
     if (getIgnoredElements() == null) return false;
+    if (descriptor == null) return true;
     for (RefEntity entity : getIgnoredElements().keySet()) {
       if (Comparing.equal(entity, refEntity)) {
         final CommonProblemDescriptor[] descriptors = getIgnoredElements().get(refEntity);

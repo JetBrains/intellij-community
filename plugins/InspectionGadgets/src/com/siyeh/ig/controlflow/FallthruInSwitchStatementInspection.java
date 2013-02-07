@@ -77,7 +77,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   private static class FallthroughInSwitchStatementVisitor extends BaseInspectionVisitor {
 
-    private final Pattern commentPattern = Pattern.compile("fall(s)*\\s*thr(u|ou)");
+    private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
@@ -86,27 +86,23 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
       if (body == null) {
         return;
       }
-      boolean switchLabelValid = true;
       final PsiStatement[] statements = body.getStatements();
-      for (final PsiStatement child : statements) {
-
-        if (child instanceof PsiSwitchLabelStatement) {
-          if (switchLabelValid) {
+      for (int i = 1; i < statements.length; i++) {
+        final PsiStatement child = statements[i];
+        if (!(child instanceof PsiSwitchLabelStatement)) {
+          continue;
+        }
+        final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(child, PsiWhiteSpace.class);
+        if (previousSibling instanceof PsiComment) {
+          final PsiComment comment = (PsiComment)previousSibling;
+          final String commentText = comment.getText();
+          if (commentPattern.matcher(commentText).find()) {
             continue;
           }
-          final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(child, PsiWhiteSpace.class);
-          if (previousSibling instanceof PsiComment) {
-            final PsiComment comment = (PsiComment)previousSibling;
-            final String commentText = comment.getText();
-            if (commentPattern.matcher(commentText).find()) {
-              continue;
-            }
-          }
-          registerError(child);
-          //switchLabelValid = true;
         }
-        else {
-          switchLabelValid = !ControlFlowUtils.statementMayCompleteNormally(child);
+        final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(child, PsiStatement.class);
+        if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
+          registerError(child);
         }
       }
     }

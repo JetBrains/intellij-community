@@ -20,14 +20,15 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Queue;
 
 public class MessageBusConnectionImpl implements MessageBusConnection {
@@ -37,15 +38,16 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
 
   private MessageHandler myDefaultHandler;
-  private final Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
+  private final List<Pair<Topic, Object>> mySubscriptions = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public MessageBusConnectionImpl(MessageBusImpl bus) {
+  public MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
     myBus = bus;
   }
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException {
-    if (mySubscriptions.put(topic, handler) != null) {
+    mySubscriptions.add(Pair.<Topic, Object>create(topic, handler));
+    if (getHandler(topic) != handler) {
       throw new IllegalStateException("Subscription to " + topic + " already exists");
     }
     myBus.notifyOnSubscription(this, topic);
@@ -94,12 +96,19 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     }
   }
 
+  private Object getHandler(@NotNull Topic topic) {
+    for (Pair<Topic, Object> subscription : mySubscriptions) {
+      if (topic == subscription.first) return subscription.second;
+    }
+    return null;
+  }
+
   void deliverMessage(@NotNull Message message) {
     final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
 
     final Topic topic = message.getTopic();
-    final Object handler = mySubscriptions.get(topic);
+    final Object handler = getHandler(topic);
 
     try {
       Method listenerMethod = message.getListenerMethod();
@@ -124,6 +133,6 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   public String toString() {
-    return mySubscriptions.keySet().toString();
+    return mySubscriptions.toString();
   }
 }

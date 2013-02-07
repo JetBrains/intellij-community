@@ -56,6 +56,7 @@ public class PathMappingSettings implements Cloneable {
     myPathMappings = ContainerUtil.newArrayList();
   }
 
+  @NotNull
   public String convertToLocal(String remotePath) {
     for (PathMapping mapping : myPathMappings) {
       if (mapping.canReplaceRemote(remotePath)) {
@@ -133,6 +134,7 @@ public class PathMappingSettings implements Cloneable {
     myPathMappings = create(pathMappings);
   }
 
+  @NotNull
   public static String mapToLocal(String path, String remoteRoot, String localRoot) {
     if (isEmpty(localRoot, remoteRoot)) {
       return path;
@@ -213,6 +215,7 @@ public class PathMappingSettings implements Cloneable {
       myRemoteRoot = remoteRoot;
     }
 
+    @NotNull
     public String mapToLocal(@NotNull String path) {
       return PathMappingSettings.mapToLocal(path, myRemoteRoot, myLocalRoot);
     }

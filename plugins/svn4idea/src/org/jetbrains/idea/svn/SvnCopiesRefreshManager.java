@@ -16,95 +16,43 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RequestsMerger;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 
 public class SvnCopiesRefreshManager {
-  private final CopiesRefresh myCopiesRefresh;
+  private final RequestsMerger myRequestsMerger;
+  private final Semaphore mySemaphore;
+  private Runnable myMappingCallback;
 
-  public SvnCopiesRefreshManager(final Project project, final SvnFileUrlMappingImpl mapping) {
-    myCopiesRefresh = new MyVeryRefresh();
-
-    final Runnable refresher = new MyRefresher(mapping);
-
-    final RequestsMerger requestsMerger = new RequestsMerger(refresher, new Consumer<Runnable>() {
+  public SvnCopiesRefreshManager(final SvnFileUrlMappingImpl mapping) {
+    mySemaphore = new Semaphore();
+    // svn mappings refresh inside also uses asynchronous pass -> we need to pass callback that will ping our "single-threaded" executor here
+    myMappingCallback = new Runnable() {
+      @Override
+      public void run() {
+        mySemaphore.up();
+      }
+    };
+    myRequestsMerger = new RequestsMerger(new Runnable() {
+      @Override
+      public void run() {
+        mySemaphore.down();
+        mapping.realRefresh(myMappingCallback);
+        mySemaphore.waitFor();
+      }
+    }, new Consumer<Runnable>() {
       public void consume(final Runnable runnable) {
         ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
     });
-    ((MyVeryRefresh) myCopiesRefresh).setRequestMerger(requestsMerger);
   }
 
-  public CopiesRefresh getCopiesRefresh() {
-    return myCopiesRefresh;
+  public void asynchRequest() {
+    myRequestsMerger.request();
   }
 
-  private class MyVeryRefresh implements CopiesRefresh {
-    private static final long ourQueryInterval = 1000;
-    private RequestsMerger myRequestMerger;
-    private final ProgressManager myPm;
-
-    private MyVeryRefresh() {
-      myPm = ProgressManager.getInstance();
-    }
-
-    public void setRequestMerger(RequestsMerger requestMerger) {
-      myRequestMerger = requestMerger;
-    }
-
-    public void ensureInit() {
-      synchRequest(myPm.getProgressIndicator(), true);
-    }
-
-    public void asynchRequest() {
-      myRequestMerger.request();
-    }
-
-    public void synchRequest() {
-      synchRequest(myPm.getProgressIndicator(), false);
-    }
-
-    private void synchRequest(final ProgressIndicator pi, final boolean isOnlyInit) {
-      final Semaphore semaphore = new Semaphore();
-      final Runnable waiter = new Runnable() {
-        public void run() {
-          semaphore.up();
-        }
-      };
-      semaphore.down();
-      if (isOnlyInit) {
-        myRequestMerger.ensureInitialization(waiter);
-      } else {
-        myRequestMerger.waitRefresh(waiter);
-      }
-      while (true) {
-        if (semaphore.waitFor(ourQueryInterval)) break;
-        if (pi != null) {
-          pi.checkCanceled();
-        }
-      }
-    }
-  }
-
-  private static class MyRefresher implements Runnable {
-    private final SvnFileUrlMappingImpl myMapping;
-
-    private MyRefresher(final SvnFileUrlMappingImpl mapping) {
-      myMapping = mapping;
-    }
-
-    public void run() {
-      try {
-        myMapping.realRefresh();
-      }
-      catch (ProcessCanceledException e) {
-        //
-      }
-    }
+  public void waitRefresh(final Runnable runnable) {
+    myRequestsMerger.waitRefresh(runnable);
   }
 }

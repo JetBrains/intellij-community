@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
@@ -230,8 +231,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       surroundedText = surroundedText.trim();
     }
 
-    GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, surroundedText, true, null);
-    node.expand(-1, surroundedText, callback, true, fakeParentNode);
+    GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, 1, surroundedText, true, null);
+    node.expand(-1, 1, surroundedText, callback, true, fakeParentNode);
 
     List<GenerationNode> genNodes = fakeParentNode.getChildren();
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
@@ -242,6 +243,12 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
+      }
+    }
+    for (ZenCodingFilter filter : filters) {
+      if(filter instanceof SingleLineEmmetFilter) {
+        builder.setIsToReformat(false);
+        break;
       }
     }
 

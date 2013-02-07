@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
@@ -148,6 +150,12 @@ public class GradleDiffUtil {
 
         @Override
         public void visit(@NotNull Library library) {
+          for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+            GradleJarId jarId = new GradleJarId(context.getPlatformFacade().getLocalFileSystemPath(file),
+                                                LibraryPathType.BINARY,
+                                                new GradleLibraryId(GradleEntityOwner.IDE, GradleUtil.getLibraryName(library)));
+            context.register(new GradleJarPresenceChange(null, jarId));
+          }
         }
       });
     }

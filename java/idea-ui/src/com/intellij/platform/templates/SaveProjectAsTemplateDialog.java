@@ -21,12 +21,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +54,15 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
   private EditorTextField myDescription;
   private JComboBox myModuleCombo;
   private JLabel myModuleLabel;
+  private JBCheckBox myReplaceParameters;
 
   protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
     myProject = project;
 
     setTitle("Save Project As Template");
+    myName.setText(project.getName());
+
     Module[] modules = ModuleManager.getInstance(project).getModules();
     if (modules.length < 2) {
       myModuleLabel.setVisible(false);
@@ -109,8 +115,22 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
     if (StringUtil.isEmpty(myName.getText())) {
       return new ValidationInfo("Template name should not be empty");
     }
+    return null;
+  }
+
+  @Override
+  protected void doOKAction() {
     File file = getTemplateFile();
-    return file.exists() ? new ValidationInfo("Template already exists") : null;
+    if (file.exists()) {
+      if (Messages.showYesNoDialog(myPanel,
+                                   FileUtil.getNameWithoutExtension(file) + " exists already.\n" +
+                                   "Do you want to replace it with the new one?", "Template Already Exists",
+                                   Messages.getWarningIcon()) == Messages.NO) {
+        return;
+      }
+      file.delete();
+    }
+    super.doOKAction();
   }
 
   File getTemplateFile() {
@@ -120,6 +140,10 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   String getDescription() {
     return myDescription.getText();
+  }
+
+  boolean isReplaceParameters() {
+    return myReplaceParameters.isSelected();
   }
 
   @Nullable

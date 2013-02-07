@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,21 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.util.IncorrectOperationException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 9:30:02 PM
- * To change this template use Options | File Templates.
+ * @author max
+ * @since Sep 5, 2003
  */
 public class ParameterListFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiParameterList) {
-      if (!StringUtil.endsWithChar(psiElement.getText(), ')')) {
+      String text = psiElement.getText();
+      if (StringUtil.startsWithChar(text, '(') && !StringUtil.endsWithChar(text, ')')) {
+        PsiParameter[] params = ((PsiParameterList)psiElement).getParameters();
         int offset;
-        PsiParameterList list = (PsiParameterList) psiElement;
-        final PsiParameter[] params = list.getParameters();
-        if (params == null || params.length == 0) {
-          offset = list.getTextRange().getStartOffset() + 1;
-        } else {
+        if (params.length == 0) {
+          offset = psiElement.getTextRange().getStartOffset() + 1;
+        }
+        else {
           offset = params[params.length - 1].getTextRange().getEndOffset();
         }
         editor.getDocument().insertString(offset, ")");

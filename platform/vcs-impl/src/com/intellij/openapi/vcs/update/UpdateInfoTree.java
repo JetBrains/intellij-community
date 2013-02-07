@@ -115,6 +115,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     myProject = project;
     myUpdatedFiles = updatedFiles;
     myRootName = rootName;
+    
+    myShowOnlyFilteredItems = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE;
 
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFileStatusManager.addFileStatusListener(myFileStatusListener);
@@ -227,6 +229,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   private void updateTreeModel() {
     myRoot.rebuild(VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myShowOnlyFilteredItems);
+    if (myTreeModel != null) {
+      myTreeModel.reload();
+    }
   }
 
   public Object getData(String dataId) {
@@ -451,8 +456,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   private class FilterAction extends ToggleAction implements DumbAware {
     public FilterAction() {
-      super("Scope Filter");
-      getTemplatePresentation().setIcon(AllIcons.General.Filter);
+      super("Scope Filter", VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
     }
 
     @Override
@@ -463,13 +467,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myShowOnlyFilteredItems = state;
+      VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE = myShowOnlyFilteredItems;
       updateTreeModel();
     }
 
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setVisible(VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME != null);
-      e.getPresentation().setEnabled(!myGroupByChangeList);
+      e.getPresentation().setEnabled(!myGroupByChangeList && VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME != null);
     }
   }
 }

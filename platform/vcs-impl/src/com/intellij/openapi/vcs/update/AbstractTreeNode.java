@@ -74,8 +74,8 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   protected boolean acceptFilter(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
     boolean apply = false;
     if (children != null && filter != null) {
-      for (Iterator I = children.iterator(); I.hasNext(); ) {
-        AbstractTreeNode node = (AbstractTreeNode)I.next();
+      for (Iterator it = children.iterator(); it.hasNext(); ) {
+        AbstractTreeNode node = (AbstractTreeNode)it.next();
         if (node.acceptFilter(filter, showOnlyFilteredItems)) {
           apply = true;
         }
@@ -83,7 +83,7 @@ public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
           if (node instanceof Disposable) {
             Disposer.dispose((Disposable)node);
           }
-          I.remove();
+          it.remove();
         }
       }
       applyFilter(apply);

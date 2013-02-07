@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
@@ -68,11 +69,12 @@ abstract class HgRevisionsCommand {
   protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
                                              String template, int limit, HgFile hgFile, @Nullable List<String> argsForCmd);
 
-  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) throws HgCommandException {
     return execute(hgFile, limit, includeFiles, null);
   }
 
-  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
+    throws HgCommandException {
     if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
       return Collections.emptyList();
     }
@@ -97,6 +99,10 @@ abstract class HgRevisionsCommand {
       return revisions;
     }
 
+    List<String> errors = result.getErrorLines();
+    if (errors != null && !errors.isEmpty()) {
+      throw new HgCommandException(errors.toString());
+    }
     String output = result.getRawOutput();
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {

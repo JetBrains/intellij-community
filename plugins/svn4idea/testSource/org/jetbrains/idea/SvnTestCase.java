@@ -17,11 +17,16 @@ package org.jetbrains.idea;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
@@ -31,6 +36,9 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -42,10 +50,13 @@ import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
@@ -76,6 +87,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   private File myRepoRoot;
   private File myWcRoot;
   private ChangeListManagerGate myGate;
+  protected String myAnotherRepoUrl;
 
   protected SvnTestCase(@NotNull String testDataDir) {
     PlatformTestCase.initPlatformLangPrefix();
@@ -155,10 +167,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
-          final SvnVcs vcs = SvnVcs.getInstance(myProject);
           ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
-          ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
-
+          refreshSvnMappingsSynchronously();
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -172,6 +182,19 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       changeListManager.ensureUpToDate(false);
     }
+  }
+
+  protected void refreshSvnMappingsSynchronously() {
+    final SvnVcs vcs = SvnVcs.getInstance(myProject);
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(new Runnable() {
+      @Override
+      public void run() {
+        semaphore.up();
+      }
+    });
+    semaphore.waitFor();
   }
 
   @Override
@@ -316,18 +339,29 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     verify(runSvn("copy", "-q", "-m", "coppy", mainUrl, branchUrl));
 
     clManager.forceGoInTestMode();
-    vcs.invokeRefreshSvnRoots(false);
-    clManager.ensureUpToDate(false);
-    clManager.ensureUpToDate(false);
+    refreshSvnMappingsSynchronously();
+    //clManager.ensureUpToDate(false);
+    //clManager.ensureUpToDate(false);
 
     return branchUrl;
   }
 
   public void prepareExternal() throws Exception {
+    prepareExternal(true, true, false);
+  }
+
+  public void prepareExternal(final boolean commitExternalDefinition, final boolean updateExternal,
+                              final boolean anotherRepository) throws Exception {
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final String mainUrl = myRepoUrl + "/root/source";
-    final String externalURL = myRepoUrl + "/root/target";
+    final String externalURL;
+    if (anotherRepository) {
+      createAnotherRepo();
+      externalURL = myAnotherRepoUrl + "/root/target";
+    } else {
+      externalURL = myRepoUrl + "/root/target";
+    }
 
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -344,17 +378,62 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     verify(runSvn("co", mainUrl, sourceDir.getPath()));
     CreateExternalAction.addToExternalProperty(vcs, sourceDir, "external", externalURL);
     sleep(100);
-    verify(runSvn("up", sourceDir.getPath()));
-    verify(runSvn("ci", "-m", "test", sourceDir.getPath()));
+
+    if (updateExternal) {
+      verify(runSvn("up", sourceDir.getPath()));
+    }
+    if (commitExternalDefinition) {
+      verify(runSvn("ci", "-m", "test", sourceDir.getPath()));
+    }
     sleep(100);
-    myWorkingCopyDir.refresh(false, true);
-    Assert.assertTrue(new File(sourceDir, "external").exists());
+
+    if (updateExternal) {
+      myWorkingCopyDir.refresh(false, true);
+      Assert.assertTrue(new File(sourceDir, "external").exists());
+    }
     // above is preparation
 
     // start change list manager again
     clManager.forceGoInTestMode();
-    vcs.invokeRefreshSvnRoots(false);
+    refreshSvnMappingsSynchronously();
+    //clManager.ensureUpToDate(false);
+    //clManager.ensureUpToDate(false);
+  }
+
+  private void createAnotherRepo() throws Exception {
+    final File repo = FileUtil.createTempDirectory("anotherRepo", "");
+    FileUtil.delete(repo);
+    FileUtil.copyDir(myRepoRoot, repo);
+    myAnotherRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(repo.getPath());
+    final File tmpWc = FileUtil.createTempDirectory("hhh", "");
+    verify(runSvn("co", myAnotherRepoUrl, tmpWc.getPath()));
+    final VirtualFile tmpWcVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpWc);
+    Assert.assertNotNull(tmpWcVf);
+    final SubTree tree = new SubTree(tmpWcVf);
+    verify(myRunner.runClient("svn", null, tmpWc, "add", "root"));
+    verify(myRunner.runClient("svn", null, tmpWc, "ci", "-m", "fff"));
+    FileUtil.delete(tmpWc);
+  }
+
+  protected static void imitUpdate(final Project project) {
+    ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
+    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
+    action.getTemplatePresentation().setText("1");
+    action.actionPerformed(new AnActionEvent(null,
+                                             new DataContext() {
+                                               @Nullable
+                                               @Override
+                                               public Object getData(@NonNls String dataId) {
+                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                   return project;
+                                                 }
+                                                 return null;
+                                               }
+                                             }, "test", new Presentation(), null, 0));
+
+    final ChangeListManager clManager = ChangeListManager.getInstance(project);
     clManager.ensureUpToDate(false);
-    clManager.ensureUpToDate(false);
+    clManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
+    sleep(100); // zipper updater
   }
 }

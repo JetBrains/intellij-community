@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Dave Griffith
+ * Copyright 2007-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +28,8 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+
+import java.util.regex.Pattern;
 
 public class GroovyFallthroughInspection extends BaseInspection {
 
@@ -36,12 +42,12 @@ public class GroovyFallthroughInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return "Fallthrough in switch statement";
+    return "Fall-through in switch statement";
   }
 
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Fallthough in switch statement #loc";
+    return "Fall-through in switch statement #loc";
 
   }
 
@@ -54,20 +60,37 @@ public class GroovyFallthroughInspection extends BaseInspection {
   }
 
   private static class Visitor extends BaseInspectionVisitor {
+    private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
+
     public void visitSwitchStatement(GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
-      final GrCaseSection[] grCaseSections = switchStatement.getCaseSections();
-      for (int i = 0; i < grCaseSections.length - 1; i++) {
-        final GrCaseSection caseSection = grCaseSections[i];
-        final GrStatement[] statements = caseSection.getStatements();
-        if (statements.length == 0) {
+      final GrCaseSection[] caseSections = switchStatement.getCaseSections();
+      for (int i = 1; i < caseSections.length; i++) {
+        final GrCaseSection caseSection = caseSections[i];
+        if (isCommented(caseSection)) {
           continue;
         }
-        final GrStatement lastStatement = statements[statements.length - 1];
-        if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
-          registerError(grCaseSections[i + 1].getFirstChild());
+        final GrCaseSection previousCaseSection = caseSections[i - 1];
+        final GrStatement[] statements = previousCaseSection.getStatements();
+        if (statements.length == 0) {
+          registerError(caseSection.getFirstChild());
+        }
+        else {
+          final GrStatement lastStatement = statements[statements.length - 1];
+          if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
+            registerError(caseSection.getFirstChild());
+          }
         }
       }
+    }
+
+    private static boolean isCommented(GrCaseSection caseClause) {
+      final PsiElement element = PsiTreeUtil.skipSiblingsBackward(caseClause, PsiWhiteSpace.class);
+      if (!(element instanceof PsiComment)) {
+        return false;
+      }
+      final String commentText = element.getText();
+      return commentPattern.matcher(commentText).find();
     }
   }
 }

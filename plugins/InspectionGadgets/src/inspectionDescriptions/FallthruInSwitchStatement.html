@@ -6,7 +6,7 @@ to transfer control before the next <b>switch</b> label. In that case, control f
 that <b>switch</b> label, even though the <b>switch</b> expression does not equal
 the value of the fallen-through label. While occasionally intended, this construction is confusing, and is often the result of a typo.
 <p>
-This inspection ignores any fall-through commented with a text matching the regex pattern <code>fall(s)*\s*thr(u|ou)</code>.
+This inspection ignores any fall-through commented with a text matching the regex pattern <code>(?i)falls?\s*thro?u</code>.
 <!-- tooltip end -->
 <p>
 <small>Powered by InspectionGadgets</small>

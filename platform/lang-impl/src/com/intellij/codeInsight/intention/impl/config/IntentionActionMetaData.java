@@ -152,17 +152,20 @@ public final class IntentionActionMetaData {
     }
     if (urls.isEmpty()) {
       String[] children;
+      Exception cause = null;
       try {
         children = new File(descriptionDirectory.toURI()).list();
       }
       catch (URISyntaxException e) {
+        cause = e;
         children = null;
       }
       catch (IllegalArgumentException e) {
+        cause = e;
         children = null;
       }
       LOG.error("URLs not found for prefix: '"+prefix+"', suffix: '"+suffix+"'; in directory: '"+descriptionDirectory+"'; directory contents: "+
-                (children == null ? null : Arrays.asList(children)));
+                (children == null ? null : Arrays.asList(children)), cause);
       return new TextDescriptor[0];
     }
     return urls.toArray(new TextDescriptor[urls.size()]);

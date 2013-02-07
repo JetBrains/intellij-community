@@ -59,7 +59,10 @@ public class GradleOutdatedLibraryVersionPostProcessor implements GradleProjectS
   private static final boolean SKIP = SystemProperties.getBooleanProperty("gradle.skip.outdated.processing", false);
 
   @Override
-  public void processChanges(@NotNull Collection<GradleProjectStructureChange> changes, @NotNull Project project) {
+  public void processChanges(@NotNull Collection<GradleProjectStructureChange> changes,
+                             @NotNull Project project,
+                             boolean onIdeProjectStructureChange)
+  {
     if (SKIP) {
       return;
     }

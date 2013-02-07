@@ -97,16 +97,17 @@ public class RecentProjectPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         ReopenProjectAction selection = (ReopenProjectAction)myList.getSelectedValue();
 
-        final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                   "Remove '" + selection.getTemplatePresentation().getText() +
-                                                   "' from recent projects list?",
-                                                   "Remove Recent Project",
-                                                   Messages.getQuestionIcon());
-        if (rc == 0) {
-          final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
-
-          manager.removePath(selection.getProjectPath());
-          ListUtil.removeSelectedItems(myList);
+        if (selection != null) {
+          final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
+                                                     "Remove '" + selection.getTemplatePresentation().getText() +
+                                                     "' from recent projects list?",
+                                                     "Remove Recent Project",
+                                                     Messages.getQuestionIcon());
+          if (rc == 0) {
+            final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
+            manager.removePath(selection.getProjectPath());
+            ListUtil.removeSelectedItems(myList);
+          }
         }
       }
     };

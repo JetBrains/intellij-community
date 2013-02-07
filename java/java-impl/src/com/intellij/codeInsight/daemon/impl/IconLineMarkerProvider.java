@@ -30,12 +30,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -147,7 +153,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
             || !isIconFileExtension(file.getExtension())
             || file.getLength() > ICON_MAX_SIZE) continue;
 
-        final Icon icon = getIcon(file);
+        final Icon icon = getIcon(file, project);
 
         if (icon != null) {
           final Ref<VirtualFile> f = Ref.create(file);
@@ -179,13 +185,13 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   }
 
   @Nullable
-  private Icon getIcon(VirtualFile file) {
+  private Icon getIcon(VirtualFile file, Project project) {
     final String path = file.getPath();
     final long stamp = file.getModificationStamp();
     Pair<Long, Icon> iconInfo = iconsCache.get(path);
     if (iconInfo == null || iconInfo.getFirst() < stamp) {
       try {
-        final Icon icon = new ImageIcon(file.contentsToByteArray());
+        final Icon icon = createOrFindBetterIcon(file, PlatformUtils.isIdeaProject(project));
         iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
         iconsCache.put(file.getPath(), iconInfo);
       }
@@ -195,6 +201,42 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
       }
     }
     return iconInfo == null ? null : iconInfo.getSecond();
+  }
+
+  private Icon createOrFindBetterIcon(VirtualFile file, boolean tryToFindBetter) throws IOException {
+    if (tryToFindBetter) {
+      VirtualFile parent = file.getParent();
+      String name = file.getNameWithoutExtension();
+      String ext = file.getExtension();
+      VirtualFile newFile;
+      boolean retina = UIUtil.isRetina();
+      boolean dark = UIUtil.isUnderDarcula();
+      if (retina && dark) {
+        newFile = parent.findChild(name + "@2x_dark." + ext);
+        if (newFile != null) {
+          return loadIcon(newFile, 2);
+        }
+      }
+
+      if (dark) {
+        newFile = parent.findChild(name + "_dark." + ext);
+        if (newFile != null) {
+          return loadIcon(file, 1);
+        }
+      }
+
+      if (retina) {
+        newFile = parent.findChild(name + "@2x." + ext);
+        if (newFile != null) {
+          return loadIcon(newFile, 2);
+        }
+      }
+    }
+    return new ImageIcon(file.contentsToByteArray());
+  }
+
+  private ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
+    return new ImageIcon(ImageLoader.loadFromStream(URLUtil.openStream(new URL(file.getUrl())), scale));
   }
 
   private static boolean isIconClassType(PsiType type) {

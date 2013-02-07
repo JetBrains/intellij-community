@@ -41,6 +41,7 @@ import java.util.zip.ZipInputStream;
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   static final String DESCRIPTION_PATH = ".idea/description.html";
+  static final String IDEA_INPUT_FIELDS_XML = ".idea/input-fields.xml";
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
@@ -55,7 +56,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     String s = readEntry(new Condition<ZipEntry>() {
       @Override
       public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith("/.idea/input-fields.xml");
+        return entry.getName().endsWith(IDEA_INPUT_FIELDS_XML);
       }
     });
     if (s != null) {

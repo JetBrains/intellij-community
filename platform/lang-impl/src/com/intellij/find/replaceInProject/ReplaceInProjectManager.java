@@ -332,7 +332,9 @@ public class ReplaceInProjectManager {
   private boolean doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
     boolean success = true;
     int replacedCount = 0;
-    ensureUsagesWritable(usages);
+    if (!ensureUsagesWritable(replaceContext, usages)) {
+      return true;
+    }
     for (final Usage usage : usages) {
       try {
         doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSet(), false);
@@ -432,17 +434,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    ensureUsagesWritable(selectedUsages);
-
-    if (hasReadOnlyUsages(selectedUsages)) {
-      int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
-                                               Messages.getWarningIcon());
-      if (result != 0) {
-        return;
-      }
-    }
+    if (!ensureUsagesWritable(replaceContext, selectedUsages)) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
@@ -456,7 +448,7 @@ public class ReplaceInProjectManager {
     }, FindBundle.message("find.replace.command"), null);
   }
 
-  private void ensureUsagesWritable(Collection<Usage> selectedUsages) {
+  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<Usage> selectedUsages) {
     Set<VirtualFile> readOnlyFiles = null;
     for (final Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();
@@ -470,6 +462,17 @@ public class ReplaceInProjectManager {
     if (readOnlyFiles != null) {
       ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
     }
+
+    if (hasReadOnlyUsages(selectedUsages)) {
+      int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
+                                               FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
+                                               FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
+                                               Messages.getWarningIcon());
+      if (result != 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {
