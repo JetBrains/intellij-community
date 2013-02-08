@@ -34,9 +34,9 @@ import java.util.ArrayList;
 public class AddAllOpenFilesToFavorites extends AnAction {
   private final String myFavoritesName;
 
-  public AddAllOpenFilesToFavorites(String choosenList) {
-    super(choosenList);
-    myFavoritesName = choosenList;
+  public AddAllOpenFilesToFavorites(String chosenList) {
+    getTemplatePresentation().setText(chosenList, false);
+    myFavoritesName = chosenList;
   }
 
   public void actionPerformed(AnActionEvent e) {
