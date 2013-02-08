@@ -193,7 +193,7 @@ NSString *getPreferencesFolderPath() {
 }
 
 NSString *getPropertiesFilePath() {
-    return [getPreferencesFolderPath() stringByAppendingString:@"/idea.properites"];
+    return [getPreferencesFolderPath() stringByAppendingString:@"/idea.properties"];
 }
 
 NSString *getDefaultPropertiesFilePath() {
