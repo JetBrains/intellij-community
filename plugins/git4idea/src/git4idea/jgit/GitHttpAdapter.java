@@ -56,7 +56,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -309,13 +312,8 @@ public final class GitHttpAdapter {
 
     String url = command.getUrl();
     GitHttpCredentialsProvider provider = command.getCredentialsProvider();
-    final Set<CommonProxy.HostInfo> tried = new HashSet<CommonProxy.HostInfo>();
     try {
       for (int i = 0; i < 3; i++) {
-        final CommonProxy.HostInfo hostInfo = getHostInfo(url);
-        CommonProxy.getInstance().noAuthentication(hostInfo.getProtocol(), hostInfo.getHost(), hostInfo.getPort());
-        tried.add(hostInfo);
-
         try {
           AuthData authData = getUsernameAndPassword(provider.getProject(), provider.getUrl());
           if (authData != null) {
@@ -384,9 +382,6 @@ public final class GitHttpAdapter {
     }
     finally {
       log(command, project);
-      for (CommonProxy.HostInfo info : tried) {
-        CommonProxy.getInstance().removeNoAuthentication(info.getProtocol(), info.getHost(), info.getPort());
-      }
     }
   }
 

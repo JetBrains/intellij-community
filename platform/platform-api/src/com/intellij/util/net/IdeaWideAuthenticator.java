@@ -68,6 +68,7 @@ public class IdeaWideAuthenticator extends NonStaticAuthenticator {
         ApplicationManager.getApplication().isDisposed()) return null;
 
     LOG.debug("CommonAuthenticator.getPasswordAuthentication generic authentication will be asked");
-    return myHttpConfigurable.getGenericPromptedAuthentication(prefix, host, getRequestingPrompt(), getRequestingPort(), false);
+    //return myHttpConfigurable.getGenericPromptedAuthentication(prefix, host, getRequestingPrompt(), getRequestingPort(), false);
+    return null;
   }
 }
