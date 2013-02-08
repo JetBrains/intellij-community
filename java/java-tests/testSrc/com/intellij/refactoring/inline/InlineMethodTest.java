@@ -17,6 +17,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
@@ -158,6 +159,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testInferredType() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_7);
     doTest();
   }
 
