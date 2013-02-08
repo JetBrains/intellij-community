@@ -4,12 +4,13 @@ package org.hanuna.gitalk.common.compressedlist;
  * @author erokhins
  */
 public class Replace {
-    public static final Replace ID_REPLACE = new Replace(0, 1, 0);
+    public static Replace ID_REPLACE = new Replace(0, 0, 1);
 
     /**
      * This class describe replace in list or another ordered set's
-     * Elements (from, to) will be remove, and add addElementsCount new's element
-     * Elements from and to should be exist in list, from != to, and they should not change after this replace
+     * Elements [from, to] will be remove, and add addedElementCount new's element in this interval
+     * Elements from and to should be exist in list.
+     * Elements from - 1, to + 1, if they exist, shouldn't change after this replace
      *
      * Example:
      * Replace(1, 3, 2)
@@ -18,25 +19,25 @@ public class Replace {
      */
 
     public static Replace buildFromToInterval(int oldFrom, int oldTo, int newFrom, int newTo) {
-        if (oldFrom != newFrom || oldFrom >= oldTo || newFrom >= newTo) {
+        if (oldFrom != newFrom || oldFrom > oldTo || newFrom > newTo) {
             throw new IllegalArgumentException("oldFrom: " + oldFrom + ", oldTo: " + oldTo +
                     ", newFrom: " + newFrom + ", newTo: " + newTo);
         }
-        return new Replace(oldFrom, oldTo, newTo - newFrom - 1);
+        return new Replace(oldFrom, oldTo, newTo - newFrom + 1);
     }
 
     private final int from;
     private final int to;
-    private final int addElementsCount;
+    private final int addedElementCount;
 
-    public Replace(int from, int to, int addElementsCount) {
-        if (from >= to || addElementsCount < 0 || from < 0) {
-            throw new IllegalArgumentException("from: " + from + ", to: " + to +
-                    ", addElementsCount: " + addElementsCount);
+    public Replace(int from, int to, int addedElementCount) {
+        if (from < 0 || from > to || addedElementCount < 0) {
+            throw new IllegalArgumentException("from: " + from + "to: " + to +
+                    "addedElementCount: " + addedElementCount);
         }
         this.from = from;
         this.to = to;
-        this.addElementsCount = addElementsCount;
+        this.addedElementCount = addedElementCount;
     }
 
     public int from() {
@@ -47,14 +48,20 @@ public class Replace {
         return to;
     }
 
-    public int addElementsCount() {
-        return addElementsCount;
+    public int addedElementCount() {
+        return addedElementCount;
     }
 
-    public int removeElementsCount() {
-        return to - from - 1;
+    public int removedElementCount() {
+        return to - from + 1;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "Replace{" +
+                "from=" + from +
+                ", to=" + to +
+                ", addedElementCount=" + addedElementCount +
+                '}';
+    }
 }

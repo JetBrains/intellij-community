@@ -47,6 +47,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         this(generator, size, 20);
     }
 
+    // returned index k, which is max from k: positionItems.get(k).getPosition() <= position
     private int binarySearch(int position) {
         assert positionItems.size() > 0;
         int x = 0;
@@ -105,7 +106,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     private void checkReplace(Replace replace) {
         if (replace.to() >= size) {
             throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
-                    + replace.to() + ", " + replace.addElementsCount());
+                    + replace.to() + ", " + replace.addedElementCount());
         }
     }
 
@@ -116,12 +117,18 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         }
         checkReplace(replace);
         cache.clear();
-        int deltaSize = replace.addElementsCount() - replace.removeElementsCount();
+        int deltaSize = replace.addedElementCount() - replace.removedElementCount();
+
         int upSaveIndex = binarySearch(replace.from());
+        if (upSaveIndex > 0) { // update started from replace.from()
+            upSaveIndex--;
+        } else {
+            positionItems.set(0, new PositionItem(0, generator.generateFirst()));
+        }
         PositionItem upSavePositionItem = positionItems.get(upSaveIndex);
 
         int downSaveIndex = upSaveIndex;
-        while (downSaveIndex < positionItems.size() && positionItems.get(downSaveIndex).getPosition() < replace.to()) {
+        while (downSaveIndex < positionItems.size() && positionItems.get(downSaveIndex).getPosition() <= replace.to()) {
             downSaveIndex++;
         }
 
@@ -138,6 +145,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         positionItems.addAll(upSaveIndex + 1, mediate);
     }
 
+    @NotNull
     private T get(int position) {
         if (position < 0 || position >= size) {
             throw new IllegalArgumentException();
@@ -152,7 +160,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         private int position;
         private final T t;
 
-        private PositionItem(int position, T t) {
+        private PositionItem(int position, @NotNull T t) {
             this.position = position;
             this.t = t;
         }
@@ -161,6 +169,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
             return position;
         }
 
+        @NotNull
         public T getT() {
             return t;
         }

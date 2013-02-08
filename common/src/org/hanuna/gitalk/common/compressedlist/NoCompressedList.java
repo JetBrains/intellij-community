@@ -12,14 +12,12 @@ import java.util.List;
  */
 public class NoCompressedList<T> implements CompressedList<T> {
     private final List<T> calcList;
-    private final T first;
     private final Generator<T> generator;
     private int size;
 
-    public NoCompressedList(Generator<T> generator, T first, int size) {
+    public NoCompressedList(Generator<T> generator, int size) {
         assert size >= 0 : "bad size";
         calcList = new ArrayList<T>(size);
-        this.first = first;
         this.generator = generator;
         this.size = size;
         generate();
@@ -27,8 +25,8 @@ public class NoCompressedList<T> implements CompressedList<T> {
 
     private void generate() {
         calcList.clear();
-        calcList.add(first);
-        T t = first;
+        T t = generator.generateFirst();
+        calcList.add(t);
         for (int i = 1; i < size; i++) {
             t = generator.generate(t, 1);
             calcList.add(t);
@@ -49,9 +47,9 @@ public class NoCompressedList<T> implements CompressedList<T> {
         }
         if (replace.to() >= size) {
             throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
-                    + replace.to() + ", " + replace.addElementsCount());
+                    + replace.to() + ", " + replace.addedElementCount());
         }
-        size = replace.addElementsCount() - replace.removeElementsCount() + size;
+        size = replace.addedElementCount() - replace.removedElementCount() + size;
         generate();
     }
 }

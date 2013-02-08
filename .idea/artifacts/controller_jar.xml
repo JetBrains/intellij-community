@@ -11,6 +11,7 @@
       <element id="module-output" name="common" />
       <element id="module-output" name="refs" />
       <element id="module-output" name="printmodel" />
+      <element id="module-output" name="graph_model" />
       <element id="module-output" name="swing_ui" />
       <element id="module-output" name="ui_controller" />
       <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/lib/junit-4.10.jar" path-in-jar="/" />

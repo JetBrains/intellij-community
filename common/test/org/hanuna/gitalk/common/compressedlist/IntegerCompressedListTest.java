@@ -14,7 +14,6 @@ import java.util.NoSuchElementException;
 public class IntegerCompressedListTest {
     private final int size = 200;
     private final IntegerGenerator generator = new IntegerGenerator(size);
-    private final Integer first = 0;
 
     private final Replace[] simple = {
             new Replace(1, 5, 1),
@@ -24,7 +23,7 @@ public class IntegerCompressedListTest {
 
     private final Replace[] marginal = {
             new Replace(size - 2, size - 1, 0),
-            new Replace(size - 2, size - 1, 100),
+            new Replace(size - 4, size - 3, 100),
             new Replace(0, 1, 0),
             new Replace(0, 1, 100),
             new Replace(10, 15, 97)
@@ -32,7 +31,7 @@ public class IntegerCompressedListTest {
 
     @Test
     public void simpleNoCompressedList() {
-        runTests(new NoCompressedList<Integer>(generator, first, size), simple);
+        runTests(new NoCompressedList<Integer>(generator, size), simple);
     }
 
     @Test
@@ -43,7 +42,7 @@ public class IntegerCompressedListTest {
 
     @Test
     public void marginalNoCompressedList() {
-        runTests(new NoCompressedList<Integer>(generator, first, size), marginal);
+        runTests(new NoCompressedList<Integer>(generator, size), marginal);
     }
 
     @Test
@@ -53,7 +52,7 @@ public class IntegerCompressedListTest {
 
 
     public void runTests(CompressedList<Integer> list, Replace[] replaces) {
-        RunCompressedListTest<Integer> runner = new RunCompressedListTest<Integer>(list, generator, first);
+        RunCompressedListTest<Integer> runner = new RunCompressedListTest<Integer>(list, generator);
         runner.assertList();
 
         for (Replace replace : replaces) {
@@ -94,12 +93,12 @@ public class IntegerCompressedListTest {
         public void replace(Replace replace) {
             replaceCount++;
             int shift = replaceCount * 1000;
-            list.subList(replace.from() + 1, replace.to()).clear();
-            List<Integer> newLists = new ArrayList<Integer>(replace.addElementsCount());
-            for (int i = 0; i < replace.addElementsCount(); i++) {
+            list.subList(replace.from(), replace.to() + 1).clear();
+            List<Integer> newLists = new ArrayList<Integer>(replace.addedElementCount());
+            for (int i = 0; i < replace.addedElementCount(); i++) {
                 newLists.add(shift + i);
             }
-            list.addAll(replace.from() + 1, newLists);
+            list.addAll(replace.from(), newLists);
         }
     }
 }

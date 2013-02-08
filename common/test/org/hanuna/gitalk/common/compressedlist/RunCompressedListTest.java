@@ -10,12 +10,10 @@ import static junit.framework.Assert.assertEquals;
 public class RunCompressedListTest<T> {
     private final CompressedList<T> compressedList;
     private final Generator<T> generator;
-    private final T first;
 
-    public RunCompressedListTest(CompressedList<T> compressedList, Generator<T> generator, T first) {
+    public RunCompressedListTest(CompressedList<T> compressedList, Generator<T> generator) {
         this.compressedList = compressedList;
         this.generator = generator;
-        this.first = first;
     }
 
     private String CompressedListStr() {
@@ -29,7 +27,7 @@ public class RunCompressedListTest<T> {
 
     private String ActualListStr() {
         StringBuilder s = new StringBuilder();
-        T t = first;
+        T t = generator.generateFirst();
         s.append(t).append(" ");
         for (int i = 1; i < compressedList.getList().size(); i++) {
             t = generator.generate(t, 1);
@@ -52,7 +50,7 @@ public class RunCompressedListTest<T> {
 
 
     public String replaceToStr(Replace replace) {
-        return "Replace: from: " + replace.from() + ", to: " + replace.to() + ", addElementsCounts: " + replace.addElementsCount();
+        return "Replace: from: " + replace.from() + ", to: " + replace.to() + ", addedElementCounts: " + replace.addedElementCount();
     }
 
 }
