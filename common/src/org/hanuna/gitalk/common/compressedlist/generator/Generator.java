@@ -12,4 +12,7 @@ public interface Generator<T> {
      */
     @NotNull
     public T generate(@NotNull T prev, int steps);
+
+    @NotNull
+    public T generateFirst();
 }

@@ -28,10 +28,11 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
     private final List<PositionItem> positionItems = new ArrayList<PositionItem>();
     private int size;
 
-    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size, int intervalSave) {
+    public RuntimeGenerateCompressedList(Generator<T> generator, int size, int intervalSave) {
         this.generator = generator;
         this.intervalSave = intervalSave;
         this.size = size;
+        T firstT = generator.generateFirst();
         positionItems.add(new PositionItem(0, firstT));
         int curPosition = intervalSave;
         T prevT = firstT;
@@ -42,8 +43,8 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         }
     }
 
-    public RuntimeGenerateCompressedList(Generator<T> generator, T firstT, int size) {
-        this(generator, firstT, size, 20);
+    public RuntimeGenerateCompressedList(Generator<T> generator, int size) {
+        this(generator, size, 20);
     }
 
     private int binarySearch(int position) {

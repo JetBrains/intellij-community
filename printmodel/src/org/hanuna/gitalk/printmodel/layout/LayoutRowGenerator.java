@@ -100,4 +100,20 @@ class LayoutRowGenerator extends AbstractGenerator<MutableLayoutRow, LayoutRow> 
         row.setNodeRow(nextGraphRow);
         return row;
     }
+
+    @NotNull
+    @Override
+    public LayoutRow generateFirst() {
+        List<NodeRow> rows = graph.getNodeRows();
+        assert ! rows.isEmpty();
+
+        NodeRow firstRow = rows.get(0);
+        MutableLayoutRow firstCellRow = new MutableLayoutRow();
+        firstCellRow.setNodeRow(firstRow);
+        List<GraphElement> editableLayoutRow = firstCellRow.getModifiableOrderedGraphElements();
+        for (Node node : firstRow.getNodes()) {
+            editableLayoutRow.add(node);
+        }
+        return firstCellRow;
+    }
 }

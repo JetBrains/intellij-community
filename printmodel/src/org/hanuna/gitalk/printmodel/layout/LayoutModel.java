@@ -5,8 +5,6 @@ import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.hanuna.gitalk.graph.Graph;
-import org.hanuna.gitalk.graph.elements.GraphElement;
-import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,16 +27,7 @@ public class LayoutModel {
 
     private void build() {
         List<NodeRow> rows = graph.getNodeRows();
-        assert ! rows.isEmpty();
-
-        NodeRow firstRow = rows.get(0);
-        MutableLayoutRow firstCellRow = new MutableLayoutRow();
-        firstCellRow.setNodeRow(firstRow);
-        List<GraphElement> editableLayoutRow = firstCellRow.getModifiableOrderedGraphElements();
-        for (Node node : firstRow.getNodes()) {
-            editableLayoutRow.add(node);
-        }
-        layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, firstCellRow, rows.size(), 100);
+        layoutRowCompressedList = new RuntimeGenerateCompressedList<LayoutRow>(generator, rows.size(), 100);
     }
 
 

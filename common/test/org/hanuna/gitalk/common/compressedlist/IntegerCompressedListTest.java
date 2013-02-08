@@ -37,7 +37,7 @@ public class IntegerCompressedListTest {
 
     @Test
     public void simpleRuntimeGenerateCompressedList() {
-        runTests(new RuntimeGenerateCompressedList<Integer>(generator, first, size), simple);
+        runTests(new RuntimeGenerateCompressedList<Integer>(generator, size), simple);
     }
 
 
@@ -48,7 +48,7 @@ public class IntegerCompressedListTest {
 
     @Test
     public void marginalRuntimeGenerateCompressedList() {
-        runTests(new RuntimeGenerateCompressedList<Integer>(generator, first, size), marginal);
+        runTests(new RuntimeGenerateCompressedList<Integer>(generator, size), marginal);
     }
 
 
@@ -83,6 +83,12 @@ public class IntegerCompressedListTest {
                 throw new NoSuchElementException();
             }
             return list.get(prevIndex + steps);
+        }
+
+        @NotNull
+        @Override
+        public Integer generateFirst() {
+            return list.get(0);
         }
 
         public void replace(Replace replace) {
