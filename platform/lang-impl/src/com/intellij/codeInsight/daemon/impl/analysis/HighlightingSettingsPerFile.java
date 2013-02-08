@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -30,10 +31,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(name="HighlightingSettingsPerFile", storages = @Storage( file = StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile implements PersistentStateComponent<Element> {
@@ -55,9 +53,22 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
     final int index = PsiUtilBase.getRootIndex(root);
 
     if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index) {
-      return FileHighlighingSetting.FORCE_HIGHLIGHTING;
+      return getDefaultHighlightingSetting(root.getProject(), virtualFile);
     }
     return fileHighlighingSettings[index];
+  }
+
+  private static FileHighlighingSetting getDefaultHighlightingSetting(Project project, final VirtualFile virtualFile) {
+    DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
+    List<DefaultHighlightingSettingProvider> filtered =
+      DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers));
+    for (DefaultHighlightingSettingProvider p : filtered) {
+      FileHighlighingSetting setting = p.getDefaultSetting(project, virtualFile);
+      if (setting != null) {
+        return setting;
+      }
+    }
+    return FileHighlighingSetting.FORCE_HIGHLIGHTING;
   }
 
   public static FileHighlighingSetting[] getDefaults(@NotNull PsiFile file){

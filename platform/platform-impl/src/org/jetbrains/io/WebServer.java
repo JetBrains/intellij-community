@@ -358,6 +358,8 @@ public class WebServer {
         else {
           response = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
         }
+        Responses.addServer(response);
+        Responses.addDate(response);
         context.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
       }
     }

@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableProvider;
@@ -41,13 +40,18 @@ public class ConfigurableExtensionPointUtil {
 
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
                                                           final Configurable[] components,
-                                                          @Nullable ConfigurableFilter filter,
-                                                          ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint) {
+                                                          @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
-    ContainerUtil.addAll(result, components);
+    for (Configurable component : components) {
+      if (!isSuppressed(component, filter)) {
+        result.add(component);
+      }
+    }
+
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
+      if (isSuppressed(configurable, filter)) continue;
       if (configurable instanceof ConfigurableWrapper) {
         final ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
@@ -77,17 +81,13 @@ public class ConfigurableExtensionPointUtil {
     }
     ContainerUtil.addAll(result, idToConfigurable.values());
 
-    final ListIterator<Configurable> iterator = result.listIterator();
-    while (iterator.hasNext()) {
-      Configurable each = iterator.next();
-      if (each instanceof Configurable.Assistant
-          || each instanceof OptionalConfigurable && !((OptionalConfigurable) each).needDisplay()
-          || filter != null && !filter.isIncluded(each)) {
-        iterator.remove();
-      }
-    }
-
     return result;
+  }
+
+  private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
+    return each instanceof Configurable.Assistant
+        || each instanceof OptionalConfigurable && !((OptionalConfigurable) each).needDisplay()
+        || filter != null && !filter.isIncluded(each);
   }
 
   /*

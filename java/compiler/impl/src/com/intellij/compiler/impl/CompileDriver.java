@@ -858,7 +858,10 @@ public class CompileDriver {
         outputs.add(new File(path));
       }
       if (!outputs.isEmpty()) {
+        final ProgressIndicator indicator = compileContext.getProgressIndicator();
+        indicator.setText("Synchronizing output directories...");
         LocalFileSystem.getInstance().refreshIoFiles(outputs, false, false, null);
+        indicator.setText("");
       }
     }
     SwingUtilities.invokeLater(new Runnable() {

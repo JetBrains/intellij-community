@@ -111,15 +111,15 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
     }
-    if (generator != null && !validate(tokens, generator)) {
+    if (!validate(tokens, generator)) {
       return null;
     }
-    EmmetParser parser = new EmmetParser(tokens, callback, generator);
+    EmmetParser parser = generator.createParser(tokens, callback, generator);
     ZenCodingNode node = parser.parse();
     if (parser.getIndex() != tokens.size() || node instanceof TextNode) {
       return null;
@@ -136,7 +136,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return true;
   }
 
-  public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
     return parse(key, callback, generator) != null;
   }
 

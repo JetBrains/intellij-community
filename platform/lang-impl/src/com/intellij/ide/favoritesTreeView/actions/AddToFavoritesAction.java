@@ -53,7 +53,7 @@ public class AddToFavoritesAction extends AnAction {
   private final String myFavoritesListName;
 
   public AddToFavoritesAction(String choosenList) {
-    super(choosenList.replaceAll("_", "__"));
+    getTemplatePresentation().setText(choosenList, false);
     myFavoritesListName = choosenList;
   }
 

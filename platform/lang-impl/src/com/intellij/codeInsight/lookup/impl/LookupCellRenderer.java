@@ -118,9 +118,13 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean hasFocus) {
 
 
+    boolean paintBorder = false;
     if (!myLookup.isFocused()) {
+      paintBorder = isSelected && CompletionPreview.hasPreview(myLookup);
       isSelected = false;
     }
+
+    myPanel.setBorder(paintBorder ? new DottedBorder(SELECTED_BACKGROUND_COLOR) : null);
 
     myIsSelected = isSelected;
     final LookupElement item = (LookupElement)value;
@@ -397,13 +401,10 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     @Override
     public void paint(Graphics g){
-      if (!myLookup.isFocused() && myLookup.isCompletion()) {
+      if (!myLookup.isFocused() && myLookup.isCompletion() && !CompletionPreview.hasPreview(myLookup)) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
       }
       super.paint(g);
-      //if (myUpdateExtender) {
-      //  myLookup.updateExtender();
-      //}
     }
   }
 }

@@ -255,7 +255,7 @@ public abstract class RadComponent extends PropertiesContainer {
 
   public void accept(RadComponentVisitor visitor, boolean forward) {
     if (visitor.visit(this)) {
-      List<RadComponent> children = getChildren();
+      List<RadComponent> children = getChildrenForAccept(visitor);
       if (forward) {
         for (RadComponent child : children) {
           child.accept(visitor, forward);
@@ -269,6 +269,10 @@ public abstract class RadComponent extends PropertiesContainer {
       }
       visitor.endVisit(this);
     }
+  }
+
+  protected List<RadComponent> getChildrenForAccept(RadComponentVisitor visitor) {
+    return getChildren();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

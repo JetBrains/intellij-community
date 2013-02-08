@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Extensions {
   private static LogProvider ourLogger = new SimpleLogProvider();
@@ -44,6 +45,14 @@ public class Extensions {
   }
 
   private Extensions() {
+  }
+
+  public static void setSynchronized() {
+    assert ourAreaInstance2area.isEmpty();
+    assert ourAreaClass2Configuration.isEmpty();
+
+    ourAreaInstance2area = new ConcurrentHashMap<AreaInstance, ExtensionsAreaImpl>();
+    ourAreaClass2Configuration = new ConcurrentHashMap<String, AreaClassConfiguration>();
   }
 
   @NotNull

@@ -230,5 +230,12 @@
     <synonym>View plugin statistics</synonym>
     </configurable>
 
+  <configurable id="web.server" configurable_name="Deployment">
+    <synonym>Server</synonym>
+    <synonym>Host</synonym>
+    <synonym>Remote</synonym>
+    <synonym>Web Path</synonym>
+  </configurable>
+
 </options>
 

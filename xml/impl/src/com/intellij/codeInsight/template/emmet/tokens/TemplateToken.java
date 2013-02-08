@@ -34,6 +34,10 @@ public class TemplateToken extends ZenCodingToken {
   private final List<Pair<String, String>> myAttribute2Value;
   private XmlFile myFile;
 
+  public TemplateToken(String key) {
+    this(key, new ArrayList<Pair<String, String>>());
+  }
+
   public TemplateToken(String key, List<Pair<String, String>> attribute2value) {
     myKey = key;
     myAttribute2Value = attribute2value;

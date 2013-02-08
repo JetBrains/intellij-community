@@ -57,9 +57,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
@@ -649,9 +646,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setLanguage(Language language) {
     myVirtualFile.setLanguage(language);
-    // setViewProvider() call is required otherwise psiFile will stay the same!
-    FileManager fileManager = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager();
-    fileManager.setViewProvider(myVirtualFile, fileManager.createFileViewProvider(myVirtualFile, true));
     reparsePsiFile();
   }
 
@@ -731,7 +725,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myVirtualFile.setContent(myEditorDocument, myEditorDocument.getText(), false);
     FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(myVirtualFile), false);
     myFile = ObjectUtils.assertNotNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
-    PsiDocumentManagerImpl.cachePsi(myEditorDocument, myFile);
   }
 
   private class MyLayout extends AbstractLayoutManager {

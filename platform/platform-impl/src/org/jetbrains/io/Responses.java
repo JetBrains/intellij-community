@@ -1,5 +1,8 @@
 package org.jetbrains.io;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -11,13 +14,42 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.util.CharsetUtil;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.DATE;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public final class Responses {
+  public static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+
+  static {
+    DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
+
+  public static void addDate(HttpResponse response) {
+    addDate(response, Calendar.getInstance().getTime());
+  }
+
+  public static void addDate(HttpResponse response, Date date) {
+    response.setHeader(DATE, DATE_FORMAT.format(date));
+  }
+
+  public static void addServer(HttpResponse response) {
+    Application app = ApplicationManager.getApplication();
+    if (app != null && !app.isDisposed()) {
+      response.setHeader("Server", ApplicationInfo.getInstance().getBuild().asString());
+    }
+  }
+
   public static void send(HttpResponse response, HttpRequest request, byte[] bytes, ChannelHandlerContext context) {
     response.setContent(new BigEndianHeapChannelBuffer(bytes));
     send(response, request, context);

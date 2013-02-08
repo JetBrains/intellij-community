@@ -1,8 +1,13 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class ChangeNewOperatorTypeTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
 
-  public void test() throws Exception { doAllTests(); }
+public class ChangeNewOperatorTypeTest extends LightQuickFixTestCase {
+
+  public void test() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_7);
+    doAllTests(); 
+  }
 
   @Override
   protected String getBasePath() {

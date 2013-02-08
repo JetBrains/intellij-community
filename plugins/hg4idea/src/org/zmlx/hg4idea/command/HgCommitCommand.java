@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -26,6 +27,7 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,14 +62,24 @@ public class HgCommitCommand {
     if (StringUtil.isEmptyOrSpaces(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
-    List<String> parameters = new LinkedList<String>();
-    parameters.add("--logfile");
-    parameters.add(saveCommitMessage().getAbsolutePath());
-    for (HgFile hgFile : myFiles) {
-      parameters.add(hgFile.getRelativePath());
+    List<String> relativePaths = HgUtil.getRelativePathsByRepository(myFiles).get(myRoot);
+    //if it's merge commit, so myFiles is Empty. Need to commit all files in changeList, can't call setFiles() method.
+    // see HgCheckinEnviroment->commit() method
+    if (relativePaths == null) {
+      List<String> parameters = new LinkedList<String>();
+      parameters.add("--logfile");
+      parameters.add(saveCommitMessage().getAbsolutePath());
+      ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
     }
-
-    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    else {
+      for (List<String> chunk : VcsFileUtil.chunkRelativePaths(relativePaths)) {
+        List<String> parameters = new LinkedList<String>();
+        parameters.add("--logfile");
+        parameters.add(saveCommitMessage().getAbsolutePath());
+        parameters.addAll(chunk);
+        ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+      }
+    }
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);

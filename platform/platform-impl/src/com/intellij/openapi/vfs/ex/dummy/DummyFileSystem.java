@@ -30,6 +30,10 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     return (DummyFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
+  public DummyFileSystem() {
+    startEventPropagation();
+  }
+
   public VirtualFile createRoot(String name) {
     myRoot = new VirtualFileDirectoryImpl(this, null, name);
     fireFileCreated(null, myRoot);

@@ -15,8 +15,15 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.pom.java.LanguageLevel;
+
 /**
  * @author ven
  */
 public abstract class LightQuickFix15TestCase extends LightQuickFixTestCase {
+  @Override
+  protected void doAllTests() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_5); 
+    super.doAllTests();
+  }
 }
