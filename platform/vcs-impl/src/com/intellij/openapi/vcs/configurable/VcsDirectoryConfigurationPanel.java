@@ -561,6 +561,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   public void disposeUIResources() {
+    myLimitHistory.disposeUIResources();
+    myScopeFilterConfig.disposeUIResources();
   }
 
   private static class VcsRootErrorLabel extends JPanel {

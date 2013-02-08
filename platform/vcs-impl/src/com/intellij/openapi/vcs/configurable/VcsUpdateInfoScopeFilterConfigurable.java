@@ -40,12 +40,13 @@ import java.awt.*;
 /**
  * @author Kirill Likhodedov
  */
-class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
+class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesHolder.ScopeListener {
   
   private final JCheckBox myCheckbox;
   private final JComboBox myComboBox;
   private final Project myProject;
   private final VcsConfiguration myVcsConfiguration;
+  private final NamedScopesHolder[] myNamedScopeHolders;
 
   VcsUpdateInfoScopeFilterConfigurable(Project project, VcsConfiguration vcsConfiguration) {
     myProject = project;
@@ -60,6 +61,16 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
         myComboBox.setEnabled(myCheckbox.isSelected());
       }
     });
+
+    myNamedScopeHolders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+    for (NamedScopesHolder holder : myNamedScopeHolders) {
+      holder.addScopeListener(this);
+    }
+  }
+  
+  @Override
+  public void scopesChanged() {
+    reset();
   }
   
   @Nls
@@ -109,7 +120,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
   public void reset() {
     myComboBox.removeAllItems();
     boolean selection = false;
-    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
+    for (NamedScopesHolder holder : myNamedScopeHolders) {
       for (NamedScope scope : holder.getEditableScopes()) {
         myComboBox.addItem(scope.getName());
         if (!selection && scope.getName().equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
@@ -125,6 +136,9 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
 
   @Override
   public void disposeUIResources() {
+    for (NamedScopesHolder holder : myNamedScopeHolders) {
+      holder.removeScopeListener(this);
+    }
   }
   
   private String getScopeFilterName() {
@@ -133,5 +147,5 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
     }
     return (String)myComboBox.getSelectedItem();
   }
-  
+
 }
