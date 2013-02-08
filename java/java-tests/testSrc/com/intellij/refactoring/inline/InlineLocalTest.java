@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiReference;
@@ -221,6 +222,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
 
   private void doTest(final boolean inlineDef) throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_7);
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
     configureByFile(fileName);

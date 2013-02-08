@@ -29,8 +29,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class TreeEditOperation extends AbstractEditOperation {
-  private RadComponent myTarget;
-  private boolean myInsertBefore;
+  protected RadComponent myTarget;
+  protected boolean myInsertBefore;
 
   public TreeEditOperation(RadComponent container, OperationContext context) {
     super(container, context);

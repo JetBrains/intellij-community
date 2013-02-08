@@ -23,27 +23,38 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   private final VirtualFileListener myAdapted;
+  private final VirtualFileSystem myFileSystem;
 
-  public BulkVirtualFileListenerAdapter(final VirtualFileListener adapted) {
+  public BulkVirtualFileListenerAdapter(@NotNull VirtualFileListener adapted) {
+    this(adapted, null);
+  }
+
+  public BulkVirtualFileListenerAdapter(@NotNull VirtualFileListener adapted, @Nullable VirtualFileSystem fileSystem) {
     myAdapted = adapted;
+    myFileSystem = fileSystem;
   }
 
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      fireBefore(event);
+      if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
+        fireBefore(event);
+      }
     }
   }
 
   @Override
   public void after(@NotNull final List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      fireAfter(event);
+      if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
+        fireAfter(event);
+      }
     }
   }
 
