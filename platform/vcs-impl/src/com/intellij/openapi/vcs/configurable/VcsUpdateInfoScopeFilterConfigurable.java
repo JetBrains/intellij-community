@@ -19,7 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -77,20 +77,17 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable {
   @Nullable
   @Override
   public JComponent createComponent() {
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(new LinkLabel("Edit scopes", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
+        final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext(panel));
         if (optionsEditor != null) {
-          ScopeChooserConfigurable configurable = optionsEditor.findConfigurable(ScopeChooserConfigurable.class);
+          SearchableConfigurable configurable = optionsEditor.findConfigurableById(new ScopeChooserConfigurable(myProject).getId());
           if (configurable != null) {
-            boolean edited = ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
-            if (edited) {
-              reset();
-            }
+            optionsEditor.select(configurable);
           }
         }
       }
