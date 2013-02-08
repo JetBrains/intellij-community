@@ -96,9 +96,13 @@ public class GraphModelImpl implements GraphModel {
 
     @Override
     public void appendCommitsToGraph(@NotNull List<Commit> commits) {
+        int oldSize = graph.getNodeRows().size();
         GraphBuilder.addCommitsToGraph(graph, commits);
         visibleNodes.setVisibleBranchesNodes(isStartedBranchVisibilityNode);
-        fullUpdate();
+        graph.updateVisibleRows();
+
+        Replace replace = Replace.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
+        callUpdateListener(replace);
     }
 
     @Override
