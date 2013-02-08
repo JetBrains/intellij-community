@@ -48,8 +48,12 @@
 #define HELP_MSG \
     "Try 'fsnotifier --help' for more information.\n"
 
-#define INOTIFY_LIMIT_MSG \
-    "The current <b>inotify</b>(7) watch limit of %d is too low. " \
+#define INSTANCE_LIMIT_TEXT \
+    "The <b>inotify</b>(7) instances limit reached. " \
+    "<a href=\"http://confluence.jetbrains.net/display/IDEADEV/Inotify+Instances+Limit\">More details.</a>\n"
+
+#define WATCH_LIMIT_TEXT \
+    "The current <b>inotify</b>(7) watch limit is too low. " \
     "<a href=\"http://confluence.jetbrains.net/display/IDEADEV/Inotify+Watches+Limit\">More details.</a>\n"
 
 typedef struct {
@@ -59,7 +63,6 @@ typedef struct {
 
 static array* roots = NULL;
 
-static bool show_warning = true;
 static bool self_test = false;
 
 static void init_log();
@@ -149,6 +152,19 @@ static void init_log() {
   snprintf(ident, sizeof(ident), "fsnotifier[%d]", getpid());
   openlog(ident, 0, LOG_USER);
   setlogmask(LOG_UPTO(level));
+}
+
+
+void message(MSG id) {
+  if (id == MSG_INSTANCE_LIMIT) {
+    output("MESSAGE\n" INSTANCE_LIMIT_TEXT);
+  }
+  else if (id == MSG_WATCH_LIMIT) {
+    output("MESSAGE\n" WATCH_LIMIT_TEXT);
+  }
+  else {
+    userlog(LOG_ERR, "unknown message: %d", id);
+  }
 }
 
 
@@ -353,12 +369,6 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       return false;
     }
     else if (id != ERR_IGNORE) {
-      if (show_warning && watch_limit_reached()) {
-        int limit = get_watch_count();
-        userlog(LOG_WARNING, "watch limit (%d) reached", limit);
-        output("MESSAGE\n" INOTIFY_LIMIT_MSG, limit);
-        show_warning = false;  // warn only once
-      }
       CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
     }
   }
