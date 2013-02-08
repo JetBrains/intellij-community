@@ -29,7 +29,7 @@ public class FragmentGraphDecorator implements GraphDecorator {
     public Edge getHideFragmentUpEdge(@NotNull Node node) {
         List<Edge> edges = downNodeEdges.get(node);
         for (Edge edge : edges) {
-            if (isVisibleNode(edge.getDownNode())) {
+            if (isVisibleNode(edge.getUpNode())) {
                 return edge;
             }
         }
@@ -40,7 +40,7 @@ public class FragmentGraphDecorator implements GraphDecorator {
     public Edge getHideFragmentDownEdge(@NotNull Node node) {
         List<Edge> edges = upNodeEdges.get(node);
         for (Edge edge : edges) {
-            if (isVisibleNode(edge.getUpNode())) {
+            if (isVisibleNode(edge.getDownNode())) {
                 return edge;
             }
         }
