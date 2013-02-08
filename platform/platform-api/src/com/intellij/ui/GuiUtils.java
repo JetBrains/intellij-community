@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,17 +384,9 @@ public class GuiUtils {
     }
   }
 
-  /**
-   * Runs the runnable, if called from the dispatch thread.
-   * Otherwise calls {@link Application#invokeAndWait(Runnable, com.intellij.openapi.application.ModalityState)}
-   */
+  /** @deprecated call {@link Application#invokeAndWait(Runnable, ModalityState)} directly (to remove in IDEA 13). */
+  @SuppressWarnings("UnusedDeclaration")
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeAndWait(runnable, modalityState);
-    }
+    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
   }
 }

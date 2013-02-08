@@ -27,8 +27,13 @@ public abstract class ProjectTemplateParameterFactory {
 
   public static final ExtensionPointName<ProjectTemplateParameterFactory> EP_NAME = ExtensionPointName.create("com.intellij.projectTemplateParameterFactory");
 
+  // standard ids
+  public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
+  public static final String IJ_PROJECT_NAME = "IJ_PROJECT_NAME";
+
   public abstract String getParameterId();
 
+  /** Null if no UI needed */
   @Nullable
   public abstract WizardInputField createField(String defaultValue);
 

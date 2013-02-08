@@ -22,6 +22,7 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.*;
 import com.intellij.designer.palette.PaletteGroup;
@@ -793,6 +794,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public abstract TreeComponentDecorator getTreeDecorator();
+
+  public void handleTreeArea(TreeEditableArea treeArea) {
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //

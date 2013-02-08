@@ -24,6 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -57,7 +58,7 @@ public class HgAnnotationProvider implements AnnotationProvider {
       logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
     }
     catch (HgCommandException e) {
-      throw new VcsException("Can not annotate, log command failed ", e);
+      throw new VcsException("Can not annotate, " + HgVcsMessages.message("hg4idea.error.log.command.execution"), e);
     }
     VcsRevisionNumber revisionNumber = revision == null ?
                                        new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot) :

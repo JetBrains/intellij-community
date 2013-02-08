@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgCopyHistoryRevisionNumberAction;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -115,7 +116,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
       return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
     }
     catch (HgCommandException e) {
-      new HgCommandResultNotifier(project).notifyError(null, "Mercurial log command error ", e.getMessage());
+      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
       return Collections.emptyList();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +132,7 @@ public class GitTask {
           completed.set(true);
         }
       };
-      GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
         @Override
         public void run() {
           ProgressManager.getInstance().run(task);

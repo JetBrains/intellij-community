@@ -60,6 +60,64 @@ class Proto implements RW.Savable, Streamable {
     }
   }
 
+  public final boolean isPublic() {
+    return (Opcodes.ACC_PUBLIC & access) != 0;
+  }
+
+  public final boolean isProtected() {
+    return (Opcodes.ACC_PROTECTED & access) != 0;
+  }
+
+  public final boolean isPackageLocal() {
+    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
+  }
+
+  public final boolean isPrivate() {
+    return (Opcodes.ACC_PRIVATE & access) != 0;
+  }
+
+  public final boolean isAbstract() {
+    return (Opcodes.ACC_ABSTRACT & access) != 0;
+  }
+
+  public final boolean isBridge() {
+    return (Opcodes.ACC_BRIDGE & access) != 0;
+  }
+
+  public final boolean isSynthetic() {
+    return (Opcodes.ACC_SYNTHETIC & access) != 0;
+  }
+
+  public final boolean isAnnotation() {
+    return (Opcodes.ACC_ANNOTATION & access) != 0;
+  }
+
+  public final boolean isFinal() {
+    return (Opcodes.ACC_FINAL & access) != 0;
+  }
+
+  public final boolean isStatic() {
+    return (Opcodes.ACC_STATIC & access) != 0;
+  }
+
+  /**
+   * tests if the accessibility of this Proto is less restricted than the accessibility of the given Proto
+   * @return true means this Proto is less restricted than the proto passed as parameter <br>
+   *         false means this Proto has more restricted access than the parameter Proto or they have equal accessibility
+   */
+  public final boolean isMoreAccessibleThan(Proto anotherProto) {
+    if (anotherProto.isPrivate()) {
+      return this.isPackageLocal() || this.isProtected() || this.isPublic();
+    }
+    if (anotherProto.isPackageLocal()) {
+      return this.isProtected() || this.isPublic();
+    }
+    if (anotherProto.isProtected()) {
+      return this.isPublic();
+    }
+    return false;
+  }
+
   public Difference difference(final Proto past) {
     int diff = Difference.NONE;
 
@@ -96,10 +154,7 @@ class Proto implements RW.Savable, Streamable {
 
       @Override
       public boolean packageLocalOn() {
-        return ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
-                (past.access & Opcodes.ACC_PUBLIC) != 0 ||
-                (past.access & Opcodes.ACC_PROTECTED) != 0) &&
-               Difference.isPackageLocal(access);
+        return (past.isPrivate() || past.isPublic() || past.isProtected()) && Proto.this.isPackageLocal();
       }
 
       @Override

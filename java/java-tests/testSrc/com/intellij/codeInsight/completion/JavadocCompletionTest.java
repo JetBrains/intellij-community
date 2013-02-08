@@ -198,6 +198,12 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")));
   }
 
+  public void testQualifyClassReferenceInPackageStatement() throws Exception {
+    configureByFile(getTestName(false) + ".java");
+    myFixture.type('\n');
+    checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testCustomReferenceProvider() throws Exception {
     PsiReferenceRegistrarImpl registrar =
       (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);

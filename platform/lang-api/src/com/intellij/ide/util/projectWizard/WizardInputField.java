@@ -22,12 +22,11 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
+ * @see ProjectTemplateParameterFactory
  * @author Dmitry Avdeev
  *         Date: 2/1/13
  */
 public abstract class WizardInputField<T extends JComponent> {
-
-  public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
 
   private final String myId;
   private final String myDefaultValue;

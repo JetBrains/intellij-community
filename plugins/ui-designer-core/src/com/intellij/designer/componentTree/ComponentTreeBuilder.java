@@ -45,6 +45,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
 
     tree.setArea(myTreeArea);
+    designer.handleTreeArea(myTreeArea);
 
     new TreeDropListener(tree, myTreeArea, designer.getToolProvider());
 
@@ -83,7 +84,13 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     try {
       removeListeners();
       if (mySurfaceArea == area) {
-        myTreeArea.setSelection(mySurfaceArea.getSelection());
+        try {
+          myTreeArea.setCanvasSelection(true);
+          myTreeArea.setSelection(mySurfaceArea.getSelection());
+        }
+        finally {
+          myTreeArea.setCanvasSelection(false);
+        }
       }
       else {
         mySurfaceArea.setSelection(myTreeArea.getSelection());

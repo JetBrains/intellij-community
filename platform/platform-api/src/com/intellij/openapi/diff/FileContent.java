@@ -96,6 +96,9 @@ public class FileContent extends DiffContent {
         fileContent.setIsEmpty(true);
         fileContent.myTypeForEmpty = FileTypeManager.getInstance().getFileTypeByFileName(name + "." + ext);
       }
+      else {
+        FileTypeManager.getInstance().detectFileTypeFromContent(file);
+      }
       return fileContent;
     }
     throw new IOException("Can not create temp file for revision content");

@@ -48,13 +48,13 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
   @Override
   public String getParameterId() {
-    return WizardInputField.IJ_BASE_PACKAGE;
+    return IJ_BASE_PACKAGE;
   }
 
   @Override
   public WizardInputField createField(final String defaultValue) {
 
-    return new WizardInputField<JTextField>(WizardInputField.IJ_BASE_PACKAGE, defaultValue) {
+    return new WizardInputField<JTextField>(IJ_BASE_PACKAGE, defaultValue) {
 
       private final JTextField myField = new JTextField(defaultValue);
 

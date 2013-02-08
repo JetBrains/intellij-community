@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,18 +179,26 @@ public interface Application extends ComponentManager {
   ModalityInvokator getInvokator();
 
   /**
-   * Causes <i>runnable.run()</i> to be executed asynchronously on the
-   * AWT event dispatching thread.  This will happen after all
+   * Causes {@code runnable.run()} to be executed asynchronously on the
+   * AWT event dispatching thread. This will happen after all
    * pending AWT events have been processed.
    *
    * @param runnable the runnable to execute.
    */
   void invokeLater(@NotNull Runnable runnable);
 
+  /**
+   * Causes {@code runnable.run()} to be executed asynchronously on the
+   * AWT event dispatching thread - unless the expiration condition is fulfilled.
+   * This will happen after all pending AWT events have been processed.
+   *
+   * @param runnable the runnable to execute.
+   * @param expired  condition to check before execution.
+   */
   void invokeLater(@NotNull Runnable runnable, @NotNull Condition expired);
 
   /**
-   * Causes <i>runnable.run()</i> to be executed asynchronously on the
+   * Causes {@code runnable.run()} to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
    * state.
    *
@@ -199,13 +207,26 @@ public interface Application extends ComponentManager {
    */
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
+  /**
+   * Causes {@code runnable.run()} to be executed asynchronously on the
+   * AWT event dispatching thread, when IDEA is in the specified modality
+   * state - unless the expiration condition is fulfilled.
+   * This will happen after all pending AWT events have been processed.
+   *
+   * @param runnable the runnable to execute.
+   * @param state the state in which the runnable will be executed.
+   * @param expired  condition to check before execution.
+   */
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
-   * Causes <code>runnable.run()</code> to be executed synchronously on the
+   * <p>Causes {@code runnable.run()} to be executed synchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
-   * state.  This call blocks until all pending AWT events have been processed and (then)
-   * <code>runnable.run()</code> returns.
+   * state. This call blocks until all pending AWT events have been processed and (then)
+   * {@code runnable.run()} returns.</p>
+   *
+   * <p>If current thread is an event dispatch thread then {@code runnable.run()}
+   * is executed immediately.</p>
    *
    * @param runnable the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.

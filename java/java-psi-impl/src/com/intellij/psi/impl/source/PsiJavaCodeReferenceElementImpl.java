@@ -36,12 +36,14 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +160,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         i == JavaDocElementType.DOC_INLINE_TAG ||
         i == JavaDocElementType.DOC_REFERENCE_HOLDER ||
         i == JavaDocElementType.DOC_TYPE_HOLDER) {
+      PsiDocComment docComment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
+      if (docComment != null && docComment.getOwner() == null && docComment.getParent() instanceof PsiJavaFile) {
+        return CLASS_FQ_OR_PACKAGE_NAME_KIND;
+      }
+
       return CLASS_OR_PACKAGE_NAME_KIND;
     }
     if (isCodeFragmentType(i)) {

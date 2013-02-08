@@ -61,15 +61,7 @@ import java.util.zip.ZipInputStream;
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
 
-  private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
-    @Nullable
-    @Override
-    public String fun(String s) {
-      return s.contains(".idea") ? null : s;
-    }
-  };
   public static final String UTF_8 = "UTF-8";
-  private static final String SRC = "src/";
 
   private final ModuleType myType;
   private List<WizardInputField> myAdditionalFields;
@@ -173,7 +165,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private WizardInputField getBasePackageField() {
     for (WizardInputField field : getAdditionalFields()) {
-      if (WizardInputField.IJ_BASE_PACKAGE.equals(field.getId())) {
+      if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
         return field;
       }
     }

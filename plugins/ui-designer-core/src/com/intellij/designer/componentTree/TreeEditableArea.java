@@ -45,6 +45,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
   private final DesignerActionPanel myActionPanel;
+  private boolean myCanvasSelection;
 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder, DesignerActionPanel actionPanel) {
     myTree = tree;
@@ -169,7 +170,15 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     fireSelectionChanged();
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////
+  public boolean isCanvasSelection() {
+    return myCanvasSelection;
+  }
+
+  public void setCanvasSelection(boolean canvasSelection) {
+    myCanvasSelection = canvasSelection;
+  }
+
+//////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
   //

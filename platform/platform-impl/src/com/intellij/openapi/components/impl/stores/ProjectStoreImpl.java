@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -181,7 +182,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_CONFIG_DIR), dirStore.getPath());
 
-      VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore));
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          VfsUtil.markDirtyAndRefresh(false, true, true, fs.refreshAndFindFileByIoFile(dirStore));
+        }
+      }, ModalityState.defaultModalityState());
     }
     else {
       myScheme = StorageScheme.DEFAULT;
@@ -191,7 +197,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       final String workspacePath = composeWsPath(filePath);
       stateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE), workspacePath);
 
-      VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          VfsUtil.markDirtyAndRefresh(false, true, false, fs.refreshAndFindFileByPath(filePath), fs.refreshAndFindFileByPath(workspacePath));
+        }
+      }, ModalityState.defaultModalityState());
     }
     
     myCachedLocation = null;
