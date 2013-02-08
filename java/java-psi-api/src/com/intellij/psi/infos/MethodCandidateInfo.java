@@ -41,7 +41,6 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
   private final LanguageLevel myLanguageLevel;
-  private static final Object LOCK = new Object();
 
   public MethodCandidateInfo(PsiElement candidate,
                              PsiSubstitutor substitutor,
@@ -99,27 +98,11 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map;
-        synchronized (LOCK) {
-          map = CURRENT_CANDIDATE.get();
-          if (map == null) {
-            map = new ConcurrentWeakHashMap<PsiElement,  Pair<PsiMethod, PsiSubstitutor>>();
-            CURRENT_CANDIDATE.set(map);
-          }
-        }
-        map.put(myArgumentList, Pair.create(getElement(), incompleteSubstitutor));
-        try {
-
-          final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
-          if (lists != null && !lists.isEmpty()) {
+         final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
+         if (lists != null && !lists.isEmpty()) {
             return inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
-          }
-
-          myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
-        }
-        finally {
-          map.remove(myArgumentList);
-        }
+         }
+         myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
@@ -165,21 +148,32 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
-    PsiMethod method = getElement();
-    PsiTypeParameter[] typeParameters = method.getTypeParameters();
-
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(method.getProject());
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
-        return javaPsiFacade.getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
-      }
+    Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = CURRENT_CANDIDATE.get();
+    if (map == null) {
+      map = new ConcurrentWeakHashMap<PsiElement, Pair<PsiMethod, PsiSubstitutor>>();
+      CURRENT_CANDIDATE.set(map);
     }
+    final PsiMethod method = getElement();
+    final Pair<PsiMethod, PsiSubstitutor> alreadyThere = map.put(myArgumentList, Pair.create(method, super.getSubstitutor()));
+    try {
+      PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-    final PsiElement parent = getParent();
-    if (parent == null) return PsiSubstitutor.EMPTY;
-    return javaPsiFacade.getResolveHelper()
-      .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy);
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(method.getProject());
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
+          return javaPsiFacade.getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
+        }
+      }
+
+      final PsiElement parent = getParent();
+      if (parent == null) return PsiSubstitutor.EMPTY;
+      return javaPsiFacade.getResolveHelper()
+        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy);
+    }
+    finally {
+      if (alreadyThere == null) map.remove(myArgumentList);
+    }
   }
 
   public boolean isInferencePossible() {
