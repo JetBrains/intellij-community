@@ -18,7 +18,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -26,13 +29,11 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
@@ -60,14 +61,17 @@ public class HgCommitCommand {
     if (StringUtil.isEmptyOrSpaces(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
-    List<String> parameters = new LinkedList<String>();
-    parameters.add("--logfile");
-    parameters.add(saveCommitMessage().getAbsolutePath());
-    for (HgFile hgFile : myFiles) {
-      parameters.add(hgFile.getRelativePath());
+    List<String> relativePaths = HgUtil.getRelativePathsByRepository(myFiles).get(myRoot);
+    if (relativePaths == null) {
+      return; // relativePaths for root shouldn't be empty;
     }
-
-    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    for (List<String> chunk : VcsFileUtil.chunkRelativePaths(relativePaths)) {
+      List<String> parameters = new LinkedList<String>();
+      parameters.add("--logfile");
+      parameters.add(saveCommitMessage().getAbsolutePath());
+      parameters.addAll(chunk);
+      ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    }
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);

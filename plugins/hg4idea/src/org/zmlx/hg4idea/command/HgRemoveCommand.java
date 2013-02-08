@@ -14,15 +14,13 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A wrapper for the 'hg remove' command.
@@ -50,8 +48,12 @@ public class HgRemoveCommand {
   public void execute(@NotNull Collection<HgFile> hgFiles) {
     for( Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
       List<String> filePaths = entry.getValue();
-      filePaths.add(0, "--after");
-      new HgCommandExecutor(myProject).executeInCurrentThread(entry.getKey(), "remove", filePaths);
+      for (List<String> chunkFiles : VcsFileUtil.chunkRelativePaths(filePaths)) {
+        List<String> parameters = new LinkedList<String>();
+        parameters.addAll(chunkFiles);
+        parameters.add(0, "--after");
+        new HgCommandExecutor(myProject).executeInCurrentThread(entry.getKey(), "remove", parameters);
+      }
     }
   }
 
