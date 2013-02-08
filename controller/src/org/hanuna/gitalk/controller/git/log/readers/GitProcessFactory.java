@@ -26,8 +26,15 @@ public class GitProcessFactory {
         return Runtime.getRuntime().exec(request);
     }
 
-    public static Process lastMonth(int monthCount) throws IOException {
-        String monthArg = "--since=" + monthCount + "\\month\\ago ";
+    public static Process lastDays(int dayCount) throws IOException {
+        String monthArg = "--since=" + dayCount + "\\day ";
+        String request = "git log --all --date-order " + monthArg + COMMIT_LOG_FORMAT;
+        return Runtime.getRuntime().exec(request);
+    }
+
+    //startDay < lastDay
+    public static Process dayInterval(int startDay, int lastDay) throws IOException {
+        String monthArg = "--since=" + lastDay + "\\day " + "--until=" + startDay + "\\day ";
         String request = "git log --all --date-order " + monthArg + COMMIT_LOG_FORMAT;
         return Runtime.getRuntime().exec(request);
     }

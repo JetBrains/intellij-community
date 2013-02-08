@@ -2,12 +2,12 @@ package org.hanuna.gitalk.ui_controller;
 
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.controller.Controller;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
-import org.hanuna.gitalk.log.commit.Commit;
 import org.hanuna.gitalk.log.commit.Hash;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui_controller.table_models.GraphTableModel;
@@ -31,14 +31,14 @@ public class UI_Controller {
     private final GraphTableModel graphTableModel;
 
     private GraphElement prevGraphElement = null;
-    private Set<Commit> prevSelectionBranches;
+    private Set<Hash> prevSelectionBranches;
 
     public UI_Controller(@NotNull DataPack dataPack) {
         this.dataPack = dataPack;
 
         this.refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
         this.graphTableModel = new GraphTableModel(dataPack);
-        this.prevSelectionBranches = new HashSet<Commit>(refTableModel.getCheckedCommits());
+        this.prevSelectionBranches = new HashSet<Hash>(refTableModel.getCheckedCommits());
     }
 
 
@@ -94,14 +94,14 @@ public class UI_Controller {
     }
 
     public void runUpdateShowBranches() {
-        Set<Commit> checkedCommits = refTableModel.getCheckedCommits();
+        Set<Hash> checkedCommits = refTableModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommits)) {
             MyTimer timer = new MyTimer("update branch shows");
 
-            prevSelectionBranches = new HashSet<Commit>(checkedCommits);
+            prevSelectionBranches = new HashSet<Hash>(checkedCommits);
             Set<Hash> hashSet = new HashSet<Hash>();
-            for (Commit commit : checkedCommits) {
-                hashSet.add(commit.getCommitHash());
+            for (Hash commit : checkedCommits) {
+                hashSet.add(commit);
             }
             dataPack.setShowBranches(hashSet);
             graphTableModel.rewriteData(dataPack);
@@ -136,4 +136,9 @@ public class UI_Controller {
     }
 
 
+    public void readNextCommits() {
+        System.out.println("graph row count:" + dataPack.getGraph().getNodeRows().size());
+        dataPack.getGraphModel().appendCommitsToGraph(Controller.readNextCommits());
+        events.runUpdateTable();
+    }
 }

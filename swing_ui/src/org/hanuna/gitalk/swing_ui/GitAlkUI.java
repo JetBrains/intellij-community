@@ -58,6 +58,16 @@ public class GitAlkUI extends JFrame {
         });
         leftPanel.add(hideButton);
 
+
+        JButton addButton = new JButton("A");
+        addButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                controller.readNextCommits();
+            }
+        });
+        leftPanel.add(addButton);
+
         leftPanel.add(Box.createVerticalGlue());
 
         mainPanel.add(leftPanel);

@@ -38,7 +38,15 @@ public class CommitReader {
 
     @NotNull
     public List<Commit> readLastCommits(int monthCount) throws GitException, IOException {
-        Process process = GitProcessFactory.lastMonth(monthCount);
+        Process process = GitProcessFactory.lastDays(monthCount);
+        outputReader.startRead(process);
+        return commits;
+    }
+
+
+    @NotNull
+    public List<Commit> readIntervalCommits(int startDay, int lastDay) throws GitException, IOException {
+        Process process = GitProcessFactory.dayInterval(startDay, lastDay);
         outputReader.startRead(process);
         return commits;
     }

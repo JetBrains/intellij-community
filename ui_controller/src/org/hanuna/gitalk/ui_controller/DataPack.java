@@ -20,7 +20,6 @@ import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -42,10 +41,7 @@ public class DataPack {
         this.commitDataGetter = commitDataGetter;
         final MyTimer graphTimer = new MyTimer("graph build");
 
-        final Set<Hash> trackedHashes = new HashSet<Hash>();
-        for (Commit commit : refsModel.getOrderedLogTrackedCommit()) {
-            trackedHashes.add(commit.getCommitHash());
-        }
+        final Set<Hash> trackedHashes = refsModel.getOrderedLogTrackedCommit();
 
         graph = GraphBuilder.build(commits);
         graphModel = new GraphModelImpl(graph);
@@ -56,6 +52,7 @@ public class DataPack {
                 return key.getDownEdges().size() == 0 || trackedHashes.contains(key.getCommitHash());
             }
         });
+        System.out.println("graph row count:" + graph.getNodeRows().size());
 
         graphTimer.print();
 
@@ -80,6 +77,10 @@ public class DataPack {
     @NotNull
     public Graph getGraph() {
         return graph;
+    }
+
+    public GraphModel getGraphModel() {
+        return graphModel;
     }
 
     @NotNull

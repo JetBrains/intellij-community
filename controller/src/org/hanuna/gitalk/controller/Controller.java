@@ -17,6 +17,7 @@ import org.hanuna.gitalk.ui_controller.DataPack;
 import org.hanuna.gitalk.ui_controller.UI_Controller;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,13 +26,27 @@ import java.util.List;
 public class Controller {
     private static final String START_MESSAGE = "git think";
 
-    private final ProgressModel progressModel = new ProgressModel();
+    private static final ProgressModel progressModel = new ProgressModel();
     private final ProgressFrame frame = new ProgressFrame(progressModel, START_MESSAGE);
 
-    public DataPack readData(int monthCount) throws IOException, GitException {
-        progressModel.setMessage(START_MESSAGE);
-        progressModel.setState(ProgressModel.State.UNREFINED_PROGRESS);
+    private static int lastDay = 170;
+    private static int incCount = 150;
 
+    public static List<Commit> readNextCommits() {
+        try {
+            List<Commit> commits = Collections.emptyList();
+            commits = readCommits(incCount, lastDay);
+            lastDay += incCount;
+            return commits;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GitException e) {
+            e.printStackTrace();
+        }
+        throw new IllegalStateException();
+    }
+
+    public static List<Commit> readCommits(int dayCount, int startDay) throws IOException, GitException {
         final MyTimer gitThink = new MyTimer("git think");
         final MyTimer commitReadTimer = new MyTimer("commits read");
         CommitReader commitReader = new CommitReader(new Executor<Integer>() {
@@ -47,17 +62,28 @@ public class Controller {
             }
         });
         List<Commit> commits;
-        if (monthCount == 0) {
+        if (dayCount == 0) {
             commits = commitReader.readAllCommits();
         } else {
-            commits = commitReader.readLastCommits(monthCount);
+            if (startDay == 0) {
+                commits = commitReader.readLastCommits(dayCount);
+            } else {
+                commits = commitReader.readIntervalCommits(startDay, startDay + dayCount);
+            }
         }
         commitReadTimer.print();
+        return commits;
+    }
 
 
+    public DataPack readData(int monthCount, int startDay) throws IOException, GitException {
+        progressModel.setMessage(START_MESSAGE);
+        progressModel.setState(ProgressModel.State.UNREFINED_PROGRESS);
+
+        List<Commit> commits = readCommits(monthCount, startDay);
         RefReader refReader = new RefReader();
         List<Ref> allRefs = refReader.readAllRefs();
-        RefsModel refsModel = RefsModel.existedCommitRefs(allRefs, commits);
+        RefsModel refsModel = RefsModel.existedCommitRefs(allRefs);
 
         progressModel.setMessage("graph build");
         DataPack dataPack = new DataPack(refsModel, commits, new CacheCommitDataGetter());
@@ -69,7 +95,7 @@ public class Controller {
     public void run() throws IOException {
         DataPack dataPack;
         try {
-            dataPack = readData(0);
+            dataPack = readData(lastDay, 0);
         } catch (GitException e) {
             progressModel.setState(ProgressModel.State.HIDE);
             new ErrorFrame(e.getMessage());

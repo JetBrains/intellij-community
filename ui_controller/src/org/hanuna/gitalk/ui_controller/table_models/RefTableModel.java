@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.ui_controller.table_models;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.Hash;
 import org.hanuna.gitalk.log.commitdata.CommitData;
 import org.hanuna.gitalk.log.commitdata.CommitDataGetter;
 import org.hanuna.gitalk.refs.Ref;
@@ -16,17 +16,17 @@ import java.util.*;
 public class RefTableModel extends AbstractTableModel {
     private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
-    private static List<Commit> getOrderedBranchCommit(RefsModel refsModel) {
-        List<Commit> orderedCommit = new ArrayList<Commit>();
-        for (Commit commit : refsModel.getOrderedLogTrackedCommit()) {
+    private static List<Hash> getOrderedBranchCommit(RefsModel refsModel) {
+        List<Hash> orderedCommit = new ArrayList<Hash>();
+        for (Hash hash : refsModel.getOrderedLogTrackedCommit()) {
             boolean hasBranchRef = false;
-            for (Ref ref : refsModel.refsToCommit(commit.getCommitHash())) {
+            for (Ref ref : refsModel.refsToCommit(hash)) {
                 if (ref.getType() != Ref.Type.TAG) {
                     hasBranchRef = true;
                 }
             }
             if (hasBranchRef) {
-                orderedCommit.add(commit);
+                orderedCommit.add(hash);
             }
         }
         return orderedCommit;
@@ -34,8 +34,8 @@ public class RefTableModel extends AbstractTableModel {
 
 
     private final RefsModel refsModel;
-    private final List<Commit> orderedRefCommit;
-    private final Set<Commit> checkedCommits;
+    private final List<Hash> orderedRefCommit;
+    private final Set<Hash> checkedCommits;
     private final CommitDataGetter commitDataGetter;
 
 
@@ -44,10 +44,10 @@ public class RefTableModel extends AbstractTableModel {
         this.refsModel = refsModel;
         this.commitDataGetter = commitDataGetter;
         this.orderedRefCommit = getOrderedBranchCommit(refsModel);
-        checkedCommits = new HashSet<Commit>(orderedRefCommit);
+        checkedCommits = new HashSet<Hash>(orderedRefCommit);
     }
 
-    public Set<Commit> getCheckedCommits() {
+    public Set<Hash> getCheckedCommits() {
         return Collections.unmodifiableSet(checkedCommits);
     }
 
@@ -68,13 +68,13 @@ public class RefTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        Commit commit = orderedRefCommit.get(rowIndex);
-        CommitData data = commitDataGetter.getCommitData(commit.getCommitHash());
+        Hash hash = orderedRefCommit.get(rowIndex);
+        CommitData data = commitDataGetter.getCommitData(hash);
         switch (columnIndex) {
             case 0:
-                return checkedCommits.contains(commit);
+                return checkedCommits.contains(hash);
             case 1:
-                return new CommitCell(data.getMessage(), refsModel.refsToCommit(commit.getCommitHash()));
+                return new CommitCell(data.getMessage(), refsModel.refsToCommit(hash));
             case 2:
                 return data.getAuthor();
             case 3:
@@ -88,11 +88,11 @@ public class RefTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex == 0) {
             Boolean select = (Boolean) aValue;
-            Commit commit = orderedRefCommit.get(rowIndex);
+            Hash hash = orderedRefCommit.get(rowIndex);
             if (select) {
-                checkedCommits.add(commit);
+                checkedCommits.add(hash);
             } else {
-                checkedCommits.remove(commit);
+                checkedCommits.remove(hash);
                 if (checkedCommits.size() == 0) {
                     checkedCommits.add(orderedRefCommit.get(0));
                 }
