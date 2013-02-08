@@ -105,8 +105,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
 
     private void checkReplace(Replace replace) {
         if (replace.to() >= size) {
-            throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
-                    + replace.to() + ", " + replace.addedElementCount());
+            throw new IllegalArgumentException("size= "+size + "Bad replace: " + replace);
         }
     }
 
