@@ -187,9 +187,11 @@ public class MinusculeMatcher implements Matcher {
 
   @Nullable
   public FList<TextRange> matchingFragments(@NotNull String name) {
-    MatchingState table = myMatchingState.get();
-    table.clearTable(name.length());
-    return matchWildcards(name, 0, 0, IOUtil.isAscii(name), table);
+    MatchingState state = myMatchingState.get();
+    state.initializeState(name.length());
+    FList<TextRange> result = matchWildcards(name, 0, 0, IOUtil.isAscii(name), state);
+    state.deinitializeState();
+    return result;
   }
 
   @Nullable
@@ -394,12 +396,20 @@ public class MinusculeMatcher implements Matcher {
   }
 
   private static class MatchingState {
+    private boolean myBusy;
     private int myNameLength;
     private final BitSet myTable = new BitSet();
 
-    void clearTable(int nameLength) {
+    void initializeState(int nameLength) {
+      assert !myBusy;
+      myBusy = true;
       myNameLength = nameLength;
       myTable.clear();
+    }
+
+    void deinitializeState() {
+      assert myBusy;
+      myBusy = false;
     }
 
     void registerFailure(int patternIndex, int nameIndex) {
