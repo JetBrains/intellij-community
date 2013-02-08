@@ -21,6 +21,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
@@ -65,6 +66,20 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
+
+    Dictionary<Integer, JLabel> delayDictionary = new Hashtable<Integer, JLabel>();
+    delayDictionary.put(new Integer(0), new JLabel("0"));
+    delayDictionary.put(new Integer(1200), new JLabel("1200"));
+    //delayDictionary.put(new Integer(2400), new JLabel("2400"));
+    myComponent.myInitialTooltipDelaySlider.setLabelTable(delayDictionary);
+    UIUtil.setSliderIsFilled(myComponent.myInitialTooltipDelaySlider, Boolean.TRUE);
+    myComponent.myInitialTooltipDelaySlider.setMinimum(0);
+    myComponent.myInitialTooltipDelaySlider.setMaximum(1200);
+    myComponent.myInitialTooltipDelaySlider.setPaintLabels(true);
+    myComponent.myInitialTooltipDelaySlider.setPaintTicks(true);
+    myComponent.myInitialTooltipDelaySlider.setPaintTrack(true);
+    myComponent.myInitialTooltipDelaySlider.setMajorTickSpacing(1200);
+    myComponent.myInitialTooltipDelaySlider.setMinorTickSpacing(100);
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -196,6 +211,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         settings.ALPHA_MODE_RATIO = ratio;
       }
     }
+    int tooltipDelay = Math.min(myComponent.myInitialTooltipDelaySlider.getValue(), 5000);
+    if (tooltipDelay != Registry.intValue("ide.tooltip.initialDelay")) {
+      update = true;
+      Registry.get("ide.tooltip.initialDelay").setValue(tooltipDelay);
+    }
 
     if (update) {
       settings.fireUISettingsChanged();
@@ -240,6 +260,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAlphaModeRatioSlider.setValue(ratio);
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
+    myComponent.myInitialTooltipDelaySlider.setValue(Registry.intValue("ide.tooltip.initialDelay"));
     myComponent.updateCombo();
   }
 
@@ -284,6 +305,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
       isModified |= ratio != settings.ALPHA_MODE_RATIO;
     }
+    int tooltipDelay = -1;
+    tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
+    isModified |=  tooltipDelay != Registry.intValue("ide.tooltip.initialDelay");
 
     return isModified;
   }
@@ -320,9 +344,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JCheckBox myDisableMnemonicInControlsCheckBox;
-    private JBCheckBox myHideNavigationPopupsCheckBox;
+    private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
+    private JSlider myInitialTooltipDelaySlider;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
