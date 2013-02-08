@@ -48,7 +48,7 @@ class LambdaTest2<TypeParam> {
     U map(T t);
   }
 
-  public <U> LambdaTest<U> map(final Mapper<? super TypeParam, ? extends U> mapper) {
+  public <U> LambdaTest2<U> map(final Mapper<? super TypeParam, ? extends U> mapper) {
     return null;
   }
 

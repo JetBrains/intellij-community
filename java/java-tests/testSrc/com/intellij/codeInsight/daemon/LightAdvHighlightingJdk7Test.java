@@ -21,7 +21,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
-import com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -30,6 +29,9 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
@@ -46,6 +48,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
+    setLanguageLevel(LanguageLevel.JDK_1_7); 
+    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_7, myTestRootDisposable);
     enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
@@ -94,7 +98,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg12() throws Exception { doTest(false, false); }
   public void testDiamondNeg13() throws Exception { doTest(false, false); }
   public void testDiamondNeg14() throws Exception { doTest(false, false); }
-  public void testDiamondMisc() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(false, false); }
+  public void testDiamondMisc() throws Exception { doTest(false, false); }
   public void testHighlightInaccessibleFromClassModifierList() throws Exception { doTest(false, false); }
   public void testInnerInTypeArguments() throws Exception { doTest(false, false); }
 
@@ -130,7 +134,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testJavacQuirks() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testMultiCatch() throws Exception { doTest(false, false); }
   public void testTryWithResources() throws Exception { doTest(false, false); }
@@ -147,8 +150,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testExtendsBound() throws Exception { doTest(false, false); }
   public void testIDEA84533() throws Exception { doTest(false, false); }
   public void testClassLiteral() throws Exception { doTest(false, false); }
-  public void testExtensionMethods() throws Exception { doTest(false, false); }
-  public void testExtensionMethodSyntax() throws Exception { doTest(true, false, DeprecatedDefenderSyntaxInspection.class); }
   public void testMethodReferences() throws Exception { doTest(false, true, false); }
   public void testUsedMethodsByMethodReferences() throws Exception { doTest(true, true, false); }
   public void testLambdaExpressions() throws Exception { doTest(false, true, false); }
@@ -161,9 +162,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningIDEA99357() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA26738() throws Exception { doTest(true, false); }
   public void testUncheckedWarningIDEA99536() throws Exception { doTest(true, false); }
-  public void testDefaultMethodVisibility() throws Exception { doTest(true, false); }
-  public void testInheritUnrelatedDefaults() throws Exception { doTest(true, false); }
-  public void testNotInheritFromUnrelatedDefault() throws Exception { doTest(true, false); }
   public void testEnclosingInstance() throws Exception { doTest(false, false); }
   public void testWrongArgsAndUnknownTypeParams() throws Exception { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA97983() throws Exception { doTest(false, false); }
