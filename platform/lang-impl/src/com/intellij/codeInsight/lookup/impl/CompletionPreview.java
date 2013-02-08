@@ -85,6 +85,10 @@ public class CompletionPreview implements Disposable {
   }
 
   private void updatePreview() {
+    if (true) {
+      return;
+    }
+
     LookupElement item = myLookup.getCurrentItem();
     if (item == null) {
       return;
