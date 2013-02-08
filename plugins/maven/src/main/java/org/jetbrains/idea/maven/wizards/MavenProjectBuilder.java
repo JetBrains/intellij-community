@@ -104,6 +104,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     settings.generalSettings = getGeneralSettings();
     settings.importingSettings = getImportingSettings();
 
+    String settingsFile = System.getProperty("idea.maven.import.settings.file");
+    if (!StringUtil.isEmptyOrSpaces(settingsFile)) {
+      settings.generalSettings.setUserSettingsFile(settingsFile.trim());
+    }
+
     List<String> selectedProfiles = getSelectedProfiles();
 
     String profilesList = System.getProperty("idea.maven.import.enabled.profiles");
