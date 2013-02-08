@@ -89,12 +89,15 @@ public class CompletionPreview implements Disposable {
       return;
     }
 
+    final EditorImpl editor = getEditorImpl();
+    editor.setCustomImage(null);
+    repaintCaretLine();
+
     LookupElement item = myLookup.getCurrentItem();
     if (item == null) {
       return;
     }
 
-    final EditorImpl editor = getEditorImpl();
     if (editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection()) {
       return;
     }
@@ -116,7 +119,6 @@ public class CompletionPreview implements Disposable {
     }
 
 
-    editor.setCustomImage(null);
     BufferedImage previewImage = createPreviewImage(text.substring(prefixLength));
     editor.setCustomImage(Pair.create(getCaretPoint(), previewImage));
     repaintCaretLine();
