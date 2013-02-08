@@ -20,6 +20,7 @@ import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,14 +36,26 @@ public class DataPack {
     private GraphModel graphModel;
     private GraphPrintCellModel printCellModel;
 
-    public DataPack(RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
+    public DataPack(final RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
         this.refsModel = refsModel;
         this.commits = commits;
         this.commitDataGetter = commitDataGetter;
-        MyTimer graphTimer = new MyTimer("graph build");
-        //graph = GraphBuilder.build(commits, refsModel);
+        final MyTimer graphTimer = new MyTimer("graph build");
+
+        final Set<Hash> trackedHashes = new HashSet<Hash>();
+        for (Commit commit : refsModel.getOrderedLogTrackedCommit()) {
+            trackedHashes.add(commit.getCommitHash());
+        }
+
         graph = GraphBuilder.build(commits);
         graphModel = new GraphModelImpl(graph);
+        graphModel.getFragmentManager().setUnhiddenNodes(new Get<Node, Boolean>() {
+            @NotNull
+            @Override
+            public Boolean get(@NotNull Node key) {
+                return key.getDownEdges().size() == 0 || trackedHashes.contains(key.getCommitHash());
+            }
+        });
 
         graphTimer.print();
 
