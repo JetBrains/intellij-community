@@ -27,7 +27,7 @@ public class DefaultParameterTypeInferencePolicy extends ParameterTypeInferenceP
   
   @Nullable
   @Override
-  public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiCallExpression innerMethodCall,
+  public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
                                                                           PsiExpressionList parent,
                                                                           PsiCallExpression contextCall,
                                                                           PsiTypeParameter typeParameter) {

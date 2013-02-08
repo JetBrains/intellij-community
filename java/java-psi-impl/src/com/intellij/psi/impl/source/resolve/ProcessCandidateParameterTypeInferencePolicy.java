@@ -36,17 +36,18 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
 
   @Override
-  public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiCallExpression innerMethodCall,
+  public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
                                                                           PsiExpressionList expressionList,
                                                                           PsiCallExpression contextCall,
                                                                           PsiTypeParameter typeParameter) {
+    PsiExpression[] expressions = expressionList.getExpressions();
+    int i = ArrayUtil.find(expressions, innerMethodCall);
+    if (i < 0) return null;
+
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall);
     try {
       //can't call resolve() since it obtains full substitution, that may result in infinite recursion
       PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
-      PsiExpression[] expressions = expressionList.getExpressions();
-      int i = ArrayUtil.find(expressions, innerMethodCall);
-      if (i < 0) return null;
       final JavaResolveResult[] results = processor.getResult();
       PsiMethod owner = (PsiMethod)typeParameter.getOwner();
       if (owner == null) return null;
