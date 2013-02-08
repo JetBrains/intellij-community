@@ -98,12 +98,12 @@ public class LambdaHighlightingUtil {
       final PsiType substitution = resolveResult.getSubstitutor().substitute(parameter);
       if (substitution instanceof PsiWildcardType && !((PsiWildcardType)substitution).isBounded()) {
         for (PsiType paramType : methodSignature.getParameterTypes()) {
-          if (LambdaUtil.depends(paramType, parameter, new LambdaUtil.TypeParamsChecker((PsiMethod)null, aClass) {
+          if (LambdaUtil.depends(paramType, new LambdaUtil.TypeParamsChecker((PsiMethod)null, aClass) {
             @Override
             public boolean startedInference() {
               return true;
             }
-          })) {
+          }, parameter)) {
             depends = true;
             break;
           }
