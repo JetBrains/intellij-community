@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import gnu.trove.THashSet;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
@@ -69,7 +69,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public Icon getIcon() {
-    return icons.MavenIcons.MavenLogo;
+    return MavenIcons.MavenLogo;
   }
 
   public void cleanup() {
@@ -108,7 +108,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     String profilesList = System.getProperty("idea.maven.import.enabled.profiles");
     if (profilesList != null) {
-      Set<String> selectedProfilesSet = new THashSet<String>(selectedProfiles);
+      Set<String> selectedProfilesSet = new LinkedHashSet<String>(selectedProfiles);
       selectedProfilesSet.addAll(StringUtil.split(profilesList, ","));
       selectedProfiles = new ArrayList<String>(selectedProfilesSet);
     }
