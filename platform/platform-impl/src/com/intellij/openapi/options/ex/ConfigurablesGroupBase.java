@@ -46,7 +46,7 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
       final ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
       Configurable[] components = myLoadComponents ? myComponentManager.getComponents(Configurable.class) : new Configurable[0];
 
-      List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, getConfigurableFilter(), myConfigurablesExtensionPoint);
+      List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, getConfigurableFilter());
       myChildren = result.toArray(new Configurable[result.size()]);
     }
     return myChildren;

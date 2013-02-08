@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableProvider;
@@ -41,8 +40,7 @@ public class ConfigurableExtensionPointUtil {
 
   public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
                                                           final Configurable[] components,
-                                                          @Nullable ConfigurableFilter filter,
-                                                          ExtensionPointName<ConfigurableEP<Configurable>> configurablesExtensionPoint) {
+                                                          @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
     ContainerUtil.addAll(result, components);
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
