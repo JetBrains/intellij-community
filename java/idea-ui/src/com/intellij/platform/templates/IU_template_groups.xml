@@ -1,5 +1,15 @@
 <template-groups xmlns="http://www.jetbrains.com/projectTemplates">
   <group>
+    <name>Java Samples</name>
+    <path>Java</path>
+    <template>
+      <name>Java Hello World</name>
+      <description><![CDATA[ Simple Java "Hello World" application. ]]></description>
+      <path>HelloWorld.zip</path>
+    </template>
+  </group>
+
+  <group>
     <name>Spring</name>
     <path>Spring</path>
     <requiredPlugin>com.intellij.spring</requiredPlugin>
@@ -9,7 +19,6 @@
       <description><![CDATA[ A simple console application with Spring Framework 3.2. ]]></description>
       <path>SpringApp</path>
       <input-field>IJ_BASE_PACKAGE</input-field>
-      <input-field>IJ_APPLICATION_SERVER</input-field>
     </template>
   </group>
 </template-groups>
