@@ -387,6 +387,11 @@ public class LambdaUtil {
 
   @Nullable
   public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
+    return getFunctionalInterfaceType(expression, tryToSubstitute, -1);
+  }
+
+  @Nullable
+  public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute, int paramIdx) {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
@@ -416,13 +421,13 @@ public class LambdaUtil {
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
       if (lambdaIdx > -1) {
 
-        if (!tryToSubstitute) {
-          final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
-          if (method != null) {
-            final PsiParameter[] parameters = method.first.getParameterList().getParameters();
-            return lambdaIdx < parameters.length ? method.second.substitute(parameters[lambdaIdx].getType()) : null;
-          }
+        PsiType cachedType = null;
+        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+        final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
+        if (method != null) {
+          final PsiParameter[] parameters = method.first.getParameterList().getParameters();
+          cachedType = lambdaIdx < parameters.length ? method.second.substitute(parameters[lambdaIdx].getType()) : null;
+          if (!tryToSubstitute) return cachedType;
         }
 
         final PsiElement gParent = expressionList.getParent();
@@ -434,6 +439,16 @@ public class LambdaUtil {
               final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
               if (lambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return parameters[lambdaIdx].getType();
+                if (cachedType != null && paramIdx > -1) {
+                  final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
+                  if (interfaceMethod != null) {
+                    final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
+                    final PsiType interfaceMethodParameterType = interfaceMethod.getParameterList().getParameters()[paramIdx].getType();
+                    if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethodParameterType), cachedType, expression, null)){
+                      return cachedType;
+                    }
+                  }
+                }
                 return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
@@ -478,7 +493,7 @@ public class LambdaUtil {
           final PsiParameterList parameterList = lambdaExpression.getParameterList();
           final boolean add = currentStack.add(parameterList);
           try {
-            PsiType type = getFunctionalInterfaceType(lambdaExpression, true);
+            PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
             if (type == null) {
               type = getFunctionalInterfaceType(lambdaExpression, false);
             }
