@@ -194,6 +194,10 @@ public class MinusculeMatcher implements Matcher {
     return result;
   }
 
+  /**
+   * After a wildcard (* or space), search for the first non-wildcard pattern character in the name starting from nameIndex
+   * and try to {@link #matchFragment(String, int, int, com.intellij.psi.codeStyle.MinusculeMatcher.MatchingState)} for it.
+   */
   @Nullable
   private FList<TextRange> matchWildcards(@NotNull String name,
                                           int patternIndex,
@@ -212,8 +216,10 @@ public class MinusculeMatcher implements Matcher {
     do {
       patternIndex++;
     } while (isWildcard(patternIndex));
-    boolean space = isPatternChar(patternIndex - 1, ' ');
+
     if (patternIndex == myPattern.length) {
+      boolean space = isPatternChar(patternIndex - 1, ' ');
+      // the trailing space should match if the pattern ends with the last name part, or only its first hump character
       if (space && nameIndex != name.length() && (patternIndex < 2 || !NameUtil.isWordStart(myPattern[patternIndex - 2]))) {
         return null;
       }
@@ -228,6 +234,10 @@ public class MinusculeMatcher implements Matcher {
     return matchSkippingWords(name, patternIndex, nameIndex, true, matchingState);
   }
 
+  /**
+   * Enumerates places in name that could be matched by the pattern at patternIndex position
+   * and invokes {@link #matchFragment(String, int, int, com.intellij.psi.codeStyle.MinusculeMatcher.MatchingState)} at those candidate positions
+   */
   @Nullable
   private FList<TextRange> matchSkippingWords(@NotNull String name,
                                               final int patternIndex,
@@ -243,9 +253,11 @@ public class MinusculeMatcher implements Matcher {
       if (nextOccurrence < 0) {
         return null;
       }
+      // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
       if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
         return null;
       }
+      // if the user has typed a dot, don't skip other dots between humps
       if (!allowSpecialChars && myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
         return null;
       }
@@ -280,6 +292,10 @@ public class MinusculeMatcher implements Matcher {
     return result;
   }
 
+  /**
+   * Attempts to match an alphanumeric sequence of pattern (starting at patternIndex)
+   * to some continuous substring of name, starting from nameIndex.
+   */
   private FList<TextRange> doMatchFragments(String name,
                                             int patternIndex,
                                             int nameIndex,
@@ -288,6 +304,7 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
 
+    // middle matches have to be at least of length 2, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil
       .isWordStart(name, nameIndex) ? 2 : 1;
     int i = 1;
@@ -299,12 +316,14 @@ public class MinusculeMatcher implements Matcher {
         if (i < minFragment) {
           return null;
         }
+        // when an uppercase pattern letter matches lowercase name letter, try to find an uppercase (better) match further in the name
         if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
           int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i, matchingState.isAsciiName);
           FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart, matchingState);
           if (ranges != null) {
             return prependRange(ranges, nameIndex, i);
           }
+          // at least three consecutive uppercase letters shouldn't match lowercase
           if (myHasHumps && i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
             return null;
           }
@@ -313,9 +332,14 @@ public class MinusculeMatcher implements Matcher {
       i++;
     }
 
+    // we've found the longest fragment matching pattern and name
+
     if (patternIndex + i >= myPattern.length) {
       return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
     }
+
+    // try to match the remainder of pattern with the remainder of name
+    // it may not succeed with the longest matching fragment, then try shorter matches
     while (i >= minFragment) {
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, matchingState) :
