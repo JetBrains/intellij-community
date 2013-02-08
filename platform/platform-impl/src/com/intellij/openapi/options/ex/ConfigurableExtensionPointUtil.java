@@ -42,10 +42,16 @@ public class ConfigurableExtensionPointUtil {
                                                           final Configurable[] components,
                                                           @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
-    ContainerUtil.addAll(result, components);
+    for (Configurable component : components) {
+      if (!isSuppressed(component, filter)) {
+        result.add(component);
+      }
+    }
+
     final Map<String, ConfigurableWrapper> idToConfigurable = new HashMap<String, ConfigurableWrapper>();
     for (ConfigurableEP<Configurable> ep : extensions) {
       final Configurable configurable = ConfigurableWrapper.wrapConfigurable(ep);
+      if (isSuppressed(configurable, filter)) continue;
       if (configurable instanceof ConfigurableWrapper) {
         final ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
         idToConfigurable.put(wrapper.getId(), wrapper);
@@ -75,17 +81,13 @@ public class ConfigurableExtensionPointUtil {
     }
     ContainerUtil.addAll(result, idToConfigurable.values());
 
-    final ListIterator<Configurable> iterator = result.listIterator();
-    while (iterator.hasNext()) {
-      Configurable each = iterator.next();
-      if (each instanceof Configurable.Assistant
-          || each instanceof OptionalConfigurable && !((OptionalConfigurable) each).needDisplay()
-          || filter != null && !filter.isIncluded(each)) {
-        iterator.remove();
-      }
-    }
-
     return result;
+  }
+
+  private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
+    return each instanceof Configurable.Assistant
+        || each instanceof OptionalConfigurable && !((OptionalConfigurable) each).needDisplay()
+        || filter != null && !filter.isIncluded(each);
   }
 
   /*
