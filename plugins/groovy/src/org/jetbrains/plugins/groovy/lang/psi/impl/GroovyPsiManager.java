@@ -240,7 +240,7 @@ public class GroovyPsiManager {
       return null;
     }
 
-    return ourGuard.doPreventingRecursion(element, false, computable);
+    return ourGuard.doPreventingRecursion(element, true, computable);
   }
 
 }
