@@ -17,14 +17,14 @@ import java.util.Set;
  */
 public class BranchVisibleNodes {
     private final MutableGraph graph;
-    private final Set<Node> visibleNodes = new HashSet<Node>();
+    private Set<Node> visibleNodes = Collections.emptySet();
 
     public BranchVisibleNodes(MutableGraph graph) {
         this.graph = graph;
     }
 
-    public void setVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode) {
-        visibleNodes.clear();
+    public Set<Node> generateVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode) {
+        Set<Node> visibleNodes = new HashSet<Node>();
         for (MutableNodeRow row : graph.getAllRows()) {
             for (MutableNode node : row.getInnerNodeList()) {
                 if (isStartedNode.get(node)) {
@@ -37,6 +37,11 @@ public class BranchVisibleNodes {
                 }
             }
         }
+        return visibleNodes;
+    }
+
+    public void setVisibleNodes(@NotNull Set<Node> visibleNodes) {
+        this.visibleNodes = visibleNodes;
     }
 
     public Set<Node> getVisibleNodes() {

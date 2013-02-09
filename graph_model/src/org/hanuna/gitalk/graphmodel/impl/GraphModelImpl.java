@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author erokhins
@@ -26,6 +27,7 @@ public class GraphModelImpl implements GraphModel {
     private final FragmentManagerImpl fragmentManager;
     private final BranchVisibleNodes visibleNodes;
     private final List<Executor<Replace>> listeners = new ArrayList<Executor<Replace>>();
+    private final GraphBranchShowFixer branchShowFixer;
 
     private Get<Node, Boolean> isStartedBranchVisibilityNode = new Get<Node, Boolean>() {
         @NotNull
@@ -49,7 +51,8 @@ public class GraphModelImpl implements GraphModel {
             }
         });
         this.visibleNodes = new BranchVisibleNodes(graph);
-        visibleNodes.setVisibleBranchesNodes(isStartedBranchVisibilityNode);
+        visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
+        branchShowFixer = new GraphBranchShowFixer(graph, fragmentManager);
         graph.setGraphDecorator(new GraphDecorator() {
             private final GraphDecorator decorator = fragmentManager.getGraphDecorator();
             @Override
@@ -98,7 +101,7 @@ public class GraphModelImpl implements GraphModel {
     public void appendCommitsToGraph(@NotNull List<Commit> commits) {
         int oldSize = graph.getNodeRows().size();
         GraphBuilder.addCommitsToGraph(graph, commits);
-        visibleNodes.setVisibleBranchesNodes(isStartedBranchVisibilityNode);
+        visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
         graph.updateVisibleRows();
 
         Replace replace = Replace.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
@@ -108,7 +111,10 @@ public class GraphModelImpl implements GraphModel {
     @Override
     public void setVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode) {
         this.isStartedBranchVisibilityNode = isStartedNode;
-        visibleNodes.setVisibleBranchesNodes(isStartedNode);
+        Set<Node> prevVisibleNodes = visibleNodes.getVisibleNodes();
+        Set<Node> newVisibleNodes = visibleNodes.generateVisibleBranchesNodes(isStartedNode);
+        branchShowFixer.fixCrashBranches(prevVisibleNodes, newVisibleNodes);
+        visibleNodes.setVisibleNodes(newVisibleNodes);
         fullUpdate();
     }
 
