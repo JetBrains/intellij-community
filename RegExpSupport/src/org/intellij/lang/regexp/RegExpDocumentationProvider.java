@@ -39,10 +39,11 @@ public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
         final String elementName = node.getText();
         for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
           if (stringArray[0].equals(elementName)) {
+            final String description = stringArray.length > 1 ? stringArray[1] : stringArray[0];
             if (prop.isNegated()) {
-              return "Property block stands for characters not matching " + stringArray[1];
+              return "Property block stands for characters not matching " + description;
             } else {
-              return "Property block stands for " + "" + stringArray[1];
+              return "Property block stands for " + description;
             }
           }
         }
