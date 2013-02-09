@@ -414,18 +414,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
-    // defaulting to the same jdk that used to run the build process
-    String javaHome = SystemProperties.getJavaHome();
-    int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
-
-    for (JpsSdk<?> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-      final String version = sdk.getVersionString();
-      final int ver = convertToNumber(version);
-      if (ver > javaVersion) {
-        javaVersion = ver;
-        javaHome = sdk.getHomePath();
-      }
-    }
+    // use the same jdk that used to run the build process
+    final String javaHome = SystemProperties.getJavaHome();
 
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
       javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context)
@@ -657,16 +647,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return cached;
     }
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
-    if (!USE_EMBEDDED_JAVAC) {
-      // in case of external javac, run compiler from the newest jdk that is used in the project
-      for (JpsSdk<?> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-        final String version = sdk.getVersionString();
-        final int ver = convertToNumber(version);
-        if (ver > javaVersion) {
-          javaVersion = ver;
-        }
-      }
-    }
     JAVA_COMPILER_VERSION_KEY.set(context, javaVersion);
     return javaVersion;
   }
