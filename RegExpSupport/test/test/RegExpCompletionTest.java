@@ -59,7 +59,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     private void doBackSlashVariantsTest() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                 "t", "n", "r", "f", "a", "e"));
-        for (String[] stringArray : RegExpPropertyNameProvider.getProvider().getAllKnownProperties()) {
+        for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
             nameList.add("p{" + stringArray[0] + "}");
         }
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
@@ -67,7 +67,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropertyVariants() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>();
-        for (String[] stringArray : RegExpPropertyNameProvider.getProvider().getAllKnownProperties()) {
+        for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
         }
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));

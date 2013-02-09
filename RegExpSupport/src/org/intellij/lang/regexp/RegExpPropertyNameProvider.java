@@ -81,7 +81,7 @@ public final class RegExpPropertyNameProvider {
   }
 
   @NotNull
-  public static RegExpPropertyNameProvider getProvider() {
+  public static RegExpPropertyNameProvider getInstance() {
     return ourInstance;
   }
 

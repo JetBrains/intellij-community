@@ -90,7 +90,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertyNameProvider.getProvider().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
         result.addElement(
           TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
@@ -102,7 +102,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertyNameProvider.getProvider().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
         addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
@@ -125,7 +125,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
         addLookupElement(result, completions[i], completionsTypes[i], emptyIcon);
       }
 
-      for (String[] stringArray : RegExpPropertyNameProvider.getProvider().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
         addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }

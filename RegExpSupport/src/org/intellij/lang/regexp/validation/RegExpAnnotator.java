@@ -135,7 +135,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
-    if (category != null && !RegExpPropertyNameProvider.getProvider().isValidCategory(category.getText())) {
+    if (category != null && !RegExpPropertyNameProvider.getInstance().isValidCategory(category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
         // IDEA-9381
