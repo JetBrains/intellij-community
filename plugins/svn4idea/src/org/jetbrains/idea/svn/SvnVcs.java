@@ -334,7 +334,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myCopiesRefreshManager.waitRefresh(new Runnable() {
       @Override
       public void run() {
-        callCleanupWorker.run();
+        ApplicationManager.getApplication().invokeLater(callCleanupWorker, ModalityState.any());
       }
     });
   }
