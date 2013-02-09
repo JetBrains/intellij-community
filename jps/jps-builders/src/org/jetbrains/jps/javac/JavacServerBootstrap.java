@@ -39,7 +39,12 @@ import java.util.concurrent.Future;
  */
 public class JavacServerBootstrap {
 
-  public static BaseOSProcessHandler launchJavacServer(String sdkHomePath, int heapSize, int port, File workingDir, List<String> vmOptions) throws Exception {
+  public static BaseOSProcessHandler launchJavacServer(String sdkHomePath,
+                                                       int heapSize,
+                                                       int port,
+                                                       File workingDir,
+                                                       List<String> vmOptions,
+                                                       boolean useEclipseCompiler) throws Exception {
     final List<String> cmdLine = new ArrayList<String>();
     appendParam(cmdLine, getVMExecutablePath(sdkHomePath));
     appendParam(cmdLine, "-XX:MaxPermSize=150m");
@@ -77,13 +82,17 @@ public class JavacServerBootstrap {
       appendParam(cmdLine, "-Duser.region=" + region);
     }
 
+    if (useEclipseCompiler) {
+      appendParam(cmdLine, "-D" + JavacServer.USE_ECLIPSE_COMPILER_PROPERTY);
+    }
+
     for (String option : vmOptions) {
       appendParam(cmdLine, option);
     }
 
     appendParam(cmdLine, "-classpath");
 
-    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath);
+    final List<File> cp = ClasspathBootstrap.getJavacServerClasspath(sdkHomePath, useEclipseCompiler);
     final StringBuilder classpath = new StringBuilder();
     for (File file : cp) {
       if (classpath.length() > 0) {

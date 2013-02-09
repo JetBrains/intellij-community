@@ -378,9 +378,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean useEclipseCompiler(CompileContext context) {
-    if (!USE_EMBEDDED_JAVAC) {
-      return false;
-    }
     JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     final String compilerId = configuration != null? configuration.getJavaCompilerId() : null;
@@ -418,7 +415,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String javaHome = SystemProperties.getJavaHome();
 
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context)
+      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context), useEclipseCompiler(context)
     );
     final JavacServerClient client = new JavacServerClient();
     try {
