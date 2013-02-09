@@ -90,7 +90,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : getAllKnownProperties(parameters)) {
+      for (String[] stringArray : getProvider(parameters).getAllKnownProperties()) {
         result.addElement(
           TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
@@ -102,7 +102,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : getAllKnownProperties(parameters)) {
+      for (String[] stringArray : getProvider(parameters).getAllKnownProperties()) {
         addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
@@ -112,27 +112,21 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
-                               @NotNull final CompletionResultSet result) {
-      @NonNls String[] completions = {"d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E", "t", "n", "r", "f", "a", "e"};
-      @NonNls String[] completionsTypes = {"digit: [0-9]", "nondigit: [^0-9]", "whitespace [ \\t\\n\\x0B\\f\\r]", "non-whitespace [^\\s]",
-        "word character [a-zA-Z_0-9]", "nonword character [^\\w]", "word boundary", "non-word boundary", "beginning of the input",
-        "end of the previous match", "end of the input but for the final terminator, if any", "end of input",
-        "Nothing, but quotes all characters until \\E", " \tNothing, but ends quoting started by \\Q", "tab character ('\\u0009')",
-        "newline (line feed) character ('\\u000A')", "carriage-return character ('\\u000D')", "form-feed character ('\\u000C')",
-        "alert (bell) character ('\\u0007')", "escape character ('\\u001B')"};
-      
-      for (int i = 0; i < completions.length; ++i) {
-        addLookupElement(result, completions[i], completionsTypes[i], emptyIcon);
+                               @NotNull final CompletionResultSet result)
+    {
+      final RegExpPropertiesProvider provider = getProvider(parameters);
+      for (final String[] completion : provider.getKnownCharacterClasses()) {
+        addLookupElement(result, completion[0], completion[1], emptyIcon);
       }
 
-      for (String[] stringArray : getAllKnownProperties(parameters)) {
+      for (String[] stringArray : provider.getAllKnownProperties()) {
         addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
   }
 
   @NotNull
-  private static String[][] getAllKnownProperties(CompletionParameters parameters) {
-    return RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties();
+  private static RegExpPropertiesProvider getProvider(@NotNull final CompletionParameters parameters) {
+    return RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage());
   }
 }

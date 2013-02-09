@@ -75,6 +75,29 @@ final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider 
           { "javaMirrored", },
   };
 
+  private final String[][] myCharacterClasses = {
+    {"d", "digit: [0-9]"},
+    {"D", "nondigit: [^0-9]"},
+    {"s", "whitespace [ \\t\\n\\x0B\\f\\r]"},
+    {"S", "non-whitespace [^\\s]"},
+    {"w", "word character [a-zA-Z_0-9]"},
+    {"W", "nonword character [^\\w]"},
+    {"b", "word boundary"},
+    {"B", "non-word boundary"},
+    {"A", "beginning of the input"},
+    {"G", "end of the previous match"},
+    {"Z", "end of the input but for the final terminator, if any"},
+    {"z", "end of input"},
+    {"Q", "Nothing, but quotes all characters until \\E"},
+    {"E", " \tNothing, but ends quoting started by \\Q"},
+    {"t", "tab character ('\\u0009')"},
+    {"n", "newline (line feed) character ('\\u000A')"},
+    {"r", "carriage-return character ('\\u000D')"},
+    {"f", "form-feed character ('\\u000C')"},
+    {"a", "alert (bell) character ('\\u0007')"},
+    {"e", "escape character ('\\u001B')"}
+  };
+
   public DefaultRegExpPropertiesProvider() {
   }
 
@@ -116,5 +139,11 @@ final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider 
   @NotNull
   public String[][] getAllKnownProperties() {
     return myPropertyNames;
+  }
+
+  @NotNull
+  @Override
+  public String[][] getKnownCharacterClasses() {
+    return myCharacterClasses;
   }
 }
