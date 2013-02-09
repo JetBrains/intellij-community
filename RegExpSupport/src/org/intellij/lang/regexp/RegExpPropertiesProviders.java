@@ -10,6 +10,6 @@ public final class RegExpPropertiesProviders extends LanguageExtension<RegExpPro
   }
 
   public RegExpPropertiesProviders() {
-    super("com.intellij.regExpPropertiesProvider", new RegExpPropertyNameProvider());
+    super("com.intellij.regExpPropertiesProvider", new DefaultRegExpPropertiesProvider());
   }
 }

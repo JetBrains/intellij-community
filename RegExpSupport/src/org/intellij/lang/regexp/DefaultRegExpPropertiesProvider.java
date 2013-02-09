@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class RegExpPropertyNameProvider implements RegExpPropertiesProvider {
+final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider {
   private final String[][] myPropertyNames = {
           { "Cn", "UNASSIGNED" },
           { "Lu", "UPPERCASE_LETTER" },
@@ -75,7 +75,7 @@ final class RegExpPropertyNameProvider implements RegExpPropertiesProvider {
           { "javaMirrored", },
   };
 
-  public RegExpPropertyNameProvider() {
+  public DefaultRegExpPropertiesProvider() {
   }
 
   @Override
