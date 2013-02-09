@@ -28,9 +28,9 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
+import org.intellij.lang.regexp.RegExpPropertyNameProvider;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
-import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +135,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
-    if (category != null && !RegExpPropertyImpl.isValidCategory(category.getText())) {
+    if (category != null && !RegExpPropertyNameProvider.isValidCategory(category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
         // IDEA-9381

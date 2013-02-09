@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpProperty;
-import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +34,7 @@ public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final String description = RegExpPropertyImpl.getPropertyDescription(node.getText());
+        final String description = RegExpPropertyNameProvider.getPropertyDescription(node.getText());
         if (description != null) {
           if (prop.isNegated()) {
             return "Property block stands for characters not matching " + description;
