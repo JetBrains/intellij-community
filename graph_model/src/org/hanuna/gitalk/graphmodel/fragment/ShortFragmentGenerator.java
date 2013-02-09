@@ -69,7 +69,7 @@ public class ShortFragmentGenerator {
         for (int currentRowIndex = startRowIndex; currentRowIndex <= lastIndex && !isEnd; currentRowIndex++) {
             for (Node node : graph.getNodeRows().get(currentRowIndex).getNodes()) {
                 if (notAddedNodes.remove(node)) {
-                    if (notAddedNodes.isEmpty() && node.getType() != Node.Type.EDGE_NODE) {
+                    if (notAddedNodes.isEmpty() && node.getType() == Node.Type.COMMIT_NODE) {
                         if (allUpNodeHere(upNodes, node)) { // i.e. we found smallFragment
                             endNode = node;
                         }
@@ -130,7 +130,7 @@ public class ShortFragmentGenerator {
         for (int currentRowIndex = startRowIndex; currentRowIndex >= lastIndex && !isEnd; currentRowIndex--) {
             for (Node node : graph.getNodeRows().get(currentRowIndex).getNodes()) {
                 if (notAddedNodes.remove(node)) {
-                    if (notAddedNodes.isEmpty() && node.getType() != Node.Type.EDGE_NODE) {
+                    if (notAddedNodes.isEmpty() && node.getType() == Node.Type.COMMIT_NODE) {
                         if (allDownNodeHere(downNodes, node)) { // i.e. we found smallFragment
                             endNode = node;
                         }
