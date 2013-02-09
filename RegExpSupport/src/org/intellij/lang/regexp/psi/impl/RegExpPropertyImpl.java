@@ -94,6 +94,12 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
       }
       return null;
     }
+
+    @NotNull
+    public static String[][] getAllKnownProperties() {
+      return RegExpPropertyImpl.PROPERTY_NAMES;
+    }
+
     private class MyPsiReference implements PsiReference {
         public PsiElement getElement() {
             return RegExpPropertyImpl.this;
@@ -205,7 +211,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
         }
       UNICODE_BLOCKS = ArrayUtil.toStringArray(unicodeBlocks);
     }
-    public static final String[][] PROPERTY_NAMES = {
+    private static final String[][] PROPERTY_NAMES = {
             { "Cn", "UNASSIGNED" },
             { "Lu", "UPPERCASE_LETTER" },
             { "Ll", "LOWERCASE_LETTER" },
