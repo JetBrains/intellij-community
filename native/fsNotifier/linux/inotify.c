@@ -49,30 +49,18 @@ static void (* callback)(char*, int) = NULL;
 #define EVENT_BUF_LEN (2048 * (EVENT_SIZE + 16))
 static char event_buf[EVENT_BUF_LEN];
 
-
-static void read_watch_descriptors_count() {
-  FILE* f = fopen(WATCH_COUNT_NAME, "r");
-  if (f == NULL) {
-    userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
-    return;
-  }
-
-  char* str = read_line(f);
-  if (str == NULL) {
-    userlog(LOG_ERR, "can't read from %s", WATCH_COUNT_NAME);
-  }
-  else {
-    watch_count = atoi(str);
-  }
-
-  fclose(f);
-}
+static void read_watch_descriptors_count();
+static void watch_limit_reached();
 
 
 bool init_inotify() {
   inotify_fd = inotify_init();
   if (inotify_fd < 0) {
-    userlog(LOG_ERR, "inotify_init: %s", strerror(errno));
+    int e = errno;
+    userlog(LOG_ERR, "inotify_init: %s", strerror(e));
+    if (e == EMFILE) {
+      message(MSG_INSTANCE_LIMIT);
+    }
     return false;
   }
   userlog(LOG_DEBUG, "inotify fd: %d", get_inotify_fd());
@@ -96,6 +84,24 @@ bool init_inotify() {
   return true;
 }
 
+static void read_watch_descriptors_count() {
+  FILE* f = fopen(WATCH_COUNT_NAME, "r");
+  if (f == NULL) {
+    userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
+    return;
+  }
+
+  char* str = read_line(f);
+  if (str == NULL) {
+    userlog(LOG_ERR, "can't read from %s", WATCH_COUNT_NAME);
+  }
+  else {
+    watch_count = atoi(str);
+  }
+
+  fclose(f);
+}
+
 
 inline void set_inotify_callback(void (* _callback)(char*, int)) {
   callback = _callback;
@@ -104,16 +110,6 @@ inline void set_inotify_callback(void (* _callback)(char*, int)) {
 
 inline int get_inotify_fd() {
   return inotify_fd;
-}
-
-
-inline int get_watch_count() {
-  return watch_count;
-}
-
-
-inline bool watch_limit_reached() {
-  return limit_reached;
 }
 
 
@@ -128,7 +124,7 @@ static int add_watch(const char* path, watch_node* parent) {
     }
     else if (errno == ENOSPC) {
       userlog(LOG_WARNING, "inotify_add_watch(%s): %s", path, strerror(errno));
-      limit_reached = true;
+      watch_limit_reached();
       return ERR_CONTINUE;
     }
     else {
@@ -188,6 +184,12 @@ static int add_watch(const char* path, watch_node* parent) {
   return wd;
 }
 
+static void watch_limit_reached() {
+  if (!limit_reached) {
+    limit_reached = true;
+    message(MSG_WATCH_LIMIT);
+  }
+}
 
 static void rm_watch(int wd, bool update_parent) {
   watch_node* node = table_get(watches, wd);

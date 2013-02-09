@@ -21,6 +21,14 @@
 #include <stdio.h>
 
 
+// messaging
+typedef enum {
+  MSG_INSTANCE_LIMIT, MSG_WATCH_LIMIT
+} MSG;
+
+void message(MSG id);
+
+
 // logging
 void userlog(int priority, const char* format, ...);
 
@@ -59,8 +67,6 @@ enum {
 bool init_inotify();
 void set_inotify_callback(void (* callback)(char*, int));
 int get_inotify_fd();
-int get_watch_count();
-bool watch_limit_reached();
 int watch(const char* root, array* mounts);
 void unwatch(int id);
 bool process_inotify_input();

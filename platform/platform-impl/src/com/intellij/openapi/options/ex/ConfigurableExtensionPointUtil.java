@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,12 @@ public class ConfigurableExtensionPointUtil {
       final String parentId = wrapper.getParentId();
       if (parentId != null) {
         final ConfigurableWrapper parent = idToConfigurable.get(parentId);
-        LOG.assertTrue(parent != null, "Can't find parent for " + parentId + " (" + wrapper + ")");
-        idToConfigurable.put(parentId, parent.addChild(wrapper));
+        if (parent != null) {
+          idToConfigurable.put(parentId, parent.addChild(wrapper));
+        }
+        else {
+          LOG.error("Can't find parent for " + parentId + " (" + wrapper + ")");
+        }
       }
     }
     //leave only roots (i.e. configurables without parents)
