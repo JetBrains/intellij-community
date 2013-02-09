@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupValueWithPriority;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
@@ -81,6 +82,18 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
         return false;
     }
 
+    @Nullable
+    public static String getPropertyDescription(@Nullable final String name) {
+      if (StringUtil.isEmptyOrSpaces(name)) {
+        return null;
+      }
+      for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
+        if (stringArray[0].equals(name)) {
+          return stringArray.length > 1 ? stringArray[1] : stringArray[0];
+        }
+      }
+      return null;
+    }
     private class MyPsiReference implements PsiReference {
         public PsiElement getElement() {
             return RegExpPropertyImpl.this;

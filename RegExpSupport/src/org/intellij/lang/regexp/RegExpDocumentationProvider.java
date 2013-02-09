@@ -35,15 +35,12 @@ public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final String elementName = node.getText();
-        for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
-          if (stringArray[0].equals(elementName)) {
-            final String description = stringArray.length > 1 ? stringArray[1] : stringArray[0];
-            if (prop.isNegated()) {
-              return "Property block stands for characters not matching " + description;
-            } else {
-              return "Property block stands for " + description;
-            }
+        final String description = RegExpPropertyImpl.getPropertyDescription(node.getText());
+        if (description != null) {
+          if (prop.isNegated()) {
+            return "Property block stands for characters not matching " + description;
+          } else {
+            return "Property block stands for " + description;
           }
         }
       }
