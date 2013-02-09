@@ -4,7 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class RegExpPropertyNameProvider {
+final class RegExpPropertyNameProvider implements RegExpPropertiesProvider {
   private final String[][] myPropertyNames = {
           { "Cn", "UNASSIGNED" },
           { "Lu", "UPPERCASE_LETTER" },
@@ -75,16 +75,10 @@ public final class RegExpPropertyNameProvider {
           { "javaMirrored", },
   };
 
-  private static RegExpPropertyNameProvider ourInstance = new RegExpPropertyNameProvider();
-
-  private RegExpPropertyNameProvider() {
+  public RegExpPropertyNameProvider() {
   }
 
-  @NotNull
-  public static RegExpPropertyNameProvider getInstance() {
-    return ourInstance;
-  }
-
+  @Override
   public boolean isValidCategory(@NotNull String category) {
       if (category.startsWith("In")) {
           try {
@@ -104,6 +98,7 @@ public final class RegExpPropertyNameProvider {
       return false;
   }
 
+  @Override
   @Nullable
   public String getPropertyDescription(@Nullable final String name) {
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -117,6 +112,7 @@ public final class RegExpPropertyNameProvider {
     return null;
   }
 
+  @Override
   @NotNull
   public String[][] getAllKnownProperties() {
     return myPropertyNames;

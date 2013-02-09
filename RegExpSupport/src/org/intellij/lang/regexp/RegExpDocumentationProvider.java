@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vnikolaenko
  */
-public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
+public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
@@ -34,7 +35,8 @@ public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final String description = RegExpPropertyNameProvider.getInstance().getPropertyDescription(node.getText());
+        final Language language = node.getPsi().getContainingFile().getLanguage();
+        final String description = RegExpPropertiesProviders.getInstance().forLanguage(language).getPropertyDescription(node.getText());
         if (description != null) {
           if (prop.isNegated()) {
             return "Property block stands for characters not matching " + description;

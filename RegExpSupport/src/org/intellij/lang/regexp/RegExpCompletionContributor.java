@@ -35,7 +35,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author vnikolaenko
  */
-public class RegExpCompletionContributor extends CompletionContributor {
+public final class RegExpCompletionContributor extends CompletionContributor {
   private static final Icon emptyIcon = new EmptyIcon(PlatformIcons.PROPERTY_ICON.getIconWidth(), PlatformIcons.PROPERTY_ICON.getIconHeight());
 
   public RegExpCompletionContributor() {
@@ -90,7 +90,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
         result.addElement(
           TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
@@ -102,7 +102,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
         addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
@@ -125,7 +125,7 @@ public class RegExpCompletionContributor extends CompletionContributor {
         addLookupElement(result, completions[i], completionsTypes[i], emptyIcon);
       }
 
-      for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
+      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
         addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }

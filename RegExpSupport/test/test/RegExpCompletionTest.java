@@ -19,7 +19,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.regexp.RegExpPropertyNameProvider;
+import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.lang.regexp.RegExpPropertiesProviders;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
     private void doBackSlashVariantsTest() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>(Arrays.asList("d", "D", "s", "S", "w", "W", "b", "B", "A", "G", "Z", "z", "Q", "E",
                 "t", "n", "r", "f", "a", "e"));
-        for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
+        for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(RegExpLanguage.INSTANCE).getAllKnownProperties()) {
             nameList.add("p{" + stringArray[0] + "}");
         }
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
@@ -67,7 +68,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
 
   public void testPropertyVariants() throws Throwable {
         java.util.List<String> nameList = new ArrayList<String>();
-        for (String[] stringArray : RegExpPropertyNameProvider.getInstance().getAllKnownProperties()) {
+        for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(RegExpLanguage.INSTANCE).getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
         }
         myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));

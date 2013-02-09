@@ -18,6 +18,7 @@ package org.intellij.lang.regexp.validation;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -26,10 +27,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.RegExpLanguageHosts;
-import org.intellij.lang.regexp.RegExpPropertyNameProvider;
-import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +133,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
-    if (category != null && !RegExpPropertyNameProvider.getInstance().isValidCategory(category.getText())) {
+    if (category == null) {
+      return;
+    }
+    final Language language = category.getPsi().getContainingFile().getLanguage();
+    final RegExpPropertiesProvider provider = RegExpPropertiesProviders.getInstance().forLanguage(language);
+    if(!provider.isValidCategory(category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
         // IDEA-9381
