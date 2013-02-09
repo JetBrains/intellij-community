@@ -16,7 +16,6 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -35,8 +34,7 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final Language language = node.getPsi().getContainingFile().getLanguage();
-        final String description = RegExpPropertiesProviders.getInstance().forLanguage(language).getPropertyDescription(node.getText());
+        final String description = RegExpPropertiesProviders.forNode(node).getPropertyDescription(node.getText());
         if (description != null) {
           if (prop.isNegated()) {
             return "Property block stands for characters not matching " + description;

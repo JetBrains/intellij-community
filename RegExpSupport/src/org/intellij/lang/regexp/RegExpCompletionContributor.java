@@ -90,7 +90,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
+      for (String[] stringArray : getAllKnownProperties(parameters)) {
         result.addElement(
           TailTypeDecorator.withTail(createLookupElement(stringArray[0], null, emptyIcon), TailType.createSimpleTailType('}')));
       }
@@ -102,7 +102,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
     public void addCompletions(@NotNull final CompletionParameters parameters,
                                final ProcessingContext context,
                                @NotNull final CompletionResultSet result) {
-      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
+      for (String[] stringArray : getAllKnownProperties(parameters)) {
         addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
@@ -125,9 +125,14 @@ public final class RegExpCompletionContributor extends CompletionContributor {
         addLookupElement(result, completions[i], completionsTypes[i], emptyIcon);
       }
 
-      for (String[] stringArray : RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties()) {
+      for (String[] stringArray : getAllKnownProperties(parameters)) {
         addLookupElement(result, "p{" + stringArray[0] + "}", stringArray.length > 1? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
     }
+  }
+
+  @NotNull
+  private static String[][] getAllKnownProperties(CompletionParameters parameters) {
+    return RegExpPropertiesProviders.getInstance().forLanguage(parameters.getOriginalFile().getLanguage()).getAllKnownProperties();
   }
 }

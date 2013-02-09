@@ -136,8 +136,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (category == null) {
       return;
     }
-    final Language language = category.getPsi().getContainingFile().getLanguage();
-    final RegExpPropertiesProvider provider = RegExpPropertiesProviders.getInstance().forLanguage(language);
+    final RegExpPropertiesProvider provider = RegExpPropertiesProviders.forNode(category);
     if(!provider.isValidCategory(category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
