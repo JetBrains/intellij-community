@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class RegExpPropertyNameProvider {
-  private static final String[][] PROPERTY_NAMES = {
+  private final String[][] myPropertyNames = {
           { "Cn", "UNASSIGNED" },
           { "Lu", "UPPERCASE_LETTER" },
           { "Ll", "LOWERCASE_LETTER" },
@@ -75,11 +75,17 @@ public final class RegExpPropertyNameProvider {
           { "javaMirrored", },
   };
 
+  private static RegExpPropertyNameProvider ourInstance = new RegExpPropertyNameProvider();
+
   private RegExpPropertyNameProvider() {
   }
 
+  @NotNull
+  public static RegExpPropertyNameProvider getProvider() {
+    return ourInstance;
+  }
 
-  public static boolean isValidCategory(@NotNull String category) {
+  public boolean isValidCategory(@NotNull String category) {
       if (category.startsWith("In")) {
           try {
               return Character.UnicodeBlock.forName(category.substring(2)) != null;
@@ -90,7 +96,7 @@ public final class RegExpPropertyNameProvider {
       if (category.startsWith("Is")) {
           category = category.substring(2);
       }
-      for (String[] name : PROPERTY_NAMES) {
+      for (String[] name : myPropertyNames) {
           if (name[0].equals(category)) {
               return true;
           }
@@ -99,11 +105,11 @@ public final class RegExpPropertyNameProvider {
   }
 
   @Nullable
-  public static String getPropertyDescription(@Nullable final String name) {
+  public String getPropertyDescription(@Nullable final String name) {
     if (StringUtil.isEmptyOrSpaces(name)) {
       return null;
     }
-    for (String[] stringArray : PROPERTY_NAMES) {
+    for (String[] stringArray : myPropertyNames) {
       if (stringArray[0].equals(name)) {
         return stringArray.length > 1 ? stringArray[1] : stringArray[0];
       }
@@ -112,7 +118,7 @@ public final class RegExpPropertyNameProvider {
   }
 
   @NotNull
-  public static String[][] getAllKnownProperties() {
-    return PROPERTY_NAMES;
+  public String[][] getAllKnownProperties() {
+    return myPropertyNames;
   }
 }
