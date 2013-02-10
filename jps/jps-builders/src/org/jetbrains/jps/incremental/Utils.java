@@ -92,12 +92,7 @@ public class Utils {
     return new File(systemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
   }
 
-
   public static URI toURI(String localPath) {
-    return toURI(localPath, true);
-  }
-
-  private static URI toURI(String localPath, boolean convertSpaces) {
     try {
       String p = FileUtil.toSystemIndependentName(localPath);
       if (!p.startsWith("/")) {
@@ -106,7 +101,7 @@ public class Utils {
       if (p.startsWith("//")) {
         p = "//" + p;
       }
-      return new URI("file", null, convertSpaces? p.replaceAll(" ", "%20") : p, null);
+      return new URI("file", null, p, null);
     }
     catch (URISyntaxException e) {
       throw new Error(e);
@@ -122,7 +117,7 @@ public class Utils {
     if (path == null) {
       return null;
     }
-    return new File(toURI(path, false));
+    return new File(toURI(path));
   }
 
   public static boolean intersects(Set<JpsModule> set1, Set<JpsModule> set2) {
