@@ -21,6 +21,7 @@ import com.sun.tools.javac.file.RelativePath;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.*;
@@ -229,7 +230,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public URI toUri() {
-      return file.toURI().normalize();
+      try {
+        return Utils.toURI(file.getPath());
+      }
+      catch (Throwable e) {
+        return file.toURI().normalize(); // fallback
+      }
     }
 
     @Override

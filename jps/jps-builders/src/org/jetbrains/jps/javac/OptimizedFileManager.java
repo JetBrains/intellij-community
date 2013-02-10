@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
+import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.*;
@@ -26,7 +27,6 @@ import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -418,10 +418,10 @@ class OptimizedFileManager extends DefaultFileManager {
 
     public URI toUri() {
       try {
-        return new URI(f.getPath());
+        return Utils.toURI(f.getPath());
       }
-      catch (URISyntaxException ex) {
-        return f.toURI();
+      catch (Throwable ex) {
+        return f.toURI().normalize();
       }
     }
   }
