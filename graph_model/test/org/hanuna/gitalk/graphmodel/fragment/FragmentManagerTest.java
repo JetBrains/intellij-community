@@ -86,10 +86,9 @@ public class FragmentManagerTest {
                 "a1|-a2",
                 1,
 
-                "a0:0|-a1:1|-a2:2",
+                "null",
 
-                "a0|-|-a0:a2:HIDE_FRAGMENT:a0|-COMMIT_NODE|-a0|-0\n" +
-                "a2|-a0:a2:HIDE_FRAGMENT:a0|-|-END_COMMIT_NODE|-a0|-1"
+                ""
         );
     }
 
