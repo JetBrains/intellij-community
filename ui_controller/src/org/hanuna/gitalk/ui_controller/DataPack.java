@@ -13,7 +13,7 @@ import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
 import org.hanuna.gitalk.log.commit.Commit;
 import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.log.commitdata.CommitDataGetter;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
 import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.printmodel.impl.GraphPrintCellModelImpl;

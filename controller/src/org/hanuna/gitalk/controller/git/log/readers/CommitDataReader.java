@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.controller.git.log.readers;
 
 import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.log.commitdata.CommitData;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 

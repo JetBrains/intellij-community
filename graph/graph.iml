@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="commits" />
+    <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

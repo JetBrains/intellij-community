@@ -7,7 +7,7 @@
       </element>
       <element id="module-output" name="controller" />
       <element id="module-output" name="graph" />
-      <element id="module-output" name="commits" />
+      <element id="module-output" name="log_data" />
       <element id="module-output" name="common" />
       <element id="module-output" name="refs" />
       <element id="module-output" name="printmodel" />

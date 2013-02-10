@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.log.commitdata;
+package org.hanuna.gitalk.log.commit;
 
 import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;

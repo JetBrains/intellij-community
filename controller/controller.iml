@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="graph" />
     <orderEntry type="module" module-name="common" />
-    <orderEntry type="module" module-name="commits" />
+    <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module" module-name="refs" />
     <orderEntry type="module-library">
       <library>

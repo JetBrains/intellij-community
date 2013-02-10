@@ -28,7 +28,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="commits" />
+    <orderEntry type="module" module-name="log_data" />
     <orderEntry type="module" module-name="graph_model" />
   </component>
 </module>

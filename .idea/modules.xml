@@ -3,11 +3,11 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/GitAlk.iml" filepath="$PROJECT_DIR$/GitAlk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/commits/commits.iml" filepath="$PROJECT_DIR$/commits/commits.iml" />
       <module fileurl="file://$PROJECT_DIR$/common/common.iml" filepath="$PROJECT_DIR$/common/common.iml" />
       <module fileurl="file://$PROJECT_DIR$/controller/controller.iml" filepath="$PROJECT_DIR$/controller/controller.iml" />
       <module fileurl="file://$PROJECT_DIR$/graph/graph.iml" filepath="$PROJECT_DIR$/graph/graph.iml" />
       <module fileurl="file://$PROJECT_DIR$/graph_model/graph_model.iml" filepath="$PROJECT_DIR$/graph_model/graph_model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/log_data/log_data.iml" filepath="$PROJECT_DIR$/log_data/log_data.iml" />
       <module fileurl="file://$PROJECT_DIR$/printmodel/printmodel.iml" filepath="$PROJECT_DIR$/printmodel/printmodel.iml" />
       <module fileurl="file://$PROJECT_DIR$/refs/refs.iml" filepath="$PROJECT_DIR$/refs/refs.iml" />
       <module fileurl="file://$PROJECT_DIR$/swing_ui/swing_ui.iml" filepath="$PROJECT_DIR$/swing_ui/swing_ui.iml" />

@@ -4,8 +4,8 @@ import org.hanuna.gitalk.common.CacheGet;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.controller.git.log.readers.CommitDataReader;
 import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.log.commitdata.CommitData;
-import org.hanuna.gitalk.log.commitdata.CommitDataGetter;
+import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

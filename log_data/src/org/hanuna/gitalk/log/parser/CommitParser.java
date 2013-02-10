@@ -2,7 +2,7 @@ package org.hanuna.gitalk.log.parser;
 
 import org.hanuna.gitalk.log.commit.Commit;
 import org.hanuna.gitalk.commit.Hash;
-import org.hanuna.gitalk.log.commitdata.CommitData;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.log.parser;
 
 import junit.framework.Assert;
-import org.hanuna.gitalk.log.commitdata.CommitData;
+import org.hanuna.gitalk.log.commit.CommitData;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
