@@ -3,7 +3,7 @@ package org.hanuna.gitalk.ui_controller.table_models;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.Hash;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.log.commitdata.CommitData;
 import org.hanuna.gitalk.log.commitdata.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.refs;
 
-import org.hanuna.gitalk.log.commit.Hash;
+import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
 /**

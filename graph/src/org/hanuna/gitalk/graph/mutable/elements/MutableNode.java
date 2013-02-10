@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable.elements;
 
-import org.hanuna.gitalk.log.commit.Hash;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.elements.Edge;

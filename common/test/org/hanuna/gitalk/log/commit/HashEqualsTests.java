@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.log.commit;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.junit.Assert;
 import org.junit.Test;
 

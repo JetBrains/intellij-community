@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.log.commit.Commit;
-import org.hanuna.gitalk.log.commit.Hash;
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
