@@ -9,6 +9,7 @@ import org.hanuna.gitalk.graph.mutable.GraphDecorator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,7 +86,8 @@ public class MutableNode implements Node {
         if (edge != null) {
             return OneElementList.buildList(edge);
         }
-
+        /*
+        slow method:
         List<Edge> visibleEdge = new ArrayList<Edge>();
         for (Edge downEdge : downEdges) {
             if (decorator.isVisibleNode(downEdge.getDownNode())) {
@@ -93,6 +95,8 @@ public class MutableNode implements Node {
             }
         }
         return visibleEdge;
+        */
+        return Collections.unmodifiableList(downEdges);
     }
 
     @NotNull
