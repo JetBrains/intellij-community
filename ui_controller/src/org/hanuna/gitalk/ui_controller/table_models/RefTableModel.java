@@ -18,7 +18,7 @@ public class RefTableModel extends AbstractTableModel {
 
     private static List<Hash> getOrderedBranchCommit(RefsModel refsModel) {
         List<Hash> orderedCommit = new ArrayList<Hash>();
-        for (Hash hash : refsModel.getOrderedLogTrackedCommit()) {
+        for (Hash hash : refsModel.getTrackedCommitHashes()) {
             boolean hasBranchRef = false;
             for (Ref ref : refsModel.refsToCommit(hash)) {
                 if (ref.getType() != Ref.Type.TAG) {

@@ -40,7 +40,7 @@ public class GitProcessFactory {
     }
 
     public static Process refs() throws IOException {
-        String request = "git show-ref --head --abbrev";
+        String request = "git log --all --no-walk --format=%h%d --decorate=full ";
         return Runtime.getRuntime().exec(request);
     }
 

@@ -35,7 +35,7 @@ public class RefReader {
     }
 
     protected void appendLine(@NotNull String line) {
-        refs.add(RefParser.parse(line));
+        refs.addAll(RefParser.parseCommitRefs(line));
     }
 
     @NotNull

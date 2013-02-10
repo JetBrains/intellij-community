@@ -83,7 +83,7 @@ public class Controller {
         List<Commit> commits = readCommits(monthCount, startDay);
         RefReader refReader = new RefReader();
         List<Ref> allRefs = refReader.readAllRefs();
-        RefsModel refsModel = RefsModel.existedCommitRefs(allRefs);
+        RefsModel refsModel = new RefsModel(allRefs);
 
         progressModel.setMessage("graph build");
         DataPack dataPack = new DataPack(refsModel, commits, new CacheCommitDataGetter());

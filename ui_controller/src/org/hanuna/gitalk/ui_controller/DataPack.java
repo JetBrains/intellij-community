@@ -41,7 +41,7 @@ public class DataPack {
         this.commitDataGetter = commitDataGetter;
         final MyTimer graphTimer = new MyTimer("graph build");
 
-        final Set<Hash> trackedHashes = refsModel.getOrderedLogTrackedCommit();
+        final Set<Hash> trackedHashes = refsModel.getTrackedCommitHashes();
 
         graph = GraphBuilder.build(commits);
         graphModel = new GraphModelImpl(graph);
