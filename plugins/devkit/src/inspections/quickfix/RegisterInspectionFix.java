@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,6 +85,16 @@ class RegisterInspectionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    choosePluginDescriptor(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
+      @Override
+      public void consume(DomFileElement<IdeaPlugin> element) {
+        doFix(element, project, file);
+      }
+    });
+  }
+
+  public static void choosePluginDescriptor(final Project project, Editor editor, final PsiFile file,
+                                            final Consumer<DomFileElement<IdeaPlugin>> consumer) {
     Module module = ModuleUtil.findModuleForPsiElement(file);
     assert module != null;
     List<DomFileElement<IdeaPlugin>> elements =
@@ -103,7 +114,7 @@ class RegisterInspectionFix implements IntentionAction {
     }
 
     if (elements.size() == 1) {
-      doFix(elements.get(0), project, file);
+      consumer.consume(elements.get(0));
       return;
     }
 
@@ -127,7 +138,7 @@ class RegisterInspectionFix implements IntentionAction {
 
         @Override
         public PopupStep onChosen(DomFileElement<IdeaPlugin> selectedValue, boolean finalChoice) {
-          doFix(selectedValue, project, file);
+          consumer.consume(selectedValue);
           return FINAL_CHOICE;
         }
       };
@@ -137,12 +148,11 @@ class RegisterInspectionFix implements IntentionAction {
 
   private void doFix(DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
     final IdeaPlugin plugin = selectedValue.getRootElement();
-    final List<Extensions> extensionsList = plugin.getExtensions();
     Extension extension = new WriteCommandAction<Extension>(project, file) {
 
       @Override
       protected void run(Result<Extension> result) throws Throwable {
-        final Extensions extensions = getExtension(plugin, extensionsList);
+        final Extensions extensions = getExtension(plugin, myEp.getName());
         Extension extension = extensions.addExtension(myEp.getName());
         XmlTag tag = extension.getXmlTag();
         tag.setAttribute("implementationClass", myPsiClass.getQualifiedName());
@@ -152,11 +162,12 @@ class RegisterInspectionFix implements IntentionAction {
     PsiNavigateUtil.navigate(extension.getXmlTag());
   }
 
-  private Extensions getExtension(IdeaPlugin plugin, List<Extensions> extensionsList) {
+  public static Extensions getExtension(IdeaPlugin plugin, String epName) {
+    final List<Extensions> extensionsList = plugin.getExtensions();
     Extensions extensions = null;
     for (Extensions e : extensionsList) {
       String s = e.getDefaultExtensionNs().getStringValue();
-      if (s != null && myEp.getName().startsWith(s)) {
+      if (s != null && epName.startsWith(s)) {
         extensions = e;
         break;
       }
