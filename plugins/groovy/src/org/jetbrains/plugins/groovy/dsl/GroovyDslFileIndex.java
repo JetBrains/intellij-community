@@ -331,12 +331,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           ref.set(executors);
         }
         catch (Throwable e) {
-          LOG.error(e);
           ref.set(new ArrayList<Pair<File, GroovyDslExecutor>>());
           //noinspection InstanceofCatchParameter
           if (e instanceof Error) {
             stopGdsl = true;
           }
+          LOG.error(e);
         }
         finally {
           semaphore.up();
