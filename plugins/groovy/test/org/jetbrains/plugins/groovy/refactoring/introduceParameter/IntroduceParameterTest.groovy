@@ -15,12 +15,10 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter
-
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pass
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.HelpID
@@ -52,6 +50,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
   }
 
+
   private boolean executeRefactoring(boolean replaceAllOccurrences,
                                      int replaceFieldsWithGetters,
                                      @NonNls String parameterName,
@@ -64,7 +63,13 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
     final PsiFile myFile = myFixture.file;
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
-    ElementToWorkOn.processElementToWorkOn(editor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, project, new Pass<ElementToWorkOn>() {
+    ElementToWorkOn.processElementToWorkOn(editor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, project, new ElementToWorkOn.ElementsProcessor<com.intellij.refactoring.introduceField.ElementToWorkOn>() {
+
+            @Override
+            boolean accept(ElementToWorkOn el) {
+              return true;
+            }
+      
             @Override
             public void pass(final ElementToWorkOn e) {
               if (e == null) return;
