@@ -25,6 +25,7 @@ import org.jetbrains.jps.incremental.LineOutputWriter;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -170,6 +171,9 @@ public class JavacMain {
     }
     finally {
       fileManager.close();
+      if (nowUsingJavac) {
+        cleanupJavacNameTable();
+      }
     }
     return false;
   }
@@ -277,4 +281,31 @@ public class JavacMain {
       myOutputFileSink.save(cls);
     }
   }
+
+  private static boolean ourCleanupFailed = false;
+  private static final class NameTableCleanupDataHolder {
+    static final com.sun.tools.javac.util.List emptyList = com.sun.tools.javac.util.List.nil();
+    static final Field freelistField;
+    static {
+      try {
+        freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+        freelistField.setAccessible(true);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private static void cleanupJavacNameTable() {
+    try {
+      if (!ourCleanupFailed) {
+        NameTableCleanupDataHolder.freelistField.set(null, NameTableCleanupDataHolder.emptyList);
+      }
+    }
+    catch (Throwable e) {
+      ourCleanupFailed = true;
+    }
+  }
+
 }

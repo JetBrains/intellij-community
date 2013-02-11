@@ -20,6 +20,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,6 +31,11 @@ import java.util.Collection;
 public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointFileGroup> {
   public XBreakpointFileGroupingRule() {
     super("by-file", XDebuggerBundle.message("rule.name.group.by.file"));
+  }
+
+  @Override
+  public int getPriority() {
+    return XBreakpointsGroupingPriorities.BY_FILE;
   }
 
   public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointFileGroup> groups) {

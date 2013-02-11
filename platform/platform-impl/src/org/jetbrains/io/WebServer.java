@@ -349,18 +349,17 @@ public class WebServer {
     public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
       if (e.getMessage() instanceof HttpRequest) {
         HttpRequest message = (HttpRequest)e.getMessage();
-        HttpResponse response;
         if (new QueryStringDecoder(message.getUri()).getPath().equals(START_TIME_PATH)) {
-          response = new DefaultHttpResponse(HTTP_1_1, OK);
+          HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
           response.setHeader("Access-Control-Allow-Origin", "*");
           response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
+          Responses.addServer(response);
+          Responses.addDate(response);
+          context.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
         }
         else {
-          response = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
+          Responses.sendError(message, context, NOT_FOUND);
         }
-        Responses.addServer(response);
-        Responses.addDate(response);
-        context.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
       }
     }
   }

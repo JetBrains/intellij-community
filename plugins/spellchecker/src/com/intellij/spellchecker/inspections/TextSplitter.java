@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,10 @@ public class TextSplitter extends BaseSplitter {
 
   protected void doSplit(@NotNull String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     final WordSplitter ws = WordSplitter.getInstance();
-    Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(range.substring(text));
+    Matcher matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text);
+    matcher.region(range.getStartOffset(), range.getEndOffset());
     while (matcher.find()) {
-      TextRange found = matcherRange(range, matcher);
+      TextRange found = new TextRange(matcher.start(), matcher.end());
       ws.split(text, found, consumer);
     }
   }

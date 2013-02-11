@@ -240,24 +240,7 @@ public class IncProjectBuilder {
       }
       ExternalJavacDescriptor.KEY.set(context, null);
     }
-    //cleanupJavacNameTable();
   }
-
-  //private static boolean ourClenupFailed = false;
-
-  //private static void cleanupJavacNameTable() {
-  //  try {
-  //    if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
-  //      final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
-  //      freelistField.setAccessible(true);
-  //      freelistField.set(null, com.sun.tools.javac.util.List.nil());
-  //    }
-  //  }
-  //  catch (Throwable e) {
-  //    ourClenupFailed = true;
-  //    //LOG.info(e);
-  //  }
-  //}
 
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);

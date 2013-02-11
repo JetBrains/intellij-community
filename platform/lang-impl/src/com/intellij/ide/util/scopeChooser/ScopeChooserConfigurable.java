@@ -57,8 +57,9 @@ import java.util.List;
  * User: anna
  * Date: 01-Jul-2006
  */
-public class ScopeChooserConfigurable extends MasterDetailsComponent implements /*NonDefaultProjectConfigurable,*/ SearchableConfigurable {
+public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
+  public static final String PROJECT_SCOPES = "project.scopes";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
 
@@ -278,7 +279,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   @NotNull
   @NonNls
   public String getHelpTopic() {
-    return "project.scopes";  //todo help id
+    return PROJECT_SCOPES;  //todo help id
   }
 
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {

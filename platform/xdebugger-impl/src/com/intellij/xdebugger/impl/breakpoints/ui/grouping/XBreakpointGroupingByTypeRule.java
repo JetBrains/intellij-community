@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -37,6 +38,11 @@ public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B,
   @Override
   public boolean isAlwaysEnabled() {
     return true;
+  }
+
+  @Override
+  public int getPriority() {
+    return XBreakpointsGroupingPriorities.BY_TYPE;
   }
 
   @Override

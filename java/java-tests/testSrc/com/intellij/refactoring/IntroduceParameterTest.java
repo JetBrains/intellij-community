@@ -11,7 +11,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.Pass;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -365,7 +364,12 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
                                  int enclosingLevel) {
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
     ElementToWorkOn
-          .processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(), new Pass<ElementToWorkOn>() {
+          .processElementToWorkOn(myEditor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(), new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+            @Override
+            public boolean accept(ElementToWorkOn el) {
+              return true;
+            }
+
             @Override
             public void pass(final ElementToWorkOn e) {
               if (e == null) return;

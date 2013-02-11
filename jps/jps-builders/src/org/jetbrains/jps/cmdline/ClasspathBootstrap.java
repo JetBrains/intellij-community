@@ -131,7 +131,7 @@ public class ClasspathBootstrap {
     return ContainerUtil.newArrayList(cp);
   }
 
-  public static List<File> getJavacServerClasspath(String sdkHome) {
+  public static List<File> getJavacServerClasspath(String sdkHome, boolean useEclipseCompiler) {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourceFile(JavacServer.class)); // self
     // util
@@ -187,6 +187,17 @@ public class ClasspathBootstrap {
       }
       catch (Throwable th) {
         LOG.info(th);
+      }
+    }
+
+    if (useEclipseCompiler) {
+      // eclipse compiler
+      for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
+        final File compilerResource = getResourceFile(javaCompiler.getClass());
+        final String name = compilerResource.getName();
+        if (name.startsWith("ecj-") && name.endsWith(".jar")) {
+          cp.add(compilerResource);
+        }
       }
     }
 

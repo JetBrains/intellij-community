@@ -42,6 +42,7 @@ public class JavacServer {
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String SERVER_SUCCESS_START_MESSAGE = "Javac server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Javac Server: ";
+  public static final String USE_ECLIPSE_COMPILER_PROPERTY = "use.eclipse.compiler";
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("javac-server");
   private final ChannelFactory myChannelFactory;
@@ -149,7 +150,7 @@ public class JavacServer {
     };
 
     try {
-      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus, false);
+      final boolean rc = JavacMain.compile(options, files, classpath, platformCp, sourcePath, outs, diagnostic, outputSink, canceledStatus, System.getProperty(USE_ECLIPSE_COMPILER_PROPERTY) != null);
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }
     catch (Throwable e) {

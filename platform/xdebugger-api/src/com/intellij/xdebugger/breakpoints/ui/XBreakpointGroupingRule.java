@@ -48,6 +48,10 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     return myId;
   }
 
+  public int getPriority() {
+    return XBreakpointsGroupingPriorities.DEFAULT;
+  }
+
   @Nullable
   public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<G> groups);
 }

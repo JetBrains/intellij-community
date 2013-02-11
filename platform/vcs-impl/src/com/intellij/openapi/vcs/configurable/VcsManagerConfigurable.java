@@ -80,8 +80,12 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();
-    myMappings.disposeUIResources();
-    myGeneralPanel.disposeUIResources();
+    if (myMappings != null) {
+      myMappings.disposeUIResources();
+    }
+    if (myGeneralPanel != null) {
+      myGeneralPanel.disposeUIResources();
+    }
     myMappings = null;
   }
 

@@ -157,6 +157,11 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                            dialog.getFieldType(), localVariable != null, (TargetDestination)null, false, false);
   }
 
+  @Override
+  protected boolean accept(ElementToWorkOn elementToWorkOn) {
+    return true;
+  }
+
   private static PsiElement getElement(PsiExpression expr, PsiElement anchorElement) {
     PsiElement element = null;
     if (expr != null) {

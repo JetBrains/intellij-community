@@ -1,8 +1,8 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -29,7 +29,10 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public final class Responses {
+  @SuppressWarnings("SpellCheckingInspection")
   public static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+
+  private static String SERVER_HEADER_VALUE;
 
   static {
     DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -44,9 +47,14 @@ public final class Responses {
   }
 
   public static void addServer(HttpResponse response) {
-    Application app = ApplicationManager.getApplication();
-    if (app != null && !app.isDisposed()) {
-      response.setHeader("Server", ApplicationInfo.getInstance().getBuild().asString());
+    if (SERVER_HEADER_VALUE == null) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        SERVER_HEADER_VALUE = ApplicationInfoEx.getInstanceEx().getFullApplicationName();
+      }
+    }
+    if (SERVER_HEADER_VALUE != null) {
+      response.setHeader("Server", SERVER_HEADER_VALUE);
     }
   }
 
@@ -94,5 +102,20 @@ public final class Responses {
     if (close) {
       future.addListener(ChannelFutureListener.CLOSE);
     }
+  }
+
+  public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponseStatus responseStatus) {
+    sendError(request, context, new DefaultHttpResponse(HTTP_1_1, responseStatus));
+  }
+
+  public static void sendError(HttpRequest request, ChannelHandlerContext context, HttpResponse response) {
+    response.setHeader(CONTENT_TYPE, "text/html");
+    addServer(response);
+    addDate(response);
+
+    String message = response.getStatus().toString();
+    response.setContent(ChannelBuffers.copiedBuffer("<!doctype html><title>" + message + "</title>" +
+                                                    "<h1 style=\"text-align: center\">" + message + "</h1><hr/><p style=\"text-align: center\">" + SERVER_HEADER_VALUE + "</p>", CharsetUtil.US_ASCII));
+    send(response, request, context);
   }
 }

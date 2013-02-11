@@ -103,7 +103,7 @@ public class LambdaUtil {
       if (hasParams && !checkRawAcceptable(expression, functionalInterfaceType)) {
         return false;
       }
-      return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression, null);
+      return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression);
     }
     return true;
   }
@@ -295,34 +295,30 @@ public class LambdaUtil {
     return -1;
   }
 
-  public static boolean dependsOnTypeParams(PsiType type, PsiLambdaExpression expr) {
-    return dependsOnTypeParams(type, expr, null);
-  }
-
   public static boolean dependsOnTypeParams(PsiType type,
                                             PsiLambdaExpression expr,
                                             PsiTypeParameter param2Check) {
-    return depends(type, param2Check, new TypeParamsChecker(expr));
+    return depends(type, new TypeParamsChecker(expr), param2Check);
   }
 
   public static boolean dependsOnTypeParams(PsiType type,
                                             PsiType functionalInterfaceType,
                                             PsiElement lambdaExpression,
-                                            PsiTypeParameter param2Check) {
-    return depends(type, param2Check, new TypeParamsChecker(lambdaExpression,
-                                                            PsiUtil.resolveClassInType(functionalInterfaceType)));
+                                            PsiTypeParameter... param2Check) {
+    return depends(type, new TypeParamsChecker(lambdaExpression,
+                                               PsiUtil.resolveClassInType(functionalInterfaceType)), param2Check);
   }
 
   public static boolean dependsOnTypeParams(PsiType type,
                                             PsiClass aClass,
                                             PsiMethod aMethod) {
-    return depends(type, null, new TypeParamsChecker(aMethod, aClass));
+    return depends(type, new TypeParamsChecker(aMethod, aClass));
   }
 
-  static boolean depends(PsiType type, PsiTypeParameter param2Check, TypeParamsChecker visitor) {
+  static boolean depends(PsiType type, TypeParamsChecker visitor, PsiTypeParameter... param2Check) {
     if (!visitor.startedInference()) return false;
     final Boolean accept = type.accept(visitor);
-    if (param2Check != null) {
+    if (param2Check.length > 0) {
       return visitor.used(param2Check);
     }
     return accept != null && accept.booleanValue();
@@ -352,6 +348,14 @@ public class LambdaUtil {
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters();
     if (lambdaParams.length != methodParameters.length) return false;
     final boolean[] independent = new boolean[]{true};
+    final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (interfaceMethod == null) return false;
+    final TypeParamsChecker paramsChecker = new TypeParamsChecker(lambdaExpression);
+    for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+      subst.substitute(parameter.getType()).accept(paramsChecker);
+    }
+    paramsChecker.myUsedTypeParams.add(typeParam);
+
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitConditionalExpression(PsiConditionalExpression expression) {
@@ -377,7 +381,8 @@ public class LambdaUtil {
           }
         }
 
-        if (usedParamIdx > -1 && dependsOnTypeParams(subst.substitute(methodParameters[usedParamIdx].getType()), functionalInterfaceType, lambdaExpression, typeParam)) {
+        if (usedParamIdx > -1 && dependsOnTypeParams(subst.substitute(methodParameters[usedParamIdx].getType()), functionalInterfaceType,
+                                                     lambdaExpression, paramsChecker.myUsedTypeParams.toArray(new PsiTypeParameter[paramsChecker.myUsedTypeParams.size()]))) {
           independent[0] = false;
         }
       }
@@ -387,6 +392,11 @@ public class LambdaUtil {
 
   @Nullable
   public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
+    return getFunctionalInterfaceType(expression, tryToSubstitute, -1);
+  }
+
+  @Nullable
+  public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute, int paramIdx) {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
@@ -416,13 +426,13 @@ public class LambdaUtil {
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
       if (lambdaIdx > -1) {
 
-        if (!tryToSubstitute) {
-          final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
-          if (method != null) {
-            final PsiParameter[] parameters = method.first.getParameterList().getParameters();
-            return lambdaIdx < parameters.length ? method.second.substitute(parameters[lambdaIdx].getType()) : null;
-          }
+        PsiType cachedType = null;
+        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+        final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
+        if (method != null) {
+          final PsiParameter[] parameters = method.first.getParameterList().getParameters();
+          cachedType = lambdaIdx < parameters.length ? method.second.substitute(parameters[lambdaIdx].getType()) : null;
+          if (!tryToSubstitute) return cachedType;
         }
 
         final PsiElement gParent = expressionList.getParent();
@@ -434,6 +444,16 @@ public class LambdaUtil {
               final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
               if (lambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return parameters[lambdaIdx].getType();
+                if (cachedType != null && paramIdx > -1) {
+                  final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
+                  if (interfaceMethod != null) {
+                    final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
+                    final PsiType interfaceMethodParameterType = interfaceMethod.getParameterList().getParameters()[paramIdx].getType();
+                    if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethodParameterType), cachedType, expression)){
+                      return cachedType;
+                    }
+                  }
+                }
                 return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
@@ -478,7 +498,7 @@ public class LambdaUtil {
           final PsiParameterList parameterList = lambdaExpression.getParameterList();
           final boolean add = currentStack.add(parameterList);
           try {
-            PsiType type = getFunctionalInterfaceType(lambdaExpression, true);
+            PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
             if (type == null) {
               type = getFunctionalInterfaceType(lambdaExpression, false);
             }
@@ -512,7 +532,7 @@ public class LambdaUtil {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameterIndex < parameters.length) {
           final PsiType psiType = getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-          if (!dependsOnTypeParams(psiType, conjunct, lambdaExpression, null)) {
+          if (!dependsOnTypeParams(psiType, conjunct, lambdaExpression)) {
             return GenericsUtil.eliminateWildcards(psiType);
           }
         }
@@ -796,8 +816,11 @@ public class LambdaUtil {
       return false;
     }
 
-    public boolean used(PsiTypeParameter parameter) {
-      return myUsedTypeParams.contains(parameter);
+    public boolean used(PsiTypeParameter... parameters) {
+      for (PsiTypeParameter parameter : parameters) {
+        if (myUsedTypeParams.contains(parameter)) return true;
+      }
+      return false;
     }
   }
 }

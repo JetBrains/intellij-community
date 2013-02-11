@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.regexp;
+package com.intellij.xdebugger.breakpoints.ui;
 
-/**
- * @author yole
- */
-public enum RegExpCapability {
-  XML_SCHEMA_MODE,
-  DANGLING_METACHARACTERS,
-  NESTED_CHARACTER_CLASSES,
-  OCTAL_NO_LEADING_ZERO,
-  OMIT_NUMBERS_IN_QUANTIFIERS,
-  COMMENT_MODE,
-  ALLOW_HEX_DIGIT_CLASS,
+public class XBreakpointsGroupingPriorities {
+  public static final int DEFAULT = 100;
+  public static final int BY_CLASS = 400;
+  public static final int BY_FILE = 600;
+  public static final int BY_PACKAGE = 800;
+  public static final int BY_TYPE = 1000;
 }

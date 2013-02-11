@@ -46,6 +46,7 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
@@ -55,19 +56,23 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class CommentByLineCommentHandler implements CodeInsightActionHandler {
-  private Project myProject;
-  private PsiFile myFile;
-  private Document myDocument;
-  private Editor myEditor;
-  private int myStartOffset;
-  private int myEndOffset;
-  private int myStartLine;
-  private int myEndLine;
-  private int[] myStartOffsets;
-  private int[] myEndOffsets;
-  private Commenter[] myCommenters;
+
+  private static final int MIN_LINES_TO_COMMENT_TO_USE_BULK_PROCESSING
+    = SystemProperties.getIntProperty("idea.bulk.comment.lines.trigger", 100);
+
+  private Project                                         myProject;
+  private PsiFile                                         myFile;
+  private Document                                        myDocument;
+  private Editor                                          myEditor;
+  private int                                             myStartOffset;
+  private int                                             myEndOffset;
+  private int                                             myStartLine;
+  private int                                             myEndLine;
+  private int[]                                           myStartOffsets;
+  private int[]                                           myEndOffsets;
+  private Commenter[]                                     myCommenters;
   private Map<SelfManagingCommenter, CommenterDataHolder> myCommenterStateMap;
-  private CodeStyleManager myCodeStyleManager;
+  private CodeStyleManager                                myCodeStyleManager;
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -419,7 +424,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   public void doDefaultCommenting(final Commenter commenter) {
-    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+    DocumentUtil.executeInBulk(myDocument, myEndLine - myStartLine >= MIN_LINES_TO_COMMENT_TO_USE_BULK_PROCESSING, new Runnable() {
       @Override
       public void run() {
         for (int line = myEndLine; line >= myStartLine; line--) {
@@ -435,7 +440,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     final FileType fileType = myFile.getFileType();
     final Indent minIndent = computeMinIndent(myStartLine, myEndLine, chars, myCodeStyleManager, fileType);
 
-    DocumentUtil.executeInBulk(myDocument, true, new Runnable() {
+    DocumentUtil.executeInBulk(myDocument, myEndLine - myStartLine > MIN_LINES_TO_COMMENT_TO_USE_BULK_PROCESSING, new Runnable() {
       @Override
       public void run() {
         for (int line = myEndLine; line >= myStartLine; line--) {

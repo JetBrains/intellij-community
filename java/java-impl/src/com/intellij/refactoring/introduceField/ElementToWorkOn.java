@@ -29,6 +29,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -60,7 +61,7 @@ public class ElementToWorkOn {
     return myExpression == null;
   }
 
-  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final String refactoringName, final String helpId, final Project project, final Pass<ElementToWorkOn> processor) {
+  public static void processElementToWorkOn(final Editor editor, final PsiFile file, final String refactoringName, final String helpId, final Project project, final ElementsProcessor<ElementToWorkOn> processor) {
     PsiLocalVariable localVar = null;
     PsiExpression expr = null;
 
@@ -92,13 +93,20 @@ public class ElementToWorkOn {
         if (statementsInRange.length == 1 && (PsiUtilCore.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]))) {
           editor.getSelectionModel().selectLineAtCaret();
           final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
-          if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
+          if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null || !processor.accept(elementToWorkOn)) {
             editor.getSelectionModel().removeSelection();
           }
         }
 
         if (!editor.getSelectionModel().hasSelection()){
           final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
+          for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext(); ) {
+            PsiExpression expression = iterator.next();
+            if (!processor.accept(new ElementToWorkOn(null, expression))) {
+              iterator.remove();
+            }
+          }
+
           if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();
           }
@@ -176,5 +184,10 @@ public class ElementToWorkOn {
       }
     }
     return new ElementToWorkOn(localVar, expr);
+  }
+  
+  public interface ElementsProcessor<T> {
+    boolean accept(ElementToWorkOn el);
+    void pass(T t);
   }
 }

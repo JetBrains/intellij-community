@@ -18,10 +18,8 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -30,6 +28,11 @@ public class XBreakpointGroupingByPackageRule<B> extends XBreakpointGroupingRule
 
   protected XBreakpointGroupingByPackageRule() {
     super("XBreakpointGroupingByPackageRule", "Group by package");
+  }
+
+  @Override
+  public int getPriority() {
+    return XBreakpointsGroupingPriorities.BY_PACKAGE;
   }
 
   @Override

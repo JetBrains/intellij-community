@@ -21,7 +21,7 @@ import com.intellij.openapi.util.ClassExtension;
  * @author yole
  */
 public class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
-  public static RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
+  public static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
 
   private RegExpLanguageHosts() {
     super("com.intellij.regExpLanguageHost");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ public class WordSplitter extends BaseSplitter {
     if (text == null || range.getLength() <= 1) {
       return;
     }
-
-    Matcher specialMatcher = SPECIAL.matcher(range.substring(text));
+    Matcher specialMatcher = SPECIAL.matcher(text);
+    specialMatcher.region(range.getStartOffset(), range.getEndOffset());
     if (specialMatcher.find()) {
-      TextRange found = matcherRange(range, specialMatcher);
+      TextRange found = new TextRange(specialMatcher.start(), specialMatcher.end());
       addWord(consumer, true, found);
     }
     else {
