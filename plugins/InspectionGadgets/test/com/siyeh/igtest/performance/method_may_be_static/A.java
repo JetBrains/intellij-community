@@ -24,7 +24,7 @@ public class A implements Serializable {
     Object readResolve() throws ObjectStreamException {
         return null;
     }
-
+    native void f();
     void g() {
         System.out.println("boo!");
     }

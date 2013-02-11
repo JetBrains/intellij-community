@@ -114,6 +114,7 @@ public class BinaryContent extends DiffContent {
     return null;
   }
 
+  @Nullable
   public FileType getContentType() {
     return myFileType;
   }

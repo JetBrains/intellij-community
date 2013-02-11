@@ -17,12 +17,8 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -35,12 +31,13 @@ import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.ide.WebServerManager;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,7 +49,6 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebServer {
   private static final String START_TIME_PATH = "/startTime";
 
-  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
   private static final Logger LOG = Logger.getInstance(WebServer.class);
@@ -71,26 +67,18 @@ public class WebServer {
     return !openChannels.isEmpty();
   }
 
-  public void start(int port, Consumer<ChannelPipeline>... pipelineConsumers) {
-    start(port, new Computable.PredefinedValueComputable<Consumer<ChannelPipeline>[]>(pipelineConsumers));
+  public void start(int port) {
+    start(port, 1, false);
   }
 
-  public void start(int port, int portsCount, Consumer<ChannelPipeline>... pipelineConsumers) {
-    start(port, portsCount, false, new Computable.PredefinedValueComputable<Consumer<ChannelPipeline>[]>(pipelineConsumers));
-  }
-
-  public void start(int port, Computable<Consumer<ChannelPipeline>[]> pipelineConsumers) {
-    start(port, 1, false, pipelineConsumers);
-  }
-
-  public int start(int firstPort, int portsCount, boolean tryAnyPort, Computable<Consumer<ChannelPipeline>[]> pipelineConsumers) {
+  public int start(int firstPort, int portsCount, boolean tryAnyPort) {
     if (isRunning()) {
       throw new IllegalStateException("server already started");
     }
 
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
-    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(pipelineConsumers, new DefaultHandler(openChannels)));
+    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new DefaultHandler(openChannels)));
     return bind(firstPort, portsCount, tryAnyPort, bootstrap);
   }
 
@@ -261,9 +249,9 @@ public class WebServer {
 
   public void stop() {
     try {
-      for (ChannelFutureListener listener : closingListeners) {
+      for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
         try {
-          listener.operationComplete(null);
+          handler.serverStopping();
         }
         catch (Exception e) {
           LOG.error(e);
@@ -280,25 +268,6 @@ public class WebServer {
     }
   }
 
-  public void addClosingListener(ChannelFutureListener listener) {
-    closingListeners.add(listener);
-  }
-
-  public Runnable createShutdownTask() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (isRunning()) {
-          stop();
-        }
-      }
-    };
-  }
-
-  public void addShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(createShutdownTask());
-  }
-
   public static void removePluggableHandlers(ChannelPipeline pipeline) {
     for (String name : pipeline.getNames()) {
       if (name.startsWith("pluggable_")) {
@@ -307,28 +276,20 @@ public class WebServer {
     }
   }
 
+  public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelUpstreamHandler messageChannelHandler) {
+    context.getPipeline().replace(DefaultHandler.class, "replacedDefaultHandler", messageChannelHandler);
+  }
+
   private static class ChannelPipelineFactoryImpl implements ChannelPipelineFactory {
-    private final Computable<Consumer<ChannelPipeline>[]> pipelineConsumers;
     private final DefaultHandler defaultHandler;
 
-    public ChannelPipelineFactoryImpl(Computable<Consumer<ChannelPipeline>[]> pipelineConsumers, DefaultHandler defaultHandler) {
-      this.pipelineConsumers = pipelineConsumers;
+    public ChannelPipelineFactoryImpl(DefaultHandler defaultHandler) {
       this.defaultHandler = defaultHandler;
     }
 
     @Override
     public ChannelPipeline getPipeline() throws Exception {
-      ChannelPipeline pipeline = pipeline(new HttpRequestDecoder(), new HttpChunkAggregator(1048576), new HttpResponseEncoder());
-      for (Consumer<ChannelPipeline> consumer : pipelineConsumers.compute()) {
-        try {
-          consumer.consume(pipeline);
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-      }
-      pipeline.addLast("defaultHandler", defaultHandler);
-      return pipeline;
+      return pipeline(new HttpRequestDecoder(), new HttpChunkAggregator(1048576), new HttpResponseEncoder(), defaultHandler);
     }
   }
 
@@ -346,20 +307,54 @@ public class WebServer {
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
-      if (e.getMessage() instanceof HttpRequest) {
-        HttpRequest message = (HttpRequest)e.getMessage();
-        if (new QueryStringDecoder(message.getUri()).getPath().equals(START_TIME_PATH)) {
-          HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-          response.setHeader("Access-Control-Allow-Origin", "*");
-          response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
-          Responses.addServer(response);
-          Responses.addDate(response);
-          context.getChannel().write(response).addListener(ChannelFutureListener.CLOSE);
+    public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
+      if (!(event.getMessage() instanceof HttpRequest)) {
+        context.sendUpstream(event);
+      }
+
+      HttpRequest request = (HttpRequest)event.getMessage();
+      QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
+      if (urlDecoder.getPath().equals(START_TIME_PATH)) {
+        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
+        Responses.addServer(response);
+        Responses.addDate(response);
+        Responses.send(response, context);
+        return;
+      }
+
+      HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
+      if (connectedHandler == null) {
+        for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
+          try {
+            if (handler.isSupported(request.getMethod()) && handler.process(urlDecoder, request, context)) {
+              if (context.getAttachment() == null) {
+                context.setAttachment(handler);
+              }
+              return;
+            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
-        else {
-          Responses.sendError(message, context, NOT_FOUND);
-        }
+      }
+      else if (connectedHandler.isSupported(request.getMethod())) {
+        connectedHandler.process(urlDecoder, request, context);
+        return;
+      }
+      Responses.sendError(request, context, NOT_FOUND);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
+      try {
+        LOG.error(event.getCause());
+      }
+      finally {
+        context.setAttachment(null);
+        event.getChannel().close();
       }
     }
   }

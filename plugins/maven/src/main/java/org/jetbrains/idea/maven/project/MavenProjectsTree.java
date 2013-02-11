@@ -1201,7 +1201,6 @@ public class MavenProjectsTree {
 
                             Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,
                                                                                                            importingSettings,
-                                                                                                           new MavenProjectReader(),
                                                                                                            console);
                             if (resolveResult.first) {
                               fireFoldersResolved(Pair.create(mavenProject, resolveResult.second));

@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface.layout.flow;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.layout.AbstractFlowBaseOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
@@ -27,7 +28,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class FlowBaseOperation extends com.intellij.designer.designSurface.FlowBaseOperation {
+public class FlowBaseOperation extends AbstractFlowBaseOperation {
   public FlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
     super(container, context, horizontal);
   }

@@ -223,6 +223,7 @@ public class MergeRequestImpl extends MergeRequest {
       return myTarget.getFile();
     }
 
+    @Nullable
     public FileType getContentType() {
       return myTarget.getContentType();
     }

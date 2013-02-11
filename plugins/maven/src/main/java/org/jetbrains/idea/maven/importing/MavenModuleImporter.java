@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -44,9 +43,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.File;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 
@@ -98,7 +94,6 @@ public class MavenModuleImporter {
     configFolders();
     configDependencies();
     configLanguageLevel();
-    configEncoding();
     configAnnotationProcessors();
     excludeFromCompilationArchetypeResources();
   }
@@ -411,19 +406,6 @@ public class MavenModuleImporter {
     if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
     if (MavenConstants.SCOPE_PROVIDEED.equals(mavenScope)) return DependencyScope.PROVIDED;
     return DependencyScope.COMPILE;
-  }
-
-  private void configEncoding() {
-    if (Boolean.parseBoolean(System.getProperty("maven.disable.encode.import"))) return;
-
-    String encoding = myMavenProject.getEncoding();
-    if (encoding != null) {
-      try {
-        EncodingProjectManager.getInstance(myModule.getProject()).setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
-      }
-      catch (UnsupportedCharsetException ignored) {/**/}
-      catch (IllegalCharsetNameException ignored) {/**/}
-    }
   }
 
   private void configLanguageLevel() {

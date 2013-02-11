@@ -18,6 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -44,30 +45,30 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PROPERTY_KEY = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.KEY",
-    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.KEYWORD
   );
 
   public static final TextAttributesKey PROPERTY_VALUE = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.VALUE",
-    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.STRING
   );
 
   public static final TextAttributesKey PROPERTY_COMMENT = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.LINE_COMMENT",
-    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.LINE_COMMENT
   );
 
   public static final TextAttributesKey PROPERTY_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.KEY_VALUE_SEPARATOR",
-    SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.OPERATION_SIGN
   );
   public static final TextAttributesKey PROPERTIES_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.VALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
   );
   public static final TextAttributesKey PROPERTIES_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
     "PROPERTIES.INVALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE
   );
 
   static {

@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface.layout.grid;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.android.designer.designSurface.layout.BorderStaticDecorator;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.GridInsertType;
@@ -24,7 +25,6 @@ import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.InsertFeedback;
-import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;

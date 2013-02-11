@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -213,7 +212,7 @@ public class GenerateEqualsHelper implements Runnable {
       }
     }
     buffer.append("\nreturn true;\n}");
-    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), null);
+    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), myClass);
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 

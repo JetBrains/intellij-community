@@ -110,6 +110,7 @@ public abstract class DiffContent {
    * @return FileType of content.
    *         null means use other content's type for this one
    */
+  @Nullable 
   public abstract FileType getContentType();
 
   /**

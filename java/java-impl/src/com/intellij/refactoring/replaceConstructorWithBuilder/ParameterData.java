@@ -21,6 +21,7 @@
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -30,7 +31,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import java.util.Map;
 
 public class ParameterData {
-  private final String myName;
   private final String myParameterName;
   private final PsiType myType;
   private String myFieldName;
@@ -39,8 +39,7 @@ public class ParameterData {
   private boolean myInsertSetter = true;
   private static final Logger LOG = Logger.getInstance("#" + ParameterData.class.getName());
 
-  public ParameterData(String name, String parameterName, PsiType type) {
-    myName = name;
+  public ParameterData(String parameterName, PsiType type) {
     myParameterName = parameterName;
     myType = type;
   }
@@ -77,14 +76,24 @@ public class ParameterData {
     final String paramName = parameter.getName();
     final String pureParamName = styleManager.variableNameToPropertyName(paramName, VariableKind.PARAMETER);
 
-    ParameterData parameterData = result.get(pureParamName);
+    String uniqueParamName = pureParamName;
+    ParameterData parameterData = result.get(uniqueParamName);
+    int i = 0;
+    while (parameterData != null) {
+      if (!Comparing.equal(parameter.getType(), parameterData.getType())) {
+        uniqueParamName = pureParamName + i++;
+        parameterData = result.get(uniqueParamName);
+      } else {
+        break;
+      }
+    }
     if (parameterData == null) {
-      parameterData = new ParameterData(pureParamName, paramName, parameter.getType());
+      parameterData = new ParameterData(paramName, parameter.getType());
 
-      parameterData.setFieldName(styleManager.suggestVariableName(VariableKind.FIELD, pureParamName, null, parameter.getType()).names[0]);
-      parameterData.setSetterName(PropertyUtil.suggestSetterName(pureParamName));
+      parameterData.setFieldName(styleManager.suggestVariableName(VariableKind.FIELD, uniqueParamName, null, parameter.getType()).names[0]);
+      parameterData.setSetterName(PropertyUtil.suggestSetterName(uniqueParamName));
 
-      result.put(pureParamName, parameterData);
+      result.put(uniqueParamName, parameterData);
     }
 
     return parameterData;

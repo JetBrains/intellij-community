@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -117,7 +118,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
       if (qualifier == null) {
         if (parent instanceof PsiCallExpression) {
           // method calls are always in error
-          registerError(qualifierExpression);
+          registerError(qualifierExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           return;
         }
         final PsiElement target = expression.resolve();
@@ -128,7 +129,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
         if (!VariableSearchUtils.variableNameResolvesToTarget(referenceName, variable, expression)) {
           return;
         }
-        registerError(thisExpression);
+        registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
       }
       else {
         final String qualifierName = qualifier.getReferenceName();
@@ -148,7 +149,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
           final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression);
+              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             }
             final PsiMethod[] methods = parentClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
@@ -175,7 +176,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
           PsiClass parentClass = ClassUtils.getContainingClass(expression);
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression);
+              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             }
             final PsiField field = parentClass.findFieldByName(referenceName, true);
             if (field != null) {

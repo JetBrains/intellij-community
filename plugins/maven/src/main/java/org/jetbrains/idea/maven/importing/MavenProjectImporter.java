@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Stack;
@@ -49,6 +50,9 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
 public class MavenProjectImporter {
@@ -391,6 +395,17 @@ public class MavenProjectImporter {
             Module module = projectsManager.findModule(project);
             if (module != null) {
               configuration.setBytecodeTargetLevel(module, targetLevel);
+            }
+          }
+
+          if (!Boolean.parseBoolean(System.getProperty("maven.disable.encode.import"))) {
+            String encoding = project.getEncoding();
+            if (encoding != null) {
+              try {
+                EncodingProjectManager.getInstance(myProject).setEncoding(project.getDirectoryFile(), Charset.forName(encoding));
+              }
+              catch (UnsupportedCharsetException ignored) {/**/}
+              catch (IllegalCharsetNameException ignored) {/**/}
             }
           }
         }

@@ -15,8 +15,6 @@
  */
 package com.intellij.designer.designSurface.feedbacks;
 
-import com.intellij.ui.Colors;
-import com.intellij.ui.LightColors;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -25,32 +23,17 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class TextFeedback extends SimpleColoredComponent {
-  private static SimpleTextAttributes DIMENSION_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.lightGray);
-  private static SimpleTextAttributes SNAP_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Colors.DARK_GREEN);
-
-  public TextFeedback() {
-    setBackground(LightColors.YELLOW);
-  }
-
-  public void bold(String text) {
+public class AbstractTextFeedback extends SimpleColoredComponent {
+  public final void bold(String text) {
     append(text, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
   }
 
-  public void dimension(String text) {
-    append(text, DIMENSION_ATTRIBUTES);
-  }
-
-  public void snap(String text) {
-    append(text, SNAP_ATTRIBUTES);
-  }
-
-  public void centerTop(Rectangle bounds) {
+  public final void centerTop(Rectangle bounds) {
     Dimension textSize = getPreferredSize();
     setBounds(bounds.x + bounds.width / 2 - textSize.width / 2, bounds.y - textSize.height - 10, textSize.width, textSize.height);
   }
 
-  public void locationTo(Point location, int shift) {
+  public final void locationTo(Point location, int shift) {
     Dimension textSize = getPreferredSize();
     setBounds(location.x + shift, location.y + shift, textSize.width, textSize.height);
   }

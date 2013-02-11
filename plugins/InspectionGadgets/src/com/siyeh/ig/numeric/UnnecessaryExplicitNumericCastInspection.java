@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -59,17 +59,14 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.explicit.numeric.cast.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    return InspectionGadgetsBundle.message(
-      "unnecessary.explicit.numeric.cast.problem.descriptor",
-      expression.getText());
+    return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.problem.descriptor", expression.getText());
   }
 
   @Override
@@ -77,26 +74,22 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     return new UnnecessaryExplicitNumericCastFix();
   }
 
-  private static class UnnecessaryExplicitNumericCastFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryExplicitNumericCastFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.explicit.numeric.cast.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.explicit.numeric.cast.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression)parent;
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       if (isPrimitiveNumericCastNecessary(typeCastExpression)) {
         return;
       }
@@ -115,8 +108,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     return new UnnecessaryExplicitNumericCastVisitor();
   }
 
-  private static class UnnecessaryExplicitNumericCastVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryExplicitNumericCastVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
@@ -138,7 +130,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       }
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement != null) {
-        registerError(typeElement, operand);
+        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, operand);
       }
     }
   }
@@ -176,9 +168,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
           }
         }
       }
-      else if (JavaTokenType.GTGT.equals(tokenType) ||
-               JavaTokenType.GTGTGT.equals(tokenType) ||
-               JavaTokenType.LTLT.equals(tokenType)) {
+      else if (JavaTokenType.GTGT.equals(tokenType) || JavaTokenType.GTGTGT.equals(tokenType) || JavaTokenType.LTLT.equals(tokenType)) {
         final PsiExpression firstOperand = polyadicExpression.getOperands()[0];
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
           return false;
@@ -188,8 +178,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       return true;
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression =
-        (PsiAssignmentExpression)parent;
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final PsiType lhsType = assignmentExpression.getType();
       if (!castType.equals(lhsType)) {
         return true;
@@ -201,15 +190,60 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final PsiType lhsType = variable.getType();
       return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
     }
+    else if (parent instanceof PsiExpressionList) {
+      final PsiExpressionList expressionList = (PsiExpressionList)parent;
+      final PsiElement grandParent = expressionList.getParent();
+      if (!(grandParent instanceof PsiCallExpression)) {
+        return true;
+      }
+      final PsiCallExpression callExpression = (PsiCallExpression)grandParent;
+      final PsiMethod targetMethod = callExpression.resolveMethod();
+      if (targetMethod == null) {
+        return true;
+      }
+      final PsiElement[] children = callExpression.getChildren();
+      final StringBuilder newMethodCallText = new StringBuilder();
+      for (PsiElement child : children) {
+        if (child != expressionList) {
+          newMethodCallText.append(child.getText());
+          continue;
+        }
+        newMethodCallText.append('(');
+        final PsiExpression[] arguments = expressionList.getExpressions();
+        boolean comma = false;
+        for (PsiExpression argument : arguments) {
+          if (comma) {
+            newMethodCallText.append(',');
+          }
+          else {
+            comma = true;
+          }
+          if (PsiTreeUtil.isAncestor(argument, expression, false)) {
+            newMethodCallText.append(operand.getText());
+          }
+          else {
+            newMethodCallText.append(argument.getText());
+          }
+        }
+        newMethodCallText.append(')');
+      }
+      final Project project = expression.getProject();
+      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+      final PsiElementFactory factory = javaPsiFacade.getElementFactory();
+      final PsiCallExpression newMethodCall = (PsiCallExpression)
+        factory.createExpressionFromText(newMethodCallText.toString(), expression);
+      if (targetMethod != newMethodCall.resolveMethod()) {
+        return true;
+      }
+      return false;
+    }
     else {
-      final PsiType expectedType =
-        ExpectedTypeUtils.findExpectedType(expression, false);
+      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
       return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);
     }
   }
 
-  public static boolean isLegalWideningConversion(
-    PsiExpression expression, PsiType requiredType) {
+  static boolean isLegalWideningConversion(PsiExpression expression, PsiType requiredType) {
     final PsiType operandType = expression.getType();
     if (PsiType.DOUBLE.equals(requiredType)) {
       if (PsiType.FLOAT.equals(operandType) ||
@@ -248,8 +282,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     return false;
   }
 
-  public static boolean isLegalAssignmentConversion(
-    PsiExpression expression, PsiType assignmentType) {
+  static boolean isLegalAssignmentConversion(PsiExpression expression, PsiType assignmentType) {
     // JLS 5.2 Assignment Conversion
     final PsiType operandType = expression.getType();
     if (isLegalWideningConversion(expression, assignmentType)) {
@@ -257,8 +290,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     }
     else if (PsiType.SHORT.equals(assignmentType)) {
       if (PsiType.INT.equals(operandType)) {
-        final Object constant =
-          ExpressionUtils.computeConstantExpression(expression);
+        final Object constant = ExpressionUtils.computeConstantExpression(expression);
         if (!(constant instanceof Integer)) {
           return false;
         }
@@ -271,8 +303,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     }
     else if (PsiType.CHAR.equals(assignmentType)) {
       if (PsiType.INT.equals(operandType)) {
-        final Object constant =
-          ExpressionUtils.computeConstantExpression(expression);
+        final Object constant = ExpressionUtils.computeConstantExpression(expression);
         if (!(constant instanceof Integer)) {
           return false;
         }
@@ -285,8 +316,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     }
     else if (PsiType.BYTE.equals(assignmentType)) {
       if (PsiType.INT.equals(operandType)) {
-        final Object constant =
-          ExpressionUtils.computeConstantExpression(expression);
+        final Object constant = ExpressionUtils.computeConstantExpression(expression);
         if (!(constant instanceof Integer)) {
           return false;
         }

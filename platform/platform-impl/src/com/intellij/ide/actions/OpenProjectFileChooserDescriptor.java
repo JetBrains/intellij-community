@@ -17,9 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
+  private static final Icon ourProjectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
 
   public OpenProjectFileChooserDescriptor(final boolean chooseFiles) {
     super(chooseFiles, true, chooseFiles, chooseFiles, false, false);
@@ -38,7 +41,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
 
   public Icon getIcon(final VirtualFile file) {
     if (isProjectDirectory(file)) {
-      return dressIcon(file, AllIcons.Nodes.IdeaModule);
+      return dressIcon(file, ourProjectIcon);
     }
     final Icon icon = getImporterIcon(file);
     if (icon != null) {
