@@ -15,15 +15,79 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.ClassExtension;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.intellij.lang.regexp.psi.RegExpPyCondRef;
+import org.intellij.lang.regexp.psi.RegExpQuantifier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
-  public static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
+public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
+  private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
+
+  public static RegExpLanguageHosts getInstance() {
+    return INSTANCE;
+  }
 
   private RegExpLanguageHosts() {
     super("com.intellij.regExpLanguageHost");
+  }
+
+  @Nullable
+  private static RegExpLanguageHost findRegExpHost(@Nullable final PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
+    if (host instanceof RegExpLanguageHost) {
+      return (RegExpLanguageHost)host;
+    }
+    if (host != null) {
+      return INSTANCE.forClass(host.getClass());
+    }
+    return null;
+  }
+
+  public boolean isRedundantEscape(@NotNull final RegExpChar ch, @NotNull final String text) {
+    if (text.length() <= 1) {
+      return false;
+    }
+    final RegExpLanguageHost host = findRegExpHost(ch);
+    if (host != null) {
+      final char c = text.charAt(1);
+      final boolean needsEscaping = host.characterNeedsEscaping(c);
+      return !needsEscaping;
+    }
+    else {
+      return !("\\]".equals(text) || "\\}".equals(text));
+    }
+  }
+
+  public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
+    final RegExpLanguageHost host = findRegExpHost(group);
+    return host != null && host.supportsNamedGroupSyntax(group);
+  }
+
+  public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {
+    final RegExpLanguageHost host = findRegExpHost(comment);
+    return host != null && host.supportsPerl5EmbeddedComments();
+  }
+
+  public boolean supportsPythonConditionalRefs(@Nullable final RegExpPyCondRef condRef) {
+    final RegExpLanguageHost host = findRegExpHost(condRef);
+    return host != null && host.supportsPythonConditionalRefs();
+  }
+
+  public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
+    final RegExpLanguageHost host = findRegExpHost(quantifier);
+    return host != null && host.supportsPossessiveQuantifiers();
   }
 }
