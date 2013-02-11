@@ -418,11 +418,11 @@ public class MavenModuleImporter {
 
     String encoding = myMavenProject.getEncoding();
     if (encoding != null) {
-      try {
-        EncodingProjectManager.getInstance(myModule.getProject()).setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
-      }
-      catch (UnsupportedCharsetException ignored) {/**/}
-      catch (IllegalCharsetNameException ignored) {/**/}
+      //try {
+      //  EncodingProjectManager.getInstance(myModule.getProject()).setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
+      //}
+      //catch (UnsupportedCharsetException ignored) {/**/}
+      //catch (IllegalCharsetNameException ignored) {/**/}
     }
   }
 

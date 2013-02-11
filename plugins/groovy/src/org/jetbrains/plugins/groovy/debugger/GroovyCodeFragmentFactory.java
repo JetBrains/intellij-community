@@ -127,7 +127,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         javaText.append(
           "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
           .append(s)
-          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
+          .append(":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
         javaText.append("  |thiz0 = thiz;\n");
         javaText.append(" } else {\n");
         javaText.append("  |thiz0 = this;\n");
