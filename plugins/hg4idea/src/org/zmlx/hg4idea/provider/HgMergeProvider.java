@@ -60,7 +60,9 @@ public class HgMergeProvider implements MergeProvider {
         final VirtualFile repo = HgUtil.getHgRootOrThrow(myProject, file);
         final HgFile hgFile = new HgFile(myProject, file);
 
-        HgRevisionNumber serverRevisionNumber, baseRevisionNumber = null, localRevisionNumber;
+        HgRevisionNumber serverRevisionNumber;
+        HgRevisionNumber localRevisionNumber;
+        HgRevisionNumber baseRevisionNumber = null;
         // there are two possibilities: we have checked in local changes in the selected file or we didn't.
         if (wasFileCheckedIn(repo, file)) {
           // 1. We checked in.
@@ -91,8 +93,7 @@ public class HgMergeProvider implements MergeProvider {
             }
           }
           catch (HgCommandException e) {
-            new HgCommandResultNotifier(myProject)
-              .notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
+            throw new VcsException(HgVcsMessages.message("hg4idea.error.log.command.execution"), e);
           }
         } else {
           // 2. local changes are not checked in.
