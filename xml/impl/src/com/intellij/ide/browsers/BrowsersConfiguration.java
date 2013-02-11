@@ -152,9 +152,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         }
         myBrowserToSettingsMap.put(browserFamily, new WebBrowserSettings(path, Boolean.parseBoolean(active), specificSettings));
       }
-      catch (IllegalArgumentException e) {
-        // skip
-      }
+      catch (IllegalArgumentException ignored) { }
     }
   }
 
@@ -194,6 +192,8 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     return ServiceManager.getService(BrowsersConfiguration.class);
   }
 
+  /** @deprecated use {@link DefaultUrlOpener} (to remove in IDEA 13) */
+  @SuppressWarnings("unused")
   public static void launchBrowser(final @Nullable BrowserFamily family, @NotNull final String url) {
     if (family == null) {
       BrowserUtil.launchBrowser(url);
