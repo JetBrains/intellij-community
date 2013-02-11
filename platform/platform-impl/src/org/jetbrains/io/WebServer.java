@@ -268,14 +268,6 @@ public class WebServer {
     }
   }
 
-  public static void removePluggableHandlers(ChannelPipeline pipeline) {
-    for (String name : pipeline.getNames()) {
-      if (name.startsWith("pluggable_")) {
-        pipeline.remove(name);
-      }
-    }
-  }
-
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelUpstreamHandler messageChannelHandler) {
     context.getPipeline().replace(DefaultHandler.class, "replacedDefaultHandler", messageChannelHandler);
   }
