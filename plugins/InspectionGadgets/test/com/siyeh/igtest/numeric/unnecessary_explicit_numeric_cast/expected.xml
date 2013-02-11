@@ -93,4 +93,11 @@
     <line>34</line>    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
     <description>'b' unnecessarily cast to &lt;code&gt;long&lt;/code&gt;</description>
   </problem>
+
+  <problem>
+    <file>UnnecessaryExplicitNumericCast.java</file>
+    <line>46</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary explicit numeric cast</problem_class>
+    <description>''b'' unnecessarily cast to &lt;code&gt;int&lt;/code&gt; #loc</description>
+  </problem>
 </problems>

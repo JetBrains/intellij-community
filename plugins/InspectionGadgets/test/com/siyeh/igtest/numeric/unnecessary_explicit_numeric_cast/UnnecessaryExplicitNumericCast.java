@@ -40,4 +40,12 @@ public class UnnecessaryExplicitNumericCast {
     void c(int cols, int no) {
       int rows = (int) Math.ceil((double) no / cols);
     }
+
+    void source() {
+      target((int)'a');
+      target2((int)'b');
+    }
+    void target(int c) {}
+    void target(char c) {}
+    void target2(int d) {}
 }
