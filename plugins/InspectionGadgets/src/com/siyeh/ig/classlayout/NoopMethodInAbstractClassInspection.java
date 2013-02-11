@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,26 +28,22 @@ public class NoopMethodInAbstractClassInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "noop.method.in.abstract.class.display.name");
+    return InspectionGadgetsBundle.message("noop.method.in.abstract.class.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "noop.method.in.abstract.class.problem.descriptor");
+    return InspectionGadgetsBundle.message("noop.method.in.abstract.class.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new NoopMethodInAbstractClassVisitor();
   }
 
-  private static class NoopMethodInAbstractClassVisitor
-    extends BaseInspectionVisitor {
+  private static class NoopMethodInAbstractClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
       if (method.isConstructor()) {
         return;
       }
@@ -55,14 +51,13 @@ public class NoopMethodInAbstractClassInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      if (containingClass.isInterface() ||
-          containingClass.isAnnotationType()) {
+      if (containingClass.isInterface() || containingClass.isAnnotationType()) {
         return;
       }
       if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) || method.hasModifierProperty(PsiModifier.NATIVE)) {
         return;
       }
       if (!MethodUtils.isEmpty(method)) {
