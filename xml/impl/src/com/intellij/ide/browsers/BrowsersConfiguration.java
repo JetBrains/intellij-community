@@ -24,7 +24,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -253,52 +251,6 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       }
     }
 
-    return null;
-  }
-
-  /**
-   * Gets data from Windows registry, may take some time to run (up to ~300ms)
-   *
-   * @return Map[BrowserFamily -> "path to .exe"]
-   */
-  @NotNull
-  public static EnumMap<BrowserFamily, String> getWindowsBrowsersEXE() {
-    EnumMap<BrowserFamily, String> map = new EnumMap<BrowserFamily, String>(BrowserFamily.class);
-    if (SystemInfo.isWindows) {
-      List<String> sections = WindowsRegistryUtil.readRegistryBranch("HKEY_LOCAL_MACHINE\\SOFTWARE\\Clients\\StartMenuInternet");
-      for (String section : sections) {
-        BrowserFamily family = getFamily(section);
-        if (family == null) {
-          continue; //We ignore "unknown" browsers like Maxthon, RockMelt, SeaMonkey, Deepnet Explorer, Avant Browser etc.
-        }
-        String pathToExe = WindowsRegistryUtil.readRegistryDefault(
-          "HKLM\\SOFTWARE\\Clients\\StartMenuInternet\\" + section + "\\shell\\open\\command");
-        if (pathToExe != null) {
-          map.put(family, pathToExe);
-        }
-      }
-    }
-    return map;
-  }
-
-  @Nullable
-  private static BrowserFamily getFamily(String registryName) {
-    registryName = registryName.toLowerCase();
-    if (registryName.contains("firefox")) {
-      return BrowserFamily.FIREFOX;
-    }
-    if (registryName.contains("iexplore")) {
-      return BrowserFamily.EXPLORER;
-    }
-    if (registryName.contains("opera")) {
-      return BrowserFamily.OPERA;
-    }
-    if (registryName.contains("safari")) {
-      return BrowserFamily.SAFARI;
-    }
-    if (registryName.contains("google")) {
-      return BrowserFamily.CHROME;
-    }
     return null;
   }
 }
