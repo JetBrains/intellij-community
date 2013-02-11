@@ -1033,38 +1033,40 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     final Pair<PsiType, ConstraintType> result;
-    if (constraint == null && methodCall instanceof PsiCallExpression) {
-
-      final PsiExpressionList argumentList = ((PsiCallExpression)methodCall).getArgumentList();
-      if (argumentList != null && preparedKey == null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
-        for (PsiExpression expression : argumentList.getExpressions()) {
-          if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
-            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, false);
-            if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
-              return getFailedInferenceConstraint(typeParameter);
-            }
-            final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-
-            final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-            if (method == null || methodParamsDependOn(typeParameter, expression, 
-                                                       functionalInterfaceType, method.getParameterList().getParameters(),
-                                                       LambdaUtil.getSubstitutor(method, resolveResult))) {
-              if (expression instanceof PsiMethodReferenceExpression) {
+    if (constraint == null) {
+      if (methodCall instanceof PsiCallExpression) {
+        final PsiExpressionList argumentList = ((PsiCallExpression)methodCall).getArgumentList();
+        if (argumentList != null && preparedKey == null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
+          for (PsiExpression expression : argumentList.getExpressions()) {
+            if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
+              final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, false);
+              if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
                 return getFailedInferenceConstraint(typeParameter);
               }
-              return null;
+              final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+  
+              final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+              if (method == null || methodParamsDependOn(typeParameter, expression, 
+                                                         functionalInterfaceType, method.getParameterList().getParameters(),
+                                                         LambdaUtil.getSubstitutor(method, resolveResult))) {
+                if (expression instanceof PsiMethodReferenceExpression) {
+                  return getFailedInferenceConstraint(typeParameter);
+                }
+                return null;
+              }
             }
           }
         }
-      }
 
-      final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
-      PsiClassType[] superTypes = typeParameter.getSuperTypes();
-      if (superTypes.length == 0) return null;
-      PsiType superType = finalSubstitutor.substitute(superTypes[0]);
-      if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
-      if (superType == null) return null;
-      return policy.getInferredTypeWithNoConstraint(manager, superType);
+        final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
+        PsiClassType[] superTypes = typeParameter.getSuperTypes();
+        if (superTypes.length == 0) return null;
+        PsiType superType = finalSubstitutor.substitute(superTypes[0]);
+        if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
+        if (superType == null) return null;
+        return policy.getInferredTypeWithNoConstraint(manager, superType);
+      }
+      return null;
     }
     else {
       PsiType guess = constraint.getFirst();
