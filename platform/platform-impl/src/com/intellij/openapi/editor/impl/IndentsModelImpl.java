@@ -22,20 +22,25 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IndentsModelImpl implements IndentsModel {
 
-  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<IntPair, IndentGuideDescriptor>();
-  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<IndentGuideDescriptor>();
-  private final EditorImpl myEditor;
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = ContainerUtilRt.newHashMap();
+  private       List<IndentGuideDescriptor>         myIndents        = ContainerUtilRt.newArrayList();
+  @NotNull private final EditorImpl myEditor;
 
-  public IndentsModelImpl(EditorImpl editor) {
+  public IndentsModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
+  }
+
+  @NotNull
+  public List<IndentGuideDescriptor> getIndents() {
+    return myIndents;
   }
 
   @Override
@@ -60,16 +65,16 @@ public class IndentsModelImpl implements IndentsModel {
   }
 
   @Override
-  public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
+  public void assumeIndents(@NotNull List<IndentGuideDescriptor> descriptors) {
     myIndents = descriptors;
     myIndentsByLines.clear();
     for (IndentGuideDescriptor descriptor : myIndents) {
       myIndentsByLines.put(new IntPair(descriptor.startLine, descriptor.endLine), descriptor);
     }
   }
-  
+
   private static class IntPair {
-    
+
     private final int start;
     private final int end;
 

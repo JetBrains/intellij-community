@@ -31,8 +31,29 @@ public class IndentGuideDescriptor {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    IndentGuideDescriptor other = (IndentGuideDescriptor)obj;
-    return indentLevel == other.indentLevel && startLine == other.startLine && endLine == other.endLine;
+  public int hashCode() {
+    int result = indentLevel;
+    result = 31 * result + startLine;
+    result = 31 * result + endLine;
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    IndentGuideDescriptor that = (IndentGuideDescriptor)o;
+
+    if (endLine != that.endLine) return false;
+    if (indentLevel != that.indentLevel) return false;
+    if (startLine != that.startLine) return false;
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%d (%d-%d)", indentLevel, startLine, endLine);
   }
 }
