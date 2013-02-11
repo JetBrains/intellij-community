@@ -78,6 +78,7 @@ public class ConversionRunner {
     return myProcessProjectFile ||
            myProcessWorkspaceFile ||
            myProcessRunConfigurations ||
+           myProcessProjectLibraries ||
            !myModulesFilesToProcess.isEmpty() ||
            myConverter.isConversionNeeded();
   }
