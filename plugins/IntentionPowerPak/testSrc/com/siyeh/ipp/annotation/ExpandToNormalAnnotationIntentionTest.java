@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,28 @@
  */
 package com.siyeh.ipp.annotation;
 
-import com.intellij.psi.*;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.IPPTestCase;
 
-class ExpandToNormalAnnotationPredicate implements PsiElementPredicate {
+public class ExpandToNormalAnnotationIntentionTest extends IPPTestCase {
+  public void testOneAttr() throws Exception {
+    doTest();
+  }
+  
+  public void testMultiAttr() throws Exception {
+    doTest();
+  }
 
-  public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiNameValuePair)) {
-      return false;
-    }
-    final PsiNameValuePair attribute = (PsiNameValuePair)element;
-    if (attribute.getName() != null) return false;
+  public void testAlreadyHasName() throws Exception {
+    assertIntentionNotAvailable();
+  }
 
-    final PsiAnnotationMemberValue value = attribute.getValue();
-    if (value == null) {
-      return false;
-    }
+  @Override
+  protected String getIntentionName() {
+    return "Expand to 'value = \"foo\"'";
+  }
 
-    return true;
+  @Override
+  protected String getRelativePath() {
+    return "expandToNormal";
   }
 }
