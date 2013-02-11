@@ -221,7 +221,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public void realRefresh(final Runnable callback) {
+  public void realRefresh(final Runnable afterRefreshCallback) {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final VirtualFile[] roots = myHelper.executeDefended(myProject);
 
@@ -232,7 +232,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }
     });
     // do not send additional request for nested copies when in init state
-    copiesDetector.detectCopyRoots(roots, init(), callback);
+    copiesDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
   }
 
   private class CopiesApplier {
