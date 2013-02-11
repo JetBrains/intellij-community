@@ -23,7 +23,9 @@ import com.intellij.ide.browsers.impl.DefaultUrlOpener;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -236,6 +239,20 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return family;
       }
     }
+    return null;
+  }
+
+  @Nullable
+  public static BrowserFamily findFamilyByPath(@Nullable String path) {
+    if (!StringUtil.isEmptyOrSpaces(path)) {
+      String name = FileUtil.getNameWithoutExtension(new File(path).getName());
+      for (BrowserFamily family : BrowserFamily.values()) {
+        if (name.equalsIgnoreCase(family.getExecutionPath())) {
+          return family;
+        }
+      }
+    }
+
     return null;
   }
 

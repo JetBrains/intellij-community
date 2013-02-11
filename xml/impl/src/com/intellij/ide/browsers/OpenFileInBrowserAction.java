@@ -1,6 +1,22 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +43,7 @@ public class OpenFileInBrowserAction extends DumbAwareAction {
       final WebBrowserUrlProvider browserUrlProvider = WebBrowserServiceImpl.getProvider(file);
       final boolean isHtmlFile = HtmlUtil.isHtmlFile(file);
       presentation.setEnabled(browserUrlProvider != null || isHtmlFile);
+
       String text = getTemplatePresentation().getText();
       String description = getTemplatePresentation().getDescription();
 
@@ -46,10 +63,20 @@ public class OpenFileInBrowserAction extends DumbAwareAction {
 
       presentation.setText(text);
       presentation.setDescription(description);
+
+      GeneralSettings settings = GeneralSettings.getInstance();
+      if (!settings.isUseDefaultBrowser()) {
+        BrowsersConfiguration.BrowserFamily family = BrowsersConfiguration.findFamilyByPath(settings.getBrowserPath());
+        if (family != null) {
+          presentation.setIcon(family.getIcon());
+        }
+      }
+
       if (ActionPlaces.isPopupPlace(e.getPlace())) {
         presentation.setVisible(presentation.isEnabled());
       }
-    } else {
+    }
+    else {
       presentation.setVisible(false);
       presentation.setEnabled(false);
     }
