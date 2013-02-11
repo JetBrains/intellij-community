@@ -69,6 +69,7 @@ import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
@@ -188,6 +189,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       return false;
     }
   };
+  private SvnCheckoutProvider myCheckoutProvider;
 
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();
@@ -1208,5 +1210,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean areDirectoriesVersionedItems() {
     return true;
+  }
+
+  @Override
+  public CheckoutProvider getCheckoutProvider() {
+    if (myCheckoutProvider == null) {
+      myCheckoutProvider = new SvnCheckoutProvider();
+    }
+    return myCheckoutProvider;
   }
 }

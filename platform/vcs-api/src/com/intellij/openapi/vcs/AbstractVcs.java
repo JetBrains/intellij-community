@@ -636,5 +636,9 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public boolean revisionsSame(@NotNull final VcsRevisionNumber number1, @NotNull final VcsRevisionNumber number2) {
     return number1.equals(number2);
   }
+
+  public CheckoutProvider getCheckoutProvider() {
+    return null;
+  }
 }
 
