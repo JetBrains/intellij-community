@@ -114,6 +114,30 @@ public class CommonShortcuts {
     return shortcutsById(IdeActions.ACTION_CLOSE);
   }
 
+  public static ShortcutSet getMoveUp() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+  }
+
+  public static ShortcutSet getMoveDown() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+  }
+
+  public static ShortcutSet getMovePageUp() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP);
+  }
+
+  public static ShortcutSet getMovePageDown() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN);
+  }
+
+  public static ShortcutSet getMoveHome() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+  }
+
+  public static ShortcutSet getMoveEnd() {
+    return shortcutsById(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+  }
+
   private static CustomShortcutSet shortcutsById(String actionId) {
     if (ApplicationManager.getApplication() == null) return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
 

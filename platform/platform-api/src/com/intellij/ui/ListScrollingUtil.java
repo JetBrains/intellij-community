@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -305,5 +306,60 @@ public class ListScrollingUtil {
     UIUtil.maybeInstall(map, SELECT_LAST_ROW_ACTION_ID, KeyStroke.getKeyStroke(KeyEvent.VK_END, 0));
     UIUtil.maybeInstall(map, MOVE_HOME_ID, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
+
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMoveUp(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveUp(list, 0);
+      }
+    };
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMoveDown(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveDown(list, 0);
+      }
+    };
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        movePageUp(list);
+      }
+    };
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        movePageDown(list);
+      }
+    };
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMoveHome(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveHome(list);
+      }
+    };
+    new AnAction(){
+      {
+        registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), list);
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        moveEnd(list);
+      }
+    };
   }
 }
