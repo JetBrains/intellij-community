@@ -107,6 +107,7 @@ public class SimpleContent extends DiffContent {
     return null;
   }
 
+  @Nullable
   public FileType getContentType() {
     return myType;
   }
