@@ -1,4 +1,4 @@
-<root>
+<idea-plugin>
   <project-components>
     <component>
       <interface-class>com.intellij.xdebugger.XDebuggerManager</interface-class>
@@ -37,4 +37,4 @@
 
     <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run"/>
   </extensions>
-</root>
+</idea-plugin>
