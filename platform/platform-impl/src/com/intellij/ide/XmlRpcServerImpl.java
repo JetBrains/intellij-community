@@ -103,7 +103,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
   }
 
   private boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
-    if (!(urlDecoder.getPath().isEmpty() || urlDecoder.getPath().equalsIgnoreCase("/RPC2"))) {
+    if (!(urlDecoder.getPath().isEmpty() || urlDecoder.getPath().equals("/") || urlDecoder.getPath().equalsIgnoreCase("/RPC2"))) {
       return false;
     }
 
