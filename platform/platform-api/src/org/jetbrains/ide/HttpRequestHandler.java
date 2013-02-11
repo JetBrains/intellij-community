@@ -29,4 +29,7 @@ public abstract class HttpRequestHandler {
 
   public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
     throws IOException;
+
+  public void serverStopping() {
+  }
 }

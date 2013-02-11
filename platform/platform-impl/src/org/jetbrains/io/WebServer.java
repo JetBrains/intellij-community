@@ -17,10 +17,8 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -40,7 +38,6 @@ import org.jetbrains.ide.WebServerManager;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -52,7 +49,6 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class WebServer {
   private static final String START_TIME_PATH = "/startTime";
 
-  private final List<ChannelFutureListener> closingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
   private static final Logger LOG = Logger.getInstance(WebServer.class);
@@ -253,9 +249,9 @@ public class WebServer {
 
   public void stop() {
     try {
-      for (ChannelFutureListener listener : closingListeners) {
+      for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
         try {
-          listener.operationComplete(null);
+          handler.serverStopping();
         }
         catch (Exception e) {
           LOG.error(e);
@@ -270,25 +266,6 @@ public class WebServer {
         channelFactory.releaseExternalResources();
       }
     }
-  }
-
-  public void addClosingListener(ChannelFutureListener listener) {
-    closingListeners.add(listener);
-  }
-
-  public Runnable createShutdownTask() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (isRunning()) {
-          stop();
-        }
-      }
-    };
-  }
-
-  public void addShutdownHook() {
-    ShutDownTracker.getInstance().registerShutdownTask(createShutdownTask());
   }
 
   public static void removePluggableHandlers(ChannelPipeline pipeline) {

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.WebServer;
@@ -53,12 +52,6 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
       }
     }
     return this;
-  }
-
-  public void addClosingListener(ChannelFutureListener listener) {
-    if (server != null) {
-      server.addClosingListener(listener);
-    }
   }
 
   private static int getDefaultPort() {

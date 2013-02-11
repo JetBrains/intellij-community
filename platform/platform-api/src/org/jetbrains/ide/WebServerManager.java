@@ -17,7 +17,6 @@ package org.jetbrains.ide;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jboss.netty.channel.ChannelFutureListener;
 
 public abstract class WebServerManager {
   // Your handler will be instantiated on first user request
@@ -28,8 +27,6 @@ public abstract class WebServerManager {
   }
 
   public abstract int getPort();
-
-  public abstract void addClosingListener(ChannelFutureListener listener);
 
   public abstract WebServerManager waitForStart();
 }
