@@ -943,7 +943,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   private static Pair<PsiType, ConstraintType> inferMethodTypeParameterFromParent(PsiElement parent,
-                                                                                  PsiCallExpression methodCall,
+                                                                                  PsiExpression methodCall,
                                                                                   final PsiTypeParameter typeParameter,
                                                                                   PsiSubstitutor substitutor,
                                                                                   ParameterTypeInferencePolicy policy) {
@@ -998,6 +998,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     } else if (parent instanceof PsiTypeCastExpression) {
       expectedType = ((PsiTypeCastExpression)parent).getType();
+    } else if (parent instanceof PsiConditionalExpression) {
+      if (PsiUtil.isLanguageLevel8OrHigher(parent)) {
+        return inferMethodTypeParameterFromParent(parent.getParent(), (PsiExpression)parent, typeParameter, substitutor, policy);
+      }
     }
 
     final PsiManager manager = typeParameter.getManager();
@@ -1005,7 +1009,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType returnType = null;
     if (constraint == null) {
       if (expectedType == null) {
-        expectedType = policy.getDefaultExpectedType(methodCall);
+        expectedType = methodCall instanceof PsiCallExpression ? policy.getDefaultExpectedType((PsiCallExpression)methodCall) : null;
       }
 
       returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
@@ -1029,9 +1033,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     final Pair<PsiType, ConstraintType> result;
-    if (constraint == null) {
+    if (constraint == null && methodCall instanceof PsiCallExpression) {
 
-      final PsiExpressionList argumentList = methodCall.getArgumentList();
+      final PsiExpressionList argumentList = ((PsiCallExpression)methodCall).getArgumentList();
       if (argumentList != null && preparedKey == null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
         for (PsiExpression expression : argumentList.getExpressions()) {
           if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
@@ -1089,7 +1093,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull PsiCallExpression methodCall,
+  private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull PsiExpression methodCall,
                                                                              @NotNull PsiTypeParameter typeParameter,
                                                                              @NotNull PsiCallExpression parentCall) {
     final PsiExpressionList argumentList = parentCall.getArgumentList();
