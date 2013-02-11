@@ -330,13 +330,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
           ourStandardScripts = new SoftReference<List<Pair<File, GroovyDslExecutor>>>(executors);
           ref.set(executors);
         }
-        catch (OutOfMemoryError e) {
-          stopGdsl = true;
-          throw e;
-        }
-        catch (NoClassDefFoundError e) {
-          stopGdsl = true;
-          throw e;
+        catch (Throwable e) {
+          LOG.error(e);
+          ref.set(new ArrayList<Pair<File, GroovyDslExecutor>>());
+          //noinspection InstanceofCatchParameter
+          if (e instanceof Error) {
+            stopGdsl = true;
+          }
         }
         finally {
           semaphore.up();
