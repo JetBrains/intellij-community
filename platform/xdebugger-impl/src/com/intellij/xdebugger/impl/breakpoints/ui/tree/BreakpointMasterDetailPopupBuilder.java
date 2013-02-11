@@ -60,7 +60,8 @@ public class BreakpointMasterDetailPopupBuilder {
   private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(new Comparator<XBreakpointGroupingRule>() {
     @Override
     public int compare(XBreakpointGroupingRule o1, XBreakpointGroupingRule o2) {
-      return o2.getPriority() - o1.getPriority();
+      final int res = o2.getPriority() - o1.getPriority();
+      return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
     }
   });
 
