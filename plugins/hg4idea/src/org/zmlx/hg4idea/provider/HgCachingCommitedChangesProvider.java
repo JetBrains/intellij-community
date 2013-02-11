@@ -204,7 +204,7 @@ public class HgCachingCommitedChangesProvider implements CachingCommittedChanges
     if (changeBrowserSettings != null) {
       args = new ArrayList<String>();
       if (changeBrowserSettings.USE_CHANGE_AFTER_FILTER) {
-        args.add("-r " + changeBrowserSettings.getChangeAfterFilter() + ":");
+        args.add("-r tip:" + changeBrowserSettings.getChangeAfterFilter());
       }
     }
     final List<HgFileRevision> localRevisions;
