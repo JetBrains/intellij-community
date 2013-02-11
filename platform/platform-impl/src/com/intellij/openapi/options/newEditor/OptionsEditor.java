@@ -270,6 +270,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     });
   }
 
+  /** @see #select(com.intellij.openapi.options.Configurable) */
+  @Deprecated
   public ActionCallback select(Class<? extends Configurable> configurableClass) {
     final Configurable configurable = findConfigurable(configurableClass);
     if (configurable == null) {
@@ -278,6 +280,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return select(configurable);
   }
 
+  /** @see #findConfigurableById(String) */
+  @Deprecated
   @Nullable
   public <T extends Configurable> T findConfigurable(Class<T> configurableClass) {
     return myTree.findConfigurable(configurableClass);
@@ -367,7 +371,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           checkModified(configurable);
 
           if (myTree.myBuilder.getSelectedElements().size() == 0) {
-            select(configurable.getClass()).notify(result);
+            select(configurable).notify(result);
           } else {
             result.setDone();
           }
@@ -378,7 +382,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return result;
   }
 
-  private void assertIsDispatchThread() {
+  private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 

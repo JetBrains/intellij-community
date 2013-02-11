@@ -21,6 +21,7 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -75,7 +76,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {
           try {
-            ScopeChooserConfigurable configurable = optionsEditor.findConfigurable(ScopeChooserConfigurable.class);
+            Configurable configurable = optionsEditor.findConfigurableById(ScopeChooserConfigurable.PROJECT_SCOPES);
             if (configurable == null || optionsEditor.clearSearchAndSelect(configurable).isRejected()) {
               EditScopesDialog.showDialog(project, null);
             }
