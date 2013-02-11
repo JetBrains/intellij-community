@@ -83,7 +83,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   public static final String MODIFIED = "Modified";
   public static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
-  private static final GroovyFrameworkConfigNotification[] EXTENSIONS = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
 
@@ -284,6 +283,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       return result;
     }
 
+    final GroovyFrameworkConfigNotification[] extensions = GroovyFrameworkConfigNotification.EP_NAME.getExtensions();
+
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final AtomicReference<List<Pair<File, GroovyDslExecutor>>> ref = new AtomicReference<List<Pair<File, GroovyDslExecutor>>>();
@@ -300,7 +301,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
           Set<File> scriptFolders = new LinkedHashSet<File>();
           // perhaps a separate extension for that?
-          for (GroovyFrameworkConfigNotification extension : EXTENSIONS) {
+          for (GroovyFrameworkConfigNotification extension : extensions) {
             File jarPath = new File(PathUtil.getJarPathForClass(extension.getClass()));
             if (jarPath.isFile()) {
               jarPath = jarPath.getParentFile();
