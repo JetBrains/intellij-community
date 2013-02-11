@@ -16,6 +16,8 @@
 package org.intellij.lang.regexp;
 
 import org.intellij.lang.regexp.psi.RegExpGroup;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -26,4 +28,12 @@ public interface RegExpLanguageHost {
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonConditionalRefs();
   boolean supportsNamedGroupSyntax(RegExpGroup group);
+
+  boolean isValidCategory(@NotNull String category);
+  @NotNull
+  String[][] getAllKnownProperties();
+  @Nullable
+  String getPropertyDescription(@Nullable final String name);
+  @NotNull
+  String[][] getKnownCharacterClasses();
 }

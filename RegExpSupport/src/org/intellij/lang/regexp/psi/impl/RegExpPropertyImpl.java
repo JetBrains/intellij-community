@@ -25,7 +25,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import org.intellij.lang.regexp.RegExpPropertiesProviders;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpProperty;
@@ -106,7 +106,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             if (categoryNode != null && categoryNode.getText().startsWith("In") && !categoryNode.getText().startsWith("Intelli")) {
                 return UNICODE_BLOCKS;
             } else {
-              final String[][] knownProperties = RegExpPropertiesProviders.forNode(getNode()).getAllKnownProperties();
+              final String[][] knownProperties = RegExpLanguageHosts.getInstance().getAllKnownProperties(getElement());
               final Object[] objects = new Object[knownProperties.length];
                 for (int i = 0; i < objects.length; i++) {
                     final String[] prop = knownProperties[i];

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
   private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
+  private final DefaultRegExpPropertiesProvider myDefaultProvider;
 
   public static RegExpLanguageHosts getInstance() {
     return INSTANCE;
@@ -39,6 +40,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   private RegExpLanguageHosts() {
     super("com.intellij.regExpLanguageHost");
+    myDefaultProvider = DefaultRegExpPropertiesProvider.getInstance();
   }
 
   @Nullable
@@ -89,5 +91,34 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
     final RegExpLanguageHost host = findRegExpHost(quantifier);
     return host != null && host.supportsPossessiveQuantifiers();
+  }
+
+  public boolean isValidCategory(@NotNull final PsiElement element, @NotNull String category) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    if (host == null) {
+      return false;
+    }
+    return host.isValidCategory(category);
+  }
+
+  @NotNull
+  public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    if (host != null) {
+      return host.getAllKnownProperties();
+    }
+    return myDefaultProvider.getAllKnownProperties();
+  }
+
+  @Nullable
+  String getPropertyDescription(@NotNull final PsiElement element, @Nullable final String name) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    return host == null ? null : host.getPropertyDescription(name);
+  }
+
+  @NotNull
+  String[][] getKnownCharacterClasses(@NotNull final PsiElement element) {
+    final RegExpLanguageHost host = findRegExpHost(element);
+    return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }
 }

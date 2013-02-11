@@ -112,8 +112,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (category == null) {
       return;
     }
-    final RegExpPropertiesProvider provider = RegExpPropertiesProviders.forNode(category);
-    if(!provider.isValidCategory(category.getText())) {
+    if(!myLanguageHosts.isValidCategory(category.getPsi(), category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
         // IDEA-9381

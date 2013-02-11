@@ -4,7 +4,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider {
+public final class DefaultRegExpPropertiesProvider {
+  private static final DefaultRegExpPropertiesProvider INSTANCE = new DefaultRegExpPropertiesProvider();
+
+  public static DefaultRegExpPropertiesProvider getInstance() {
+    return INSTANCE;
+  }
+
   private final String[][] myPropertyNames = {
           { "Cn", "UNASSIGNED" },
           { "Lu", "UPPERCASE_LETTER" },
@@ -98,10 +104,9 @@ final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider 
     {"e", "escape character ('\\u001B')"}
   };
 
-  public DefaultRegExpPropertiesProvider() {
+  private DefaultRegExpPropertiesProvider() {
   }
 
-  @Override
   public boolean isValidCategory(@NotNull String category) {
       if (category.startsWith("In")) {
           try {
@@ -121,7 +126,6 @@ final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider 
       return false;
   }
 
-  @Override
   @Nullable
   public String getPropertyDescription(@Nullable final String name) {
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -135,14 +139,12 @@ final class DefaultRegExpPropertiesProvider implements RegExpPropertiesProvider 
     return null;
   }
 
-  @Override
   @NotNull
   public String[][] getAllKnownProperties() {
     return myPropertyNames;
   }
 
   @NotNull
-  @Override
   public String[][] getKnownCharacterClasses() {
     return myCharacterClasses;
   }
