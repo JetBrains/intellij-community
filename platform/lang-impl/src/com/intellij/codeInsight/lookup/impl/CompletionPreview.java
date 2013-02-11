@@ -30,17 +30,13 @@ import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -85,10 +81,8 @@ public class CompletionPreview implements Disposable {
   }
 
   private void updatePreview() {
-    if (true) {
-      return;
-    }
-
+    // don't show preview for now, show dotted border instead
+    /*
     final EditorImpl editor = getEditorImpl();
     editor.setCustomImage(null);
     repaintCaretLine();
@@ -122,6 +116,7 @@ public class CompletionPreview implements Disposable {
     BufferedImage previewImage = createPreviewImage(text.substring(prefixLength));
     editor.setCustomImage(Pair.create(getCaretPoint(), previewImage));
     repaintCaretLine();
+    */
   }
 
   @Override
