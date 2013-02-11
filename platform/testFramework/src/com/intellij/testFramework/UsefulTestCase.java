@@ -25,10 +25,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -621,7 +619,7 @@ public abstract class UsefulTestCase extends TestCase {
     return testName.replaceAll("_.*", "");
   }
 
-  protected static void assertSameLinesWithFile(final String filePath, final String actualText) {
+  protected static void assertSameLinesWithFile(String filePath, String actualText) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -633,7 +631,11 @@ public abstract class UsefulTestCase extends TestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    assertSameLines(fileText, actualText);
+    String expected = StringUtil.convertLineSeparators(fileText.trim());
+    String actual = StringUtil.convertLineSeparators(actualText.trim());
+    if (!Comparing.equal(expected, actual)) {
+      throw new FileComparisonFailure(null, expected, actual, filePath);
+    }
   }
 
   public static void clearFields(final Object test) throws IllegalAccessException {
