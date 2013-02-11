@@ -510,7 +510,6 @@ public class SearchUtil {
         }
       }
     }
-    ListScrollingUtil.installActions(list);
     list.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
