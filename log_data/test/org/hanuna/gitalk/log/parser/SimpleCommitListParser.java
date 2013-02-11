@@ -32,7 +32,7 @@ public class SimpleCommitListParser {
         String line;
         List<CommitParents> commitParentses = new ArrayList<CommitParents>();
         while ((line = bufferedReader.readLine()) != null) {
-            commitParentses.add(CommitParser.parseParentHashes(line));
+            commitParentses.add(CommitParser.parseCommitParents(line));
         }
         return commitParentses;
     }

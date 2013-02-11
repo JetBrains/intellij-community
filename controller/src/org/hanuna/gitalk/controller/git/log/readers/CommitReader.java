@@ -26,7 +26,7 @@ public class CommitReader {
     }
 
     protected final void appendLine(@NotNull String line) {
-        commitParentses.add(CommitParser.parseParentHashes(line));
+        commitParentses.add(CommitParser.parseCommitParents(line));
     }
 
     @NotNull

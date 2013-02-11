@@ -1,8 +1,10 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.log.commit.CommitData;
+import org.hanuna.gitalk.log.commit.CommitParents;
+import org.hanuna.gitalk.log.commit.parents.SimpleCommitParents;
+import org.hanuna.gitalk.log.commit.parents.TimestampCommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,10 +21,10 @@ public class CommitParser {
      *             123|-             // no parent
      */
     @NotNull
-    public static CommitParents parseParentHashes(@NotNull String line) {
+    public static CommitParents parseCommitParents(@NotNull String line) {
         int separatorIndex = line.indexOf("|-");
         if (separatorIndex == -1) {
-            throw new IllegalArgumentException("not found separator \"|-\"");
+            throw new IllegalArgumentException("not found separator \"|-\" in line: " + line);
         }
         String commitHashStr = line.substring(0, separatorIndex);
         Hash commitHash = Hash.build(commitHashStr);
@@ -35,7 +37,30 @@ public class CommitParser {
                 hashes.add(Hash.build(aParentsStr));
             }
         }
-        return new CommitParents(commitHash, hashes);
+        return new SimpleCommitParents(commitHash, hashes);
+    }
+
+    /**
+     *
+     * @param line 1231423|-adada|-193 adf45
+     * timestamp|-hash commit|-parent hashes
+     */
+    @NotNull
+    public static TimestampCommitParents parseTimestampParentHashes(@NotNull String line) {
+        int firstSeparatorIndex = line.indexOf("|-");
+        if (firstSeparatorIndex == -1) {
+            throw new IllegalArgumentException("not found separator \"|-\" in line: " + line);
+        }
+        String timestampStr = line.substring(0, firstSeparatorIndex);
+        long timestamp;
+        try {
+            timestamp = Long.parseLong(timestampStr);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("bad timestamp in line: " + line);
+        }
+        CommitParents commitParents = parseCommitParents(line.substring(firstSeparatorIndex + 2));
+
+        return new TimestampCommitParents(commitParents, timestamp);
     }
 
     /**

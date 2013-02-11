@@ -24,8 +24,8 @@ public class CommitParserTest {
     }
 
     private void runTest(String inputStr) {
-        CommitParents commitParentHashes = CommitParser.parseParentHashes(inputStr);
-        assertEquals(inputStr, toStr(commitParentHashes));
+        CommitParents commitParents = CommitParser.parseCommitParents(inputStr);
+        assertEquals(inputStr, toStr(commitParents));
     }
 
     @Test

@@ -8,22 +8,12 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class CommitParents {
-    private final Hash commitHash;
-    private final List<Hash> parentHashes;
-
-    public CommitParents(@NotNull Hash commitHash, @NotNull List<Hash> parentHashes) {
-        this.commitHash = commitHash;
-        this.parentHashes = parentHashes;
-    }
+public interface CommitParents {
 
     @NotNull
-    public Hash getCommitHash() {
-        return commitHash;
-    }
+    public Hash getCommitHash();
 
     @NotNull
-    public List<Hash> getParentHashes() {
-        return parentHashes;
-    }
+    public List<Hash> getParentHashes();
+
 }
