@@ -85,7 +85,6 @@ public class FileWatcher {
   private volatile boolean myIsShuttingDown = false;
   private volatile boolean myFailureShownToTheUser = false;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
-  private final ModalityState myDefaultModalityState;
 
   /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
   public static FileWatcher getInstance() {
@@ -94,9 +93,6 @@ public class FileWatcher {
 
   FileWatcher(@NotNull final ManagingFS managingFS) {
     myManagingFS = managingFS;
-
-    // eager initialization to avoid deadlock during component initialization (PY-8724)
-    myDefaultModalityState = ModalityState.defaultModalityState();
 
     boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
     myExecutable = getExecutable();
@@ -192,7 +188,7 @@ public class FileWatcher {
           String title = ApplicationBundle.message("watcher.slow.sync");
           Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
         }
-      }, myDefaultModalityState);
+      }, ModalityState.NON_MODAL);
     }
   }
 
