@@ -36,7 +36,7 @@ public class ReplacePolicy implements ConflictResolutionPolicy {
     }
 
     public void setNewMethodStrategy(InsertNewMethodStrategy strategy) {
-        // not needed here
+        DuplicatePolicy.getInstance().setNewMethodStrategy(strategy);
     }
 
     public PsiMethod applyMethod(PsiClass clazz, PsiMethod existingMethod, @NotNull PsiMethod newMethod, Editor editor) throws IncorrectOperationException {
