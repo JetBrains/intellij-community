@@ -409,6 +409,9 @@ public class TreeModelBuilder {
     public int compare(ChangesBrowserNode node1, ChangesBrowserNode node2) {
       final int classdiff = node1.getSortWeight() - node2.getSortWeight();
       if (classdiff != 0) return classdiff;
+      if (node1 instanceof Comparable && node1.getClass().equals(node2.getClass())) {
+        return ((Comparable)node1).compareTo(node2);
+      }
       return node1.compareUserObjects(node2.getUserObject());
     }
   }

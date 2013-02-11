@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -28,11 +29,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
+public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> implements Comparable<ChangesBrowserFileNode> {
   private final Project myProject;
+  private final String myName;
 
   public ChangesBrowserFileNode(Project project, @NotNull VirtualFile userObject) {
     super(userObject);
+    myName = StringUtil.toLowerCase(userObject.getName());
     myProject = project;
     if (userObject.isDirectory()) {
       myDirectoryCount = 1;
@@ -81,6 +84,11 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
 
   public int getSortWeight() {
     return 7;
+  }
+
+  @Override
+  public int compareTo(ChangesBrowserFileNode o) {
+    return myName.compareTo(o.myName);
   }
 
   public int compareUserObjects(final Object o2) {
