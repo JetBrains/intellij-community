@@ -225,4 +225,26 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
           dependencies {
             'lib-2'('gradle') } } } }
   }
+  
+  @Test
+  void "new outdated library dependency on active 'outdated' filter"() {
+    Closure initialProject = {
+      project {
+        module {
+          dependencies {
+            library('lib-1') } } } }
+    init(gradle: initialProject, intellij: initialProject)
+    applyTreeFilter(GradleTextAttributes.OUTDATED_ENTITY)
+    setState(gradle: {
+      project {
+        module {
+          dependencies {
+            library('lib-2')} } } } )
+    checkTree {
+      project {
+        module {
+          dependencies {
+            'lib (1 -> 2)'('outdated')
+    } } } }
+  }
 }
