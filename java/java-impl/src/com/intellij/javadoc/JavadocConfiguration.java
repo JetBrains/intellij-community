@@ -260,7 +260,12 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           final Collection<String> sources = new HashSet<String>();
           final Runnable findRunnable = new Runnable() {
             public void run() {
-              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources));
+              final int scopeType = myGenerationOptions.getScopeType();
+              final boolean usePackageNotation = scopeType == AnalysisScope.MODULE ||
+                                                 scopeType == AnalysisScope.MODULES ||
+                                                 scopeType == AnalysisScope.PROJECT ||
+                                                 scopeType == AnalysisScope.DIRECTORY;
+              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, usePackageNotation));
             }
           };
           if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", false, myProject)) {
@@ -329,8 +334,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final PsiManager myPsiManager;
     private final Collection<String> myPackages;
     private final Collection<String> mySourceFiles;
+    private final boolean myUsePackageNotation;
 
-    public MyContentIterator(Project project, Collection<String> packages, Collection<String> sources) {
+    public MyContentIterator(Project project, Collection<String> packages, Collection<String> sources, boolean canUsePackageNotation) {
+      myUsePackageNotation = canUsePackageNotation;
       myPsiManager = PsiManager.getInstance(project);
       myPackages = packages;
       mySourceFiles = sources;
@@ -345,7 +352,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         final String packageName = javaFile.getPackageName();
-        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof JspFile))) {
+        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof JspFile)) || !myUsePackageNotation) {
           mySourceFiles.add(FileUtil.toSystemIndependentName(fileOrDir.getPath()));
         }
         else {
