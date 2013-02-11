@@ -15,9 +15,9 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.intellij.android.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;

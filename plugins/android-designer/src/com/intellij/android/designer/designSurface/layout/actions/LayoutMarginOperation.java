@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface.layout.actions;
 
 import com.android.SdkConstants;
+import com.intellij.android.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
@@ -24,7 +25,6 @@ import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
-import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.EmptyPoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
