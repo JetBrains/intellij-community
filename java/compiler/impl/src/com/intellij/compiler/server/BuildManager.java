@@ -827,6 +827,10 @@ public class BuildManager implements ApplicationComponent{
     }
     cmdLine.addParameter("-D"+ GlobalOptions.COMPILE_PARALLEL_OPTION +"=" + Boolean.toString(config.PARALLEL_COMPILATION));
 
+    if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
+      cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
+    }
+
     boolean isProfilingMode = false;
     final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     if (!StringUtil.isEmpty(additionalOptions)) {
