@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 
-  public abstract boolean openUrl(BrowsersConfiguration.BrowserFamily family, String url);
+  public abstract boolean openUrl(@NotNull BrowsersConfiguration.BrowserFamily family, String url);
 }
