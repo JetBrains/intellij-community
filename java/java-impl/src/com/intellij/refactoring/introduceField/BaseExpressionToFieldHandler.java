@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -446,9 +445,15 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
   }
   
+  protected abstract boolean accept(ElementToWorkOn elementToWorkOn);
 
-  protected Pass<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
-    return new Pass<ElementToWorkOn>() {
+  protected ElementToWorkOn.ElementsProcessor<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
+    return new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+      @Override
+      public boolean accept(ElementToWorkOn el) {
+        return BaseExpressionToFieldHandler.this.accept(el);
+      }
+
       @Override
       public void pass(final ElementToWorkOn elementToWorkOn) {
         if (elementToWorkOn == null) return;
