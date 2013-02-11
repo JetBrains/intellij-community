@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class FlowBaseOperation extends AbstractEditOperation {
+public abstract class AbstractFlowBaseOperation extends AbstractEditOperation {
   protected final boolean myHorizontal;
   protected RectangleFeedback myFirstInsertFeedback;
   protected LineInsertFeedback myInsertFeedback;
@@ -34,7 +34,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
   protected RadComponent myChildTarget;
   protected boolean myInsertBefore;
 
-  public FlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
+  public AbstractFlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
     super(container, context);
     myHorizontal = horizontal;
   }
@@ -61,15 +61,9 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
     return myContainer.getChildren();
   }
 
-  protected void createInsertFeedback() {
-    myInsertFeedback = new LineInsertFeedback(Color.green, !myHorizontal);
-    myInsertFeedback.size(myBounds.width, myBounds.height);
-  }
+  protected abstract void createInsertFeedback();
 
-  protected void createFirstInsertFeedback() {
-    myFirstInsertFeedback = new RectangleFeedback(Color.green, 2);
-    myFirstInsertFeedback.setBounds(myBounds);
-  }
+  protected abstract void createFirstInsertFeedback();
 
   @Override
   public void showFeedback() {
