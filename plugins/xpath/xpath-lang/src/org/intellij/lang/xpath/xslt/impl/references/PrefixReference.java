@@ -70,6 +70,7 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
     return XsltNamespaceContext.resolvePrefix(getCanonicalText(), myAttribute);
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return "Undeclared namespace prefix ''{0}''";
   }

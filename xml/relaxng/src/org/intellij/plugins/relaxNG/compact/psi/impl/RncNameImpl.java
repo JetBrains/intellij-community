@@ -135,6 +135,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return "xsd".equals(prefix) || "xml".equals(prefix);
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved namespace prefix ''{0}''";
   }

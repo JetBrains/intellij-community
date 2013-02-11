@@ -124,6 +124,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return false;
     }
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
       return message;
     }

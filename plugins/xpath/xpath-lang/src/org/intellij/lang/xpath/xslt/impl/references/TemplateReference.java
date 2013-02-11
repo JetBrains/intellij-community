@@ -86,6 +86,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateTemplateFix(myAttribute.getParent(), myName));
     }
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
         return "Cannot resolve template ''{0}''";
     }

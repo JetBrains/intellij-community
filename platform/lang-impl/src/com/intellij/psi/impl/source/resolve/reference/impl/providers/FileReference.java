@@ -553,6 +553,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myIndex;
   }
 
+  @NotNull
   @Override
   public String getUnresolvedMessagePattern() {
     return LangBundle.message("error.cannot.resolve")

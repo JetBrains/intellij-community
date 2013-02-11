@@ -16,6 +16,8 @@
 
 package com.intellij.codeInsight.daemon;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Implement this in your {@link com.intellij.psi.PsiReference} to provide custom error message.
  */
@@ -27,5 +29,6 @@ public interface EmptyResolveMessageProvider {
    * @return pattern or message
    * @see XmlHighlightVisitor#getErrorDescription()
    */
+  @NotNull
   String getUnresolvedMessagePattern();
 }

@@ -118,6 +118,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
       return false;
     }
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
       return "Undefined namespace prefix ''{0}''";
     }

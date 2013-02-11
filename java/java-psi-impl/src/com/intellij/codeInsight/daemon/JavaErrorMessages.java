@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
@@ -31,6 +32,7 @@ public class JavaErrorMessages extends AbstractBundle {
     super(BUNDLE);
   }
 
+  @NotNull
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
     return INSTANCE.getMessage(key, params);
   }

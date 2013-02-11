@@ -251,6 +251,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     }
 
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
       return getUnresolvedMessage(getValue());
     }

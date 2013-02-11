@@ -147,6 +147,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     return false;
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved pattern reference ''{0}''";
   }

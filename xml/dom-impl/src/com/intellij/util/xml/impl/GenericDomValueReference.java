@@ -142,6 +142,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return StringUtil.notNullize(getStringValue());
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     final ConvertContext context = getConvertContext();
     return getConverter().getErrorMessage(getStringValue(), context);
