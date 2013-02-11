@@ -20,6 +20,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -159,9 +160,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         else {
           manager.clearAllResources(myProject);
         }
-        for (Object myPair : myPairs) {
-          NameLocationPair pair = (NameLocationPair)myPair;
-          String s = FileUtil.toSystemIndependentName(pair.myLocation);
+        for (NameLocationPair pair : myPairs) {
+          String s = FileUtil.toSystemIndependentName(StringUtil.notNullize(pair.myLocation));
           if (myProject == null || pair.myShared) {
             manager.addResource(pair.myName, s);
           }
