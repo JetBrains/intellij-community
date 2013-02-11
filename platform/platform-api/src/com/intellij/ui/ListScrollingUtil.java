@@ -307,59 +307,49 @@ public class ListScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_HOME_ID, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
 
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMoveUp(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMoveUp(), list) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveUp(list, 0);
       }
     };
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMoveDown(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMoveDown(), list){
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveDown(list, 0);
       }
     };
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMovePageUp(), list){
       @Override
       public void actionPerformed(AnActionEvent e) {
         movePageUp(list);
       }
     };
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMovePageDown(), list){
       @Override
       public void actionPerformed(AnActionEvent e) {
         movePageDown(list);
       }
     };
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMoveHome(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMoveHome(), list){
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveHome(list);
       }
     };
-    new AnAction(){
-      {
-        registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), list);
-      }
+    new ListScrollAction(CommonShortcuts.getMoveEnd(), list){
       @Override
       public void actionPerformed(AnActionEvent e) {
         moveEnd(list);
       }
     };
+  }
+  
+  public static abstract class ListScrollAction extends AnAction {
+    protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
+      registerCustomShortcutSet(shortcutSet, component);
+    }
+
+    
   }
 }
