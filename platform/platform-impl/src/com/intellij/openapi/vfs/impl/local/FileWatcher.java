@@ -203,7 +203,7 @@ public class FileWatcher {
 
     if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
-      throw new IOException("Can't launch process anymore");
+      return;
     }
 
     if (restart) {
@@ -245,7 +245,7 @@ public class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    return mySettingRoots.get() > 0;
+    return isOperational() && mySettingRoots.get() > 0;
   }
 
   public static class DirtyPaths {
