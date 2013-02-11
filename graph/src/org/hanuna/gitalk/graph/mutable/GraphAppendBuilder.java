@@ -2,7 +2,7 @@ package org.hanuna.gitalk.graph.mutable;
 
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,32 +86,32 @@ class GraphAppendBuilder {
         return underdoneNodes;
     }
 
-    private void simpleAppend(@NotNull List<Commit> commits, @NotNull MutableNodeRow nextRow,
+    private void simpleAppend(@NotNull List<CommitParents> commitParentses, @NotNull MutableNodeRow nextRow,
                               @NotNull Map<Hash, MutableNode> underdoneNodes) {
         int startIndex = nextRow.getRowIndex();
 
-        Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commits.size());
-        for (int i = 0; i < commits.size(); i++) {
-            commitLogIndexes.put(commits.get(i).getCommitHash(), i + startIndex);
+        Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
+        for (int i = 0; i < commitParentses.size(); i++) {
+            commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i + startIndex);
         }
 
-        GraphBuilder builder = new GraphBuilder(commits.size() + startIndex - 1, commitLogIndexes, graph,
+        GraphBuilder builder = new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph,
                 underdoneNodes, nextRow);
-        builder.runBuild(commits);
+        builder.runBuild(commitParentses);
     }
 
-    public void appendToGraph(@NotNull List<Commit> commits) {
-        if (commits.size() == 0) {
-            throw new IllegalArgumentException("Empty list commits");
+    public void appendToGraph(@NotNull List<CommitParents> commitParentses) {
+        if (commitParentses.size() == 0) {
+            throw new IllegalArgumentException("Empty list commitParentses");
         }
         if (isSimpleEndOfGraph()) {
             int startIndex = getLastRowInGraph().getRowIndex() + 1;
-            simpleAppend(commits, new MutableNodeRow(graph, startIndex), new HashMap<Hash, MutableNode>());
+            simpleAppend(commitParentses, new MutableNodeRow(graph, startIndex), new HashMap<Hash, MutableNode>());
         } else {
-            Map<Hash, MutableNode> underdoneNodes = fixUnderdoneNodes(commits.get(0).getCommitHash());
+            Map<Hash, MutableNode> underdoneNodes = fixUnderdoneNodes(commitParentses.get(0).getCommitHash());
             MutableNodeRow lastRow = getLastRowInGraph();
             graph.getAllRows().remove(graph.getAllRows().size() - 1);
-            simpleAppend(commits, lastRow, underdoneNodes);
+            simpleAppend(commitParentses, lastRow, underdoneNodes);
         }
     }
 }

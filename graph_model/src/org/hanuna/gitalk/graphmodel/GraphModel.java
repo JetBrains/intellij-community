@@ -5,7 +5,7 @@ import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public interface GraphModel {
     @NotNull
     public Graph getGraph();
 
-    public void appendCommitsToGraph(@NotNull List<Commit> commits);
+    public void appendCommitsToGraph(@NotNull List<CommitParents> commitParentses);
 
     public void setVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode);
 

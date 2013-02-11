@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ public class CommitParser {
      *             123|-             // no parent
      */
     @NotNull
-    public static Commit parseParentHashes(@NotNull String line) {
+    public static CommitParents parseParentHashes(@NotNull String line) {
         int separatorIndex = line.indexOf("|-");
         if (separatorIndex == -1) {
             throw new IllegalArgumentException("not found separator \"|-\"");
@@ -35,7 +35,7 @@ public class CommitParser {
                 hashes.add(Hash.build(aParentsStr));
             }
         }
-        return new Commit(commitHash, hashes);
+        return new CommitParents(commitHash, hashes);
     }
 
     /**

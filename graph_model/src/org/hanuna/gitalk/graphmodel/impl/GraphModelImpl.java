@@ -12,7 +12,7 @@ import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.fragment.FragmentManagerImpl;
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -98,9 +98,9 @@ public class GraphModelImpl implements GraphModel {
     }
 
     @Override
-    public void appendCommitsToGraph(@NotNull List<Commit> commits) {
+    public void appendCommitsToGraph(@NotNull List<CommitParents> commitParentses) {
         int oldSize = graph.getNodeRows().size();
-        GraphBuilder.addCommitsToGraph(graph, commits);
+        GraphBuilder.addCommitsToGraph(graph, commitParentses);
         visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
         graph.updateVisibleRows();
 

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -13,7 +13,7 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitListParser {
-    public static List<Commit> parseCommitList(@NotNull String input) {
+    public static List<CommitParents> parseCommitList(@NotNull String input) {
         SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
         try {
             return parser.readAllCommits();
@@ -28,13 +28,13 @@ public class SimpleCommitListParser {
         this.bufferedReader = new BufferedReader(bufferedReader);
     }
 
-    public List<Commit> readAllCommits() throws IOException {
+    public List<CommitParents> readAllCommits() throws IOException {
         String line;
-        List<Commit> commits = new ArrayList<Commit>();
+        List<CommitParents> commitParentses = new ArrayList<CommitParents>();
         while ((line = bufferedReader.readLine()) != null) {
-            commits.add(CommitParser.parseParentHashes(line));
+            commitParentses.add(CommitParser.parseParentHashes(line));
         }
-        return commits;
+        return commitParentses;
     }
 
 }

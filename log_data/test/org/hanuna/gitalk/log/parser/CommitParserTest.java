@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.log.parser;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.junit.Test;
 
@@ -10,7 +10,7 @@ import static junit.framework.Assert.assertEquals;
  * @author erokhins
  */
 public class CommitParserTest {
-    private String toStr(Commit commitParentHashes) {
+    private String toStr(CommitParents commitParentHashes) {
         StringBuilder s = new StringBuilder();
         s.append(commitParentHashes.getCommitHash().toStrHash()).append("|-");
         for (int i = 0; i < commitParentHashes.getParentHashes().size(); i++) {
@@ -24,7 +24,7 @@ public class CommitParserTest {
     }
 
     private void runTest(String inputStr) {
-        Commit commitParentHashes = CommitParser.parseParentHashes(inputStr);
+        CommitParents commitParentHashes = CommitParser.parseParentHashes(inputStr);
         assertEquals(inputStr, toStr(commitParentHashes));
     }
 

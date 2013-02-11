@@ -11,7 +11,7 @@ import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphModel;
 import org.hanuna.gitalk.graphmodel.impl.GraphModelImpl;
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.printmodel.GraphPrintCellModel;
@@ -29,21 +29,21 @@ import java.util.Set;
  */
 public class DataPack {
     private final RefsModel refsModel;
-    private final List<Commit> commits;
+    private final List<CommitParents> commitParentses;
     private final CommitDataGetter commitDataGetter;
     private MutableGraph graph;
     private GraphModel graphModel;
     private GraphPrintCellModel printCellModel;
 
-    public DataPack(final RefsModel refsModel, List<Commit> commits, CommitDataGetter commitDataGetter) {
+    public DataPack(final RefsModel refsModel, List<CommitParents> commitParentses, CommitDataGetter commitDataGetter) {
         this.refsModel = refsModel;
-        this.commits = commits;
+        this.commitParentses = commitParentses;
         this.commitDataGetter = commitDataGetter;
         final MyTimer graphTimer = new MyTimer("graph build");
 
         final Set<Hash> trackedHashes = refsModel.getTrackedCommitHashes();
 
-        graph = GraphBuilder.build(commits);
+        graph = GraphBuilder.build(commitParentses);
         graphModel = new GraphModelImpl(graph);
         graphModel.getFragmentManager().setUnhiddenNodes(new Get<Node, Boolean>() {
             @NotNull

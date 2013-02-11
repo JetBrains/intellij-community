@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel.cells.builder;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
@@ -19,8 +19,8 @@ import static org.hanuna.gitalk.printmodel.LayoutTestUtils.toStr;
 public class LayoutModelBuilderTest {
     private void runTest(String input, String out) throws IOException {
         SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
-        List<Commit> commits = parser.readAllCommits();
-        LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commits));
+        List<CommitParents> commitParentses = parser.readAllCommits();
+        LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commitParentses));
         assertEquals(out, toStr(layoutModel));
     }
 

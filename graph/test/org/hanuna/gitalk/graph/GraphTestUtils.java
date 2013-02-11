@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
@@ -35,13 +35,13 @@ public class GraphTestUtils {
     @NotNull
     public static MutableGraph getNewMutableGraph(@NotNull String inputStr) {
         SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(inputStr));
-        List<Commit> commits;
+        List<CommitParents> commitParentses;
         try {
-            commits = parser.readAllCommits();
+            commitParentses = parser.readAllCommits();
         } catch (IOException e) {
             throw new IllegalStateException();
         }
-        return GraphBuilder.build(commits);
+        return GraphBuilder.build(commitParentses);
     }
 
     // "1 20 3" -> {1,20,3}

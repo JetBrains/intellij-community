@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.log.parser.SimpleCommitListParser;
 import org.junit.Test;
 
@@ -14,12 +14,12 @@ import static org.hanuna.gitalk.graph.GraphStrUtils.toStr;
  */
 public class GraphAppendBuildTest {
     public void runTest(String firstPart, String firstPartStr, String secondPart, String secondPartStr) {
-        List<Commit> commits = SimpleCommitListParser.parseCommitList(firstPart);
-        MutableGraph graph = GraphBuilder.build(commits);
+        List<CommitParents> commitParentses = SimpleCommitListParser.parseCommitList(firstPart);
+        MutableGraph graph = GraphBuilder.build(commitParentses);
         assertEquals(firstPartStr, toStr(graph));
 
-        commits = SimpleCommitListParser.parseCommitList(secondPart);
-        GraphBuilder.addCommitsToGraph(graph, commits);
+        commitParentses = SimpleCommitListParser.parseCommitList(secondPart);
+        GraphBuilder.addCommitsToGraph(graph, commitParentses);
         assertEquals(secondPartStr, toStr(graph));
     }
 

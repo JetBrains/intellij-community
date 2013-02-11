@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.controller;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.controller.git.log.CacheCommitDataGetter;
@@ -32,12 +32,12 @@ public class Controller {
     private static int lastDay = 170;
     private static int incCount = 150;
 
-    public static List<Commit> readNextCommits() {
+    public static List<CommitParents> readNextCommits() {
         try {
-            List<Commit> commits = Collections.emptyList();
-            commits = readCommits(incCount, lastDay);
+            List<CommitParents> commitParentses = Collections.emptyList();
+            commitParentses = readCommits(incCount, lastDay);
             lastDay += incCount;
-            return commits;
+            return commitParentses;
         } catch (IOException e) {
             e.printStackTrace();
         } catch (GitException e) {
@@ -46,7 +46,7 @@ public class Controller {
         throw new IllegalStateException();
     }
 
-    public static List<Commit> readCommits(int dayCount, int startDay) throws IOException, GitException {
+    public static List<CommitParents> readCommits(int dayCount, int startDay) throws IOException, GitException {
         final MyTimer gitThink = new MyTimer("git think");
         final MyTimer commitReadTimer = new MyTimer("commits read");
         CommitReader commitReader = new CommitReader(new Executor<Integer>() {
@@ -61,18 +61,18 @@ public class Controller {
                 }
             }
         });
-        List<Commit> commits;
+        List<CommitParents> commitParentses;
         if (dayCount == 0) {
-            commits = commitReader.readAllCommits();
+            commitParentses = commitReader.readAllCommits();
         } else {
             if (startDay == 0) {
-                commits = commitReader.readLastCommits(dayCount);
+                commitParentses = commitReader.readLastCommits(dayCount);
             } else {
-                commits = commitReader.readIntervalCommits(startDay, startDay + dayCount);
+                commitParentses = commitReader.readIntervalCommits(startDay, startDay + dayCount);
             }
         }
         commitReadTimer.print();
-        return commits;
+        return commitParentses;
     }
 
 
@@ -80,13 +80,13 @@ public class Controller {
         progressModel.setMessage(START_MESSAGE);
         progressModel.setState(ProgressModel.State.UNREFINED_PROGRESS);
 
-        List<Commit> commits = readCommits(monthCount, startDay);
+        List<CommitParents> commitParentses = readCommits(monthCount, startDay);
         RefReader refReader = new RefReader();
         List<Ref> allRefs = refReader.readAllRefs();
         RefsModel refsModel = new RefsModel(allRefs);
 
         progressModel.setMessage("graph build");
-        DataPack dataPack = new DataPack(refsModel, commits, new CacheCommitDataGetter());
+        DataPack dataPack = new DataPack(refsModel, commitParentses, new CacheCommitDataGetter());
         progressModel.setState(ProgressModel.State.HIDE);
 
         return dataPack;

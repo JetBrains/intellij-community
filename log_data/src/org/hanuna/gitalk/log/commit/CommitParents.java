@@ -8,11 +8,11 @@ import java.util.List;
 /**
  * @author erokhins
  */
-public class Commit {
+public class CommitParents {
     private final Hash commitHash;
     private final List<Hash> parentHashes;
 
-    public Commit(@NotNull Hash commitHash, @NotNull List<Hash> parentHashes) {
+    public CommitParents(@NotNull Hash commitHash, @NotNull List<Hash> parentHashes) {
         this.commitHash = commitHash;
         this.parentHashes = parentHashes;
     }

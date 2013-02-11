@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graph.mutable;
 
-import org.hanuna.gitalk.log.commit.Commit;
+import org.hanuna.gitalk.log.commit.CommitParents;
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.graph.elements.Branch;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
@@ -19,17 +19,17 @@ import static org.hanuna.gitalk.graph.elements.Node.Type.*;
  * @author erokhins
  */
 public class GraphBuilder {
-    public static MutableGraph build(@NotNull List<Commit> commits) {
-        Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commits.size());
-        for (int i = 0; i < commits.size(); i++) {
-            commitLogIndexes.put(commits.get(i).getCommitHash(), i);
+    public static MutableGraph build(@NotNull List<CommitParents> commitParentses) {
+        Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
+        for (int i = 0; i < commitParentses.size(); i++) {
+            commitLogIndexes.put(commitParentses.get(i).getCommitHash(), i);
         }
-        GraphBuilder builder = new GraphBuilder(commits.size() - 1, commitLogIndexes);
-        return builder.runBuild(commits);
+        GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, commitLogIndexes);
+        return builder.runBuild(commitParentses);
     }
 
-    public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<Commit> commits) {
-        new GraphAppendBuilder(graph).appendToGraph(commits);
+    public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<CommitParents> commitParentses) {
+        new GraphAppendBuilder(graph).appendToGraph(commitParentses);
     }
 
     // local package
@@ -116,10 +116,10 @@ public class GraphBuilder {
         }
     }
 
-    private void append(@NotNull Commit commit) {
-        MutableNode node = addCurrentCommitAndFinishRow(commit.getCommitHash());
+    private void append(@NotNull CommitParents commitParents) {
+        MutableNode node = addCurrentCommitAndFinishRow(commitParents.getCommitHash());
 
-        List<Hash> parents = commit.getParentHashes();
+        List<Hash> parents = commitParents.getParentHashes();
         if (parents.size() == 1) {
             addParent(node, parents.get(0), node.getBranch());
         } else {
@@ -145,12 +145,12 @@ public class GraphBuilder {
 
     // local package
     @NotNull
-    MutableGraph runBuild(@NotNull List<Commit> commits) {
-        if (commits.size() == 0) {
-            throw new IllegalArgumentException("Empty list commits");
+    MutableGraph runBuild(@NotNull List<CommitParents> commitParentses) {
+        if (commitParentses.size() == 0) {
+            throw new IllegalArgumentException("Empty list commitParentses");
         }
-        for (Commit commit : commits) {
-            append(commit);
+        for (CommitParents commitParents : commitParentses) {
+            append(commitParents);
         }
         lastActions();
         graph.updateVisibleRows();
