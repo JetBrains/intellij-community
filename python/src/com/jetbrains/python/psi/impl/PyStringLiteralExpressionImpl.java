@@ -17,9 +17,11 @@ import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -32,6 +34,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   private static final Map<String, String> escapeMap = initializeEscapeMap();
   private String stringValue;
   private List<TextRange> valueTextRanges;
+  private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
   private static Map<String, String> initializeEscapeMap() {
     Map<String, String> map = new HashMap<String, String>();
@@ -51,6 +54,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public PyStringLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
+    myPropertiesProvider = DefaultRegExpPropertiesProvider.getInstance();
   }
 
   @Override
@@ -430,5 +434,28 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
     return group.isPythonNamedGroup();
+  }
+
+  @Override
+  public boolean isValidCategory(@NotNull String category) {
+    return myPropertiesProvider.isValidCategory(category);
+  }
+
+  @NotNull
+  @Override
+  public String[][] getAllKnownProperties() {
+    return myPropertiesProvider.getAllKnownProperties();
+  }
+
+  @Nullable
+  @Override
+  public String getPropertyDescription(@Nullable String name) {
+    return myPropertiesProvider.getPropertyDescription(name);
+  }
+
+  @NotNull
+  @Override
+  public String[][] getKnownCharacterClasses() {
+    return myPropertiesProvider.getKnownCharacterClasses();
   }
 }
