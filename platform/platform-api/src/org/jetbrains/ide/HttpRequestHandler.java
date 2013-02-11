@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package org.jetbrains.ide;
 
-import com.intellij.openapi.components.ServiceManager;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
-public interface XmlRpcServer {
-  void addHandler(String name, Object handler);
-  boolean hasHandler(String name);
-  void removeHandler(String name);
+import java.io.IOException;
 
-  final class SERVICE {
-    private SERVICE() {
-    }
-
-    public static XmlRpcServer getInstance() {
-      return ServiceManager.getService(XmlRpcServer.class);
-    }
+public abstract class HttpRequestHandler {
+  public boolean isSupported(HttpMethod method) {
+    return method == HttpMethod.GET;
   }
+
+  public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
+    throws IOException;
 }
