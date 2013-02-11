@@ -59,13 +59,15 @@ public class HighlightingSettingsPerFile implements PersistentStateComponent<Ele
   }
 
   private static FileHighlighingSetting getDefaultHighlightingSetting(Project project, final VirtualFile virtualFile) {
-    DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
-    List<DefaultHighlightingSettingProvider> filtered =
-      DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers));
-    for (DefaultHighlightingSettingProvider p : filtered) {
-      FileHighlighingSetting setting = p.getDefaultSetting(project, virtualFile);
-      if (setting != null) {
-        return setting;
+    if (virtualFile != null) {
+      DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
+      List<DefaultHighlightingSettingProvider> filtered =
+        DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers));
+      for (DefaultHighlightingSettingProvider p : filtered) {
+        FileHighlighingSetting setting = p.getDefaultSetting(project, virtualFile);
+        if (setting != null) {
+          return setting;
+        }
       }
     }
     return FileHighlighingSetting.FORCE_HIGHLIGHTING;
