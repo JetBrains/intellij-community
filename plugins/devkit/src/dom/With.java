@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,45 +15,28 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.psi.PsiField;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.PluginFieldNameConverter;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
-import java.util.List;
-
 /**
- * @author mike
+ * @author yole
  */
-@Presentation(typeName = "Extension Point")
-public interface ExtensionPoint extends DomElement {
-  enum Area {
-    IDEA_PROJECT,
-    IDEA_MODULE,
-    IDEA_APPLICATION
-  }
+public interface With extends DomElement {
+  @NotNull
+  @Attribute("attribute")
+  @Convert(PluginFieldNameConverter.class)
+  GenericAttributeValue<PsiField> getAttribute();
+
 
   @NotNull
-  @NameValue
-  GenericAttributeValue<String> getName();
-
-  @Attribute("qualifiedName")
-  GenericAttributeValue<String> getQualifiedName();
-
-  @NotNull
+  @Attribute("implements")
   @Convert(PluginPsiClassConverter.class)
-  GenericAttributeValue<PsiClass> getInterface();
-
-  @NotNull
-  @Attribute("beanClass")
-  @Convert(PluginPsiClassConverter.class)
-  GenericAttributeValue<PsiClass> getBeanClass();
-
-  @NotNull
-  GenericAttributeValue<Area> getArea();
-
-  @NotNull
-  @SubTagList("with")
-  List<With> getWithElements();
+  GenericAttributeValue<PsiClass> getImplements();
 }
