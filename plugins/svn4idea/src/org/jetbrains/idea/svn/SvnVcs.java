@@ -342,7 +342,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public void invokeRefreshSvnRoots() {
-    REFRESH_LOG.debug("refresh: ", new Throwable());
+    if (REFRESH_LOG.isDebugEnabled()) {
+      REFRESH_LOG.debug("refresh: ", new Throwable());
+    }
     if (myCopiesRefreshManager != null) {
       myCopiesRefreshManager.asynchRequest();
     }
