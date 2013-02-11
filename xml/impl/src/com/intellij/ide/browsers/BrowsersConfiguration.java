@@ -233,7 +233,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   }
 
   @Nullable
-  public static BrowserFamily findFamilyByName(@Nullable String name) {
+  public BrowserFamily findFamilyByName(@Nullable String name) {
     for (BrowserFamily family : BrowserFamily.values()) {
       if (family.getName().equals(name)) {
         return family;
@@ -243,7 +243,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   }
 
   @Nullable
-  public static BrowserFamily findFamilyByPath(@Nullable String path) {
+  public BrowserFamily findFamilyByPath(@Nullable String path) {
     if (!StringUtil.isEmptyOrSpaces(path)) {
       String name = FileUtil.getNameWithoutExtension(new File(path).getName());
       for (BrowserFamily family : BrowserFamily.values()) {
