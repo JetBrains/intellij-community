@@ -969,49 +969,6 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     }
   }
 
-  private static class SvnTestInteractiveAuthentication implements ISVNAuthenticationProvider {
-    private final SvnAuthenticationManager myManager;
-    private boolean mySaveData;
-
-    public SvnTestInteractiveAuthentication(SvnAuthenticationManager manager) {
-      myManager = manager;
-      mySaveData = true;
-    }
-
-    public void setSaveData(boolean saveData) {
-      mySaveData = saveData;
-    }
-
-    @Override
-    public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-      return ISVNAuthenticationProvider.REJECTED;
-    }
-
-    @Override
-    public SVNAuthentication requestClientAuthentication(String kind,
-                                                         SVNURL url,
-                                                         String realm,
-                                                         SVNErrorMessage errorMessage,
-                                                         SVNAuthentication previousAuth,
-                                                         boolean authMayBeStored) {
-      authMayBeStored = authMayBeStored && mySaveData;
-      SVNAuthentication result = null;
-      if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-        result = new SVNUserNameAuthentication("username", authMayBeStored);
-      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-        result = new SVNPasswordAuthentication("username", "abc", authMayBeStored, url, false);
-      } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-        result = new SVNSSHAuthentication("username", "abc", -1, authMayBeStored, url, false);
-      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        result = new SVNSSLAuthentication(new File("aaa"), "abc", authMayBeStored, url, false);
-      }
-      if (! ISVNAuthenticationManager.USERNAME.equals(kind)) {
-        myManager.requested(ProviderType.interactive, url, realm, kind, result == null);
-      }
-      return result;
-    }
-  }
-
   private static boolean passwordSpecified(final SVNAuthentication authentication) {
     final String kind = authentication.getKind();
     if (ISVNAuthenticationManager.SSH.equals(kind)) {
