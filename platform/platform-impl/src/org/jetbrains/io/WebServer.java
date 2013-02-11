@@ -302,6 +302,7 @@ public class WebServer {
     public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
       if (!(event.getMessage() instanceof HttpRequest)) {
         context.sendUpstream(event);
+        return;
       }
 
       HttpRequest request = (HttpRequest)event.getMessage();
