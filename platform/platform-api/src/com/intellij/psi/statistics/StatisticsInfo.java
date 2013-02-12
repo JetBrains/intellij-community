@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class StatisticsInfo implements Comparable<StatisticsInfo>{
+public class StatisticsInfo {
   public static final StatisticsInfo EMPTY = new StatisticsInfo("empty", "empty");
 
   private static final StatisticsManager ourManager = StatisticsManager.getInstance();
@@ -43,16 +43,16 @@ public class StatisticsInfo implements Comparable<StatisticsInfo>{
     return myValue;
   }
 
-  public int compareTo(final StatisticsInfo o) {
-    return getUseCount() - o.getUseCount();
-  }
-
   public void incUseCount() {
     ourManager.incUseCount(this);
   }
 
   public int getUseCount() {
     return ourManager.getUseCount(this);
+  }
+
+  public int getLastUseRecency() {
+    return ourManager.getLastUseRecency(this);
   }
 
   public String toString() {

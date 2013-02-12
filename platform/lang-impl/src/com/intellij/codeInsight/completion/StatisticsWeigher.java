@@ -38,7 +38,6 @@ import java.util.*;
  * @author peter
 */
 public class StatisticsWeigher extends CompletionWeigher {
-  private static final StatisticsManager ourStatManager = StatisticsManager.getInstance();
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
@@ -149,8 +148,8 @@ public class StatisticsWeigher extends CompletionWeigher {
       int minRecency = Integer.MAX_VALUE;
       int maxUseCount = 0;
       for (StatisticsInfo eachInfo : composeStatsWithPrefix(baseInfo, prefix, false)) {
-        minRecency = Math.min(minRecency, ourStatManager.getLastUseRecency(eachInfo));
-        maxUseCount = Math.max(maxUseCount, ourStatManager.getUseCount(eachInfo));
+        minRecency = Math.min(minRecency, eachInfo.getLastUseRecency());
+        maxUseCount = Math.max(maxUseCount, eachInfo.getUseCount());
       }
       return minRecency == Integer.MAX_VALUE ? maxUseCount : 100 - minRecency;
     }
