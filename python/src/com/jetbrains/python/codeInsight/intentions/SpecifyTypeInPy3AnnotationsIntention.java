@@ -83,7 +83,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     TemplateManager.getInstance(project).startTemplate(editor, template);
   }
 
-  private static void annotateReturnType(Project project, PsiElement resolved) {
+  private void annotateReturnType(Project project, PsiElement resolved) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     Callable callable = getCallable(resolved);
@@ -122,6 +122,39 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       }
     }
   }
+
+  @Override
+  protected boolean isTypeDefined(PyExpression problemElement) {
+
+    return isDefinedInAnnotation(problemElement);
+  }
+
+  private boolean isDefinedInAnnotation(PyExpression problemElement) {
+    if (LanguageLevel.forElement(problemElement).isOlderThan(LanguageLevel.PYTHON30)) {
+      return false;
+    }
+    PsiReference reference = problemElement.getReference();
+    final PsiElement resolved = reference != null? reference.resolve() : null;
+    PyParameter parameter = getParameter(problemElement, resolved);
+
+    if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;
+
+    if (resolved instanceof PyTargetExpression) { // return type
+      final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
+      if (assignedValue instanceof PyCallExpression) {
+        final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
+        if (callee != null) {
+          final PsiReference psiReference = callee.getReference();
+          if (psiReference != null && psiReference.resolve() == null) return false;
+        }
+        final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(getResolveContext(problemElement));
+
+        if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() != null) return true;
+      }
+    }
+    return false;
+  }
+
 
   @Override
   protected void updateText(boolean isReturn) {

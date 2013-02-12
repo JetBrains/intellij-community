@@ -9,10 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -31,7 +29,10 @@ public abstract class TypeIntention implements IntentionAction {
 
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
-    if (isAvailableForReturn(elementAt)) return true;
+    if (isAvailableForReturn(elementAt)) {
+      updateText(true);
+      return true;
+    }
 
     final PyExpression problemElement = getProblemElement(elementAt);
     if (problemElement == null) return false;
@@ -49,7 +50,7 @@ public abstract class TypeIntention implements IntentionAction {
         return false;
       }
     }
-    return isTypeUndefined(problemElement);
+    return !isTypeDefined(problemElement);
   }
 
   @Nullable
@@ -67,43 +68,7 @@ public abstract class TypeIntention implements IntentionAction {
 
   protected abstract void updateText(boolean isReturn);
 
-  private static boolean isTypeUndefined(PyExpression problemElement) {
-    final PyType type = problemElement.getType(TypeEvalContext.fastStubOnly(problemElement.getContainingFile()));
-    if (type == null || type instanceof PyReturnTypeReference || type instanceof PyDynamicallyEvaluatedType) {
-      PsiReference reference = problemElement.getReference();
-      if (problemElement instanceof PyQualifiedExpression) {
-        final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-        if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) reference = qualifier.getReference();
-      }
-
-      if (isDefinedInDocstring(problemElement, reference)) return false;
-      return !isDefinedInAnnotation(problemElement, reference);
-    }
-    return false;
-  }
-
-  private static boolean isDefinedInAnnotation(PyExpression problemElement, PsiReference reference) {
-    if (LanguageLevel.forElement(problemElement).isOlderThan(LanguageLevel.PYTHON30)) {
-      return false;
-    }
-    final PsiElement resolved = reference != null? reference.resolve() : null;
-    PyParameter parameter = getParameter(problemElement, resolved);
-
-    if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;
-
-    if (resolved instanceof PyTargetExpression) { // return type
-      final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-      if (assignedValue instanceof PyCallExpression) {
-        final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
-        if (callee != null) {
-          final PsiReference psiReference = callee.getReference();
-          if (psiReference != null && psiReference.resolve() == null) return false;
-        }
-        final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(getResolveContext(problemElement));
-
-        if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() != null) return true;
-      }
-    }
+  protected boolean isTypeDefined(PyExpression problemElement) {
     return false;
   }
 
@@ -113,26 +78,6 @@ public abstract class TypeIntention implements IntentionAction {
     if (resolved instanceof PyParameter)
       parameter = (PyParameter)resolved;
     return parameter;
-  }
-
-  private static boolean isDefinedInDocstring(PyExpression problemElement, PsiReference reference) {
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
-    if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
-      final String docstring = pyFunction.getDocStringValue();
-      if (docstring != null) {
-        String name = problemElement.getName();
-        if (problemElement instanceof PyQualifiedExpression) {
-          final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-          if (qualifier != null) {
-            name = qualifier.getText();
-          }
-        }
-        StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
-        return structuredDocString != null && structuredDocString.getParamType(name) != null;
-      }
-      return false;
-    }
-    return false;
   }
 
   private boolean isAvailableForReturn(PsiElement elementAt) {
@@ -160,7 +105,6 @@ public abstract class TypeIntention implements IntentionAction {
                     return false;
                   }
                 }
-                updateText(true);
                 return true;
               }
             }
@@ -172,7 +116,6 @@ public abstract class TypeIntention implements IntentionAction {
     if (parentFunction != null) {
       final ASTNode nameNode = parentFunction.getNameNode();
       if (nameNode != null && nameNode.getPsi() == elementAt) {
-        updateText(true);
         return true;
       }
     }
@@ -204,7 +147,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static Callable getCallable(PsiElement elementAt) {
+  protected Callable getCallable(PsiElement elementAt) {
     PyCallExpression callExpression = getCallExpression(elementAt);
 
     if (callExpression != null && elementAt != null) {
@@ -214,7 +157,7 @@ public abstract class TypeIntention implements IntentionAction {
     return PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
   }
 
-  private static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
+  protected PyResolveContext getResolveContext(@NotNull PsiElement origin) {
     return PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.fastStubOnly(origin.getContainingFile()));
   }
 
