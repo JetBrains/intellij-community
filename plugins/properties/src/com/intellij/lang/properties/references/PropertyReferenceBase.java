@@ -191,6 +191,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return mySoft;
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
   }

@@ -138,6 +138,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       };
     }
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.element.reference", getCanonicalText());
     }
@@ -259,6 +260,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       };
     }
 
+    @NotNull
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.entity.reference", getCanonicalText());
     }

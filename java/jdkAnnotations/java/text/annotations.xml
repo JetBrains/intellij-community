@@ -1,5 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <item name='java.text.SimpleDateFormat SimpleDateFormat(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name="java.text.MessageFormat MessageFormat(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat MessageFormat(java.lang.String, java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat java.lang.StringBuffer format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat java.text.Format[] getFormats()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat java.text.Format[] getFormatsByArgumentIndex()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat void applyPattern(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat void setFormats(java.text.Format[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.MessageFormat void setFormatsByArgumentIndex(java.text.Format[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
 </root>
+

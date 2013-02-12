@@ -207,6 +207,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     }
   }
 
+  @NotNull
   @Override
   @SuppressWarnings({"UnresolvedPropertyKey"})
   public String getUnresolvedMessagePattern() {

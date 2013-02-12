@@ -44,6 +44,7 @@ public interface Component extends DomElement {
 
   @NotNull
   @Convert(PluginPsiClassConverter.class)
+  @ExtendClass(allowEmpty=true)
   GenericDomValue<PsiClass> getHeadlessImplementationClass();
 
   @NotNull

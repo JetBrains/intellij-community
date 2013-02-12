@@ -257,8 +257,8 @@ public class JDOMXIncluder {
   //xpointer($1)
   @NonNls public static Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
 
-  // /$1/*
-  public static Pattern CHILDREN_PATTERN = Pattern.compile("\\/(.*)\\/\\*");
+  // /$1(/$2)?/*
+  public static Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
 
   @Nullable
   private static List<Object> extractNeededChildren(final Element element, List<Object> remoteElements) {
@@ -283,8 +283,13 @@ public class JDOMXIncluder {
 
       Element e = (Element)remoteElements.get(0);
 
-      if (e.getName().equals(rootTagName)) return
-        new ArrayList<Object>(e.getContent());
+      if (e.getName().equals(rootTagName)) {
+        String subTagName = matcher.group(2);
+        if (subTagName != null) {
+          e = e.getChild(subTagName.substring(1));    // cut off the slash
+        }
+        return new ArrayList<Object>(e.getContent());
+      }
       else
         return Collections.emptyList();
     }

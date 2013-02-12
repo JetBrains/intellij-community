@@ -67,9 +67,6 @@ public class JavaBuilderUtil {
                                        ModuleChunk chunk,
                                        Collection<File> filesToCompile,
                                        Collection<File> successfullyCompiled) throws IOException {
-    if (Utils.errorsDetected(context)) {
-      return false;
-    }
     try {
       boolean additionalPassRequired = false;
 
@@ -159,6 +156,14 @@ public class JavaBuilderUtil {
       }
       else {
         globalMappings.differentiateOnRebuild(delta);
+      }
+
+      if (Utils.errorsDetected(context)) {
+        // important: perform dependency analysis and mark found dependencies even if there were errors during the first phase of make.
+        // Integration of changes should happen only if the corresponding phase of make succeeds
+        // In case of errors this wil ensure that all dependencies marked after the first phase
+        // will be compiled during the first phase of the next make
+        return false;
       }
 
       context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getName() + "]"));

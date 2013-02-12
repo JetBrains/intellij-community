@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +57,8 @@ public class ObjectUtils {
   }
 
   @Nullable
-  public static <T, K extends T> T nullizeIfSubtype(@Nullable T obj, @NotNull Class<K> clazz) {
-    if (clazz.isInstance(obj)) {
+  public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
+    if (condition.value(obj)) {
       return null;
     }
     return obj;

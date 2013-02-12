@@ -79,8 +79,8 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
-    public boolean isSupported(HttpMethod method) {
-      return method == HttpMethod.POST || method == HttpMethod.OPTIONS;
+    public boolean isSupported(HttpRequest request) {
+      return request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS;
     }
 
     @Override
@@ -103,7 +103,7 @@ public class XmlRpcServerImpl implements XmlRpcServer {
   }
 
   private boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
-    if (!(urlDecoder.getPath().isEmpty() || urlDecoder.getPath().equalsIgnoreCase("/RPC2"))) {
+    if (!isXmlRpcRequest(urlDecoder.getPath())) {
       return false;
     }
 
@@ -136,6 +136,10 @@ public class XmlRpcServerImpl implements XmlRpcServer {
       return true;
     }
     return false;
+  }
+
+  private static boolean isXmlRpcRequest(String path) {
+    return path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2");
   }
 
   private static class XmlRpcHandlerMappingImpl implements XmlRpcHandlerMapping {

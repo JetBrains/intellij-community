@@ -1,155 +1,181 @@
-<extensionPoints>
-  <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
-  <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+    <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
-  <extensionPoint name="appStarter"
-                  interface="com.intellij.openapi.application.ApplicationStarter"/>
+    <extensionPoint name="appStarter"
+                    interface="com.intellij.openapi.application.ApplicationStarter"/>
 
-  <extensionPoint name="postStartupActivity"
-                  interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity"
+                    interface="com.intellij.openapi.startup.StartupActivity"/>
 
-  <extensionPoint name="errorHandler"
-                  interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
+    <extensionPoint name="errorHandler"
+                    interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
 
-  <extensionPoint name="projectConfigurable"
-                  beanClass="com.intellij.openapi.options.ConfigurableEP"
-                  area="IDEA_PROJECT"/>
+    <extensionPoint name="projectConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP"
+                    area="IDEA_PROJECT">
+      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
 
-  <extensionPoint name="applicationConfigurable"
-                  beanClass="com.intellij.openapi.options.ConfigurableEP"/>
+    <extensionPoint name="applicationConfigurable"
+                    beanClass="com.intellij.openapi.options.ConfigurableEP">
+      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
 
-  <extensionPoint name="selectInTarget"
-                  interface="com.intellij.ide.SelectInTarget"
-                  area="IDEA_PROJECT"/>
+    <extensionPoint name="selectInTarget"
+                    interface="com.intellij.ide.SelectInTarget"
+                    area="IDEA_PROJECT"/>
 
-  <extensionPoint name="fileEditorProvider"
-                  interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
+    <extensionPoint name="fileEditorProvider"
+                    interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
 
-  <extensionPoint name="selectedFileEditorProvider"
-                  interface="com.intellij.openapi.fileEditor.SelectedFileEditorProvider"/>
+    <extensionPoint name="selectedFileEditorProvider"
+                    interface="com.intellij.openapi.fileEditor.SelectedFileEditorProvider"/>
 
-  <extensionPoint name="fileTypeFactory"
-                  interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
+    <extensionPoint name="fileTypeFactory"
+                    interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
-  <extensionPoint name="virtualFileSystem"
-                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
+    <extensionPoint name="virtualFileSystem"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
+    </extensionPoint>
 
-  <extensionPoint name="keymapExtension"
-                  interface="com.intellij.openapi.keymap.KeymapExtension"/>
+    <extensionPoint name="keymapExtension"
+                    interface="com.intellij.openapi.keymap.KeymapExtension"/>
 
-  <extensionPoint name="getDataRule"
-                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
-  <extensionPoint name="dataValidator"
-                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
-  <extensionPoint name="cutElementMarker"
-                  interface="com.intellij.openapi.ide.CutElementMarker"/>
+    <extensionPoint name="getDataRule"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.ide.impl.dataRules.GetDataRule"/>
+    </extensionPoint>
 
-  <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
-  <extensionPoint name="schemeOwner" beanClass="com.intellij.openapi.components.ServiceBean"/>
+    <extensionPoint name="dataValidator"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.ide.impl.DataValidator"/>
+    </extensionPoint>
 
-  <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
+    <extensionPoint name="cutElementMarker"
+                    interface="com.intellij.openapi.ide.CutElementMarker"/>
 
-  <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
-                  area="IDEA_PROJECT"/>
-  <extensionPoint name="customFileTypeFactory" interface="com.intellij.openapi.fileTypes.ex.CustomFileTypeFactory"/>
-  <extensionPoint name="fileTypeRegistrator" interface="com.intellij.ide.highlighter.FileTypeRegistrator"/>
+    <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ServiceBean"/>
+    <extensionPoint name="schemeOwner" beanClass="com.intellij.openapi.components.ServiceBean"/>
 
-  <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"/>
-  <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
-                  area="IDEA_PROJECT"/>
+    <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.IdeRootPaneNorthExtension" area="IDEA_PROJECT"/>
 
-  <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT"/>
-  
-  <extensionPoint name="syntaxHighlighter"
-                  beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
+    <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
+                    area="IDEA_PROJECT"/>
+    <extensionPoint name="customFileTypeFactory" interface="com.intellij.openapi.fileTypes.ex.CustomFileTypeFactory"/>
+    <extensionPoint name="fileTypeRegistrator" interface="com.intellij.ide.highlighter.FileTypeRegistrator"/>
 
-  <extensionPoint name="lang.syntaxHighlighterFactory"
-                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
-  <extensionPoint name="projectOpenProcessor"
-                  interface="com.intellij.projectImport.ProjectOpenProcessor"/>
+    <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"/>
+    <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
+                    area="IDEA_PROJECT"/>
 
-  <extensionPoint name="codeInsight.linkHandler"
-                  beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
+    <extensionPoint name="cachedValuesFactory" interface="com.intellij.util.CachedValuesFactory" area="IDEA_PROJECT"/>
 
-  <extensionPoint name="directoryProjectConfigurator"
-                  interface="com.intellij.platform.DirectoryProjectConfigurator"/>
-  <extensionPoint name="directoryProjectGenerator"
-                  interface="com.intellij.platform.DirectoryProjectGenerator"/>
+    <extensionPoint name="syntaxHighlighter"
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterProvider"/>
+    </extensionPoint>
 
-  <extensionPoint name="projectTemplatesFactory"
-                  interface="com.intellij.platform.ProjectTemplatesFactory"/>
+    <extensionPoint name="lang.syntaxHighlighterFactory"
+                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
+    </extensionPoint>
 
-  <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
-  <extensionPoint name="ComponentRoamingType" beanClass="com.intellij.openapi.components.impl.stores.RoamingTypeExtensionPointBean"/>
+    <extensionPoint name="projectOpenProcessor"
+                    interface="com.intellij.projectImport.ProjectOpenProcessor"/>
 
-  <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
-  <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
-  <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper"/>
-  <extensionPoint name="editorFileAssociateFinder" interface="com.intellij.openapi.fileEditor.impl.FileEditorAssociateFinder"/>
+    <extensionPoint name="codeInsight.linkHandler"
+                    beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP">
+      <with attribute="handlerClass" implements="com.intellij.codeInsight.highlighting.TooltipLinkHandler"/>
+    </extensionPoint>
 
-  <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder"/>
-  <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider"/>
+    <extensionPoint name="directoryProjectConfigurator"
+                    interface="com.intellij.platform.DirectoryProjectConfigurator"/>
+    <extensionPoint name="directoryProjectGenerator"
+                    interface="com.intellij.platform.DirectoryProjectGenerator"/>
 
-  <extensionPoint name="componentConfigurationMerger" interface="com.intellij.openapi.components.XmlConfigurationMerger"/>
-  <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+    <extensionPoint name="projectTemplatesFactory"
+                    interface="com.intellij.platform.ProjectTemplatesFactory"/>
 
-  <extensionPoint name="editorActionHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean"/>
-  <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean"/>
-  <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
+    <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
+    <extensionPoint name="ComponentRoamingType" beanClass="com.intellij.openapi.components.impl.stores.RoamingTypeExtensionPointBean"/>
 
-  <extensionPoint name="browserSettingsProvider" beanClass="com.intellij.ide.BrowserSettingsProviderEP"/>
+    <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
+    <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
+    <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper"/>
+    <extensionPoint name="editorFileAssociateFinder" interface="com.intellij.openapi.fileEditor.impl.FileEditorAssociateFinder"/>
 
-  <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" />
-  <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
-  <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
-  <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
+    <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder"/>
+    <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider"/>
 
-  <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
-  <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
-  <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider"/>
-  <extensionPoint name="frameEditorComponentProvider" interface="com.intellij.openapi.wm.ex.FrameEditorComponentProvider"/>
+    <extensionPoint name="componentConfigurationMerger" interface="com.intellij.openapi.components.XmlConfigurationMerger"/>
+    <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
+    </extensionPoint>
 
-  <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
+    <extensionPoint name="editorActionHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.EditorActionHandler"/>
+    </extensionPoint>
 
-  <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
-  <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
-  <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
+    <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean"/>
+    <extensionPoint name="contentBasedClassFileProcessor" interface="com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor"/>
 
-  <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
+    <extensionPoint name="browserSettingsProvider" beanClass="com.intellij.ide.BrowserSettingsProviderEP"/>
 
-  <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
-  
-  <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
+    <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" />
+    <extensionPoint name="bundledColorSchemesProvider" interface="com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider"/>
+    <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
+    <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider"/>
 
-  <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
+    <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP"/>
+    <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
+    <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider"/>
+    <extensionPoint name="frameEditorComponentProvider" interface="com.intellij.openapi.wm.ex.FrameEditorComponentProvider"/>
 
-  <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider"/>
-  <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
-  <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
+    <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
 
-  <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
-  <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate"/>
+    <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
+    <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
-  <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
+    <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
 
-  <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
+    <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
 
-  <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
-  <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-  <extensionPoint name="exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
-  <extensionPoint name="fileDocumentSynchronizationVetoer" interface="com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer"/>
+    <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
 
-  <extensionPoint name="itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint"/>
+    <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
 
-  <extensionPoint name="classpathStorageProvider" interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
-  <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector"/>
+    <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider"/>
+    <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider"/>
+    <extensionPoint name="featureStatBundle" interface="com.intellij.featureStatistics.FeatureStatisticsBundleProvider"/>
 
-  <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor"/>
+    <extensionPoint name="editorCustomization" area="IDEA_PROJECT" interface="com.intellij.ui.EditorCustomization"/>
+    <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate"/>
 
-  <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter"/>
-  <extensionPoint name="pathMacroExpendableProtocol" beanClass="com.intellij.application.options.PathMacroExpendableProtocolBean"/>
+    <extensionPoint name="statistics.usagesCollector" interface="com.intellij.internal.statistic.UsagesCollector"/>
 
-  <extensionPoint name="httpRequestHandler" interface="org.jetbrains.ide.HttpRequestHandler"/>
+    <extensionPoint name="xmlRpcHandler" beanClass="com.intellij.ide.XmlRpcHandlerBean"/>
 
-  <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
-</extensionPoints>
+    <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+    <extensionPoint name="fileDocumentManagerListener" interface="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <extensionPoint name="exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
+    <extensionPoint name="fileDocumentSynchronizationVetoer" interface="com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer"/>
+
+    <extensionPoint name="itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint"/>
+
+    <extensionPoint name="classpathStorageProvider" interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
+    <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector"/>
+
+    <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor"/>
+
+    <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter"/>
+    <extensionPoint name="pathMacroExpendableProtocol" beanClass="com.intellij.application.options.PathMacroExpendableProtocolBean"/>
+
+    <extensionPoint name="httpRequestHandler" interface="org.jetbrains.ide.HttpRequestHandler"/>
+
+    <extensionPoint name="colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory"/>
+  </extensionPoints>
+</idea-plugin>

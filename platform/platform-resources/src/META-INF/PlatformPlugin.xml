@@ -6,13 +6,13 @@
   <xi:include href="/idea/PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
-    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
-    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.codeStyle.DefaultCodeStyleFacade"/>

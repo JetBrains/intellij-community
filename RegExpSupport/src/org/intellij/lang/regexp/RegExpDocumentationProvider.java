@@ -34,7 +34,7 @@ public final class RegExpDocumentationProvider extends AbstractDocumentationProv
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final String description = RegExpPropertiesProviders.forNode(node).getPropertyDescription(node.getText());
+        final String description = RegExpLanguageHosts.getInstance().getPropertyDescription(node.getPsi(), node.getText());
         if (description != null) {
           if (prop.isNegated()) {
             return "Property block stands for characters not matching " + description;

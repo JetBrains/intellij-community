@@ -375,7 +375,7 @@
 
     <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
 
-    <browserSettingsProvider instance="com.intellij.ide.browsers.BrowserSettingsProviderImpl"/>
+    <browserSettingsProvider instance="com.intellij.ide.browsers.impl.BrowserSettingsProviderImpl"/>
 
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
 

@@ -47,6 +47,7 @@ public class AntDomFileReference extends FileReference implements AntDomReferenc
     return (AntDomFileReferenceSet)super.getFileReferenceSet();
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("file.doesnt.exist", getCanonicalRepresentationText());
   }

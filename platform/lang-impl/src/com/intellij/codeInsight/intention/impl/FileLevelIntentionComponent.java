@@ -49,6 +49,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      final Project project, final PsiFile psiFile, final Editor editor) {
     myProject = project;
+    myBackground = getColor(severity);
 
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -72,7 +73,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
 
     myLabel.setText(description);
     myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
-    myBackground = getColor(severity);
 
     new ClickListener() {
       @Override

@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -95,17 +96,24 @@ public class RecentProjectPanel extends JPanel {
     ActionListener deleteAction = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ReopenProjectAction selection = (ReopenProjectAction)myList.getSelectedValue();
+        Object[] selection = myList.getSelectedValues();
 
-        if (selection != null) {
+        if (selection != null && selection.length > 0) {
           final int rc = Messages.showOkCancelDialog(RecentProjectPanel.this,
-                                                     "Remove '" + selection.getTemplatePresentation().getText() +
+                                                     "Remove '" + StringUtil.join(selection, new Function<Object, String>() {
+                                                       @Override
+                                                       public String fun(Object action) {
+                                                         return ((ReopenProjectAction)action).getTemplatePresentation().getText();
+                                                       }
+                                                     }, "'\n'") + 
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
           if (rc == 0) {
             final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
-            manager.removePath(selection.getProjectPath());
+            for (Object projectAction : selection) {
+              manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
+            }
             ListUtil.removeSelectedItems(myList);
           }
         }

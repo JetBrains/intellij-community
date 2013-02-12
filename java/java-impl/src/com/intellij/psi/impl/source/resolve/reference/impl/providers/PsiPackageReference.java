@@ -60,6 +60,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     return subPackages.toArray();
   }
 
+  @NotNull
   @Override
   public String getUnresolvedMessagePattern() {
     return JavaErrorMessages.message("cannot.resolve.package");

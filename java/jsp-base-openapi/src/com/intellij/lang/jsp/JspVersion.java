@@ -54,6 +54,17 @@ public interface JspVersion {
     }
   };
 
+  JspVersion JSP_2_3 = new JspVersion() {
+
+    public String getNumber() {
+      return "2.3";
+    }
+
+    public boolean betterThan(JspVersion other) {
+      return getNumber().compareTo(other.getNumber()) > 0;
+    }
+  };
+
   String getNumber();
 
   boolean betterThan(JspVersion other);

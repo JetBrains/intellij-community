@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -34,6 +35,7 @@ public class GroovyBundle {
   @NonNls
   private static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
 
+  @NotNull
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }

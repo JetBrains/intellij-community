@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -33,13 +31,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -50,9 +48,6 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
 public class MavenProjectImporter {
@@ -95,20 +90,20 @@ public class MavenProjectImporter {
   public List<MavenProjectsProcessorTask> importProject() {
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<MavenProjectsProcessorTask>();
 
-    boolean hasChanges = false;
+    boolean hasChanges;
 
     // in the case projects are changed during importing we must memorise them
     myAllProjects = new LinkedHashSet<MavenProject>(myProjectsTree.getProjects());
     myAllProjects.addAll(myProjectsToImportWithChanges.keySet()); // some projects may already have been removed from the tree
 
-    hasChanges |= deleteIncompatibleModules();
+    hasChanges = deleteIncompatibleModules();
     myProjectsToImportWithChanges = collectProjectsToImport(myProjectsToImportWithChanges);
 
     mapMavenProjectsToModulesAndNames();
 
     if (myProject.isDisposed()) return null;
 
-    boolean projectsHaveChanges = projectsToImportHaveChanges();
+    final boolean projectsHaveChanges = projectsToImportHaveChanges();
     if (projectsHaveChanges) {
       hasChanges = true;
       importModules(postTasks);
@@ -128,16 +123,30 @@ public class MavenProjectImporter {
       removeUnusedProjectLibraries();
     }
 
-    if (hasChanges) {
-      myModelsProvider.commit();
+    final boolean finalHasChanges = hasChanges;
 
-      if (projectsHaveChanges) {
-        configSettings();
+    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+      public void run() {
+        if (finalHasChanges) {
+          myModelsProvider.commit();
+
+          if (projectsHaveChanges) {
+            removeOutdatedCompilerConfigSettings();
+
+            for (MavenProject mavenProject : myAllProjects) {
+              Module module = myMavenProjectToModule.get(mavenProject);
+
+              for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
+                configurer.configure(mavenProject, myProject, module);
+              }
+            }
+          }
+        }
+        else {
+          myModelsProvider.dispose();
+        }
       }
-    }
-    else {
-      myModelsProvider.dispose();
-    }
+    });
 
     return postTasks;
   }
@@ -327,6 +336,10 @@ public class MavenProjectImporter {
       }, "\n");
   }
 
+  private static void doRefreshFiles(Set<File> files) {
+    LocalFileSystem.getInstance().refreshIoFiles(files);
+  }
+
   private void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
@@ -346,21 +359,15 @@ public class MavenProjectImporter {
       if (each.isResolved()) files.add(each.getFile());
     }
 
-    final Runnable r = new Runnable() {
-      public void run() {
-        LocalFileSystem.getInstance().refreshIoFiles(files);
-      }
-    };
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run();
+      doRefreshFiles(files);
     }
     else {
       postTasks.add(new MavenProjectsProcessorTask() {
         public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
           throws MavenProcessCanceledException {
           indicator.setText("Refreshing files...");
-          r.run();
+          doRefreshFiles(files);
         }
       });
     }
@@ -381,41 +388,13 @@ public class MavenProjectImporter {
                               myImportingSettings.getDedicatedModuleDir());
   }
 
-  private void configSettings() {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+  private void removeOutdatedCompilerConfigSettings() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-
-        for (MavenProject project : myAllProjects) {
-          String targetLevel = project.getTargetLevel();
-
-          if (targetLevel != null) {
-            Module module = projectsManager.findModule(project);
-            if (module != null) {
-              configuration.setBytecodeTargetLevel(module, targetLevel);
-            }
-          }
-
-          if (!Boolean.parseBoolean(System.getProperty("maven.disable.encode.import"))) {
-            String encoding = project.getEncoding();
-            if (encoding != null) {
-              try {
-                EncodingProjectManager.getInstance(myProject).setEncoding(project.getDirectoryFile(), Charset.forName(encoding));
-              }
-              catch (UnsupportedCharsetException ignored) {/**/}
-              catch (IllegalCharsetNameException ignored) {/**/}
-            }
-          }
-        }
-
-        final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-        String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
-        options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
-        javacOptions.ADDITIONAL_OPTIONS_STRING = options;
-      }
-    });
+    final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
+    options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
+    javacOptions.ADDITIONAL_OPTIONS_STRING = options;
   }
 
   private void importModules(final List<MavenProjectsProcessorTask> postTasks) {

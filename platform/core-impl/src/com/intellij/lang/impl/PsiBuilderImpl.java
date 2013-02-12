@@ -22,7 +22,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -31,14 +34,16 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.LimitedPool;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
@@ -798,7 +803,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     clearCachedTokenType();
   }
 
-  private boolean whitespaceOrComment(IElementType token) {
+  public boolean whitespaceOrComment(IElementType token) {
     return myWhitespaces.contains(token) || myComments.contains(token);
   }
 

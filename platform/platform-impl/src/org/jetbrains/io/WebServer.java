@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -46,7 +47,7 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-public class WebServer {
+public class WebServer implements Disposable {
   private static final String START_TIME_PATH = "/startTime";
 
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
@@ -247,25 +248,15 @@ public class WebServer {
     }
   }
 
-  public void stop() {
+  @Override
+  public void dispose() {
     try {
-      for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
-        try {
-          handler.serverStopping();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
+      openChannels.close().awaitUninterruptibly();
     }
     finally {
-      try {
-        openChannels.close().awaitUninterruptibly();
-      }
-      finally {
-        channelFactory.releaseExternalResources();
-      }
+      channelFactory.releaseExternalResources();
     }
+    LOG.info("web server stopped");
   }
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelUpstreamHandler messageChannelHandler) {
@@ -302,6 +293,7 @@ public class WebServer {
     public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
       if (!(event.getMessage() instanceof HttpRequest)) {
         context.sendUpstream(event);
+        return;
       }
 
       HttpRequest request = (HttpRequest)event.getMessage();
@@ -320,7 +312,7 @@ public class WebServer {
       if (connectedHandler == null) {
         for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
           try {
-            if (handler.isSupported(request.getMethod()) && handler.process(urlDecoder, request, context)) {
+            if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
               if (context.getAttachment() == null) {
                 context.setAttachment(handler);
               }
@@ -332,7 +324,7 @@ public class WebServer {
           }
         }
       }
-      else if (connectedHandler.isSupported(request.getMethod())) {
+      else if (connectedHandler.isSupported(request)) {
         connectedHandler.process(urlDecoder, request, context);
         return;
       }
