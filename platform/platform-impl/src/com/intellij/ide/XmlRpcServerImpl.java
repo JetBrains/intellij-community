@@ -79,8 +79,8 @@ public class XmlRpcServerImpl implements XmlRpcServer {
 
   static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
-    public boolean isSupported(HttpMethod method) {
-      return method == HttpMethod.POST || method == HttpMethod.OPTIONS;
+    public boolean isSupported(HttpRequest request) {
+      return request == HttpMethod.POST || request == HttpMethod.OPTIONS;
     }
 
     @Override

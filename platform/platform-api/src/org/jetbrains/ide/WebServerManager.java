@@ -15,8 +15,10 @@
  */
 package org.jetbrains.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class WebServerManager {
   // Your handler will be instantiated on first user request
@@ -29,4 +31,7 @@ public abstract class WebServerManager {
   public abstract int getPort();
 
   public abstract WebServerManager waitForStart();
+
+  @Nullable
+  public abstract Disposable getServerDisposable();
 }
