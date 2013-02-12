@@ -18,8 +18,7 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -1095,9 +1094,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull PsiExpression methodCall,
-                                                                             @NotNull PsiTypeParameter typeParameter,
-                                                                             @NotNull PsiCallExpression parentCall) {
+  private static RecursionGuard ourGraphGuard = RecursionManager.createGuard("typeArgInference");
+  private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull final PsiExpression methodCall,
+                                                                             @NotNull final PsiTypeParameter typeParameter,
+                                                                             @NotNull final PsiCallExpression parentCall) {
     final PsiExpressionList argumentList = parentCall.getArgumentList();
     LOG.assertTrue(argumentList != null);
     final int exprIdx = ArrayUtilRt.find(argumentList.getExpressions(), PsiUtil.skipParenthesizedExprUp(methodCall));
@@ -1105,7 +1105,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (exprIdx > -1) {
       final PsiExpression nullPlaceholder = JavaPsiFacade.getElementFactory(methodCall.getProject()).createExpressionFromText("null", methodCall);
 
-      final PsiCallExpression copy = (PsiCallExpression)parentCall.copy();
+      final PsiCallExpression copy = ourGraphGuard.doPreventingRecursion(parentCall, true, new Computable<PsiCallExpression>() {
+        @Override
+        public PsiCallExpression compute() {
+          return (PsiCallExpression)parentCall.copy(); 
+        }
+      });
+      if (copy == null) return null;
       final PsiExpressionList copyArgumentList = copy.getArgumentList();
       LOG.assertTrue(copyArgumentList != null);
       final PsiExpression currentCallInCopy = copyArgumentList.getExpressions()[exprIdx];
