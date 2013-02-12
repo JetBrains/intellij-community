@@ -181,29 +181,26 @@ public abstract class TypeIntention implements IntentionAction {
 
   @Nullable
   protected static PyCallExpression getCallExpression(PsiElement elementAt) {
-    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class, false);
-    if (callExpression == null) {
-      final PyExpression problemElement = getProblemElement(elementAt);
-      if (problemElement != null) {
-        PsiReference reference = problemElement.getReference();
-        final PsiElement resolved = reference != null? reference.resolve() : null;
-        if (resolved instanceof PyTargetExpression) {
-          final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-          if (assignedValue instanceof PyCallExpression) {
-            return (PyCallExpression)assignedValue;
-          }
-        }
-      }
-
-      PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-      if (assignmentStatement != null) {
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+    final PyExpression problemElement = getProblemElement(elementAt);
+    if (problemElement != null) {
+      PsiReference reference = problemElement.getReference();
+      final PsiElement resolved = reference != null? reference.resolve() : null;
+      if (resolved instanceof PyTargetExpression) {
+        final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
         if (assignedValue instanceof PyCallExpression) {
           return (PyCallExpression)assignedValue;
         }
       }
     }
-    return callExpression;
+
+    PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+    if (assignmentStatement != null) {
+      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+      if (assignedValue instanceof PyCallExpression) {
+        return (PyCallExpression)assignedValue;
+      }
+    }
+    return PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class, false);
   }
 
   @Nullable

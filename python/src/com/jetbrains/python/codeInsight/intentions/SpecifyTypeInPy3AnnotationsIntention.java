@@ -55,7 +55,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       annotateParameter(project, editor, parameter);
     }
     else {
-      annotateReturnType(project, resolved);
+      annotateReturnType(project, elementAt);
     }
   }
 
