@@ -382,11 +382,6 @@
         <option name="FOREGROUND" value="a5c25c" />
       </value>
     </option>
-    <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
-      <value>
-        <option name="BACKGROUND" value="141414" />
-      </value>
-    </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="cc7832" />
@@ -944,20 +939,21 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="PHP_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="9876aa" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="PHP_EXEC_COMMAND_ID">
       <value>
         <option name="FOREGROUND" value="a5c25c" />
         <option name="BACKGROUND" value="5e6465" />
       </value>
     </option>
-    <option name="PHP_SCRIPTING_BACKGROUND">
-      <value>
-        <option name="BACKGROUND" value="444444" />
-      </value>
-    </option>
     <option name="PHP_VAR">
       <value>
-        <option name="FOREGROUND" value="bf5553" />
+        <option name="FOREGROUND" value="9876aa" />
       </value>
     </option>
     <option name="PROPERTIES.INVALID_STRING_ESCAPE">
