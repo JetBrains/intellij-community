@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.wm.ToolWindow;
@@ -41,12 +42,16 @@ public interface RunContentManager {
    * to reduce number of open contents RunContentManager reuses
    * some of them during showRunContent (for ex. if a process was stopped) 
    * @return content that will be reused by showRunContent
+   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, ExecutionEnvironment)}
    */
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse);
 
+  @Nullable
+  RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment);
+
   /**
-   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, RunContentDescriptor)}
+   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, ExecutionEnvironment)}
    */
   @Deprecated
   @Nullable

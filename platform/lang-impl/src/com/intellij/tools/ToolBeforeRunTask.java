@@ -64,12 +64,12 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
     return (ToolBeforeRunTask)super.clone();
   }
 
-  public void execute(final DataContext context) {
+  public void execute(final DataContext context, final long executionId) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
 
       @Override
       public void run() {
-        ToolAction.runTool(myToolActionId, context);
+        ToolAction.runTool(myToolActionId, context, executionId);
       }
     });
   }

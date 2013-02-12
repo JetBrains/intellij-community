@@ -120,6 +120,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                             @NotNull final ExecutionEnvironment env,
                             @Nullable final RunProfileState state,
                             @Nullable final Runnable onCancelRunnable) {
+    long id = env.getExecutionId();
+    if (id == 0) {
+      id = env.assignNewExecutionId();
+    }
     RunProfile profile = env.getRunProfile();
 
     if (profile instanceof RunConfiguration) {
@@ -135,6 +139,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
 
       if (!activeTasks.isEmpty()) {
+        final long finalId = id;
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
           @Override
@@ -152,8 +157,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                                                               env.getConfigurationSettings(),
                                                                               null,
                                                                               env.getRunnerAndConfigurationSettings());
-              taskEnvironment
-                .putUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED, RunConfigurationBeforeRunProvider.ID.equals(provider.getId()));
+              taskEnvironment.setExecutionId(finalId);
               if (!provider.executeTask(dataContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
@@ -187,7 +191,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
                               @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final RunContentDescriptor reuseContent =
-      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
+      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env);
+    if (reuseContent != null) {
+      reuseContent.setExecutionId(env.getExecutionId());
+    }
     final RunProfile profile = env.getRunProfile();
 
     project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);

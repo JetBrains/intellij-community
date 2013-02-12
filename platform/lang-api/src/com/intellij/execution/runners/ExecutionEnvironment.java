@@ -33,8 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 
 public class ExecutionEnvironment extends UserDataHolderBase {
+  private static final AtomicLong myIdHolder = new AtomicLong(1L);
+
   @Nullable private final Project myProject;
 
   @NotNull private RunProfile myRunProfile;
@@ -44,6 +48,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private RunContentDescriptor myContentToReuse;
+  private long myExecutionId = 0;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -55,9 +60,18 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               @Nullable Project project) {
-    this(runner, DefaultExecutionTarget.INSTANCE, configuration, project);
+    this(configuration.getConfiguration(),
+         DefaultExecutionTarget.INSTANCE,
+         project,
+         configuration.getRunnerSettings(runner),
+         configuration.getConfigurationSettings(runner),
+         null,
+         null);
   }
 
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,
                               @NotNull final RunnerAndConfigurationSettings configuration,
@@ -72,6 +86,10 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration);
   }
 
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
+  @TestOnly
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final ExecutionTarget target,
                               @NotNull final RunnerAndConfigurationSettings configuration,
@@ -85,14 +103,31 @@ public class ExecutionEnvironment extends UserDataHolderBase {
          configuration);
   }
 
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
+  @Deprecated
+  public ExecutionEnvironment(@NotNull final RunProfile runProfile,
+                              @Nullable final RunnerSettings runnerSettings,
+                              @Nullable final ConfigurationPerRunnerSettings configurationSettings,
+                              @NotNull final DataContext dataContext) {
+    this(runProfile, DefaultExecutionTarget.INSTANCE, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null, null);
+  }
+
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @Nullable Project project,
                               @Nullable RunnerSettings runnerSettings,
                               @Nullable ConfigurationPerRunnerSettings configurationSettings,
                               @Nullable RunContentDescriptor contentToReuse) {
-    this(runProfile, project, runnerSettings, configurationSettings, contentToReuse, null);
+    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, null);
   }
 
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @NotNull ExecutionTarget target,
                               @Nullable Project project,
@@ -102,6 +137,9 @@ public class ExecutionEnvironment extends UserDataHolderBase {
     this(runProfile, target, project, runnerSettings, configurationSettings, contentToReuse, null);
   }
 
+  /**
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
+   */
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @Nullable Project project,
                               @Nullable RunnerSettings runnerSettings,
@@ -136,13 +174,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   /**
-   * @deprecated use {@link #ExecutionEnvironment(ProgramRunner, com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.openapi.project.Project)}
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
    */
   @Deprecated
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               @NotNull final DataContext context) {
     this(configuration.getConfiguration(),
+         DefaultExecutionTarget.INSTANCE,
          PlatformDataKeys.PROJECT.getData(context),
          configuration.getRunnerSettings(runner),
          configuration.getConfigurationSettings(runner),
@@ -151,23 +190,11 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   }
 
   /**
-   * @deprecated use {@link #ExecutionEnvironment(com.intellij.execution.configurations.RunProfile, com.intellij.openapi.project.Project, com.intellij.execution.configurations.RunnerSettings, com.intellij.execution.configurations.ConfigurationPerRunnerSettings, com.intellij.execution.ui.RunContentDescriptor)}
+   * @deprecated, use {@link com.intellij.execution.runners.ExecutionEnvironmentBuilder} instead
    */
-  @Deprecated
   public ExecutionEnvironment(@NotNull final RunProfile profile,
                               @NotNull final DataContext dataContext) {
     this(profile, PlatformDataKeys.PROJECT.getData(dataContext), null, null, null);
-  }
-
-  /**
-   * @deprecated use {@link #ExecutionEnvironment(com.intellij.execution.configurations.RunProfile, com.intellij.openapi.project.Project, com.intellij.execution.configurations.RunnerSettings, com.intellij.execution.configurations.ConfigurationPerRunnerSettings, com.intellij.execution.ui.RunContentDescriptor)}
-   */
-  @Deprecated
-  public ExecutionEnvironment(@NotNull final RunProfile runProfile,
-                              @Nullable final RunnerSettings runnerSettings,
-                              @Nullable final ConfigurationPerRunnerSettings configurationSettings,
-                              @NotNull final DataContext dataContext) {
-    this(runProfile, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null);
   }
 
   @Nullable
@@ -226,5 +253,30 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable
   public RunProfileState getState(final Executor executor) throws ExecutionException {
     return myRunProfile.getState(executor, this);
+  }
+
+  public long assignNewExecutionId() {
+    myExecutionId = myIdHolder.incrementAndGet();
+    return myExecutionId;
+  }
+
+  public void setExecutionId(long executionId) {
+    myExecutionId = executionId;
+  }
+
+  public long getExecutionId() {
+    return myExecutionId;
+  }
+
+  @Override
+  public String toString() {
+    if (myRunnerAndConfigurationSettings != null) {
+      return myRunnerAndConfigurationSettings.getName();
+    } else if (myRunProfile != null) {
+        return myRunProfile.getName();
+    } else if (myContentToReuse != null) {
+      return myContentToReuse.getDisplayName();
+    }
+    return super.toString();
   }
 }
