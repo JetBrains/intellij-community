@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionEP;
@@ -43,6 +44,7 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
+import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -50,6 +52,7 @@ import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -108,6 +111,8 @@ class RegisterInspectionFix implements IntentionAction {
       }
     });
 
+    elements = findAppropriateIntelliJModule(module.getName(), elements);
+
     if (elements.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find plugin descriptor");
       return;
@@ -146,6 +151,29 @@ class RegisterInspectionFix implements IntentionAction {
       .showInBestPositionFor(editor);
   }
 
+  private static final ImmutableMap<String, String> INTELLIJ_MODULES = ImmutableMap.<String, String>builder()
+    .put("platform-api", "PlatformExtensions.xml")
+    .put("platform-impl", "PlatformExtensions.xml")
+    .put("lang-api", "LangExtensions.xml")
+    .put("lang-impl", "LangExtensions.xml")
+    .put("vcs-api", "VcsExtensions.xml")
+    .put("vcs-impl", "VcsExtensions.xml")
+    .put("openapi", "IdeaPlugin.xml")
+    .put("java-impl", "IdeaPlugin.xml")
+    .build();
+
+  private static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String name, List<DomFileElement<IdeaPlugin>> elements) {
+    String extensionsFile = INTELLIJ_MODULES.get(name);
+    if (extensionsFile != null) {
+      for (DomFileElement<IdeaPlugin> element : elements) {
+        if (element.getFile().getName().equals(extensionsFile)) {
+          return Collections.singletonList(element);
+        }
+      }
+    }
+    return elements;
+  }
+
   private void doFix(DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
     final IdeaPlugin plugin = selectedValue.getRootElement();
     Extension extension = new WriteCommandAction<Extension>(project, file) {
@@ -166,6 +194,9 @@ class RegisterInspectionFix implements IntentionAction {
     final List<Extensions> extensionsList = plugin.getExtensions();
     Extensions extensions = null;
     for (Extensions e : extensionsList) {
+      if (e.getXmlTag() instanceof IncludedXmlTag) {
+        continue;
+      }
       String s = e.getDefaultExtensionNs().getStringValue();
       if (s != null && epName.startsWith(s)) {
         extensions = e;

@@ -22,15 +22,18 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -51,50 +54,68 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
     if (InheritanceUtil.isInheritor(parentClass, GlobalInspectionTool.class.getName())) {
       return new IntentionAction[] { new RegisterInspectionFix(parentClass, InspectionEP.GLOBAL_INSPECTION) };
     }
-    PsiField epField = findEPNameField(parentClass);
-    if (epField != null) {
-      String epName = findEPNameForClass(epField.getContainingClass());
-      if (epName != null) {
-        return new IntentionAction[] { new RegisterExtensionFix(parentClass, epName) };
-      }
+    List<ExtensionPointCandidate> candidateList = new ArrayList<ExtensionPointCandidate>();
+    findExtensionPointCandidatesInHierarchy(parentClass, candidateList);
+    if (!candidateList.isEmpty()) {
+      return new IntentionAction[] { new RegisterExtensionFix(parentClass, candidateList) };
     }
     return IntentionAction.EMPTY_ARRAY;
   }
 
-  private static String findEPNameForClass(PsiClass aClass) {
-    GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(ProjectScope.getAllScope(aClass.getProject()), XmlFileType.INSTANCE);
-    for (PsiReference reference : ReferencesSearch.search(aClass, scope)) {
-      XmlTag tag = PsiTreeUtil.getParentOfType(reference.getElement(), XmlTag.class);
-      if (tag != null && "extensionPoint".equals(tag.getName())) {
-        String qName = tag.getAttributeValue("qualifiedName");
-        if (qName != null) {
-          return qName;
-        }
-        String name = tag.getAttributeValue("name");
-        if (name != null) {
-          return "com.intellij." + name;
-        }
+  private static void findExtensionPointCandidatesInHierarchy(PsiClass aClass, List<ExtensionPointCandidate> list) {
+    for (PsiClass superClass : aClass.getSupers()) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+        continue;
       }
+      findExtensionPointCandidates(superClass, list);
+      findExtensionPointCandidatesInHierarchy(superClass, list);
     }
-    return null;
   }
 
-  private static PsiField findEPNameField(PsiClass aClass) {
-    for (PsiField field : aClass.getFields()) {
-      if (field.getType() instanceof PsiClassType) {
-        PsiClassType classType = (PsiClassType)field.getType();
-        PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
-        PsiClass fieldClass = resolved.getElement();
-        if (fieldClass != null && ExtensionPointName.class.getName().equals(fieldClass.getQualifiedName())) {
-          return field;
-        }
+  private static void findExtensionPointCandidates(PsiClass aClass, final List<ExtensionPointCandidate> list) {
+    String name = aClass.getQualifiedName();
+    if (name == null) {
+      return;
+    }
+    GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(ProjectScope.getAllScope(aClass.getProject()), XmlFileType.INSTANCE);
+    PsiSearchHelper.SERVICE.getInstance(aClass.getProject()).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
+      @Override
+      public boolean process(PsiFile file, int startOffset, int endOffset) {
+        PsiElement element = file.findElementAt(startOffset);
+        processExtensionPointCandidate(element, list);
+        return true;
+      }
+    }, scope);
+  }
+
+  private static void processExtensionPointCandidate(PsiElement element, List<ExtensionPointCandidate> list) {
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    if (tag == null) return;
+    if ("extensionPoint".equals(tag.getName())) {
+      String epName = getEPName(tag);
+      if (epName != null) {
+        list.add(new ExtensionPointCandidate(epName));
       }
     }
-    for (PsiClass superClass: aClass.getSupers()) {
-      PsiField epField = findEPNameField(superClass);
-      if (epField != null) {
-        return epField;
-      }
+    else if ("with".equals(tag.getName())) {
+      XmlTag extensionPointTag = tag.getParentTag();
+      if (!"extensionPoint".equals(extensionPointTag.getName())) return;
+      String attrName = tag.getAttributeValue("attribute");
+      String epName = getEPName(extensionPointTag);
+      String beanClassName = extensionPointTag.getAttributeValue("beanClass");
+      if (attrName == null || epName == null) return;
+      list.add(new ExtensionPointCandidate(epName, attrName, beanClassName));
+    }
+  }
+
+  private static String getEPName(XmlTag tag) {
+    String qName = tag.getAttributeValue("qualifiedName");
+    if (qName != null) {
+      return qName;
+    }
+    String name = tag.getAttributeValue("name");
+    if (name != null) {
+      return "com.intellij." + name;
     }
     return null;
   }
