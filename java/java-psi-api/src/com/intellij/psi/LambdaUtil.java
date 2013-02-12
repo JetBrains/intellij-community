@@ -82,7 +82,16 @@ public class LambdaUtil {
 
     final PsiClass methodContainingClass = method.getContainingClass();
     LOG.assertTrue(methodContainingClass != null);
-    return TypeConversionUtil.getSuperClassSubstitutor(methodContainingClass, derivedClass, resolveResult.getSubstitutor());
+    PsiSubstitutor initialSubst = resolveResult.getSubstitutor();
+    final PsiSubstitutor superClassSubstitutor =
+      TypeConversionUtil.getSuperClassSubstitutor(methodContainingClass, derivedClass, PsiSubstitutor.EMPTY);
+    for (PsiTypeParameter param : superClassSubstitutor.getSubstitutionMap().keySet()) {
+      final PsiType substitute = superClassSubstitutor.substitute(param);
+      if (substitute != null) {
+        initialSubst = initialSubst.put(param, initialSubst.substitute(substitute));
+      }
+    }
+    return initialSubst;
   }
 
   public static boolean isValidLambdaContext(PsiElement context) {

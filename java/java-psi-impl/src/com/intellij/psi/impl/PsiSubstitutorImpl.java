@@ -310,7 +310,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
           if (alreadyFound) continue;*/
           final PsiType substituted = substituteInternal(original);
-          if (substituted == null) return false;
+          //if (substituted == null) return false;
           substMap.put(param, substituted);
         }
       }
