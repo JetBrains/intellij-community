@@ -48,13 +48,7 @@ import java.util.Map;
 
 public class MavenModuleImporter {
 
-  public static final String PROFILE_PREFIX = "Annotation profile for ";
-
-  public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
-
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
-  public static final String DEFAULT_ANNOTATION_PATH_OUTPUT = "target/generated-sources/annotations";
-  public static final String DEFAULT_TEST_ANNOTATION_OUTPUT = "target/generated-test-sources/test-annotations";
 
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
@@ -94,26 +88,6 @@ public class MavenModuleImporter {
     configFolders();
     configDependencies();
     configLanguageLevel();
-    configAnnotationProcessors();
-    excludeFromCompilationArchetypeResources();
-  }
-
-  private void excludeFromCompilationArchetypeResources() {
-    VirtualFile directoryFile = myMavenProject.getDirectoryFile();
-
-    VirtualFile archetypeResourcesDir = VfsUtil.findRelativeFile(directoryFile, "src", "main", "resources", "archetype-resources");
-
-    if (archetypeResourcesDir != null) {
-      Project project = myModule.getProject();
-
-      CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-
-      if (!compilerConfiguration.isExcludedFromCompilation(archetypeResourcesDir)) {
-        ExcludedEntriesConfiguration cfg = compilerConfiguration.getExcludedEntriesConfiguration();
-
-        cfg.addExcludeEntryDescription(new ExcludeEntryDescription(archetypeResourcesDir, true, false, project));
-      }
-    }
   }
 
   public void preConfigFacets() {
@@ -265,139 +239,6 @@ public class MavenModuleImporter {
         libraryModel.addRoot(file, rootType);
       }
     }
-  }
-
-  private void configAnnotationProcessors() {
-    if (Boolean.parseBoolean(System.getProperty("idea.maven.keep.annotation.processors"))) return;
-
-    Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
-    if (sdk != null) {
-      String versionString = sdk.getVersionString();
-      if (versionString != null) {
-        if (versionString.contains("1.5") || versionString.contains("1.4") || versionString.contains("1.3") || versionString.contains("1.2")) {
-          return;
-        }
-      }
-    }
-
-    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(
-      myModule.getProject());
-
-    ProcessorConfigProfile currentProfile = compilerConfiguration.getAnnotationProcessingConfiguration(myModule);
-
-    String moduleProfileName = PROFILE_PREFIX + myModule.getName();
-
-    if (currentProfile != compilerConfiguration.getDefaultProcessorProfile()
-        && !MAVEN_DEFAULT_ANNOTATION_PROFILE.equals(currentProfile.getName())
-        && !moduleProfileName.equals(currentProfile.getName())) {
-      return;
-    }
-
-    ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
-
-    ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
-
-    if (shouldEnableAnnotationProcessors()) {
-      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(false);
-      if (annotationProcessorDirectory == null) {
-        annotationProcessorDirectory = DEFAULT_ANNOTATION_PATH_OUTPUT;
-      }
-
-      String testAnnotationProcessorDirectory = getRelativeAnnotationProcessorDirectory(true);
-      if (testAnnotationProcessorDirectory == null) {
-        testAnnotationProcessorDirectory = DEFAULT_TEST_ANNOTATION_OUTPUT;
-      }
-
-      Map<String, String> options = myMavenProject.getAnnotationProcessorOptions();
-
-      List<String> processors = myMavenProject.getDeclaredAnnotationProcessors();
-
-      if (processors == null
-          && options.isEmpty()
-          && DEFAULT_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
-          && DEFAULT_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'))) {
-        if (moduleProfile != null) {
-          compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
-        }
-
-        if (defaultMavenProfile == null) {
-          defaultMavenProfile = new ProcessorConfigProfileImpl(MAVEN_DEFAULT_ANNOTATION_PROFILE);
-          defaultMavenProfile.setEnabled(true);
-          defaultMavenProfile.setOutputRelativeToContentRoot(true);
-          defaultMavenProfile.setObtainProcessorsFromClasspath(true);
-          defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_ANNOTATION_PATH_OUTPUT, false);
-          defaultMavenProfile.setGeneratedSourcesDirectoryName(DEFAULT_TEST_ANNOTATION_OUTPUT, true);
-          compilerConfiguration.addModuleProcessorProfile(defaultMavenProfile);
-        }
-
-        defaultMavenProfile.addModuleName(myModule.getName());
-      }
-      else {
-        if (defaultMavenProfile != null) {
-          defaultMavenProfile.removeModuleName(myModule.getName());
-
-          if (defaultMavenProfile.getModuleNames().isEmpty()) {
-            compilerConfiguration.removeModuleProcessorProfile(defaultMavenProfile);
-          }
-        }
-
-        if (moduleProfile == null) {
-          moduleProfile = new ProcessorConfigProfileImpl(moduleProfileName);
-          moduleProfile.setOutputRelativeToContentRoot(true);
-          moduleProfile.setEnabled(true);
-          moduleProfile.setObtainProcessorsFromClasspath(true);
-          moduleProfile.addModuleName(myModule.getName());
-          compilerConfiguration.addModuleProcessorProfile(moduleProfile);
-        }
-
-        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory, false);
-        moduleProfile.setGeneratedSourcesDirectoryName(testAnnotationProcessorDirectory, true);
-
-        moduleProfile.clearProcessorOptions();
-        for (Map.Entry<String, String> entry : options.entrySet()) {
-          moduleProfile.setOption(entry.getKey(), entry.getValue());
-        }
-
-        moduleProfile.clearProcessors();
-
-        if (processors != null) {
-          for (String processor : processors) {
-            moduleProfile.addProcessor(processor);
-          }
-        }
-      }
-    }
-    else {
-      if (defaultMavenProfile != null) {
-        defaultMavenProfile.removeModuleName(myModule.getName());
-
-        if (defaultMavenProfile.getModuleNames().isEmpty()) {
-          compilerConfiguration.removeModuleProcessorProfile(defaultMavenProfile);
-        }
-      }
-
-      if (moduleProfile != null) {
-        compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
-      }
-    }
-  }
-
-  @Nullable
-  private String getRelativeAnnotationProcessorDirectory(boolean isTest) {
-    String annotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(isTest);
-    File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
-    if (!annotationProcessorDirectoryFile.isAbsolute()) {
-      return annotationProcessorDirectory;
-    }
-
-    String absoluteProjectDirectory = myMavenProject.getDirectory();
-    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), annotationProcessorDirectoryFile);
-  }
-
-  private boolean shouldEnableAnnotationProcessors() {
-    if ("pom".equals(myMavenProject.getPackaging())) return false;
-
-    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE || myMavenProject.getPluginConfiguration("org.bsc.maven", "maven-processor-plugin") != null;
   }
 
   @NotNull
