@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
@@ -30,6 +31,7 @@ import java.util.Map;
  */
 public class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
+
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache;
   static {
     final boolean useCache = SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless();
@@ -112,15 +114,15 @@ public class ScreenUtil {
   }
 
   private static JRootPane findMainRootPane(Component component) {
-    while(component != null) {
+    while (component != null) {
       Container parent = component.getParent();
-      if (parent == null)
-        return component instanceof RootPaneContainer ? ((RootPaneContainer) component).getRootPane() : null;
+      if (parent == null) {
+        return component instanceof RootPaneContainer ? ((RootPaneContainer)component).getRootPane() : null;
+      }
       component = parent;
     }
     return null;
   }
-
 
   private static Rectangle applyInsets(Rectangle rect, Insets i) {
     if (i == null) {
@@ -128,16 +130,6 @@ public class ScreenUtil {
     }
 
     return new Rectangle(rect.x + i.left, rect.y + i.top, rect.width - (i.left + i.right), rect.height - (i.top + i.bottom));
-  }
-
-  private static Insets fixGlobalInsets(Rectangle rect, Insets i) {
-    if (i == null) {
-      //noinspection ConstantConditions
-      return i;
-    }
-    int top = i.top > rect.y ? i.top - rect.y : i.top;
-    int left = i.left > rect.x ? i.left - rect.x : i.left;
-    return new Insets(top, left, i.bottom, i.right);
   }
 
   public static Insets getScreenInsets(final GraphicsConfiguration gc) {
@@ -157,11 +149,11 @@ public class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
-    if (SystemInfo.isXWindow && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
-      return fixGlobalInsets(gc.getBounds(), insets);
+    if (Patches.SUN_BUG_ID_4737732 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+      return new Insets(0, 0, 0, 0);
     }
-    return insets;
+
+    return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 
   public static Rectangle getScreenRectangle(int x, int y) {
