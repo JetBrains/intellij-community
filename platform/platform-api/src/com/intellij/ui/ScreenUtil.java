@@ -149,7 +149,7 @@ public class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_4737732 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+    if (Patches.SUN_BUG_ID_9000030 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
       return new Insets(0, 0, 0, 0);
     }
 
