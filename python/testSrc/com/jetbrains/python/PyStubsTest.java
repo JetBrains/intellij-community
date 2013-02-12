@@ -309,7 +309,7 @@ public class PyStubsTest extends PyTestCase {
 
   public void testImportInExcept() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
-    final PsiElement element = file.getElementNamed("tmxxx");
+    final PsiElement element = file.getElementNamed("tzinfo");
     assertTrue(element != null ? element.toString() : "null", element instanceof PyClass);
     assertNotParsed(file);
   }
