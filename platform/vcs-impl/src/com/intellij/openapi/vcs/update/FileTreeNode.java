@@ -56,14 +56,20 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
 
   @Override
   protected boolean acceptFilter(Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
-    VirtualFilePointer filePointer = getFilePointer();
-    if (!filePointer.isValid()) {
-      return false;
+    try {
+      VirtualFilePointer filePointer = getFilePointer();
+      if (!filePointer.isValid()) {
+        return false;
+      }
+      VirtualFile file = filePointer.getFile();
+      if (file != null && file.isValid() && filter.first.contains(file, filter.second)) {
+        applyFilter(true);
+        return true;
+      }
     }
-    VirtualFile file = filePointer.getFile();
-    if (file != null && file.isValid() && filter.first.contains(file, filter.second)) {
-      applyFilter(true);
-      return true;
+    catch (Throwable e) {
+      // TODO: catch and ignore exceptions: see to FilePatternPackageSet
+      // sometimes for new file DirectoryFileIndex.getContentRootForFile() return random path
     }
     return false;
   }
@@ -94,5 +100,4 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   protected boolean showStatistics() {
     return false;
   }
-
 }
