@@ -110,19 +110,24 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testStringConcatToFormat() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   public void testStringConcatToFormat1() {   //PY-5226
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   public void testStringConcatToFormat2() {   //PY-6505
-    doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
+      @Override
+      public void run() {
+        doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+      }
+    });
   }
 
   public void testStringConcatToFormat3() {   //PY-6505
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   public void testStringConcatToFormat4() {   //PY-7969
@@ -362,7 +367,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testUnicodeStringConcatToFormat() { //PY-7463
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   // PY-8366
@@ -372,7 +377,7 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-8588
   public void testStringConcatToFormatEscaping() {
-    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
   private void doDocStubTest(LanguageLevel languageLevel) {

@@ -65,7 +65,7 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testQualified() {  // PY-2171
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyClass dateClass = PyClassNameIndex.findClass("datetime.tmxxx", myFixture.getProject());
+    PyClass dateClass = PyClassNameIndex.findClass("datetime.date", myFixture.getProject());
     assertNotNull(dateClass);
     PyFunction initMethod = dateClass.findMethodByName(PyNames.INIT, false);
     assertNotNull(initMethod);
