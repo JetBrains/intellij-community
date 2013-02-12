@@ -68,17 +68,21 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   }
 
   private static PsiField findFieldByAttributeValue(PsiClass psiClass, @NotNull String attrNameToFind) {
-    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getConstantEvaluationHelper();
     for (PsiField psiField : psiClass.getAllFields()) {
-      final PsiMethod getter = PropertyUtils.findGetterForField(psiField);
-      final PsiMethod setter = PropertyUtils.findSetterForField(psiField);
-      final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(Attribute.class, psiField, getter, setter);
-      if (attrAnno != null) {
-        final String attrName = ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
-        if (attrNameToFind.equals(attrName)) {
-          return psiField;
-        }
+      if (attrNameToFind.equals(getAttributeAnnotationValue(psiField))) {
+        return psiField;
       }
+    }
+    return null;
+  }
+
+  public static String getAttributeAnnotationValue(PsiField psiField) {
+    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
+    final PsiMethod getter = PropertyUtils.findGetterForField(psiField);
+    final PsiMethod setter = PropertyUtils.findSetterForField(psiField);
+    final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(Attribute.class, psiField, getter, setter);
+    if (attrAnno != null) {
+      return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
     }
     return null;
   }
