@@ -90,30 +90,24 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpQuantifier quantifier) {
     final RegExpLanguageHost host = findRegExpHost(quantifier);
-    return host != null && host.supportsPossessiveQuantifiers();
+    return host == null || host.supportsPossessiveQuantifiers();
   }
 
   public boolean isValidCategory(@NotNull final PsiElement element, @NotNull String category) {
     final RegExpLanguageHost host = findRegExpHost(element);
-    if (host == null) {
-      return false;
-    }
-    return host.isValidCategory(category);
+    return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
   }
 
   @NotNull
   public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
-    if (host != null) {
-      return host.getAllKnownProperties();
-    }
-    return myDefaultProvider.getAllKnownProperties();
+    return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
   }
 
   @Nullable
   String getPropertyDescription(@NotNull final PsiElement element, @Nullable final String name) {
     final RegExpLanguageHost host = findRegExpHost(element);
-    return host == null ? null : host.getPropertyDescription(name);
+    return host != null ?  host.getPropertyDescription(name) : myDefaultProvider.getPropertyDescription(name);
   }
 
   @NotNull
