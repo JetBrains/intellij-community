@@ -861,6 +861,7 @@
     <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
     <importResolver implementation="com.jetbrains.cython.PyCythonImportResolver"/>
     <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.cython.CythonModuleMembersProvider"/>
 
     <!-- Mako -->
     <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>

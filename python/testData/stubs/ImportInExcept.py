@@ -9,4 +9,4 @@ except ImportError:
         from unittest import *
     else:
         # otherwise use our bundled version
-        from datetime import tmxxx
+        from datetime import tzinfo
