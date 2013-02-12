@@ -220,6 +220,16 @@ public class CompileDriver {
     if (!useOutOfProcessBuild()) {
       scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     }
+    else {
+      final Application app = ApplicationManager.getApplication();
+      if (!app.isUnitTestMode()) {
+        final boolean isDispatchThread = app.isDispatchThread();
+        LOG.assertTrue(!isDispatchThread, "Calling isUpToDate() from Event Dispatch Thread may cause deadlocks");
+        if (isDispatchThread) {
+          return false;
+        }
+      }
+    }
 
     final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false);
     final DependencyCache cache = useOutOfProcessBuild()? null : createDependencyCache();
