@@ -15,13 +15,16 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ClassExtensionPoint;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -92,13 +95,9 @@ public class RegisterExtensionFix implements IntentionAction {
         Extension extension = extensions.addExtension(candidate.epName);
         XmlTag tag = extension.getXmlTag();
         PsiElement navTarget = null;
-        if (KeyedFactoryEPBean.class.getName().equals(candidate.beanClassName) ||
-            KeyedLazyInstanceEP.class.getName().equals(candidate.beanClassName)) {
-          XmlAttribute attr = tag.setAttribute("key", "");
-          navTarget = attr.getValueElement();
-        }
-        else if (LanguageExtensionPoint.class.getName().equals(candidate.beanClassName)) {
-          XmlAttribute attr = tag.setAttribute("language", "");
+        String keyAttrName = KEY_MAP.get(candidate.beanClassName);
+        if (keyAttrName != null) {
+          XmlAttribute attr = tag.setAttribute(keyAttrName, "");
           navTarget = attr.getValueElement();
         }
         tag.setAttribute(candidate.attributeName, myExtensionClass.getQualifiedName());
@@ -107,6 +106,14 @@ public class RegisterExtensionFix implements IntentionAction {
     }.execute().throwException().getResultObject();
     PsiNavigateUtil.navigate(navTarget);
   }
+
+  private static final ImmutableMap<String, String> KEY_MAP = ImmutableMap.<String, String>builder()
+    .put(KeyedFactoryEPBean.class.getName(), "key")
+    .put(KeyedLazyInstanceEP.class.getName(), "key")
+    .put(FileTypeExtensionPoint.class.getName(), "filetype")
+    .put(LanguageExtensionPoint.class.getName(), "language")
+    .put(ClassExtensionPoint.class.getName(), "forClass")
+    .build();
 
 
   @Override
