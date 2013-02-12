@@ -120,7 +120,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
 
     boolean nonFocusedSelection = isSelected && !myLookup.isFocused() && CompletionPreview.hasPreview(myLookup);
-    if (nonFocusedSelection) {
+    if (!myLookup.isFocused()) {
       isSelected = false;
     }
 
