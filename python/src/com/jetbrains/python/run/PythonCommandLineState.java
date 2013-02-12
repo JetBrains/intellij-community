@@ -171,7 +171,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private ProcessHandler startRemoteProcess(Sdk sdk, GeneralCommandLine commandLine) throws ExecutionException {
     PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
     if (manager != null) {
-
       ProcessHandler processHandler =
         null;
 
@@ -339,8 +338,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
 
     return pythonPath;
-
-
   }
 
   @NotNull
