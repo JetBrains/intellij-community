@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ public class PyDocstringGenerator {
 
   private final Map<String, Pair<Integer, Integer>> myParamTypesOffset = Maps.newHashMap();
   private PsiFile myFile;
+  private boolean myGenerateReturn;
 
   public PyDocstringGenerator(@NotNull PyDocStringOwner docStringOwner) {
     myDocStringOwner = docStringOwner;
@@ -58,6 +60,25 @@ public class PyDocstringGenerator {
     }
     myProject = myDocStringOwner.getProject();
     myFile = myDocStringOwner.getContainingFile();
+  }
+
+  public void addFunctionArguments(@NotNull PyFunction function,
+                                   @Nullable PySignature signature) {
+    for (PyParameter functionParam : function.getParameterList().getParameters()) {
+      String paramName = functionParam.getName();
+      if (!functionParam.isSelf() && !StringUtil.isEmpty(paramName)) {
+        assert paramName != null;
+
+        String type = signature != null ? signature.getArgTypeQualifiedName(paramName) : null;
+
+        if (type != null) {
+          withParamTypedByQualifiedName("type", paramName, type, function);
+        }
+        else {
+          withParam("param", paramName);
+        }
+      }
+    }
   }
 
   public PyDocstringGenerator withParam(@NotNull String kind, @NotNull String name) {
@@ -72,6 +93,10 @@ public class PyDocstringGenerator {
   public PyDocstringGenerator withParamTypedByName(String kind, String name, String type) {
     myParams.add(new DocstringParam(kind, name, type));
     return this;
+  }
+
+  public void withReturn() {
+    myGenerateReturn = true;
   }
 
   private PsiFile getFile() {
@@ -140,7 +165,7 @@ public class PyDocstringGenerator {
   private Collection<DocstringParam> collectParametersToAdd() {
     String text = getDocstringText();
 
-    StructuredDocString structuredDocString = StructuredDocString.parse(text);
+    StructuredDocString structuredDocString = StructuredDocString.parse(text); //TODO: do we need to cache it?
 
     return getParamsToAdd(structuredDocString, myParams);
   }
@@ -214,13 +239,13 @@ public class PyDocstringGenerator {
     if (replacementText.length() > 0) {
       replacementText.deleteCharAt(replacementText.length() - 1);
     }
+    // if creating a new docstring, leave blank line where text will be entered
+    if (!StringUtil.containsAlphaCharacters(replacementText.toString())) {
+      replacementText.append("\n");
+    }
     replacementText.append(ws);
 
     int i = 0;
-
-    if (paramsToAdd.size() == 0) {
-      throw new IllegalArgumentException("At least one parameter should be added");
-    }
 
     for (DocstringParam param : paramsToAdd) {
       replacementText.append(getPrefix());
@@ -238,6 +263,14 @@ public class PyDocstringGenerator {
       i++;
       if (i < paramsToAdd.size()) {
         replacementText.append(ws);
+      }
+    }
+
+    if (myGenerateReturn && myDocStringOwner instanceof PyFunction) {
+      PyFunction function = (PyFunction)myDocStringOwner;
+      String returnType = PythonDocumentationProvider.generateRaiseOrReturn(function, " ", getPrefix(), true);
+      if (!returnType.isEmpty()) {
+        replacementText.append(ws).append(returnType);
       }
     }
 

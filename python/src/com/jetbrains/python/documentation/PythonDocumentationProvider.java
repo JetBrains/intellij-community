@@ -149,7 +149,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   static String describeExpressionType(PyExpression expr) {
     final TypeEvalContext context = TypeEvalContext.slow();
-    return String.format("Inferred type: %s", getTypeName(expr.getType(context), context));
+    return String.format("Inferred type: %s", getTypeName(context.getType(expr), context));
   }
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
@@ -177,7 +177,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   public static void describeExpressionTypeWithLinks(ChainIterable<String> body,
                                                      PyReferenceExpression expression,
                                                      @NotNull TypeEvalContext context) {
-    PyType type = expression.getType(context);
+    PyType type = context.getType(expression);
     describeTypeWithLinks(body, expression, type, context);
   }
 
@@ -481,7 +481,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PyClass inferClassOfParameter(PsiElement context) {
     if (context instanceof PyNamedParameter) {
-      final PyType type = ((PyNamedParameter)context).getType(TypeEvalContext.fast());
+      final PyType type = TypeEvalContext.fast().getType((PyNamedParameter)context);
       if (type instanceof PyClassType) {
         return ((PyClassType)type).getPyClass();
       }
@@ -567,6 +567,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         builder.append(offset);
       }
     }
+    builder.append(generateRaiseOrReturn(element, offset, prefix, checkReturn));
+    return builder.toString();
+  }
+
+  public static String generateRaiseOrReturn(PyFunction element, String offset, String prefix, boolean checkReturn) {
+    StringBuilder builder = new StringBuilder();
     if (checkReturn) {
       RaiseVisitor visitor = new RaiseVisitor();
       PyStatementList statementList = element.getStatementList();

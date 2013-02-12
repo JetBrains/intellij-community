@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class PyJavaPackageType implements PyType {
   }
 
   @Override
-  public List<? extends RatedResolveResult> resolveMember(String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {

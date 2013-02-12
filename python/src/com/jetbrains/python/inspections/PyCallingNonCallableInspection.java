@@ -58,7 +58,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
         return;
       }
       if (!callable) {
-        final PyType calleeType = callee != null ? callee.getType(myTypeEvalContext) : type;
+        final PyType calleeType = callee != null ? myTypeEvalContext.getType(callee) : type;
         if (calleeType instanceof PyClassType) {
           registerProblem(node, String.format("'%s' object is not callable", calleeType.getName()));
         }
@@ -77,6 +77,6 @@ public class PyCallingNonCallableInspection extends PyInspection {
     if (element instanceof PyQualifiedExpression && PyNames.CLASS.equals(element.getName())) {
       return true;
     }
-    return PyTypeChecker.isCallable(element.getType(context));
+    return PyTypeChecker.isCallable(context.getType(element));
   }
 }

@@ -69,7 +69,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       boolean made_instance = false;
       if (call_by_class) {
         if (args.length > 0) {
-          PyType first_arg_type = args[0].getType(TypeEvalContext.fast());
+          PyType first_arg_type = TypeEvalContext.fast().getType(args[0]);
           if (first_arg_type instanceof PyClassType && ((PyClassType)first_arg_type).getPyClass().isSubclass(cls)) {
             // class, first arg ok: instance method
             builder.parameter("self"); // NOTE: might use a name other than 'self', according to code style.

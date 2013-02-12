@@ -242,7 +242,8 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean isInControlStatement() {
-    return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null;
+    return PsiTreeUtil.getParentOfType(_node.getPsi(), PyStatementPart.class, false, PyStatementList.class) != null ||
+           PsiTreeUtil.getParentOfType(_node.getPsi(), PyWithItem.class) != null;
   }
 
   private boolean isSliceOperand(ASTNode child) {

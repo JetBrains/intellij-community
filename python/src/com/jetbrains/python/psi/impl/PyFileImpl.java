@@ -704,7 +704,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (myType == null) myType = new PyModuleType(this);
     return myType;
   }

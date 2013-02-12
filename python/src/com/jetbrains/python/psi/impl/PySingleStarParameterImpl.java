@@ -43,4 +43,9 @@ public class PySingleStarParameterImpl extends PyPresentableElementImpl<PySingle
   public boolean hasDefaultValue() {
     return false;
   }
+
+  @Override
+  public boolean isSelf() {
+    return false;
+  }
 }

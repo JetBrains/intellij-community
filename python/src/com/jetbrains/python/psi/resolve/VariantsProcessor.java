@@ -50,9 +50,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
-      final String name = psiNamedElement instanceof PyFile
-                          ? FileUtil.getNameWithoutExtension(((PyFile)psiNamedElement).getName())
-                          : psiNamedElement.getName();
+      final String name = PyUtil.getElementNameWithoutExtension(psiNamedElement);
       if (name != null && nameIsAcceptable(name)) {
         addElement(name, psiNamedElement);
       }

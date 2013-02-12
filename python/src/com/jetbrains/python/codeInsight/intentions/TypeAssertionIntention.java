@@ -59,7 +59,7 @@ public class TypeAssertionIntention implements IntentionAction {
         (reference != null && reference.resolve() == null)) {
       return false;
     }
-    final PyType type = problemElement.getType(TypeEvalContext.fastStubOnly(file));
+    final PyType type = TypeEvalContext.fastStubOnly(file).getType(problemElement);
     return (type == null || type instanceof PyReturnTypeReference);
   }
 

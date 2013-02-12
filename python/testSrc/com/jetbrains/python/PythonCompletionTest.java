@@ -613,4 +613,18 @@ public class PythonCompletionTest extends PyTestCase {
     doTestByText("def foo(**<caret>)");
     myFixture.checkResult("def foo(**kwargs)");
   }
+
+  public void testLocalImportedModule() {  // PY-3668
+    myFixture.copyDirectoryToProject("completion/py3668", "");
+    myFixture.configureByFile("py3668.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/py3668/py3668.after.py");
+  }
+
+  public void testDuplicateDunderAll() {  // PY-6483
+    doTestByText("VAR = 1\nVAR = 2\n__all__ = ['<caret>']");
+    myFixture.checkResult("VAR = 1\n" +
+                          "VAR = 2\n" +
+                          "__all__ = ['VAR']");
+  }
 }

@@ -79,7 +79,7 @@ class PyDocumentationBuilder {
         if (outer instanceof PyQualifiedExpression) {
           PyExpression qual = ((PyQualifiedExpression)outer).getQualifier();
           if (qual != null) {
-            PyType type = qual.getType(TypeEvalContext.fast());
+            PyType type = TypeEvalContext.fast().getType(qual);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
               Property property = cls.findProperty(elementName);
@@ -188,7 +188,7 @@ class PyDocumentationBuilder {
       boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)followed);
       if (outer instanceof PyExpression) {
         TypeEvalContext context = TypeEvalContext.slow();
-        PyType type = ((PyExpression)outer).getType(context);
+        PyType type = context.getType((PyExpression)outer);
         if (type != null) {
           String s = null;
           if (type instanceof PyDynamicallyEvaluatedType) {

@@ -58,7 +58,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(final String name,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
                                                           PyResolveContext resolveContext) {
@@ -167,7 +167,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  private static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
+  public static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
     final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override

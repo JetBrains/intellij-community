@@ -4,6 +4,7 @@ import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -26,26 +27,31 @@ public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector
   @NotNull
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
-    Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
-    for(Module m: ModuleManager.getInstance(project).getModules()) {
+    final Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
+    for(final Module m: ModuleManager.getInstance(project).getModules()) {
       Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
-        List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(m);
-        if (requirements != null) {
-          Collection<String> packages;
-          try {
-            packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
-          }
-          catch (IOException e) {
-            continue;
-          }
-          for (PyRequirement requirement : requirements) {
-            String name = requirement.getName();
-            if (packages.contains(name)) {
-              result.add(new UsageDescriptor(name, 1));
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(m);
+            if (requirements != null) {
+              Collection<String> packages;
+              try {
+                packages = new HashSet<String>(PyPIPackageUtil.INSTANCE.getPackageNames());
+              }
+              catch (IOException e) {
+                return;
+              }
+              for (PyRequirement requirement : requirements) {
+                String name = requirement.getName();
+                if (packages.contains(name)) {
+                  result.add(new UsageDescriptor(name, 1));
+                }
+              }
             }
           }
-        }
+        });
       }
     }
     return result;

@@ -161,9 +161,13 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     if (anchor == null) {
       // adding last element; the import may be "from ... import (...)", must get before the last ")"
-      PsiElement last_child = getLastChild();
-      if (last_child != null) {
-        ASTNode rpar_node = last_child.getNode();
+      PsiElement lastChild = getLastChild();
+      if (lastChild != null) {
+        while (lastChild instanceof PsiComment) {
+          lastChild = lastChild.getPrevSibling();
+          anchor = lastChild.getNode();
+        }
+        ASTNode rpar_node = lastChild.getNode();
         if (rpar_node != null && rpar_node.getElementType() == PyTokenTypes.RPAR) anchor = rpar_node;
       }
     }

@@ -91,7 +91,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  public List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
                                                           PyResolveContext resolveContext) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
@@ -136,7 +136,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       // methods of super() call are not of class super!
       PyExpression first_arg = ((PyCallExpression)location).getArgument(0, PyExpression.class);
       if (first_arg != null) { // the usual case: first arg is the derived class that super() is proxying for
-        PyType first_arg_type = first_arg.getType(resolveContext.getTypeEvalContext());
+        PyType first_arg_type = resolveContext.getTypeEvalContext().getType(first_arg);
         if (first_arg_type instanceof PyClassType) {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
           final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
@@ -212,7 +212,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private PyClassType getMetaclassType() {
     final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
     if (metaClassAttribute != null) {
-      final PyType type = metaClassAttribute.getType(TypeEvalContext.fastStubOnly(null));
+      final PyType type = TypeEvalContext.fastStubOnly(null).getType(metaClassAttribute);
       if (type instanceof PyClassType) {
         return (PyClassType)type;
       }
@@ -381,7 +381,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         type = new PyClassTypeImpl((PyClass)element, myIsDefinition);
       }
       else {
-        type = expression.getType(TypeEvalContext.fastStubOnly(myClass.getContainingFile()));
+        final TypeEvalContext typeEvalContext = TypeEvalContext.fastStubOnly(myClass.getContainingFile());
+        type = typeEvalContext.getType(expression);
         if (type instanceof PyClassType && !myIsDefinition) {
           type = ((PyClassType)type).toInstance();
         }

@@ -242,7 +242,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     assert qualifier != null;
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
-    PyType qualifierType = qualifier.getType(TypeEvalContext.slow());
+    PyType qualifierType = TypeEvalContext.slow().getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);
@@ -382,7 +382,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       final PyExpression qualifier = myElement.getQualifier();
       if (qualifier != null) {
         final TypeEvalContext context = TypeEvalContext.fast();
-        PyType qualifierType = qualifier.getType(context);
+        PyType qualifierType = context.getType(qualifier);
         if (qualifierType == null || qualifierType instanceof PyTypeReference) {
           return true;
         }

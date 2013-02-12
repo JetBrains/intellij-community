@@ -34,7 +34,7 @@ public class ProtocolParser {
       if (!"arg".equals(reader.getNodeName())) {
         throw new PyDebuggerException("Expected <arg>, found " + reader.getNodeName());
       }
-      signature.addArgumentVar(readString(reader, "name", ""), readString(reader, "type", ""));
+      signature.addArgument(readString(reader, "name", ""), readString(reader, "type", ""));
       reader.moveUp();
     }
 

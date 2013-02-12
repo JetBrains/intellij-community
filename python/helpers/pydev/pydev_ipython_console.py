@@ -12,14 +12,9 @@ os.environ['TERM'] = 'emacs' #to use proper page_more() for paging
 
 try:
     from pydev_ipython_console_010 import PyDevFrontEnd
-
-    sys.stderr.write('PyDev console: using IPython 0.10\n')
 except:
     #IPython 0.11 broke compatibility...
     from pydev_ipython_console_011 import PyDevFrontEnd
-
-    sys.stderr.write('PyDev console: using IPython %s\n' % PyDevFrontEnd.version)
-
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -40,6 +35,9 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.notification_max_tries = 3
 
         self.notify_about_magic()
+
+    def get_greeting_msg(self):
+        return self.interpreter.get_greeting_msg()
 
     def doAddExec(self, line):
         self.notify_about_magic()

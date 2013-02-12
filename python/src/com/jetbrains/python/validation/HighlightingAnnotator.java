@@ -3,9 +3,6 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.jetbrains.cython.psi.CythonClass;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -18,7 +15,7 @@ public class HighlightingAnnotator extends PyAnnotator {
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
       Annotation annotation = getHolder().createInfoAnnotation(node, null);
-      annotation.setTextAttributes(isSelf(node, function) ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+      annotation.setTextAttributes(node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
     }
   }
 
@@ -31,7 +28,7 @@ public class HighlightingAnnotator extends PyAnnotator {
         final PyNamedParameter element = function.getParameterList().findParameterByName(referencedName);
         if (element != null) {
           Annotation annotation = getHolder().createInfoAnnotation(node, null);
-          annotation.setTextAttributes(isSelf(element, function) ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+          annotation.setTextAttributes(element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
         }
       }
     }
@@ -44,29 +41,5 @@ public class HighlightingAnnotator extends PyAnnotator {
       Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD_ARGUMENT);
     }
-  }
-
-  private static boolean isSelf(PyParameter node, PyFunction function) {
-    final PyNamedParameter named = node.getAsNamed();
-    if (named != null) {
-      if (named.isPositionalContainer() || named.isKeywordContainer()) {
-        return false;
-      }
-    }
-    final int index = ArrayUtil.find(function.getParameterList().getParameters(), node);
-    final PyClass cls = function.getContainingClass();
-    if (cls != null && index == 0) {
-      if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
-        return false;
-      }
-      if (PyNames.NEW.equals(function.getName())) {
-        return true;
-      }
-      final PyFunction.Modifier modifier = function.getModifier();
-      if (modifier != PyFunction.Modifier.CLASSMETHOD && modifier != PyFunction.Modifier.STATICMETHOD) {
-        return true;
-      }
-    }
-    return false;
   }
 }

@@ -108,7 +108,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return new PyOperatorReference(this, context);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCall(this, context);
     if (results != null) {
       final PyType type = results.getCallable().getReturnType(context, this);

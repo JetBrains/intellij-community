@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -173,11 +174,11 @@ public abstract class PythonSdkFlavor {
       return null;
     }
     Pattern pattern = Pattern.compile(version_regexp);
-    final String result = PySdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
+    final String result = PatternUtil.getFirstMatch(process_output.getStderrLines(), pattern);
     if (result != null) {
       return result;
     }
-    return PySdkUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
+    return PatternUtil.getFirstMatch(process_output.getStdoutLines(), pattern);
   }
 
   public Collection<String> getExtraDebugOptions() {

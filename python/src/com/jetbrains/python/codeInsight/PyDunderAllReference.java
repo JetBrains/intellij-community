@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -47,18 +49,24 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
     final List<LookupElement> result = new ArrayList<LookupElement>();
     PyFile containingFile = (PyFile) getElement().getContainingFile().getOriginalFile();
     final List<String> dunderAll = containingFile.getDunderAll();
+    final Set<String> seenNames = new HashSet<String>();
+    if (dunderAll != null) {
+      seenNames.addAll(dunderAll);
+    }
     containingFile.processDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
-          if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
+          if (name != null && PyUtil.getInitialUnderscores(name) == 0 && !seenNames.contains(name)) {
+            seenNames.add(name);
             result.add(LookupElementBuilder.create((PsiNamedElement) element).withIcon(element.getIcon(0)));
           }
         }
         else if (element instanceof PyImportElement) {
           final String visibleName = ((PyImportElement)element).getVisibleName();
-          if (visibleName != null && (dunderAll == null || !dunderAll.contains(visibleName))) {
+          if (visibleName != null && !seenNames.contains(visibleName)) {
+            seenNames.add(visibleName);
             result.add(LookupElementBuilder.create(element, visibleName));
           }
         }

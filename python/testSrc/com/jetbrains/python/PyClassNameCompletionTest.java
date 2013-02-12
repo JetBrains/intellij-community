@@ -18,15 +18,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
   }
 
   public void testQualified() {
-    final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
-    boolean oldValue = settings.PREFER_FROM_IMPORT;
-    settings.PREFER_FROM_IMPORT = false;
-    try {
-      doTest();
-    }
-    finally {
-      settings.PREFER_FROM_IMPORT = oldValue;
-    }
+    doTestWithoutFromImport();
   }
 
   public void testFunction() {
@@ -43,6 +35,22 @@ public class PyClassNameCompletionTest extends PyTestCase {
 
   public void testSubmodule() {  // PY-7887
     doTest();
+  }
+
+  public void testSubmoduleRegularImport() {  // PY-7887
+    doTestWithoutFromImport();
+  }
+
+  private void doTestWithoutFromImport() {
+    final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
+    boolean oldValue = settings.PREFER_FROM_IMPORT;
+    settings.PREFER_FROM_IMPORT = false;
+    try {
+      doTest();
+    }
+    finally {
+      settings.PREFER_FROM_IMPORT = oldValue;
+    }
   }
 
   private void doTest() {

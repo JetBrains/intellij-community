@@ -66,6 +66,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
   }
 
+  private void setExpectAsKeyword(boolean expectAsKeyword) {
+    myExpectAsKeyword = expectAsKeyword;
+    myBuilder.setTokenTypeRemapper(this);  // clear cached token type
+  }
+
   public void parseStatement(ParsingScope scope) {
 
     while (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
@@ -472,14 +477,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
       }
-      myExpectAsKeyword = true; // possible 'as' comes as an ident; reparse it as keyword if found
+      setExpectAsKeyword(true); // possible 'as' comes as an ident; reparse it as keyword if found
       if (builder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         builder.advanceLexer();
-        myExpectAsKeyword = false;
+        setExpectAsKeyword(false);
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
       asMarker.done(elementType);
-      myExpectAsKeyword = false;
+      setExpectAsKeyword(false);
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();
         if (in_parens && builder.getTokenType() == PyTokenTypes.RPAR) {
@@ -527,14 +532,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     myBuilder.advanceLexer();
     marker.done(getReferenceType());
     boolean old_expect_AS_kwd = myExpectAsKeyword;
-    myExpectAsKeyword = expect_as;
+    setExpectAsKeyword(expect_as);
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
       marker.done(getReferenceType());
     }
-    myExpectAsKeyword = old_expect_AS_kwd;
+    setExpectAsKeyword(old_expect_AS_kwd);
     return true;
   }
 
@@ -675,7 +680,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           if (!getExpressionParser().parseSingleExpression(false, false)) {
             myBuilder.error(EXPRESSION_EXPECTED);
           }
-          myExpectAsKeyword = true;
+          setExpectAsKeyword(true);
           if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true, false)) {
@@ -730,7 +735,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (true) {
       PsiBuilder.Marker withItem = myBuilder.mark();
       getExpressionParser().parseExpression();
-      myExpectAsKeyword = true;
+      setExpectAsKeyword(true);
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
         getExpressionParser().parseSingleExpression(true, false); // 'as' is followed by a target

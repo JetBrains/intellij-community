@@ -156,12 +156,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
       PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
       if (closee != null) {
-        return closee.getType(context);
+        return context.getType(closee);
       }
     }
     final String name = contextManager.getName();
     if ("FileIO".equals(name) || "TextIOWrapper".equals(name) || "IOBase".equals(name) || "_IOBase".equals(name)) {
-      return withExpression.getType(context);
+      return context.getType(withExpression);
     }
     return null;
   }
@@ -191,7 +191,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             if (p.isPositionalContainer() || p.isKeywordContainer() || name == null) {
               continue;
             }
-            final PyType argType = entry.getKey().getType(context);
+            final PyType argType = context.getType(entry.getKey());
             final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
             if (PyTypeChecker.match(paramType, argType, context)) {
               if (paramType != null && !PyTypeChecker.isUnknown(argType)) {

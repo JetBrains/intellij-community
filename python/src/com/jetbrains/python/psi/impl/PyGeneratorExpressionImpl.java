@@ -28,12 +28,12 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
 
   @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
     if (resultExpr != null && generator != null) {
-      final PyType elementType = resultExpr.getType(context);
+      final PyType elementType = context.getType(resultExpr);
       return new PyCollectionTypeImpl(generator, false, elementType);
     }
     return null;

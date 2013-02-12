@@ -144,26 +144,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @NotNull
-  private static ResolveResultList resolveToLatestDefs(@NotNull ScopeOwner owner, @NotNull PsiElement element, @NotNull String name) {
+  private static ResolveResultList resolveToLatestDefs(@NotNull List<ReadWriteInstruction> instructions, @NotNull PsiElement element, @NotNull String name) {
     final ResolveResultList ret = new ResolveResultList();
-    final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, name, element, false);
     for (ReadWriteInstruction instruction : instructions) {
       PsiElement definition = instruction.getElement();
       NameDefiner definer = null;
       // TODO: This check may slow down resolving, but it is the current solution to the comprehension scopes problem
-      final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
-      if (definitionComprehension != null) {
-        final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
-        final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
-        if (!isListComprehension || isAtLeast30) {
-          if (true) {
-            final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
-            if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
-              continue;
-            }
-          }
-        }
-      }
+      if (isInnerComprehension(element, definition)) continue;
       if (definition instanceof NameDefiner && !(definition instanceof PsiNamedElement)) {
         definer = (NameDefiner)definition;
         definition = definer.getElementNamed(name);
@@ -200,6 +187,29 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     return results;
   }
+
+  private static boolean isInnerComprehension(PsiElement referenceElement, PsiElement definition) {
+    final PyComprehensionElement definitionComprehension = PsiTreeUtil.getParentOfType(definition, PyComprehensionElement.class);
+    if (definitionComprehension != null && isOwnScopeComprehension(definitionComprehension)) {
+      final PyComprehensionElement elementComprehension = PsiTreeUtil.getParentOfType(referenceElement, PyComprehensionElement.class);
+      if (elementComprehension == null || !PsiTreeUtil.isAncestor(definitionComprehension, elementComprehension, false)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isOwnScopeComprehension(PsiElement definitionComprehension) {
+    final boolean isAtLeast30 = LanguageLevel.forElement(definitionComprehension).isAtLeast(LanguageLevel.PYTHON30);
+    final boolean isListComprehension = definitionComprehension instanceof PyListCompExpression;
+    return !isListComprehension || isAtLeast30;
+  }
+
+  private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
+    PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
+    return comprehensionElement != null && isOwnScopeComprehension(comprehensionElement);
+  }
+
 
   /**
    * Does actual resolution of resolve().
@@ -248,15 +258,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             uexpr = null;
           }
           else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
-            final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
+            final List<ReadWriteInstruction> instructions = PyDefUseUtil.getLatestDefs(owner, referencedName, myElement, false);
+            final ResolveResultList latest = resolveToLatestDefs(instructions, myElement, referencedName);
             if (!latest.isEmpty()) {
               return latest;
             }
-            if (owner instanceof PyClass) {
-              final ScopeOwner classOwner = ScopeUtil.getScopeOwner(owner);
-              if (classOwner != null) {
+            if (owner instanceof PyClass || (instructions.isEmpty() && isInOwnScopeComprehension(uexpr))) {
+              final ScopeOwner parentOwner = ScopeUtil.getScopeOwner(owner);
+              if (parentOwner != null) {
                 processor = new ResolveProcessor(referencedName);
-                PyResolveUtil.scopeCrawlUp(processor, classOwner, referencedName, roof);
+                PyResolveUtil.scopeCrawlUp(processor, parentOwner, referencedName, roof);
                 uexpr = processor.getResult();
               }
             }
@@ -288,8 +299,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (uexpr == null) {
       // ...as a part of current module
       PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
-      if (otype != null) {
-        ret.addAll(otype.resolveMember(myElement.getName(), null, AccessDirection.READ, myContext));
+      String name = myElement.getName();
+      if (otype != null && name != null) {
+        ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
       }
     }
     if (uexpr == null) {
@@ -443,6 +455,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           final PsiElement resolveResult = resolve();
           if (resolveResult == element) {
+            return true;
+          }
+
+          // we shadow their name or they shadow ours (PY-6241)
+          if (resolveResult instanceof PsiNamedElement && resolveResult instanceof ScopeOwner && element instanceof ScopeOwner &&
+              theirScopeOwner == ScopeUtil.getScopeOwner(resolveResult)) {
             return true;
           }
 

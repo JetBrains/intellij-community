@@ -98,7 +98,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return this;
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return getTypeWithAnchor(context, null);
   }
 
@@ -120,7 +120,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (!context.maySwitchToAST(this)) {
         final PsiElement value = getStub() != null ? findAssignedValueByStub() : findAssignedValue();
         if (value instanceof PyTypedElement) {
-          return ((PyTypedElement)value).getType(context);
+          return context.getType((PyTypedElement)value);
         }
         return null;
       }
@@ -175,7 +175,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           final PyAssignmentStatement assignment = (PyAssignmentStatement)nextParent;
           final PyExpression value = assignment.getAssignedValue();
           if (value != null) {
-            final PyType assignedType = value.getType(context);
+            final PyType assignedType = context.getType(value);
             if (assignedType instanceof PyTupleType) {
               final PyType t = getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)assignedType);
               if (t != null) {
@@ -207,7 +207,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
     final PyExpression expression = item.getExpression();
     if (expression != null) {
-      final PyType exprType = expression.getType(context);
+      final PyType exprType = context.getType(expression);
       if (exprType instanceof PyClassType) {
         final PyClass cls = ((PyClassType)exprType).getPyClass();
         final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
@@ -299,7 +299,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     if (source != null && target != null) {
       PyType type = null;
-      final PyType sourceType = source.getType(context);
+      final PyType sourceType = context.getType(source);
       if (sourceType instanceof PyCollectionType) {
         type = ((PyCollectionType)sourceType).getElementType(context);
         if (sourceType instanceof PyClassType) {
@@ -444,7 +444,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             return ((PyFile)parent).getElementNamed(name);
           }
           else if (parent instanceof PyClass) {
-            final PyType type = ((PyClass)parent).getType(TypeEvalContext.fastStubOnly(null));
+            final PyType type = TypeEvalContext.fastStubOnly(null).getType((PyClass)parent);
             if (type != null) {
               final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
                                                                                     PyResolveContext.noImplicits());

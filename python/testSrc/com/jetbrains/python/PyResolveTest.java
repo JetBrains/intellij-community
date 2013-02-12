@@ -521,4 +521,8 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("foo", res.getName());
     assertInstanceOf(res.getParent(), PyAugAssignmentStatement.class);
   }
+
+  public void testGeneratorShadowing() {  // PY-8725
+    assertResolvesTo(PyFunction.class, "_");
+  }
 }

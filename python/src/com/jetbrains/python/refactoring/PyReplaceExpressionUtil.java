@@ -111,7 +111,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       }
       else {
         final TypeEvalContext context = TypeEvalContext.slow();
-        final PyType valueType = formatValue.getType(context);
+        final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
         final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping");

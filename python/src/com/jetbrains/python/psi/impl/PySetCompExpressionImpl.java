@@ -15,7 +15,7 @@ public class PySetCompExpressionImpl extends PyComprehensionElementImpl implemen
     super(astNode);
   }
 
-  public PyType getType(@NotNull TypeEvalContext context) {
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyBuiltinCache.getInstance(this).getSetType();
   }
 
