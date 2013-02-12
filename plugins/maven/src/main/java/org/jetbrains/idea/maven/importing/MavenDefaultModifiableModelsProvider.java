@@ -106,47 +106,39 @@ public class MavenDefaultModifiableModelsProvider extends MavenBaseModifiableMod
   }
 
   public void commit() {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
       public void run() {
-        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
-          public void run() {
-            processExternalArtifactDependencies();
-            for (Library.ModifiableModel each : myLibraryModels.values()) {
-              each.commit();
-            }
-            myLibrariesModel.commit();
-            Collection<ModifiableRootModel> rootModels = myRootModels.values();
+        processExternalArtifactDependencies();
+        for (Library.ModifiableModel each : myLibraryModels.values()) {
+          each.commit();
+        }
+        myLibrariesModel.commit();
+        Collection<ModifiableRootModel> rootModels = myRootModels.values();
 
-            ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-            for (ModifiableRootModel model : rootModels1) {
-              assert !model.isDisposed() : "Already disposed: " + model;
-            }
-            ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
+        ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+        for (ModifiableRootModel model : rootModels1) {
+          assert !model.isDisposed() : "Already disposed: " + model;
+        }
+        ModifiableModelCommitter.multiCommit(rootModels1, myModuleModel);
 
-            for (ModifiableFacetModel each : myFacetModels.values()) {
-              each.commit();
-            }
-            if (myArtifactModel != null) {
-              myArtifactModel.commit();
-            }
-          }
-        });
+        for (ModifiableFacetModel each : myFacetModels.values()) {
+          each.commit();
+        }
+        if (myArtifactModel != null) {
+          myArtifactModel.commit();
+        }
       }
     });
   }
 
   public void dispose() {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        for (ModifiableRootModel each : myRootModels.values()) {
-          each.dispose();
-        }
-        myModuleModel.dispose();
-        if (myArtifactModel != null) {
-          myArtifactModel.dispose();
-        }
-      }
-    });
+    for (ModifiableRootModel each : myRootModels.values()) {
+      each.dispose();
+    }
+    myModuleModel.dispose();
+    if (myArtifactModel != null) {
+      myArtifactModel.dispose();
+    }
   }
 
   public ModalityState getModalityStateForQuestionDialogs() {

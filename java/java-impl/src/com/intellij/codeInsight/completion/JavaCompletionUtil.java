@@ -517,7 +517,7 @@ public class JavaCompletionUtil {
   }
 
   private static LookupElement highlight(LookupElement decorator) {
-    return PrioritizedLookupElement.withGrouping(
+    return PrioritizedLookupElement.withExplicitProximity(
       LookupElementDecorator.withRenderer(decorator, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {

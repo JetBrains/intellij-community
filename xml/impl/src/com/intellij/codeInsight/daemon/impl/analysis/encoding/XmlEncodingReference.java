@@ -65,6 +65,7 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     //return myValue.getManager().findClass(fqn, GlobalSearchScope.allScope(myValue.getProject()));
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return XmlErrorMessages.message("unknown.encoding.0");

@@ -36,6 +36,12 @@ public class DefaultExecutionResult implements ExecutionResult {
   private AnAction[] myRestartActions;
   private final List<AnAction> myStopActions = new ArrayList<AnAction>();
 
+  public DefaultExecutionResult() {
+    myConsole = null;
+    myProcessHandler = null;
+    myActions = AnAction.EMPTY_ARRAY;
+  }
+
   public DefaultExecutionResult(final ExecutionConsole console, @NotNull final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);
   }

@@ -1,40 +1,43 @@
-<extensions>
-  <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
-                      serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
+                        serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
-  <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
-                  serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
-  <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"
-                  serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
-  <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
-                  serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
-  <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
-  <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
-  <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
-  <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"
+                    serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
+    <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
+                    serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
+    <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.MergeToolSettings"/>
+    <projectService serviceImplementation="com.intellij.openapi.diff.impl.settings.DiffToolSettings"/>
 
-  <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
+    <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
-  <projectConfigurable instance="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
+    <projectConfigurable instance="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable" id="vcs"/>
 
-  <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
-                      predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
-  <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
-                      predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
+    <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
+    <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
 
-  <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
-  <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
-  <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
+    <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
+    <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
 
-  <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
+    <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
-  <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
-  <fileTypeFactory implementation="com.intellij.openapi.vcs.impl.VcsFileTypeFactory"/>
-  <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
-  <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.vcs.changes.SaveCommittingDocumentsVetoer"/>
+    <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
+    <fileTypeFactory implementation="com.intellij.openapi.vcs.impl.VcsFileTypeFactory"/>
+    <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
+    <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.vcs.changes.SaveCommittingDocumentsVetoer"/>
 
-  <applicationService serviceImplementation="com.intellij.openapi.vcs.VcsApplicationSettings"/>
-  <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
-                      serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
-  <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
-</extensions>
+    <applicationService serviceImplementation="com.intellij.openapi.vcs.VcsApplicationSettings"/>
+    <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
+                        serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
+    <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
+  </extensions>
+</idea-plugin>
+

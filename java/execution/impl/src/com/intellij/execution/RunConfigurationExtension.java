@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase>{
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
 
-  public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings);
+  public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings) throws ExecutionException;
 
 
   @Override

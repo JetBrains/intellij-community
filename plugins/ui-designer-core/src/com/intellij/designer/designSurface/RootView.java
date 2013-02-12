@@ -44,6 +44,7 @@ public class RootView extends JComponent {
   public void setImage(BufferedImage image) {
     myImage = image;
     setBounds(myX, myY, image.getWidth(), image.getHeight());
+    repaint();
   }
 
   @Override

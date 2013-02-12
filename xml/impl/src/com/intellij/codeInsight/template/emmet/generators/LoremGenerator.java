@@ -17,10 +17,7 @@ package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * User: zolotov
@@ -72,7 +69,7 @@ public class LoremGenerator {
    * @return generated paragraph
    */
   public String generate(int wordsCount, boolean startWithCommon) {
-    StringBuilder result = new StringBuilder();
+    Collection<String> sentences = new LinkedList<String>();
     int totalWords = 0;
     String[] words;
 
@@ -82,17 +79,17 @@ public class LoremGenerator {
         words[4] += ',';
       }
       totalWords += words.length;
-      result.append(sentence(words, '.'));
+      sentences.add(sentence(words, '.'));
     }
 
     while (totalWords < wordsCount) {
       words = sample(WORDS, Math.min(rand(3, 12) * rand(1, 5), wordsCount - totalWords));
       totalWords += words.length;
       insertCommas(words);
-      result.append(sentence(words));
+      sentences.add(sentence(words));
     }
 
-    return result.toString();
+    return StringUtil.join(sentences, " ");
   }
 
   private void insertCommas(String[] words) {

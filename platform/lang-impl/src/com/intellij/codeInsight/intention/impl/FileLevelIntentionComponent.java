@@ -42,12 +42,14 @@ import java.util.List;
  */
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
   private final Project myProject;
+  private final Color myBackground;
 
   public FileLevelIntentionComponent(final String description,
                                      final HighlightSeverity severity,
                                      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      final Project project, final PsiFile psiFile, final Editor editor) {
     myProject = project;
+    myBackground = getColor(severity);
 
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -71,7 +73,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
 
     myLabel.setText(description);
     myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
-    setBackground(getColor(severity));
 
     new ClickListener() {
       @Override
@@ -90,6 +91,11 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }.installOn(myLabel);
   }
 
+  @Override
+  public Color getBackground() {
+    return myBackground;
+  }
+
   private  Color getColor(HighlightSeverity severity) {
     if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
@@ -99,6 +105,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
       return LightColors.YELLOW;
     }
 
-    return Color.white;
+    return LightColors.GREEN;
   }
 }

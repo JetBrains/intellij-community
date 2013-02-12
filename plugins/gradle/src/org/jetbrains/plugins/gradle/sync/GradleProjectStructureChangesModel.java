@@ -56,6 +56,10 @@ public class GradleProjectStructureChangesModel {
     myPostProcessors.add(changedLibraryVersionPostProcessor);
   }
 
+  public void update(@NotNull GradleProject gradleProject) {
+    update(gradleProject, false);
+  }
+
   /**
    * Asks the model to update its state according to the given state of the target gradle project.
    * <p/>
@@ -72,11 +76,13 @@ public class GradleProjectStructureChangesModel {
    * <b>Note:</b> it's very important that the listeners are notified <b>after</b> the actual state change, i.e. {@link #getChanges()}
    * during the update returns up-to-date data.
    *
-   * @param gradleProject  gradle project to sync with
+   * @param gradleProject                gradle project to sync with
+   * @param onIdeProjectStructureChange  a flag which identifies if current update is triggered by ide project structure
+   *                                     change (an alternative is a manual project structure changes refresh implied by a user)
    */
-  public void update(@NotNull GradleProject gradleProject) {
+  public void update(@NotNull GradleProject gradleProject, boolean onIdeProjectStructureChange) {
     myGradleProject.set(gradleProject);
-    final GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject);
+    final GradleChangesCalculationContext context = getCurrentChangesContext(gradleProject, onIdeProjectStructureChange);
     if (!context.hasNewChanges()) {
       return;
     }
@@ -112,12 +118,14 @@ public class GradleProjectStructureChangesModel {
   }
 
   @NotNull
-  public GradleChangesCalculationContext getCurrentChangesContext(@NotNull GradleProject gradleProject) {
+  public GradleChangesCalculationContext getCurrentChangesContext(@NotNull GradleProject gradleProject,
+                                                                  boolean onIdeProjectStructureChange)
+  {
     GradleChangesCalculationContext context
       = new GradleChangesCalculationContext(myChanges.get(), myPlatformFacade, myLibraryPathTypeMapper);
     myChangesCalculator.calculate(gradleProject, myProject, context);
     for (GradleProjectStructureChangesPostProcessor processor : myPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), myProject);
+      processor.processChanges(context.getCurrentChanges(), myProject, onIdeProjectStructureChange);
     }
     return context;
   }

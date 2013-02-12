@@ -296,6 +296,17 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return null;
   }
 
+  @Override
+  protected boolean accept(ElementToWorkOn elementToWorkOn) {
+    final PsiExpression expr = elementToWorkOn.getExpression();
+    if (expr != null) {
+      return isStaticFinalInitializer(expr) == null;
+    }
+    final PsiLocalVariable localVariable = elementToWorkOn.getLocalVariable();
+    final PsiExpression initializer = localVariable.getInitializer();
+    return initializer != null && isStaticFinalInitializer(initializer) == null;
+  }
+
   protected boolean validClass(PsiClass parentClass, Editor editor) {
     return true;
   }

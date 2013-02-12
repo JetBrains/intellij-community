@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,21 +110,6 @@ public class BrowserSettingsPanel extends JPanel {
     mySettingsProviders = ConfigurableWrapper.createConfigurables(BrowserSettingsProviderEP.EP_NAME);
     for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
       outerPanel.add(settingsProvider.createComponent());
-    }
-    if (SystemInfo.isWindows) {
-      JPanel wrapperPanel = new JPanel(new BorderLayout());
-      JButton registryButton = new JButton("Retrieve settings from Windows registry");
-      registryButton.setMnemonic('W');
-      registryButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          for (BrowserSettingsProvider settingsProvider : mySettingsProviders) {
-            settingsProvider.applySettingsFromWindowsRegistry();
-          }
-        }
-      });
-      wrapperPanel.add(registryButton, BorderLayout.EAST);
-      outerPanel.add(wrapperPanel);
     }
 
     add(outerPanel, BorderLayout.NORTH);

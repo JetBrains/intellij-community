@@ -59,6 +59,7 @@ public class GenerationNode extends UserDataHolderBase {
   private final TemplateToken myTemplateToken;
   private final List<GenerationNode> myChildren = newArrayList();
   private final int myNumberInIteration;
+  private final int myTotalIterations;
   private String mySurroundedText;
   private final boolean myInsertSurroundedTextAtTheEnd;
   private GenerationNode myParent;
@@ -67,10 +68,11 @@ public class GenerationNode extends UserDataHolderBase {
 
   public GenerationNode(TemplateToken templateToken,
                         int numberInIteration,
-                        String surroundedText,
+                        int totalIterations, String surroundedText,
                         boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     myTemplateToken = templateToken;
     myNumberInIteration = numberInIteration;
+    myTotalIterations = totalIterations;
     mySurroundedText = surroundedText;
     myInsertSurroundedTextAtTheEnd = insertSurroundedTextAtTheEnd;
     if(parent != null) {
@@ -250,7 +252,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       for (Pair<String, String> pair : attr2value) {
-        if (Strings.isNullOrEmpty(pair.second) && template.getSegmentsCount() > template.getVariableCount()) {
+        if (Strings.isNullOrEmpty(pair.second)) {
           template.addVariable(pair.first, "", "", true);
         }
       }
@@ -344,6 +346,8 @@ public class GenerationNode extends UserDataHolderBase {
       String varName = template.getVariableNameAt(i);
       if (!segments.contains(varName)) {
         template.removeVariable(i);
+      } else {
+        segments.remove(varName);
       }
     }
   }
@@ -363,7 +367,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
 
-    String attributes = generator.buildAttributesString(attribute2value, hasChildren, myNumberInIteration, mySurroundedText);
+    String attributes = generator.buildAttributesString(attribute2value, hasChildren, myNumberInIteration, myTotalIterations, mySurroundedText);
     attributes = attributes.length() > 0 ? ' ' + attributes : null;
     Map<String, String> predefinedValues = null;
     if (attributes != null) {
@@ -383,7 +387,7 @@ public class GenerationNode extends UserDataHolderBase {
         tag.setAttribute(pair.first,
                          Strings.isNullOrEmpty(pair.second)
                          ? "$" + pair.first + "$"
-                         : ZenCodingUtil.getValue(pair.second, myNumberInIteration, mySurroundedText));
+                         : ZenCodingUtil.getValue(pair.second, myNumberInIteration, myTotalIterations, mySurroundedText));
         iterator.remove();
       }
     }

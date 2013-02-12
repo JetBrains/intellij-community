@@ -268,7 +268,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void setFocused(boolean focused) {
-    if (focused && !myFocused) {
+    if (focused && !CompletionPreview.hasPreview(this)) {
       CompletionPreview.installPreview(this);
     }
     myFocused = focused;

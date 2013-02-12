@@ -61,15 +61,7 @@ import java.util.zip.ZipInputStream;
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
 
-  private static final NullableFunction<String,String> PATH_CONVERTOR = new NullableFunction<String, String>() {
-    @Nullable
-    @Override
-    public String fun(String s) {
-      return s.contains(".idea") ? null : s;
-    }
-  };
   public static final String UTF_8 = "UTF-8";
-  private static final String SRC = "src/";
 
   private final ModuleType myType;
   private List<WizardInputField> myAdditionalFields;
@@ -171,11 +163,10 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  private String getBasePackage() {
-    List<WizardInputField> fields = getAdditionalFields();
-    for (WizardInputField field : fields) {
-      if (WizardInputField.IJ_BASE_PACKAGE.equals(field.getId())) {
-        return field.getValue();
+  private WizardInputField getBasePackageField() {
+    for (WizardInputField field : getAdditionalFields()) {
+      if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
+        return field;
       }
     }
     return null;
@@ -184,18 +175,18 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   private void unzip(String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
-    final String basePackage = getBasePackage();
+    final WizardInputField basePackage = getBasePackageField();
     try {
       zipInputStream = myTemplate.getStream();
       NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
         @Nullable
         @Override
-        public String fun(String s) {
-          if (moduleMode && s.contains(".idea")) return null;
-          if (basePackage != null && s.startsWith(SRC)) {
-            return SRC + basePackage.replace('.', '/') + s.substring(SRC.length() - 1);
+        public String fun(String path) {
+          if (moduleMode && path.contains(".idea")) return null;
+          if (basePackage != null) {
+            return path.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
           }
-          return s;
+          return path;
         }
       };
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
@@ -232,10 +223,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
+  private static String getPathFragment(String value) {
+    return "/" + value.replace('.', '/') + "/";
+  }
+
   private byte[] processTemplates(String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
-      properties.put(field.getId(), field.getValue());
+      properties.putAll(field.getValues());
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);

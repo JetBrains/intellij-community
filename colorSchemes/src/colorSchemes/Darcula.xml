@@ -382,11 +382,6 @@
         <option name="FOREGROUND" value="a5c25c" />
       </value>
     </option>
-    <option name="DEFAULT_TEMPLATE_LANGUAGE_COLOR">
-      <value>
-        <option name="BACKGROUND" value="141414" />
-      </value>
-    </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">
       <value>
         <option name="FOREGROUND" value="cc7832" />
@@ -616,7 +611,7 @@
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="424445" />
-        <option name="ERROR_STRIPE_COLOR" value="ccccff" />
+        <option name="ERROR_STRIPE_COLOR" value="258500" />
       </value>
     </option>
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -944,20 +939,21 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="PHP_CONSTANT">
+      <value>
+        <option name="FOREGROUND" value="9876aa" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
     <option name="PHP_EXEC_COMMAND_ID">
       <value>
         <option name="FOREGROUND" value="a5c25c" />
         <option name="BACKGROUND" value="5e6465" />
       </value>
     </option>
-    <option name="PHP_SCRIPTING_BACKGROUND">
-      <value>
-        <option name="BACKGROUND" value="444444" />
-      </value>
-    </option>
     <option name="PHP_VAR">
       <value>
-        <option name="FOREGROUND" value="bf5553" />
+        <option name="FOREGROUND" value="9876aa" />
       </value>
     </option>
     <option name="PROPERTIES.INVALID_STRING_ESCAPE">
@@ -1493,7 +1489,8 @@
     </option>
     <option name="SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="8b6700" />
+        <option name="BACKGROUND" value="155221" />
+        <option name="ERROR_STRIPE_COLOR" value="246e00" />
       </value>
     </option>
     <option name="SLIM_BAD_CHARACTER">
@@ -1765,20 +1762,21 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="525041" />
+        <option name="BACKGROUND" value="52503a" />
         <option name="EFFECT_TYPE" value="2" />
         <option name="ERROR_STRIPE_COLOR" value="8c8c00" />
       </value>
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="480c48" />
-        <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
+        <option name="BACKGROUND" value="532b2e" />
+        <option name="ERROR_STRIPE_COLOR" value="7e6761" />
       </value>
     </option>
     <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="5a647e" />
+        <option name="BACKGROUND" value="532b2e" />
+        <option name="ERROR_STRIPE_COLOR" value="c55450" />
       </value>
     </option>
     <option name="WRONG_REFERENCES_ATTRIBUTES">

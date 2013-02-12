@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,12 +29,14 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.regex.Pattern;
+
 public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "fallthru.in.switch.statement.display.name");
+    return InspectionGadgetsBundle.message("fallthru.in.switch.statement.display.name");
   }
 
   @NotNull
@@ -42,8 +46,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "fallthru.in.switch.statement.problem.descriptor");
+    return InspectionGadgetsBundle.message("fallthru.in.switch.statement.problem.descriptor");
   }
 
   @Nullable
@@ -55,52 +58,51 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     return new FallthroughInSwitchStatementVisitor();
   }
 
-  private static class FallthruInSwitchStatementFix
-    extends InspectionGadgetsFix {
+  private static class FallthruInSwitchStatementFix extends InspectionGadgetsFix {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "fallthru.in.switch.statement.quickfix");
+      return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix");
     }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiSwitchLabelStatement labelStatement =
-        (PsiSwitchLabelStatement)descriptor.getPsiElement();
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)descriptor.getPsiElement();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
-      final PsiStatement breakStatement =
-        factory.createStatementFromText("break;", labelStatement);
+      final PsiStatement breakStatement = factory.createStatementFromText("break;", labelStatement);
       final PsiElement parent = labelStatement.getParent();
       parent.addBefore(breakStatement, labelStatement);
     }
   }
 
-  private static class FallthroughInSwitchStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class FallthroughInSwitchStatementVisitor extends BaseInspectionVisitor {
+
+    private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
       final PsiCodeBlock body = statement.getBody();
       if (body == null) {
         return;
       }
-      boolean switchLabelValid = true;
       final PsiStatement[] statements = body.getStatements();
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          if (!switchLabelValid) {
-            registerError(child);
-          }
-          switchLabelValid = true;
+      for (int i = 1; i < statements.length; i++) {
+        final PsiStatement child = statements[i];
+        if (!(child instanceof PsiSwitchLabelStatement)) {
+          continue;
         }
-        else {
-          switchLabelValid =
-            !ControlFlowUtils.statementMayCompleteNormally(
-              child);
+        final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(child, PsiWhiteSpace.class);
+        if (previousSibling instanceof PsiComment) {
+          final PsiComment comment = (PsiComment)previousSibling;
+          final String commentText = comment.getText();
+          if (commentPattern.matcher(commentText).find()) {
+            continue;
+          }
+        }
+        final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(child, PsiStatement.class);
+        if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
+          registerError(child);
         }
       }
     }

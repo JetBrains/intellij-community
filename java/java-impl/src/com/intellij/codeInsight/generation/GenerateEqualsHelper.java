@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -213,7 +212,7 @@ public class GenerateEqualsHelper implements Runnable {
       }
     }
     buffer.append("\nreturn true;\n}");
-    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), null);
+    PsiMethod result = myFactory.createMethodFromText(buffer.toString(), myClass);
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, styleSettings.GENERATE_FINAL_PARAMETERS);
 
@@ -395,6 +394,7 @@ public class GenerateEqualsHelper implements Runnable {
       buffer.append("return 0;\n}");
     }
     PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+    hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
     return (PsiMethod)myCodeStyleManager.reformat(hashCode);
   }
 
@@ -472,7 +472,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   private static void adjustHashCodeToArrays(@NonNls StringBuilder buffer, final PsiField field, final String name) {
     if (field.getType() instanceof PsiArrayType && hasArraysHashCode(field)) {
-      buffer.append("Arrays.hashCode(");
+      buffer.append("java.util.Arrays.hashCode(");
       buffer.append(name);
       buffer.append(")");
     }

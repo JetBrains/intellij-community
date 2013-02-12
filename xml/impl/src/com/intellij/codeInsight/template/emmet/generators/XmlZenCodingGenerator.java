@@ -73,7 +73,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   public abstract String buildAttributesString(@NotNull List<Pair<String, String>> attribute2value,
                                                boolean hasChildren,
                                                int numberInIteration,
-                                               @Nullable String surroundedText);
+                                               int totalIterations, @Nullable String surroundedText);
 
   public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
 }

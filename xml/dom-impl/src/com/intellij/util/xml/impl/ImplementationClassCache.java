@@ -18,17 +18,22 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SofterReference;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.Implementation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -45,23 +50,28 @@ class ImplementationClassCache {
 
 
   private final MultiMap<String, DomImplementationClassEP> myImplementationClasses = new MultiMap<String, DomImplementationClassEP>();
-  private final ConcurrentFactoryMap<Class, Class> myCache = new ConcurrentFactoryMap<Class, Class>() {
-      @Nullable
-        protected Class create(final Class concreteInterface) {
-          final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
-          findImplementationClassDFS(concreteInterface, set);
-          if (!set.isEmpty()) {
-            return set.first();
-          }
-          final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-          return implementation == null ? null : implementation.value();
-        }
-    };
+  private final SofterCache<Class, Class> myCache = SofterCache.create(new NotNullFunction<Class, Class>() {
+    @NotNull
+    @Override
+    public Class fun(Class dom) {
+      return calcImplementationClass(dom);
+    }
+  });
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
     for (DomImplementationClassEP ep : epName.getExtensions()) {
       myImplementationClasses.putValue(ep.interfaceName, ep);
     }
+  }
+
+  private Class calcImplementationClass(Class concreteInterface) {
+    final TreeSet<Class> set = new TreeSet<Class>(CLASS_COMPARATOR);
+    findImplementationClassDFS(concreteInterface, set);
+    if (!set.isEmpty()) {
+      return set.first();
+    }
+    final Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
+    return implementation == null ? concreteInterface : implementation.value();
   }
 
   private void findImplementationClassDFS(final Class concreteInterface, SortedSet<Class> results) {
@@ -98,15 +108,13 @@ class ImplementationClassCache {
         }
       });
     }
-    myCache.clear();
+    myCache.clearCache();
   }
 
   public Class get(Class key) {
-    return myCache.get(key);
+    Class impl = myCache.getCachedValue(key);
+    return impl == key ? null : impl;
   }
 
-  public void clear() {
-    myCache.clear();
-  }
 
 }

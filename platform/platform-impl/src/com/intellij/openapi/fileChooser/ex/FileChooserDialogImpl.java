@@ -358,7 +358,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myFileSystemTree.registerMouseListener(group);
   }
 
-  @Nullable
   private VirtualFile[] getSelectedFilesInt() {
     if (myTreeIsUpdating || !myUiUpdater.isEmpty()) {
       if (isTextFieldActive() && !StringUtil.isEmpty(myPathTextField.getTextFieldText())) {
@@ -567,7 +566,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  // todo[r.sh] fix symlink selection
   private void selectInTree(final VirtualFile[] array, final boolean requestFocus) {
     myTreeIsUpdating = true;
     final List<VirtualFile> fileList = Arrays.asList(array);

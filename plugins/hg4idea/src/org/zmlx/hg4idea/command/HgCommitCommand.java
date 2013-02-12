@@ -18,7 +18,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -60,17 +63,33 @@ public class HgCommitCommand {
     if (StringUtil.isEmptyOrSpaces(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
-    List<String> parameters = new LinkedList<String>();
-    parameters.add("--logfile");
-    parameters.add(saveCommitMessage().getAbsolutePath());
-    for (HgFile hgFile : myFiles) {
-      parameters.add(hgFile.getRelativePath());
+    //if it's merge commit, so myFiles is Empty. Need to commit all files in changeList.
+    // see HgCheckinEnviroment->commit() method
+    if (myFiles.isEmpty()) {
+      commitChunkFiles(Collections.<String>emptyList());
     }
-
-    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    else {
+      List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {
+        @Override
+        public String fun(HgFile file) {
+          return file.getRelativePath();
+        }
+      });
+      for (List<String> chunk : VcsFileUtil.chunkRelativePaths(relativePaths)) {
+        commitChunkFiles(chunk);
+      }
+    }
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
+  }
+
+  private void commitChunkFiles(List<String> chunk) throws VcsException {
+    List<String> parameters = new LinkedList<String>();
+    parameters.add("--logfile");
+    parameters.add(saveCommitMessage().getAbsolutePath());
+    parameters.addAll(chunk);
+    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
   }
 
   private File saveCommitMessage() throws VcsException {

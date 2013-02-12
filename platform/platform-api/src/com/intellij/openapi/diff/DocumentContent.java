@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DocumentContent extends DiffContent {
   private final Document myDocument;
@@ -66,6 +67,7 @@ public class DocumentContent extends DiffContent {
     return myFile;
   }
 
+  @Nullable
   public FileType getContentType() {
     return myOverridenType == null ? DiffContentUtil.getContentType(getFile()) : myOverridenType;
   }

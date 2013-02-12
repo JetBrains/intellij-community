@@ -21,6 +21,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.StrikeoutLabel;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +56,7 @@ class ParameterInfoComponent extends JPanel{
   protected int myWidthLimit;
 
   public ParameterInfoComponent(Object[] objects, Editor editor,@NotNull ParameterInfoHandler handler) {
-    super(new GridBagLayout());
+    super(new BorderLayout());
 
     JComponent editorComponent = editor.getComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
@@ -66,17 +67,34 @@ class ParameterInfoComponent extends JPanel{
 
     myObjects = objects;
 
-    setLayout(new GridBagLayout());
     setBackground(BACKGROUND_COLOR);
 
     myHandler = handler;
     myPanels = new OneElementComponent[myObjects.length];
+    final JPanel panel = new JPanel(new GridBagLayout());
     for(int i = 0; i < myObjects.length; i++) {
       myPanels[i] = new OneElementComponent();
-      add(myPanels[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
+      panel.add(myPanels[i], new GridBagConstraints(0,i,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0));
     }
 
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(panel);
+    pane.setBorder(null);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    add(pane, BorderLayout.CENTER);
+
     myCurrentParameterIndex = -1;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    int size = myPanels.length;
+    final Dimension preferredSize = super.getPreferredSize();
+    if (size >= 0 && size <= 20) {
+      return preferredSize;
+    }
+    else {
+      return new Dimension(preferredSize.width + 20, 200);
+    }
   }
 
   public Object getHighlighted() {

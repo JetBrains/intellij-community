@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ParameterTypeInferencePolicy {
   @Nullable
-  public abstract Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiCallExpression innerMethodCall,
+  public abstract Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
                                                                                    PsiExpressionList parent,
                                                                                    PsiCallExpression contextCall,
                                                                                    PsiTypeParameter typeParameter);

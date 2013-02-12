@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,41 +79,30 @@ public class CvsChangeProvider implements ChangeProvider {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Processing changes for scope " + dirtyScope);
     }
-    final Runnable checkCanceled = new Runnable() {
-      @Override
-      public void run() {
-        if (progress != null) {
-          progress.checkCanceled();
-        }
-      }
-    };
-
     showBranchImOn(builder, dirtyScope);
 
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
-      checkCanceled.run();
       if (dir != null) {
-        processEntriesIn(dir, dirtyScope, builder, true, checkCanceled);
+        processEntriesIn(dir, dirtyScope, builder, true, progress);
       }
       else {
-        processFile(path, builder, checkCanceled);
+        processFile(path, builder, progress);
       }
     }
 
     for (FilePath path : dirtyScope.getDirtyFiles()) {
-      checkCanceled.run();
       if (path.isDirectory()) {
         final VirtualFile dir = path.getVirtualFile();
         if (dir != null) {
-          processEntriesIn(dir, dirtyScope, builder, false, checkCanceled);
+          processEntriesIn(dir, dirtyScope, builder, false, progress);
         }
         else {
-          processFile(path, builder, checkCanceled);
+          processFile(path, builder, progress);
         }
       }
       else {
-        processFile(path, builder, checkCanceled);
+        processFile(path, builder, progress);
       }
     }
     if (LOG.isDebugEnabled()) {
@@ -130,7 +119,7 @@ public class CvsChangeProvider implements ChangeProvider {
   public void doCleanup(final List<VirtualFile> files) {}
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
-                                final Runnable checkCanceled) throws VcsException {
+                                final ProgressIndicator progress) throws VcsException {
     final FilePath path = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir);
     if (!scope.belongsTo(path)) {
       if (LOG.isDebugEnabled()) {
@@ -138,7 +127,7 @@ public class CvsChangeProvider implements ChangeProvider {
       }
       return;
     }
-    final DirectoryContent dirContent = getDirectoryContent(dir, checkCanceled);
+    final DirectoryContent dirContent = getDirectoryContent(dir, progress);
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
@@ -162,6 +151,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     */
 
+    progress.checkCanceled();
     checkSwitchedDir(dir, builder, scope);
 
     if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
@@ -170,17 +160,18 @@ public class CvsChangeProvider implements ChangeProvider {
       builder.processChange(new Change(CurrentContentRevision.create(path), CurrentContentRevision.create(path), FileStatus.DELETED), CvsVcs2.getKey());
     }
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
-      processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder, checkCanceled);
+      processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder, progress);
     }
 
     if (recursively) {
       final VirtualFile[] children = CvsVfsUtil.getChildrenOf(dir);
       if (children != null) {
         for (VirtualFile file : children) {
+          progress.checkCanceled();
           if (file.isDirectory()) {
             final boolean isIgnored = myFileIndex.isIgnored(file);
             if (!isIgnored) {
-              processEntriesIn(file, scope, builder, true, checkCanceled);
+              processEntriesIn(file, scope, builder, true, progress);
             }
             else {
               if (LOG.isDebugEnabled()) {
@@ -203,8 +194,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
 
-  private void processFile(final FilePath filePath, final ChangelistBuilder builder, final Runnable checkCanceled) throws VcsException {
-    checkCanceled.run();
+  private void processFile(final FilePath filePath, final ChangelistBuilder builder, final ProgressIndicator progress) throws VcsException {
     final VirtualFile dir = filePath.getVirtualFileParent();
     if (dir == null) return;
 
@@ -212,16 +202,17 @@ public class CvsChangeProvider implements ChangeProvider {
     final FileStatus status = CvsStatusProvider.getStatus(filePath.getVirtualFile(), entry);
     final VcsRevisionNumber number = entry != null ? createRevisionNumber(entry.getRevision(), status) : VcsRevisionNumber.NULL;
     processStatus(filePath, dir.findChild(filePath.getName()), status, number, builder);
+    progress.checkCanceled();
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
   private void processFile(final VirtualFile dir, @Nullable VirtualFile file, Entry entry, final ChangelistBuilder builder,
-                           final Runnable checkCanceled) throws VcsException {
-    checkCanceled.run();
+                           final ProgressIndicator progress) throws VcsException {
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(dir, entry.getFileName());
     final FileStatus status = CvsStatusProvider.getStatus(file, entry);
     final VcsRevisionNumber number = createRevisionNumber(entry.getRevision(), status);
     processStatus(filePath, file, status, number, builder);
+    progress.checkCanceled();
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
@@ -458,7 +449,7 @@ public class CvsChangeProvider implements ChangeProvider {
     return file == null || !FileTypeManager.getInstance().isFileIgnored(file);
   }
 
-  private static DirectoryContent getDirectoryContent(VirtualFile directory, final Runnable checkCanceled) {
+  private static DirectoryContent getDirectoryContent(VirtualFile directory, final ProgressIndicator progress) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Retrieving directory content for " + directory);
     }
@@ -476,7 +467,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final Entry entry : entries) {
-      checkCanceled.run();
+      progress.checkCanceled();
       final String fileName = entry.getFileName();
       if (entry.isDirectory()) {
         if (nameToFileMap.containsKey(fileName)) {
@@ -504,7 +495,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     for (final String name : nameToFileMap.keySet()) {
-      checkCanceled.run();
+      progress.checkCanceled();
       final VirtualFile unknown = nameToFileMap.get(name);
       if (unknown.isDirectory()) {
         if (isInContent(unknown)) {

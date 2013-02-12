@@ -38,26 +38,51 @@ public class ZenCodingUtil {
     return s.contains(SURROUNDED_TEXT_MARKER);
   }
 
-  public static String replaceMarkers(String s, int numberInIteration, @Nullable String surroundedText) {
-    final String by = Integer.toString(numberInIteration + 1);
+  public static String replaceMarkers(String s, int numberInIteration, int totalIterations, @Nullable String surroundedText) {
+    String by = Integer.toString(numberInIteration + 1);
     StringBuilder builder = new StringBuilder(s.length());
-    int j = -1;
+    int markerStartIndex = -1;
     int i = 0;
     int n = s.length();
     while (i <= n) {
       char c = i < n ? s.charAt(i) : 0;
       if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && (i == n - 1 || s.charAt(i + 1) != '#')) {
-        if (j == -1) {
-          j = i;
+        if (markerStartIndex == -1) {
+          markerStartIndex = i;
         }
       }
       else {
-        if (j != -1) {
-          for (int k = 0, m = i - j - by.length(); k < m; k++) {
+        int markersCount = i - markerStartIndex;
+        if (markerStartIndex != -1) {
+          // counter base
+          boolean decrement = false;
+          if(i < n && s.charAt(i) == '@') {
+            i++;
+            if (i < n && s.charAt(i) == '-') {
+              decrement = true;
+              i++;
+            }
+            StringBuilder base = new StringBuilder();
+            while (i < n && Character.isDigit(s.charAt(i))) {
+              base.append(s.charAt(i));
+              i++;
+            }
+            int baseInt = parseNonNegativeInt(base.toString()) - 1;
+            baseInt = baseInt >= 0 ? baseInt : 0;
+            if(baseInt >= 0) {
+              int byInt = decrement
+                          ? totalIterations - numberInIteration
+                          : numberInIteration + 1;
+              byInt += baseInt;
+              by = Integer.toString(byInt);
+            }
+          }
+          for (int k = 0, m = markersCount - by.length(); k < m; k++) {
             builder.append('0');
           }
           builder.append(by);
-          j = -1;
+          markerStartIndex = -1;
+          c = i < n ? s.charAt(i) : 0;
         }
         if (i < n) {
           if (c == NUMBER_IN_ITERATION_PLACE_HOLDER && surroundedText != null) {
@@ -74,8 +99,8 @@ public class ZenCodingUtil {
     return builder.toString();
   }
 
-  public static String getValue(String value, int numberInIteration, String surroundedText) {
-    String s = replaceMarkers(value, numberInIteration, surroundedText);
+  public static String getValue(String value, int numberInIteration, int totalIterations, String surroundedText) {
+    String s = replaceMarkers(value, numberInIteration, totalIterations, surroundedText);
     return s.replace("\"", "&quot;");
   }
 

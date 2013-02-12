@@ -21,10 +21,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -44,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -84,7 +80,6 @@ public class FileWatcher {
 
   private final ManagingFS myManagingFS;
   private final File myExecutable;
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
   private volatile MyProcessHandler myProcessHandler;
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
@@ -96,28 +91,19 @@ public class FileWatcher {
     return ((LocalFileSystemImpl)LocalFileSystem.getInstance()).getFileWatcher();
   }
 
-  FileWatcher(@NotNull final ManagingFS managingFS) {
+  FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
 
     boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
     myExecutable = getExecutable();
 
     if (disabled) {
-      myInitialized.set(true);
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
-      myInitialized.set(true);
       LOG.info("Native file watcher is not supported on this platform");
     }
-  }
-
-  private void init() {
-    if (!myInitialized.compareAndSet(false, true)) {
-      return;
-    }
-
-    if (!myExecutable.exists()) {
+    else if (!myExecutable.exists()) {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
@@ -187,7 +173,7 @@ public class FileWatcher {
   private static boolean isUpToDate(File executable) {
     long length = SystemInfo.isWindows ? 70216 :
                   SystemInfo.isMac ? 13924 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29308 : 22809 :
+                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29227 : 22734 :
                   -1;
     return length < 0 || length == executable.length();
   }
@@ -202,7 +188,7 @@ public class FileWatcher {
           String title = ApplicationBundle.message("watcher.slow.sync");
           Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
         }
-      });
+      }, ModalityState.NON_MODAL);
     }
   }
 
@@ -217,7 +203,7 @@ public class FileWatcher {
 
     if (myStartAttemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
       notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
-      throw new IOException("Can't launch process anymore");
+      return;
     }
 
     if (restart) {
@@ -255,11 +241,11 @@ public class FileWatcher {
   }
 
   public boolean isOperational() {
-    return !myInitialized.get() || myProcessHandler != null;
+    return myProcessHandler != null;
   }
 
   public boolean isSettingRoots() {
-    return mySettingRoots.get() > 0;
+    return isOperational() && mySettingRoots.get() > 0;
   }
 
   public static class DirtyPaths {
@@ -291,7 +277,6 @@ public class FileWatcher {
   }
 
   public void setWatchRoots(final List<String> recursive, final List<String> flat) {
-    init();
     setWatchRoots(recursive, flat, false);
   }
 

@@ -467,7 +467,7 @@ public final class UpdateChecker {
     return result;
   }
 
-  private static boolean myUpdateInfoDialogShown = false;
+  private static boolean ourUpdateInfoDialogShown = false;
 
   public static void showUpdateResult(CheckForUpdateResult checkForUpdateResult,
                                       List<PluginDownloader> updatedPlugins,
@@ -480,22 +480,29 @@ public final class UpdateChecker {
       dialog.setModal(alwaysShowResults);
       dialog.show();
     }
-    else if (checkForUpdateResult.hasNewBuildInSelectedChannel() && !myUpdateInfoDialogShown) {
+    else if (checkForUpdateResult.hasNewBuildInSelectedChannel() && !ourUpdateInfoDialogShown) {
       UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink) {
         @Override
         protected void dispose() {
-          myUpdateInfoDialogShown = false;
+          ourUpdateInfoDialogShown = false;
           super.dispose();
         }
       };
       dialog.setModal(alwaysShowResults);
-      myUpdateInfoDialogShown = true;
+      ourUpdateInfoDialogShown = true;
       dialog.show();
     }
-    else if (updatedPlugins != null || alwaysShowResults && ProjectManager.getInstance().getOpenProjects().length == 0) {
-      NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
+    else if ((updatedPlugins != null || alwaysShowResults && ProjectManager.getInstance().getOpenProjects().length == 0) && !ourUpdateInfoDialogShown) {
+      NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink) {
+        @Override
+        protected void dispose() {
+          ourUpdateInfoDialogShown = false;
+          super.dispose();
+        }
+      };
       dialog.setShowConfirmation(showConfirmation);
       dialog.show();
+      ourUpdateInfoDialogShown = true;
     } else if (alwaysShowResults) {
       final String title = IdeBundle.message("updates.info.dialog.title");
       final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +

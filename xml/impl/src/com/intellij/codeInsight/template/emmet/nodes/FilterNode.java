@@ -43,10 +43,10 @@ public class FilterNode extends ZenCodingNode {
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
-                                     String surroundedText,
+                                     int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    return myNode.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
+    return myNode.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent);
   }
 
   @Override

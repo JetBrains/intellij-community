@@ -52,8 +52,9 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     myProjectView = projectView;
     myFavoritesManager = favoritesManager;
     myFavoritesListener = new FavoritesListener() {
-      public void rootsChanged(String listName) {
+      public void rootsChanged() {
       }
+
       public void listAdded(String listName) {
         refreshMySubIdsAndSelect(listName);
       }
@@ -69,7 +70,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
         myProjectView.addProjectPane(FavoritesProjectViewPane.this);
         myFavoritesManager.addFavoritesListener(myFavoritesListener);
 
-        if (ArrayUtil.find(myFavoritesManager.getAvailableFavoritesListNames(), listName) == -1) {
+        if (!myFavoritesManager.getAvailableFavoritesListNames().contains(listName)) {
           listName = null;
         }
         myProjectView.changeView(ID, listName);
@@ -113,7 +114,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   @NotNull
   public String[] getSubIds() {
-    return myFavoritesManager.getAvailableFavoritesListNames();
+    return ArrayUtil.toStringArray(myFavoritesManager.getAvailableFavoritesListNames());
   }
 
   @NotNull
@@ -122,7 +123,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    return ((FavoritesViewTreeBuilder) getTreeBuilder()).updateFromRootCB();
+    return ((FavoritesViewTreeBuilder)getTreeBuilder()).updateFromRootCB();
   }
 
   public void select(Object object, VirtualFile file, boolean requestFocus) {
@@ -159,6 +160,6 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public void addToolbarActions(final DefaultActionGroup group) {
-    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST)); 
+    group.add(ActionManager.getInstance().getAction(IdeActions.RENAME_FAVORITES_LIST));
   }
 }

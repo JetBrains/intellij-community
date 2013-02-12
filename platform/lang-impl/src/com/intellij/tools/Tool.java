@@ -249,7 +249,7 @@ public class Tool implements SchemeElement {
   }
 
   public String getActionId() {
-    StringBuilder name = new StringBuilder(ACTION_ID_PREFIX);
+    StringBuilder name = new StringBuilder(getActionIdPrefix());
     if (myGroup != null) {
       name.append(myGroup);
       name.append('_');
@@ -342,5 +342,9 @@ public class Tool implements SchemeElement {
   @Override
   public String toString() {
     return myGroup + ": " + myName;
+  }
+
+  public String getActionIdPrefix() {
+    return ACTION_ID_PREFIX;
   }
 }

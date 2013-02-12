@@ -225,6 +225,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     }
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");
   }

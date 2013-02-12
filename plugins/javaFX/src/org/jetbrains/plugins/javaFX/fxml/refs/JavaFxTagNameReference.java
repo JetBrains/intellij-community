@@ -92,8 +92,8 @@ public class JavaFxTagNameReference extends TagNameReference{
       if (object instanceof JavaFxClassBackedElementDescriptor) {
         final XmlFile xmlFile = (XmlFile)context.getFile();
         final String shortName = ((JavaFxClassBackedElementDescriptor)object).getName();
-        JavaFxPsiUtil.insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassBackedElementDescriptor)object).getQualifiedName());
         context.commitDocument();
+        JavaFxPsiUtil.insertImportWhenNeeded(xmlFile, shortName, ((JavaFxClassBackedElementDescriptor)object).getQualifiedName());
       }
     }
   }

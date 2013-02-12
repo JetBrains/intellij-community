@@ -57,7 +57,16 @@ public class MergeInfoUpdatesListener {
           callReloadMergeInfo();
         }
       });
+      final Consumer<Boolean> reloadConsumer = new Consumer<Boolean>() {
+        @Override
+        public void consume(Boolean aBoolean) {
+          if (Boolean.TRUE.equals(aBoolean)) {
+            callReloadMergeInfo();
+          }
+        }
+      };
       final Runnable reloadRunnable = new Runnable() {
+        @Override
         public void run() {
           callReloadMergeInfo();
         }
@@ -65,7 +74,7 @@ public class MergeInfoUpdatesListener {
       myConnection.subscribe(SvnVcs.WC_CONVERTED, reloadRunnable);
       myConnection.subscribe(RootsAndBranches.REFRESH_REQUEST, reloadRunnable);
 
-      myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadRunnable);
+      myConnection.subscribe(SvnVcs.ROOTS_RELOADED, reloadConsumer);
 
       ProjectLevelVcsManager.getInstance(myProject).addVcsListener(new VcsListener() {
         public void directoryMappingChanged() {

@@ -189,16 +189,22 @@ public class HgVFSListener extends VcsVFSListener {
     return HgVcsMessages.message("hg4idea.remove.single.body");
   }
 
+  @Override
+  protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {
+    return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
+           ? VcsDeleteType.SILENT
+           : VcsDeleteType.CONFIRM;
+  }
+
   protected void executeDelete() {
     final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
     final List<FilePath> filesToConfirmDeletion = new ArrayList<FilePath>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
-    // skip unversioned files and files which are not under Mercurial
-    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    skipUnversionedAndNotUnderHg(changeListManager, filesToDelete);
-    skipUnversionedAndNotUnderHg(changeListManager, filesToConfirmDeletion);
+    // skip files which are not under Mercurial
+    skipNotUnderHg(filesToDelete);
+    skipNotUnderHg(filesToConfirmDeletion);
 
     // newly added files (which were added to the repo but never committed) should be removed from the VCS,
     // but without user confirmation.
@@ -241,16 +247,16 @@ public class HgVFSListener extends VcsVFSListener {
     }.queue();
   }
 
-    /**
-     * Changes the given collection of files by filtering out unversioned files and
-     * files which are not under Mercurial repository.
-     * @param changeListManager instance of the ChangeListManagerImpl to retrieve unversioned files from it.
-     * @param filesToFilter     files to be filtered.
-     */
-  private void skipUnversionedAndNotUnderHg(ChangeListManagerImpl changeListManager, Collection<FilePath> filesToFilter) {
+  /**
+   * Changes the given collection of files by filtering out unversioned files and
+   * files which are not under Mercurial repository.
+   *
+   * @param filesToFilter    files to be filtered.
+   */
+  private void skipNotUnderHg(Collection<FilePath> filesToFilter) {
     for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
       final FilePath filePath = iter.next();
-      if (HgUtil.getHgRootOrNull(myProject, filePath) == null || changeListManager.isUnversioned(filePath.getVirtualFile())) {
+      if (HgUtil.getHgRootOrNull(myProject, filePath) == null) {
         iter.remove();
       }
     }

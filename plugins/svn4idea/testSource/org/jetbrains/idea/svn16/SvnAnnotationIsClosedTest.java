@@ -15,10 +15,6 @@
  */
 package org.jetbrains.idea.svn16;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,14 +23,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import junit.framework.Assert;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.Svn17TestCase;
 import org.jetbrains.idea.svn.SvnDiffProvider;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -134,24 +126,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
-    ProjectLevelVcsManagerEx.getInstanceEx(myProject).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action.actionPerformed(new AnActionEvent(null,
-                                             new DataContext() {
-                                               @Nullable
-                                               @Override
-                                               public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
-                                                   return myProject;
-                                                 }
-                                                 return null;
-                                               }
-                                             }, "test", new Presentation(), null, 0));
-
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    imitUpdate(myProject);
     Assert.assertTrue(myIsClosed);
   }
 
@@ -181,24 +156,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     myChangeListManager.ensureUpToDate(false);
     Assert.assertFalse(myIsClosed);
 
-    ProjectLevelVcsManagerEx.getInstanceEx(myProject).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action.actionPerformed(new AnActionEvent(null,
-                                             new DataContext() {
-                                               @Nullable
-                                               @Override
-                                               public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
-                                                   return myProject;
-                                                 }
-                                                 return null;
-                                               }
-                                             }, "test", new Presentation(), null, 0));
-
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
-    sleep(100); // zipper updater
+    imitUpdate(myProject);
     Assert.assertTrue(myIsClosed);
   }
 

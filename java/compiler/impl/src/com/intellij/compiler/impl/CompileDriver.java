@@ -671,8 +671,12 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-            if (!executeCompileTasks(compileContext, true)) {
-              COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
+
+            final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
+
+            final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
+            if (!beforeTasksOk || errorCount > 0) {
+              COMPILE_SERVER_BUILD_STATUS.set(compileContext, errorCount > 0? ExitStatus.ERRORS : ExitStatus.CANCELLED);
               return;
             }
 
@@ -698,7 +702,9 @@ public class CompileDriver {
               }
               if (!executeCompileTasks(compileContext, false)) {
                 COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
-                return;
+              }
+              if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+                COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
               }
             }
           }
@@ -852,7 +858,10 @@ public class CompileDriver {
         outputs.add(new File(path));
       }
       if (!outputs.isEmpty()) {
+        final ProgressIndicator indicator = compileContext.getProgressIndicator();
+        indicator.setText("Synchronizing output directories...");
         LocalFileSystem.getInstance().refreshIoFiles(outputs, false, false, null);
+        indicator.setText("");
       }
     }
     SwingUtilities.invokeLater(new Runnable() {

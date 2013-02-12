@@ -17,7 +17,11 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +54,26 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
     return FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName()).getIcon();
   }
 
+  @Override
+  protected boolean acceptFilter(Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
+    try {
+      VirtualFilePointer filePointer = getFilePointer();
+      if (!filePointer.isValid()) {
+        return false;
+      }
+      VirtualFile file = filePointer.getFile();
+      if (file != null && file.isValid() && filter.first.contains(file, filter.second)) {
+        applyFilter(true);
+        return true;
+      }
+    }
+    catch (Throwable e) {
+      // TODO: catch and ignore exceptions: see to FilePatternPackageSet
+      // sometimes for new file DirectoryFileIndex.getContentRootForFile() return random path
+    }
+    return false;
+  }
+
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
@@ -76,5 +100,4 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   protected boolean showStatistics() {
     return false;
   }
-
 }

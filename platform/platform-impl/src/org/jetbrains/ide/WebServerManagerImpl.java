@@ -9,16 +9,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SimpleTimer;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.util.Disposer;
 import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelPipeline;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.WebServer;
@@ -27,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class WebServerManagerImpl extends WebServerManager implements Disposable {
+class WebServerManagerImpl extends WebServerManager {
   private static final Logger LOG = Logger.getInstance(WebServerManager.class);
 
   @NonNls
@@ -58,12 +53,6 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
       }
     }
     return this;
-  }
-
-  public void addClosingListener(ChannelFutureListener listener) {
-    if (server != null) {
-      server.addClosingListener(listener);
-    }
   }
 
   private static int getDefaultPort() {
@@ -114,18 +103,8 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
           return;
         }
 
-        detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true, new Computable<Consumer<ChannelPipeline>[]>() {
-          @Override
-          public Consumer<ChannelPipeline>[] compute() {
-            Consumer<ChannelPipeline>[] consumers = Extensions.getExtensions(EP_NAME);
-            if (consumers.length == 0) {
-              LOG.warn("web server will be stopped, there are no pipeline consumers");
-              SimpleTimer.getInstance().setUp(server.createShutdownTask(), 3000);
-            }
-            return consumers;
-          }
-        });
-
+        Disposer.register(ApplicationManager.getApplication(), server);
+        detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true);
         if (detectedPortNumber == -1) {
           LOG.info("web server cannot be started, cannot bind to port");
         }
@@ -137,10 +116,8 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
   }
 
   @Override
-  public void dispose() {
-    if (started.get() && server != null) {
-      server.stop();
-      LOG.info("web server stopped");
-    }
+  @Nullable
+  public Disposable getServerDisposable() {
+    return server;
   }
 }

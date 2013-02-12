@@ -28,7 +28,7 @@ public interface IndentsModel {
   IndentGuideDescriptor getCaretIndentGuide();
 
   /**
-   * Tries to return descriptor (if any) that defines indent guide for the given lines.
+   * Tries to return a descriptor (if any) that defines indent guide for the given lines.
    * 
    * @param startLine   logical line where target indent guide is started
    * @param endLine     logical line where target indent guide is ended

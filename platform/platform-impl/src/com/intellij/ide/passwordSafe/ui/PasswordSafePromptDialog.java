@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,7 +199,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       }
     }
     final AtomicReference<String> pw = new AtomicReference<String>(null);
-    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         final PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, ps, title, message);
         if (promptLabel != null) {

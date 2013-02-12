@@ -32,6 +32,10 @@ public class PsiBuilderAdapter implements PsiBuilder {
     myDelegate = delegate;
   }
 
+  public PsiBuilder getDelegate() {
+    return myDelegate;
+  }
+
   @Override
   public Project getProject() {
     return myDelegate.getProject();

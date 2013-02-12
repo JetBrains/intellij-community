@@ -31,7 +31,7 @@ public class ZenEmptyNode extends ZenCodingNode {
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
-                                     String surroundedText,
+                                     int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd,
                                      GenerationNode parent) {

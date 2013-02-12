@@ -41,7 +41,7 @@ public class DefaultUrlOpener extends UrlOpener {
   private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
   @Override
-  public boolean openUrl(BrowsersConfiguration.BrowserFamily family, @Nullable String url) {
+  public boolean openUrl(@NotNull BrowsersConfiguration.BrowserFamily family, @Nullable String url) {
     return launchBrowser(family, url, false);
   }
 

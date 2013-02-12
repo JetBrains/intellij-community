@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,25 @@ package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.util.Consumer;
 import gnu.trove.THashMap;
 import org.apache.xmlrpc.*;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.io.Responses;
 
+import java.io.IOException;
 import java.util.Arrays;
 
-@ChannelHandler.Sharable
-public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer {
+public class XmlRpcServerImpl implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
   private final XmlRpcHandlerMappingImpl handlerMapping;
@@ -76,11 +77,15 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     LOG.debug("XmlRpcServerImpl instantiated, handlers " + handlerMapping);
   }
 
-  static final class XmlRpcPipelineConsumer implements Consumer<ChannelPipeline> {
+  static final class XmlRpcRequestHandler extends HttpRequestHandler {
     @Override
-    public void consume(ChannelPipeline pipeline) {
-      XmlRpcServer xmlRpcServer = SERVICE.getInstance();
-      pipeline.addLast("pluggable_xmlRpc", (XmlRpcServerImpl)xmlRpcServer);
+    public boolean isSupported(HttpRequest request) {
+      return request.getMethod() == HttpMethod.POST || request.getMethod() == HttpMethod.OPTIONS;
+    }
+
+    @Override
+    public boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
+      return ((XmlRpcServerImpl)SERVICE.getInstance()).process(urlDecoder, request, context);
     }
   }
 
@@ -97,52 +102,44 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
     handlerMapping.removeHandler(name);
   }
 
-  public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
-    if (e.getMessage() instanceof HttpRequest) {
-      HttpRequest request = (HttpRequest)e.getMessage();
-
-      if (request.getMethod() == HttpMethod.POST) {
-        ChannelBuffer result;
-        ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
-        try {
-          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(handlerMapping).execute(in, xmlRpcContext));
-        }
-        catch (Throwable ex) {
-          context.getChannel().close();
-          LOG.error(ex);
-          return;
-        }
-        finally {
-          in.close();
-        }
-
-        HttpResponse response = Responses.create("text/xml");
-        response.setContent(result);
-        Responses.send(response, request, context);
-        return;
-      }
-
-      if (request.getMethod() == HttpMethod.OPTIONS &&
-          HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
-        HttpResponse response = Responses.create("text/plain");
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        Responses.send(response, request, context);
-        return;
-      }
+  private boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context) throws IOException {
+    if (!isXmlRpcRequest(urlDecoder.getPath())) {
+      return false;
     }
 
-    context.sendUpstream(e);
+    if (request.getMethod() == HttpMethod.POST) {
+      ChannelBuffer result;
+      ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
+      try {
+        result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(handlerMapping).execute(in, xmlRpcContext));
+      }
+      catch (Throwable ex) {
+        context.getChannel().close();
+        LOG.error(ex);
+        return true;
+      }
+      finally {
+        in.close();
+      }
+
+      HttpResponse response = Responses.create("text/xml");
+      response.setContent(result);
+      Responses.send(response, request, context);
+      return true;
+    }
+    else if (HttpMethod.POST.getName().equals(request.getHeader("Access-Control-Request-Method"))) {
+      assert request.getMethod() == HttpMethod.OPTIONS;
+      HttpResponse response = Responses.create("text/plain");
+      response.setHeader("Access-Control-Allow-Origin", "*");
+      response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+      Responses.send(response, request, context);
+      return true;
+    }
+    return false;
   }
 
-  @Override
-  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent e) throws Exception {
-    try {
-      LOG.error(e.getCause());
-    }
-    finally {
-      e.getChannel().close();
-    }
+  private static boolean isXmlRpcRequest(String path) {
+    return path.isEmpty() || (path.length() == 1 && path.charAt(0) == '/') || path.equalsIgnoreCase("/RPC2");
   }
 
   private static class XmlRpcHandlerMappingImpl implements XmlRpcHandlerMapping {

@@ -21,23 +21,22 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.RegExpLanguageHosts;
-import org.intellij.lang.regexp.RegExpTT;
+import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
-import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
+  private final RegExpLanguageHosts myLanguageHosts;
+
+  public RegExpAnnotator() {
+    myLanguageHosts = RegExpLanguageHosts.getInstance();
+  }
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     assert myHolder == null : "unsupported concurrent annotator invocation";
@@ -98,7 +97,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     else {
       final String text = ch.getUnescapedText();
-      if (text.startsWith("\\") && isRedundantEscape(ch, text)) {
+      if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
         final ASTNode astNode = ch.getNode().getFirstChildNode();
         if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
           final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
@@ -108,34 +107,12 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
-  private static boolean isRedundantEscape(RegExpChar ch, String text) {
-    if (text.length() <= 1) return false;
-    RegExpLanguageHost host = findRegExpHost(ch);
-    if (host != null) {
-      final char c = text.charAt(1);
-      final boolean needsEscaping = host.characterNeedsEscaping(c);
-      return !needsEscaping;
-    }
-    else {
-      return !("\\]".equals(text) || "\\}".equals(text));
-    }
-  }
-
-  @Nullable
-  private static RegExpLanguageHost findRegExpHost(PsiElement element) {
-    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
-    if (host instanceof RegExpLanguageHost) {
-      return (RegExpLanguageHost)host;
-    }
-    if (host != null) {
-      return RegExpLanguageHosts.INSTANCE.forClass(host.getClass());
-    }
-    return null;
-  }
-
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
-    if (category != null && !RegExpPropertyImpl.isValidCategory(category.getText())) {
+    if (category == null) {
+      return;
+    }
+    if(!myLanguageHosts.isValidCategory(category.getPsi(), category.getText())) {
       final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
       if (a != null) {
         // IDEA-9381
@@ -179,8 +156,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       }
     }
     if (group.isPythonNamedGroup() || group.isRubyNamedGroup()) {
-      RegExpLanguageHost host = findRegExpHost(group);
-      if (host == null || !host.supportsNamedGroupSyntax(group)) {
+      if (!myLanguageHosts.supportsNamedGroupSyntax(group)) {
         myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
       }
     }
@@ -211,8 +187,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitComment(PsiComment comment) {
     if (comment.getText().startsWith("(?#")) {
-      RegExpLanguageHost host = findRegExpHost(comment);
-      if (host == null || !host.supportsPerl5EmbeddedComments()) {
+      if (!myLanguageHosts.supportsPerl5EmbeddedComments(comment)) {
         myHolder.createErrorAnnotation(comment, "Embedded comments are not supported");
       }
     }
@@ -220,8 +195,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-    RegExpLanguageHost host = findRegExpHost(condRef);
-    if (host == null || !host.supportsPythonConditionalRefs()) {
+    if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
       myHolder.createErrorAnnotation(condRef, "Conditional references are not supported");
     }
   }
@@ -279,8 +253,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       }
     }
     if (quantifier.getType() == RegExpQuantifier.Type.POSSESSIVE) {
-      RegExpLanguageHost host = findRegExpHost(quantifier);
-      if (host != null && !host.supportsPossessiveQuantifiers()) {
+      if (!myLanguageHosts.supportsPossessiveQuantifiers(quantifier)) {
         myHolder.createErrorAnnotation(quantifier, "Nested quantifier in regexp");
       }
     }

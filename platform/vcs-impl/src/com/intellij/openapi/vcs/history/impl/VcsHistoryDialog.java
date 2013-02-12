@@ -228,7 +228,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
       @Override
       public void run() {
         if (! VcsHistoryDialog.this.isShowing()) return;
-        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true);
+        PopupUtil.showBalloonForComponent(VcsHistoryDialog.this.getRootPane(), canNoLoadMessage(e), MessageType.ERROR, true, myProject);
       }
     });
   }

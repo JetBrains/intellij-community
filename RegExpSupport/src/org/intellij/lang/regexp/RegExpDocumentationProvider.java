@@ -18,17 +18,15 @@ package org.intellij.lang.regexp;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpProperty;
-import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author vnikolaenko
  */
-public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
+public final class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
@@ -36,52 +34,17 @@ public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
       final RegExpProperty prop = (RegExpProperty)element;
       final ASTNode node = prop.getCategoryNode();
       if (node != null) {
-        final String elementName = node.getText();
-        for (String[] stringArray : RegExpPropertyImpl.PROPERTY_NAMES) {
-          if (stringArray[0].equals(elementName)) {
-            if (prop.isNegated()) {
-              return "Property block stands for characters not matching " + stringArray[1];
-            } else {
-              return "Property block stands for " + "" + stringArray[1];
-            }
+        final String description = RegExpLanguageHosts.getInstance().getPropertyDescription(node.getPsi(), node.getText());
+        if (description != null) {
+          if (prop.isNegated()) {
+            return "Property block stands for characters not matching " + description;
+          } else {
+            return "Property block stands for " + description;
           }
         }
       }
     }
     return null;
-  }
-
-  @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    /*
-    if (element instanceof RegExpProperty) {
-      final String s;
-      if (object instanceof PresentableLookupValue) {
-        s = ((PresentableLookupValue)object).getPresentation();
-      } else if (object instanceof String) {
-        s = (String)object;
-      } else {
-        return null;
-      }
-      final Project project = element.getProject();
-      final JavaPsiFacade f = JavaPsiFacade.getInstance(project);
-      if (s.startsWith("java")) {
-        final PsiClass charClass = f.findClass("java.lang.Character", GlobalSearchScope.allScope(project));
-        if (charClass != null) {
-          final PsiMethod[] methods = charClass.findMethodsByName("is" + s.substring("java".length()), false);
-          return methods.length > 0 ? methods[0] : null;
-        }
-      } else if (s.matches("In[\\p{Upper}_]+")) {
-        final PsiClass charClass = f.findClass("java.lang.Character.UnicodeBlock", GlobalSearchScope.allScope(project));
-        if (charClass != null) {
-          return charClass.findFieldByName(s.substring(2), false);
-        }
-      } else {
-        return f.findClass("java.util.regex.Pattern", GlobalSearchScope.allScope(project));
-      }
-    }
-      */
-    return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
   @Nullable

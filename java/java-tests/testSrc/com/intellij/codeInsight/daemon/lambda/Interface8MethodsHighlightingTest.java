@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection;
 import org.jetbrains.annotations.NonNls;
 
 public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -24,8 +25,21 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testStaticMethod() throws Exception {
     doTest();
   }
+  
+  public void testNotInheritFromUnrelatedDefault() throws Exception { doTest(true, false); }
+  public void testDefaultMethodVisibility() throws Exception { doTest(true, false); }
+  public void testInheritUnrelatedDefaults() throws Exception { doTest(true, false); }
+  public void testExtensionMethods() throws Exception { doTest(false, false); }
+  public void testExtensionMethodSyntax() throws Exception {
+    enableInspectionTools(DeprecatedDefenderSyntaxInspection.class);
+    doTest(true, false); 
+  }
 
   private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTest(false, false);
+  }
+
+  private void doTest(final boolean checkWarnings, final boolean checkInfos) throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 }

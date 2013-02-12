@@ -30,7 +30,7 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    final PsiAnnotation annotation = (PsiAnnotation)element;
+    final PsiNameValuePair annotation = (PsiNameValuePair)element;
     final String text = buildReplacementText(annotation);
     return IntentionPowerPackBundle.message(
       "expand.to.normal.annotation.name", text);
@@ -42,51 +42,26 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
     return new ExpandToNormalAnnotationPredicate();
   }
 
-  public static String buildReplacementText(PsiAnnotation annotation) {
-    final StringBuilder text = new StringBuilder("@");
-    final PsiAnnotationParameterList parameterList =
-      annotation.getParameterList();
-    if (parameterList.getChildren().length == 0) {
-      final PsiJavaCodeReferenceElement nameReferenceElement =
-        annotation.getNameReferenceElement();
-      if (nameReferenceElement != null) {
-        text.append(nameReferenceElement.getText());
-      }
-      text.append("()");
-    }
-    else {
-      final PsiNameValuePair[] attributes = parameterList.getAttributes();
-      final PsiNameValuePair attribute = attributes[0];
-      final PsiAnnotationMemberValue value = attribute.getValue();
-      final PsiJavaCodeReferenceElement nameReferenceElement =
-        annotation.getNameReferenceElement();
-      if (nameReferenceElement != null) {
-        text.append(nameReferenceElement.getText());
-      }
-      text.append("(value = ");
-      if (value != null) {
-        text.append(value.getText());
-      }
-      text.append(')');
+  public static String buildReplacementText(PsiNameValuePair attribute) {
+    final StringBuilder text = new StringBuilder();
+    final PsiAnnotationMemberValue value = attribute.getValue();
+    text.append("value = ");
+    if (value != null) {
+      text.append(value.getText());
     }
     return text.toString();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiAnnotation annotation = (PsiAnnotation)element;
-    final int textOffset = annotation.getTextOffset();
-    final Project project = annotation.getProject();
-    final String text = buildReplacementText(annotation);
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
-    final PsiAnnotation newAnnotation =
-      factory.createAnnotationFromText(
-        text, annotation);
-    annotation.replace(newAnnotation);
-    final FileEditorManager editorManager =
-      FileEditorManager.getInstance(project);
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiNameValuePair attribute = (PsiNameValuePair)element;
+    final int textOffset = attribute.getTextOffset();
+    final Project project = attribute.getProject();
+    final String text = buildReplacementText(attribute);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@A(" + text +" )", attribute);
+    attribute.replace(newAnnotation.getParameterList().getAttributes()[0]);
+    final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final Editor editor = editorManager.getSelectedTextEditor();
     if (editor == null) {
       return;

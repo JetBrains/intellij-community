@@ -21,6 +21,8 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
+import java.util.List;
+
 /**
  * @author mike
  */
@@ -50,4 +52,8 @@ public interface ExtensionPoint extends DomElement {
 
   @NotNull
   GenericAttributeValue<Area> getArea();
+
+  @NotNull
+  @SubTagList("with")
+  List<With> getWithElements();
 }

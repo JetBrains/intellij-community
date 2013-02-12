@@ -18,6 +18,7 @@ package org.jetbrains.jps.builders.rebuild
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
 
+import java.util.jar.Attributes
 import java.util.jar.Manifest
 /**
  * @author nik
@@ -96,7 +97,7 @@ class ArtifactRebuildTest extends JpsRebuildTestCase {
     File manifestFile = new File(extracted, "META-INF/MANIFEST.MF")
     junit.framework.Assert.assertTrue(manifestFile.exists())
     Manifest manifest = new Manifest(new FileInputStream(manifestFile))
-    junit.framework.Assert.assertEquals("MyClass", manifest.getMainAttributes().getValue())
+    junit.framework.Assert.assertEquals("MyClass", manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS))
   }
 
   public void testOverwriteArtifacts() {

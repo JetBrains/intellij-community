@@ -17,12 +17,12 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.android.SdkConstants;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
-import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;

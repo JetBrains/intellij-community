@@ -596,7 +596,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
   }
 
-  private static class FilesScope extends GlobalSearchScope {
+  public static class FilesScope extends GlobalSearchScope {
     private final Collection<VirtualFile> myFiles;
 
     public FilesScope(final Project project, final Collection<VirtualFile> files) {

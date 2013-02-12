@@ -31,7 +31,7 @@ import com.intellij.ui.DottedBorder;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.table.JBTable;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
@@ -51,15 +51,14 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class CopiesPanel {
@@ -122,14 +121,23 @@ public class CopiesPanel {
         ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
       }
     };
-    final Runnable refreshOnPooled = new Runnable() {
+    final Consumer<Boolean> refreshOnPooled = new Consumer<Boolean>() {
       @Override
-      public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          refreshView.run();
-        }
-        else {
-          ApplicationManager.getApplication().executeOnPooledThread(refreshView);
+      public void consume(Boolean somethingNew) {
+        if (Boolean.TRUE.equals(somethingNew)) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            refreshView.run();
+          }
+          else {
+            ApplicationManager.getApplication().executeOnPooledThread(refreshView);
+          }
+        } else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myRefreshLabel.setEnabled(true);
+            }
+          }, ModalityState.NON_MODAL);
         }
       }
     };
@@ -146,7 +154,7 @@ public class CopiesPanel {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myRefreshLabel.isEnabled()) {
-          myVcs.invokeRefreshSvnRoots(true);
+          myVcs.invokeRefreshSvnRoots();
           myRefreshLabel.setEnabled(false);
         }
       }
@@ -158,7 +166,7 @@ public class CopiesPanel {
     vBar.setUnitIncrement(vBar.getUnitIncrement() * 5);
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
-    refreshOnPooled.run();
+    refreshOnPooled.consume(true);
     initView();
   }
 

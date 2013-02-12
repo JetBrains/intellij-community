@@ -57,7 +57,23 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     @Nullable
     public Character getValue() {
       final String s = getUnescapedText();
-      if (s.equals("\\") && getType() == Type.CHAR) return '\\';
+      if (s.equals("\\") && getType() == Type.CHAR) {
+        return '\\';
+      }
+      // special case for valid octal escaped sequences (see RUBY-12161)
+      if (s.startsWith("\\") && s.length() > 1) {
+        final ASTNode child = getNode().getFirstChildNode();
+        assert child != null;
+        final IElementType t = child.getElementType();
+        if (t == RegExpTT.OCT_CHAR) {
+          try {
+            return (char) Integer.parseInt(s.substring(1), 8);
+          }
+          catch (NumberFormatException e) {
+            // do nothing
+          }
+        }
+      }
       return unescapeChar(s);
     }
 

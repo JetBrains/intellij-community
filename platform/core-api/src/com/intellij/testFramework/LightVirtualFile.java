@@ -28,7 +28,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
@@ -122,6 +125,10 @@ public class LightVirtualFile extends VirtualFile {
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
     @NonNls private static final String PROTOCOL = "mock";
+
+    private MyVirtualFileSystem() {
+      startEventPropagation();
+    }
 
     @Override
     @NotNull

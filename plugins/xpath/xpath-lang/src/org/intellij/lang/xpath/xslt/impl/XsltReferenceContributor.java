@@ -134,6 +134,7 @@ public class XsltReferenceContributor {
       return name.equals(text) || text.endsWith(":" + name);
     }
 
+    @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
       return "Unknown Type";

@@ -21,25 +21,17 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class ExpandToNormalAnnotationPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAnnotation)) {
+    if (!(element instanceof PsiNameValuePair)) {
       return false;
     }
-    final PsiAnnotation annotation = (PsiAnnotation)element;
-    final PsiAnnotationParameterList parameterList =
-      annotation.getParameterList();
-    if (parameterList.getChildren().length == 0) {
-      return true;
-    }
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    if (attributes.length != 1) {
-      return false;
-    }
-    final PsiNameValuePair attribute = attributes[0];
+    final PsiNameValuePair attribute = (PsiNameValuePair)element;
+    if (attribute.getName() != null) return false;
+
     final PsiAnnotationMemberValue value = attribute.getValue();
     if (value == null) {
       return false;
     }
-    final String name = attribute.getName();
-    return name == null;
+
+    return true;
   }
 }

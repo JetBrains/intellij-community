@@ -169,7 +169,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
                                     mySystemProperties,
                                     FieldAccessor.<Properties>get(cliRequestClass, cliRequest, "userProperties"));
 
-    myLocalRepository = createLocalRepository(settings.getSnapshotUpdatePolicy());
+    myLocalRepository = createLocalRepository();
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -220,7 +220,7 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       }
   }
 
-  private ArtifactRepository createLocalRepository(MavenServerSettings.UpdatePolicy snapshotUpdatePolicy) {
+  private ArtifactRepository createLocalRepository() {
     try {
       return getComponent(RepositorySystem.class).createLocalRepository(new File(myMavenSettings.getLocalRepository()));
     }

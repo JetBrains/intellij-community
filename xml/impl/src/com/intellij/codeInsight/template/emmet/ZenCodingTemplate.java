@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
@@ -110,15 +111,15 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   @Nullable
-  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
     }
-    if (generator != null && !validate(tokens, generator)) {
+    if (!validate(tokens, generator)) {
       return null;
     }
-    EmmetParser parser = new EmmetParser(tokens, callback, generator);
+    EmmetParser parser = generator.createParser(tokens, callback, generator);
     ZenCodingNode node = parser.parse();
     if (parser.getIndex() != tokens.size() || node instanceof TextNode) {
       return null;
@@ -135,7 +136,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return true;
   }
 
-  public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
     return parse(key, callback, generator) != null;
   }
 
@@ -230,8 +231,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       surroundedText = surroundedText.trim();
     }
 
-    GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, surroundedText, true, null);
-    node.expand(-1, surroundedText, callback, true, fakeParentNode);
+    GenerationNode fakeParentNode = new GenerationNode(TemplateToken.EMPTY_TEMPLATE_TOKEN, -1, 1, surroundedText, true, null);
+    node.expand(-1, 1, surroundedText, callback, true, fakeParentNode);
 
     List<GenerationNode> genNodes = fakeParentNode.getChildren();
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
@@ -242,6 +243,12 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       int e = builder.insertTemplate(builder.length(), template, null);
       if (end == -1 && end < builder.length()) {
         end = e;
+      }
+    }
+    for (ZenCodingFilter filter : filters) {
+      if(filter instanceof SingleLineEmmetFilter) {
+        builder.setIsToReformat(false);
+        break;
       }
     }
 

@@ -104,7 +104,7 @@ public class CopyReferenceAction extends DumbAwareAction {
         PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
         if (reference != null) {
           highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
-        } else {
+        } else if (element != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
           highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
         }
       }

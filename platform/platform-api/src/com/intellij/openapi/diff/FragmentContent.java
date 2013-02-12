@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -80,6 +81,7 @@ public class FragmentContent extends DiffContent {
 
   public VirtualFile getFile() { return null; }
 
+  @Nullable
   public FileType getContentType() {
     return myType != null ? myType : myOriginal.getContentType();
   }

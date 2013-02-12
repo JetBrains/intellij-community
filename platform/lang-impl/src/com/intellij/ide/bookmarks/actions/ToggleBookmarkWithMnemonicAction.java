@@ -33,7 +33,7 @@ import com.intellij.util.ui.UIUtil;
 
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   public ToggleBookmarkWithMnemonicAction() {
-    getTemplatePresentation().setText(IdeBundle.message("action.toggle.bookmark.mnemonic"));
+    getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
 
   @Override
@@ -85,6 +85,6 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   public void update(AnActionEvent event) {
     super.update(event);
 
-    event.getPresentation().setText(IdeBundle.message("action.toggle.bookmark.mnemonic"));
+    event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
 }

@@ -40,7 +40,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -117,8 +116,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return myName2Profile.containsKey(getInspectionProfile().getName());
   }
 
-  @Nullable
-  public InspectionProfileWrapper getProfileWrapper(){
+  @NotNull
+  public synchronized InspectionProfileWrapper getProfileWrapper(){
     final InspectionProfile profile = getInspectionProfile();
     final String profileName = profile.getName();
     if (!myName2Profile.containsKey(profileName)){

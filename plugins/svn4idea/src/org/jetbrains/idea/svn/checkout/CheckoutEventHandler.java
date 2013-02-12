@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -50,16 +51,15 @@ public class CheckoutEventHandler implements ISVNEventHandler {
     }
     if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
       myExternalsCount++;
-      myIndicator.setText(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()));
-      myIndicator.setText2("");
+      ProgressManager.progress(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()), "");
     }
     else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-      myIndicator.setText2(SvnBundle.message(myIsExport ? "progress.text2.exported" : "progress.text2.checked.out", event.getFile().getName(), myCnt));
+      ProgressManager.progress2(SvnBundle.message(myIsExport ? "progress.text2.exported" : "progress.text2.checked.out", event.getFile().getName(), myCnt));
       ++ myCnt;
     }
     else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
       myExternalsCount--;
-      myIndicator.setText2(SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "progress.text2.checked.out.revision", event.getRevision()));
+      ProgressManager.progress2((SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "progress.text2.checked.out.revision", event.getRevision())));
       if (myExternalsCount == 0 && event.getRevision() >= 0 && myVCS != null) {
         myExternalsCount = 1;
         Project project = myVCS.getProject();
@@ -68,14 +68,14 @@ public class CheckoutEventHandler implements ISVNEventHandler {
         }
       }
     } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-      myIndicator.setText2(SvnBundle.message("progress.text2.adding", path));
+      ProgressManager.progress2((SvnBundle.message("progress.text2.adding", path)));
     } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-      myIndicator.setText2(SvnBundle.message("progress.text2.transmitting.delta", path));
+      ProgressManager.progress2((SvnBundle.message("progress.text2.transmitting.delta", path)));
     }
   }
 
   public void checkCancelled() throws SVNCancelException {
-    if (myIndicator.isCanceled()) {
+    if (myIndicator != null && myIndicator.isCanceled()) {
       throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Operation cancelled"));
     }
   }

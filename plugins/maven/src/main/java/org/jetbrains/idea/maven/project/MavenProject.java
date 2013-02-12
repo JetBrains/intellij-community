@@ -609,13 +609,12 @@ public class MavenProject {
   @NotNull
   public Pair<Boolean, MavenProjectChanges> resolveFolders(@NotNull MavenEmbedderWrapper embedder,
                                                            @NotNull MavenImportingSettings importingSettings,
-                                                           @NotNull MavenProjectReader reader,
                                                            @NotNull MavenConsole console) throws MavenProcessCanceledException {
-    MavenProjectReaderResult result = reader.generateSources(embedder,
-                                                             importingSettings,
-                                                             getFile(),
-                                                             getActivatedProfilesIds(),
-                                                             console);
+    MavenProjectReaderResult result = MavenProjectReader.generateSources(embedder,
+                                                                         importingSettings,
+                                                                         getFile(),
+                                                                         getActivatedProfilesIds(),
+                                                                         console);
     if (result == null || !result.readingProblems.isEmpty()) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);

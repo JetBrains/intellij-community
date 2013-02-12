@@ -113,6 +113,8 @@ public class GeneralCommandLineTest {
 
   @Test
   public void unicodeArguments() throws Exception {
+    assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
+
     File script;
     GeneralCommandLine commandLine;
     String encoding = null;
@@ -154,7 +156,19 @@ public class GeneralCommandLineTest {
     Map<String, String> testEnv = new HashMap<String, String>();
     testEnv.put("VALUE_1", "some value");
     testEnv.put("VALUE_2", "another\n\"value\"");
-    testEnv.put("VALUE_3", "немного юникода");
+
+    GeneralCommandLine commandLine = makeJavaCommand(EnvPassingTest.class, null);
+    checkEnvPassing(commandLine, testEnv, true);
+    checkEnvPassing(commandLine, testEnv, false);
+  }
+
+  @Test
+  public void unicodeEnvironment() throws Exception {
+    assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
+
+    Map<String, String> testEnv = new HashMap<String, String>();
+    testEnv.put("VALUE_1", "немного");
+    testEnv.put("VALUE_2", "юникода");
 
     GeneralCommandLine commandLine = makeJavaCommand(EnvPassingTest.class, null);
     checkEnvPassing(commandLine, testEnv, true);
@@ -178,9 +192,13 @@ public class GeneralCommandLineTest {
 
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java"));
-    commandLine.addParameter("-D" + "file.encoding=UTF-8");
-    commandLine.addParameter("-cp");
 
+    String encoding = System.getProperty("file.encoding");
+    if (encoding != null) {
+      commandLine.addParameter("-D" + "file.encoding=" + encoding);
+    }
+
+    commandLine.addParameter("-cp");
     String[] packages = className.split("\\.");
     File classFile = new File(url.getFile());
     if (copyTo == null) {
@@ -197,6 +215,7 @@ public class GeneralCommandLineTest {
 
     commandLine.addParameter(className);
     commandLine.setRedirectErrorStream(true);
+
     return commandLine;
   }
 

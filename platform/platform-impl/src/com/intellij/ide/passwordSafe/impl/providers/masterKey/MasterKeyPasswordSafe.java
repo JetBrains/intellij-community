@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.UnsupportedEncodingException;
@@ -184,7 +183,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       if (key.get() == null) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-        GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
             if (key.get() == null) {
               try {

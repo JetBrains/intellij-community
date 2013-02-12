@@ -146,9 +146,11 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
     return new ToolAction(tool);
   }
 
+  protected abstract String getActionIdPrefix();
+
   private void unregisterActions() {
     // unregister Tool actions
-    String[] oldIds = myActionManager.getActionIds(T.ACTION_ID_PREFIX);
+    String[] oldIds = myActionManager.getActionIds(getActionIdPrefix());
     for (int i = 0; i < oldIds.length; i++) {
       String oldId = oldIds[i];
       myActionManager.unregisterAction(oldId);

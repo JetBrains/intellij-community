@@ -43,10 +43,11 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
 
+  private boolean alwaysUpdateSnapshots = false;
+
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
-  private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private File myEffectiveLocalRepositoryCache;
@@ -125,18 +126,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
     this.outputLevel = value;
-    changed();
-  }
-
-  @Property
-  @NotNull
-  public MavenExecutionOptions.SnapshotUpdatePolicy getSnapshotUpdatePolicy() {
-    return snapshotUpdatePolicy;
-  }
-
-  public void setSnapshotUpdatePolicy(MavenExecutionOptions.SnapshotUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializator
-    this.snapshotUpdatePolicy = value;
     changed();
   }
 
@@ -280,6 +269,15 @@ public class MavenGeneralSettings implements Cloneable {
     changed();
   }
 
+  public boolean isAlwaysUpdateSnapshots() {
+    return alwaysUpdateSnapshots;
+  }
+
+  public void setAlwaysUpdateSnapshots(boolean alwaysUpdateSnapshots) {
+    this.alwaysUpdateSnapshots = alwaysUpdateSnapshots;
+    changed();
+  }
+
   public boolean isNonRecursive() {
     return nonRecursive;
   }
@@ -298,7 +296,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
-    if (snapshotUpdatePolicy != that.snapshotUpdatePolicy) return false;
+    if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (workOffline != that.workOffline) return false;
@@ -324,7 +322,6 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
     result = 31 * result + pluginUpdatePolicy.hashCode();
-    result = 31 * result + snapshotUpdatePolicy.hashCode();
     return result;
   }
 

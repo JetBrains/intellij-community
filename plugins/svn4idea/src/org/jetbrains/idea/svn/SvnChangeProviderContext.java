@@ -307,19 +307,15 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (parentPath == null) {
       return;
     }
-    File svnSubdirectory = new File(parentPath.getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    VirtualFile file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
-    if (file != null) {
-      localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
-    }
+    refreshDotSvnAndEntries(parentPath);
     if (filePath.isDirectory()) {
-      svnSubdirectory = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
-      file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
-      if (file != null) {
-        localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
-      }
+      refreshDotSvnAndEntries(filePath);
     }
+  }
+
+  private static void refreshDotSvnAndEntries(FilePath filePath) {
+    final File svn = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
+    LocalFileSystem.getInstance().refreshIoFiles(Arrays.asList(svn, new File(svn, SvnUtil.ENTRIES_FILE_NAME)), true, false, null);
   }
 
   // seems here we can only have a tree conflict; which can be marked on either path (?)

@@ -57,7 +57,13 @@ public class BreakpointMasterDetailPopupBuilder {
   private BreakpointItemsTreeController myTreeController;
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
     
-  private Set<XBreakpointGroupingRule> myRulesEnabled = new HashSet<XBreakpointGroupingRule>();
+  private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(new Comparator<XBreakpointGroupingRule>() {
+    @Override
+    public int compare(XBreakpointGroupingRule o1, XBreakpointGroupingRule o2) {
+      final int res = o2.getPriority() - o1.getPriority();
+      return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
+    }
+  });
 
   @Nullable private Object myInitialBreakpoint;
 
@@ -143,14 +149,14 @@ public class BreakpointMasterDetailPopupBuilder {
     }
 
     if (!myIsViewer) {
-      myRulesEnabled = getInitialGroupingRules();
+      getInitialGroupingRules(myRulesEnabled);
     }
 
     DefaultActionGroup actions = createActions();
 
     myTreeController = new BreakpointItemsTreeController(myRulesEnabled);
 
-    JTree tree = myIsViewer ? new BreakpointsSimpleTree(myTreeController) : new BreakpointsCheckboxTree(myTreeController);
+    JTree tree = myIsViewer ? new BreakpointsSimpleTree(myProject, myTreeController) : new BreakpointsCheckboxTree(myProject, myTreeController);
 
     if (myPlainView) {
       tree.putClientProperty("plainView", Boolean.TRUE);
@@ -283,8 +289,8 @@ public class BreakpointMasterDetailPopupBuilder {
     ((XBreakpointManagerImpl)getBreakpointManager()).setBreakpointsDialogSettings(dialogState);
   }
 
-  private Set<XBreakpointGroupingRule> getInitialGroupingRules() {
-    java.util.HashSet<XBreakpointGroupingRule> rules = new java.util.HashSet<XBreakpointGroupingRule>();
+  private void getInitialGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+    rules.clear();
     XBreakpointsDialogState settings = ((XBreakpointManagerImpl)getBreakpointManager()).getBreakpointsDialogSettings();
 
     for (XBreakpointGroupingRule rule : myRulesAvailable) {
@@ -292,7 +298,6 @@ public class BreakpointMasterDetailPopupBuilder {
         rules.add(rule);
       }
     }
-    return rules;
   }
 
   private XBreakpointManager getBreakpointManager() {

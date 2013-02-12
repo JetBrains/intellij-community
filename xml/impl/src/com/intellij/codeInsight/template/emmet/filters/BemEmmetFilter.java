@@ -60,7 +60,16 @@ public class BemEmmetFilter extends ZenCodingFilter {
   private static final Function<String, String> CLASS_NAME_NORMALIZER = new Function<String, String>() {
     @Override
     public String apply(@NotNull String input) {
-      return input.replaceAll(Pattern.quote(SHORT_ELEMENT_PREFIX), ELEMENT_SEPARATOR);
+      if(!input.startsWith(SHORT_ELEMENT_PREFIX)) {
+        return input;
+      }
+
+      StringBuilder result = new StringBuilder();
+      while (input.startsWith(SHORT_ELEMENT_PREFIX)) {
+        input = input.substring(SHORT_ELEMENT_PREFIX.length());
+        result.append(ELEMENT_SEPARATOR);
+      }
+      return result.append(input).toString();
     }
   };
 

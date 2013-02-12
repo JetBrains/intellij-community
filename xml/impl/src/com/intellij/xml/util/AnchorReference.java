@@ -215,6 +215,7 @@ public class AnchorReference implements PsiReference, EmptyResolveMessageProvide
     return mySoft;
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     final XmlFile xmlFile = getFile();
     return xmlFile == null ? 

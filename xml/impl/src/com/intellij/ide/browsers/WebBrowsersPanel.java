@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.impl.BrowserConfigurationHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
@@ -32,7 +33,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -60,6 +60,8 @@ public class WebBrowsersPanel extends JPanel {
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.SAFARI, mySettingsPanel);
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.CHROME, mySettingsPanel);
     createIndividualSettings(BrowsersConfiguration.BrowserFamily.OPERA, mySettingsPanel);
+
+    createPlatformSpecificAction(mySettingsPanel);
   }
 
   private void createIndividualSettings(@NotNull final BrowsersConfiguration.BrowserFamily family, final JPanel container) {
@@ -125,53 +127,62 @@ public class WebBrowsersPanel extends JPanel {
     if (settings == null) {
       settings = family.createBrowserSpecificSettings();
     }
-
-    if (ShowSettingsUtil.getInstance().editConfigurable(mySettingsPanel, settings.createConfigurable())) {
+    if (settings != null && ShowSettingsUtil.getInstance().editConfigurable(mySettingsPanel, settings.createConfigurable())) {
       myConfiguration.updateBrowserSpecificSettings(family, settings);
     }
   }
 
-  public void applySettingsFromWindowsRegistry() {
-    if (!SystemInfo.isWindows) {
-      return;
-    }
-    ApplicationManager.getApplication()
-      .executeOnPooledThread(new SwingWorker<EnumMap<BrowsersConfiguration.BrowserFamily, String>, Void>() {
+  private void createPlatformSpecificAction(JPanel container) {
+    if (SystemInfo.isWindows) {
+      JButton registryButton = new JButton(XmlBundle.message("read.win.registry"));
+      registryButton.addActionListener(new ActionListener() {
         @Override
-        protected EnumMap<BrowsersConfiguration.BrowserFamily, String> doInBackground() throws Exception {
-          return BrowsersConfiguration.getWindowsBrowsersEXE();
-        }
-
-        @Override
-        protected void done() {
-          EnumMap<BrowsersConfiguration.BrowserFamily, String> map = null;
-          try {
-            map = get();
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (ExecutionException ignored) {
-          }
-          if (myBrowserSettingsMap == null) {
-            return;//we are disposed
-          }
-          if (map != null && !map.isEmpty()) {
-            for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
-              Pair<JCheckBox, TextFieldWithBrowseButton> pair = myBrowserSettingsMap.get(family);
-              String pathToExe = map.get(family);
-              if (pathToExe != null) {
-                pair.first.setSelected(true);
-                pair.second.setText(pathToExe);
-              }
-              else {
-                pair.first.setSelected(false);
-              }
-            }
-          }
+        public void actionPerformed(ActionEvent e) {
+          applySettingsFromWindowsRegistry();
         }
       });
+
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+      panel.add(registryButton, BorderLayout.EAST);
+      container.add(panel);
+    }
   }
 
+  private void applySettingsFromWindowsRegistry() {
+    ApplicationManager.getApplication().executeOnPooledThread(new SwingWorker<Map<BrowsersConfiguration.BrowserFamily, String>, Void>() {
+      @Override
+      protected Map<BrowsersConfiguration.BrowserFamily, String> doInBackground() throws Exception {
+        return BrowserConfigurationHelper.getBrowserPathsFromRegistry();
+      }
+
+      @Override
+      protected void done() {
+        Map<BrowsersConfiguration.BrowserFamily, String> map = null;
+        try {
+          map = get();
+        }
+        catch (InterruptedException ignore) { }
+        catch (ExecutionException ignore) { }
+
+        if (myBrowserSettingsMap == null || map == null || map.isEmpty()) {
+          return;
+        }
+
+        for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
+          Pair<JCheckBox, TextFieldWithBrowseButton> pair = myBrowserSettingsMap.get(family);
+          String pathToExe = map.get(family);
+          if (pathToExe != null) {
+            pair.first.setSelected(true);
+            pair.second.setText(pathToExe);
+          }
+          else {
+            pair.first.setSelected(false);
+          }
+        }
+      }
+    });
+  }
 
   public void dispose() {
     myBrowserSettingsMap = null;

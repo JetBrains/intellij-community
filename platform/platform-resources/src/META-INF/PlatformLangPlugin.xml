@@ -11,15 +11,15 @@
   <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/component/*)"/>
 
   <extensionPoints>
-    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
-    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
-    <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+    <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
@@ -81,7 +81,7 @@
     <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
 
     <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before intentions"/>
-    <projectConfigurable instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
+    <projectConfigurable instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
 
@@ -90,7 +90,7 @@
 
   </extensions>
 
-  <xi:include href="xdebugger.xml" xpointer="xpointer(/root/*)"/>
+  <xi:include href="xdebugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ultimate.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>

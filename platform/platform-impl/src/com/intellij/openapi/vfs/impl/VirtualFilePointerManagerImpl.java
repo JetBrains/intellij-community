@@ -21,7 +21,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
@@ -32,9 +31,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Function;
+import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     VirtualFilePointerImpl pointer = getOrCreate(parentDisposable, listener, path, Pair.create(file, url));
 
-    register(parentDisposable, pointer);
+    DelegatingDisposable.registerDisposable(parentDisposable, pointer);
 
     return pointer;
   }
@@ -210,32 +211,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myUrlToIdentity.put(url, pointer);
     }
     return pointer;
-  }
-
-  private static void register(@NotNull Disposable parentDisposable, @NotNull VirtualFilePointerImpl pointer) {
-    ObjectNode<Disposable> node = Disposer.getTree().getNode(pointer);
-    if (node == null) {
-      Disposer.register(parentDisposable, pointer);
-    }
-    else if (node.getParent().getObject() == parentDisposable) {
-      // already registered, just do not inc the usage count
-      pointer.myNode.incrementUsageCount(-1);
-    }
-    else {
-      // already registered but under different parent
-      DelegatingDisposable delegating = new DelegatingDisposable(pointer);
-      DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
-      if (registered == null) {
-        Disposer.register(parentDisposable, delegating);
-      }
-      else {
-        registered.disposeCount++;
-      }
-    }
-    if (node != null && !node.getChildren().isEmpty()) {
-      // VFP is registered in Disposable in a very eccentric way (custom refcounts etc) so it's not a good idea to have it as a Disposable parent
-      LOG.error("You must not register disposable having VirtualFilePointer as a parent: "+node.getChildren());
-    }
   }
 
   private static String cleanupPath(String path, @NotNull String protocol) {
@@ -561,39 +536,39 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static class DelegatingDisposable implements Disposable {
-    @NotNull private final VirtualFilePointerImpl myPointer;
-    private int disposeCount = 1;
+    private static final Map<Disposable, DelegatingDisposable> ourInstances = new IdentityHashMap<Disposable, DelegatingDisposable>();
+    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<VirtualFilePointerImpl>();
+    private final Disposable myParent;
 
-    private DelegatingDisposable(@NotNull VirtualFilePointerImpl pointer) {
-      myPointer = pointer;
+    private DelegatingDisposable(Disposable parent) {
+      myParent = parent;
+    }
+
+    static void registerDisposable(Disposable parentDisposable, VirtualFilePointerImpl pointer) {
+      synchronized (ourInstances) {
+        DelegatingDisposable result = ourInstances.get(parentDisposable);
+        if (result == null) {
+          ourInstances.put(parentDisposable, result = new DelegatingDisposable(parentDisposable));
+          Disposer.register(parentDisposable, result);
+        }
+
+        result.myCounts.put(pointer, result.myCounts.get(pointer) + 1);
+      }
     }
 
     @Override
     public void dispose() {
-      if (disposeCount != 1) {
-        int after = myPointer.myNode.incrementUsageCount(-disposeCount+1);
-        LOG.assertTrue(after > 0, after);
+      synchronized (ourInstances) {
+        ourInstances.remove(myParent);
+
+        for (Object o : myCounts.keys()) {
+          VirtualFilePointerImpl pointer = (VirtualFilePointerImpl)o;
+          int disposeCount = myCounts.get(pointer);
+          int after = pointer.myNode.incrementUsageCount(-disposeCount + 1);
+          LOG.assertTrue(after > 0, after);
+          pointer.dispose();
+        }
       }
-      myPointer.dispose();
-    }
-
-    @NonNls
-    @NotNull
-    @Override
-    public String toString() {
-      return "D:" + myPointer.toString();
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-      DelegatingDisposable that = (DelegatingDisposable)o;
-      return myPointer == that.myPointer;
-    }
-
-    @Override
-    public int hashCode() {
-      return myPointer.hashCode();
     }
   }
 

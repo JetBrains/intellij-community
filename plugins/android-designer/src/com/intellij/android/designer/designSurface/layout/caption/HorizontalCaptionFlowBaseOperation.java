@@ -15,10 +15,10 @@
  */
 package com.intellij.android.designer.designSurface.layout.caption;
 
+import com.intellij.android.designer.designSurface.layout.AbstractFlowBaseOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackLayer;
-import com.intellij.designer.designSurface.FlowBaseOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineInsertFeedback;
 import com.intellij.designer.model.RadComponent;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class HorizontalCaptionFlowBaseOperation<T extends RadViewComponent> extends FlowBaseOperation {
+public abstract class HorizontalCaptionFlowBaseOperation<T extends RadViewComponent> extends AbstractFlowBaseOperation {
   protected final T myMainContainer;
   private final EditableArea myMainArea;
   private LineInsertFeedback myMainInsertFeedback;

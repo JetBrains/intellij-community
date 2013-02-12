@@ -31,11 +31,17 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
   public static final ClassConditionKey<PrioritizedLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(PrioritizedLookupElement.class);
   private final double myPriority;
   private final int myGrouping;
+  private final int myExplicitProximity;
 
-  public PrioritizedLookupElement(T delegate, double priority, int grouping) {
+  private PrioritizedLookupElement(T delegate, double priority, int grouping) {
+    this(delegate, priority, grouping, 0);
+  }
+
+  private PrioritizedLookupElement(T delegate, double priority, int grouping, int explicitProximity) {
     super(delegate);
     myPriority = priority;
     myGrouping = grouping;
+    myExplicitProximity = explicitProximity;
   }
 
   public double getPriority() {
@@ -46,6 +52,10 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
     return myGrouping;
   }
 
+  public int getExplicitProximity() {
+    return myExplicitProximity;
+  }
+
   public static LookupElement withPriority(LookupElement element, double priority) {
     final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     return new PrioritizedLookupElement<LookupElement>(element, priority, prioritized == null ? 0 : prioritized.getGrouping());
@@ -54,5 +64,12 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
   public static LookupElement withGrouping(LookupElement element, int grouping) {
     final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     return new PrioritizedLookupElement<LookupElement>(element, prioritized == null ? 0 : prioritized.getPriority(), grouping);
+  }
+
+  public static LookupElement withExplicitProximity(LookupElement element, int explicitProximity) {
+    final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
+    double priority = prioritized == null ? 0 : prioritized.getPriority();
+    int grouping = prioritized == null ? 0 : prioritized.getGrouping();
+    return new PrioritizedLookupElement<LookupElement>(element, priority, grouping, explicitProximity);
   }
 }

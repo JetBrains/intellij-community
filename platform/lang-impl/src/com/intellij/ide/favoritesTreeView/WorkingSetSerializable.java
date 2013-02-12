@@ -27,8 +27,12 @@ import java.io.IOException;
  */
 public interface WorkingSetSerializable<Valid, Invalid> {
   String getId();
+
   int getVersion();
+
   void serializeMe(final Valid t, final StringBuilder oos) throws IOException;
+
   Valid deserializeMe(Project project, final String ois) throws IOException;
+
   Invalid deserializeMeInvalid(Project project, final String ois) throws IOException;
 }

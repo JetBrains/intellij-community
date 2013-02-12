@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -324,5 +325,26 @@ public class VfsUtilCore {
         return virtualToIoFile(file);
       }
     });
+  }
+
+  /**
+   * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
+   */
+  public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
+    public DistinctVFilesRootsCollection() {
+    }
+
+    public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
+      super(virtualFiles);
+    }
+
+    public DistinctVFilesRootsCollection(VirtualFile[] collection) {
+      super(collection);
+    }
+
+    @Override
+    protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
+      return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
+    }
   }
 }

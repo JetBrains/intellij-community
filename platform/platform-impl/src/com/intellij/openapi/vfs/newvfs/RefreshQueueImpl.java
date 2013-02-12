@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,21 +49,13 @@ public class RefreshQueueImpl extends RefreshQueue {
       queueSession(session, state);
     }
     else {
-      final Application application = ApplicationManager.getApplication();
-      boolean isEDT = application.isDispatchThread();
-      if (isEDT) {
-        try {
-          updateSessionMap(session, true);
-          session.scan();
-        }
-        finally {
-          updateSessionMap(session, false);
-        }
-        boolean hasWriteAction = application.isWriteAccessAllowed();
-        session.fireEvents(hasWriteAction);
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        doScan(session);
+        session.fireEvents(app.isWriteAccessAllowed());
       }
       else {
-        if (((ApplicationEx)application).holdsReadLock()) {
+        if (((ApplicationEx)app).holdsReadLock()) {
           LOG.error("Do not call synchronous refresh from inside read action except for event dispatch thread. " +
                     "This will eventually cause deadlock if there are any events to fire");
           return;
@@ -82,11 +74,9 @@ public class RefreshQueueImpl extends RefreshQueue {
           myRefreshIndicator.start();
           HeavyProcessLatch.INSTANCE.processStarted();
           try {
-            updateSessionMap(session, true);
-            session.scan();
+            doScan(session);
           }
           finally {
-            updateSessionMap(session, false);
             HeavyProcessLatch.INSTANCE.processFinished();
             myRefreshIndicator.stop();
           }
@@ -103,6 +93,16 @@ public class RefreshQueueImpl extends RefreshQueue {
         }
       }
     });
+  }
+
+  private void doScan(RefreshSessionImpl session) {
+    try {
+      updateSessionMap(session, true);
+      session.scan();
+    }
+    finally {
+      updateSessionMap(session, false);
+    }
   }
 
   private void updateSessionMap(RefreshSession session, boolean add) {

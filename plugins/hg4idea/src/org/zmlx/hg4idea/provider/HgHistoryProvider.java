@@ -26,8 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgCopyHistoryRevisionNumberAction;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -109,7 +112,13 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final HgLogCommand logCommand = new HgLogCommand(project);
     logCommand.setFollowCopies(!filePath.isDirectory());
     logCommand.setIncludeRemoved(true);
-    return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
+    try {
+      return logCommand.execute(new HgFile(vcsRoot, filePath), limit, false);
+    }
+    catch (HgCommandException e) {
+      new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
+      return Collections.emptyList();
+    }
   }
 
   public boolean supportsHistoryForDirectories() {

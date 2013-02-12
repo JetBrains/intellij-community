@@ -53,9 +53,11 @@ public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<Fil
   protected void update(PresentationData presentation) {
     if (myVirtualFile != null && myVirtualFile.isDirectory()) {
       presentation.setIcon(AllIcons.Nodes.TreeClosed);
-    } else if (myVirtualFile != null) {
+    }
+    else if (myVirtualFile != null) {
       presentation.setIcon(myVirtualFile.getFileType().getIcon());
-    } else {
+    }
+    else {
       presentation.setIcon(AllIcons.FileTypes.Unknown);
     }
     presentation.setPresentableText(getValue().getName());

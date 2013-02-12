@@ -73,6 +73,14 @@ public abstract class ProgressManager {
     progress(text, "");
   }
 
+  public static void progress2(@NotNull final String text) throws ProcessCanceledException {
+    final ProgressIndicator pi = getInstance().getProgressIndicator();
+    if (pi != null) {
+      pi.checkCanceled();
+      pi.setText2(text);
+    }
+  }
+
   public static void progress(final String text, @Nullable String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {

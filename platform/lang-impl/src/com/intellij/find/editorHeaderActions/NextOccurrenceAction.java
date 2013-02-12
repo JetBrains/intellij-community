@@ -4,6 +4,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -19,8 +20,11 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class NextOccurrenceAction extends EditorHeaderAction implements DumbAware {
+  private final Getter<JTextComponent> myTextField;
+
   public NextOccurrenceAction(EditorSearchComponent editorSearchComponent, Getter<JTextComponent> editorTextField) {
     super(editorSearchComponent);
+    myTextField = editorTextField;
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
     ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
     ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts());
@@ -41,6 +45,6 @@ public class NextOccurrenceAction extends EditorHeaderAction implements DumbAwar
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches());
+    e.getPresentation().setEnabled(getEditorSearchComponent().hasMatches() && !StringUtil.isEmpty(myTextField.get().getText()));
   }
 }

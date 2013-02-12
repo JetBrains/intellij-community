@@ -19,7 +19,6 @@ package com.intellij.ide.favoritesTreeView.actions;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,16 +31,17 @@ import java.util.ArrayList;
  * User: anna
  * Date: Apr 5, 2005
  */
-public class AddAllOpenFilesToFavorites extends AnAction{
+public class AddAllOpenFilesToFavorites extends AnAction {
   private final String myFavoritesName;
-  public AddAllOpenFilesToFavorites(String choosenList) {
-    super(choosenList);
-    myFavoritesName = choosenList;
+
+  public AddAllOpenFilesToFavorites(String chosenList) {
+    getTemplatePresentation().setText(chosenList, false);
+    myFavoritesName = chosenList;
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null){
+    final Project project = e.getProject();
+    if (project == null) {
       return;
     }
 
@@ -53,7 +53,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
     }
   }
 
-  static ArrayList<PsiFile> getFilesToAdd (Project project) {
+  static ArrayList<PsiFile> getFilesToAdd(Project project) {
     ArrayList<PsiFile> result = new ArrayList<PsiFile>();
     final FileEditorManager editorManager = FileEditorManager.getInstance(project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -69,8 +69,8 @@ public class AddAllOpenFilesToFavorites extends AnAction{
   }
 
   public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null){
+    final Project project = e.getProject();
+    if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
     }

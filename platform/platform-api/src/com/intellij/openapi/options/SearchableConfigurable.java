@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * User: anna
- * Date: 08-Feb-2006
+ * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
+ * {@link #com.intellij.ide.ui.search.TraverseUIStarter}
  */
 public interface SearchableConfigurable extends Configurable {
   @NotNull

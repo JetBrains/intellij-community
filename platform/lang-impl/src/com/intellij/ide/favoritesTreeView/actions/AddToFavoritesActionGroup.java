@@ -17,10 +17,16 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: anna
@@ -31,12 +37,17 @@ public class AddToFavoritesActionGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null){
+    final Project project = e.getProject();
+    if (project == null) {
       return AnAction.EMPTY_ARRAY;
     }
-    final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
-    AnAction[] actions = new AnAction[availableFavoritesLists.length + 2];
+    final List<String> availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
+    availableFavoritesLists.remove(FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(e.getDataContext()));
+    if (availableFavoritesLists.isEmpty()) {
+      return new AnAction[]{new AddToNewFavoritesListAction()};
+    }
+
+    AnAction[] actions = new AnAction[availableFavoritesLists.size() + 2];
     int idx = 0;
     for (String favoritesList : availableFavoritesLists) {
       actions[idx++] = new AddToFavoritesAction(favoritesList);
@@ -44,5 +55,11 @@ public class AddToFavoritesActionGroup extends ActionGroup {
     actions[idx++] = Separator.getInstance();
     actions[idx] = new AddToNewFavoritesListAction();
     return actions;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));
   }
 }

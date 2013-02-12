@@ -18,7 +18,6 @@ package com.intellij.junit4;
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
-import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.ComparisonFailure;
 import org.junit.Ignore;
@@ -121,23 +120,32 @@ public class JUnit4TestResultsSender extends RunListener {
 
     final String message = assertion.getMessage();
     if (message != null) {
-      Matcher matcher =
-        Pattern.compile("\nExpected: (.*)\n\\s*got: (.*)", Pattern.DOTALL).matcher(message);
-      if (!matcher.matches()) {
-        matcher = Pattern.compile("\\s*expected same:<(.*)> was not:<(.*)>", Pattern.DOTALL).matcher(message);
+      PacketFactory notification = createExceptionNotification(assertion, message, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
+      if (notification == null) {
+        notification = createExceptionNotification(assertion, message, "\nExpected: (.*)\n\\s*got: (.*)");
       }
-      if (!matcher.matches()) {
-        matcher = Pattern.compile("\\s*expected:<(.*)> but was:<(.*)>", Pattern.DOTALL).matcher(message);
+      if (notification == null) {
+        notification = createExceptionNotification(assertion, message, "\\s*expected same:<(.*)> was not:<(.*)>");
       }
-      if (!matcher.matches()) {
-        matcher = Pattern.compile("\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"", Pattern.DOTALL).matcher(message);
+      if (notification == null) {
+        notification = createExceptionNotification(assertion, message, "\\s*expected:<(.*)> but was:<(.*)>");
       }
-      if (matcher.matches()) {
-        return ComparisonDetailsExtractor
-          .create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+      if (notification == null) {
+        notification = createExceptionNotification(assertion, message, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
+      }
+      if (notification != null) {
+        return notification;
       }
     }
     return new ExceptionPacketFactory(PoolOfTestStates.FAILED_INDEX, assertion);
+  }
+
+  private static PacketFactory createExceptionNotification(Throwable assertion, String message, final String regex) {
+    final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL).matcher(message);
+    if (matcher.matches()) {
+      return ComparisonDetailsExtractor.create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+    }
+    return null;
   }
 
   private Packet prepareDefectPacket(Description test, Throwable assertion) {

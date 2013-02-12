@@ -27,7 +27,7 @@ import java.util.List;
 public abstract class ZenCodingNode {
   @NotNull
   public abstract List<GenerationNode> expand(int numberInIteration,
-                                              String surroundedText,
+                                              int totalIterations, String surroundedText,
                                               CustomTemplateCallback callback,
                                               boolean insertSurroundedTextAtTheEnd, GenerationNode parent);
 

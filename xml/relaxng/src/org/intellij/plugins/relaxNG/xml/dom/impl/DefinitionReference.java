@@ -153,6 +153,7 @@ public class DefinitionReference extends PsiReferenceBase.Poly<XmlAttributeValue
     }
   }
 
+  @NotNull
   public String getUnresolvedMessagePattern() {
     return "Unresolved pattern reference ''{0}''";
   }

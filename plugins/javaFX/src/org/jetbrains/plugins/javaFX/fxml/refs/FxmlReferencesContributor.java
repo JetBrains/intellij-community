@@ -59,6 +59,12 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
                                                                                      .withParent(XmlPatterns.xmlTag()
+                                                                                                   .withName(FxmlConstants.FX_SCRIPT)))
+                                          .and(attributeValueInFxml),
+                                        new JavaFxSourceReferenceProvider());
+
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
+                                                                                     .withParent(XmlPatterns.xmlTag()
                                                                                                    .withName(FxmlConstants.FX_REFERENCE)))
                                           .and(attributeValueInFxml),
                                         new JavaFxComponentIdReferenceProvider());

@@ -72,7 +72,7 @@ public class FilePathImpl implements FilePath {
     return new File(child.getPath());
   }
 
-  private void detectCharset() {
+  private void detectFileType() {
     VirtualFile file = myVirtualFile;
     if (file == null || !file.isValid() || file.isDirectory()) return;
     FileType fileType = file.getFileType();
@@ -214,7 +214,7 @@ public class FilePathImpl implements FilePath {
     if (myVirtualFile != null && !myVirtualFile.isValid()) {
       myVirtualFile = null;
     }
-    detectCharset();
+    detectFileType();
     return myVirtualFile;
   }
 

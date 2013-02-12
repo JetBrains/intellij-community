@@ -24,25 +24,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -51,108 +43,120 @@ import java.util.List;
  * Date: 6/7/12
  * Time: 4:33 PM
  */
-public class TaskDefaultFavoriteListProvider implements FavoritesListProvider {
+public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvider {
   public static final String CURRENT_TASK = "Current task";
 
-  @Override
-  public String getListName(Project project) {
-    return CURRENT_TASK;
+  public TaskDefaultFavoriteListProvider(Project project) {
+    super(project, CURRENT_TASK);
   }
 
-  @Override
-  public boolean canBeRemoved() {
-    return false;
-  }
+  //@Override
+  //public String getListName(Project project) {
+  //  return CURRENT_TASK;
+  //}
+
+  //@Override
+  //public boolean canBeRemoved() {
+  //  return false;
+  //}
+  //
+  //@Override
+  //public boolean isTreeLike() {
+  //  return false;
+  //}
 
   @Override
-  public boolean isTreeLike() {
-    return false;
-  }
-
-  @Override
-  public Comparator<FavoritesTreeNodeDescriptor> getNodeDescriptorComparator() {
-    return new Comparator<FavoritesTreeNodeDescriptor>() {
-      @Override
-      public int compare(FavoritesTreeNodeDescriptor o1, FavoritesTreeNodeDescriptor o2) {
-        return o1.getIndex() - o2.getIndex();
-      }
-    };
-  }
-
-  @Override
-  public Operation getCustomDeleteOperation() {
+  public FavoritesListNode createFavoriteListNode(Project project) {
     return null;
   }
 
-  @Override
-  public Operation getCustomAddOperation() {
-    return new Operation() {
-      @Override
-      public boolean willHandle(DnDAwareTree tree) {
-        final int count = tree.getSelectionCount();
-        if (count != 1) {
-          return false;
-        }
-        final TreePath path = tree.getSelectionPath();
-        if (path.getPathCount() > 2) return true;
-        return false;
-      }
+  //@Override
+  //public Comparator<FavoritesTreeNodeDescriptor> getNodeDescriptorComparator() {
+  //  return new Comparator<FavoritesTreeNodeDescriptor>() {
+  //    @Override
+  //    public int compare(FavoritesTreeNodeDescriptor o1, FavoritesTreeNodeDescriptor o2) {
+  //      return o1.getIndex() - o2.getIndex();
+  //    }
+  //  };
+  //}
 
-      @Override
-      public String getCustomName() {
-        return "New Note";
-      }
-
-      @Override
-      public void handle(final Project project, final DnDAwareTree tree) {
-        final Object component = tree.getSelectionPath().getLastPathComponent();
-        if (component instanceof DefaultMutableTreeNode) {
-          final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
-          if (uo instanceof FavoritesTreeNodeDescriptor) {
-            final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
-
-            final AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
-            final NoteNode node = new NoteNode("Test text", false);
-            final NoteProjectNode noteNode = new NoteProjectNode(project, node, favoritesManager.getViewSettings());
-            final Consumer<String> after = new Consumer<String>() {
-              @Override
-              public void consume(String text) {
-                node.setText(text);
-                // above it
-                final AbstractTreeNode parent = treeNode.getParent();
-                noteNode.setParent(parent);
-                if (parent instanceof ProjectViewNodeWithChildrenList) {
-                  // add through manager
-                  //((ProjectViewNodeWithChildrenList)parent).addChildBefore(noteNode, treeNode);
-                  final List<AbstractTreeNode> pathToSelected = FavoritesTreeUtil.getLogicalPathToSelected(tree);
-                  final List<AbstractTreeNode> elements;
-                  AbstractTreeNode sibling;
-                  if (pathToSelected.isEmpty()) {
-                    elements = pathToSelected;
-                    sibling = null;
-                  }
-                  else {
-                    elements = pathToSelected.subList(0, pathToSelected.size() - 1);
-                    sibling = pathToSelected.get(pathToSelected.size() - 1);
-                  }
-                  favoritesManager.addRoot(CURRENT_TASK, elements, noteNode, sibling);
-                } else if (parent instanceof FavoritesListNode) {
-                  favoritesManager.addRoot(CURRENT_TASK, Collections.<AbstractTreeNode>emptyList(), noteNode, treeNode);
-                }
-              }
-            };
-            showNotePopup(project, tree, after, "");
-          }
-        }
-      }
-    };
-  }
+  //@Override
+  //public Operation createCustomOperation(OperationType operationType) {
+  //  switch (operationType) {
+  //    case ADD:return getCustomAddOperation();
+  //    case EDIT: return getCustomEditOperation();
+  //    default:return null;
+  //  }
+  //}
+  //
+  // private Operation getCustomAddOperation() {
+  //  return new Operation() {
+  //    @Override
+  //    public boolean willHandle(final Project project, @NotNull Set<Object> selectedObjects) {//todo
+  //      //final int count = tree.getSelectionCount();
+  //      //if (count != 1) {
+  //      //  return false;
+  //      //}
+  //      //final TreePath path = tree.getSelectionPath();
+  //      //if (path.getPathCount() > 2) return true;
+  //      return false;
+  //    }
+  //
+  //    @Override
+  //    public String getCustomName() {
+  //      return "New Note";
+  //    }
+  //
+  //    @Override
+  //    public void handle(final Project project, @NotNull Set<Object> selectedObjects) {//todo
+  //final Object component = tree.getSelectionPath().getLastPathComponent();
+  //if (component instanceof DefaultMutableTreeNode) {
+  //  final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
+  //  if (uo instanceof FavoritesTreeNodeDescriptor) {
+  //    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+  //
+  //    final AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
+  //    final NoteNode node = new NoteNode("Test text", false);
+  //    final NoteProjectNode noteNode = new NoteProjectNode(project, node, favoritesManager.getViewSettings());
+  //    final Consumer<String> after = new Consumer<String>() {
+  //      @Override
+  //      public void consume(String text) {
+  //        node.setText(text);
+  //        // above it
+  //        final AbstractTreeNode parent = treeNode.getParent();
+  //        noteNode.setParent(parent);
+  //        if (parent instanceof ProjectViewNodeWithChildrenList) {
+  //          // add through manager
+  //          //((ProjectViewNodeWithChildrenList)parent).addChildBefore(noteNode, treeNode);
+  //          final List<AbstractTreeNode> pathToSelected = FavoritesTreeUtil.getLogicalPathToSelected(tree);
+  //          final List<AbstractTreeNode> elements;
+  //          AbstractTreeNode sibling;
+  //          if (pathToSelected.isEmpty()) {
+  //            elements = pathToSelected;
+  //            sibling = null;
+  //          }
+  //          else {
+  //            elements = pathToSelected.subList(0, pathToSelected.size() - 1);
+  //            sibling = pathToSelected.get(pathToSelected.size() - 1);
+  //          }
+  //          favoritesManager.addRoot(CURRENT_TASK, elements, noteNode, sibling);
+  //        } else if (parent instanceof FavoritesListNode) {
+  //          favoritesManager.addRoot(CURRENT_TASK, Collections.<AbstractTreeNode>emptyList(), noteNode, treeNode);
+  //        }
+  //      }
+  //    };
+  //    showNotePopup(project, tree, after, "");
+  //  }
+  //}
+  //}
+  //};
+  //}
 
   // ! containing self
   public static List<AbstractTreeNode> getPathToUsualNode(final AbstractTreeNode treeNode) {
     final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     AbstractTreeNode current = treeNode;
-    while (current != null && (! (current instanceof FavoritesRootNode))) {
+    while (current != null && (!(current instanceof FavoritesRootNode))) {
       result.add(current);
       current = current.getParent();
     }
@@ -206,106 +210,105 @@ public class TaskDefaultFavoriteListProvider implements FavoritesListProvider {
     }, ModalityState.NON_MODAL, project.getDisposed());
   }
 
-  @Override
-  public Operation getCustomEditOperation() {
-    return new Operation() {
-      @Override
-      public boolean willHandle(DnDAwareTree tree) {
-        final int count = tree.getSelectionCount();
-        if (count != 1) {
-          return false;
-        }
-        final TreePath path = tree.getSelectionPath();
-        if (path.getPathCount() < 2) return false;
-        // todo temporarily
-        if (path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
-          final Object uo = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-          if (uo instanceof FavoritesTreeNodeDescriptor) {
-            return ((FavoritesTreeNodeDescriptor)uo).getElement() instanceof NoteProjectNode;
-          }
-        }
-        return false;
-      }
+  //private Operation getCustomEditOperation() {
+  //  return new Operation() {
+  //    @Override
+  //    public boolean willHandle(final Project project, @NotNull Set<Object> selectedObjects) {//todo
+  //final int count = tree.getSelectionCount();
+  //if (count != 1) {
+  //  return false;
+  //}
+  //final TreePath path = tree.getSelectionPath();
+  //if (path.getPathCount() < 2) return false;
+  //// todo temporarily
+  //if (path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+  //  final Object uo = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+  //  if (uo instanceof FavoritesTreeNodeDescriptor) {
+  //    return ((FavoritesTreeNodeDescriptor)uo).getElement() instanceof NoteProjectNode;
+  //  }
+  //}
+  //return false;
+  //}
 
-      @Override
-      public String getCustomName() {
-        return "Edit Note";
-      }
+  //@Override
+  //public String getCustomName() {
+  //  return "Edit Note";
+  //}
 
-      @Override
-      public void handle(Project project, final DnDAwareTree tree) {
-        final Object component = tree.getSelectionPath().getLastPathComponent();
-        if (component instanceof DefaultMutableTreeNode) {
-          final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
-          if (uo instanceof FavoritesTreeNodeDescriptor) {
-            final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+  //@Override
+  //public void handle(Project project, @NotNull Set<Object> selectedObjects) {//todo
+  //final Object component = tree.getSelectionPath().getLastPathComponent();
+  //if (component instanceof DefaultMutableTreeNode) {
+  //  final Object uo = ((DefaultMutableTreeNode)component).getUserObject();
+  //  if (uo instanceof FavoritesTreeNodeDescriptor) {
+  //    final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
+  //
+  //    final AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
+  //
+  //    if (treeNode instanceof NoteProjectNode) {
+  //      showNotePopup(project, tree, new Consumer<String>() {
+  //        @Override
+  //        public void consume(String s) {
+  //          ((NoteProjectNode)treeNode).getValue().setText(s);
+  //          favoritesManager.editRoot(CURRENT_TASK, FavoritesTreeUtil.getLogicalIndexPathTo(tree.getSelectionPath()), treeNode);
+  //          favoritesManager.fireListeners(CURRENT_TASK);
+  //        }
+  //      }, ((NoteProjectNode)treeNode).getValue().getText());
+  //    }
+  //  }
+  //}
+  //}
+  //};
+  //}
 
-            final AbstractTreeNode treeNode = ((FavoritesTreeNodeDescriptor)uo).getElement();
-
-            if (treeNode instanceof NoteProjectNode) {
-              showNotePopup(project, tree, new Consumer<String>() {
-                @Override
-                public void consume(String s) {
-                  ((NoteProjectNode)treeNode).getValue().setText(s);
-                  favoritesManager.editRoot(CURRENT_TASK, FavoritesTreeUtil.getLogicalIndexPathTo(tree.getSelectionPath()), treeNode);
-                  favoritesManager.fireListeners(CURRENT_TASK);
-                }
-              }, ((NoteProjectNode)treeNode).getValue().getText());
-            }
-          }
-        }
-      }
-    };
-  }
-
-  @Override
-  public TreeCellRenderer getTreeCellRenderer() {
-    return new MyRenderer();
-  }
-
-  private static class MyRenderer implements TreeCellRenderer {
-    private AbstractTreeNode myNode;
-
-    private final MultilineTreeCellRenderer myMultilineTreeCellRenderer = new MultilineTreeCellRenderer() {
-      @Override
-      protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (myNode instanceof NoteProjectNode) {
-          setForeground(UIUtil.getListSelectionBackground());
-          final NoteNode note = ((NoteProjectNode)myNode).getValue();
-          final String[] lines = StringUtil.splitByLines(note.getText());
-          setText(lines, null);
-        }
-      }
-    };
-
-    private final MultiLineLabel myLabel = new MultiLineLabel();
-
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      if (value instanceof DefaultMutableTreeNode) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        //only favorites roots to explain
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof FavoritesTreeNodeDescriptor) {
-          final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
-          AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
-          if (treeNode instanceof NoteProjectNode) {
-            myNode = treeNode;
-            myLabel.setText(((NoteProjectNode)myNode).getValue().getText());
-            //myLabel.setBackground(selected ? );
-            myMultilineTreeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-            return myMultilineTreeCellRenderer;
-            //return myLabel;
-          }
-        }
-      }
-      return null;
-    }
-  }
+  //@Override
+  //public TreeCellRenderer getTreeCellRenderer() {
+  //  return new MyRenderer();
+  //}
+  //
+  //private static class MyRenderer implements TreeCellRenderer {
+  //  private AbstractTreeNode myNode;
+  //
+  //  private final MultilineTreeCellRenderer myMultilineTreeCellRenderer = new MultilineTreeCellRenderer() {
+  //    @Override
+  //    protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  //      if (myNode instanceof NoteProjectNode) {
+  //        setForeground(UIUtil.getListSelectionBackground());
+  //        final NoteNode note = ((NoteProjectNode)myNode).getValue();
+  //        final String[] lines = StringUtil.splitByLines(note.getText());
+  //        setText(lines, null);
+  //      }
+  //    }
+  //  };
+  //
+  //  private final MultiLineLabel myLabel = new MultiLineLabel();
+  //
+  //  @Override
+  //  public Component getTreeCellRendererComponent(JTree tree,
+  //                                                Object value,
+  //                                                boolean selected,
+  //                                                boolean expanded,
+  //                                                boolean leaf,
+  //                                                int row,
+  //                                                boolean hasFocus) {
+  //    if (value instanceof DefaultMutableTreeNode) {
+  //      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
+  //      //only favorites roots to explain
+  //      final Object userObject = node.getUserObject();
+  //      if (userObject instanceof FavoritesTreeNodeDescriptor) {
+  //        final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
+  //        AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
+  //        if (treeNode instanceof NoteProjectNode) {
+  //          myNode = treeNode;
+  //          myLabel.setText(((NoteProjectNode)myNode).getValue().getText());
+  //          //myLabel.setBackground(selected ? );
+  //          myMultilineTreeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+  //          return myMultilineTreeCellRenderer;
+  //          //return myLabel;
+  //        }
+  //      }
+  //    }
+  //    return null;
+  //  }
+  //}
 }

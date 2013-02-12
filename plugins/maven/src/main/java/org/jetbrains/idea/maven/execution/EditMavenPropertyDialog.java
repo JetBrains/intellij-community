@@ -25,6 +25,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
 import java.util.Map;
 
 public class EditMavenPropertyDialog extends DialogWrapper {
@@ -40,13 +41,14 @@ public class EditMavenPropertyDialog extends DialogWrapper {
     myAvailableProperties = availableProperties;
 
     installFocusListeners();
-    installPropertySelectionListener();
     fillAvailableProperties();
 
     if (value != null) {
       myNameBox.getEditor().setItem(value.getFirst());
       myValueField.setText(value.getSecond());
     }
+
+    installPropertySelectionListener();
 
     init();
   }
@@ -79,6 +81,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
 
   private void fillAvailableProperties() {
     String[] keys = ArrayUtil.toStringArray(myAvailableProperties.keySet());
+    Arrays.sort(keys);
     myNameBox.setModel(new DefaultComboBoxModel(keys));
   }
 

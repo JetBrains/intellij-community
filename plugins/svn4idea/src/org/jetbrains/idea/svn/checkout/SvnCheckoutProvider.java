@@ -84,20 +84,19 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       public void run(@NotNull final ProgressIndicator indicator) {
         SvnWorkingCopyFormatHolder.setPresetFormat(selectedFormat);
 
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
         if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
           client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
         }
-        client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
+        client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, ProgressManager.getInstance().getProgressIndicator()));
         client.setIgnoreExternals(ignoreExternals);
         try {
-          progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+          ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
           if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
             client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
           }
           client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, depth, true);
-          progressIndicator.checkCanceled();
+          ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
         catch (SVNCancelException ignore) {

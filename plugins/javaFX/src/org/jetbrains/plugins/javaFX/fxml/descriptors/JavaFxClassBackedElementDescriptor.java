@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -32,7 +31,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -76,17 +74,9 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
         collectStaticElementDescriptors(context, children);
 
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
-        if (annotation != null) {
-          final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
-          if (memberValue != null) {
-            final String propertyName = StringUtil.stripQuotesAroundValue(memberValue.getText());
-            final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(propertyName, myPsiClass);
-            if (getter != null) {
-              final PsiType returnType = getter.getReturnType();
-              JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
-            }
-          }
+        final PsiType returnType = JavaFxPsiUtil.getDefaultPropertyExpectedType(myPsiClass);
+        if (returnType != null) {
+          JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
         }
 
         for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
@@ -195,7 +185,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
         final PsiType fieldType = field.getType();
         if (!JavaFxPsiUtil.isReadOnly(field.getName(), context) && 
-            InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_PROPERTY) || 
+            InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) || 
             fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
             includeListProperties && GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
           children.add(factory.fun(field));
@@ -215,6 +205,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(attributeName, context);
         if (propertySetter != null) {
           return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
+        }
+        final PsiMethod getter = JavaFxPsiUtil.findPropertyGetter(attributeName, myPsiClass);
+        if (getter != null) {
+          return new JavaFxPropertyAttributeDescriptor(attributeName, myPsiClass);
         }
         return null;
       }

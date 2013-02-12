@@ -31,6 +31,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
     private boolean allowDanglingMetacharacters;
     private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
+    private boolean allowHexDigitClass;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
@@ -39,6 +40,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
       this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
       this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
       this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
+      this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
     }
 
     private void yypushstate(int state) {
@@ -155,6 +157,7 @@ HEX_CHAR=[0-9a-fA-F]
 {ESCAPE}  {BOUNDARY}          { return yystate() != CLASS2 ? RegExpTT.BOUNDARY : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }
 
+{ESCAPE} [hH]                 { return (allowHexDigitClass ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN); }
 {ESCAPE}  [:letter:]          { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
 {ESCAPE}  [\n\b\t\r\f ]       { return commentMode ? RegExpTT.CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
 

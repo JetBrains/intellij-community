@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui.popup.util;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -135,15 +137,15 @@ public class PopupUtil {
             final Project project = projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
             final JFrame jFrame = WindowManager.getInstance().getFrame(project);
             if (jFrame != null) {
-              showBalloonForComponent(jFrame, message, type, true);
+              showBalloonForComponent(jFrame, message, type, true, project);
             } else {
               LOG.info("Can not get component to show message: " + message);
             }
             return;
           }
-          showBalloonForComponent(frame.getComponent(), message, type, true);
+          showBalloonForComponent(frame.getComponent(), message, type, true, frame.getProject());
         } else {
-          showBalloonForComponent(targetWindow, message, type, true);
+          showBalloonForComponent(targetWindow, message, type, true, null);
         }
       }
     };
@@ -151,8 +153,9 @@ public class PopupUtil {
   }
 
   public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
-                                             final boolean atTop) {
+                                             final boolean atTop, @Nullable final Disposable disposable) {
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
+      balloonBuilder.setDisposable(disposable == null ? ApplicationManager.getApplication() : disposable);
       Balloon balloon = balloonBuilder.createBalloon();
       Dimension size = component.getSize();
       Balloon.Position position;

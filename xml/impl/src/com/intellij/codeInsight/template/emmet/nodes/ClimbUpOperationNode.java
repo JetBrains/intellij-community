@@ -46,17 +46,17 @@ public class ClimbUpOperationNode extends ZenCodingNode {
   @NotNull
   @Override
   public List<GenerationNode> expand(int numberInIteration,
-                                     String surroundedText,
+                                     int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     List<GenerationNode> result = newArrayList();
-    result.addAll(myLeftOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
+    result.addAll(myLeftOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
     GenerationNode grandParent = parent != null ? parent.getParent() : null;
     if (grandParent != null) {
-      myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, grandParent);
+      myRightOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, grandParent);
     }
     else {
-      result.addAll(myRightOperand.expand(numberInIteration, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
+      result.addAll(myRightOperand.expand(numberInIteration, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd, parent));
     }
     return result;
   }

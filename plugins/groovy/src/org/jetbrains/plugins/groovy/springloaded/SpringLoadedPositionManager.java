@@ -61,10 +61,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       Set<ReferenceType> res = new HashSet<ReferenceType>();
 
       for (ReferenceType referenceType : referenceTypes) {
-        List<ReferenceType> types = findNested(referenceType, classPosition);
-        if (types != null) {
-          res.addAll(types);
-        }
+        findNested(res, referenceType, classPosition);
       }
 
       if (res.isEmpty()) {
@@ -166,51 +163,37 @@ public class SpringLoadedPositionManager implements PositionManager {
       && GENERATED_CLASS_NAME.matcher(name.substring(ownerClassName.length())).matches();
   }
   
-  @Nullable
-  private static List<ReferenceType> findNested(ReferenceType fromClass, SourcePosition classPosition) {
-    if (!fromClass.isPrepared()) return null;
+  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, SourcePosition classPosition) {
+    if (!fromClass.isPrepared()) return;
 
     List<ReferenceType> nestedTypes = fromClass.nestedTypes();
 
-    List<ReferenceType> springLoadedGeneratedClasses = new ArrayList<ReferenceType>();
-    
+    ReferenceType springLoadedGeneratedClass = null;
+
     for (ReferenceType nested : nestedTypes) {
       if (!nested.isPrepared()) continue;
 
       if (isSpringLoadedGeneratedClass(fromClass, nested)) {
-        if (springLoadedGeneratedClasses.size() > 0 && !springLoadedGeneratedClasses.get(0).name().equals(nested.name())) {
-          springLoadedGeneratedClasses.clear(); // Only latest generated classes should be used.
+        if (springLoadedGeneratedClass == null || !springLoadedGeneratedClass.name().equals(nested.name())) {
+          springLoadedGeneratedClass = nested; // Only latest generated classes should be used.
         }
-        
-        springLoadedGeneratedClasses.add(nested);
       }
       else {
-        final List<ReferenceType> found = findNested(nested, classPosition);
-        if (found != null) {
-          return found;
-        }
+        findNested(res, nested, classPosition);
       }
     }
 
     try {
       final int lineNumber = classPosition.getLine() + 1;
 
-      if (springLoadedGeneratedClasses.isEmpty()) {
-        if (fromClass.locationsOfLine(lineNumber).size() > 0) {
-          return Collections.singletonList(fromClass);
-        }
-      }
-      else {
-        ReferenceType referenceType = springLoadedGeneratedClasses.get(0);
-        if (referenceType.locationsOfLine(lineNumber).size() > 0) {
-          return springLoadedGeneratedClasses;
-        }
+      ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
+
+      if (effectiveRef.locationsOfLine(lineNumber).size() > 0) {
+        res.add(effectiveRef);
       }
     }
     catch (AbsentInformationException ignored) {
     }
-
-    return null;
   }
 
 }

@@ -23,8 +23,8 @@ import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitorAdapter;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
-import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import org.jetbrains.plugins.gradle.model.id.GradleJarId;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryId;
@@ -59,7 +59,10 @@ public class GradleOutdatedLibraryVersionPostProcessor implements GradleProjectS
   private static final boolean SKIP = SystemProperties.getBooleanProperty("gradle.skip.outdated.processing", false);
 
   @Override
-  public void processChanges(@NotNull Collection<GradleProjectStructureChange> changes, @NotNull Project project) {
+  public void processChanges(@NotNull Collection<GradleProjectStructureChange> changes,
+                             @NotNull Project project,
+                             boolean onIdeProjectStructureChange)
+  {
     if (SKIP) {
       return;
     }
@@ -120,11 +123,24 @@ public class GradleOutdatedLibraryVersionPostProcessor implements GradleProjectS
       ));
       libraryIds.add(gradleInfo.libraryId);
       libraryIds.add(ideInfo.libraryId);
+      
+      // There is a possible situation that gradle project has more than one module which depend on the same library
+      // but some of the corresponding ide modules doesn't have that library dependency at all. We want to show it as
+      // gradle-local for it then. The same is true for the opposite situation (ide-local outdated library).
+      Map<String /* module name */, GradleLibraryDependencyPresenceChange> gradleLibraryDependencies = ContainerUtilRt.newHashMap();
       for (GradleLibraryDependencyPresenceChange c : gradleInfo.dependencyPresenceChanges) {
-        changes.remove(c);
+        GradleLibraryDependencyId e = c.getGradleEntity();
+        assert e != null;
+        gradleLibraryDependencies.put(e.getOwnerModuleName(), c);
       }
       for (GradleLibraryDependencyPresenceChange c : ideInfo.dependencyPresenceChanges) {
-        changes.remove(c);
+        GradleLibraryDependencyId e = c.getIdeEntity();
+        assert e != null;
+        GradleLibraryDependencyPresenceChange gradleChange = gradleLibraryDependencies.remove(e.getOwnerModuleName());
+        if (gradleChange != null) {
+          changes.remove(gradleChange);
+          changes.remove(c);
+        }
       }
     }
     //endregion
