@@ -24,9 +24,11 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.WeakHashMap;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -34,7 +36,8 @@ import java.util.List;
  */
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
-
+  private static ThreadLocal<Map<PsiExpression, JavaResolveResult[]>> ourResults = new ThreadLocal<Map<PsiExpression, JavaResolveResult[]>>();
+  
   @Override
   public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
                                                                           PsiExpressionList expressionList,
@@ -48,7 +51,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     try {
       //can't call resolve() since it obtains full substitution, that may result in infinite recursion
       PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
-      final JavaResolveResult[] results = processor.getResult();
+      final JavaResolveResult[] results = getCachedResults(contextCall, processor);
       PsiMethod owner = (PsiMethod)typeParameter.getOwner();
       if (owner == null) return null;
 
@@ -84,7 +87,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
             });
             final Pair<PsiType, ConstraintType> constraint =
               PsiResolveHelperImpl.getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false,
-                                                                             PsiUtil.getLanguageLevel(innerMethodCall));
+                                                                             PsiUtil.getLanguageLevel(finalParameter));
             if (constraint != null) return constraint;
           }
         }
@@ -95,5 +98,26 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     }
 
     return null;
+  }
+
+  private static JavaResolveResult[] getCachedResults(PsiCallExpression contextCall, MethodCandidatesProcessor processor) {
+    final PsiCallExpression preparedKey = contextCall.getCopyableUserData(PsiResolveHelperImpl.CALL_EXPRESSION_KEY);
+    final JavaResolveResult[] results;
+    if (preparedKey != null) {
+      Map<PsiExpression, JavaResolveResult[]> map = ourResults.get();
+      if (map != null && map.containsKey(preparedKey)) {
+        results = map.get(preparedKey);
+      } else {
+        results = processor.getResult();
+        if (map == null) {
+          map = new WeakHashMap<PsiExpression, JavaResolveResult[]>();
+          ourResults.set(map);
+        }
+        map.put(preparedKey, results);
+      }
+    } else {
+      results = processor.getResult();
+    }
+    return results;
   }
 }
