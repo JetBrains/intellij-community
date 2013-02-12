@@ -336,6 +336,10 @@ public class MavenProjectImporter {
       }, "\n");
   }
 
+  private static void doRefreshFiles(Set<File> files) {
+    LocalFileSystem.getInstance().refreshIoFiles(files);
+  }
+
   private void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
@@ -355,21 +359,15 @@ public class MavenProjectImporter {
       if (each.isResolved()) files.add(each.getFile());
     }
 
-    final Runnable r = new Runnable() {
-      public void run() {
-        LocalFileSystem.getInstance().refreshIoFiles(files);
-      }
-    };
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run();
+      doRefreshFiles(files);
     }
     else {
       postTasks.add(new MavenProjectsProcessorTask() {
         public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
           throws MavenProcessCanceledException {
           indicator.setText("Refreshing files...");
-          r.run();
+          doRefreshFiles(files);
         }
       });
     }
