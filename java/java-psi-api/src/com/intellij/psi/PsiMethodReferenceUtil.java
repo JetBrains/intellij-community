@@ -142,7 +142,7 @@ public class PsiMethodReferenceUtil {
       final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(methodReferenceExpression);
       final PsiElement resolve = result.getElement();
       if (resolve instanceof PsiMethod) {
-        final MethodSignature signature1 = method.getSignature(resolveResult.getSubstitutor());
+        final MethodSignature signature1 = method.getSignature(LambdaUtil.getSubstitutor(method, resolveResult));
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
         subst = subst.putAll(qualifierResolveResult.getSubstitutor());
         subst = subst.putAll(result.getSubstitutor());
