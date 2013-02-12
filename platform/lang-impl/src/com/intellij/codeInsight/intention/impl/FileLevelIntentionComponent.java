@@ -31,7 +31,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.LightColors;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -98,13 +98,13 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
 
   private  Color getColor(HighlightSeverity severity) {
     if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
-      return LightColors.RED;
+      return JBColor.RED;
     }
 
     if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
-      return LightColors.YELLOW;
+      return JBColor.YELLOW;
     }
 
-    return LightColors.GREEN;
+    return JBColor.GREEN;
   }
 }
