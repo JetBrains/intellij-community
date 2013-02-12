@@ -16,8 +16,10 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.*;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,9 +57,30 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   @Nullable
   @Override
   public PsiField fromString(@Nullable @NonNls String s, ConvertContext context) {
+    if (s == null) return null;
     PsiClass value = getEPBeanClass(context);
     if (value == null) return null;
-    return value.findFieldByName(s, true);
+    PsiField field = value.findFieldByName(s, true);
+    if (field != null) {
+      return field;
+    }
+    return findFieldByAttributeValue(value, s);
+  }
+
+  private static PsiField findFieldByAttributeValue(PsiClass psiClass, @NotNull String attrNameToFind) {
+    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getConstantEvaluationHelper();
+    for (PsiField psiField : psiClass.getAllFields()) {
+      final PsiMethod getter = PropertyUtils.findGetterForField(psiField);
+      final PsiMethod setter = PropertyUtils.findSetterForField(psiField);
+      final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(Attribute.class, psiField, getter, setter);
+      if (attrAnno != null) {
+        final String attrName = ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
+        if (attrNameToFind.equals(attrName)) {
+          return psiField;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

@@ -152,7 +152,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  private static With findWithElement(List<With> elements, PsiField field) {
+  public static With findWithElement(List<With> elements, PsiField field) {
     for (With element : elements) {
       if (field.getName().equals(element.getAttribute().getStringValue())) {
         return element;
@@ -174,7 +174,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
-        boolean isClass = withElement != null || fieldName.endsWith("Class");
+        boolean isClass = withElement != null || isClassField(fieldName);
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), isClass ? PsiClass.class : String.class).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
@@ -217,13 +217,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (fieldName.endsWith("Class") || withElement != null) {
+    if (isClassField(fieldName) || withElement != null) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }
 
+  public static boolean isClassField(String fieldName) {
+    return fieldName.endsWith("Class") || fieldName.equals("implementation");
+  }
+
   @Nullable
-  private static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+  static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
       if (member != null) {
         final PsiModifierList modifierList = member.getModifierList();
@@ -274,9 +278,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  private static String getStringAttribute(final PsiAnnotation annotation,
-                                           final String name,
-                                           final PsiConstantEvaluationHelper evalHelper) {
+  static String getStringAttribute(final PsiAnnotation annotation,
+                                   final String name,
+                                   final PsiConstantEvaluationHelper evalHelper) {
     String value = getAttributeValue(annotation, name);
     if (value != null) return value;
     final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
