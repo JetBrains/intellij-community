@@ -124,7 +124,7 @@ public class SvnChangeProvider implements ChangeProvider {
     for (NestedCopiesBuilder.MyPointInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
         final VirtualFile root = info.getFile();
-        final VirtualFile wcDb = lfs.refreshAndFindFileByIoFile(SvnUtil.getWcDb(new File(root.getPath())));
+        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(new File(root.getPath()))), true, false, null);
       }
     }
   }
