@@ -18,8 +18,12 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -61,9 +65,21 @@ public class AddWithTagFix implements LocalQuickFix {
       if (attributeName == null) {
         attributeName = field.getName();
       }
+      if (attributeName.equals("forClass")) {
+        continue;
+      }
       With with = extensionPoint.addWith();
       with.getAttribute().setStringValue(attributeName);
-      with.getImplements().setStringValue("");
+      String epName = extensionPoint.getName().getStringValue();
+      String className = "";
+      if (epName != null) {
+        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(StringUtil.capitalize(epName),
+                                                                                            ProjectScope.getAllScope(project));
+        if (classesByName.length == 1) {
+          className = classesByName[0].getQualifiedName();
+        }
+      }
+      with.getImplements().setStringValue(className);
       if (navTarget == null) {
         navTarget = with.getImplements().getXmlAttributeValue();
       }
