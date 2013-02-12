@@ -3,7 +3,6 @@ from django.core.management import ManagementUtility
 import inspect
 import os
 import sys
-from importlib import import_module
 
 project_directory = sys.argv.pop()
 sys.path.insert(0, project_directory)
@@ -13,7 +12,7 @@ try:
   # this stuff was done earlier by setup_environ() which was removed in 1.4
   sys.path.append(os.path.join(project_directory, os.pardir))
   project_name = os.path.basename(project_directory)
-  project_module = import_module(project_name)
+  __import__(project_name)
   sys.path.pop()
 except ImportError:
   # project has custom structure (project directory is not importable)

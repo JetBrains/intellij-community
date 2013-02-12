@@ -263,6 +263,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testReplaceSelection() {    //PY-8744
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 

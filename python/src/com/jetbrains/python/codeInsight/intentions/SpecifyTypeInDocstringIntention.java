@@ -6,11 +6,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,5 +71,31 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   @Override
   protected void updateText(boolean isReturn) {
     myText = isReturn ? PyBundle.message("INTN.specify.return.type") : PyBundle.message("INTN.specify.type");
+  }
+
+  @Override
+  protected boolean isTypeDefined(PyExpression problemElement) {
+    return isDefinedInDocstring(problemElement);
+  }
+
+  private boolean isDefinedInDocstring(PyExpression problemElement) {
+    PsiReference reference = problemElement.getReference();
+    PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
+    if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
+      final String docstring = pyFunction.getDocStringValue();
+      if (docstring != null) {
+        String name = problemElement.getName();
+        if (problemElement instanceof PyQualifiedExpression) {
+          final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+          if (qualifier != null) {
+            name = qualifier.getText();
+          }
+        }
+        StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+        return structuredDocString != null && structuredDocString.getParamType(name) != null;
+      }
+      return false;
+    }
+    return false;
   }
 }
