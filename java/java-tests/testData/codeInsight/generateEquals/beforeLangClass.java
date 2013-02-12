@@ -1,0 +1,3 @@
+class Integer {
+    int i;
+}
