@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Disposer;
 import org.jboss.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class WebServerManagerImpl extends WebServerManager implements Disposable {
+class WebServerManagerImpl extends WebServerManager {
   private static final Logger LOG = Logger.getInstance(WebServerManager.class);
 
   @NonNls
@@ -102,6 +103,7 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
           return;
         }
 
+        Disposer.register(ApplicationManager.getApplication(), server);
         detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true);
         if (detectedPortNumber == -1) {
           LOG.info("web server cannot be started, cannot bind to port");
@@ -114,10 +116,8 @@ class WebServerManagerImpl extends WebServerManager implements Disposable {
   }
 
   @Override
-  public void dispose() {
-    if (started.get() && server != null) {
-      server.stop();
-      LOG.info("web server stopped");
-    }
+  @Nullable
+  public Disposable getServerDisposable() {
+    return server;
   }
 }

@@ -23,13 +23,10 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import java.io.IOException;
 
 public abstract class HttpRequestHandler {
-  public boolean isSupported(HttpMethod method) {
-    return method == HttpMethod.GET;
+  public boolean isSupported(HttpRequest request) {
+    return request.getMethod() == HttpMethod.GET;
   }
 
   public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
     throws IOException;
-
-  public void serverStopping() {
-  }
 }

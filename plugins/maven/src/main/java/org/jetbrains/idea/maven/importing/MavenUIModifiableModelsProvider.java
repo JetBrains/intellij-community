@@ -95,11 +95,7 @@ public class MavenUIModifiableModelsProvider extends MavenBaseModifiableModelsPr
   }
 
   public void commit() {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        processExternalArtifactDependencies();
-      }
-    });
+    processExternalArtifactDependencies();
   }
 
   public void dispose() {
