@@ -331,9 +331,12 @@ public class MavenExternalParameters {
       cmdList.add("--errors");
     }
 
+    if (coreSettings.isAlwaysUpdateSnapshots()) {
+      cmdList.add("--update-snapshots");
+    }
+
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
-    addIfNotEmpty(cmdList, coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
 
     addOption(cmdList, "s", coreSettings.getUserSettingsFile());
     if (!StringUtil.isEmptyOrSpaces(coreSettings.getLocalRepository())) {

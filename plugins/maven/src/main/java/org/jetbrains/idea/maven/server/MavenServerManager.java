@@ -391,14 +391,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   public static MavenServerSettings convertSettings(MavenGeneralSettings settings) {
     MavenServerSettings result = new MavenServerSettings();
-    result.setLoggingLevel(settings.getLoggingLevel().getLevel());
+    result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
     result.setMavenHome(settings.getEffectiveMavenHome());
     result.setUserSettingsFile(settings.getEffectiveUserSettingsIoFile());
     result.setGlobalSettingsFile(settings.getEffectiveGlobalSettingsIoFile());
     result.setLocalRepository(settings.getEffectiveLocalRepository());
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(settings.getSnapshotUpdatePolicy().getServerPolicy());
+    result.setSnapshotUpdatePolicy(settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 
