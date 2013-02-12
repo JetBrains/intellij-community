@@ -38,7 +38,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -386,7 +385,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final StatisticsInfo base = StatisticsWeigher.getBaseStatisticsInfo(item, null);
     if (base == StatisticsInfo.EMPTY) {
-      return new StatisticsUpdate(Collections.<StatisticsInfo>emptyList());
+      return new StatisticsUpdate(StatisticsInfo.EMPTY);
     }
 
     StatisticsUpdate update = new StatisticsUpdate(StatisticsWeigher.composeStatsWithPrefix(base, lookup.itemPattern(item), true));
@@ -477,17 +476,15 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   static class StatisticsUpdate implements Disposable {
-    private final List<StatisticsInfo> myInfos;
+    private final StatisticsInfo myInfo;
     private int mySpared;
 
-    public StatisticsUpdate(List<StatisticsInfo> infos) {
-      myInfos = infos;
+    public StatisticsUpdate(StatisticsInfo info) {
+      myInfo = info;
     }
 
     void performUpdate() {
-      for (StatisticsInfo statisticsInfo : myInfos) {
-        StatisticsManager.getInstance().incUseCount(statisticsInfo);
-      }
+      myInfo.incUseCount();
       ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics().registerInvocation(mySpared);
     }
 

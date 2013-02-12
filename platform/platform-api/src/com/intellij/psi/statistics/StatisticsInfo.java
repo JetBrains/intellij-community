@@ -18,6 +18,9 @@ package com.intellij.psi.statistics;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -27,10 +30,16 @@ public class StatisticsInfo {
   private static final StatisticsManager ourManager = StatisticsManager.getInstance();
   private final String myContext;
   private final String myValue;
+  private final List<StatisticsInfo> myConjuncts;
 
   public StatisticsInfo(@NonNls @NotNull final String context, @NonNls @NotNull final String value) {
+    this(context, value, Collections.<StatisticsInfo>emptyList());
+  }
+
+  public StatisticsInfo(String context, String value, List<StatisticsInfo> conjuncts) {
     myContext = context;
     myValue = value;
+    myConjuncts = conjuncts;
   }
 
   @NotNull
@@ -41,6 +50,10 @@ public class StatisticsInfo {
   @NotNull
   public String getValue() {
     return myValue;
+  }
+
+  public List<StatisticsInfo> getConjuncts() {
+    return myConjuncts;
   }
 
   public void incUseCount() {
@@ -56,6 +69,6 @@ public class StatisticsInfo {
   }
 
   public String toString() {
-    return myContext + "::::" + myValue;
+    return myContext + "::::" + myValue + (myConjuncts.isEmpty() ? "" : "::::" + myConjuncts);
   }
 }

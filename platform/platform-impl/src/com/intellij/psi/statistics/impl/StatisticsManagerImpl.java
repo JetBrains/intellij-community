@@ -52,10 +52,19 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
+    int useCount;
     synchronized (LOCK) {
       StatisticsUnit unit = getUnit(unitNumber);
-      return unit.getData(key1, info.getValue());
+      useCount = unit.getData(key1, info.getValue());
     }
+
+    if (!info.getConjuncts().isEmpty()) {
+      for (StatisticsInfo conjunct : info.getConjuncts()) {
+        useCount = Math.max(getUseCount(conjunct), useCount);
+      }
+    }
+
+    return useCount;
   }
 
   @Override
@@ -64,10 +73,19 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
+    int recency;
     synchronized (LOCK) {
       StatisticsUnit unit = getUnit(unitNumber);
-      return unit.getRecency(key1, info.getValue());
+      recency = unit.getRecency(key1, info.getValue());
     }
+
+    if (!info.getConjuncts().isEmpty()) {
+      for (StatisticsInfo conjunct : info.getConjuncts()) {
+        recency = Math.max(getLastUseRecency(conjunct), recency);
+      }
+    }
+
+    return recency;
   }
 
   public void incUseCount(@NotNull final StatisticsInfo info) {
@@ -84,6 +102,10 @@ public class StatisticsManagerImpl extends StatisticsManager {
       myModifiedUnits.add(unit);
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      incUseCount(conjunct);
+    }
   }
 
   public StatisticsInfo[] getAllValues(final String context) {
