@@ -627,4 +627,9 @@ public class PythonCompletionTest extends PyTestCase {
                           "VAR = 2\n" +
                           "__all__ = ['VAR']");
   }
+
+  // PY-7805
+  public void testNoUnderscoredBuiltin() {
+    doTest();
+  }
 }
