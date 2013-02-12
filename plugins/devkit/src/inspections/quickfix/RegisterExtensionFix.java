@@ -24,6 +24,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.ClassExtensionPoint;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -72,18 +75,29 @@ public class RegisterExtensionFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     RegisterInspectionFix.choosePluginDescriptor(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
       @Override
       public void consume(DomFileElement<IdeaPlugin> element) {
-        doFix(element);
+        doFix(editor, element);
       }
     });
   }
 
-  private void doFix(final DomFileElement<IdeaPlugin> element) {
+  private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {
     if (myEPCandidates.size() == 1) {
       registerExtension(element, myEPCandidates.get(0));
+    }
+    else {
+      final BaseListPopupStep<ExtensionPointCandidate> popupStep =
+        new BaseListPopupStep<ExtensionPointCandidate>("Choose Extension Point", myEPCandidates) {
+          @Override
+          public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
+            registerExtension(element, selectedValue);
+            return FINAL_CHOICE;
+          }
+        };
+      JBPopupFactory.getInstance().createListPopup(popupStep).showInBestPositionFor(editor);
     }
   }
 

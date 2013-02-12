@@ -34,4 +34,9 @@ class ExtensionPointCandidate {
     this.attributeName = "implementation";
     this.beanClassName = null;
   }
+
+  @Override
+  public String toString() {
+    return epName;
+  }
 }
