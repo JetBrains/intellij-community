@@ -77,10 +77,14 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   }
 
   public static String getAttributeAnnotationValue(PsiField psiField) {
+    return getAnnotationValue(psiField, Attribute.class);
+  }
+
+  public static String getAnnotationValue(PsiField psiField, Class annotationClass) {
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
     final PsiMethod getter = PropertyUtils.findGetterForField(psiField);
     final PsiMethod setter = PropertyUtils.findSetterForField(psiField);
-    final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(Attribute.class, psiField, getter, setter);
+    final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(annotationClass, psiField, getter, setter);
     if (attrAnno != null) {
       return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper);
     }

@@ -101,10 +101,11 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
       XmlTag extensionPointTag = tag.getParentTag();
       if (!"extensionPoint".equals(extensionPointTag.getName())) return;
       String attrName = tag.getAttributeValue("attribute");
+      String tagName = tag.getAttributeValue("tag");
       String epName = getEPName(extensionPointTag);
       String beanClassName = extensionPointTag.getAttributeValue("beanClass");
-      if (attrName == null || epName == null) return;
-      list.add(new ExtensionPointCandidate(epName, attrName, beanClassName));
+      if ((attrName == null && tagName == null) || epName == null) return;
+      list.add(new ExtensionPointCandidate(epName, attrName, tagName, beanClassName));
     }
   }
 

@@ -114,7 +114,13 @@ public class RegisterExtensionFix implements IntentionAction {
           XmlAttribute attr = tag.setAttribute(keyAttrName, "");
           navTarget = attr.getValueElement();
         }
-        tag.setAttribute(candidate.attributeName, myExtensionClass.getQualifiedName());
+        if (candidate.attributeName != null) {
+          tag.setAttribute(candidate.attributeName, myExtensionClass.getQualifiedName());
+        }
+        else {
+          XmlTag subTag = tag.createChildTag(candidate.tagName, null, myExtensionClass.getQualifiedName(), false);
+          tag.addSubTag(subTag, false);
+        }
         result.setResult(navTarget != null ? navTarget : extension.getXmlTag());
       }
     }.execute().throwException().getResultObject();

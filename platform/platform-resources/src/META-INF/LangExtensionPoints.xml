@@ -43,7 +43,7 @@
 
     <extensionPoint name="intentionAction"
                     beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
-      <with attribute="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"

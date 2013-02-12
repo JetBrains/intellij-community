@@ -34,6 +34,10 @@ public interface With extends DomElement {
   @Convert(PluginFieldNameConverter.class)
   GenericAttributeValue<PsiField> getAttribute();
 
+  @NotNull
+  @Attribute("tag")
+  @Convert(PluginFieldNameConverter.class)
+  GenericAttributeValue<PsiField> getTag();
 
   @NotNull
   @Attribute("implements")

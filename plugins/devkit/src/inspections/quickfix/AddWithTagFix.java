@@ -27,6 +27,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
@@ -61,15 +62,21 @@ public class AddWithTagFix implements LocalQuickFix {
     List<PsiField> fields = ExtensionPointBeanClassInspection.collectMissingWithTags(extensionPoint);
     PsiElement navTarget = null;
     for (PsiField field : fields) {
-      String attributeName = PluginFieldNameConverter.getAttributeAnnotationValue(field);
-      if (attributeName == null) {
-        attributeName = field.getName();
-      }
-      if (attributeName.equals("forClass")) {
-        continue;
-      }
       With with = extensionPoint.addWith();
-      with.getAttribute().setStringValue(attributeName);
+      String tagName = PluginFieldNameConverter.getAnnotationValue(field, Tag.class);
+      if (tagName != null) {
+        with.getTag().setStringValue(tagName);
+      }
+      else {
+        String attributeName = PluginFieldNameConverter.getAttributeAnnotationValue(field);
+        if (attributeName == null) {
+          attributeName = field.getName();
+        }
+        if (attributeName.equals("forClass")) {
+          continue;
+        }
+        with.getAttribute().setStringValue(attributeName);
+      }
       String epName = extensionPoint.getName().getStringValue();
       String className = "";
       if (epName != null) {

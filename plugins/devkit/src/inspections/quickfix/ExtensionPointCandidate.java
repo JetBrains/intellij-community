@@ -21,17 +21,20 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 class ExtensionPointCandidate {
   public final String epName;
   public final String attributeName;
+  public final String tagName;
   public final String beanClassName;
 
-  ExtensionPointCandidate(String epName, String attributeName, String beanClassName) {
+  ExtensionPointCandidate(String epName, String attributeName, String tagName, String beanClassName) {
     this.epName = epName;
     this.attributeName = attributeName;
+    this.tagName = tagName;
     this.beanClassName = beanClassName;
   }
 
   ExtensionPointCandidate(String epName) {
     this.epName = epName;
     this.attributeName = "implementation";
+    this.tagName = null;
     this.beanClassName = null;
   }
 
