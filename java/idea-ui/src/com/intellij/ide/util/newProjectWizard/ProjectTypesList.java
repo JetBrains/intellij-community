@@ -46,10 +46,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -71,8 +68,7 @@ public class ProjectTypesList implements Disposable {
 
     List<TemplateItem> items = buildItems(map);
     final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-    final String groupName = RemoteTemplatesFactory.SAMPLES_GALLERY;
-    final TemplatesGroup samplesGroup = new TemplatesGroup(groupName, "", null);
+    final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null);
     myLoadingItem = new TemplateItem(new LoadingProjectTemplate(), samplesGroup) {
       @Override
       Icon getIcon() {
@@ -88,23 +84,29 @@ public class ProjectTypesList implements Disposable {
     final CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(items);
     myFilteringListModel = new FilteringListModel<TemplateItem>(model);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Samples") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myList.setPaintBusy(true);
-          final ProjectTemplate[] templates = factory.createTemplates(groupName, context);
-          Runnable runnable = new Runnable() {
+          String[] groups = factory.getGroups();
+          final List<TemplateItem> items = new ArrayList<TemplateItem>();
+          for (String group : groups) {
+            TemplatesGroup templatesGroup = new TemplatesGroup(group, "", factory.getGroupIcon(group));
+            ProjectTemplate[] templates = factory.createTemplates(group, context);
+            for (ProjectTemplate template : templates) {
+              items.add(new TemplateItem(template, templatesGroup));
+            }
+          }
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               int index = myList.getSelectedIndex();
               model.remove(myLoadingItem);
-              for (ProjectTemplate template : templates) {
-                model.add(new TemplateItem(template, samplesGroup));
-              }
+              model.add(items);
               myList.setSelectedIndex(index);
             }
-          };
-          SwingUtilities.invokeLater(runnable);
+          });
         }
         finally {
           myList.setPaintBusy(false);

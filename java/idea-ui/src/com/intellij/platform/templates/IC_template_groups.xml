@@ -1,0 +1,11 @@
+<template-groups xmlns="http://www.jetbrains.com/projectTemplates">
+  <group>
+    <name>Java Samples</name>
+    <path>Java</path>
+    <template>
+      <name>Java Hello World</name>
+      <description><![CDATA[ Simple Java "Hello World" application. ]]></description>
+      <path>HelloWorld.zip</path>
+    </template>
+  </group>
+</template-groups>
