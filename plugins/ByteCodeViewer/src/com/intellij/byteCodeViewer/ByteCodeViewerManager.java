@@ -92,7 +92,13 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   }
 
   private void updateByteCode(PsiElement element, ByteCodeViewerComponent component, Content content) {
-    String byteCode = getByteCode(element);
+    updateByteCode(element, component, content, getByteCode(element));
+  }
+
+  public void updateByteCode(PsiElement element,
+                             ByteCodeViewerComponent component,
+                             Content content,
+                             final String byteCode) {
     if (!StringUtil.isEmpty(byteCode)) {
       component.setText(byteCode, element);
     } else {
@@ -126,9 +132,13 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
 
   @Override
   protected void doUpdateComponent(@NotNull PsiElement element) {
+    doUpdateComponent(element, getByteCode(element));
+  }
+
+  protected void doUpdateComponent(@NotNull PsiElement element, final String newText) {
     final Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null) {
-      updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content);
+      updateByteCode(element, (ByteCodeViewerComponent)content.getComponent(), content, newText);
     }
   }
 
