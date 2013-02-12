@@ -20,7 +20,7 @@
     <title>Test <TYPO descr="Typo: In word 'ttitle'">ttitle</TYPO></title>
 </head>
 <body>
-    <div title="div <TYPO descr="Typo: In word 'ttitle'">ttitle</TYPO>">Test <TYPO descr="Typo: In word 'ccontent'">ccontent</TYPO> goes here</div>
+    <div title="div <TYPO descr="Typo: In word 'ttitle'">ttitle</TYPO>">Test <TYPO descr="Typo: In word 'cccontent'">cccontent</TYPO> goes here</div>
     <a href="#">test link</a>
     <table>
       <tr bgcolor="#EFEBEF">

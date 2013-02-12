@@ -86,6 +86,10 @@ public class MavenArtifact implements Serializable {
     return myVersion;
   }
 
+  public String getBaseVersion() {
+    return myBaseVersion;
+  }
+
   public MavenId getMavenId() {
     return new MavenId(myGroupId, myArtifactId, myVersion);
   }
@@ -136,14 +140,13 @@ public class MavenArtifact implements Serializable {
     return getRelativePathForExtraArtifact(null, null);
   }
 
-  public String getRelativePathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
-    StringBuilder result = new StringBuilder();
-    result.append(myGroupId.replace('.', '/'));
-    result.append('/');
-    result.append(myArtifactId);
-    result.append('/');
-    result.append(myVersion);
-    result.append('/');
+  public String getFileNameWithBaseVersion() {
+    StringBuilder res = new StringBuilder();
+    appendFileName(res, null, null);
+    return res.toString();
+  }
+
+  private void appendFileName(StringBuilder result, @Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     result.append(myArtifactId);
     result.append('-');
     result.append(myVersion);
@@ -155,6 +158,18 @@ public class MavenArtifact implements Serializable {
 
     result.append(".");
     result.append(customExtension == null ? myExtension : customExtension);
+  }
+
+  public String getRelativePathForExtraArtifact(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
+    StringBuilder result = new StringBuilder();
+    result.append(myGroupId.replace('.', '/'));
+    result.append('/');
+    result.append(myArtifactId);
+    result.append('/');
+    result.append(myVersion);
+    result.append('/');
+
+    appendFileName(result, extraArtifactClassifier, customExtension);
     return result.toString();
   }
 
