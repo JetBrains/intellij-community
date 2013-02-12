@@ -119,7 +119,11 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
     final Semaphore s = new Semaphore();
     s.down();
 
+
     myOutput = new StringBuilder();
+    myStdErr = new StringBuilder();
+    myStdOut = new StringBuilder();
+
     runProcess(sdkHome, s);
 
     try {
@@ -136,6 +140,7 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
 
   private void runProcess(final String sdkHome, final Semaphore s) throws ExecutionException, IOException {
     final ConfigurationFactory factory = getFactory();
+
     if (factory == null) {     // PythonTask (there is no run configuration)
       final Module module = myFixture.getModule();
       final DjangoManageTask task = new DjangoManageTask(module, DjangoBundle.message("manage.run.tab.name"), mySdk);
@@ -148,9 +153,6 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
       task.setParameters(parametersString.build());
 
       myProcessHandler = task.createProcess();
-      myOutput = new StringBuilder();
-      myStdErr = new StringBuilder();
-      myStdOut = new StringBuilder();
 
       myProcessHandler.addProcessListener(createProcessListener());
 
