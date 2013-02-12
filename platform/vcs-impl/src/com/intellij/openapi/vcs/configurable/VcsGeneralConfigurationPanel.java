@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -96,7 +97,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());                           // todo check text!
     myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
-                              SystemInfo.getFileManagerName() + " after creation:");
+                              ShowFilePathAction.getFileManagerName() + " after creation:");
   }
 
   public void apply() throws ConfigurationException {
