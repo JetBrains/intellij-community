@@ -394,6 +394,7 @@ public class GenerateEqualsHelper implements Runnable {
       buffer.append("return 0;\n}");
     }
     PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+    hashCode = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(hashCode);
     return (PsiMethod)myCodeStyleManager.reformat(hashCode);
   }
 
@@ -471,7 +472,7 @@ public class GenerateEqualsHelper implements Runnable {
 
   private static void adjustHashCodeToArrays(@NonNls StringBuilder buffer, final PsiField field, final String name) {
     if (field.getType() instanceof PsiArrayType && hasArraysHashCode(field)) {
-      buffer.append("Arrays.hashCode(");
+      buffer.append("java.util.Arrays.hashCode(");
       buffer.append(name);
       buffer.append(")");
     }

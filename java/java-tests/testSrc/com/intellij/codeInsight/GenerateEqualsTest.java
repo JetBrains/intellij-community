@@ -63,6 +63,10 @@ public class GenerateEqualsTest extends GenerateEqualsTestCase {
     doTest(new int[]{0}, new int[]{0}, new int[0], true);
   }
 
+  public void testArraysClass() throws Exception {
+    doTest(new int[]{0}, new int[]{0}, new int[0], true);
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk14();
