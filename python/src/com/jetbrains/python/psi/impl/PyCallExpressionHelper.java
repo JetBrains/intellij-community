@@ -420,9 +420,6 @@ public class PyCallExpressionHelper {
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
           if (providedType != null) {
-            if (providedType instanceof PyClassType) {
-              return ((PyClassType)providedType).toInstance();
-            }
             return providedType;
           }
           if (target instanceof Callable) {

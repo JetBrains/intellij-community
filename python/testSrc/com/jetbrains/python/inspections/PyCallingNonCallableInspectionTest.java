@@ -69,6 +69,11 @@ public class PyCallingNonCallableInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-8801
+  public void testQualifiedNamedTuple() {
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON27);
     try {
