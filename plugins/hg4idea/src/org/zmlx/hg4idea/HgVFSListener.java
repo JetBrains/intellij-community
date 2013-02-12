@@ -27,6 +27,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
@@ -196,9 +198,15 @@ public class HgVFSListener extends VcsVFSListener {
     myDeletedFiles.clear();
 
     // skip unversioned files and files which are not under Mercurial
-    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    skipUnversionedAndNotUnderHg(changeListManager, filesToDelete);
-    skipUnversionedAndNotUnderHg(changeListManager, filesToConfirmDeletion);
+    final List<FilePath> unversionedFiles =
+      ContainerUtil.map(ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles(), new Function<VirtualFile, FilePath>() {
+        @Override
+        public FilePath fun(VirtualFile virtualFile) {
+          return new FilePathImpl(virtualFile);
+        }
+      });
+    skipUnversionedAndNotUnderHg(unversionedFiles, filesToDelete);
+    skipUnversionedAndNotUnderHg(unversionedFiles, filesToConfirmDeletion);
 
     // newly added files (which were added to the repo but never committed) should be removed from the VCS,
     // but without user confirmation.
@@ -241,20 +249,21 @@ public class HgVFSListener extends VcsVFSListener {
     }.queue();
   }
 
-    /**
-     * Changes the given collection of files by filtering out unversioned files and
-     * files which are not under Mercurial repository.
-     * @param changeListManager instance of the ChangeListManagerImpl to retrieve unversioned files from it.
-     * @param filesToFilter     files to be filtered.
-     */
-  private void skipUnversionedAndNotUnderHg(ChangeListManagerImpl changeListManager, Collection<FilePath> filesToFilter) {
-    for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
-      final FilePath filePath = iter.next();
-      if (HgUtil.getHgRootOrNull(myProject, filePath) == null || changeListManager.isUnversioned(filePath.getVirtualFile())) {
-        iter.remove();
+  /**
+   * Changes the given collection of files by filtering out unversioned files and
+   * files which are not under Mercurial repository.
+   *
+   * @param unversionedFiles list of unversioned files
+   * @param filesToFilter    files to be filtered.
+   */
+  private void skipUnversionedAndNotUnderHg(List<FilePath> unversionedFiles, Collection<FilePath> filesToFilter) {
+      for (Iterator<FilePath> iter = filesToFilter.iterator(); iter.hasNext(); ) {
+        final FilePath filePath = iter.next();
+        if (HgUtil.getHgRootOrNull(myProject, filePath) == null || unversionedFiles.contains(filePath)) {
+          iter.remove();
+        }
       }
     }
-  }
 
   @Override
   protected void performDeletion( final List<FilePath> filesToDelete) {
