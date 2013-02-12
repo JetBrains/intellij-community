@@ -6,6 +6,7 @@ import com.jetbrains.django.manage.BaseCommand;
 import com.jetbrains.django.manage.ManageTasksModel;
 import com.jetbrains.django.util.ManagePyUtil;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.python.PythonTestUtil;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.jetbrains.annotations.Nullable;
@@ -19,10 +20,14 @@ import java.util.Set;
 public class DjangoManageTest extends PyEnvTestCase {
 
   public void testTaskListCompleteness() throws IOException {
-    runPythonTest(new DjangoPathTestTask() {
+    runPythonTest(new DjangoManageTestTask() {
+      @Override
+      protected String getTestDataPath() {
+        return PythonTestUtil.getTestDataPath() + "/django/manage/completeness";
+      }
 
       public void testing() throws Exception {
-        waitForOutput("Process finished with exit code 0");
+        waitForOutput("Process finished with exit code");
 
         Set<String> defCommands = getCommands();
         String allCommands = ToStringBuilder.reflectionToString(defCommands.toArray(), ToStringStyle.SIMPLE_STYLE);
@@ -37,8 +42,8 @@ public class DjangoManageTest extends PyEnvTestCase {
       }
 
       public Set<String> getCommands() throws ExecutionException {
-        Set<String> result = ManagePyUtil.extractAvailableCommands(output());
-        assertFalse(output(), result.isEmpty());
+        Set<String> result = ManagePyUtil.extractAvailableCommands(stdout() + stderr());
+        assertFalse(stdout() + stderr(), result.isEmpty());
         result.add("createsuperuser");
         result.add("changepassword");
 

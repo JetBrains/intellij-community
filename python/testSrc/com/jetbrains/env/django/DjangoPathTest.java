@@ -20,6 +20,11 @@ import java.util.ArrayList;
  */
 public class DjangoPathTest extends PyEnvTestCase {
 
+  /**
+   * This string is printed after printing sys.path in djangoPath/settings.py
+   */
+  public static final String THE_END_OF_SYS_PATH = "The end of sys.path";
+
   public void testRunserverPath() throws IOException {
     runPythonTest(new DjangoPathTestTask() {
 
@@ -48,7 +53,7 @@ public class DjangoPathTest extends PyEnvTestCase {
     final String[] splittedOutput = output.split("\\n");
     final ArrayList<String> outputList = Lists.newArrayList();
     for (String s : splittedOutput) {
-      if (s.equals("The end of sys.path")) {
+      if (s.equals(THE_END_OF_SYS_PATH)) {
         break;
       }
       outputList.add(norm(s));
