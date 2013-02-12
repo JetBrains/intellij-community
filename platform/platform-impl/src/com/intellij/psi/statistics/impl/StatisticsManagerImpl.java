@@ -50,42 +50,42 @@ public class StatisticsManagerImpl extends StatisticsManager {
   public int getUseCount(@NotNull final StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return 0;
 
-    String key1 = info.getContext();
-    int unitNumber = getUnitNumber(key1);
-    int useCount;
-    synchronized (LOCK) {
-      StatisticsUnit unit = getUnit(unitNumber);
-      useCount = unit.getData(key1, info.getValue());
-    }
+    int useCount = 0;
 
-    if (!info.getConjuncts().isEmpty()) {
-      for (StatisticsInfo conjunct : info.getConjuncts()) {
-        useCount = Math.max(getUseCount(conjunct), useCount);
-      }
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      useCount = Math.max(doGetUseCount(conjunct), useCount);
     }
 
     return useCount;
+  }
+
+  private int doGetUseCount(StatisticsInfo info) {
+    String key1 = info.getContext();
+    int unitNumber = getUnitNumber(key1);
+    synchronized (LOCK) {
+      StatisticsUnit unit = getUnit(unitNumber);
+      return unit.getData(key1, info.getValue());
+    }
   }
 
   @Override
   public int getLastUseRecency(@NotNull StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return 0;
 
+    int recency = Integer.MAX_VALUE;
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      recency = Math.max(doGetRecency(conjunct), recency);
+    }
+    return recency;
+  }
+
+  private int doGetRecency(StatisticsInfo info) {
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
-    int recency;
     synchronized (LOCK) {
       StatisticsUnit unit = getUnit(unitNumber);
-      recency = unit.getRecency(key1, info.getValue());
+      return unit.getRecency(key1, info.getValue());
     }
-
-    if (!info.getConjuncts().isEmpty()) {
-      for (StatisticsInfo conjunct : info.getConjuncts()) {
-        recency = Math.max(getLastUseRecency(conjunct), recency);
-      }
-    }
-
-    return recency;
   }
 
   public void incUseCount(@NotNull final StatisticsInfo info) {
@@ -94,17 +94,20 @@ public class StatisticsManagerImpl extends StatisticsManager {
       return;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      doIncUseCount(conjunct);
+    }
+  }
+
+  private void doIncUseCount(StatisticsInfo info) {
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     synchronized (LOCK) {
       StatisticsUnit unit = getUnit(unitNumber);
       unit.incData(key1, info.getValue());
       myModifiedUnits.add(unit);
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    for (StatisticsInfo conjunct : info.getConjuncts()) {
-      incUseCount(conjunct);
     }
   }
 

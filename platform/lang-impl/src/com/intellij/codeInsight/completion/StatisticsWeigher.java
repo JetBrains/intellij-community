@@ -196,12 +196,13 @@ public class StatisticsWeigher extends CompletionWeigher {
       infos.add(info);
     }
     for (int i = 0; i <= fullPrefix.length(); i++) {
-      infos.add(new StatisticsInfo(composeWithPrefix(info, fullPrefix.substring(0, i), forWriting), info.getValue()));
+      infos.add(composeWithPrefix(info, fullPrefix.substring(0, i), forWriting));
     }
-    return new StatisticsInfo(composeWithPrefix(info, fullPrefix, !forWriting), info.getValue(), infos);
+    infos.add(composeWithPrefix(info, fullPrefix, !forWriting));
+    return StatisticsInfo.createComposite(infos);
   }
 
-  private static String composeWithPrefix(StatisticsInfo info, String subPrefix, boolean partial) {
-    return info.getContext() + "###prefix=" + subPrefix + "###part#" + partial;
+  private static StatisticsInfo composeWithPrefix(StatisticsInfo info, String fullPrefix, boolean partial) {
+    return new StatisticsInfo(info.getContext() + "###prefix=" + fullPrefix + "###part#" + partial, info.getValue());
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.psi.statistics;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,13 +34,27 @@ public class StatisticsInfo {
   private final List<StatisticsInfo> myConjuncts;
 
   public StatisticsInfo(@NonNls @NotNull final String context, @NonNls @NotNull final String value) {
-    this(context, value, Collections.<StatisticsInfo>emptyList());
+    myContext = context;
+    myValue = value;
+    myConjuncts = Collections.singletonList(this);
   }
 
-  public StatisticsInfo(String context, String value, List<StatisticsInfo> conjuncts) {
+  private StatisticsInfo(String context, String value, List<StatisticsInfo> conjuncts) {
     myContext = context;
     myValue = value;
     myConjuncts = conjuncts;
+  }
+
+  public static StatisticsInfo createComposite(List<StatisticsInfo> conjuncts) {
+    if (conjuncts.isEmpty()) {
+      return EMPTY;
+    }
+
+    ArrayList<StatisticsInfo> flattened = new ArrayList<StatisticsInfo>(conjuncts.size());
+    for (StatisticsInfo conjunct : conjuncts) {
+      flattened.addAll(conjunct.getConjuncts());
+    }
+    return new StatisticsInfo(conjuncts.get(0).getContext(), conjuncts.get(0).getValue(), flattened);
   }
 
   @NotNull
