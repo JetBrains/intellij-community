@@ -184,7 +184,7 @@ class TeamcityTestResult(TestResult):
     # do not use text.decode('string_escape'), it leads to problems with different string encodings given
     return text.replace("\\n", "\n")
 
-class TeamcityTestRunner:
+class TeamcityTestRunner(object):
   def __init__(self, stream=sys.stdout):
     self.stream = stream
 

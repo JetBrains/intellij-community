@@ -35,6 +35,7 @@ try:
       BaseSuiteRunner.__init__(self)
 
 except ImportError:
+  # for Django <= 1.1 compatibility
   class BaseRunner(TeamcityTestRunner):
     def __init__(self, stream=sys.stdout, **options):
       TeamcityTestRunner.__init__(self, stream)
