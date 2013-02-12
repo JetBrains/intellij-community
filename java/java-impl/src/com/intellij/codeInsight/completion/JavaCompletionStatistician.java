@@ -21,6 +21,10 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -48,18 +52,21 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         return new StatisticsInfo(JavaStatisticsManager.getAfterNewKey(expectedType), key2);
       }
 
-      if (o instanceof PsiMethod) {
-        o = RecursionWeigher.findDeepestSuper((PsiMethod)o);
-      }
-      
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
-        if (o instanceof PsiMethod && "getClass".equals(((PsiMethod) o).getName()) &&
-            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-          return StatisticsInfo.EMPTY;
+        String context = JavaStatisticsManager.getMemberUseKey2(containingClass);
+
+        if (o instanceof PsiMethod) {
+          String memberValue = JavaStatisticsManager.getMemberUseKey2(RecursionWeigher.findDeepestSuper((PsiMethod)o));
+
+          List<StatisticsInfo> superMethodInfos = ContainerUtil.newArrayList(new StatisticsInfo(context, memberValue));
+          for (PsiClass superClass : InheritanceUtil.getSuperClasses(containingClass)) {
+            superMethodInfos.add(new StatisticsInfo(JavaStatisticsManager.getMemberUseKey2(superClass), memberValue));
+          }
+          return StatisticsInfo.createComposite(superMethodInfos);
         }
 
-        return new StatisticsInfo(JavaStatisticsManager.getMemberUseKey2(containingClass), key2);
+        return new StatisticsInfo(context, key2);
       }
     }
 
