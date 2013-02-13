@@ -17,12 +17,15 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.Semaphore;
+import org.apache.sanselan.ImageFormat;
+import org.apache.sanselan.Sanselan;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -36,6 +39,8 @@ import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.ide.WebServerManager;
 
+import javax.swing.*;
+import java.awt.image.BufferedImage;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -298,18 +303,24 @@ public class WebServer implements Disposable {
 
       HttpRequest request = (HttpRequest)event.getMessage();
       QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
-      if (urlDecoder.getPath().equals(START_TIME_PATH)) {
-        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setContent(ChannelBuffers.copiedBuffer(getApplicationStartTime(), CharsetUtil.US_ASCII));
-        Responses.addServer(response);
-        Responses.addDate(response);
-        Responses.send(response, context);
-        return;
-      }
-
       HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
       if (connectedHandler == null) {
+        if (urlDecoder.getPath().equals("/favicon.ico")) {
+          Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+          if (icon != null) {
+            //noinspection UndesirableClassUsage
+            BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+            icon.paintIcon(null, image.getGraphics(), 0, 0);
+            byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
+            Responses.send(FileResponses.createResponse(urlDecoder.getPath()), icoBytes, request, context);
+            return;
+          }
+        }
+        else if (urlDecoder.getPath().equals(START_TIME_PATH)) {
+          Responses.send(getApplicationStartTime(), request, context);
+          return;
+        }
+
         for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
           try {
             if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
