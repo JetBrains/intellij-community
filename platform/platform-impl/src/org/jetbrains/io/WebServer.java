@@ -17,13 +17,9 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.Semaphore;
-import org.apache.sanselan.ImageFormat;
-import org.apache.sanselan.Sanselan;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.*;
@@ -35,12 +31,8 @@ import org.jboss.netty.handler.codec.http.*;
 import org.jboss.netty.util.CharsetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.HttpRequestHandler;
 import org.jetbrains.ide.PooledThreadExecutor;
-import org.jetbrains.ide.WebServerManager;
 
-import javax.swing.*;
-import java.awt.image.BufferedImage;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -48,16 +40,15 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jboss.netty.channel.Channels.pipeline;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class WebServer implements Disposable {
-  private static final String START_TIME_PATH = "/startTime";
+  static final String START_TIME_PATH = "/startTime";
 
   private final ChannelGroup openChannels = new DefaultChannelGroup("web-server");
 
-  private static final Logger LOG = Logger.getInstance(WebServer.class);
+  static final Logger LOG = Logger.getInstance(WebServer.class);
 
   @NonNls
   private static final String PROPERTY_ONLY_ANY_HOST = "rpc.onlyAnyHost";
@@ -84,7 +75,7 @@ public class WebServer implements Disposable {
 
     ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
     bootstrap.setOption("child.tcpNoDelay", true);
-    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new DefaultHandler(openChannels)));
+    bootstrap.setPipelineFactory(new ChannelPipelineFactoryImpl(new PortUnificationServerHandler(openChannels)));
     return bind(firstPort, portsCount, tryAnyPort, bootstrap);
   }
 
@@ -96,7 +87,7 @@ public class WebServer implements Disposable {
     final Semaphore semaphore = new Semaphore();
     semaphore.down(); // must call to down() here to ensure that down was called _before_ up()
     bootstrap.setPipeline(
-      pipeline(new HttpResponseDecoder(), new HttpChunkAggregator(1048576), new HttpRequestEncoder(), new SimpleChannelUpstreamHandler() {
+      pipeline(new HttpResponseDecoder(), new HttpRequestEncoder(), new SimpleChannelUpstreamHandler() {
         @Override
         public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
           try {
@@ -164,7 +155,7 @@ public class WebServer implements Disposable {
     return true;
   }
 
-  private static String getApplicationStartTime() {
+  static String getApplicationStartTime() {
     return Long.toString(ApplicationManager.getApplication().getStartTime());
   }
 
@@ -265,92 +256,19 @@ public class WebServer implements Disposable {
   }
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull SimpleChannelUpstreamHandler messageChannelHandler) {
-    context.getPipeline().replace(DefaultHandler.class, "replacedDefaultHandler", messageChannelHandler);
+    context.getPipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", messageChannelHandler);
   }
 
   private static class ChannelPipelineFactoryImpl implements ChannelPipelineFactory {
-    private final DefaultHandler defaultHandler;
+    private final ChannelHandler defaultHandler;
 
-    public ChannelPipelineFactoryImpl(DefaultHandler defaultHandler) {
+    public ChannelPipelineFactoryImpl(ChannelHandler defaultHandler) {
       this.defaultHandler = defaultHandler;
     }
 
     @Override
     public ChannelPipeline getPipeline() throws Exception {
-      return pipeline(new HttpRequestDecoder(), new HttpChunkAggregator(1048576), new HttpResponseEncoder(), defaultHandler);
-    }
-  }
-
-  @ChannelHandler.Sharable
-  private static class DefaultHandler extends SimpleChannelUpstreamHandler {
-    private final ChannelGroup openChannels;
-
-    public DefaultHandler(ChannelGroup openChannels) {
-      this.openChannels = openChannels;
-    }
-
-    @Override
-    public void channelOpen(ChannelHandlerContext context, ChannelStateEvent e) {
-      openChannels.add(e.getChannel());
-    }
-
-    @Override
-    public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-      if (!(event.getMessage() instanceof HttpRequest)) {
-        context.sendUpstream(event);
-        return;
-      }
-
-      HttpRequest request = (HttpRequest)event.getMessage();
-      QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
-      HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
-      if (connectedHandler == null) {
-        if (urlDecoder.getPath().equals("/favicon.ico")) {
-          Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-          if (icon != null) {
-            //noinspection UndesirableClassUsage
-            BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-            icon.paintIcon(null, image.getGraphics(), 0, 0);
-            byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
-            Responses.send(FileResponses.createResponse(urlDecoder.getPath()), icoBytes, request, context);
-            return;
-          }
-        }
-        else if (urlDecoder.getPath().equals(START_TIME_PATH)) {
-          Responses.send(getApplicationStartTime(), request, context);
-          return;
-        }
-
-        for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
-          try {
-            if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
-              if (context.getAttachment() == null) {
-                context.setAttachment(handler);
-              }
-              return;
-            }
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
-      }
-      else if (connectedHandler.isSupported(request)) {
-        connectedHandler.process(urlDecoder, request, context);
-        return;
-      }
-      Responses.sendError(request, context, NOT_FOUND);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-      try {
-        LOG.error(event.getCause());
-      }
-      finally {
-        context.setAttachment(null);
-        event.getChannel().close();
-      }
+      return pipeline(defaultHandler);
     }
   }
 }
