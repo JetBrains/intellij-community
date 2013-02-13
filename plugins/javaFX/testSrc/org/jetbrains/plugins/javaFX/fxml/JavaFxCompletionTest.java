@@ -97,6 +97,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("text");
   }
 
+  public void testStylesheets() throws Exception {
+    doTest("mystyle.css", "mystyle.css");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);
@@ -117,7 +121,17 @@ public class JavaFxCompletionTest extends CompletionTestCase {
   }
 
   private void doTest(final String selection) throws Exception {
-    configureByFile(getTestName(true) + ".fxml");
+    doTest(selection, null);
+  }
+
+  private void doTest(final String selection, String additionalPath) throws Exception {
+    final String mainFxml = getTestName(true) + ".fxml";
+    if (additionalPath != null) {
+      configureByFiles(null, mainFxml, additionalPath);
+      complete();
+    } else {
+      configureByFile(mainFxml);
+    }
     assertTrue(myItems.length > 0);
     LookupElement selectionElement = null;
     for (LookupElement item : myItems) {
