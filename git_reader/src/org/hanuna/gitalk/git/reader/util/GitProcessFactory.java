@@ -10,7 +10,7 @@ import java.io.IOException;
 public class GitProcessFactory {
     private final static String COMMIT_PARENTS_LOG_FORMAT = "--format=%h|-%p";
     private final static String TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT = "--format=%ct|-%h|-%p";
-    private final static String COMMIT_DATA_LOG_FORMAT = "--format=%an|-%ct|-%s";
+    private final static String COMMIT_DATA_LOG_FORMAT = "--format=%h|-%an|-%ct|-%s";
 
     public static Process commitData(@NotNull String commitHash) throws IOException {
         String request = "git log " + commitHash + " --no-walk " + COMMIT_DATA_LOG_FORMAT;

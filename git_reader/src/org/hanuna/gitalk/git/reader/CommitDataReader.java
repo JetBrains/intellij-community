@@ -1,6 +1,9 @@
-package org.hanuna.gitalk.controller.git.log.readers;
+package org.hanuna.gitalk.git.reader;
 
 import org.hanuna.gitalk.common.Executor;
+import org.hanuna.gitalk.git.reader.util.GitException;
+import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
+import org.hanuna.gitalk.git.reader.util.ProcessOutputReader;
 import org.hanuna.gitalk.log.commit.CommitData;
 import org.hanuna.gitalk.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
@@ -59,14 +62,6 @@ public class CommitDataReader {
             throw new IllegalStateException();
         } catch (GitException e) {
             throw new IllegalStateException(e.getMessage());
-        }
-    }
-
-    public static void main(String[] args) {
-        List<CommitData> commitDatas = new CommitDataReader().readCommitsData("4a5d57e aab2eab 2160040 ");
-        for (int i = 0; i < commitDatas.size(); i++) {
-            CommitData commitData = commitDatas.get(i);
-            System.out.println(commitData.getAuthor() + " " + commitData.getMessage());
         }
     }
 

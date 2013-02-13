@@ -18,6 +18,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="log_data" />
+    <orderEntry type="module" module-name="refs" />
   </component>
 </module>
 

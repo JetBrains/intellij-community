@@ -1,6 +1,9 @@
-package org.hanuna.gitalk.controller.git.log.readers;
+package org.hanuna.gitalk.git.reader;
 
 import org.hanuna.gitalk.common.Executor;
+import org.hanuna.gitalk.git.reader.util.GitException;
+import org.hanuna.gitalk.git.reader.util.GitProcessFactory;
+import org.hanuna.gitalk.git.reader.util.ProcessOutputReader;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefParser;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +37,7 @@ public class RefReader {
         });
     }
 
-    protected void appendLine(@NotNull String line) {
+    private void appendLine(@NotNull String line) {
         refs.addAll(RefParser.parseCommitRefs(line));
     }
 
