@@ -15,6 +15,15 @@ import java.util.List;
  */
 public class CommitParser {
 
+    private static int nextSeparatorIndex(@NotNull String line, int startIndex) {
+        int nextIndex = line.indexOf("|-", startIndex);
+        if (nextIndex == -1) {
+            throw new IllegalArgumentException("not found separator \"|-\", with startIndex=" + startIndex +
+            ", in line: " + line);
+        }
+        return nextIndex;
+    }
+
     /**
      * @param line input format:
      *             ab123|-adada 193 352
@@ -22,10 +31,7 @@ public class CommitParser {
      */
     @NotNull
     public static CommitParents parseCommitParents(@NotNull String line) {
-        int separatorIndex = line.indexOf("|-");
-        if (separatorIndex == -1) {
-            throw new IllegalArgumentException("not found separator \"|-\" in line: " + line);
-        }
+        int separatorIndex = nextSeparatorIndex(line, 0);
         String commitHashStr = line.substring(0, separatorIndex);
         Hash commitHash = Hash.build(commitHashStr);
 
@@ -47,10 +53,7 @@ public class CommitParser {
      */
     @NotNull
     public static TimestampCommitParents parseTimestampParentHashes(@NotNull String line) {
-        int firstSeparatorIndex = line.indexOf("|-");
-        if (firstSeparatorIndex == -1) {
-            throw new IllegalArgumentException("not found separator \"|-\" in line: " + line);
-        }
+        int firstSeparatorIndex = nextSeparatorIndex(line, 0);
         String timestampStr = line.substring(0, firstSeparatorIndex);
         long timestamp;
         try {
@@ -65,21 +68,22 @@ public class CommitParser {
 
     /**
      * @param line input format
-     *             author name|-123124|-commit message
+     *             hash|-author name|-123124|-commit message
      */
     @NotNull
     public static CommitData parseCommitData(@NotNull String line) {
-        int firstSeparatorIndex = line.indexOf("|-");
-        if (firstSeparatorIndex == -1) {
-            throw new IllegalArgumentException("not found first separator \"|-\" in this str: " + line);
-        }
-        String authorName = line.substring(0, firstSeparatorIndex);
+        int prevIndex = 0;
+        int nextIndex = nextSeparatorIndex(line, 0);
+        String hashStr = line.substring(0, nextIndex);
 
-        int secondSeparatorIndex = line.indexOf("|-", firstSeparatorIndex + 1);
-        if (secondSeparatorIndex == -1) {
-            throw new IllegalArgumentException("not found second separator \"|-\" in this str: " + line);
-        }
-        String timestampStr = line.substring(firstSeparatorIndex + 2, secondSeparatorIndex);
+        prevIndex = nextIndex;
+        nextIndex = nextSeparatorIndex(line, prevIndex + 1);
+        String authorName = line.substring(prevIndex + 2, nextIndex);
+
+        prevIndex = nextIndex;
+        nextIndex = nextSeparatorIndex(line, prevIndex + 1);
+
+        String timestampStr = line.substring(prevIndex + 2, nextIndex);
         long timestamp;
         try {
             if (timestampStr.isEmpty()) {
@@ -91,9 +95,9 @@ public class CommitParser {
             throw new IllegalArgumentException("bad timestamp format: " + timestampStr + " in this Str: " + line);
         }
 
-        String commitMessage = line.substring(secondSeparatorIndex + 2);
+        String commitMessage = line.substring(nextIndex + 2);
 
-        return new CommitData(commitMessage, authorName, timestamp);
+        return new CommitData(Hash.build(hashStr), commitMessage, authorName, timestamp);
     }
 
 

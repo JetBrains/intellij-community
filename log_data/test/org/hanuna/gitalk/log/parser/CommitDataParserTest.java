@@ -14,6 +14,7 @@ public class CommitDataParserTest {
 
     private String toStr(@NotNull CommitData commitData) {
         StringBuilder s = new StringBuilder();
+        s.append(commitData.getCommitHash()).append("|-");
         s.append(commitData.getAuthor()).append("|-");
         s.append(commitData.getTimeStamp()).append("|-");
         s.append(commitData.getMessage());
@@ -27,37 +28,37 @@ public class CommitDataParserTest {
 
     @Test
     public void simple1() {
-        runTest("author|-1435|-message");
+        runTest("af56|-author|-1435|-message");
     }
 
     @Test
     public void emptyMessage() {
-        runTest("author|-1435|-");
+        runTest("12|-author|-1435|-");
     }
 
     @Test
     public void longAuthor() {
-        runTest("author  skdhfb  j 2353246|-1435|-message");
+        runTest("af56|-author  skdhfb  j 2353246|-1435|-message");
     }
 
     @Test
     public void strangeMessage() {
-        runTest("author |-1435|-m|-|-es dfsage");
+        runTest("af56|-author |-1435|-m|-|-es dfsage");
     }
 
     @Test
     public void bigTimestamp() {
-        runTest("author |-143523623|-m|-|-es dfsage");
+        runTest("af56|-author |-143523623|-m|-|-es dfsage");
     }
 
     @Test
     public void emptyAuthor() {
-        runTest("|-143523623|-");
+        runTest("af56|-|-143523623|-");
     }
 
     @Test
     public void emptyTimestamp() {
-        CommitData commitData = CommitParser.parseCommitData("author |-|-message");
+        CommitData commitData = CommitParser.parseCommitData("af56|-author |-|-message");
         Assert.assertEquals("author ", commitData.getAuthor());
         Assert.assertEquals(0, commitData.getTimeStamp());
         Assert.assertEquals("message", commitData.getMessage());
