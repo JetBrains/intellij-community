@@ -491,31 +491,6 @@
         </value>
       </option>
 
-      <option name="JSP_SCRIPTING_BACKGROUND">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="fffce4"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="JSP_DIRECTIVE_BACKGROUND">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="edffed"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="JSP_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-
       <option name="NOT_USED_ELEMENT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="808080"/>
@@ -719,14 +694,6 @@
         </value>
       </option>
 
-      <option name="JSP_ATTRIBUTE_NAME">
-        <value>
-          <option name="FOREGROUND" value="ff"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
       <option name="DIFF_ABSENT">
         <value>
           <option name="FOREGROUND"/>
@@ -825,16 +792,6 @@
         </value>
       </option>
       
-      <option name="JSP_DIRECTIVE_NAME">
-        <value>
-          <option name="FOREGROUND" value="ff"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-
-
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="ff"/>
@@ -851,14 +808,6 @@
         </value>
       </option>
 
-      <option name="JSP_ACTION_BACKGROUND">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="efefef"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
       <option name="TEXT">
         <value>
           <option name="EFFECT_COLOR"/>
@@ -869,23 +818,6 @@
         <value>
           <option name="FOREGROUND"/>
           <option name="BACKGROUND" value="ffc8c8"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="JSP_ACTION_NAME">
-        <value>
-          <option name="FOREGROUND" value="80"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-
-      <option name="JSP_ATTRIBUTE_VALUE">
-        <value>
-          <option name="FOREGROUND" value="8000"/>
-          <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
