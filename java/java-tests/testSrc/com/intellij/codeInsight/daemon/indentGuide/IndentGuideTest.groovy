@@ -137,7 +137,7 @@ class Test {
   }
   
   private void doTest(@NotNull String text) {
-    IndentGuideTestData testData = parse text
+    IndentGuideTestData testData = parse(text)
     myFixture.configureByText("${getTestName(false)}.java", testData.documentText)
     CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.file, myFixture.editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
     IndentsModelImpl model = myFixture.editor.indentsModel as IndentsModelImpl
