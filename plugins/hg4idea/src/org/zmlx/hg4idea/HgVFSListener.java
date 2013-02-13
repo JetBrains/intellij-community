@@ -192,7 +192,7 @@ public class HgVFSListener extends VcsVFSListener {
   @Override
   protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {
     return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
-           ? VcsDeleteType.SILENT
+           ? VcsDeleteType.IGNORE
            : VcsDeleteType.CONFIRM;
   }
 
