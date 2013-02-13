@@ -29,11 +29,11 @@ public class GradleDependencyManager {
     myLibraryManager = manager;
   }
 
-  public void importDependency(@NotNull GradleDependency dependency, @NotNull Module module) {
-    importDependencies(Collections.singleton(dependency), module);
+  public void importDependency(@NotNull GradleDependency dependency, @NotNull Module module, boolean synchronous) {
+    importDependencies(Collections.singleton(dependency), module, synchronous);
   }
 
-  public void importDependencies(@NotNull Iterable<GradleDependency> dependencies, @NotNull Module module) {
+  public void importDependencies(@NotNull Iterable<GradleDependency> dependencies, @NotNull Module module, boolean synchronous) {
     final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
     final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
     GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
@@ -50,17 +50,20 @@ public class GradleDependencyManager {
     for (GradleDependency dependency : dependencies) {
       dependency.invite(visitor);
     }
-    importLibraryDependencies(libraryDependencies, module);
-    importModuleDependencies(moduleDependencies, module);
+    importLibraryDependencies(libraryDependencies, module, synchronous);
+    importModuleDependencies(moduleDependencies, module, synchronous);
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void importModuleDependencies(@NotNull final Collection<GradleModuleDependency> dependencies, @NotNull final Module module) {
+  public void importModuleDependencies(@NotNull final Collection<GradleModuleDependency> dependencies,
+                                       @NotNull final Module module,
+                                       boolean synchronous)
+  {
     if (dependencies.isEmpty()) {
       return;
     }
     
-    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, new Runnable() {
+    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, synchronous, new Runnable() {
       @Override
       public void run() {
         ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -95,8 +98,11 @@ public class GradleDependencyManager {
     });
   }
   
-  public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
-    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, new Runnable() {
+  public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies,
+                                        @NotNull final Module module,
+                                        final boolean synchronous)
+  {
+    GradleUtil.executeProjectChangeAction(module.getProject(), dependencies, synchronous, new Runnable() {
       @Override
       public void run() {
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
@@ -108,7 +114,7 @@ public class GradleDependencyManager {
           }
         }
         if (!librariesToImport.isEmpty()) {
-          myLibraryManager.importLibraries(librariesToImport, module.getProject());
+          myLibraryManager.importLibraries(librariesToImport, module.getProject(), synchronous);
         }
 
         for (GradleLibraryDependency dependency : dependencies) {
@@ -138,15 +144,19 @@ public class GradleDependencyManager {
     });
   }
 
+  public void removeDependency(@NotNull final ExportableOrderEntry dependency, boolean synchronous) {
+    removeDependencies(Collections.singleton(dependency), synchronous);
+  }
+  
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeDependencies(@NotNull final Collection<? extends ExportableOrderEntry> dependencies) {
+  public void removeDependencies(@NotNull final Collection<? extends ExportableOrderEntry> dependencies, boolean synchronous) {
     if (dependencies.isEmpty()) {
       return;
     }
 
     for (final ExportableOrderEntry dependency : dependencies) {
       final Module module = dependency.getOwnerModule();
-      GradleUtil.executeProjectChangeAction(module.getProject(), dependency, new Runnable() {
+      GradleUtil.executeProjectChangeAction(module.getProject(), dependency, synchronous, new Runnable() {
         @Override
         public void run() {
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

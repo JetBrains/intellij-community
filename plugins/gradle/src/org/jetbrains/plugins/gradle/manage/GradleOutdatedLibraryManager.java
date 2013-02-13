@@ -125,12 +125,12 @@ public class GradleOutdatedLibraryManager {
         libraryDependenciesToImport.add(Pair.create(gradleLibraryDependency, ideModule));
       }
     }
-    myDependencyManager.removeDependencies(ideLibraryDependenciesToRemove);
+    myDependencyManager.removeDependencies(ideLibraryDependenciesToRemove, false);
     myLibraryManager.removeLibraries(ideLibsToRemove.values(), myProject);
     for (Pair<GradleLibraryDependency, Module> pair : libraryDependenciesToImport) {
       // Assuming that dependency manager is smart enough to import library for a given library dependency if it hasn't been
       // imported yet.
-      myDependencyManager.importDependency(pair.first, pair.second);
+      myDependencyManager.importDependency(pair.first, pair.second, false);
     }
     //endregion
   }

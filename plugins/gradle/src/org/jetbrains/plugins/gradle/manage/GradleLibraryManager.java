@@ -7,10 +7,13 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
+import org.jetbrains.plugins.gradle.model.gradle.GradleJar;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper;
@@ -28,19 +31,59 @@ public class GradleLibraryManager {
 
   @NotNull private final PlatformFacade              myPlatformFacade;
   @NotNull private final GradleLibraryPathTypeMapper myLibraryPathTypeMapper;
+  @NotNull private final GradleJarManager            myJarManager;
 
-  public GradleLibraryManager(@NotNull PlatformFacade platformFacade, @NotNull GradleLibraryPathTypeMapper mapper) {
+  public GradleLibraryManager(@NotNull PlatformFacade platformFacade,
+                              @NotNull GradleLibraryPathTypeMapper mapper,
+                              @NotNull GradleJarManager manager)
+  {
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
+    myJarManager = manager;
   }
 
-  public void importLibraries(@NotNull Collection<? extends GradleLibrary> libraries, @NotNull Project project) {
-    for (GradleLibrary library : libraries) {
-      importLibrary(library, project);
+  public void syncPaths(@NotNull GradleLibrary gradleLibrary,
+                        @NotNull final Library ideLibrary,
+                        @NotNull Project project,
+                        boolean synchronous)
+  {
+    Set<String> toRemove = ContainerUtilRt.newHashSet();
+    Set<String> toAdd = ContainerUtilRt.newHashSet(gradleLibrary.getPaths(LibraryPathType.BINARY));
+    for (VirtualFile ideFile : ideLibrary.getFiles(OrderRootType.CLASSES)) {
+      String idePath = GradleUtil.getLocalFileSystemPath(ideFile);
+      if (!toAdd.remove(idePath)) {
+        toRemove.add(idePath);
+      }
+    }
+    if (toRemove.isEmpty() && toAdd.isEmpty()) {
+      return;
+    }
+
+    Function<String, GradleJar> jarMapper = new Function<String, GradleJar>() {
+      @Override
+      public GradleJar fun(String path) {
+        return new GradleJar(path, LibraryPathType.BINARY, ideLibrary, null);
+      }
+    };
+
+    if (!toRemove.isEmpty()) {
+      List<GradleJar> jarsToRemove = ContainerUtil.map(toRemove, jarMapper);
+      myJarManager.removeJars(jarsToRemove, project, synchronous);
+    }
+
+    if (!toAdd.isEmpty()) {
+      List<GradleJar> jarsToAdd = ContainerUtil.map(toAdd, jarMapper);
+      myJarManager.importJars(jarsToAdd, project, synchronous);
     }
   }
 
-  public void importLibrary(@NotNull final GradleLibrary library, @NotNull final Project project) {
+  public void importLibraries(@NotNull Collection<? extends GradleLibrary> libraries, @NotNull Project project, boolean synchronous) {
+    for (GradleLibrary library : libraries) {
+      importLibrary(library, project, synchronous);
+    }
+  }
+
+  public void importLibrary(@NotNull final GradleLibrary library, @NotNull final Project project, boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = new HashMap<OrderRootType, Collection<File>>();
     for (LibraryPathType pathType : LibraryPathType.values()) {
       final Set<String> paths = library.getPaths(pathType);
@@ -55,14 +98,15 @@ public class GradleLibraryManager {
         }
       }));
     }
-    importLibrary(library.getName(), libraryFiles, project);
+    importLibrary(library.getName(), libraryFiles, project, synchronous);
   }
 
   public void importLibrary(@NotNull final String libraryName,
                             @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
-                            @NotNull final Project project)
+                            @NotNull final Project project,
+                            boolean synchronous)
   {
-    GradleUtil.executeProjectChangeAction(project, libraryName, new Runnable() {
+    GradleUtil.executeProjectChangeAction(project, libraryName, synchronous, new Runnable() {
       @Override
       public void run() {
         // Is assumed to be called from the EDT.

@@ -15,13 +15,16 @@ import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStruct
 import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
+import org.jetbrains.plugins.gradle.manage.GradleDependencyManager
 import org.jetbrains.plugins.gradle.manage.GradleJarManager
+import org.jetbrains.plugins.gradle.manage.GradleLibraryManager
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
 import org.jetbrains.plugins.gradle.model.id.GradleJarId
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryId
+import org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor
 import org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor
 import org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
@@ -83,7 +86,10 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(GradleEntityIdMapper)
     container.registerComponentImplementation(GradleProjectStructureContext)
     container.registerComponentImplementation(GradleLibraryPathTypeMapper, TestGradleLibraryPathTypeMapper)
+    container.registerComponentImplementation(GradleDependencyManager)
+    container.registerComponentImplementation(GradleLibraryManager)
     container.registerComponentImplementation(GradleJarManager, TestGradleJarManager)
+    container.registerComponentImplementation(GradleDuplicateLibrariesPreProcessor)
     container.registerComponentImplementation(GradleMovedJarsPostProcessor, TestGradleMovedJarsPostProcessor)
     container.registerComponentImplementation(GradleOutdatedLibraryVersionPostProcessor)
     configureContainer(container)
@@ -99,6 +105,7 @@ public abstract class AbstractGradleTest {
   }
 
   protected void clearChangePostProcessors() {
+    changesModel.preProcessors.clear()
     changesModel.postProcessors.clear()
   }
 

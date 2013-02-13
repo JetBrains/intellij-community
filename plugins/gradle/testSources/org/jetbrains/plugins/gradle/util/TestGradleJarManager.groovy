@@ -36,12 +36,12 @@ class TestGradleJarManager extends GradleJarManager {
   }
 
   @Override
-  void importJar(@NotNull GradleJar jar, @NotNull Project project) {
-    importedJars << jar
+  void importJars(@NotNull Collection<? extends GradleJar> jars, @NotNull Project project, boolean synchronous) {
+    importedJars.addAll(jars)
   }
 
   @Override
-  void removeJars(@NotNull Collection<GradleJar> jars, @NotNull Project project) {
+  void removeJars(@NotNull Collection<? extends GradleJar> jars, @NotNull Project project, boolean synchronous) {
     removedJars.addAll(jars)
   }
 }

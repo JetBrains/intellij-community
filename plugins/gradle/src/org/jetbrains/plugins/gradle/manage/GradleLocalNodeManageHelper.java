@@ -253,26 +253,26 @@ public class GradleLocalNodeManageHelper {
 
         @Override
         public void visit(@NotNull GradleLibrary library) {
-          myLibraryManager.importLibrary(library, myProjectStructureHelper.getProject()); 
+          myLibraryManager.importLibrary(library, myProjectStructureHelper.getProject(), false); 
         }
 
         @Override
         public void visit(@NotNull GradleJar jar) {
-          myJarManager.importJar(jar, myProjectStructureHelper.getProject());
+          myJarManager.importJar(jar, myProjectStructureHelper.getProject(), false);
         }
 
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
           final Module module = myProjectStructureHelper.findIdeModule(dependency.getOwnerModule());
           assert module != null;
-          myModuleDependencyManager.importDependency(dependency, module); 
+          myModuleDependencyManager.importDependency(dependency, module, false); 
         }
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
           final Module module = myProjectStructureHelper.findIdeModule(dependency.getOwnerModule());
           assert module != null;
-          myModuleDependencyManager.importDependency(dependency, module); 
+          myModuleDependencyManager.importDependency(dependency, module, false); 
         }
 
         @Override
@@ -320,9 +320,9 @@ public class GradleLocalNodeManageHelper {
       }
     }
 
-    myJarManager.removeJars(jars, myProjectStructureHelper.getProject());
+    myJarManager.removeJars(jars, myProjectStructureHelper.getProject(), false);
     myContentRootManager.removeContentRoots(contentRoots);
-    myModuleDependencyManager.removeDependencies(dependencies);
+    myModuleDependencyManager.removeDependencies(dependencies, false);
     myModuleManager.removeModules(modules);
   }
   
