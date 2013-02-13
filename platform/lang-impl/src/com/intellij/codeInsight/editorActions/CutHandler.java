@@ -57,10 +57,8 @@ public class CutHandler extends EditorWriteActionHandler {
       return;
     }
 
-    VisualPosition positionToRestore = null;
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      positionToRestore = editor.getCaretModel().getVisualPosition();
       selectionModel.selectLineAtCaret();
       if (!selectionModel.hasSelection()) return;
     }
@@ -71,16 +69,12 @@ public class CutHandler extends EditorWriteActionHandler {
     EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, dataContext);
 
     if (start != end) {
-      // There is a possible case that 'sticky selection' is active. It's automatically removed on copying then, so, we explictly
+      // There is a possible case that 'sticky selection' is active. It's automatically removed on copying then, so, we explicitly
       // remove the text.
       editor.getDocument().deleteString(start, end);
     }
     else {
       EditorModificationUtil.deleteSelectedText(editor);
-    }
-    
-    if (positionToRestore != null) {
-      editor.getCaretModel().moveToVisualPosition(positionToRestore);
     }
   }
 }
