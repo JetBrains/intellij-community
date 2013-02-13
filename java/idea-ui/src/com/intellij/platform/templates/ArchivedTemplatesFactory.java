@@ -137,5 +137,10 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     return templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
+  @Override
+  public int getGroupWeight(String group) {
+    return CUSTOM_GROUP.equals(group) ? -2 : 0;
+  }
+
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 }

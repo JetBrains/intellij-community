@@ -90,4 +90,15 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
     }
     return null;
   }
+
+  @Override
+  public int getGroupWeight(String group) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    for (int i = 0; i < builders.size(); i++) {
+      if (group.equals(builders.get(i).getGroupName())) {
+        return builders.size() - i;
+      }
+    }
+    return 0;
+  }
 }
