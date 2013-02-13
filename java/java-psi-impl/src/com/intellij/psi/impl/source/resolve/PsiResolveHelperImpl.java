@@ -412,35 +412,40 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
 
-    for (int i = 0; i < typeParameters.length; i++) {
-      PsiTypeParameter typeParameter = typeParameters[i];
-      PsiType substitution = substitutions[i];
-      if (substitution != null) continue;
-
-      Pair<PsiType, ConstraintType> constraint = constraints[i];
-      if (constraint == null) {
-        constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
-      }
-      else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
-        Pair<PsiType, ConstraintType> otherConstraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
-        if (otherConstraint != null) {
-          if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
-            constraint = otherConstraint;
+    try {
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiTypeParameter typeParameter = typeParameters[i];
+        PsiType substitution = substitutions[i];
+        if (substitution != null) continue;
+  
+        Pair<PsiType, ConstraintType> constraint = constraints[i];
+        if (constraint == null) {
+          constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
+        }
+        else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
+          Pair<PsiType, ConstraintType> otherConstraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, policy);
+          if (otherConstraint != null) {
+            if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) {
+              constraint = otherConstraint;
+            }
           }
         }
+  
+        if (constraint != null) {
+          substitution = constraint.getFirst();
+        }
+  
+        if (substitution == null) {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+          return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
+        }
+        else if (substitution != PsiType.NULL) {
+          partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
+        }
       }
-
-      if (constraint != null) {
-        substitution = constraint.getFirst();
-      }
-
-      if (substitution == null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-        return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
-      }
-      else if (substitution != PsiType.NULL) {
-        partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
-      }
+    }
+    finally {
+      ProcessCandidateParameterTypeInferencePolicy.forget(parent);
     }
     return partialSubstitutor;
   }
@@ -1061,7 +1066,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         PsiClassType[] superTypes = typeParameter.getSuperTypes();
         if (superTypes.length == 0) return null;
-        PsiType superType = TypeConversionUtil.erasure(substitutor.substitute(superTypes[0]));
+        PsiType superType = substitutor.substitute(superTypes[0]);
+        if (superType instanceof PsiClassType && ((PsiClassType)superType).isRaw()) {
+          superType = TypeConversionUtil.erasure(superType);
+        }
         if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
         if (superType == null) return null;
         return policy.getInferredTypeWithNoConstraint(manager, superType);

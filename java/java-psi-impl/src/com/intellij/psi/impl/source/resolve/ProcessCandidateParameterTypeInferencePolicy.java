@@ -163,4 +163,16 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     }
     return null;
   }
+  
+  public static void forget(PsiElement parent) {
+    if (parent instanceof PsiCallExpression) {
+      final PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiExpressionList) {
+        final PsiElement ggParent = gParent.getParent();
+        if (ggParent instanceof PsiCallExpression) {
+          ourResults.remove(ggParent);
+        }
+      }
+    }
+  }
 }

@@ -9,7 +9,10 @@ class Main {
     public static <B extends C, A, C> void bar3(B b, A a) {}
     static {
         bar0(foo(), "");
+        bar0("", foo());
+
         bar("", foo());
+        bar(foo(), "");
 
         bar1(foo(), "");
         bar2(foo(), "");
