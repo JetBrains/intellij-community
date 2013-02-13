@@ -23,6 +23,7 @@ import com.intellij.platform.ProjectTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -43,6 +44,10 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   @Override
   public String getName() {
     return myDisplayName;
+  }
+
+  public Icon getIcon() {
+    return getModuleType().getIcon();
   }
 
   protected abstract ModuleType getModuleType();

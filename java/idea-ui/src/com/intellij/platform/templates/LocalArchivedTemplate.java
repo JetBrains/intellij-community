@@ -20,13 +20,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
@@ -41,11 +44,12 @@ import java.util.zip.ZipInputStream;
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   static final String DESCRIPTION_PATH = ".idea/description.html";
-  static final String IDEA_INPUT_FIELDS_XML = ".idea/input-fields.xml";
+  static final String IDEA_INPUT_FIELDS_XML = ".idea/project-template.xml";
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
   private List<WizardInputField> myInputFields = Collections.emptyList();
+  private Icon myIcon;
 
   public LocalArchivedTemplate(String displayName,
                                URL archivePath) {
@@ -61,7 +65,12 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     });
     if (s != null) {
       try {
-        myInputFields = RemoteTemplatesFactory.getFields(JDOMUtil.loadDocument(s).getRootElement(), Namespace.NO_NAMESPACE);
+        Element templateElement = JDOMUtil.loadDocument(s).getRootElement();
+        myInputFields = RemoteTemplatesFactory.getFields(templateElement, Namespace.NO_NAMESPACE);
+        String iconPath = templateElement.getChildText("icon-path");
+        if (iconPath != null) {
+          myIcon = IconLoader.findIcon(iconPath);
+        }
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -79,6 +88,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     });
   }
 
+  @Override
+  public Icon getIcon() {
+    return myIcon == null ? super.getIcon() : myIcon;
+  }
+
   @Nullable
   String readEntry(Condition<ZipEntry> condition) {
     ZipInputStream stream = null;
@@ -87,7 +101,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
       ZipEntry entry;
       while ((entry = stream.getNextEntry()) != null) {
         if (condition.value(entry)) {
-          return StreamUtil.readText(stream);
+          return StreamUtil.readText(stream, TemplateModuleBuilder.UTF_8);
         }
       }
     }
