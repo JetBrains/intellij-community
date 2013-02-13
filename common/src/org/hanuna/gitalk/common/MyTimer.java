@@ -19,6 +19,10 @@ public class MyTimer {
         timestamp = System.currentTimeMillis();
     }
 
+    public void clear(@NotNull String message) {
+        this.message = message;
+    }
+
     public long get() {
         return System.currentTimeMillis() - timestamp;
     }

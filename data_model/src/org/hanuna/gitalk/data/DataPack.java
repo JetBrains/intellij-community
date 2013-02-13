@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface DataPack {
 
+    public CommitDataGetter getCommitDataGetter();
+
     @NotNull
     public RefsModel getRefModel();
 

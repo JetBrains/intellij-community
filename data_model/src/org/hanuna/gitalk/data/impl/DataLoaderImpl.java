@@ -5,8 +5,10 @@ import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.git.reader.CommitParentsReader;
 import org.hanuna.gitalk.git.reader.FullLogCommitParentsReader;
+import org.hanuna.gitalk.git.reader.RefReader;
 import org.hanuna.gitalk.git.reader.util.GitException;
 import org.hanuna.gitalk.log.commit.CommitParents;
+import org.hanuna.gitalk.refs.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -43,7 +45,9 @@ public class DataLoaderImpl implements DataLoader {
         state = State.ALL_LOG_READER;
         FullLogCommitParentsReader reader = new FullLogCommitParentsReader(statusUpdater);
         List<CommitParents> commitParentsList = reader.readAllCommitParents();
-        dataPack = new DataPackImpl(commitParentsList, statusUpdater);
+
+        List<Ref> allRefs = new RefReader().readAllRefs();
+        dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
     }
 
     @Override
@@ -55,7 +59,9 @@ public class DataLoaderImpl implements DataLoader {
                 List<CommitParents> commitParentsList = partReader.readNextBlock(statusUpdater);
                 nextPreLoadPart = partReader.readNextBlock(statusUpdater);
                 state = State.PART_LOG_READER;
-                dataPack = new DataPackImpl(commitParentsList, statusUpdater);
+
+                List<Ref> allRefs = new RefReader().readAllRefs();
+                dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
                 break;
             case PART_LOG_READER:
                 if (nextPreLoadPart.isEmpty()) {
