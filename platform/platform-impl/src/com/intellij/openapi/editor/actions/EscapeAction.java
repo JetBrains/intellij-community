@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 
 /**
  * @author max
@@ -34,6 +35,13 @@ public class EscapeAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
+      if (editor instanceof EditorEx) {
+        EditorEx editorEx = (EditorEx)editor;
+        if (editorEx.isStickySelection()) {
+          editorEx.setStickySelection(false);
+        }
+      }
+      
       editor.getSelectionModel().removeSelection();
     }
 
