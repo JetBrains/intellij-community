@@ -39,6 +39,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1060,7 +1061,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         PsiClassType[] superTypes = typeParameter.getSuperTypes();
         if (superTypes.length == 0) return null;
-        PsiType superType = TypeConversionUtil.erasure(superTypes[0]);
+        PsiType superType = TypeConversionUtil.erasure(substitutor.substitute(superTypes[0]));
         if (superType == null) superType = PsiType.getJavaLangObject(manager, scope);
         if (superType == null) return null;
         return policy.getInferredTypeWithNoConstraint(manager, superType);
@@ -1095,6 +1096,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   private static RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
+  private static final ProcessCandidateParameterTypeInferencePolicy GRAPH_INFERENCE_POLICY = new ProcessCandidateParameterTypeInferencePolicy() {
+      @Override
+      protected List<PsiExpression> getExpressions(PsiExpression[] expressions, int i) {
+        final List<PsiExpression> list = Arrays.asList(expressions);
+        list.set(i, null);
+        return list;
+      }
+    };
   private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull final PsiExpression methodCall,
                                                                              @NotNull final PsiTypeParameter typeParameter,
                                                                              @NotNull final PsiCallExpression parentCall) {
@@ -1127,8 +1136,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
       final PsiExpression methodCallCopy = (PsiExpression)currentCallInCopy.replace(nullPlaceholder);
       copy.putCopyableUserData(CALL_EXPRESSION_KEY, parentCall);
-      return ProcessCandidateParameterTypeInferencePolicy.INSTANCE
-        .inferTypeConstraintFromCallContext(methodCallCopy, copyArgumentList, copy, typeParameter);
+      return GRAPH_INFERENCE_POLICY.inferTypeConstraintFromCallContext(methodCallCopy, copyArgumentList, copy, typeParameter);
     }
     return null;
   }

@@ -25,6 +25,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ import java.util.Map;
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
   private static final Map<PsiExpression, Map<JavaResolveResult, PsiSubstitutor>> ourResults =
-    new ConcurrentHashMap<PsiExpression, Map<JavaResolveResult, PsiSubstitutor>>();
+    new ConcurrentWeakHashMap<PsiExpression, Map<JavaResolveResult, PsiSubstitutor>>();
   
   @Override
   public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
@@ -60,7 +61,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
         final PsiSubstitutor substitutor;
         if (subst == PsiSubstitutor.UNKNOWN) {
           if (result instanceof MethodCandidateInfo) {
-            List<PsiExpression> leftArgs = Arrays.asList(expressions).subList(0, i);
+            List<PsiExpression> leftArgs = getExpressions(expressions, i);
             substitutor = ((MethodCandidateInfo)result).inferTypeArguments(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
           }
           else {
@@ -80,6 +81,10 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     }
 
     return null;
+  }
+
+  protected List<PsiExpression> getExpressions(PsiExpression[] expressions, int i) {
+    return Arrays.asList(expressions).subList(0, i);
   }
 
   private static Pair<PsiType, ConstraintType> inferConstraint(PsiTypeParameter typeParameter, 

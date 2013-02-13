@@ -52,6 +52,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferenceForFirstArg() throws Exception {
+    doTest();
+  }
+
   public void testConditionalExpressionsInference() throws Exception {
     doTest();
   }
