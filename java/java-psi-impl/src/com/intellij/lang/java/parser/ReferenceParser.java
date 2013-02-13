@@ -171,8 +171,7 @@ public class ReferenceParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                  final boolean isNew, final boolean diamonds) {
+  public PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isNew, boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -183,9 +182,8 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                   final boolean isImport, final boolean isStaticImport, final boolean isNew,
-                                                   final boolean diamonds, final TypeInfo typeInfo) {
+  private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
+                                                   boolean isStaticImport, boolean isNew, boolean diamonds, TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -216,6 +214,8 @@ public class ReferenceParser {
 
       final PsiBuilder.Marker dotPos = builder.mark();
       builder.advanceLexer();
+
+      myParser.getDeclarationParser().parseAnnotations(builder);
 
       if (expect(builder, JavaTokenType.IDENTIFIER)) {
         hasIdentifier = true;
