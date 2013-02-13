@@ -80,6 +80,7 @@ public class CompilerTask extends Task.Backgroundable {
   private final String myContentName;
   private final boolean myHeadlessMode;
   private final boolean myForceAsyncExecution;
+  private final boolean myWaitForPreviousSession;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
   private boolean myMessagesAutoActivated = false;
@@ -89,11 +90,12 @@ public class CompilerTask extends Task.Backgroundable {
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
 
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync) {
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync, boolean waitForPreviousSession) {
     super(project, contentName);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
     myForceAsyncExecution = forceAsync;
+    myWaitForPreviousSession = waitForPreviousSession;
   }
 
   public void setContentIdKey(Key<Key<?>> contentIdKey) {
@@ -136,7 +138,10 @@ public class CompilerTask extends Task.Backgroundable {
 
       try {
         while (!acquired) {
-          acquired = semaphore.tryAcquire(500, TimeUnit.MILLISECONDS);
+          acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
+          if (!acquired && !myWaitForPreviousSession) {
+            return;
+          }
           if (indicator.isCanceled()) {
             // give up obtaining the semaphore,
             // let compile work begin in order to stop gracefuly on cancel event

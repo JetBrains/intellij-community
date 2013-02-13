@@ -220,18 +220,8 @@ public class CompileDriver {
     if (!useOutOfProcessBuild()) {
       scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     }
-    else {
-      final Application app = ApplicationManager.getApplication();
-      if (!app.isUnitTestMode()) {
-        final boolean isDispatchThread = app.isDispatchThread();
-        LOG.assertTrue(!isDispatchThread, "Calling isUpToDate() from Event Dispatch Thread may cause deadlocks");
-        if (isDispatchThread) {
-          return false;
-        }
-      }
-    }
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false);
+    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false);
     final DependencyCache cache = useOutOfProcessBuild()? null : createDependencyCache();
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, cache, true, false);
 
@@ -640,7 +630,7 @@ public class CompileDriver {
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true);
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true, true);
 
     StatusBar.Info.set("", myProject, "Compiler");
     if (useExtProcessBuild) {
@@ -2282,8 +2272,7 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
-    final CompilerTask progressManagerTask =
-      new CompilerTask(myProject, contentName, false, false);
+    final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
