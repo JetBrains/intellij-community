@@ -22,10 +22,10 @@ import java.awt.Color;
  * @author max
  */
 public interface LightColors {
-  Color YELLOW = new JBColor(new Color(0xffffcc), new Color(0xffffcc));
-  Color GREEN = new JBColor(new Color(0xccffcc), new Color(0xccffcc));
+  Color YELLOW = new JBColor(new Color(0xffffcc), new Color(0x525229));
+  Color GREEN = new JBColor(new Color(0xccffcc), new Color(0x356936));
   Color BLUE = new JBColor(new Color(0xccccff), new Color(0x589df6));
-  Color RED = new JBColor(new Color(0xffcccc), new Color(0xA05050));
+  Color RED = new JBColor(new Color(0xffcccc), new Color(0x743A3A));
   Color CYAN = new JBColor(new Color(0xccffff), new Color(100, 138, 138));
 
   Color SLIGHTLY_GREEN = new JBColor(new Color(0xeeffee), new Color(0x515B51));
