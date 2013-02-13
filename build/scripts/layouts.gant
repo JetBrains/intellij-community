@@ -183,6 +183,13 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
     layoutCommunityPlugins(home)
 
+    layoutPlugin("javaFX") {
+      jar("javaFX") {
+        module("JavaFX")
+        module("JavaFX-CE")
+      }
+    }
+
     dir("plugins") {
       dir("IntelliLang") {
         dir("lib") {
@@ -207,7 +214,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "javaFX", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
