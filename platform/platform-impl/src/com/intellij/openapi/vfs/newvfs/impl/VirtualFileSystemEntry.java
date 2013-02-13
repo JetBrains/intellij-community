@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,13 +56,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final int IS_SPECIAL_FLAG = 0x0800;
   private static final int INT_FLAGS_MASK = 0xff00;
 
-  @NonNls private static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml"};
-
-  /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #WELL_KNOWN_SUFFIXES}. */
-  private volatile Object myName;
+  private volatile int myNameId;
   private volatile VirtualDirectoryImpl myParent;
-  /** Also, high three bits are used as an index into the {@link #WELL_KNOWN_SUFFIXES} array. */
   private volatile short myFlags = 0;
   private volatile int myId;
 
@@ -81,18 +75,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private void storeName(@NotNull String name) {
-    myFlags &= 0x1fff;
-    for (int i = 0; i < WELL_KNOWN_SUFFIXES.length; i++) {
-      String suffix = WELL_KNOWN_SUFFIXES[i];
-      if (name.endsWith(suffix)) {
-        name = StringUtil.trimEnd(name, suffix);
-        int mask = (i+1) << 13;
-        myFlags |= mask;
-        break;
-      }
-    }
-
-    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
+    myNameId = FileNameCache.storeName(name.replace('\\', '/'));   // note: on Unix-style FS names may contain backslashes
   }
 
   private void updateLinkStatus() {
@@ -104,26 +87,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     setFlagInt(HAS_SYMLINK_FLAG, isSymLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
-  private static Object encodeName(@NotNull String name) {
-    int length = name.length();
-    if (length == 0) return EMPTY;
-
-    if (!IOUtil.isAscii(name)) {
-      return name;
-    }
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      bytes[i] = (byte)name.charAt(i);
-    }
-    return bytes;
-  }
-
   @NotNull
   private String getEncodedSuffix() {
-    int index = (myFlags >> 13) & 0x07;
-    if (index == 0) return EMPTY;
-    return WELL_KNOWN_SUFFIXES[index-1];
+    return FileNameCache.getNameSuffix(myNameId);
   }
 
   @Override
@@ -133,7 +99,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     String suffix = getEncodedSuffix();
     if (name instanceof String) {
       //noinspection StringEquality
-      return suffix == EMPTY ? (String)name : name + suffix;
+      return suffix == FileNameCache.EMPTY ? (String)name : name + suffix;
     }
 
     byte[] bytes = (byte[])name;
@@ -172,7 +138,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   protected Object rawName() {
-    return myName;
+    return FileNameCache.getRawName(myNameId);
   }
 
   @Override
