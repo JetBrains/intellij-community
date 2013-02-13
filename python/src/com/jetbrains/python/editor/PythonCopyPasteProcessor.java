@@ -38,7 +38,13 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return text;
     }
-
+    final boolean useTabs =
+      CodeStyleSettingsManager.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
+    CharFilter NOT_INDENT_FILTER = new CharFilter() {
+      public boolean accept(char ch) {
+        return useTabs? ch != '\t' : !Character.isWhitespace(ch);
+      }
+    };
     final CaretModel caretModel = editor.getCaretModel();
     final Document document = editor.getDocument();
     String newText = text;
@@ -75,13 +81,13 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         //calculate indent to normalize text
         if (strings.size() > 0) {
           spaceString = strings.get(0);   // insert single line
-          indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER);
+          indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER);
           if (indent < 0)
             indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
 
           if (!StringUtil.startsWithWhitespace(spaceString) && strings.size() > 1) {    // insert multi-line
             spaceString = strings.get(1);
-            indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER);
+            indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER);
             if (indent < 0)
               indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
 
@@ -93,7 +99,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
               if (trimmed.startsWith("def ") || trimmed.startsWith("if ") || trimmed.startsWith("try:") ||
                   trimmed.startsWith("class ") || trimmed.startsWith("for ") || trimmed.startsWith("elif ") ||
                   trimmed.startsWith("else:") || trimmed.startsWith("except") || trimmed.startsWith("while ")) {
-                indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER) / 2;
+                indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER) / 2;
                 if (indent < 0) indent = 0;
               }
             }
@@ -104,8 +110,10 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           text = StringUtil.trimTrailing(text);
 
         if (!StringUtil.startsWithWhitespace(text)) {   // add missed whitespaces
-          if (indent > 0)
-            newText = StringUtil.repeat(" ", indent) + text;
+          if (indent > 0) {
+            final String indentSymbol = useTabs? "\t" :" ";
+            newText = StringUtil.repeat(indentSymbol, indent) + text;
+          }
           else
             newText = new String(text);
         }

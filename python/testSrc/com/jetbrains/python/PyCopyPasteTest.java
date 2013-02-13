@@ -2,6 +2,8 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -265,6 +267,19 @@ public class PyCopyPasteTest extends PyTestCase {
 
   public void testReplaceSelection() {    //PY-8744
     doTest();
+  }
+
+  public void testIndentTab() {
+    final CommonCodeStyleSettings.IndentOptions indentOptions =
+      CodeStyleSettingsManager.getSettings(myFixture.getProject())
+        .getIndentOptions(PythonFileType.INSTANCE);
+    indentOptions.USE_TAB_CHARACTER = true;
+    try {
+      doTest();
+    }
+    finally {
+      indentOptions.USE_TAB_CHARACTER = false;
+    }
   }
 
   private void doTest() {
