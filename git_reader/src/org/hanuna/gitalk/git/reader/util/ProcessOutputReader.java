@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.controller.git.log.readers;
+package org.hanuna.gitalk.git.reader.util;
 
 import org.hanuna.gitalk.common.Executor;
 import org.jetbrains.annotations.NotNull;
