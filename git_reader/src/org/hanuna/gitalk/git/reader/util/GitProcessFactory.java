@@ -30,7 +30,14 @@ public class GitProcessFactory {
     //startDay < lastDay
     public static Process dayInterval(int startDay, int lastDay) throws IOException {
         String daysArg = "--since=" + lastDay + "\\day " + "--until=" + startDay + "\\day ";
-        String request = "git log --all --date-order " + daysArg + TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT;
+        String request = "git log --all " + daysArg + TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT;
+        return Runtime.getRuntime().exec(request);
+    }
+
+    //startDay < lastDay
+    public static Process checkEmpty(int startDay) throws IOException {
+        String daysArg = "--until=" + startDay + "\\day ";
+        String request = "git log --all -n 1 " + daysArg + TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT;
         return Runtime.getRuntime().exec(request);
     }
 
