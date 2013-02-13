@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.util.BitUtil.isSet;
-import static com.intellij.util.BitUtil.notSet;
-import static com.intellij.util.BitUtil.set;
+import static com.intellij.util.BitUtil.*;
 
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
@@ -38,6 +36,7 @@ public class ReferenceParser {
   public static final int DIAMONDS = 0x08;
   public static final int DISJUNCTIONS = 0x10;
   public static final int CONJUNCTIONS = 0x20;
+  public static final int INCOMPLETE_ANNO = 0x40;
 
   public static class TypeInfo {
     public boolean isPrimitive = false;
@@ -89,13 +88,13 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags, final boolean badWildcard) {
+  private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
 
     PsiBuilder.Marker type = builder.mark();
-    myParser.getDeclarationParser().parseAnnotations(builder);
+    PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
 
     final IElementType tokenType = builder.getTokenType();
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
@@ -117,6 +116,11 @@ public class ReferenceParser {
     }
     else {
       type.drop();
+      if (anno != null && isSet(flags, INCOMPLETE_ANNO)) {
+        error(builder, JavaErrorMessages.message("expected.type"));
+        typeInfo.hasErrors = true;
+        return typeInfo;
+      }
       return null;
     }
 

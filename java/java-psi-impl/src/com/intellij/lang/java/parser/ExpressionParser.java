@@ -266,8 +266,8 @@ public class ExpressionParser {
       final PsiBuilder.Marker typeCast = builder.mark();
       builder.advanceLexer();
 
-      final ReferenceParser.TypeInfo typeInfo =
-        myParser.getReferenceParser().parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | ReferenceParser.CONJUNCTIONS);
+      ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(
+        builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | ReferenceParser.CONJUNCTIONS | ReferenceParser.INCOMPLETE_ANNO);
       if (typeInfo == null || !expect(builder, JavaTokenType.RPARENTH)) {
         typeCast.rollbackTo();
         return parsePostfix(builder);
