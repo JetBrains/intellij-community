@@ -47,7 +47,7 @@ public class FileChangedNotificationProvider extends EditorNotifications.Provide
           }
         }
       }
-    });
+    }, project);
   }
 
   @Override

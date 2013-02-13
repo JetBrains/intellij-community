@@ -15,16 +15,19 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -105,11 +108,21 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
   }
 
-  public synchronized void addListener(FrameStateListener listener) {
-    myListeners.add(listener);
+  public synchronized void addListener(@NotNull FrameStateListener listener) {
+    addListener(listener, null);
   }
 
-  public synchronized void removeListener(FrameStateListener listener) {
+  public synchronized void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
+    myListeners.add(listener);
+    if (disposable != null) Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeListener(listener);
+      }
+    });
+  }
+
+  public synchronized void removeListener(@NotNull FrameStateListener listener) {
     myListeners.remove(listener);
   }
 }
