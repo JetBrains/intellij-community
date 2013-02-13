@@ -69,6 +69,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private DocumentEvent myIsInUpdate;
   private int[] myBlockSelectionStarts;
   private int[] myBlockSelectionEnds;
+  private boolean myUnknownDirection;
 
   private class MyRangeMarker extends RangeMarkerImpl {
     private VisualPosition myStartPosition;
@@ -227,6 +228,32 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     //}
   }
 
+  /**
+   * @return  information on whether current selection's direction in known
+   * @see #setUnknownDirection(boolean) 
+   */
+  public boolean isUnknownDirection() {
+    return myUnknownDirection;
+  }
+
+  /**
+   * There is a possible case that we don't know selection's direction. For example, a user might triple-click editor (select the
+   * whole line). We can't say what selection end is a {@link #getLeadSelectionOffset() leading end} then. However, that matters
+   * in a situation when a user clicks before or after that line holding Shift key. It's expected that the selection is expanded
+   * up to that point than.
+   * <p/>
+   * That's why we allow to specify that the direction is unknown and {@link #isUnknownDirection() expose this information}
+   * later.
+   * <p/>
+   * <b>Note:</b> when this method is called with <code>'true'</code>, subsequent calls are guaranteed to return <code>'true'</code>
+   * until selection is changed. 'Unknown direction' flag is automatically reset then.
+   * 
+   * @param unknownDirection
+   */
+  public void setUnknownDirection(boolean unknownDirection) {
+    myUnknownDirection = unknownDirection;
+  }
+
   @Override
   public int getSelectionEnd() {
     validateContext(false);
@@ -291,9 +318,13 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true);
   }
 
-  private void doSetSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition,
-                              int endOffset, boolean visualPositionAware) {
-
+  private void doSetSelection(@NotNull VisualPosition startPosition,
+                              int startOffset,
+                              @NotNull VisualPosition endPosition,
+                              int endOffset,
+                              boolean visualPositionAware)
+  {
+    myUnknownDirection = false;
     final Document doc = myEditor.getDocument();
     final Pair<String, String> markers = myEditor.getUserData(EditorImpl.EDITABLE_AREA_MARKER);
     if (markers != null) {
@@ -496,6 +527,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void removeBlockSelection() {
+    myUnknownDirection = false;
     if (hasBlockSelection()) {
       myEditor.repaint(0, myEditor.getDocument().getTextLength());
 
