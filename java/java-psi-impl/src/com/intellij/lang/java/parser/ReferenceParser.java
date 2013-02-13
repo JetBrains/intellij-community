@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class ReferenceParser {
     else if ((isSet(flags, WILDCARD) || badWildcard) && tokenType == JavaTokenType.QUEST) {
       type.drop();
       typeInfo.marker = parseWildcardType(builder, isSet(flags, WILDCARD));
-      return typeInfo.marker != null ? typeInfo : null;
+      return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       emptyElement(builder, JavaElementType.DIAMOND_TYPE);
