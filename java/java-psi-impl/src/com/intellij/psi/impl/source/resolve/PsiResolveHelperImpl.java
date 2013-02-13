@@ -1106,6 +1106,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (exprIdx > -1) {
       final PsiExpression nullPlaceholder = JavaPsiFacade.getElementFactory(methodCall.getProject()).createExpressionFromText("null", methodCall);
 
+      final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+      if (owner instanceof PsiMethod) {
+        final PsiType returnType = ((PsiMethod)owner).getReturnType();
+        final Pair<PsiType, ConstraintType> constraint =
+          ProcessCandidateParameterTypeInferencePolicy.inferConstraint(typeParameter, parentCall, nullPlaceholder, exprIdx, returnType);
+        if (constraint != null) return constraint;
+      }
+
       final PsiCallExpression copy = ourGraphGuard.doPreventingRecursion(parentCall, true, new Computable<PsiCallExpression>() {
         @Override
         public PsiCallExpression compute() {
