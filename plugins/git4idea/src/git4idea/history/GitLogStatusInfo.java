@@ -65,4 +65,12 @@ class GitLogStatusInfo {
     return mySecondPath;
   }
 
+  @Override
+  public String toString() {
+    String s = myType.toString() + " " + myPath;
+    if (mySecondPath != null) {
+      s += " -> " + mySecondPath;
+    }
+    return s;
+  }
 }

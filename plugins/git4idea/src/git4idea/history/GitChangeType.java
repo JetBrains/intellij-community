@@ -66,5 +66,10 @@ enum GitChangeType {
   boolean requiresSecondPath() {
     return myRequiresSecondPath;
   }
+
+  @Override
+  public String toString() {
+    return String.valueOf(Character.toUpperCase(myChar));
+  }
   
 }
