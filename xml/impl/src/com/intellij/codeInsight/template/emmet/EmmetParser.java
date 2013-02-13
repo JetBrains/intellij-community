@@ -36,7 +36,7 @@ public abstract class EmmetParser {
 
   private int myIndex = 0;
 
-  EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
+  public EmmetParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
     myTokens = tokens;
     myCallback = callback;
     myGenerator = generator;
