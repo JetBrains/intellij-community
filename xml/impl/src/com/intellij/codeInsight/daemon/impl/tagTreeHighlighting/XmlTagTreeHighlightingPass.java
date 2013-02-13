@@ -170,7 +170,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (int i = 0; i < count && i < baseColors.length; i++) {
       Pair<TextRange, TextRange> pair = myPairsToHighlight.get(i);
 
-      if (pair == null || (pair.first == null && pair.second == null)) {
+      if (pair == null || pair.first == null && pair.second == null) {
         continue;
       }
 
@@ -220,16 +220,17 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
-    return new HighlightInfo(new TextAttributes(null, color, null, null, Font.PLAIN), null, TYPE, range.getStartOffset(),
-                             range.getEndOffset(), null, null, HighlightSeverity.INFORMATION, false, null, false);
+    TextAttributes attributes = new TextAttributes(null, color, null, null, Font.PLAIN);
+    return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes).severity(HighlightSeverity.INFORMATION).createUnconditionally();
   }
 
   @NotNull
-  private static RangeHighlighter createHighlighter(final MarkupModel mm, final @NotNull TextRange range, final Color color) {
+  private static RangeHighlighter createHighlighter(final MarkupModel mm, @NotNull final TextRange range, final Color color) {
     final RangeHighlighter highlighter =
       mm.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, null, HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setLineMarkerRenderer(new LineMarkerRenderer() {
+      @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
         int height = r.height + editor.getLineHeight();
         g.setColor(color);
