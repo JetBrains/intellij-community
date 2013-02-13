@@ -1,26 +1,37 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author yole
  */
 public class PyRenameTest extends PyTestCase {
+  public static final String RENAME_DATA_PATH = "refactoring/rename/";
+
   public void testRenameField() {  // PY-457
     doTest("qu");
   }
 
   public void testSearchInStrings() {  // PY-670
-    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
     final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
                                                                                         TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertNotNull(element);
     myFixture.renameElement(element, "bar", true, false);
-    myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
+    myFixture.checkResultByFile(RENAME_DATA_PATH + getTestName(true) + "_after.py");
   }
 
   public void testRenameParameter() {  // PY-385
@@ -147,8 +158,18 @@ public class PyRenameTest extends PyTestCase {
     doTest("bar");
   }
 
+  // PY-8857
+  public void testRenameImportSubModuleAs() {
+    doMultiFileTest("bar.py");
+  }
+
+  // PY-8857
+  public void testRenameImportModuleAs() {
+    doMultiFileTest("bar.py");
+  }
+
   private void doRenameConflictTest(String newName, String expectedConflict) {
-    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
     try {
       myFixture.renameElementAtCaret(newName);
     }
@@ -160,8 +181,28 @@ public class PyRenameTest extends PyTestCase {
   }
 
   private void doTest(final String newName) {
-    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
+    myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
     myFixture.renameElementAtCaret(newName);
-    myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
+    myFixture.checkResultByFile(RENAME_DATA_PATH + getTestName(true) + "_after.py");
+  }
+
+  private void doMultiFileTest(String newName) {
+    final String testName = getTestName(true);
+    final VirtualFile dir1 = myFixture.copyDirectoryToProject(RENAME_DATA_PATH + testName + "/before", "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    myFixture.configureFromTempProjectFile("a.py");
+    myFixture.renameElementAtCaret(newName);
+    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
+    try {
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Nullable
+  private static VirtualFile getVirtualFileByName(String fileName) {
+    return LocalFileSystem.getInstance().findFileByPath(fileName.replace(File.separatorChar, '/'));
   }
 }
