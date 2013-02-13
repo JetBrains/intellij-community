@@ -412,8 +412,13 @@ public class GitHistoryUtils {
             if (record != null) {
               resultAdapter.consume(record);
             }
-          } finally {
+          } 
+          catch (Throwable t) {
+            LOG.error(t);
+            exceptionConsumer.consume(new VcsException("Internal error " + t.getMessage(), t));
             criticalFailure.set(true);
+          }
+          finally {
             semaphore.up();
           }
         }
