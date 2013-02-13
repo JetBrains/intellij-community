@@ -95,7 +95,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
-      if (isAfterExpression(element)) {
+      if (isAfterExpression(element) || JavaStringContextType.isStringLiteral(element)) {
         return false;
       }
       
