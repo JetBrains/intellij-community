@@ -6,6 +6,8 @@
   <description>
     This plugin provides JavaFX2 support.
   </description>
+  <depends optional="true" config-file="css-plugin.xml">com.intellij.css</depends>
+  <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>
