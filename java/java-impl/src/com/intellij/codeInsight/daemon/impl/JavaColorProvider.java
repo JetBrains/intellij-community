@@ -113,7 +113,7 @@ public class JavaColorProvider implements ElementColorProvider {
     switch (type) {
       case INT:        
       case INT_BOOL:
-        replaceInt(expr[0], color.getRGB());
+        replaceInt(expr[0], color.getRGB(), true);
         return;
       case INT_x3:        
       case INT_x4:
@@ -139,11 +139,16 @@ public class JavaColorProvider implements ElementColorProvider {
         }
     }
   }
-  
+
   private static void replaceInt(PsiExpression expr, int newValue) {
+    replaceInt(expr, newValue, false);
+  }
+
+  private static void replaceInt(PsiExpression expr, int newValue, boolean hex) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getInt(expr) != newValue) {
-      expr.replace(factory.createExpressionFromText(String.valueOf(newValue), null));
+      String text = hex ? "0x" + Integer.toHexString(newValue & 0x00ffffff).toUpperCase() : Integer.toString(newValue);
+      expr.replace(factory.createExpressionFromText(text, null));
     }
   }
   private static void replaceFloat(PsiExpression expr, float newValue) {
