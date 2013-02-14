@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -173,19 +174,14 @@ class WhiteSpace {
 
   private void refreshStateOnEndOffsetIncrease(int newEndOffset, int oldEndOffset, int tabSize) {
     assert newEndOffset > oldEndOffset;
-    for (int i = oldEndOffset - myStart; i < newEndOffset - myStart; i++) {
-      switch (myInitial.charAt(i)) {
-        case LINE_FEED:
-          setLineFeeds(getLineFeeds() + 1);
-          mySpaces = 0;
-          myIndentSpaces = 0;
-          break;
-        case '\t':
-          myIndentSpaces += tabSize - (mySpaces % tabSize);
-          break;
-        default: mySpaces++;
-      }
+    WhiteSpaceInfo info = parse(myInitial, oldEndOffset - myStart, newEndOffset - myStart, mySpaces + myIndentSpaces, tabSize);
+    if (info.lineFeeds > 0) {
+      setLineFeeds(getLineFeeds() + info.lineFeeds);
+      mySpaces = 0;
+      myIndentSpaces = 0;
     }
+    mySpaces += info.spaces;
+    myIndentSpaces += info.indentSpaces;
   }
 
   private void refreshStateOnEndOffsetDecrease(CharSequence oldText, int newEndOffset, int oldEndOffset, int tabSize) {
@@ -193,11 +189,17 @@ class WhiteSpace {
     int lineFeedsNumberAtRemovedText = 0;
     int spacesNumberAtRemovedText = 0;
     int indentSpacesNumberAtRemovedText = 0;
+    int column = mySpaces + myIndentSpaces;
     for (int i = oldEndOffset - 1; i >= newEndOffset; i--) {
       switch (oldText.charAt(i)) {
-        case LINE_FEED: ++lineFeedsNumberAtRemovedText; break;
-        case ' ': ++spacesNumberAtRemovedText; break;
-        case '\t': indentSpacesNumberAtRemovedText += tabSize; break;
+        case LINE_FEED: ++lineFeedsNumberAtRemovedText; column = 0; break;
+        case ' ': ++spacesNumberAtRemovedText; column--; break;
+        case '\t':
+          int change = column % tabSize;
+          if (change == 0) {
+            change = tabSize;
+          }
+          indentSpacesNumberAtRemovedText += change; column -= change; break;
       }
     }
 
@@ -216,16 +218,52 @@ class WhiteSpace {
     assert newLineFeedsNumber >= 0;
     newLineFeedsNumber = newLineFeedsNumber < 0 ? 0 : newLineFeedsNumber; // Never expect the defense to be triggered. 
     setLineFeeds(newLineFeedsNumber);
-    mySpaces = 0;
-    myIndentSpaces = 0;
-    for (int i = newEndOffset - 1, c = oldText.charAt(i); c != LINE_FEED; c = oldText.charAt(--i)) {
-      switch (c) {
-        case ' ': ++mySpaces; break;
-        case '\t': myIndentSpaces += tabSize; break;
-      }
-    }
+    int startOffset = CharArrayUtil.shiftForwardUntil(oldText, newEndOffset - 1, "\n") + 1;
+    WhiteSpaceInfo info = parse(oldText, startOffset, newEndOffset, 0, tabSize);
+    mySpaces = info.spaces;
+    myIndentSpaces = info.indentSpaces;
   }
 
+  /**
+   * Parses information about white space symbols at the target region of the given text.
+   * 
+   * @param text         target text
+   * @param startOffset  target text range's start offset (inclusive) 
+   * @param endOffset    target text range's end offset (exclusive)
+   * @param startColumn  given start offset's column. It affects how tab width is calculated, say, a tab symbol which
+   *                     occupies four columns, will occupy only three if located at the first column
+   * @param tabSize      tab width in columns
+   * @return             information about white space symbols at the target region of the given text
+   */
+  @NotNull
+  private static WhiteSpaceInfo parse(@NotNull CharSequence text, int startOffset, int endOffset, int startColumn, int tabSize) {
+    assert startOffset <= endOffset;
+    
+    int spaces = 0;
+    int indentSpaces = 0;
+    int lineFeeds = 0;
+    int column = startColumn;
+
+    for (int i = startOffset; i < endOffset; i++) {
+      switch (text.charAt(i)) {
+        case LINE_FEED:
+          lineFeeds++;
+          spaces = 0;
+          indentSpaces = 0;
+          column = 0;
+          break;
+        case '\t':
+          int change = tabSize - (column % tabSize);
+          indentSpaces += change;
+          column += change;
+          break;
+        default: spaces++; column++;
+      }
+    }
+    
+    return new WhiteSpaceInfo(lineFeeds, indentSpaces, spaces);
+  }
+  
   /**
    * Builds string that contains line feeds, white spaces and tabulation symbols known to the current {@link WhiteSpace} object.
    *
@@ -713,6 +751,19 @@ class WhiteSpace {
   @Override
   public String toString() {
     return "WhiteSpace(" + myStart + "-" + myEnd + " spaces=" + mySpaces + " LFs=" + getLineFeeds() + ")";
+  }
+  
+  private static class WhiteSpaceInfo {
+    
+    public final int spaces;
+    public final int indentSpaces;
+    public final int lineFeeds;
+
+    WhiteSpaceInfo(int lineFeeds, int indentSpaces, int spaces) {
+      this.lineFeeds = lineFeeds;
+      this.indentSpaces = indentSpaces;
+      this.spaces = spaces;
+    }
   }
 }
 
