@@ -88,9 +88,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
         lookup.refreshUi(false, true);
-      } else {
-        ListScrollingUtil.moveDown(lookup.getList(), 0);
       }
+      ListScrollingUtil.moveDown(lookup.getList(), 0);
     }
   }
 
