@@ -2,6 +2,7 @@ package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
+import org.hanuna.gitalk.printmodel.SpecialPrintElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -15,5 +16,8 @@ public interface GraphCellPainter {
 
     @Nullable
     public GraphElement mouseOver(GraphPrintCell row, int x, int y);
+
+    @Nullable
+    public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y);
 }
 

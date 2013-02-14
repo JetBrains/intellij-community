@@ -182,4 +182,17 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
         return null;
     }
+
+    @Nullable
+    @Override
+    public SpecialPrintElement mouseOverArrow(GraphPrintCell row, int x, int y) {
+        for (SpecialPrintElement printElement : row.getSpecialPrintElements()) {
+            if (printElement.getType() != SpecialPrintElement.Type.COMMIT_NODE) {
+                if (overNode(printElement.getPosition(), x, y)) {
+                    return printElement;
+                }
+            }
+        }
+        return null;
+    }
 }
