@@ -41,7 +41,9 @@ public class FileResponses {
   private static final MimetypesFileTypeMap FILE_MIMETYPE_MAP = new MimetypesFileTypeMap();
 
   public static HttpResponse createResponse(String path) {
-    return create(FILE_MIMETYPE_MAP.getContentType(path));
+    HttpResponse response = create(FILE_MIMETYPE_MAP.getContentType(path));
+    response.setHeader(CACHE_CONTROL, "max-age=0");
+    return response;
   }
 
   private static boolean checkCache(HttpRequest request, ChannelHandlerContext context, long lastModified) {
@@ -75,7 +77,8 @@ public class FileResponses {
       long fileLength = raf.length();
       HttpResponse response = createResponse(file.getPath());
       setContentLength(response, fileLength);
-      setDateAndCacheHeaders(response, file);
+      addDate(response);
+      response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.format(new Date(file.lastModified())));
       if (isKeepAlive(request)) {
         response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
       }
@@ -111,11 +114,5 @@ public class FileResponses {
         raf.close();
       }
     }
-  }
-
-  private static void setDateAndCacheHeaders(HttpResponse response, File file) {
-    addDate(response);
-    response.setHeader(CACHE_CONTROL, "max-age=0");
-    response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.format(new Date(file.lastModified())));
   }
 }
