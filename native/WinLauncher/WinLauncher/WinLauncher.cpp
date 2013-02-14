@@ -288,11 +288,17 @@ bool LoadVMOptions()
 	TCHAR optionsFileName[_MAX_PATH];
 	if (LoadString(hInst, IDS_VM_OPTIONS_PATH, optionsFileName, _MAX_PATH-1))
 	{
-		TCHAR optionsFileNameExpanded[_MAX_PATH];
-		ExpandEnvironmentStrings(optionsFileName, optionsFileNameExpanded, _MAX_PATH-1);
+		TCHAR fullOptionsFileName[_MAX_PATH];
+		ExpandEnvironmentStrings(optionsFileName, fullOptionsFileName, _MAX_PATH-1);
+		
+		if (GetFileAttributes(fullOptionsFileName) == INVALID_FILE_ATTRIBUTES)
+		{
+			GetModuleFileName(NULL, fullOptionsFileName, _MAX_PATH-1);
+			_tcscat_s(fullOptionsFileName, _T(".vmoptions"));
+		}
 		
 		std::vector<std::string> vmOptionLines;
-		if (LoadVMOptionsFile(optionsFileNameExpanded, vmOptionLines))
+		if (LoadVMOptionsFile(fullOptionsFileName, vmOptionLines))
 		{
 			std::string classPath = BuildClassPath();
 			if (classPath.size() == 0) return false;
