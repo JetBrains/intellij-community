@@ -35,6 +35,12 @@ HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
 
+#ifdef _M_X64
+bool need64BitJRE = true;
+#else
+bool need64BitJRE = false;
+#endif
+
 std::string LoadStdString(int id)
 {
 	char buf[_MAX_PATH];
@@ -106,6 +112,7 @@ bool FindJVMInEnvVar(const char* envVarName, bool& result)
 	{
 		if (FindValidJVM(envVarValue))
 		{
+			if (Is64BitJRE(jvmPath) != need64BitJRE) return false;
 			result = true;
 		}
 		else
@@ -151,7 +158,7 @@ bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
 
 bool FindJVMInRegistry()
 {
-#ifndef X64
+#ifndef _M_X64
 	if (FindJVMInRegistryWithVersion("1.7", true))
 		return true;
 	if (FindJVMInRegistryWithVersion("1.6", true))
@@ -174,7 +181,7 @@ bool LocateJVM()
 	}
 
 	std::string jreDir = GetAdjacentDir("jre");
-	if (FindValidJVM(jreDir.c_str()))
+	if (FindValidJVM(jreDir.c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
 	{
 		return true;
 	}
@@ -308,6 +315,19 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
 	return true;
 }
 
+void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
+{
+	std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
+	while(vmOptions.size() > 0)
+	{
+		int pos = vmOptions.find(' ');
+		if (pos == std::string::npos) pos = vmOptions.size();
+		vmOptionLines.push_back(vmOptions.substr(0, pos));
+		while(pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
+		vmOptions = vmOptions.substr(pos);
+	}
+}
+
 bool LoadVMOptions()
 {
 	TCHAR optionsFileName[_MAX_PATH];
@@ -326,6 +346,7 @@ bool LoadVMOptions()
 		if (LoadVMOptionsFile(fullOptionsFileName, vmOptionLines))
 		{
 			if (!AddClassPathOptions(vmOptionLines)) return false;
+			AddPredefinedVMOptions(vmOptionLines);
 
 			vmOptionCount = vmOptionLines.size();
 			vmOptions = (JavaVMOption*) malloc(vmOptionCount * sizeof(JavaVMOption));
@@ -362,9 +383,9 @@ bool LoadJVMLibrary()
 	}
 	if (!pCreateJavaVM)
 	{
-		TCHAR buf[_MAX_PATH];
-		_stprintf_s(buf, _MAX_PATH-1, _T("Failed to load JVM DLL %s"), dllName);
-		MessageBox(NULL, buf, _T("Error Launching IntelliJ Platform"), MB_OK);
+		char buf[_MAX_PATH];
+		sprintf(buf, "Failed to load JVM DLL %s", dllName.c_str());
+		MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
 		return false;
 	}
 	return true;
@@ -416,7 +437,7 @@ bool RunMainClass()
 	if (!mainClass)
 	{
 		char buf[_MAX_PATH];
-		sprintf_s(buf, "Could not find main class %s", mainClassName);
+		sprintf_s(buf, "Could not find main class %s", mainClassName.c_str());
 		MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
 		return false;
 	}
@@ -430,6 +451,11 @@ bool RunMainClass()
 
 	jobjectArray args = PrepareCommandLine();
 	env->CallStaticVoidMethod(mainClass, mainMethod, args);
+	jthrowable exc = env->ExceptionOccurred();
+	if (exc)
+	{
+		MessageBox(NULL, _T("Error invoking main method"), _T("Error launching IntelliJ Platform"), MB_OK);
+	}
 
 	return true;
 }
