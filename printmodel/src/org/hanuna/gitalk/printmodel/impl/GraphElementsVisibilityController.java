@@ -19,12 +19,16 @@ class GraphElementsVisibilityController {
     private static final int EDGE_PART_SHOW = 3;
 
 
-    private final boolean hideLongEdge;
     private final LayoutModel layoutModel;
+    private boolean hideLongEdge;
 
     public GraphElementsVisibilityController(boolean hideLongEdge, LayoutModel layoutModel) {
         this.hideLongEdge = hideLongEdge;
         this.layoutModel = layoutModel;
+    }
+
+    public void setHideLongEdge(boolean hideLongEdge) {
+        this.hideLongEdge = hideLongEdge;
     }
 
     @NotNull

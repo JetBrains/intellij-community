@@ -15,4 +15,6 @@ public interface GraphPrintCellModel {
     public SelectController getSelectController();
 
     public void recalculate(@NotNull Replace replace);
+
+    public void setLongEdgeVisibility(boolean visibility);
 }

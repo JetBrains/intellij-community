@@ -207,7 +207,8 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void setLongEdgeVisibility(boolean visibility) {
-        //TODO:
+        dataPack.getPrintCellModel().setLongEdgeVisibility(visibility);
+        events.runUpdateUI();
     }
 
 }

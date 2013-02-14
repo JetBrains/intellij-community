@@ -14,6 +14,7 @@ import java.util.List;
 public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     private final LayoutModel layoutModel;
     private final SelectController selectController;
+    private boolean hideLongEdges = true;
 
     public GraphPrintCellModelImpl(Graph graph) {
         this.layoutModel = new LayoutModel(graph);
@@ -21,12 +22,17 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
     }
 
     private List<ShortEdge> getUpEdges(int rowIndex) {
-        PrePrintCellModel prevPreModel = new PrePrintCellModel(layoutModel, rowIndex - 1, selectController);
+        PrePrintCellModel prevPreModel = new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex - 1, selectController);
         return prevPreModel.downShortEdges();
     }
 
     public void recalculate(@NotNull Replace replace) {
         layoutModel.recalculate(replace);
+    }
+
+    @Override
+    public void setLongEdgeVisibility(boolean visibility) {
+        hideLongEdges = !visibility;
     }
 
     @NotNull
@@ -36,7 +42,8 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
 
     @NotNull
     public GraphPrintCell getGraphPrintCell(final int rowIndex) {
-        final PrePrintCellModel prePrintCellModel = new PrePrintCellModel(layoutModel, rowIndex, selectController);
+        final PrePrintCellModel prePrintCellModel =
+                new PrePrintCellModel(hideLongEdges, layoutModel, rowIndex, selectController);
 
         return new GraphPrintCell() {
             @Override

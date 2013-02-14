@@ -68,14 +68,14 @@ public class MainFrame extends JFrame {
         leftPanel.add(hideButton);
 
 
-        JButton addButton = new JButton("A");
-        addButton.addMouseListener(new MouseAdapter() {
+        final JCheckBox visibleLongEdges = new JCheckBox("", false);
+        visibleLongEdges.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ui_controller.readNextPart();
+                ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
             }
         });
-        leftPanel.add(addButton);
+        leftPanel.add(visibleLongEdges);
 
         leftPanel.add(Box.createVerticalGlue());
     }
