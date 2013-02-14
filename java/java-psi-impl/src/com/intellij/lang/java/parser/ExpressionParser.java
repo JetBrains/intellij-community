@@ -684,15 +684,15 @@ public class ExpressionParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseNew(final PsiBuilder builder, @Nullable final PsiBuilder.Marker start) {
-    final PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
+  private PsiBuilder.Marker parseNew(PsiBuilder builder, @Nullable PsiBuilder.Marker start) {
+    PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 
     myParser.getReferenceParser().parseReferenceParameterList(builder, false, true);
 
-    final PsiBuilder.Marker refOrType;
+    PsiBuilder.Marker refOrType;
 
-    final IElementType tokenType = builder.getTokenType();
+    IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
       refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
@@ -718,42 +718,46 @@ public class ExpressionParser {
         myParser.getDeclarationParser().parseClassBodyWithBraces(builder, false, false);
         classElement.done(JavaElementType.ANONYMOUS_CLASS);
       }
+      newExpr.done(JavaElementType.NEW_EXPRESSION);
+      return newExpr;
     }
-    else {
-      if (builder.getTokenType() != JavaTokenType.LBRACKET) {
-        error(builder, refOrType == null ?
-                       JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
+
+    myParser.getDeclarationParser().parseAnnotations(builder);
+
+    if (builder.getTokenType() != JavaTokenType.LBRACKET) {
+      error(builder, refOrType == null ? JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
+      newExpr.done(JavaElementType.NEW_EXPRESSION);
+      return newExpr;
+    }
+
+    int bracketCount = 0;
+    int dimCount = 0;
+    while (true) {
+      myParser.getDeclarationParser().parseAnnotations(builder);
+
+      if (builder.getTokenType() != JavaTokenType.LBRACKET) break;
+      builder.advanceLexer();
+
+      if (bracketCount == dimCount) {
+        final PsiBuilder.Marker dimExpr = parse(builder);
+        if (dimExpr != null) {
+          dimCount++;
+        }
+      }
+      bracketCount++;
+
+      if (!expectOrError(builder, JavaTokenType.RBRACKET, "expected.rbracket")) {
         newExpr.done(JavaElementType.NEW_EXPRESSION);
         return newExpr;
       }
+    }
 
-      int bracketCount = 0;
-      int dimCount = 0;
-      while (true) {
-        if (builder.getTokenType() != JavaTokenType.LBRACKET) break;
-        builder.advanceLexer();
-
-        if (bracketCount == dimCount) {
-          final PsiBuilder.Marker dimExpr = parse(builder);
-          if (dimExpr != null) {
-            dimCount++;
-          }
-        }
-        bracketCount++;
-
-        if (!expectOrError(builder, JavaTokenType.RBRACKET, "expected.rbracket")) {
-          newExpr.done(JavaElementType.NEW_EXPRESSION);
-          return newExpr;
-        }
+    if (dimCount == 0) {
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        parseArrayInitializer(builder);
       }
-
-      if (dimCount == 0) {
-        if (builder.getTokenType() == JavaTokenType.LBRACE) {
-          parseArrayInitializer(builder);
-        }
-        else {
-          error(builder, JavaErrorMessages.message("expected.array.initializer"));
-        }
+      else {
+        error(builder, JavaErrorMessages.message("expected.array.initializer"));
       }
     }
 
