@@ -1,6 +1,7 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -15,6 +16,10 @@ import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.junit.Assert;
 
 import java.util.List;
@@ -256,6 +261,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         input("GO!");
         waitForOutput("command was GO!");
       }
+
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython"); //can't run on jython
+      }
     });
   }
 
@@ -404,7 +414,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void before() throws Exception {
         String egg = getFilePath("Adder-0.1.egg");
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
-        getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
+        PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
+        if (flavor != null) {
+          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+        } else {
+          getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
+        }
       }
 
       @Override
@@ -415,8 +430,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
-
-
 
 
   //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
