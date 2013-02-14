@@ -104,6 +104,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), new NoCoverageAction(), getCancelAction()};
