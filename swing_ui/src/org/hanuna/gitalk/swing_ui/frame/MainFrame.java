@@ -29,6 +29,14 @@ public class MainFrame extends JFrame {
         packElements();
     }
 
+    public UI_GraphTable getGraphTable() {
+        return graphTable;
+    }
+
+    public UI_RefTable getRefTable() {
+        return refTable;
+    }
+
     private void packTabs() {
         JScrollPane graphScroll = new JScrollPane(graphTable);
         tabs.add("graph", graphScroll);

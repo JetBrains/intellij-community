@@ -51,12 +51,12 @@ public class Swing_UI {
 
         @Override
         public void jumpToRow(int rowIndex) {
-            // do nothing
+            mainFrame.getGraphTable().jumpToRow(rowIndex);
         }
 
         @Override
         public void updateUI() {
-            mainFrame.repaint();
+            mainFrame.getGraphTable().updateUI();
         }
 
         @Override
