@@ -29,7 +29,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private LeafBlockWrapper myPreviousBlock;
   private LeafBlockWrapper myNextBlock;
   private SpacingImpl mySpaceProperty;
-  private String myDebugInfo;
 
   /**
    * Shortcut for calling
@@ -216,14 +215,5 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
-  }
-  
-  @Nullable
-  public String getDebugInfo() {
-    return myDebugInfo;
-  }
-
-  public void setDebugInfo(@Nullable String debugInfo) {
-    myDebugInfo = debugInfo;
   }
 }
