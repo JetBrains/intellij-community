@@ -57,6 +57,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private String myContentEntryPath;
   private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
+  private Map<String, Boolean> myAvailableFrameworks;
 
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<ModuleBuilder>();
@@ -352,6 +353,14 @@ public abstract class ModuleBuilder extends ProjectBuilder{
 
   public Sdk getModuleJdk() {
     return myJdk;
+  }
+
+  public Map<String, Boolean> getAvailableFrameworks() {
+    return myAvailableFrameworks;
+  }
+
+  public void setAvailableFrameworks(Map<String, Boolean> availableFrameworks) {
+    myAvailableFrameworks = availableFrameworks;
   }
 
   public static abstract class ModuleConfigurationUpdater {

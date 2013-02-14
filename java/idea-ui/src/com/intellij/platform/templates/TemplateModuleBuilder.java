@@ -20,7 +20,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -54,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -84,13 +83,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    ModuleWizardStep[] steps = myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
-    for (ModuleWizardStep step : steps) {
-      if (step instanceof SupportForFrameworksStep) {
-        return ArrayUtil.remove(steps, step);
-      }
-    }
-    return steps;
+    ModuleBuilder builder = myType.createModuleBuilder();
+    builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
+    return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
