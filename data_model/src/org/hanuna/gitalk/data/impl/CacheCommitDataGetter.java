@@ -47,6 +47,12 @@ public class CacheCommitDataGetter implements CommitDataGetter {
         return cache.get(node.getCommitHash());
     }
 
+    @NotNull
+    @Override
+    public CommitData getCommitData(@NotNull Hash commitHash) {
+        return cache.get(commitHash);
+    }
+
     @Nullable
     private Node getCommitNodeInRow(int rowIndex) {
         Graph graph = dataPack.getGraphModel().getGraph();
