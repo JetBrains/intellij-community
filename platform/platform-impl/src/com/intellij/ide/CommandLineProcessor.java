@@ -124,7 +124,7 @@ public class CommandLineProcessor {
   }
 
   @Nullable
-  public static Project processExternalCommandLine(List<String> args) {
+  public static Project processExternalCommandLine(List<String> args, String currentDirectory) {
     if (args.size() > 0) {
       LOG.info("External command line:");
       for (String arg : args) {

@@ -251,7 +251,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Project project = CommandLineProcessor.processExternalCommandLine(args);
+              final Project project = CommandLineProcessor.processExternalCommandLine(args, null);
               final JFrame frame;
               if (project != null) {
                 frame = (JFrame)WindowManager.getInstance().getIdeFrame(project);
@@ -264,6 +264,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           });
         }
       });
+
+      WindowsCommandLineProcessor.LISTENER = new WindowsCommandLineListener() {
+        @Override
+        public void processWindowsLauncherCommandLine(final String currentDirectory, final String commandLine) {
+          LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+          invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
+              args.remove(0);   // process name
+              CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+            }
+          });
+        }
+      };
     }
   }
 

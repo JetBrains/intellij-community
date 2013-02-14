@@ -350,7 +350,7 @@ public class IdeaApplication {
   private void loadProject() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs));
+      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
 
     final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
