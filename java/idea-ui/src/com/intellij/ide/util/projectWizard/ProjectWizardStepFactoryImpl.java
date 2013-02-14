@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -134,11 +135,12 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
 
   @Override
   public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
-    if (!FrameworkSupportUtil.getProviders(builder).isEmpty()) {
-      final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
-      return new SupportForFrameworksStep(context, builder, container);
+    Map<String,Boolean> availableFrameworks = builder.getAvailableFrameworks();
+    if (FrameworkSupportUtil.getProviders(builder).isEmpty() || availableFrameworks != null && availableFrameworks.isEmpty()) {
+      return null;
     }
-    return null;
+    final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
+    return new SupportForFrameworksStep(context, builder, container);
   }
 
   @Override

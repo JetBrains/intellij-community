@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
-  private static final int MAX_TEXT_LENGTH = 50;
+  static final int MAX_TEXT_LENGTH = 50;
 
   public HtmlTagTreeElement(final XmlTag tag) {
     super(tag);

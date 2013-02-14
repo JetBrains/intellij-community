@@ -79,6 +79,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     return panel;
   }
   
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};

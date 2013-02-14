@@ -122,7 +122,7 @@ public class GradleModuleManager {
         for (GradleModule gradleModule : modules) {
           final Module intellijModule = moduleMappings.get(gradleModule);
           myContentRootImporter.importContentRoots(gradleModule.getContentRoots(), intellijModule);
-          myDependencyImporter.importDependencies(gradleModule.getDependencies(), intellijModule);
+          myDependencyImporter.importDependencies(gradleModule.getDependencies(), intellijModule, false);
         }
       }
     });

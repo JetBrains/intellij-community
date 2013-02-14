@@ -2,6 +2,7 @@
   <keymap name="Emacs" parent="$default" version="1" disable-mnemonics="false">
     <action id="EditorEscape">
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="ESCAPE"/>
+      <keyboard-shortcut first-keystroke="control G"/>
     </action>
     <action id="EditorCutLineBackward">
       <keyboard-shortcut first-keystroke="alt MINUS" second-keystroke="control K"/>
@@ -106,6 +107,8 @@
     </action>
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="shift alt G"/>
+    </action>
+    <action id="Switcher">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="B"/>
     </action>
     <action id="GotoFile">

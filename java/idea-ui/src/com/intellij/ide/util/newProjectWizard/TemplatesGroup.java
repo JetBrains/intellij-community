@@ -21,16 +21,18 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  *         Date: 11/20/12
  */
-public class TemplatesGroup {
+public class TemplatesGroup implements Comparable<TemplatesGroup> {
 
   private final String myName;
   private final String myDescription;
   private final Icon myIcon;
+  private final int myWeight;
 
-  public TemplatesGroup(String name, String description, Icon icon) {
+  public TemplatesGroup(String name, String description, Icon icon, int weight) {
     myName = name;
     myDescription = description;
     myIcon = icon;
+    myWeight = weight;
   }
 
   public String getName() {
@@ -65,5 +67,11 @@ public class TemplatesGroup {
   @Override
   public String toString() {
     return myName;
+  }
+
+  @Override
+  public int compareTo(TemplatesGroup o) {
+    int i = o.myWeight - myWeight;
+    return i == 0 ? o.getName().compareTo(getName()) : i;
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     List<AbstractAction> actions = new ArrayList<AbstractAction>();
@@ -97,11 +99,13 @@ public class SideEffectWarningDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  @NotNull
   @Override
   protected Action getCancelAction() {
     return myCancelAllAction;
   }
 
+  @NotNull
   @Override
   protected Action getOKAction() {
     return myRemoveAllAction;

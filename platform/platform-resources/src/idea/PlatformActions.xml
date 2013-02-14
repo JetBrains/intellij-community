@@ -134,7 +134,7 @@
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
 
-    <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction" icon="AllIcons.General.ReopenRecentProject"/>
+    <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">

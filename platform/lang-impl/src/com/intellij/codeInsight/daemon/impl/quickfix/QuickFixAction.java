@@ -129,7 +129,7 @@ public final class QuickFixAction {
                                                    int group,
                                                    int offset) {
     if (info.quickFixActionMarkers == null) return;
-    if (group != -1 && group != info.group) return;
+    if (group != -1 && group != info.getGroup()) return;
     Editor injectedEditor = null;
     PsiFile injectedFile = null;
     for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
@@ -144,7 +144,7 @@ public final class QuickFixAction {
       }
       Editor editorToUse;
       PsiFile fileToUse;
-      if (info.fromInjection) {
+      if (info.isFromInjection()) {
         if (injectedEditor == null) {
           injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
           injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);

@@ -318,7 +318,9 @@ public class DialogBuilder implements Disposable {
     }
 
     public void init() { super.init(); }
+    @NotNull
     public Action getOKAction() { return super.getOKAction(); } // Make it public
+    @NotNull
     public Action getCancelAction() { return super.getCancelAction(); } // Make it public
 
     protected JComponent createCenterPanel() { return myCenterPanel; }

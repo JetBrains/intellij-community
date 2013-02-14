@@ -323,6 +323,7 @@ class Foo {
     assertTrue(isApplicable("class Foo {{ <caret>inst\n a=b; }}", template));
     assertFalse(isApplicable("class Foo {{ return (<caret>inst) }}", template));
     assertFalse(isApplicable("class Foo {{ return a <caret>inst) }}", template));
+    assertFalse(isApplicable("class Foo {{ \"<caret>\" }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>a.b(); ) }}", template));
     assertTrue(isApplicable("class Foo {{ <caret>a(); ) }}", template));
   }

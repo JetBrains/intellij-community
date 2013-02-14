@@ -237,6 +237,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     super.doCancelAction();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     myApplyAction = new ApplyAction();

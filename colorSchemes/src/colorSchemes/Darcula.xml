@@ -1242,7 +1242,9 @@
       <value />
     </option>
     <option name="RUBY_LOCAL_VAR_ID">
-      <value />
+      <value>
+        <option name="FOREGROUND" value="0078B4" />
+      </value>
     </option>
     <option name="RUBY_METHOD_NAME">
       <value>
@@ -1268,6 +1270,7 @@
     <option name="RUBY_PARAMETER_ID">
       <value>
         <option name="EFFECT_TYPE" value="2" />
+        <option name="FOREGROUND" value="C37522" />
       </value>
     </option>
     <option name="RUBY_PRIVATE_CALL">

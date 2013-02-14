@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.ResolvingConverter;
 import gnu.trove.THashSet;
@@ -45,7 +46,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
-public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> {
+public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
 
@@ -94,6 +95,28 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   @Override
   public LocalQuickFix[] getQuickFixes(ConvertContext context) {
     return ArrayUtil.append(super.getQuickFixes(context), new MyUpdateIndicesFix());
+  }
+
+  public boolean isSoft(@NotNull DomElement element) {
+    DomElement dependencyOrPluginElement = element.getParent();
+    if (dependencyOrPluginElement instanceof MavenDomDependency) {
+      DomElement dependencies = dependencyOrPluginElement.getParent();
+      if (dependencies instanceof MavenDomDependencies) {
+        if (dependencies.getParent() instanceof MavenDomDependencyManagement) {
+          return true;
+        }
+      }
+    }
+    else if (dependencyOrPluginElement instanceof MavenDomPlugin) {
+      DomElement pluginsElement = dependencyOrPluginElement.getParent();
+      if (pluginsElement instanceof MavenDomPlugins) {
+        if (pluginsElement.getParent() instanceof MavenDomPluginManagement) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private ConverterStrategy selectStrategy(ConvertContext context) {

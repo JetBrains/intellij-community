@@ -26,12 +26,14 @@ import java.util.List;
  * @author ignatov
  */
 public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor {
-  protected final static Logger LOG = Logger.getInstance(SmartEnterProcessorWithFixers.class);
+  protected static final Logger LOG = Logger.getInstance(SmartEnterProcessorWithFixers.class);
   protected static final int MAX_ATTEMPTS = 20;
   protected static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
-  private static final List<Fixer<? extends SmartEnterProcessorWithFixers>> ourFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
-  private static final List<FixEnterProcessor> ourEnterProcessors = new ArrayList<FixEnterProcessor>();
+
   protected int myFirstErrorOffset = Integer.MAX_VALUE;
+
+  private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
+  private final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
 
   protected static void plainEnter(@NotNull final Editor editor) {
     getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());
@@ -92,7 +94,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
-        for (Fixer fixer : ourFixers) {
+        for (Fixer fixer : myFixers) {
           fixer.apply(editor, this, psiElement);
           if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
@@ -136,7 +138,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     reformat(atCaret);
     commit(editor);
 
-    for (FixEnterProcessor enterProcessor : ourEnterProcessors) {
+    for (FixEnterProcessor enterProcessor : myEnterProcessors) {
       if (enterProcessor.doEnter(atCaret, file, editor, isModified(editor))) {
         return;
       }
@@ -156,11 +158,11 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   }
 
   protected void addEnterProcessors(FixEnterProcessor... processors) {
-    ContainerUtil.addAllNotNull(ourEnterProcessors, processors);
+    ContainerUtil.addAllNotNull(myEnterProcessors, processors);
   }
 
   protected void addFixers(Fixer<? extends SmartEnterProcessorWithFixers>... fixers) {
-    ContainerUtil.addAllNotNull(ourFixers, fixers);
+    ContainerUtil.addAllNotNull(myFixers, fixers);
   }
 
   protected void collectAdditionalElements(@NotNull PsiElement element, @NotNull List<PsiElement> result) {

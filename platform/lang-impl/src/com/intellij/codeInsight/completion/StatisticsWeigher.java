@@ -38,7 +38,6 @@ import java.util.*;
  * @author peter
 */
 public class StatisticsWeigher extends CompletionWeigher {
-  private static final StatisticsManager ourStatManager = StatisticsManager.getInstance();
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
@@ -146,13 +145,10 @@ public class StatisticsWeigher extends CompletionWeigher {
         return 0;
       }
       String prefix = myLocation.getCompletionParameters().getLookup().itemPattern(item);
-      int minRecency = Integer.MAX_VALUE;
-      int maxUseCount = 0;
-      for (StatisticsInfo eachInfo : composeStatsWithPrefix(baseInfo, prefix, false)) {
-        minRecency = Math.min(minRecency, ourStatManager.getLastUseRecency(eachInfo));
-        maxUseCount = Math.max(maxUseCount, ourStatManager.getUseCount(eachInfo));
-      }
-      return minRecency == Integer.MAX_VALUE ? maxUseCount : 100 - minRecency;
+      StatisticsInfo composed = composeStatsWithPrefix(baseInfo, prefix, false);
+      int minRecency = composed.getLastUseRecency();
+      int useCount = composed.getUseCount();
+      return minRecency == Integer.MAX_VALUE ? useCount : 100 - minRecency;
     }
 
     @Override
@@ -194,19 +190,41 @@ public class StatisticsWeigher extends CompletionWeigher {
     return info == null ? StatisticsInfo.EMPTY : info;
   }
 
-  public static List<StatisticsInfo> composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix, boolean forWriting) {
-    ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>(fullPrefix.length() + 3);
-    if (forWriting) {
-      infos.add(info);
+  /**
+   * For different prefixes we want to prefer different completion items,
+   *   so we decorate their basic stat-infos depending on prefix.
+   * For example, consider that an item "fooBar" was chosen with a prefix "foo"
+   * Then we'll register "fooBar" for each of the sub-prefixes: "", "f", "fo" and "foo"
+   *   and suggest "foobar" whenever we a user types any of those prefixes
+   *
+   * If a user has typed "fooB" for which there's no stat-info registered, we want to check
+   *   all of its sub-prefixes: "", "f", "fo", "foo" and see if any of them is associated with a stat-info
+   * But if the item were "fobia" and the user has typed "fob", we don't want to claim
+   *   that "fooBar" (which matches) is statistically better than "fobia" with prefix "fob" even though both begin with "fo"
+   * So we only check non-partial sub-prefixes, then ones that had been really typed by the user before completing
+   *
+   * @param forWriting controls whether this stat-info will be used for incrementing usage count or for its retrieval (for sorting)
+   */
+  public static StatisticsInfo composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix, boolean forWriting) {
+    ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>((fullPrefix.length() + 3) * info.getConjuncts().size());
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      if (forWriting) {
+        // some completion contributors may need pure statistical information to speed up searching for frequently chosen items
+        infos.add(conjunct);
+      }
+      for (int i = 0; i <= fullPrefix.length(); i++) {
+        // if we're incrementing usage count, register all sub-prefixes with "partial" mark
+        // if we're sorting and any sub-prefix was used as non-partial to choose this completion item, prefer it
+        infos.add(composeWithPrefix(conjunct, fullPrefix.substring(0, i), forWriting));
+      }
+      // if we're incrementing usage count, the full prefix is registered as non-partial
+      // if we're sorting and the current prefix was used as partial sub-prefix to choose this completion item, prefer it
+      infos.add(composeWithPrefix(conjunct, fullPrefix, !forWriting));
     }
-    for (int i = 0; i <= fullPrefix.length(); i++) {
-      infos.add(composeWithPrefix(info, fullPrefix.substring(0, i), forWriting));
-    }
-    infos.add(composeWithPrefix(info, fullPrefix, !forWriting));
-    return infos;
+    return StatisticsInfo.createComposite(infos);
   }
 
-  private static StatisticsInfo composeWithPrefix(StatisticsInfo info, String subPrefix, boolean partial) {
-    return new StatisticsInfo(info.getContext() + "###prefix=" + subPrefix + "###part#" + partial, info.getValue());
+  private static StatisticsInfo composeWithPrefix(StatisticsInfo info, String fullPrefix, boolean partial) {
+    return new StatisticsInfo(info.getContext() + "###prefix=" + fullPrefix + "###part#" + partial, info.getValue());
   }
 }

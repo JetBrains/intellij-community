@@ -68,6 +68,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     boolean hasOneSupportedModule = false;

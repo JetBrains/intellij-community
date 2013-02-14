@@ -85,6 +85,8 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName("url")).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider());
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)).and(attributeValueInFxml),
+                                        new JavaFxLocationReferenceProvider(true));
 
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlTokenType.XML_TAG_CHARACTERS).inFile(inFxmlElementPattern()), new ImportReferenceProvider());
 
@@ -92,7 +94,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new EnumeratedAttributeReferenceProvider());
   }
 
-  private static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {
+  public static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {
     return new PsiFilePattern.Capture<PsiFile>(new InitialPatternCondition<PsiFile>(PsiFile.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
@@ -101,7 +103,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
     });
   }
 
-  private static PatternCondition<XmlAttributeValue> inFxmlCondition() {
+  public static PatternCondition<XmlAttributeValue> inFxmlCondition() {
     return new PatternCondition<XmlAttributeValue>("inFxmlFile") {
       @Override
       public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {

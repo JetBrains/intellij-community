@@ -85,8 +85,8 @@ public class GradleMovedJarsPostProcessor implements GradleProjectStructureChang
       @Override
       public void run() {
         for (MergeInfo info : toMerge) {
-          myJarManager.removeJars(Collections.singleton(info.ideJar), project);
-          myJarManager.importJar(info.gradleJar, project);
+          myJarManager.removeJars(Collections.singleton(info.ideJar), project, true);
+          myJarManager.importJar(info.gradleJar, project, true);
           changes.removeAll(info.changes);
         }
       }

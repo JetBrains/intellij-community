@@ -56,4 +56,6 @@ public interface ExtensionPoint extends DomElement {
   @NotNull
   @SubTagList("with")
   List<With> getWithElements();
+
+  With addWith();
 }

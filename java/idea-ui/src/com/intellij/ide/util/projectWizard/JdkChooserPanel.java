@@ -37,6 +37,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -282,6 +283,7 @@ public class JdkChooserPanel extends JPanel {
       return JdkChooserPanel.this;
     }
 
+    @NotNull
     protected Action[] createActions() {
       return new Action[]{new ConfigureAction(), getOKAction(), getCancelAction()};
     }

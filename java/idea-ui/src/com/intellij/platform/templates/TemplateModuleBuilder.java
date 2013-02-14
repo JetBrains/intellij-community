@@ -49,8 +49,10 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -81,7 +83,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return myType.createModuleBuilder().createWizardSteps(wizardContext, modulesProvider);
+    ModuleBuilder builder = myType.createModuleBuilder();
+    builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
+    return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Override
@@ -138,6 +142,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public ModuleType getModuleType() {
     return myType;
+  }
+
+  @Override
+  public Icon getNodeIcon() {
+    return myTemplate.getIcon();
   }
 
   @NotNull

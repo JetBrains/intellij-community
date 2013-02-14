@@ -90,12 +90,6 @@ public class UpdateHighlightersUtil {
   };
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
-  private static final Comparator<TextRange> BY_START_OFFSET = new Comparator<TextRange>() {
-    @Override
-    public int compare(final TextRange o1, final TextRange o2) {
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
-  };
 
   static void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
     if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
@@ -253,7 +247,7 @@ public class UpdateHighlightersUtil {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
-          if (!info.fromInjection && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart>=endOffset)) return true; // injections are oblivious to restricting range
+          if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart>=endOffset)) return true; // injections are oblivious to restricting range
           boolean toRemove = !(hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()) &&
                              !range.containsRange(hiStart, hiEnd)
                              ;
@@ -277,7 +271,7 @@ public class UpdateHighlightersUtil {
       @Override
       public boolean process(int offset, HighlightInfo info, boolean atStart, Collection<HighlightInfo> overlappingIntervals) {
         if (!atStart) return true;
-        if (!info.fromInjection && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
+        if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
         if (info.isFileLevelAnnotation && psiFile != null && psiFile.getViewProvider().isPhysical()) {
           addFileLevelHighlight(project, group, info, psiFile);
@@ -512,7 +506,7 @@ public class UpdateHighlightersUtil {
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     for (FileEditor fileEditor : manager.getEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
-        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.severity, info.quickFixActionRanges,
+        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.getSeverity(), info.quickFixActionRanges,
                                                                                 project, psiFile, ((TextEditor)fileEditor).getEditor());
         manager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);

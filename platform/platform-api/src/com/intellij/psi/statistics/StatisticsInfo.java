@@ -18,19 +18,43 @@ package com.intellij.psi.statistics;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author peter
  */
-public class StatisticsInfo implements Comparable<StatisticsInfo>{
+public class StatisticsInfo {
   public static final StatisticsInfo EMPTY = new StatisticsInfo("empty", "empty");
 
   private static final StatisticsManager ourManager = StatisticsManager.getInstance();
   private final String myContext;
   private final String myValue;
+  private final List<StatisticsInfo> myConjuncts;
 
   public StatisticsInfo(@NonNls @NotNull final String context, @NonNls @NotNull final String value) {
     myContext = context;
     myValue = value;
+    myConjuncts = Collections.singletonList(this);
+  }
+
+  private StatisticsInfo(String context, String value, List<StatisticsInfo> conjuncts) {
+    myContext = context;
+    myValue = value;
+    myConjuncts = conjuncts;
+  }
+
+  public static StatisticsInfo createComposite(List<StatisticsInfo> conjuncts) {
+    if (conjuncts.isEmpty()) {
+      return EMPTY;
+    }
+
+    ArrayList<StatisticsInfo> flattened = new ArrayList<StatisticsInfo>(conjuncts.size());
+    for (StatisticsInfo conjunct : conjuncts) {
+      flattened.addAll(conjunct.getConjuncts());
+    }
+    return new StatisticsInfo(conjuncts.get(0).getContext(), conjuncts.get(0).getValue(), flattened);
   }
 
   @NotNull
@@ -43,8 +67,8 @@ public class StatisticsInfo implements Comparable<StatisticsInfo>{
     return myValue;
   }
 
-  public int compareTo(final StatisticsInfo o) {
-    return getUseCount() - o.getUseCount();
+  public List<StatisticsInfo> getConjuncts() {
+    return myConjuncts;
   }
 
   public void incUseCount() {
@@ -55,7 +79,11 @@ public class StatisticsInfo implements Comparable<StatisticsInfo>{
     return ourManager.getUseCount(this);
   }
 
+  public int getLastUseRecency() {
+    return ourManager.getLastUseRecency(this);
+  }
+
   public String toString() {
-    return myContext + "::::" + myValue;
+    return myContext + "::::" + myValue + (myConjuncts.isEmpty() ? "" : "::::" + myConjuncts);
   }
 }

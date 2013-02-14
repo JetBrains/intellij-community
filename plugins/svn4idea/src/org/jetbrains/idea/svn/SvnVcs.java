@@ -108,8 +108,10 @@ import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
+  private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final String KEEP_CONNECTIONS_KEY = "svn.keep.connections";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
+  public static boolean ourListenToWcDb = true;
 
   private static final int ourLogUsualInterval = 20 * 1000;
   private static final int ourLogRareInterval = 30 * 1000;
@@ -197,6 +199,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   static {
     System.setProperty("svnkit.log.native.calls", "true");
+    if (Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB)) {
+      ourListenToWcDb = false;
+    }
     final JavaSVNDebugLogger logger = new JavaSVNDebugLogger(Boolean.getBoolean(LOG_PARAMETER_NAME), Boolean.getBoolean(TRACE_NATIVE_CALLS), LOG);
     SVNDebugLog.setDefaultLog(logger);
 

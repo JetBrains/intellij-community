@@ -22,7 +22,7 @@ class InferenceFromArgs {
          bar(b, (k, v) -> {Integer  i = k; return v;});
 
          bazz(<error descr="Cyclic inference">(k, v) -> v</error>);
-         bazz((k, v) -> {<error descr="Incompatible types. Found: '<lambda parameter>', required: 'int'">int i = k;</error> return v;});
+         bazz((k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">int i = k;</error> return v;});
     }
 
     public static <T> SameArgsI<T> max() {

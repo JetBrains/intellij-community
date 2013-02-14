@@ -21,10 +21,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -172,6 +169,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       ExecutionResult result = state.execute(executor, runner);
       //noinspection ConstantConditions
       processHandler = result.getProcessHandler();
+      if (processHandler instanceof OSProcessHandler) {
+        ((OSProcessHandler)processHandler).setShouldDestroyProcessRecursively(true);
+      }
     }
     catch (Exception e) {
       dropProcessInfo(key, ExceptionUtil.getUserStackTrace(e, LOG), processHandler);

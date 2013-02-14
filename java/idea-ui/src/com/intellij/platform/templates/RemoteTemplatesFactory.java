@@ -143,7 +143,10 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
         final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
 
         final List<WizardInputField> inputFields = getFields(element, ns);
-        return new ArchivedProjectTemplate(element.getChildTextTrim("name", ns)) {
+        final String path = element.getChildText("path", ns);
+        final String description = element.getChildTextTrim("description", ns);
+        String name = element.getChildTextTrim("name", ns);
+        return new ArchivedProjectTemplate(name) {
           @Override
           protected ModuleType getModuleType() {
             return moduleType;
@@ -156,7 +159,6 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
           @Override
           public ZipInputStream getStream() throws IOException {
-            String path = element.getChildText("path", ns);
             final HttpURLConnection connection = getConnection(path);
             return new ZipInputStream(connection.getInputStream()) {
               @Override
@@ -170,7 +172,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
           @Nullable
           @Override
           public String getDescription() {
-            return element.getChildTextTrim("description", ns);
+            return description;
           }
         };
       }

@@ -125,6 +125,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return "reference.svn.repository";
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getHelpAction()};
   }

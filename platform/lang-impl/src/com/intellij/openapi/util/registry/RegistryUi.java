@@ -31,6 +31,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -277,6 +278,7 @@ public class RegistryUi implements Disposable {
         return myTable;
       }
 
+      @NotNull
       @Override
       protected Action[] createActions() {
         return new Action[]{myRestoreDefaultsAction, new AbstractAction("Close") {

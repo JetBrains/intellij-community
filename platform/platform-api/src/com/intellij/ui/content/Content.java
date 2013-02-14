@@ -121,4 +121,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setPopupIcon(Icon icon);
   Icon getPopupIcon();
+
+  /**
+   * @param executionId supposed to identify group of contents (for example "Before Launch" tasks and the main Run Configuration)
+   */
+  void setExecutionId(long executionId);
+  long getExecutionId();
 }

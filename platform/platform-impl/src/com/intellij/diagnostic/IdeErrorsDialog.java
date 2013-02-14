@@ -191,6 +191,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public void entryWasRead() {
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     if (SystemInfo.isMac) {

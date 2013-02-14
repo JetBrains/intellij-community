@@ -22,18 +22,24 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.TextTransferrable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 
 /**
  * @author nik
  */
 public class XDebuggerFramesList extends DebuggerFramesList {
+  private static final TransferHandler defaultTransferHandler = new MyListTransferHandler();
+
   private XStackFrame mySelectedFrame;
 
   public XDebuggerFramesList(Project project) {
@@ -104,6 +110,69 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         }
       }
       stackFrame.customizePresentation(this);
+    }
+  }
+
+  @Override
+  public TransferHandler getTransferHandler() {
+    return defaultTransferHandler;
+  }
+
+  private static class MyColoredTextContainer implements XStackFrame.ColoredTextContainer {
+    private final StringBuilder builder = new StringBuilder();
+    @Override
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+      builder.append(fragment);
+    }
+
+    @Override
+    public void setIcon(@Nullable Icon icon) {
+    }
+  }
+
+  private static class MyListTransferHandler extends TransferHandler {
+    protected Transferable createTransferable(JComponent c) {
+      if (!(c instanceof XDebuggerFramesList)) {
+        return null;
+      }
+      XDebuggerFramesList list = (XDebuggerFramesList)c;
+      Object[] values = list.getSelectedValues();
+      if (values == null || values.length == 0) {
+        return null;
+      }
+
+      StringBuilder plainBuf = new StringBuilder();
+      StringBuilder htmlBuf = new StringBuilder();
+      MyColoredTextContainer coloredTextContainer = new MyColoredTextContainer();
+
+      htmlBuf.append("<html>\n<body>\n<ul>\n");
+      for (Object value : values) {
+        htmlBuf.append("  <li>");
+        if (value != null) {
+          if (value instanceof XStackFrame) {
+            ((XStackFrame)value).customizePresentation(coloredTextContainer);
+            plainBuf.append(coloredTextContainer.builder);
+            htmlBuf.append(coloredTextContainer.builder);
+            coloredTextContainer.builder.setLength(0);
+          }
+          else {
+            String text = value.toString();
+            plainBuf.append(text);
+            htmlBuf.append(text);
+          }
+        }
+        plainBuf.append('\n');
+        htmlBuf.append("</li>\n");
+      }
+
+      // remove the last newline
+      plainBuf.setLength(plainBuf.length() - 1);
+      htmlBuf.append("</ul>\n</body>\n</html>");
+      return new TextTransferrable(htmlBuf.toString(), plainBuf.toString());
+    }
+
+    public int getSourceActions(JComponent c) {
+      return COPY;
     }
   }
 }

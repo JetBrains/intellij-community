@@ -19,6 +19,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -38,6 +39,7 @@ public class TipDialog extends DialogWrapper{
     init();
   }
 
+  @NotNull
   protected Action[] createActions(){
     return new Action[]{new PreviousTipAction(),new NextTipAction(),getCancelAction()};
   }

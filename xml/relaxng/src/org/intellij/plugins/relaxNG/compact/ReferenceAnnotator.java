@@ -43,6 +43,7 @@ import java.util.List;
 public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
 
+  @Override
   public synchronized void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     myHolder = holder;
     try {
@@ -102,19 +103,20 @@ public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
     final Annotation annotation;
     if (reference instanceof EmptyResolveMessageProvider) {
       final String s = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-      annotation = myHolder.createErrorAnnotation(range, s != null ?
-              MessageFormat.format(s, reference.getCanonicalText())
-              : "Cannot resolve symbol");
-    } else {
+      annotation = myHolder.createErrorAnnotation(range, MessageFormat.format(s, reference.getCanonicalText()));
+    }
+    else {
       annotation = myHolder.createErrorAnnotation(range, "Cannot resolve symbol");
     }
     annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
     if (reference instanceof QuickFixProvider) {
-      final HighlightInfo info = new HighlightInfo(HighlightInfoType.WRONG_REF, annotation.getStartOffset(), annotation.getEndOffset(), "", null);
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(annotation.getStartOffset(), annotation.getEndOffset()).create();
+
       ((QuickFixProvider)reference).registerQuickfix(info, reference);
 
-      final List<Pair<HighlightInfo.IntentionActionDescriptor,TextRange>> ranges = info.quickFixActionRanges;
+      List<Pair<HighlightInfo.IntentionActionDescriptor,TextRange>> ranges = info.quickFixActionRanges;
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
           annotation.registerFix(pair.first.getAction(), pair.second);

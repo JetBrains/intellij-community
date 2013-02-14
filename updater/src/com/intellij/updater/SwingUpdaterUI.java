@@ -187,6 +187,9 @@ public class SwingUpdaterUI implements UpdaterUI {
         }
         catch (OperationCancelledException ignore) {
         }
+        catch(Throwable e) {
+          showError(e);
+        }
         finally {
           isRunning.set(false);
 

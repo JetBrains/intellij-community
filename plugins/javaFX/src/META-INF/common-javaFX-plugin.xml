@@ -1,11 +1,5 @@
 <idea-plugin>
-  <name>JavaFX</name>
-  <id>org.jetbrains.plugins.javaFX</id>
-  <version>1.0</version>
-  <vendor>JetBrains</vendor>
-  <description>
-    This plugin provides JavaFX2 support.
-  </description>
+  <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory"/>

@@ -23,24 +23,55 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * User: anna
  */
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
+  private boolean mySupportCommaInValue = false;
+
+  JavaFxLocationReferenceProvider() {
+  }
+
+  JavaFxLocationReferenceProvider(boolean supportCommaInValue) {
+    mySupportCommaInValue = supportCommaInValue;
+  }
+
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
                                                @NotNull ProcessingContext context) {
     final String value = ((XmlAttributeValue)element).getValue();
-    final FileReferenceSet set;
     if (value.startsWith("@")) {
-      set = new FileReferenceSet(value.substring(1), element, 2, null, true);
+      return new FileReferenceSet(value.substring(1), element, 2, null, true).getAllReferences();
     }
     else {
-      set = new FileReferenceSet(value, element, 1, null, true);
-      if (value.startsWith("/")) {
-        set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
+      if (mySupportCommaInValue && value.contains(",")) {
+        int startIdx = 0;
+        int endIdx = 0;
+        List<PsiReference> refs = new ArrayList<PsiReference>();
+        while (true) {
+          endIdx = value.indexOf(",", startIdx);
+          Collections.addAll(refs, collectRefs(element, endIdx >= 0 ? value.substring(startIdx, endIdx) : value.substring(startIdx), startIdx + 1));
+          startIdx = endIdx + 1;
+          if (endIdx < 0) {
+            break;
+          }
+        }
+        return refs.toArray(new PsiReference[refs.size()]);
+      } else {
+        return collectRefs(element, value, 1);
       }
+    }
+  }
+
+  private static PsiReference[] collectRefs(PsiElement element, String value, final int startInElement) {
+    final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true);
+    if (value.startsWith("/")) {
+      set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
     }
     return set.getAllReferences();
   }

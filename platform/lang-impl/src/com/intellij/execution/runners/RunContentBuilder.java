@@ -50,7 +50,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
 
   private final ProgramRunner myRunner;
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 
   private final LogFilesManager myManager;
@@ -79,7 +78,6 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     if (profile instanceof RunConfigurationBase) {
       myManager.registerFileMatcher((RunConfigurationBase)profile);
     }
-    myReuseProhibited = Boolean.TRUE.equals(env.getUserData(RunContentDescriptor.REUSE_CONTENT_PROHIBITED));
   }
 
   public void addAction(@NotNull final AnAction action) {
@@ -110,7 +108,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
+      return new MyRunContentDescriptor(profile, myExecutionResult, myUi.getComponent(), this);
     }
 
     if (console != null) {
@@ -125,7 +123,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
         OutputFileUtil.attachDumpListener((RunConfigurationBase)profile, myExecutionResult.getProcessHandler(), console);
       }
     }
-    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myReuseProhibited, myUi.getComponent(), this);
+    MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(profile, myExecutionResult, myUi.getComponent(), this);
     myUi.getOptions().setLeftToolbar(createActionToolbar(contentDescriptor, myUi.getComponent()), ActionPlaces.UNKNOWN);
 
     if (profile instanceof RunConfigurationBase) {
@@ -239,18 +237,11 @@ public class RunContentBuilder extends LogConsoleManagerBase {
   }
 
   private static class MyRunContentDescriptor extends RunContentDescriptor {
-    private final boolean myReuseProhibited;
     private final Disposable myAdditionalDisposable;
 
-    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, @NotNull Disposable additionalDisposable) {
+    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final JComponent component, @NotNull Disposable additionalDisposable) {
       super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName(), profile.getIcon());
-      myReuseProhibited = reuseProhibited;
       myAdditionalDisposable = additionalDisposable;
-    }
-
-    @Override
-    public boolean isContentReuseProhibited() {
-      return myReuseProhibited;
     }
 
     @Override

@@ -97,20 +97,6 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), refs, commitIds);
   }
 
-  public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                             final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
-                             int maxCnt, SymbolicRefsI refs, final boolean topoOrder) throws VcsException {
-    final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
-    if (beforePoint != null) {
-      filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
-    }
-    if (afterPoint != null) {
-      filters.add(new ChangesFilter.AfterDate(afterPoint));
-    }
-
-    loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, maxCnt, null, refs, topoOrder);
-  }
-
   // uses cached version
   public CachedRefs getRefs() throws VcsException {
     final CachedRefs refs = new CachedRefs();
@@ -204,15 +190,6 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     final List<String> result = new ArrayList<String>();
     GitTag.listAsStrings(myProject, myRoot, result, hash.getValue());
     return result;
-  }
-
-  public void loadAllBranches(List<String> sink) throws VcsException {
-    sink.addAll(listAsStrings(myProject, myRoot, true, false, null));
-    sink.addAll(listAsStrings(myProject, myRoot, false, true, null));
-  }
-
-  public void loadAllTags(Collection<String> sink) throws VcsException {
-    GitTag.listAsStrings(myProject, myRoot, sink, null);
   }
 
   @NotNull

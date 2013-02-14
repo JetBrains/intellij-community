@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +43,7 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ConfirmationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +111,7 @@ public class CommitHelper {
 
     final Runnable action = new Runnable() {
       public void run() {
-        generalCommit(processor);
+        delegateCommitToVcsThread(processor);
       }
     };
 
@@ -146,6 +148,44 @@ public class CommitHelper {
         };
       ProgressManager.getInstance().run(task);
       return false;
+    }
+  }
+
+  private void delegateCommitToVcsThread(final GeneralCommitProcessor processor) {
+    final ProgressIndicator indicator = new DelegatingProgressIndicator();
+
+    final Semaphore startSemaphore = new Semaphore();
+    final Semaphore endSemaphore = new Semaphore();
+    startSemaphore.down();
+    endSemaphore.down();
+
+    ChangeListManagerImpl.getInstanceImpl(myProject).executeOnUpdaterThread(new Runnable() {
+      @Override
+      public void run() {
+        startSemaphore.up();
+        indicator.setText("Performing VCS commit...");
+        try {
+          ProgressManager.getInstance().runProcess(new Runnable() {
+            @Override
+            public void run() {
+              indicator.checkCanceled();
+              generalCommit(processor);
+            }
+          }, indicator);
+        }
+        finally {
+          endSemaphore.up();
+        }
+      }
+    });
+
+    indicator.setText("Waiting for VCS background tasks to finish...");
+    while (!startSemaphore.waitFor(20)) {
+      indicator.checkCanceled();
+    }
+
+    while (!endSemaphore.waitFor(20)) {
+      indicator.checkCanceled();
     }
   }
 

@@ -294,6 +294,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
       return myGitLog.getVisualComponent();
     }
 
+    @NotNull
     @Override
     protected Action[] createActions() {
       return new Action[0];

@@ -57,7 +57,7 @@ class ReturnTypeCompatibility {
     }
 
     public static void main(String[] args) {
-        <error descr="Cannot resolve method 'call(<lambda expression>)'">call</error>(i-> {return i;});
+        call<error descr="Ambiguous method call: both 'ReturnTypeCompatibility.call(I1)' and 'ReturnTypeCompatibility.call(I2)' match">(i-> {return i;})</error>;
     }
 }
 

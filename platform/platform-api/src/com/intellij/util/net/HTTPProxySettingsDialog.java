@@ -17,6 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -58,6 +59,7 @@ public class HTTPProxySettingsDialog extends DialogWrapper {
     return panel.createComponent();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{okAction, cancelAction};
   }

@@ -111,7 +111,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
     for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
       searcher.findDeclarationsAt(referenceExpression, 0, consumer);
-      if (consumer.getResult().size() > 0) return false;
+      if (!consumer.getResult().isEmpty()) return false;
     }
 
     return true;
@@ -176,7 +176,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     if (!(refElement.getParent() instanceof GrPackageDefinition) && resolved == null) {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, nameElement, message);
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(nameElement).descriptionAndTooltip(message).create();
 
       // todo implement for nested classes
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
@@ -340,7 +341,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     LOG.assertTrue(resolved != null);
     LOG.assertTrue(resolved instanceof PsiModifierListOwner, resolved + " : " + resolved.getText());
 
-    return (((PsiModifierListOwner)resolved).hasModifierProperty(STATIC));
+    return ((PsiModifierListOwner)resolved).hasModifierProperty(STATIC);
   }
 
   private static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
@@ -375,18 +376,20 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(ref.getProject(), ref);
 
     if (compileStatic || displayLevel == HighlightDisplayLevel.ERROR) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refNameElement, message);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
     }
 
     if (displayLevel == HighlightDisplayLevel.WARNING) {
       boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       HighlightInfoType infotype = isTestMode ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
 
-      return HighlightInfo.createHighlightInfo(infotype, refNameElement, message, UNRESOLVED_ACCESS);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
+      builder.descriptionAndTooltip(message);
+      return builder.needsUpdateOnTyping(false).textAttributes(UNRESOLVED_ACCESS).create();
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
-    return HighlightInfo.createHighlightInfo(highlightInfoType, refNameElement, message);
+    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
   }
 
   private static void registerStaticImportFix(@NotNull GrReferenceExpression referenceExpression,
@@ -430,9 +433,8 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   private static void addDynamicAnnotation(HighlightInfo info, GrReferenceExpression referenceExpression, HighlightDisplayKey key) {
     final PsiFile containingFile = referenceExpression.getContainingFile();
-    VirtualFile file;
     if (containingFile != null) {
-      file = containingFile.getVirtualFile();
+      VirtualFile file = containingFile.getVirtualFile();
       if (file == null) return;
     }
     else {
@@ -506,12 +508,14 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return parent instanceof GrExtendsClause && !(parent.getParent() instanceof GrInterfaceDefinition);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return BaseInspection.PROBABLE_BUGS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {

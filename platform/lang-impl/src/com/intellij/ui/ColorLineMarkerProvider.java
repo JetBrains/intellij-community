@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.TwoColorsIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,10 +63,12 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
   
   private static class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
 
+    private final Color myColor;
+
     public MyInfo(@NotNull final PsiElement element, final Color color, final ElementColorProvider colorProvider) {
       super(element, 
             element.getTextRange(),
-            new ColorIcon(10, color),
+            new ColorIcon(12, color),
             Pass.UPDATE_ALL, 
             FunctionUtil.<Object, String>nullConstant(), 
             new GutterIconNavigationHandler<PsiElement>() {
@@ -87,7 +90,8 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
                 }
               }
             }, 
-            GutterIconRenderer.Alignment.RIGHT);
+            GutterIconRenderer.Alignment.LEFT);
+      myColor = color;
     }
 
     @Override
@@ -97,6 +101,9 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
 
     @Override
     public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
+      if (infos.size() == 2 && infos.get(0) instanceof MyInfo && infos.get(1) instanceof MyInfo) {
+         return new TwoColorsIcon(12, ((MyInfo)infos.get(1)).myColor, ((MyInfo)infos.get(0)).myColor);
+      }
       return AllIcons.Gutter.Colors;
     }
 

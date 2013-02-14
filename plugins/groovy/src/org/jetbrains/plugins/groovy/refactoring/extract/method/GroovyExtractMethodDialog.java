@@ -214,6 +214,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD);
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

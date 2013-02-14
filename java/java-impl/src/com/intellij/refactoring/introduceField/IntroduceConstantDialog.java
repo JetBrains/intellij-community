@@ -55,6 +55,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -163,6 +164,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myTypeSelector.getSelectedType();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

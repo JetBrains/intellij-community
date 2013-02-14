@@ -125,6 +125,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     return library.getName();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     if (SystemInfo.isMac) {

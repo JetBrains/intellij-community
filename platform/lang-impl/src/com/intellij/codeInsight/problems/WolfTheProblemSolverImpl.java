@@ -463,21 +463,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   @Override
   public Problem convertToProblem(@Nullable final VirtualFile virtualFile,
-                                  final HighlightSeverity severity,
-                                  @NotNull final TextRange textRange,
-                                  final String messageText) {
-    if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
-      @Override
-      public HighlightInfo compute() {
-        return HighlightInfo.createHighlightInfo(HighlightInfo.convertSeverity(severity), textRange, messageText);
-      }
-    });
-    return new ProblemImpl(virtualFile, info, false);
-  }
-
-  @Override
-  public Problem convertToProblem(@Nullable final VirtualFile virtualFile,
                                   final int line,
                                   final int column,
                                   @NotNull final String[] message) {
@@ -486,7 +471,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       @Override
       public HighlightInfo compute() {
         TextRange textRange = getTextRange(virtualFile, line, column);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, StringUtil.join(message, "\n"));
+        String description = StringUtil.join(message, "\n");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
       }
     });
     if (info == null) return null;

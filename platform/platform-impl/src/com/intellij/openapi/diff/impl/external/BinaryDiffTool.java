@@ -64,6 +64,7 @@ public class BinaryDiffTool implements DiffTool {
               return "BinaryDiffDialog";
             }
 
+            @NotNull
             @Override
             protected Action[] createActions() {
               final Action close = getCancelAction();

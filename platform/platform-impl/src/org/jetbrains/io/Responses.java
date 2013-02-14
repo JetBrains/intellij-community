@@ -18,7 +18,6 @@ package org.jetbrains.io;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import org.jboss.netty.buffer.BigEndianHeapChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -74,15 +73,6 @@ public final class Responses {
     }
   }
 
-  public static void send(HttpResponse response, HttpRequest request, byte[] bytes, ChannelHandlerContext context) {
-    response.setContent(new BigEndianHeapChannelBuffer(bytes));
-    send(response, request, context);
-  }
-
-  public static void send(CharSequence content, HttpRequest request, ChannelHandlerContext context) {
-    send("text/plain; charset=UTF-8", content, request, context);
-  }
-
   public static void send(String contentType, CharSequence content, HttpRequest request, ChannelHandlerContext context) {
     HttpResponse response = create(contentType);
     response.setContent(ChannelBuffers.copiedBuffer(content, CharsetUtil.UTF_8));
@@ -98,13 +88,24 @@ public final class Responses {
   }
 
   public static HttpResponse create(String contentType) {
-    DefaultHttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+    HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
     response.setHeader(CONTENT_TYPE, contentType);
     return response;
   }
 
-  public static void send(HttpResponse response, CharSequence content, HttpRequest request, ChannelHandlerContext context) {
-    response.setContent(ChannelBuffers.copiedBuffer(content, CharsetUtil.US_ASCII));
+  public static void send(CharSequence content, HttpRequest request, ChannelHandlerContext context) {
+    send(new DefaultHttpResponse(HTTP_1_1, OK), ChannelBuffers.copiedBuffer(content, CharsetUtil.US_ASCII), request, context);
+  }
+
+  public static void send(HttpResponse response, byte[] bytes, HttpRequest request, ChannelHandlerContext context) {
+    send(response, ChannelBuffers.wrappedBuffer(bytes), request, context);
+  }
+
+  public static void send(HttpResponse response, ChannelBuffer content, HttpRequest request, ChannelHandlerContext context) {
+    response.setContent(content);
+    addServer(response);
+    addDate(response);
+    response.setHeader("Access-Control-Allow-Origin", "*");
     send(response, request, context);
   }
 

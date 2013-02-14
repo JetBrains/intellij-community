@@ -259,8 +259,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
-    SelectionModel selectionModel = myEditor.getSelectionModel();
-    int selectionStart = selectionModel.getLeadSelectionOffset();
+    SelectionModelImpl selectionModel = myEditor.getSelectionModel();
+    final int leadSelectionOffset = selectionModel.getLeadSelectionOffset();
     LogicalPosition blockSelectionStart = selectionModel.hasBlockSelection()
                                           ? selectionModel.getBlockStart()
                                           : getLogicalPosition();
@@ -374,15 +374,24 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       else {
         if (selectToDocumentStart) {
-          selectionModel.setSelection(selectionStart, 0);
+          selectionModel.setSelection(leadSelectionOffset, 0);
         }
         else if (pos.line >= myEditor.getVisibleLineCount()) {
-          if (selectionStart < document.getTextLength()) {
-            selectionModel.setSelection(selectionStart, document.getTextLength());
+          if (leadSelectionOffset < document.getTextLength()) {
+            selectionModel.setSelection(leadSelectionOffset, document.getTextLength());
           }
         }
         else {
-          selectionModel.setSelection(selectionStart, getVisualPosition(), getOffset());
+          int selectionStartToUse = leadSelectionOffset;
+          if (selectionModel.isUnknownDirection()) {
+            if (getOffset() > leadSelectionOffset) {
+              selectionStartToUse = Math.min(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+            }
+            else {
+              selectionStartToUse = Math.max(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+            }
+          }
+          selectionModel.setSelection(selectionStartToUse, getVisualPosition(), getOffset());
         }
       }
     }

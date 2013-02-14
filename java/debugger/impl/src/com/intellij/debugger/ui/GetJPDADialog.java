@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ public class GetJPDADialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }

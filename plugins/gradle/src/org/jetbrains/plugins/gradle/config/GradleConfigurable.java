@@ -31,10 +31,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.util.*;
 
 import javax.swing.*;
@@ -106,13 +103,14 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager gradleInstallationManager) {
     myProject = project;
     myHelper = new DefaultHelper(gradleInstallationManager);
-    buildContent();
+    buildContent(false);
   }
 
+  @TestOnly
   public GradleConfigurable(@Nullable Project project, @NotNull Helper helper) {
     myHelper = helper;
     myProject = project;
-    buildContent();
+    buildContent(true);
   }
 
   @NotNull
@@ -141,7 +139,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   @Override
   public JComponent createComponent() {
     if (myComponent == null) {
-      buildContent();
+      buildContent(false);
     }
     return myComponent;
   }
@@ -178,11 +176,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     return myUseWrapperButton;
   }
 
-  private void buildContent() {
+  private void buildContent(boolean testMode) {
     initContentPanel();
-    initLinkedGradleProjectPathControl();
+    initLinkedGradleProjectPathControl(testMode);
     initWrapperVsLocalControls();
-    initGradleHome();
+    initGradleHome(testMode);
     initServiceDirectoryHome();
     assert myComponent != null;
 
@@ -256,13 +254,17 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
   }
 
-  private void initLinkedGradleProjectPathControl() {
+  private void initLinkedGradleProjectPathControl(boolean testMode) {
     myLinkedGradleProjectPathField = new TextFieldWithBrowseButton();
+    
+    FileChooserDescriptor fileChooserDescriptor = testMode ? new FileChooserDescriptor(true, false, false, false, false, false)
+                                                           : GradleUtil.getGradleProjectFileChooserDescriptor();
+    
     myLinkedGradleProjectPathField.addBrowseFolderListener(
       "",
       GradleBundle.message("gradle.settings.label.select.project"),
       myProject,
-      GradleUtil.getGradleProjectFileChooserDescriptor(),
+      fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
       false
     );
@@ -329,13 +331,17 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     group.add(myUseLocalDistributionButton);
   }
 
-  private void initGradleHome() {
+  private void initGradleHome(boolean testMode) {
     myGradleHomePathField = new TextFieldWithBrowseButton();
+
+    FileChooserDescriptor fileChooserDescriptor = testMode ? new FileChooserDescriptor(true, false, false, false, false, false)
+                                                           : GradleUtil.getGradleHomeFileChooserDescriptor();
+    
     myGradleHomePathField.addBrowseFolderListener(
       "",
       GradleBundle.message("gradle.settings.text.home.path"),
       null,
-      GradleUtil.getGradleHomeFileChooserDescriptor(),
+      fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
       false
     );

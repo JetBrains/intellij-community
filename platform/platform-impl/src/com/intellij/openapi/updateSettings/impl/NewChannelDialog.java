@@ -23,6 +23,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,6 +47,7 @@ public class NewChannelDialog extends DialogWrapper {
     setCancelButtonText("Ignore This Update");
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     Action remindLater = new AbstractAction("Remind Me Later") {

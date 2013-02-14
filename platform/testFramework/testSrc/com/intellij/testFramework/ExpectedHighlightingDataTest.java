@@ -18,11 +18,15 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
+import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -138,14 +142,24 @@ public class ExpectedHighlightingDataTest {
     assertEquals(expected, text);
   }
 
-  private static HighlightInfo error(int start, int end, String description) {
-    return new HighlightInfo(HighlightInfoType.ERROR, start, end, description, null);
+  private static HighlightInfo error(int start, int end, @NotNull String description) {
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
+    builder.range(start, end);
+    builder.descriptionAndTooltip(description);
+    return builder.create();
   }
-  private static HighlightInfo warning(int start, int end, String description) {
-    return new HighlightInfo(HighlightInfoType.WARNING, start, end, description, null);
+  private static HighlightInfo warning(int start, int end, @NotNull String description) {
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING);
+    builder.range(start, end);
+    builder.descriptionAndTooltip(description);
+    return builder.create();
   }
 
-  private static HighlightInfo eolError(int start, int end, String description) {
-    return new HighlightInfo(null, null, HighlightInfoType.ERROR, start, end, description, null, HighlightSeverity.ERROR, true, null, false);
+  private static HighlightInfo eolError(int start, int end, @NotNull String description) {
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
+    builder.range(start, end);
+    builder.description(description);
+    builder.endOfLine();
+    return builder.create();
   }
 }
