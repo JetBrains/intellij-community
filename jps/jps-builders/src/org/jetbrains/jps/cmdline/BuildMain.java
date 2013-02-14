@@ -45,7 +45,13 @@ import java.util.UUID;
 public class BuildMain {
   public static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create("_force_model_loading");
   private static final String LOG_FILE_NAME = "log.xml";
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+
+  private static final Logger LOG;
+  static {
+    initLoggers();
+    LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+  }
+
   private static NioClientSocketChannelFactory ourChannelFactory;
 
   public static void main(String[] args){
@@ -55,8 +61,6 @@ public class BuildMain {
     final UUID sessionId = UUID.fromString(args[2]);
     final File systemDir = new File(FileUtil.toCanonicalPath(args[3]));
     Utils.setSystemRoot(systemDir);
-
-    initLoggers();
 
     ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.getInstance(), SharedThreadPool.getInstance(), 1);
     final ClientBootstrap bootstrap = new ClientBootstrap(ourChannelFactory);

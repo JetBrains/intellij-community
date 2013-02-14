@@ -301,23 +301,25 @@ final class BuildSession implements Runnable, CanceledStatus {
           pd.getFSCache().clear();
           cacheCleared = true;
         }
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying deleted path from fs event: " + file.getPath());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
           pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
         }
       }
-      else if (Utils.IS_TEST_MODE) {
-        LOG.info("Skipping deleted path: " + file.getPath());
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping deleted path: " + file.getPath());
+        }
       }
     }
     for (String changed : event.getChangedPathsList()) {
       final File file = new File(changed);
       Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptors.isEmpty()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying dirty path from fs event: " + file.getPath());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Applying dirty path from fs event: " + changed);
         }
         long fileStamp = -1L;
         for (BuildRootDescriptor descriptor : descriptors) {
@@ -325,7 +327,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (fileStamp == -1L) {
               fileStamp = FileSystemUtil.lastModified(file); // lazy init
             }
-            long stamp = timestamps.getStamp(file, descriptor.getTarget());
+            final long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
               if (!cacheCleared) {
                 pd.getFSCache().clear();
@@ -333,11 +335,18 @@ final class BuildSession implements Runnable, CanceledStatus {
               }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + changed + "; timestamp= " + stamp);
+              }
+            }
           }
         }
       }
-      else if (Utils.IS_TEST_MODE) {
-        LOG.info("Skipping dirty path: " + file.getPath());
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping dirty path: " + file.getPath());
+        }
       }
     }
   }
