@@ -28,25 +28,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.ParseException;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-import static org.jetbrains.io.Responses.addDate;
-import static org.jetbrains.io.Responses.addServer;
-import static org.jetbrains.io.Responses.send;
+import static org.jetbrains.io.Responses.*;
 
 public class FileResponses {
-  private static final int HTTP_CACHE_SECONDS = 60;
   private static final MimetypesFileTypeMap FILE_MIMETYPE_MAP = new MimetypesFileTypeMap();
 
   public static HttpResponse createResponse(String path) {
-    return Responses.create(FILE_MIMETYPE_MAP.getContentType(path));
+    return create(FILE_MIMETYPE_MAP.getContentType(path));
   }
 
   private static boolean checkCache(HttpRequest request, ChannelHandlerContext context, long lastModified) {
@@ -119,11 +114,8 @@ public class FileResponses {
   }
 
   private static void setDateAndCacheHeaders(HttpResponse response, File file) {
-    Calendar time = new GregorianCalendar();
-    addDate(response, time.getTime());
-    time.add(Calendar.SECOND, HTTP_CACHE_SECONDS);
-    response.setHeader(EXPIRES, Responses.DATE_FORMAT.format(time.getTime()));
-    response.setHeader(CACHE_CONTROL, "private, max-age=" + HTTP_CACHE_SECONDS);
+    addDate(response);
+    response.setHeader(CACHE_CONTROL, "max-age=0");
     response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.format(new Date(file.lastModified())));
   }
 }
