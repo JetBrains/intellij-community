@@ -16,17 +16,14 @@
 
 package com.intellij.problems;
 
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -49,10 +46,6 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract boolean hasProblemFilesBeneath(@NotNull Condition<VirtualFile> condition);
 
   public abstract boolean hasProblemFilesBeneath(@NotNull Module scope);
-
-  @Nullable
-  public abstract Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
-                                           final TextRange textRange, final String messageText);
 
   public abstract Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message);
 

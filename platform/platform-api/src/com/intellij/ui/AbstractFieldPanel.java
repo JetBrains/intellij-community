@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -172,6 +173,7 @@ public abstract class AbstractFieldPanel extends JPanel {
       init();
     }
 
+    @NotNull
     protected Action[] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }

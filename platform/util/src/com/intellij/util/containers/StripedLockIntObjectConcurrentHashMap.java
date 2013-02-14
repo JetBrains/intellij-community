@@ -16,6 +16,7 @@
 
 package com.intellij.util.containers;
 
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Enumeration;
@@ -688,6 +689,16 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
     }
   }
 
+  @NotNull
+  public int[] keys() {
+    TIntArrayList keys = new TIntArrayList(size());
+    for (IntHashEntry entry : table) {
+      if (entry != null) {
+        keys.add(entry.key);
+      }
+    }
+    return keys.toNativeArray();
+  }
 
 
   /**

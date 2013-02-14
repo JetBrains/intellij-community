@@ -27,7 +27,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  */
 public class GradleEntityIdMapper {
   
-  @NotNull GradleProjectStructureContext myMappingContext;
+  @NotNull private final GradleProjectStructureContext myMappingContext;
 
   public GradleEntityIdMapper(@NotNull GradleProjectStructureContext context) {
     myMappingContext = context;

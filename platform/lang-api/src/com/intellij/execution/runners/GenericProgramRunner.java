@@ -88,6 +88,9 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
                                           @Nullable RunContentDescriptor contentToReuse,
                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
         final RunContentDescriptor descriptor = doExecute(project, executor, state, contentToReuse, env);
+        if (descriptor != null) {
+          descriptor.setExecutionId(env.getExecutionId());
+        }
         if (callback != null) callback.processStarted(descriptor);
         return descriptor;
       }

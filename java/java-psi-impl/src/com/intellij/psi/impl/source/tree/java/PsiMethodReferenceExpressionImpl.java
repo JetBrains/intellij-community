@@ -267,7 +267,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           }
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(resolveResult.getSubstitutor()) : null;
+          final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null;
           final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
           final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(PsiMethodReferenceExpressionImpl.this);
           if (isConstructor && interfaceMethod != null) {

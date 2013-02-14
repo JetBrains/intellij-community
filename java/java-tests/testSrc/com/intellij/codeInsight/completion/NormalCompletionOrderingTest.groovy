@@ -181,6 +181,27 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "getComponents", "getComponent");
   }
 
+  public void testAbandonSameStatsForDifferentQualifiers() throws Throwable {
+    invokeCompletion(getTestName(false) + ".java");
+    assertPreferredItems 0, "method1", "equals"
+    myFixture.type('eq\n2);\nf2.')
+
+    myFixture.completeBasic();
+    assertPreferredItems 0, "equals", "method2"
+    myFixture.type('me\n);\n')
+
+    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
+      myFixture.type('f2.')
+      myFixture.completeBasic()
+      assertPreferredItems 0, "method2", "equals"
+      myFixture.type('me\n);\n')
+    }
+
+    myFixture.type('f3.')
+    myFixture.completeBasic()
+    assertPreferredItems 0, "method3", "equals"
+  }
+
   public void testDispreferFinalize() throws Throwable {
     checkPreferredItems(0, "final", "finalize");
   }
@@ -393,6 +414,8 @@ import java.lang.annotation.Target;
 
   public void testDoNotPreferGetClass() {
     checkPreferredItems 0, 'get', 'getClass'
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, 'getClass', 'get'
     incUseCount(lookup, 1)
     assertPreferredItems 0, 'get', 'getClass'
   }

@@ -333,8 +333,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
-    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="general"/>
-    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>
+    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage" id="defaultLanguage"/>
+    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="ansi"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.CustomColorsPage" id="custom"/>
 
     <elementDescriptionProvider implementation="com.intellij.psi.impl.DefaultPomTargetDescriptionProvider" order="last" id="pomDefault"/>
@@ -469,15 +469,17 @@
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
              order="after sameModule"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
-             order="after priority"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
-             order="after stats"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity"
-             order="after prefix"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
-             order="last"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
+           order="after priority"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
+           order="after stats"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.ExplicitProximityWeigher" id="explicitProximity"
+           order="after prefix"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity"
+           order="after explicitProximity"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
+           order="last"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor"
                             id="default"

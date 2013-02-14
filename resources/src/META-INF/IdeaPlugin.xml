@@ -135,16 +135,25 @@
     <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
     <extensionPoint name="topLevelClassProvider" interface="com.intellij.debugger.engine.TopLevelParentClassProvider"/>
 
-    <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" />
+    <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" >
+      <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
 
     <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
 
-    <extensionPoint name="annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
-    <extensionPoint name="constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="annotationSupport" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
+    </extensionPoint>
 
-    <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="constantExpressionEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ConstantExpressionEvaluator"/>
+    </extensionPoint>
+
+    <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+    </extensionPoint>
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
@@ -153,13 +162,50 @@
 
     <extensionPoint name="allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
 
-    <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.JVMElementFactoryProvider"/>
+    </extensionPoint>
 
-    <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
+    </extensionPoint>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
 
-    <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
+    </extensionPoint>
+
+    <extensionPoint name="constructorBodyGenerator"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.generation.ConstructorBodyGenerator"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.moveInnerHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveInner.MoveInnerHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.moveClassToInnerHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerHandler"/>
+
+    <extensionPoint name="refactoring.moveAllClassesInFileHandler"
+                    interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveAllClassesInFileHandler"/>
+
+    <extensionPoint name="refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
+
+    <extensionPoint name="refactoring.moveMemberHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.move.moveMembers.MoveMemberHandler"/>
+    </extensionPoint>
+
+    <extensionPoint name="testGenerator"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.testIntegration.createTest.TestGenerator"/>
+    </extensionPoint>
+
+    <extensionPoint name="psi.clsCustomNavigationPolicy"
+                    interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
+    <extensionPoint name="psi.clsDecompiledFileProvider"
+                    interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

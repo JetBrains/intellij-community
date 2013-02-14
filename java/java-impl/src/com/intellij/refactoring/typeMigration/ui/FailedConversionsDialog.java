@@ -21,6 +21,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,6 +44,7 @@ public class FailedConversionsDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), new ViewUsagesAction(), new CancelAction()};
   }

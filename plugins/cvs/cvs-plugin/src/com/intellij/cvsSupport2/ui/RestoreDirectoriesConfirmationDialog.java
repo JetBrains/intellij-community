@@ -19,6 +19,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -50,6 +51,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
     return CvsApplicationLevelConfiguration.getInstance().SHOW_RESTORE_DIRECTORIES_CONFIRMATION;
   }
 
+  @NotNull
   protected Action[] createActions() {
     Action okAction = getOKAction();
     UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.close"), okAction);

@@ -29,8 +29,8 @@ class TypeArgsConsistency1 {
     {
         I<Integer> i1 = (i, j) -> i + j;
         foo((i, j) -> i + j);
-        I<Integer> i2 =bar(<error descr="Cyclic inference">(i, j) -> i</error>) ;
-        I<Integer> i3 = bar(<error descr="Cyclic inference">(i, j) -> "" + i + j</error>);
+        I<Integer> i2 =bar((i, j) -> i) ;
+        I<Integer> i3 = bar(<error descr="Incompatible return type String in lambda expression">(i, j) -> "" + i + j</error>);
     }
 }
 
@@ -40,8 +40,8 @@ class TypeArgsConsistency2 {
     static <T> I2<T> bar2(I2<T> i) {return i;}
 
     public static void main(String[] args) {
-        I<Integer> i1 = bar(<error descr="Cyclic inference">x -> x</error>);
-        I1<Integer> i2 = bar1(<error descr="Cyclic inference">x -> 1</error>);
+        I<Integer> i1 = bar(x -> x);
+        I1<Integer> i2 = bar1(x -> 1);
         I2<String> aI2 = bar2(x -> "");
         <error descr="Incompatible types. Found: 'TypeArgsConsistency2.I2<java.lang.String>', required: 'TypeArgsConsistency2.I2<java.lang.Integer>'">I2<Integer> aI28 = bar2( x-> "");</error>
         I2<Integer> i3 = bar2(x -> x);

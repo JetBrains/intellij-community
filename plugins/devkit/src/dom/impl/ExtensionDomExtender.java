@@ -42,9 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
@@ -61,12 +59,14 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
       if (interfaceName != null) {
         registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
-        registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)));
+        registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
+                     Collections.<With>emptyList());
       }
       else {
         final String beanClassName = extensionPoint.getBeanClass().getStringValue();
         if (beanClassName != null) {
-          registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(beanClassName, GlobalSearchScope.allScope(project)));
+          registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(beanClassName, GlobalSearchScope.allScope(project)),
+                       extensionPoint.getWithElements());
         }
       }
     }
@@ -143,15 +143,25 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     domExtension.addExtender(EXTENSION_EXTENDER);
   }
 
-  private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass) {
+  private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
     if (beanClass == null) return;
 
     for (PsiField field : beanClass.getAllFields()) {
-      registerField(registrar, field);
+      registerField(registrar, field, findWithElement(elements, field));
     }
   }
 
-  private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field) {
+  @Nullable
+  public static With findWithElement(List<With> elements, PsiField field) {
+    for (With element : elements) {
+      if (field.getName().equals(element.getAttribute().getStringValue())) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
     final PsiMethod getter = PropertyUtils.findGetterForField(field);
     final PsiMethod setter = PropertyUtils.findSetterForField(field);
     if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
@@ -164,11 +174,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
+        boolean isClass = withElement != null || isClassField(fieldName);
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), String.class).setDeclaringElement(field);
-        if (fieldName.endsWith("Class")) {
-          extension.setConverter(CLASS_CONVERTER);
-        }
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), isClass ? PsiClass.class : String.class).setDeclaringElement(field);
+        markAsClass(extension, fieldName, withElement);
       }
       return;
     }
@@ -182,9 +191,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       if (absColAnno == null) {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class).setDeclaringElement(field);
-        if (fieldName.endsWith("Class")) {
-          extension.setConverter(CLASS_CONVERTER);
-        }
+        markAsClass(extension, fieldName, withElement);
       }
       else {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
@@ -200,8 +207,27 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
+    if (withElement != null) {
+      final String withClassName = withElement.getImplements().getStringValue();
+      extension.addCustomAnnotation(new ExtendClassImpl() {
+        @Override
+        public String value() {
+          return withClassName;
+        }
+      });
+    }
+    if (isClassField(fieldName) || withElement != null) {
+      extension.setConverter(CLASS_CONVERTER);
+    }
+  }
+
+  public static boolean isClassField(String fieldName) {
+    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) || fieldName.equals("implementation");
+  }
+
   @Nullable
-  private static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+  static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
       if (member != null) {
         final PsiModifierList modifierList = member.getModifierList();
@@ -244,7 +270,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerXmlb(registrar, psiClass);
+            registerXmlb(registrar, psiClass, Collections.<With>emptyList());
           }
         });
       }
@@ -252,9 +278,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   @Nullable
-  private static String getStringAttribute(final PsiAnnotation annotation,
-                                           final String name,
-                                           final PsiConstantEvaluationHelper evalHelper) {
+  static String getStringAttribute(final PsiAnnotation annotation,
+                                   final String name,
+                                   final PsiConstantEvaluationHelper evalHelper) {
     String value = getAttributeValue(annotation, name);
     if (value != null) return value;
     final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);

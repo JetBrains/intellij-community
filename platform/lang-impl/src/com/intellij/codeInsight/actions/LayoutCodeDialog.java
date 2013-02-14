@@ -208,6 +208,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     return OptionsDialog.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};

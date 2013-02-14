@@ -590,7 +590,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   @NotNull
-  public SelectionModel getSelectionModel() {
+  public SelectionModelImpl getSelectionModel() {
     return mySelectionModel;
   }
 
@@ -5433,8 +5433,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
 
-      int oldStart = mySelectionModel.getSelectionStart();
-      int oldEnd = mySelectionModel.getSelectionEnd();
+      final int oldStart = mySelectionModel.getSelectionStart();
+      final int oldEnd = mySelectionModel.getSelectionEnd();
 
       moveCaretToScreenPos(x, y);
 
@@ -5485,7 +5485,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
         else {
-          mySelectionModel.setSelection(oldSelectionStart, caretOffset);
+          int startToUse = oldSelectionStart;
+          int endToUse = caretOffset;
+          if (mySelectionModel.isUnknownDirection() && caretOffset > startToUse) {
+            startToUse = Math.min(oldStart, oldEnd);
+          }
+          mySelectionModel.setSelection(startToUse, endToUse);
         }
       }
       else {
@@ -5513,6 +5518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
                 mySavedSelectionStart = mySelectionModel.getSelectionStart();
                 mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
+                mySelectionModel.setUnknownDirection(true);
                 break;
             }
           }

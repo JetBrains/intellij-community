@@ -106,7 +106,6 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
                                                                         : initialDocument.getLineCount() - 1;
           final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
-          final int caretColumn = caretOffset - offset;
 
           if (bounds.getStartOffset() == offset) {
             String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
@@ -116,8 +115,8 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
                 return ch != ' ';
               }
             });
-            if (toIndent < 0 || toString.startsWith("\n")) {
-              toIndent = caretColumn;
+            if ((toIndent < 0 || toString.startsWith("\n")) && initialText.length() >= caretOffset) {
+              toIndent = caretOffset - offset;
             }
           }
           else if (isNotApplicable(initialDocument, offset))

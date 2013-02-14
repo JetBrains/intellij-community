@@ -29,8 +29,6 @@ public class GradleLocalNodeManageHelperTest extends AbstractGradleTest {
   protected void configureContainer(MutablePicoContainer container) {
     container.registerComponentImplementation(GradleLocalNodeManageHelper)
     container.registerComponentImplementation(GradleModuleManager)
-    container.registerComponentImplementation(GradleLibraryManager)
-    container.registerComponentImplementation(GradleDependencyManager)
     container.registerComponentImplementation(GradleContentRootManager)
   }
 

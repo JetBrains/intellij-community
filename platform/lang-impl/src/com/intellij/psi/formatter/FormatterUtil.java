@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.checkin.ReformatBeforeCheckinHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -29,8 +30,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +39,8 @@ import java.util.Collections;
 
 public class FormatterUtil {
 
-  public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.addAll(
-    new HashSet<String>(), ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME
+  public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtilRt.newHashSet(
+    ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
   ));
 
   private FormatterUtil() {

@@ -61,8 +61,11 @@ public class HighlightNamesUtil {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInherited);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
-      HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
-      if (info != null) return info;
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      return builder.createUnconditionally();
     }
     return null;
   }
@@ -111,7 +114,11 @@ public class HighlightNamesUtil {
         range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
       }
 
-      return HighlightInfo.createHighlightInfo(type, range, null, null, attributes);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      return builder.createUnconditionally();
     }
     return null;
   }
@@ -124,9 +131,13 @@ public class HighlightNamesUtil {
     if (varType != null) {
       if (variable instanceof PsiField) {
         TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
-        return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, null, attributes);
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
+        if (attributes != null) {
+          builder.textAttributes(attributes);
+        }
+        return builder.createUnconditionally();
       }
-      return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(varType).range(elementToHighlight).create();
     }
     return null;
   }
@@ -199,10 +210,10 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
     }
     if (variable instanceof PsiParameter) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER).range(elementToHighlight).create();
     }
     return null;
   }

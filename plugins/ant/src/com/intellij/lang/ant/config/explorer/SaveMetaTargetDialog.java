@@ -25,6 +25,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -56,6 +57,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     return "#com.intellij.ant.explorer.SaveMetaTargetDialog";
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }

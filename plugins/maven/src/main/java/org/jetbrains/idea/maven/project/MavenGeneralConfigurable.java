@@ -46,12 +46,11 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
   private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
-  private JComboBox snapshotUpdatePolicyCombo;
   private JBLabel myMultiprojectBuildFailPolicyLabel;
+  private JCheckBox alwaysUpdateSnapshotsCheckBox;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel failPolicyComboModel = new DefaultComboBoxModel();
-  private final DefaultComboBoxModel snapshotUpdatePolicyComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel pluginUpdatePolicyComboModel = new DefaultComboBoxModel();
   private JComponent anchor;
 
@@ -62,7 +61,6 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
     fillPluginUpdatePolicyCombobox();
-    fillSnapshotUpdatePolicyCombobox();
 
     setAnchor(myMultiprojectBuildFailPolicyLabel);
   }
@@ -107,16 +105,6 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
                           });
   }
 
-  private void fillSnapshotUpdatePolicyCombobox() {
-    ComboBoxUtil.setModel(snapshotUpdatePolicyCombo, snapshotUpdatePolicyComboModel,
-                          Arrays.asList(MavenExecutionOptions.SnapshotUpdatePolicy.values()),
-                          new Function<MavenExecutionOptions.SnapshotUpdatePolicy, Pair<String, ?>>() {
-                            public Pair<String, MavenExecutionOptions.SnapshotUpdatePolicy> fun(MavenExecutionOptions.SnapshotUpdatePolicy each) {
-                              return Pair.create(each.getDisplayString(), each);
-                            }
-                          });
-  }
-
   public JComponent createComponent() {
     mavenPathsForm.createComponent(); // have to initialize all listeners
     return panel;
@@ -153,7 +141,7 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     data.setChecksumPolicy((MavenExecutionOptions.ChecksumPolicy)ComboBoxUtil.getSelectedValue(checksumPolicyComboModel));
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
     data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
-    data.setSnapshotUpdatePolicy((MavenExecutionOptions.SnapshotUpdatePolicy)ComboBoxUtil.getSelectedValue(snapshotUpdatePolicyComboModel));
+    data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
 
     data.endUpdate();
   }
@@ -166,12 +154,12 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
+    alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
 
-    ComboBoxUtil.select(outputLevelComboModel, data.getLoggingLevel());
+    ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());
     ComboBoxUtil.select(checksumPolicyComboModel, data.getChecksumPolicy());
     ComboBoxUtil.select(failPolicyComboModel, data.getFailureBehavior());
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
-    ComboBoxUtil.select(snapshotUpdatePolicyComboModel, data.getSnapshotUpdatePolicy());
   }
 
   @Nls

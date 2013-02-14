@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
 import com.intellij.openapi.vcs.ui.CommitMessage;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -110,6 +111,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return myPrefferedFocused;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
   }

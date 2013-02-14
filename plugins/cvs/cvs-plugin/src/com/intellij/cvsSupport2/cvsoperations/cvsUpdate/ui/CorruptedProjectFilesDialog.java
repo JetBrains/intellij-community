@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -75,6 +76,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     return myPanel;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
     //  , new VisualMerge()

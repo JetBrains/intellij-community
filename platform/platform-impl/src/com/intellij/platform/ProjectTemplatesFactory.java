@@ -41,4 +41,8 @@ public abstract class ProjectTemplatesFactory {
   public Icon getGroupIcon(String group) {
     return null;
   }
+
+  public int getGroupWeight(String group) {
+    return 0;
+  }
 }

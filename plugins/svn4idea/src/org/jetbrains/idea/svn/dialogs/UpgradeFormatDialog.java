@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -53,6 +54,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }

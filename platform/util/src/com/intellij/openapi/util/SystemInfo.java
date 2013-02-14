@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,17 @@ public class SystemInfo extends SystemInfoRt {
     return ourHasXdgOpen.getValue();
   }
 
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return isUnix && new File("/usr/bin/xdg-mime").canExecute();
+    }
+  };
+  public static boolean hasXdgMime() {
+    return ourHasXdgOpen.getValue();
+  }
+
   private static final NotNullLazyValue<Boolean> hasNautilus = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override
@@ -100,11 +111,12 @@ public class SystemInfo extends SystemInfoRt {
       return isUnix && new File("/usr/bin/nautilus").canExecute();
     }
   };
+  /** @deprecated implementation details (to remove in IDEA 13) */
   public static boolean hasNautilus() {
     return hasNautilus.getValue();
   }
 
-  /** @deprecated use {@linkplain #getFileManagerName()} (to remove in IDEA 13) */
+  /** @deprecated implementation details (to remove in IDEA 13) */
   public static final String nativeFileManagerName = "File Manager";
   private static final NotNullLazyValue<String> ourFileManagerName = new AtomicNotNullLazyValue<String>() {
     @NotNull
@@ -112,11 +124,10 @@ public class SystemInfo extends SystemInfoRt {
     protected String compute() {
       return isMac ? "Finder" :
              isWindows ? "Explorer" :
-             hasNautilus() ? "Nautilus" :
              "File Manager";
     }
   };
-  @NotNull
+  /** @deprecated implementation details (to remove in IDEA 13) */
   public static String getFileManagerName() {
     return ourFileManagerName.getValue();
   }

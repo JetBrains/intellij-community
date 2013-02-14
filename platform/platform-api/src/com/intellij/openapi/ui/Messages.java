@@ -151,7 +151,7 @@ public class Messages {
 
   private static boolean isApplicationInUnitTestOrHeadless(){
     final Application application = ApplicationManager.getApplication();
-    return (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment()));
+    return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 
   public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
@@ -285,8 +285,8 @@ public class Messages {
   /**
    * Use this method only if you do not know project or component
    *
-   * @see #showYesNoDialog(Project, ...)
-   * @see #showYesNoDialog(Component, ...)
+   * @see #showYesNoDialog(com.intellij.openapi.project.Project, String, String, javax.swing.Icon)
+   * @see #showYesNoCancelDialog(java.awt.Component, String, String, javax.swing.Icon)
    */
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -302,7 +302,7 @@ public class Messages {
    *
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    * @see #showYesNoDialog(Project, String, String, String, String, Icon)
-   * @see #showYesNoDialog(Component, ...)
+   * @see #showYesNoDialog(java.awt.Component, String, String, javax.swing.Icon)
    */
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon) {
     return showYesNoDialog(message, title, yesText, noText, icon, null);
@@ -995,12 +995,15 @@ public class Messages {
       init();
     }
 
+    @NotNull
+    @Override
     protected Action[] createActions() {
       Action[] actions = new Action[myOptions.length];
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
         final int exitCode = i;
         actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
+          @Override
           public void actionPerformed(ActionEvent e) {
             close(exitCode, true);
           }
@@ -1030,10 +1033,12 @@ public class Messages {
       }
     }
 
+    @Override
     public void doCancelAction() {
       close(-1);
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return doCreateCenterPanel();
     }
@@ -1234,6 +1239,8 @@ public class Messages {
       myField.setText(initialValue);
     }
 
+    @NotNull
+    @Override
     protected Action[] createActions() {
       final Action[] actions = new Action[myOptions.length];
       for (int i = 0; i < myOptions.length; i++) {
@@ -1243,6 +1250,7 @@ public class Messages {
           actions[i] = getOKAction();
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
             public void textChanged(DocumentEvent event) {
               final String text = myField.getText().trim();
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
@@ -1254,6 +1262,7 @@ public class Messages {
         }
         else {
           actions[i] = new AbstractAction(option) {
+            @Override
             public void actionPerformed(ActionEvent e) {
               close(exitCode);
             }
@@ -1273,10 +1282,12 @@ public class Messages {
       }
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return null;
     }
 
+    @Override
     protected JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
@@ -1328,6 +1339,7 @@ public class Messages {
       return new JTextField(30);
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myField;
     }
@@ -1455,6 +1467,8 @@ public class Messages {
       myComboBox.setSelectedItem(initialValue);
     }
 
+    @NotNull
+    @Override
     protected Action[] createActions() {
       final Action[] actions = new Action[myOptions.length];
       for (int i = 0; i < myOptions.length; i++) {
@@ -1462,6 +1476,7 @@ public class Messages {
         final int exitCode = i;
         if (i == myDefaultOptionIndex) {
           actions[i] = new AbstractAction(option) {
+            @Override
             public void actionPerformed(ActionEvent e) {
               if (myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim())) {
                 close(exitCode);
@@ -1470,12 +1485,14 @@ public class Messages {
           };
           actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
           myComboBox.addItemListener(new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(myComboBox.getSelectedItem().toString().trim()));
             }
           });
           final JTextField textField = (JTextField)myComboBox.getEditor().getEditorComponent();
           textField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
             public void textChanged(DocumentEvent event) {
               actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(textField.getText().trim()));
             }
@@ -1483,6 +1500,7 @@ public class Messages {
         }
         else { // "Cancel" action
           actions[i] = new AbstractAction(option) {
+            @Override
             public void actionPerformed(ActionEvent e) {
               close(exitCode);
             }
@@ -1492,10 +1510,12 @@ public class Messages {
       return actions;
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return null;
     }
 
+    @Override
     protected JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout(15, 0));
       if (myIcon != null) {
@@ -1520,6 +1540,7 @@ public class Messages {
       return panel;
     }
 
+    @Override
     protected void doOKAction() {
       String inputString = myComboBox.getSelectedItem().toString().trim();
       if (myValidator == null ||
@@ -1529,6 +1550,7 @@ public class Messages {
       }
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myComboBox;
     }

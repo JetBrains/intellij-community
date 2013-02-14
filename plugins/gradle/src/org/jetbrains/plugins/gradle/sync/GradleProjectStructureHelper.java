@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
@@ -212,6 +213,36 @@ public class GradleProjectStructureHelper {
     };
     for (OrderEntry entry : myFacade.getOrderEntries(ideModule)) {
       final LibraryOrderEntry result = entry.accept(visitor, null);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public ModuleLibraryOrderEntryImpl findIdeModuleLocalLibraryDependency(@NotNull final String moduleName,
+                                                                         @NotNull final String libraryName)
+  {
+    final Module ideModule = findIdeModule(moduleName);
+    if (ideModule == null) {
+      return null;
+    }
+    RootPolicy<ModuleLibraryOrderEntryImpl> visitor = new RootPolicy<ModuleLibraryOrderEntryImpl>() {
+      @Override
+      public ModuleLibraryOrderEntryImpl visitLibraryOrderEntry(LibraryOrderEntry ideDependency, ModuleLibraryOrderEntryImpl value) {
+        Library library = ideDependency.getLibrary();
+        if (library == null) {
+          return value;
+        }
+        if (ideDependency instanceof ModuleLibraryOrderEntryImpl && libraryName.equals(GradleUtil.getLibraryName(library))) {
+          return (ModuleLibraryOrderEntryImpl)ideDependency;
+        }
+        return value;
+      }
+    };
+    for (OrderEntry entry : myFacade.getOrderEntries(ideModule)) {
+      final ModuleLibraryOrderEntryImpl result = entry.accept(visitor, null);
       if (result != null) {
         return result;
       }

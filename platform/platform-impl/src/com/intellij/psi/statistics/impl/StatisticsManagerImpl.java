@@ -50,6 +50,16 @@ public class StatisticsManagerImpl extends StatisticsManager {
   public int getUseCount(@NotNull final StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return 0;
 
+    int useCount = 0;
+
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      useCount = Math.max(doGetUseCount(conjunct), useCount);
+    }
+
+    return useCount;
+  }
+
+  private int doGetUseCount(StatisticsInfo info) {
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     synchronized (LOCK) {
@@ -62,6 +72,14 @@ public class StatisticsManagerImpl extends StatisticsManager {
   public int getLastUseRecency(@NotNull StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return 0;
 
+    int recency = Integer.MAX_VALUE;
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      recency = Math.max(doGetRecency(conjunct), recency);
+    }
+    return recency;
+  }
+
+  private int doGetRecency(StatisticsInfo info) {
     String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     synchronized (LOCK) {
@@ -76,6 +94,14 @@ public class StatisticsManagerImpl extends StatisticsManager {
       return;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    for (StatisticsInfo conjunct : info.getConjuncts()) {
+      doIncUseCount(conjunct);
+    }
+  }
+
+  private void doIncUseCount(StatisticsInfo info) {
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
     synchronized (LOCK) {
@@ -83,7 +109,6 @@ public class StatisticsManagerImpl extends StatisticsManager {
       unit.incData(key1, info.getValue());
       myModifiedUnits.add(unit);
     }
-    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   public StatisticsInfo[] getAllValues(final String context) {

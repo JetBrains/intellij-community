@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -48,7 +47,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -71,8 +69,7 @@ public class ProjectTypesList implements Disposable {
 
     List<TemplateItem> items = buildItems(map);
     final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
-    final String groupName = RemoteTemplatesFactory.SAMPLES_GALLERY;
-    final TemplatesGroup samplesGroup = new TemplatesGroup(groupName, "", null);
+    final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0);
     myLoadingItem = new TemplateItem(new LoadingProjectTemplate(), samplesGroup) {
       @Override
       Icon getIcon() {
@@ -88,23 +85,29 @@ public class ProjectTypesList implements Disposable {
     final CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(items);
     myFilteringListModel = new FilteringListModel<TemplateItem>(model);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Samples") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Templates") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myList.setPaintBusy(true);
-          final ProjectTemplate[] templates = factory.createTemplates(groupName, context);
-          Runnable runnable = new Runnable() {
+          String[] groups = factory.getGroups();
+          final List<TemplateItem> items = new ArrayList<TemplateItem>();
+          for (String group : groups) {
+            TemplatesGroup templatesGroup = new TemplatesGroup(group, "", factory.getGroupIcon(group), 0);
+            ProjectTemplate[] templates = factory.createTemplates(group, context);
+            for (ProjectTemplate template : templates) {
+              items.add(new TemplateItem(template, templatesGroup));
+            }
+          }
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               int index = myList.getSelectedIndex();
               model.remove(myLoadingItem);
-              for (ProjectTemplate template : templates) {
-                model.add(new TemplateItem(template, samplesGroup));
-              }
+              model.add(items);
               myList.setSelectedIndex(index);
             }
-          };
-          SwingUtilities.invokeLater(runnable);
+          });
         }
         finally {
           myList.setPaintBusy(false);
@@ -212,14 +215,7 @@ public class ProjectTypesList implements Disposable {
   private List<TemplateItem> buildItems(MultiMap<TemplatesGroup, ProjectTemplate> map) {
     List<TemplateItem> items = new ArrayList<TemplateItem>();
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(map.keySet());
-    Collections.sort(groups, new Comparator<TemplatesGroup>() {
-      @Override
-      public int compare(TemplatesGroup o1, TemplatesGroup o2) {
-        if (o1.getName().equals(ProjectTemplatesFactory.OTHER_GROUP)) return 2;
-        if (o1.getName().equals(ProjectTemplatesFactory.CUSTOM_GROUP)) return 1;
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(groups);
     for (TemplatesGroup group : groups) {
       for (ProjectTemplate template : map.get(group)) {
         TemplateItem templateItem = new TemplateItem(template, group);

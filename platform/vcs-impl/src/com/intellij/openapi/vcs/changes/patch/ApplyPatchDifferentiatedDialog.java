@@ -244,6 +244,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     };
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     if (myExecutors.isEmpty()) {

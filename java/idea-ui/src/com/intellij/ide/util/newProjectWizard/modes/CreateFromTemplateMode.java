@@ -62,7 +62,7 @@ public class CreateFromTemplateMode extends WizardMode {
                                                                                                                         TEMPLATE_CONDITION);
         if (!values.isEmpty()) {
           Icon icon = factory.getGroupIcon(group);
-          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon);
+          TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group));
           if (icon != null) {
             Collection<ProjectTemplate> collection = groups.remove(templatesGroup);
             groups.putValues(templatesGroup, values);
@@ -84,7 +84,7 @@ public class CreateFromTemplateMode extends WizardMode {
           !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey().getName())) {
 
         if (!(templates.iterator().next() instanceof LocalArchivedTemplate)) {
-          sorted.putValues(new TemplatesGroup(ProjectTemplatesFactory.OTHER_GROUP, null, null), templates);
+          sorted.putValues(new TemplatesGroup(ProjectTemplatesFactory.OTHER_GROUP, null, null, -1), templates);
           continue;
         }
       }

@@ -40,4 +40,7 @@ public interface ConcurrentIntObjectMap<V> {
   void clear();
   @NotNull
   Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>> entries();
+
+  @NotNull
+  int[] keys();
 }

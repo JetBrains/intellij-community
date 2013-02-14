@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
@@ -147,6 +148,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
         }
       }
     });
+    SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     super.tearDown();
   }
 

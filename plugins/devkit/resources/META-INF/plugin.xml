@@ -78,6 +78,13 @@
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
+    <localInspection language="XML" shortName="ExtensionPointBeanClass"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name"
+                     displayName="&lt;extensionPoint&gt; beanClass specification"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionPointBeanClassInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>

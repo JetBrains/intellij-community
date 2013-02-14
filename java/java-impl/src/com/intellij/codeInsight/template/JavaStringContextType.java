@@ -34,9 +34,12 @@ public class JavaStringContextType extends TemplateContextType {
   @Override
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
-      PsiElement element = file.findElementAt(offset);
-      return element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL;
+      return isStringLiteral(file.findElementAt(offset));
     }
     return false;
+  }
+
+  static boolean isStringLiteral(PsiElement element) {
+    return element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL;
   }
 }

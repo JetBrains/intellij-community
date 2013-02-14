@@ -257,6 +257,7 @@ public class CreateTestDialog extends DialogWrapper {
     return getClass().getName();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

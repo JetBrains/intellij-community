@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ public class ImportDialog extends RepositoryBrowserDialog {
     updateOKAction();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
   }

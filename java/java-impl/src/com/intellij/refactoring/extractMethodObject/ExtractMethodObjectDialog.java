@@ -33,6 +33,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -126,6 +127,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     return false;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

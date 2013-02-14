@@ -584,6 +584,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
+  @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
     if (path.isEmpty()) {

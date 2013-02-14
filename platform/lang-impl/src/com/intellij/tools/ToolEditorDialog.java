@@ -168,6 +168,7 @@ public class ToolEditorDialog extends DialogWrapper {
     return panel;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

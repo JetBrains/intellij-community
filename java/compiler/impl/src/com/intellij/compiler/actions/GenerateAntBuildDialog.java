@@ -35,6 +35,7 @@ import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -350,6 +351,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

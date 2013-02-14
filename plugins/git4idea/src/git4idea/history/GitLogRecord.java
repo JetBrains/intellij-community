@@ -214,7 +214,6 @@ class GitLogRecord {
 
     switch (statusInfo.getType()) {
       case ADDED:
-      case COPIED:
         before = null;
         status = FileStatus.ADDED;
         after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
@@ -235,6 +234,7 @@ class GitLogRecord {
         before = GitContentRevision.createRevision(filePathDeleted, firstParent, project, null);
         after = null;
         break;
+      case COPIED:
       case RENAMED:
         status = FileStatus.MODIFIED;
         String secondPath = statusInfo.getSecondPath();

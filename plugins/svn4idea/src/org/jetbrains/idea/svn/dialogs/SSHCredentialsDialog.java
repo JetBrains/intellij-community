@@ -32,6 +32,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHPrivateKeyUtil;
 
@@ -89,6 +90,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

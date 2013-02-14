@@ -5,18 +5,20 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -24,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,7 +42,8 @@ public class ShowByteCodeAction extends AnAction {
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(PlatformDataKeys.EDITOR));
       if (psiElement != null) {
-        if (psiElement.getContainingFile() instanceof PsiClassOwner && PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false) != null) {
+        if (psiElement.getContainingFile() instanceof PsiClassOwner &&
+            PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false) != null) {
           e.getPresentation().setEnabled(true);
         }
       }
@@ -61,47 +65,76 @@ public class ShowByteCodeAction extends AnAction {
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
     if (virtualFile == null) return;
 
-    if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && TranslatingCompilerFilesMonitor.getInstance().isMarkedForCompilation(project, virtualFile)) {
-      Messages.showWarningDialog(project, "Unable to show byte code for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.", "Class File Out-Of-Date");
-      return;
-    }
+    final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching byte code...") {
+      private String myByteCode;
+      private String myErrorMessage;
+      private String myErrorTitle;
 
-    final ByteCodeViewerManager codeViewerManager = ByteCodeViewerManager.getInstance(project);
-    if (codeViewerManager.hasActiveDockedDocWindow()) {
-      codeViewerManager.doUpdateComponent(psiElement);
-    } else {
-      final String byteCode = ByteCodeViewerManager.getByteCode(psiElement);
-      if (byteCode == null) {
-        Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Byte Code not Found");
-        return;
-      }
-      final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
-      component.setText(byteCode, psiElement);
-      Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
-        @Override
-        public boolean process(JBPopup popup) {
-
-          codeViewerManager.createToolWindow(psiElement, psiElement);
-          popup.cancel();
-          return false;
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
+            TranslatingCompilerFilesMonitor.getInstance().isMarkedForCompilation(project, virtualFile)) {
+          myErrorMessage = "Unable to show byte code for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
+          myErrorTitle = "Class File Out-Of-Date";
         }
-      };
+        else {
+          myByteCode = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
+            public String compute() {
+              return ByteCodeViewerManager.getByteCode(psiElement);
+            }
+          });
+        }
+      }
 
-      final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
-        .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-        .setProject(project)
-        .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-        .setResizable(true)
-        .setMovable(true)
-        .setRequestFocus(LookupManager.getActiveLookup(editor) == null)
-        .setTitle(psiElementTitle + " Bytecode")
-        .setCouldPin(pinCallback)
-        .createPopup();
-      Disposer.register(popup, component);
+      @Override
+      public void onSuccess() {
+        if (project.isDisposed()) return;
 
+        if (myErrorMessage != null && myTitle != null) {
+          Messages.showWarningDialog(project, myErrorMessage, myErrorTitle);
+          return;
+        }
+        final PsiElement targetElement = element.getElement();
+        if (targetElement == null) return;
 
-      PopupPositionManager.positionPopupInBestPosition(popup, editor, dataContext);
-    }
+        final ByteCodeViewerManager codeViewerManager = ByteCodeViewerManager.getInstance(project);
+        if (codeViewerManager.hasActiveDockedDocWindow()) {
+          codeViewerManager.doUpdateComponent(targetElement, myByteCode);
+        }
+        else {
+          if (myByteCode == null) {
+            Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Byte Code not Found");
+            return;
+          }
+          final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
+          component.setText(myByteCode, targetElement);
+          Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
+            @Override
+            public boolean process(JBPopup popup) {
+              codeViewerManager.createToolWindow(targetElement, targetElement);
+              popup.cancel();
+              return false;
+            }
+          };
+
+          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+            .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+            .setProject(project)
+            .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+            .setResizable(true)
+            .setMovable(true)
+            .setRequestFocus(LookupManager.getActiveLookup(editor) == null)
+            .setTitle(psiElementTitle + " Bytecode")
+            .setCouldPin(pinCallback)
+            .createPopup();
+          Disposer.register(popup, component);
+
+          PopupPositionManager.positionPopupInBestPosition(popup, editor, dataContext);
+        }
+      }
+    });
   }
 
   @Nullable

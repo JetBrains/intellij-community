@@ -135,6 +135,9 @@ public class MavenProjectImporter {
 
             for (MavenProject mavenProject : myAllProjects) {
               Module module = myMavenProjectToModule.get(mavenProject);
+              if (module != null && module.isDisposed()) {
+                module = null;
+              }
 
               for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
                 configurer.configure(mavenProject, myProject, module);

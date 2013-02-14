@@ -82,6 +82,7 @@ class GitSmartOperationDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     if (myForceButton) {

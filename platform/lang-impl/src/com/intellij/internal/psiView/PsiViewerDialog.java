@@ -688,6 +688,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     return null;
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     AbstractAction copyPsi = new AbstractAction("Cop&y PSI") {

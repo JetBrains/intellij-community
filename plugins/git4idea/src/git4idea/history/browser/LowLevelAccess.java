@@ -23,15 +23,10 @@ import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 public interface LowLevelAccess {
   VirtualFile getRoot();
-
-  void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                             final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
-                             int maxCnt, SymbolicRefsI refs, final boolean topoOrder) throws VcsException;
 
   CachedRefs getRefs() throws VcsException;
   void loadCommits(final Collection<String> startingPoints,
@@ -43,10 +38,6 @@ public interface LowLevelAccess {
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;
   Collection<String> getTagsWithCommit(final SHAHash hash) throws VcsException;
-
-  void loadAllBranches(final List<String> sink) throws VcsException;
-
-  void loadAllTags(final Collection<String> sink) throws VcsException;
 
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                              final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt,

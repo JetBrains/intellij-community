@@ -229,21 +229,37 @@ class Html5SectionsProcessor {
   private static String getHeaderText(final @Nullable XmlTag header) {
     if (header == null) return null;
 
+    final StringBuilder buf = new StringBuilder();
+
     if (HGROUP_ELEMENT.equalsIgnoreCase(header.getLocalName())) {
-      final StringBuilder buf = new StringBuilder();
       for (XmlTag subTag : header.getSubTags()) {
         if (ArrayUtil.contains(subTag.getLocalName().toLowerCase(), HEADER_ELEMENTS)) {
           if (buf.length() > 0) {
             buf.append(" ");
           }
-          buf.append(subTag.getValue().getTrimmedText());
+          appendTextRecursively(subTag, buf, HtmlTagTreeElement.MAX_TEXT_LENGTH * 2);
         }
       }
-
-      return buf.toString();
+    }
+    else {
+      appendTextRecursively(header, buf, HtmlTagTreeElement.MAX_TEXT_LENGTH * 2);
     }
 
-    return header.getValue().getTrimmedText();
+    return buf.toString();
+  }
+
+  private static void appendTextRecursively(final XmlTag tag, final StringBuilder buf, final int maximumTextLength) {
+    if (buf.length() >= maximumTextLength) return;
+
+    final String text = tag.getValue().getTrimmedText();
+    if (!text.isEmpty()) {
+      buf.append(text);
+    }
+    else {
+      for (XmlTag subTag : tag.getSubTags()) {
+        appendTextRecursively(subTag, buf, maximumTextLength);
+      }
+    }
   }
 
   private static boolean isSectioningRootElement(final XmlTag tag) {

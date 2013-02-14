@@ -60,6 +60,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private static final Color FOREGROUND_COLOR = Color.black;
   private static final Color GRAYED_FOREGROUND_COLOR = Gray._160;
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
+  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new Color(110, 142, 162);
   private static final Color SELECTED_FOREGROUND_COLOR = Color.white;
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = Color.white;
 
@@ -118,18 +119,16 @@ public class LookupCellRenderer implements ListCellRenderer {
       boolean hasFocus) {
 
 
-    boolean paintBorder = false;
+    boolean nonFocusedSelection = isSelected && !myLookup.isFocused() && CompletionPreview.hasPreview(myLookup);
     if (!myLookup.isFocused()) {
-      paintBorder = isSelected && CompletionPreview.hasPreview(myLookup);
       isSelected = false;
     }
-
-    myPanel.setBorder(paintBorder ? new DottedBorder(SELECTED_BACKGROUND_COLOR) : null);
 
     myIsSelected = isSelected;
     final LookupElement item = (LookupElement)value;
     final Color foreground = getForegroundColor(isSelected);
-    final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : new JBColor(BACKGROUND_COLOR, BACKGROUND_COLOR_DARK_VARIANT);
+    final Color background = nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
+                             isSelected ? SELECTED_BACKGROUND_COLOR : new JBColor(BACKGROUND_COLOR, BACKGROUND_COLOR_DARK_VARIANT);
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
@@ -401,7 +400,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     @Override
     public void paint(Graphics g){
-      if (!myLookup.isFocused() && myLookup.isCompletion() && !CompletionPreview.hasPreview(myLookup)) {
+      if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
       }
       super.paint(g);

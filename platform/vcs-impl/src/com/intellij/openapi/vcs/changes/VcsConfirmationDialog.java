@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,6 +73,7 @@ public class VcsConfirmationDialog extends OptionsDialog {
     return myDoNotShowMessage;
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     final AbstractAction okAction = new AbstractAction(CommonBundle.getYesButtonText()) {

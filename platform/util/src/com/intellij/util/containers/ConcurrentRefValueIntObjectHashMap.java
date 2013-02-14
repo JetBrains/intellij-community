@@ -111,6 +111,12 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
   @NotNull
   @Override
+  public int[] keys() {
+    return myMap.keys();
+  }
+
+  @NotNull
+  @Override
   public Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>> entries() {
     final Iterator<StripedLockIntObjectConcurrentHashMap.IntEntry<IntReference<V>>> entryIterator = myMap.entries().iterator();
     return new Iterable<StripedLockIntObjectConcurrentHashMap.IntEntry<V>>() {

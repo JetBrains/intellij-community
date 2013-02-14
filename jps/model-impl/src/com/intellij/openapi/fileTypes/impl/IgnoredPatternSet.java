@@ -61,7 +61,7 @@ public class IgnoredPatternSet {
     }
 
     //Quite a hack, but still we need to have some name, which
-    //won't be catched by VFS for sure.
+    //won't be caught by VFS for sure.
     return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
   }
 

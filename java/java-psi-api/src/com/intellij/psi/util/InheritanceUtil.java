@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class InheritanceUtil {
@@ -105,7 +106,14 @@ public class InheritanceUtil {
     getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<PsiClass>(), aClass.getManager());
   }
 
-  private static void getSuperClassesOfList(@NotNull PsiClassType[] types,
+  public static LinkedHashSet<PsiClass> getSuperClasses(@NotNull PsiClass aClass) {
+    LinkedHashSet<PsiClass> result = new LinkedHashSet<PsiClass>();
+    getSuperClasses(aClass, result, true);
+    return result;
+  }
+
+
+    private static void getSuperClassesOfList(@NotNull PsiClassType[] types,
                                             @NotNull Set<PsiClass> results,
                                             boolean includeNonProject,
                                             @NotNull Set<PsiClass> visited,

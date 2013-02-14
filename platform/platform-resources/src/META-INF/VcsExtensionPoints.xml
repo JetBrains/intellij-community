@@ -11,7 +11,9 @@
 
     <extensionPoint name="vcs"
                     beanClass="com.intellij.openapi.vcs.impl.VcsEP"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT">
+      <with attribute="vcsClass" implements="com.intellij.openapi.vcs.AbstractVcs"/>
+    </extensionPoint>
 
     <extensionPoint name="checkinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"

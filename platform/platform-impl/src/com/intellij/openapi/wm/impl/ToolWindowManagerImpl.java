@@ -565,7 +565,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   /**
-   * This is helper method. It delegated its fuctionality to the WindowManager.
+   * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
   public void execute(final ArrayList<FinalizableCommand> commandList) {

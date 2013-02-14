@@ -86,33 +86,6 @@ public class MavenExecutionOptions {
     }
   }
 
-  public enum SnapshotUpdatePolicy {
-    ALWAYS_UPDATE("Always Update", "--update-snapshots", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("Do Not Update", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
-
-    private final String myDisplayString;
-    private final String myCommandLineOption;
-    private final MavenServerSettings.UpdatePolicy myServerPolicy;
-
-    SnapshotUpdatePolicy(String displayString, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
-      myDisplayString = displayString;
-      myCommandLineOption = commandLineOption;
-      myServerPolicy = policy;
-    }
-
-    public String getDisplayString() {
-      return myDisplayString;
-    }
-
-    public String getCommandLineOption() {
-      return myCommandLineOption;
-    }
-
-    public MavenServerSettings.UpdatePolicy getServerPolicy() {
-      return myServerPolicy;
-    }
-  }
-
   public enum PluginUpdatePolicy {
     UPDATE("Check For Updates", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
     DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE),
