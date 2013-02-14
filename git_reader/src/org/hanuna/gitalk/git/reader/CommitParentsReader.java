@@ -13,19 +13,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author erokhins
  */
 public class CommitParentsReader {
-    private static final int DAY_BLOCK_SIZE = 100;
+    private static final int COMMIT_BLOCK_SIZE = 100;
 
-    private int lastDay = 0;
+    private long lastTimeStamp = 0;
     private Executor<Integer> progressUpdater;
 
-    private List<CommitParents> nextBlock() throws IOException, GitException {
+    private List<TimestampCommitParents> nextBlock() throws IOException, GitException {
         final List<TimestampCommitParents> commitParentsList = new ArrayList<TimestampCommitParents>();
         final MyTimer gitThink = new MyTimer("gitThink");
         final MyTimer readTimer = new MyTimer("read commit parents");
@@ -42,31 +41,23 @@ public class CommitParentsReader {
                 commitParentsList.add(commitParents);
             }
         });
-        outputReader.startRead(GitProcessFactory.dayInterval(lastDay, lastDay + DAY_BLOCK_SIZE));
-        lastDay = lastDay + DAY_BLOCK_SIZE;
-        Collections.sort(commitParentsList, new Comparator<TimestampCommitParents>() {
-            @Override
-            public int compare(TimestampCommitParents o1, TimestampCommitParents o2) {
-                if (o1.getTimestamp() < o2.getTimestamp()) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            }
-        });
-        return Collections.<CommitParents>unmodifiableList(commitParentsList);
+        if (lastTimeStamp == 0) {
+            outputReader.startRead(GitProcessFactory.firstPart(COMMIT_BLOCK_SIZE));
+        } else {
+            outputReader.startRead(GitProcessFactory.logPart(lastTimeStamp, COMMIT_BLOCK_SIZE));
+        }
+        return commitParentsList;
     }
 
-    private boolean isEmptyTailLog() throws IOException, GitException {
-        final boolean[] flag = {true};
-        ProcessOutputReader outputReader = new ProcessOutputReader(new Executor<String>() {
-            @Override
-            public void execute(String key) {
-                flag[0] = false;
+    private void removeElementsWithLastTimeStamp(List<TimestampCommitParents> commitParentsList) {
+        int lastOkIndex = -5;
+        for (int i = commitParentsList.size() - 1; i >= 0; i--) {
+            if (commitParentsList.get(i).getTimestamp() != lastTimeStamp) {
+                lastOkIndex = i;
+                break;
             }
-        });
-        outputReader.startRead(GitProcessFactory.checkEmpty(lastDay));
-        return flag[0];
+        }
+        commitParentsList.subList(lastOkIndex + 1, commitParentsList.size()).clear();
     }
 
     /**
@@ -81,19 +72,14 @@ public class CommitParentsReader {
                 statusUpdater.execute("Read " + key + " commits");
             }
         };
-        List<CommitParents> commitParentsList = nextBlock();
-        if (commitParentsList.isEmpty()) {
-            if (isEmptyTailLog()) {
-                return Collections.emptyList();
-            } else {
-                while (commitParentsList.isEmpty()) {
-                    commitParentsList = nextBlock();
-                }
-                return commitParentsList;
-            }
-        } else {
-            return commitParentsList;
+        List<TimestampCommitParents> commitParentsList = nextBlock();
+        TimestampCommitParents lastCommit = commitParentsList.get(commitParentsList.size() - 1);
+        lastTimeStamp = lastCommit.getTimestamp();
+
+        if (commitParentsList.size() == COMMIT_BLOCK_SIZE) {
+            removeElementsWithLastTimeStamp(commitParentsList);
         }
+        return Collections.<CommitParents>unmodifiableList(commitParentsList);
     }
 
 }
