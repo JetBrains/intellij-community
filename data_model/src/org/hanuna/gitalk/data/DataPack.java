@@ -13,7 +13,7 @@ public interface DataPack {
     public CommitDataGetter getCommitDataGetter();
 
     @NotNull
-    public RefsModel getRefModel();
+    public RefsModel getRefsModel();
 
     @NotNull
     public GraphModel getGraphModel();

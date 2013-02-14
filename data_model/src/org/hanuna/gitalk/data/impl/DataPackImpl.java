@@ -75,7 +75,7 @@ public class DataPackImpl implements DataPack {
 
     @NotNull
     @Override
-    public RefsModel getRefModel() {
+    public RefsModel getRefsModel() {
         return refsModel;
     }
 
