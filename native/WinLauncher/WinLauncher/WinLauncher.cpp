@@ -29,11 +29,36 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 
+std::string LoadStdString(int id)
+{
+	char buf[_MAX_PATH];
+	if (LoadStringA(hInst, id, buf, _MAX_PATH-1))
+	{
+		return std::string(buf);
+	}
+	return std::string();
+}
+
+bool FileExists(const std::string& path)
+{
+	return GetFileAttributesA(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
 bool IsValidJRE(const char* path)
 {
 	std::string dllPath(path);
-	dllPath += "\\bin\\client\\jvm.dll";
-	return GetFileAttributesA(dllPath.c_str()) != INVALID_FILE_ATTRIBUTES;
+	if (dllPath[dllPath.size()-1] != '\\')
+	{
+		dllPath += "\\";
+	}
+	return FileExists(dllPath + "bin\\server\\jvm.dll") || FileExists(dllPath + "bin\\client\\jvm.dll");
+}
+
+bool Is64BitJRE(const char* path)
+{
+	std::string cfgPath(path);
+	cfgPath += "\\lib\\amd64\\jvm.cfg";
+	return FileExists(cfgPath);
 }
 
 bool FindValidJVM(const char* path)
@@ -68,27 +93,78 @@ std::string GetAdjacentDir(const char* suffix)
 	return std::string(libDir);
 }
 
+bool FindJVMInEnvVar(const char* envVarName, bool& result)
+{
+	char envVarValue[_MAX_PATH];
+	if (GetEnvironmentVariableA(envVarName, envVarValue, _MAX_PATH-1))
+	{
+		if (FindValidJVM(envVarValue))
+		{
+			result = true;
+		}
+		else
+		{
+			char buf[_MAX_PATH];
+			sprintf_s(buf, "The environment variable %s (with the value of %s) does not point to a valid JVM installation",
+				envVarValue, jvmPath);
+			MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
+			result = false;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool FindJVMInRegistryKey(const char* key, bool wow64_32)
+{
+	HKEY hKey;
+	int flags = KEY_READ;
+	if (wow64_32) flags |= KEY_WOW64_32KEY;
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, key, 0, KEY_READ, &hKey) != ERROR_SUCCESS) return false;
+	char javaHome[_MAX_PATH];
+	DWORD javaHomeSize = _MAX_PATH-1;
+	bool success = false;
+	if (RegQueryValueExA(hKey, "JavaHome", NULL, NULL, (LPBYTE) javaHome, &javaHomeSize) == ERROR_SUCCESS)
+	{
+		success = FindValidJVM(javaHome);
+	}
+	RegCloseKey(hKey);
+	return success;
+}
+
+bool FindJVMInRegistryWithVersion(const char* version, bool wow64_32)
+{
+	const char* keyName = LoadStdString(IDS_JDK_ONLY) == std::string("true") 
+		? "Java Development Kit"
+		: "Java Runtime Environment";
+
+	char buf[_MAX_PATH];
+	sprintf_s(buf, "Software\\JavaSoft\\%s\\%s", keyName, version);
+	return FindJVMInRegistryKey(buf, wow64_32);
+}
+
+bool FindJVMInRegistry()
+{
+#ifndef X64
+	if (FindJVMInRegistryWithVersion("1.7", true))
+		return true;
+	if (FindJVMInRegistryWithVersion("1.6", true))
+		return true;
+#endif
+
+	if (FindJVMInRegistryWithVersion("1.7", false))
+		return true;
+	if (FindJVMInRegistryWithVersion("1.6", false))
+		return true;
+	return false;
+}
+
 bool LocateJVM()
 {
-	char envVarName[_MAX_PATH];
-	if (LoadStringA(hInst, IDS_JDK_ENV_VAR, envVarName, _MAX_PATH-1))
+	bool result;
+	if (FindJVMInEnvVar(LoadStdString(IDS_JDK_ENV_VAR).c_str(), result))
 	{
-		char envVarValue[_MAX_PATH];
-		if (GetEnvironmentVariableA(envVarName, envVarValue, _MAX_PATH-1))
-		{
-			if (FindValidJVM(envVarValue))
-			{
-				return true;
-			}
-			else
-			{
-				char buf[_MAX_PATH];
-				sprintf_s(buf, "The environment variable %s (with the value of %s) does not point to a valid JVM installation",
-					envVarValue, jvmPath);
-				MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
-				return false;
-			}
-		}
+		return result;
 	}
 
 	std::string jreDir = GetAdjacentDir("jre");
@@ -97,6 +173,17 @@ bool LocateJVM()
 		return true;
 	}
 
+	if (FindJVMInRegistry())
+	{
+		return true;
+	}
+
+	if (FindJVMInEnvVar("JAVA_HOME", result))
+	{
+		return result;
+	}
+
+	MessageBoxA(NULL, "No JVM installation found. Please reinstall the product or install a JDK.", "Error Launching IntelliJ Platform", MB_OK);
 	return false;
 }
 
@@ -143,9 +230,8 @@ std::string FindToolsJar()
 	size_t lastSlash = toolsJarPath.rfind('\\');
 	if (lastSlash != std::string::npos)
 	{
-		toolsJarPath = toolsJarPath.substr(0, lastSlash+1);
-		toolsJarPath += "lib\\tools.jar";
-		if (GetFileAttributesA(toolsJarPath.c_str()) != INVALID_FILE_ATTRIBUTES)
+		toolsJarPath = toolsJarPath.substr(0, lastSlash+1) + "lib\\tools.jar";
+		if (FileExists(toolsJarPath))
 		{
 			return toolsJarPath;
 		}
@@ -226,15 +312,17 @@ bool LoadVMOptions()
 bool LoadJVMLibrary()
 {
 	std::string dllName(jvmPath);
-	if (bServerJVM)
+	std::string serverDllName = dllName + "\\bin\\server\\jvm.dll";
+	std::string clientDllName = dllName + "\\bin\\client\\jvm.dll";
+	if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
 	{
-		dllName += "\\bin\\server\\jvm.dll";
+		hJVM = LoadLibraryA(serverDllName.c_str());
 	}
 	else
 	{
-		dllName += "\\bin\\client\\jvm.dll";
+		hJVM = LoadLibraryA(clientDllName.c_str());
 	}
-	hJVM = LoadLibraryA(dllName.c_str());
+
 	if (hJVM)
 	{
 		pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
