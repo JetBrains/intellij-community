@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +49,18 @@ public class MutableGraph implements Graph {
     @NotNull
     public List<NodeRow> getNodeRows() {
         return Collections.<NodeRow>unmodifiableList(visibleRows);
+    }
+
+    @Nullable
+    @Override
+    public Node getCommitNodeInRow(int rowIndex) {
+        NodeRow nodeRow = visibleRows.get(rowIndex);
+        for (Node node : nodeRow.getNodes()) {
+            if (node.getType() == Node.Type.COMMIT_NODE) {
+                return node;
+            }
+        }
+        return null;
     }
 
     public List<MutableNodeRow> getAllRows() {
