@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -118,6 +119,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<Action>();
     actions.add(getOKAction());

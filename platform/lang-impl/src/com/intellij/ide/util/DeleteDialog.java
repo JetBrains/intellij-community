@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.StateRestoringCheckBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,10 +64,12 @@ public class DeleteDialog extends DialogWrapper {
     return myCbSearchInNonJava.isSelected();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()/*, getHelpAction()*/};
   }
 
+  @NotNull
   @Override
    protected Action getOKAction() {
      Action result = super.getOKAction();

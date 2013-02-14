@@ -177,6 +177,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     return ExtractIncludeFileBase.HELP_ID;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

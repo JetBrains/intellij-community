@@ -70,6 +70,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return false;
   }
 
+  @NotNull
   protected abstract String extractRootPath(@NotNull String path);
 
   @Override

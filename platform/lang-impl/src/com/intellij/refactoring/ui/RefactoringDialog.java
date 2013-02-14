@@ -119,6 +119,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
+  @NotNull
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<Action>();
     actions.add(getRefactorAction());

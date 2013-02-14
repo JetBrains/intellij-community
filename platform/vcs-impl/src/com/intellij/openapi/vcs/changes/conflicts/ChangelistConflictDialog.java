@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -99,6 +100,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     return ChangelistConflictResolution.IGNORE;
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[] { new AbstractAction("&Configure...") {

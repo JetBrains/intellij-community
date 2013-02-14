@@ -140,11 +140,12 @@ public abstract class DialogWrapper {
       return DialogWrapper.this.toString();
     }
 
+    @Override
     public void dispose() {
       DialogWrapper.this.dispose();
     }
   };
-  private List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
+  private final List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress = false;
   private ComponentAdapter myResizeListener;
@@ -237,6 +238,7 @@ public abstract class DialogWrapper {
   //validation
   private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
 
+  @NotNull
   protected Alarm.ThreadToUse getValidationThreadToUse() {
     return Alarm.ThreadToUse.SWING_THREAD;
   }
@@ -272,12 +274,13 @@ public abstract class DialogWrapper {
     myValidationDelay = delay;
   }
 
-  private void reportProblem(final ValidationInfo info) {
+  private void reportProblem(@NotNull final ValidationInfo info) {
     installErrorPainter();
 
     myErrorPainter.setValidationInfo(info);
     if (! myErrorText.isTextSet(info.message)) {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myDisposed) return;
         setErrorText(info.message);
@@ -303,6 +306,7 @@ public abstract class DialogWrapper {
     myErrorPainter.setValidationInfo(null);
     if (! myErrorText.isTextSet(null)) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myDisposed) return;
           setErrorText(null);
@@ -323,15 +327,15 @@ public abstract class DialogWrapper {
     myPeer.setUndecorated(undecorated);
   }
 
-  public final void addMouseListener(MouseListener listener) {
+  public final void addMouseListener(@NotNull MouseListener listener) {
     myPeer.addMouseListener(listener);
   }
 
-  public final void addMouseListener(MouseMotionListener listener) {
+  public final void addMouseListener(@NotNull MouseMotionListener listener) {
     myPeer.addMouseListener(listener);
   }
 
-  public final void addKeyListener(KeyListener listener) {
+  public final void addKeyListener(@NotNull KeyListener listener) {
     myPeer.addKeyListener(listener);
   }
 
@@ -516,7 +520,8 @@ public abstract class DialogWrapper {
     return false;
   }
 
-  public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
+  @NotNull
+  public static JPanel addDoNotShowCheckBox(JComponent southPanel, @NotNull JCheckBox checkBox) {
     final JPanel panel = new JPanel(new BorderLayout());
 
     JPanel wrapper = new JPanel(new GridBagLayout());
@@ -529,7 +534,7 @@ public abstract class DialogWrapper {
     return panel;
   }
 
-  private boolean hasFocusedAction(Action[] actions) {
+  private boolean hasFocusedAction(@NotNull Action[] actions) {
     for (Action action : actions) {
       if (action.getValue(FOCUSED_ACTION) != null && (Boolean)action.getValue(FOCUSED_ACTION)) {
         return true;
@@ -539,7 +544,8 @@ public abstract class DialogWrapper {
     return false;
   }
 
-  private JPanel createButtons(Action[] actions, List<JButton> buttons) {
+  @NotNull
+  private JPanel createButtons(@NotNull Action[] actions, @NotNull List<JButton> buttons) {
     if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final List<Action> actionList = new ArrayList<Action>();
       for (Action action : actions) {
@@ -618,7 +624,8 @@ public abstract class DialogWrapper {
         }
       }
 
-    } else {
+    }
+    else {
       button = new JButton(action);
     }
 
@@ -681,7 +688,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  protected DialogWrapperPeer createPeer(final Component parent, final boolean canBeParent) {
+  protected DialogWrapperPeer createPeer(@NotNull Component parent, final boolean canBeParent) {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
@@ -765,6 +772,7 @@ public abstract class DialogWrapper {
 
   public static void unregisterKeyboardActions(final JRootPane rootPane) {
     new AwtVisitor(rootPane) {
+      @Override
       public boolean visit(final Component component) {
         if (component instanceof JComponent) {
           final JComponent eachComp = (JComponent)component;
@@ -895,6 +903,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  @NotNull
   protected Action[] createLeftSideActions() {
     return new Action[0];
   }
@@ -904,6 +913,7 @@ public abstract class DialogWrapper {
    *         <code>doOKAction()</code> method.
    * @see #doOKAction
    */
+  @NotNull
   protected Action getOKAction() {
     return myOKAction;
   }
@@ -913,6 +923,7 @@ public abstract class DialogWrapper {
    *         <code>doCancelAction()</code> method.
    * @see #doCancelAction
    */
+  @NotNull
   protected Action getCancelAction() {
     return myCancelAction;
   }
@@ -922,6 +933,7 @@ public abstract class DialogWrapper {
    *         <code>doHelpAction()</code> method.
    * @see #doHelpAction
    */
+  @NotNull
   protected Action getHelpAction() {
     return myHelpAction;
   }
@@ -1139,7 +1151,7 @@ public abstract class DialogWrapper {
       @Override
       public void update(AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        e.getPresentation().setEnabled((owner instanceof JButton && owner.isEnabled()));
+        e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root);
   }
@@ -1148,7 +1160,8 @@ public abstract class DialogWrapper {
     if (myCurrentOptionsButtonIndex > 0) {
       myOptionsButtons.get(myCurrentOptionsButtonIndex).closePopup();
       myCurrentOptionsButtonIndex++;
-    } else if (myOptionsButtons.size() > 0) {
+    }
+    else if (!myOptionsButtons.isEmpty()) {
       myCurrentOptionsButtonIndex = 0;
     }
 
@@ -1160,6 +1173,7 @@ public abstract class DialogWrapper {
 
   void startTrackingValidation() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!myValidationStarted && !myDisposed) {
           myValidationStarted = true;
@@ -1172,6 +1186,7 @@ public abstract class DialogWrapper {
   protected final void initValidation() {
     myValidationAlarm.cancelAllRequests();
     final Runnable validateRequest = new Runnable() {
+      @Override
       public void run() {
         if (myDisposed) return;
         final ValidationInfo result = doValidate();
@@ -1427,6 +1442,7 @@ public abstract class DialogWrapper {
    * You need this method ONLY for NON-MODAL dialogs. Otherwise, use {@link #show()} or {@link #showAndGet()}.
    * @return result callback
    */
+  @NotNull
   public AsyncResult<Boolean> showAndGetOk() {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
@@ -1440,6 +1456,7 @@ public abstract class DialogWrapper {
     }
 
     myPeer.show().doWhenProcessed(new Runnable() {
+      @Override
       public void run() {
         result.setDone(isOK());
       }
@@ -1463,6 +1480,7 @@ public abstract class DialogWrapper {
 
   private void registerKeyboardShortcuts() {
     ActionListener cancelKeyboardAction = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
         MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
@@ -1471,7 +1489,7 @@ public abstract class DialogWrapper {
         }
         else {
           final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
-          if (ApplicationManager.getApplication() == null || (popupDispatcher != null && !popupDispatcher.isPopupFocused())) {
+          if (ApplicationManager.getApplication() == null || popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
             doCancelAction(e);
           }
         }
@@ -1487,6 +1505,7 @@ public abstract class DialogWrapper {
 
     if (ApplicationInfo.contextHelpAvailable()) {
       ActionListener helpAction = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           doHelpAction();
         }
@@ -1498,11 +1517,13 @@ public abstract class DialogWrapper {
 
     if (myButtons != null) {
       rootPane.registerKeyboardAction(new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           focusPreviousButton();
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
       rootPane.registerKeyboardAction(new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           focusNextButton();
         }
@@ -1518,7 +1539,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private void registerForEveryKeyboardShortcut(ActionListener action, ShortcutSet shortcuts) {
+  private void registerForEveryKeyboardShortcut(ActionListener action, @NotNull ShortcutSet shortcuts) {
     for (Shortcut shortcut : shortcuts.getShortcuts()){
       if (shortcut instanceof KeyboardShortcut) {
         KeyboardShortcut ks = (KeyboardShortcut)shortcut;
@@ -1591,6 +1612,7 @@ public abstract class DialogWrapper {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
       if (myClosed) return;
       if (myPerformAction) return;
@@ -1678,6 +1700,7 @@ public abstract class DialogWrapper {
       putValue(NAME, CommonBundle.getHelpButtonText());
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doHelpAction();
     }
@@ -1697,6 +1720,7 @@ public abstract class DialogWrapper {
 
     myErrorTextAlarm.cancelAllRequests();
     myErrorTextAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         final String text = myLastErrorText;
         myErrorText.setError(text);
@@ -1820,6 +1844,7 @@ public abstract class DialogWrapper {
       return StringUtil.equals(text, myText);
     }
 
+    @Override
     public Dimension getPreferredSize() {
       return myPrefSize == null ? myLabel.getPreferredSize() : myPrefSize;
     }

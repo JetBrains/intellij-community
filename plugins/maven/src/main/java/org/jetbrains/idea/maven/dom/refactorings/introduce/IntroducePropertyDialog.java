@@ -83,6 +83,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     super.dispose();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }

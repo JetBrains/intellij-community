@@ -108,6 +108,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     setOKActionEnabled(canSelect);
   }
 
+  @NotNull
   @Override
   protected Action getOKAction() {
     Action result = super.getOKAction();

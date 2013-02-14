@@ -90,6 +90,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     TreeUtil.selectFirstNode(myTree);
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     final Action[] actions = new Action[4];

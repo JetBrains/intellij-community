@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
@@ -90,6 +91,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     getOKAction().setEnabled(enabled);
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction()};
   }

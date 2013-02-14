@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.MappingListCellRenderer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -632,6 +633,7 @@ class PrintDialog extends DialogWrapper {
 
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(),getCancelAction(), new ApplyAction(), getHelpAction()};
   }

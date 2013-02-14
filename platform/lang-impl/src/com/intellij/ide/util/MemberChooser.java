@@ -235,6 +235,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
 
+  @NotNull
   protected Action[] createActions() {
     if (myAllowEmptySelection) {
       return new Action[]{getOKAction(), new SelectNoneAction(), getCancelAction()};

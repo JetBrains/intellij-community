@@ -2,6 +2,7 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -29,6 +30,7 @@ public class GithubLoginDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
   }

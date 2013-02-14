@@ -153,6 +153,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     return mySchemesTableModel.getSchemeAt(row);
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{};

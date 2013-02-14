@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -159,6 +160,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     return myContentPane;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{myShutdownAction, myIgnoreAction};
   }

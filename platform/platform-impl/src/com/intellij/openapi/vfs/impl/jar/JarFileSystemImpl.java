@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private static final class JarFileSystemImplLock { }
@@ -47,7 +51,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private final Set<String> myNoCopyJarPaths =
     SystemProperties.getBooleanProperty("idea.jars.nocopy", false) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   private File myNoCopyJarDir;
-  private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private final Map<String, JarHandler> myHandlers = new THashMap<String, JarHandler>(FileUtil.PATH_HASHING_STRATEGY);
   private String[] jarPathsCache;
 
   public JarFileSystemImpl(MessageBus bus) {
@@ -214,6 +218,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
   }
 
+  @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);

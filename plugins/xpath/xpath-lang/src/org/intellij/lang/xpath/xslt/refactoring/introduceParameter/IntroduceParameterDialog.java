@@ -20,6 +20,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -65,6 +66,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
         myPreviewAction.setEnabled(false);
     }
 
+    @NotNull
     protected Action[] createActions() {
         return myForceDefault ? super.createActions() : new Action[]{ getOKAction(), getPreviewAction(), getCancelAction() };
     }

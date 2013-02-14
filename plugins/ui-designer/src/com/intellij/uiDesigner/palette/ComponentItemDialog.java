@@ -205,6 +205,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     updateOKAction();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

@@ -164,6 +164,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return myDelegate.copyFile(requestor, virtualFile, newParent, copyName);
   }
 
+  @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
     return path;

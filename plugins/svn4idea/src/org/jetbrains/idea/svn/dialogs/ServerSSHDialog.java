@@ -59,6 +59,7 @@ public class ServerSSHDialog extends DialogWrapper {
     return false;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
