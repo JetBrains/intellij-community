@@ -135,11 +135,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-        run_traced = True
-
-        import pydevd_tracing
-        if run_traced:
-            pydevd_tracing.SetTrace(None) # no debugging on this thread
+        threading.settrace(None) # no debugging on this thread
 
         try:
             while not self.killReceived:
