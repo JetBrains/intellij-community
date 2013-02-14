@@ -1,8 +1,12 @@
 package com.jetbrains.python.refactoring.move;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
@@ -72,6 +76,8 @@ public class PyMoveFileHandler extends MoveFileHandler {
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
       if (element != null) {
+        if (InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment(element.getContainingFile()))
+          continue;
         final PsiNamedElement newElement = element.getCopyableUserData(REFERENCED_ELEMENT);
         element.putCopyableUserData(REFERENCED_ELEMENT, null);
         if (newElement != null) {

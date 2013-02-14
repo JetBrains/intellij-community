@@ -6,6 +6,7 @@ import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +19,7 @@ import java.util.List;
 public class PyDocstringLanguageInjector implements LanguageInjector {
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
-
-    if (host instanceof PyStringLiteralExpression) {
+    if (host instanceof PyStringLiteralExpression && PyDocumentationSettings.getInstance(host.getProject()).analyzeDoctest) {
       final PyDocStringOwner
         docStringOwner = PsiTreeUtil.getParentOfType(host, PyDocStringOwner.class);
       if (docStringOwner != null && host.equals(docStringOwner.getDocStringExpression())) {

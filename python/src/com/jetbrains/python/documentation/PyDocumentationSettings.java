@@ -24,6 +24,7 @@ import java.util.List;
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public String myDocStringFormat = "";
+  public boolean analyzeDoctest = true;
 
   public boolean isEpydocFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.EPYTEXT);

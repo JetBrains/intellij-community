@@ -50,6 +50,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private JCheckBox txtIsRst;
   private JPanel myErrorPanel;
   private TextFieldWithBrowseButton myRequirementsPathField;
+  private JCheckBox analyzeDoctest;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -62,6 +63,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
+    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
@@ -174,6 +176,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
       DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      return true;
+    }
     if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText())) {
       return true;
     }
@@ -192,6 +198,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
     ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
     ReSTService.getInstance(myProject).setTxtIsRst(txtIsRst.isSelected());
+    myDocumentationSettings.analyzeDoctest = analyzeDoctest.isSelected();
     PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
@@ -204,6 +211,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
     myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myProject).txtIsRst());
+    analyzeDoctest.setSelected(myDocumentationSettings.analyzeDoctest);
     myRequirementsPathField.setText(getRequirementsPath());
   }
 
