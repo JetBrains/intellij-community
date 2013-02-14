@@ -172,9 +172,6 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void readNextPart() {
-        if (dataLoader.allLogReadied()) {
-            throw new IllegalStateException("all log read!");
-        }
         try {
             dataLoader.readNextPart(new Executor<String>() {
                 @Override

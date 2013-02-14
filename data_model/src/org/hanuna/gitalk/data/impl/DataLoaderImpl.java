@@ -21,21 +21,6 @@ public class DataLoaderImpl implements DataLoader {
     private State state = State.UNINITIALIZED;
     private DataPackImpl dataPack;
     private CommitParentsReader partReader = new CommitParentsReader();
-    private List<CommitParents> nextPreLoadPart = null;
-
-    @Override
-    public boolean allLogReadied() {
-        switch (state) {
-            case UNINITIALIZED:
-                return false;
-            case ALL_LOG_READER:
-                return true;
-            case PART_LOG_READER:
-                return nextPreLoadPart.isEmpty();
-            default:
-                throw new IllegalStateException();
-        }
-    }
 
     @Override
     public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException {
@@ -57,19 +42,14 @@ public class DataLoaderImpl implements DataLoader {
                 throw new IllegalStateException("data was read");
             case UNINITIALIZED:
                 List<CommitParents> commitParentsList = partReader.readNextBlock(statusUpdater);
-                nextPreLoadPart = partReader.readNextBlock(statusUpdater);
                 state = State.PART_LOG_READER;
 
                 List<Ref> allRefs = new RefReader().readAllRefs();
                 dataPack = DataPackImpl.buildDataPack(commitParentsList, allRefs, statusUpdater);
                 break;
             case PART_LOG_READER:
-                if (nextPreLoadPart.isEmpty()) {
-                    throw new IllegalStateException("no next commits, but readNextPart was called");
-                }
                 List<CommitParents> nextPart = partReader.readNextBlock(statusUpdater);
-                dataPack.appendCommits(nextPreLoadPart, statusUpdater);
-                nextPreLoadPart = nextPart;
+                dataPack.appendCommits(nextPart, statusUpdater);
                 break;
             default:
                 throw new IllegalStateException();

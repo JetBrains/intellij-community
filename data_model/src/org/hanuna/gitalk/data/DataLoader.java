@@ -11,8 +11,6 @@ import java.io.IOException;
  */
 public interface DataLoader {
 
-    public boolean allLogReadied();
-
     public void readAllLog(@NotNull Executor<String> statusUpdater) throws IOException, GitException;
 
     public void readNextPart(@NotNull Executor<String> statusUpdater) throws IOException, GitException;
