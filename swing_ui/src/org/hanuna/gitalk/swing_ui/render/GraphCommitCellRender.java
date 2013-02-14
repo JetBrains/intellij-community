@@ -7,6 +7,7 @@ import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.awt.image.BufferedImage;
 
 import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.*;
 
@@ -48,12 +49,18 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
     @Override
     protected void additionPaint(Graphics g, JTable table, Object value) {
         GraphCommitCell cell = getAssertGraphCommitCell(value);
-        Graphics2D g2 = (Graphics2D) g;
+
+        BufferedImage image = new BufferedImage(1000, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        g2.setBackground(new Color(0,0,0,0));
+
         graphPainter.draw(g2, cell.getPrintCell());
 
         int countCells = cell.getPrintCell().countCell();
         int padding = countCells * WIDTH_NODE;
         refPainter.draw(g2, cell.getRefsToThisCommit(), padding);
+
+        g.drawImage(image,0, 0, null);
     }
 
 
