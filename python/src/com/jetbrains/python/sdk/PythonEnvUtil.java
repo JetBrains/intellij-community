@@ -78,11 +78,13 @@ public class PythonEnvUtil {
   }
 
   public static void addToEnv(Map<String, String> envs, String key, String value) {
-    if (envs.containsKey(key)) {
-      envs.put(key, appendToPathEnvVar(envs.get(key), value));
-    }
-    else {
-      envs.put(key, value);
+    if (!StringUtil.isEmpty(value)) {
+      if (envs.containsKey(key)) {
+        envs.put(key, appendToPathEnvVar(envs.get(key), value));
+      }
+      else {
+        envs.put(key, value);
+      }
     }
   }
 
