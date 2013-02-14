@@ -410,7 +410,9 @@ bool CreateJVM()
 
 	if (result != JNI_OK)
 	{
-		MessageBox(NULL, _T("Failed to create JVM"), _T("Error launching IntelliJ Platform"), MB_OK);
+		TCHAR buf[_MAX_PATH];
+		_stprintf_s(buf, _T("Failed to create JVM: error code %d"), result);
+		MessageBox(NULL, buf, _T("Error launching IntelliJ Platform"), MB_OK);
 	}
 
 	return result == JNI_OK;
