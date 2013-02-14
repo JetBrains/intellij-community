@@ -3,17 +3,22 @@ package com.jetbrains.python.refactoring.rename;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +38,18 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
       return file.getParent();
     }
     return element;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiReference> findReferences(PsiElement element) {
+    final List<PsiReference> results = new ArrayList<PsiReference>();
+    for (PsiReference reference : super.findReferences(element)) {
+      if (isNotAliasedInImportElement(reference)) {
+        results.add(reference);
+      }
+    }
+    return results;
   }
 
   @Override
@@ -56,5 +73,22 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
         }
       }
     }
+  }
+
+  private static boolean isNotAliasedInImportElement(@NotNull PsiReference reference) {
+    boolean include = true;
+    if (reference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      for (ResolveResult result : results) {
+        final PsiElement resolved = result.getElement();
+        if (resolved instanceof PyImportElement) {
+          if (((PyImportElement)resolved).getAsName() != null) {
+            include = false;
+            break;
+          }
+        }
+      }
+    }
+    return include;
   }
 }

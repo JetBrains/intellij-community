@@ -521,6 +521,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[0];
   }

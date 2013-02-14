@@ -54,8 +54,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private final List<PsiElement> myNameDefiners = new ArrayList<PsiElement>();
     private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
     private long myNameDefinerOOCBModCount = -1;
+    private final long myModificationStamp;
 
-    private ExportedNameCache() {
+    private ExportedNameCache(long modificationStamp) {
+      myModificationStamp = modificationStamp;
       final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub());
       final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
       for (PsiElement child : children) {
@@ -226,6 +228,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       return null;
     }
 
+    public long getModificationStamp() {
+      return myModificationStamp;
+    }
   }
 
   public PyFileImpl(FileViewProvider viewProvider) {
@@ -433,8 +438,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ExportedNameCache cache;
     synchronized (myENCLock) {
       cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+      final long modificationStamp = getModificationStamp();
+      if (myExportedNameCache != null && cache != null && modificationStamp != cache.getModificationStamp()) {
+        myExportedNameCache.clear();
+        cache = null;
+      }
       if (cache == null) {
-        cache = new ExportedNameCache();
+        cache = new ExportedNameCache(modificationStamp);
         myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
       }
     }

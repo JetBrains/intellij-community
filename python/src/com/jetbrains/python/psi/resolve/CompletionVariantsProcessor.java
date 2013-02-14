@@ -151,6 +151,9 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @Override
   protected void addElement(String name, PsiElement element) {
+    if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
+      return;
+    }
     myVariants.put(name, setupItem(LookupElementBuilder.create(element, name).withIcon(element.getIcon(0))));
   }
 

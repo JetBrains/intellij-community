@@ -1,4 +1,4 @@
 import datetime
 
-class MyDate(datetime.tmxxx):
+class MyDate(datetime.date):
     pass

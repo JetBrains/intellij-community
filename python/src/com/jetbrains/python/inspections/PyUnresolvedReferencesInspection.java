@@ -423,7 +423,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (PyNames.COMPARISON_OPERATORS.contains(refname)) {
           return;
         }
-        if (CythonLanguageDialect.isInsideCythonFile(element) && CythonNames.BUILTINS.contains(text)) {
+        if (CythonLanguageDialect.isInsideCythonFile(element) &&
+            (CythonNames.BASE_C_TYPES.contains(text) ||
+             CythonNames.BASE_CYTHON_TYPES.contains(text) ||
+             CythonNames.BUILTINS.contains(text))) {
           return;
         }
         if (refex.getQualifier() != null) {

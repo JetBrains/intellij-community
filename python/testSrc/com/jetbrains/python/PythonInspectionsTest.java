@@ -131,7 +131,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyUnboundLocalVariableInspection() {
     LocalInspectionTool inspection = new PyUnboundLocalVariableInspection();
-    doTest(getTestName(false), inspection);
+    doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON27);
   }
 
   public void testPyUnboundLocalVariableInspectionPy3k() {
