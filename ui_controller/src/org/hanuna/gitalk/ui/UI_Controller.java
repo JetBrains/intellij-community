@@ -18,6 +18,7 @@ public interface UI_Controller {
     public void removeAllListeners();
 
     public void click(@Nullable GraphElement graphElement);
+    public void doubleClick(int rowIndex);
     public void over(@Nullable GraphElement graphElement);
 
     public void hideAll();

@@ -67,13 +67,20 @@ public class UI_GraphTable extends JTable {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            ui_controller.click(overCell(e));
+            if (e.getClickCount() == 1) {
+                ui_controller.click(overCell(e));
+            } else {
+                int rowIndex = e.getY() / HEIGHT_CELL;
+                ui_controller.doubleClick(rowIndex);
+            }
         }
 
         @Override
         public void mouseMoved(MouseEvent e) {
             ui_controller.over(overCell(e));
         }
+
+
     }
 
 }

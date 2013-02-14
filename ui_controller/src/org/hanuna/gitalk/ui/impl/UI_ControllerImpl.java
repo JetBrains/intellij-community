@@ -141,6 +141,13 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     @Override
+    public void doubleClick(int rowIndex) {
+        if (rowIndex == graphTableModel.getRowCount() - 1) {
+            readNextPart();
+        }
+    }
+
+    @Override
     public void updateVisibleBranches() {
         final Set<Hash> checkedCommitHashes = refTableModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommitHashes)) {
