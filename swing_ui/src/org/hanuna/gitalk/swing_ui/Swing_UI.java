@@ -17,7 +17,7 @@ public class Swing_UI {
     private final ProgressFrame progressFrame = new ProgressFrame("Begin load");
     private final ControllerListener swingControllerListener = new SwingControllerListener();
     private final UI_Controller ui_controller;
-    private MainFrame mainFrame;
+    private MainFrame mainFrame = null;
 
     public Swing_UI(UI_Controller ui_controller) {
         this.ui_controller = ui_controller;
@@ -31,7 +31,9 @@ public class Swing_UI {
     public void setState(ControllerListener.State state) {
         switch (state) {
             case USUAL:
-                mainFrame = new MainFrame(ui_controller);
+                if (mainFrame == null) {
+                    mainFrame = new MainFrame(ui_controller);
+                }
                 mainFrame.setVisible(true);
                 errorFrame.setVisible(false);
                 progressFrame.setVisible(false);

@@ -169,13 +169,13 @@ public class UI_ControllerImpl implements UI_Controller {
             throw new IllegalStateException("all log read!");
         }
         try {
-            events.setState(ControllerListener.State.PROGRESS);
             dataLoader.readNextPart(new Executor<String>() {
                 @Override
                 public void execute(String key) {
                     events.setUpdateProgressMessage(key);
                 }
             });
+            events.runUpdateUI();
 
         } catch (IOException e) {
             events.setState(ControllerListener.State.ERROR);

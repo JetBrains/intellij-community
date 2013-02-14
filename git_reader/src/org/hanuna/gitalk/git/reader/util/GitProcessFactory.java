@@ -10,7 +10,7 @@ import java.io.IOException;
 public class GitProcessFactory {
     private final static String DEFAULT_LOG_REQUEST = "git log --all --date-order --sparse --encoding=UTF-8 --full-history";
     private final static String COMMIT_PARENTS_LOG_FORMAT = "--format=%h|-%p";
-    private final static String TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT = "--format=%at|-%h|-%p";
+    private final static String TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT = "--format=%ct|-%h|-%p";
     private final static String COMMIT_DATA_LOG_FORMAT = "--format=%h|-%an|-%at|-%s";
 
     public static Process commitData(@NotNull String commitHash) throws IOException {
@@ -34,8 +34,9 @@ public class GitProcessFactory {
     }
 
     public static Process logPart(long startTimestamp, int maxCount) throws IOException {
-        String restrictions = " --before=" + startTimestamp + " --max-count=" + maxCount + " ";
-        String request = DEFAULT_LOG_REQUEST + restrictions + TIMESTAMP_COMMIT_PARENTS_LOG_FORMAT;
+        String request = "git log --before=" + startTimestamp + " --all --max-count=" + maxCount + " --date-order" +
+                " --pretty=format:%ct|-%h|-%p --encoding=UTF-8 --full-history --sparse";
+        System.out.println(request);
         return Runtime.getRuntime().exec(request);
     }
 
