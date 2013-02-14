@@ -181,7 +181,7 @@ class WhiteSpace {
           myIndentSpaces = 0;
           break;
         case '\t':
-          myIndentSpaces += tabSize;
+          myIndentSpaces += tabSize - (mySpaces % tabSize);
           break;
         default: mySpaces++;
       }
