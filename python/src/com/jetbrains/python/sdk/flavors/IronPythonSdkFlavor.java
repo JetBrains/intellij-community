@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author yole
@@ -73,7 +70,13 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    addToEnv(cmd, "IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator));
+    Map<String,String> env = getEnv(cmd);
+    initPythonPath(path, env);
+  }
+
+  @Override
+  public void initPythonPath(Collection<String> path, Map<String, String> env) {
+    addToEnv("IRONPYTHONPATH", StringUtil.join(path, File.pathSeparator), env);
   }
 
   @NotNull
