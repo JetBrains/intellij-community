@@ -578,17 +578,23 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                     LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
                   }
                 }
-                myInitializing = true;
-                myComponentsRegistry.registerComponentInstance(componentInstance);
-                initComponent(componentInstance);
-                long endTime = System.nanoTime();
-                long ms = (endTime - startTime) / 1000000;
-                if (ms > 10) {
-                  if (logSlowComponents()) {
-                    LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+
+                try {
+                  myInitializing = true;
+                  myComponentsRegistry.registerComponentInstance(componentInstance);
+                  initComponent(componentInstance);
+                  long endTime = System.nanoTime();
+                  long ms = (endTime - startTime) / 1000000;
+                  if (ms > 10) {
+                    if (logSlowComponents()) {
+                      LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                    }
                   }
                 }
-                myInitializing = false;
+                finally {
+                  myInitializing = false;
+                }
+
                 myInitialized = true;
               }
             }
