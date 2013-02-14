@@ -245,18 +245,16 @@ std::string FindToolsJar()
 	return "";
 }
 
-std::string BuildClassPath()
+std::string CollectLibJars(char* jarList)
 {
 	std::string libDir = GetAdjacentDir("lib");
-	if (GetFileAttributesA(libDir.c_str()) == INVALID_FILE_ATTRIBUTES)
+	if (!FileExists(libDir))
 	{
 		return "";
 	}
 
-	char classpathLibs[_MAX_PATH];
 	std::string result;
-	LoadStringA(hInst, IDS_CLASSPATH_LIBS, classpathLibs, _MAX_PATH-1);
-	char *pJarName = classpathLibs;
+	char *pJarName = jarList;
 	while(pJarName)
 	{
 		char *pNextJarName = strchr(pJarName, ';');
@@ -272,6 +270,14 @@ std::string BuildClassPath()
 		result += pJarName;
 		pJarName = pNextJarName;
 	}
+	return result;
+}
+
+std::string BuildClassPath()
+{
+	char classpathLibs[_MAX_PATH];
+	LoadStringA(hInst, IDS_CLASSPATH_LIBS, classpathLibs, _MAX_PATH-1);
+	std::string result = CollectLibJars(classpathLibs);
 
 	std::string toolsJar = FindToolsJar();
 	if (toolsJar.size() > 0)
@@ -281,6 +287,25 @@ std::string BuildClassPath()
 	}
 
 	return result;
+}
+
+bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
+{
+	std::string classPath = BuildClassPath();
+	if (classPath.size() == 0) return false;
+	vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
+
+	char bootClassPathLibs[_MAX_PATH];
+	if (LoadStringA(hInst, IDS_BOOTCLASSPATH_LIBS, bootClassPathLibs, _MAX_PATH-1))
+	{
+		std::string bootClassPath = CollectLibJars(bootClassPathLibs);
+		if (bootClassPath.size() > 0)
+		{
+			vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + bootClassPath);
+		}
+	}
+
+	return true;
 }
 
 bool LoadVMOptions()
@@ -300,11 +325,7 @@ bool LoadVMOptions()
 		std::vector<std::string> vmOptionLines;
 		if (LoadVMOptionsFile(fullOptionsFileName, vmOptionLines))
 		{
-			std::string classPath = BuildClassPath();
-			if (classPath.size() == 0) return false;
-			std::string classPathArg("-Djava.class.path=");
-			classPathArg += classPath;
-			vmOptionLines.push_back(classPathArg);
+			if (!AddClassPathOptions(vmOptionLines)) return false;
 
 			vmOptionCount = vmOptionLines.size();
 			vmOptions = (JavaVMOption*) malloc(vmOptionCount * sizeof(JavaVMOption));
