@@ -120,6 +120,7 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private static void putAdministrative17UnderVfsListener(Set<NestedCopiesBuilder.MyPointInfo> pointInfos) {
+    if (! SvnVcs.ourListenToWcDb) return;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (NestedCopiesBuilder.MyPointInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
