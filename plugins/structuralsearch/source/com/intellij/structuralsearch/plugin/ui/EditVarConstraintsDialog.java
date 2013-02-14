@@ -38,6 +38,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -513,6 +514,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return true;
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

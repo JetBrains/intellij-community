@@ -1044,6 +1044,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return false;
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
