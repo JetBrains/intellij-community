@@ -65,13 +65,18 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
   private static final int[] QUOTE_SYMBOLS_ARRAY = QUOTE_SYMBOLS.toArray();
 
   public DeleteToWordStartAction() {
-    super(new Handler());
+    super(new Handler(false));
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  static class Handler extends EditorWriteActionHandler {
 
     @NotNull private final TIntIntHashMap myQuotesNumber = new TIntIntHashMap();
-    
+    private final boolean myNegateCamelMode;
+
+    Handler(boolean negateCamelMode) {
+      myNegateCamelMode = negateCamelMode;
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
@@ -79,6 +84,10 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
     }
 
     private void deleteToWordStart(Editor editor) {
+      boolean camel = editor.getSettings().isCamelWords();
+      if (myNegateCamelMode) {
+        camel = !camel;
+      }
       CharSequence text = editor.getDocument().getCharsSequence();
       CaretModel caretModel = editor.getCaretModel();
       int endOffset = caretModel.getOffset();
@@ -90,7 +99,7 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
       }
       countQuotes(myQuotesNumber, text, minOffset, endOffset);
       
-      EditorActionUtil.moveCaretToPreviousWord(editor, false);
+      EditorActionUtil.moveCaretToPreviousWord(editor, false, camel);
       
       for (int offset = caretModel.getOffset(); offset > minOffset; offset = caretModel.getOffset()) {
         char previous = text.charAt(offset - 1);
@@ -106,7 +115,7 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
           }
           if (myQuotesNumber.get(current) % 2 == 0) {
             // Was 'one "two" [caret]', now 'one "two[caret]"', we want to get 'one [caret]"two"'
-            EditorActionUtil.moveCaretToPreviousWord(editor, false);
+            EditorActionUtil.moveCaretToPreviousWord(editor, false, camel);
             continue;
           }
           break;

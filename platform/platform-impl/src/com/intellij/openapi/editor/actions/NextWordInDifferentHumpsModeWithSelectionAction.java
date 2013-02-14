@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:49:27 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class NextWordAction extends TextComponentEditorAction {
-  public NextWordAction() {
+/**
+ * @author Denis Zhdanov
+ * @since 2/14/13 7:23 PM
+ */
+public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction {
+
+  public NextWordInDifferentHumpsModeWithSelectionAction() {
     super(new Handler());
   }
 
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretToNextWord(editor, false, editor.getSettings().isCamelWords());
+      EditorActionUtil.moveCaretToNextWord(editor, true, !editor.getSettings().isCamelWords());
     }
   }
 }

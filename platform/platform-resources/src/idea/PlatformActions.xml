@@ -86,11 +86,17 @@
       <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
       <action id="EditorTextEndWithSelection" class="com.intellij.openapi.editor.actions.TextEndWithSelectionAction"/>
       <action id="EditorNextWord" class="com.intellij.openapi.editor.actions.NextWordAction"/>
-      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorNextWordInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction"/>
       <action id="EditorNextWordWithSelection" class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
+      <action id="EditorNextWordInDifferentHumpsModeWithSelection" class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction"/>
+      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorPreviousWordInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeAction"/>
       <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
+      <action id="EditorPreviousWordInDifferentHumpsModeWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeWithSelectionAction"/>
       <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
+      <action id="EditorDeleteToWordStartInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.DeleteToWordStartInDifferentHumpsModeAction"/>
       <action id="EditorDeleteToWordEnd" class="com.intellij.openapi.editor.actions.DeleteToWordEndAction"/>
+      <action id="EditorDeleteToWordEndInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.DeleteToWordEndInDifferentHumpsModeAction"/>
       <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAction"/>
       <action id="EditorKillToWordStart" class="com.intellij.openapi.editor.actions.KillToWordStartAction"/>
       <action id="EditorKillToWordEnd" class="com.intellij.openapi.editor.actions.KillToWordEndAction"/>
