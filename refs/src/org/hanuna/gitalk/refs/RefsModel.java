@@ -23,6 +23,9 @@ public class RefsModel {
         }
     }
 
+    public boolean isTrackedCommitHash(@NotNull Hash commitHash) {
+        return trackedCommitHashes.contains(commitHash);
+    }
     @NotNull
     public List<Ref> refsToCommit(@NotNull Hash hash) {
         List<Ref> refs = new ArrayList<Ref>();

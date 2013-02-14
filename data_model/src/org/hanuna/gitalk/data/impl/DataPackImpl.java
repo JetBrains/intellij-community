@@ -1,10 +1,12 @@
 package org.hanuna.gitalk.data.impl;
 
 import org.hanuna.gitalk.common.Executor;
+import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.Replace;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
+import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphBuilder;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.GraphModel;
@@ -45,7 +47,18 @@ public class DataPackImpl implements DataPack {
             }
         });
 
-        RefsModel refsModel = new RefsModel(allRefs);
+        final RefsModel refsModel = new RefsModel(allRefs);
+        graphModel.getFragmentManager().setUnhiddenNodes(new Get<Node, Boolean>() {
+            @NotNull
+            @Override
+            public Boolean get(@NotNull Node key) {
+                if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isTrackedCommitHash(key.getCommitHash())) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
         return new DataPackImpl(graphModel, refsModel, printCellModel);
     }
 
