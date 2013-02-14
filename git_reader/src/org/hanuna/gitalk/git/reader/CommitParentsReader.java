@@ -19,7 +19,7 @@ import java.util.List;
  * @author erokhins
  */
 public class CommitParentsReader {
-    private static final int COMMIT_BLOCK_SIZE = 500;
+    private static final int COMMIT_BLOCK_SIZE = 340;
 
     private long lastTimeStamp = 0;
     private Executor<Integer> progressUpdater;
@@ -78,6 +78,8 @@ public class CommitParentsReader {
 
         if (commitParentsList.size() == COMMIT_BLOCK_SIZE) {
             removeElementsWithLastTimeStamp(commitParentsList);
+        } else {
+            lastTimeStamp++;
         }
         return Collections.<CommitParents>unmodifiableList(commitParentsList);
     }
