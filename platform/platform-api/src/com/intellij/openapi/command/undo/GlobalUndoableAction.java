@@ -36,6 +36,7 @@ public abstract class GlobalUndoableAction extends BasicUndoableAction {
     super(files);
   }
 
+  @Override
   public boolean isGlobal() {
     return true;
   }
