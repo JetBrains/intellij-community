@@ -24,14 +24,10 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: anna
@@ -39,8 +35,7 @@ import java.util.Map;
  */
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
-  private static final Map<PsiExpression, Map<JavaResolveResult, PsiSubstitutor>> ourResults =
-    new ConcurrentWeakHashMap<PsiExpression, Map<JavaResolveResult, PsiSubstitutor>>();
+  
   
   @Override
   public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
@@ -54,24 +49,10 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     if (owner == null) return null;
 
     try {
-      final Map<JavaResolveResult, PsiSubstitutor> results = getCachedResults(contextCall);
+      final JavaResolveResult[] results = getResults(contextCall, i);
       final PsiType innerReturnType = owner.getReturnType();
-      for (final JavaResolveResult result : results.keySet()) {
-        final PsiSubstitutor subst = results.get(result);
-        final PsiSubstitutor substitutor;
-        if (subst == PsiSubstitutor.UNKNOWN) {
-          if (result instanceof MethodCandidateInfo) {
-            List<PsiExpression> leftArgs = getExpressions(expressions, i);
-            substitutor = ((MethodCandidateInfo)result).inferTypeArguments(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
-          }
-          else {
-            substitutor = result.getSubstitutor();
-          }
-          results.put(result, substitutor);
-        } else {
-          substitutor = subst;
-        }
-
+      for (final JavaResolveResult result : results) {
+        final PsiSubstitutor substitutor = getSubstitutor(contextCall, expressions, i, result);
         final Pair<PsiType, ConstraintType> constraint = inferConstraint(typeParameter, innerMethodCall, i, innerReturnType, result, substitutor);
         if (constraint != null) return constraint;
       }
@@ -83,16 +64,26 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     return null;
   }
 
+  protected PsiSubstitutor getSubstitutor(PsiCallExpression contextCall, PsiExpression[] expressions, int i, JavaResolveResult result) {
+    if (result instanceof MethodCandidateInfo) {
+      List<PsiExpression> leftArgs = getExpressions(expressions, i);
+      return ((MethodCandidateInfo)result).inferTypeArguments(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
+    }
+    else {
+      return result.getSubstitutor();
+    }
+  }
+
   protected List<PsiExpression> getExpressions(PsiExpression[] expressions, int i) {
     return Arrays.asList(expressions).subList(0, i);
   }
 
-  private static Pair<PsiType, ConstraintType> inferConstraint(PsiTypeParameter typeParameter, 
-                                                               PsiExpression innerMethodCall,
-                                                               int parameterIdx,
-                                                               PsiType innerReturnType,
-                                                               JavaResolveResult result,
-                                                               final PsiSubstitutor substitutor) {
+  protected static Pair<PsiType, ConstraintType> inferConstraint(PsiTypeParameter typeParameter,
+                                                                 PsiExpression innerMethodCall,
+                                                                 int parameterIdx,
+                                                                 PsiType innerReturnType,
+                                                                 JavaResolveResult result,
+                                                                 final PsiSubstitutor substitutor) {
     final PsiElement element = result.getElement();
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
@@ -122,57 +113,10 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
   }
 
   @NotNull
-  private static Map<JavaResolveResult, PsiSubstitutor> getCachedResults(PsiCallExpression contextCall) throws MethodProcessorSetupFailedException {
-    final PsiCallExpression preparedKey = contextCall.getCopyableUserData(PsiResolveHelperImpl.CALL_EXPRESSION_KEY);
-    Map<JavaResolveResult, PsiSubstitutor> map;
-    if (preparedKey != null) {
-      map = ourResults.get(preparedKey);
-      if (map != null) {
-        return map;
-      }
-    }
-
-    map = new ConcurrentHashMap<JavaResolveResult, PsiSubstitutor>();
-    if (preparedKey != null) {
-      ourResults.put(preparedKey, map);
-    }
-
+  protected JavaResolveResult[] getResults(PsiCallExpression contextCall, final int exprIdx) throws MethodProcessorSetupFailedException {
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall);
     //can't call resolve() since it obtains full substitution, that may result in infinite recursion
     PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
-    for (JavaResolveResult resolveResult : processor.getResult()) {
-      map.put(resolveResult, PsiSubstitutor.UNKNOWN);
-    }
-    return map;
-  }
-  
-  @Nullable
-  public static Pair<PsiType, ConstraintType> inferConstraint(PsiTypeParameter typeParameter, PsiCallExpression parentExpression, PsiExpression nullPlaceHolder, int exprIdx, PsiType methodReturnType) {
-    final Map<JavaResolveResult, PsiSubstitutor> map = ourResults.get(parentExpression);
-    if (map != null) {
-      for (JavaResolveResult resolveResult : map.keySet()) {
-        final PsiSubstitutor substitutor = map.get(resolveResult);
-        if (substitutor == PsiSubstitutor.UNKNOWN) return null;
-        if (!substitutor.isValid()) {
-          ourResults.remove(parentExpression);
-          return null;
-        }
-        final Pair<PsiType, ConstraintType> constraint = inferConstraint(typeParameter, nullPlaceHolder, exprIdx, methodReturnType, resolveResult, substitutor);
-        if (constraint != null) return constraint;
-      }
-    }
-    return null;
-  }
-  
-  public static void forget(PsiElement parent) {
-    if (parent instanceof PsiCallExpression) {
-      final PsiElement gParent = parent.getParent();
-      if (gParent instanceof PsiExpressionList) {
-        final PsiElement ggParent = gParent.getParent();
-        if (ggParent instanceof PsiCallExpression) {
-          ourResults.remove(ggParent);
-        }
-      }
-    }
+    return processor.getResult();
   }
 }

@@ -48,7 +48,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
-  public void _testChainedInferenceTypeParamsOrderIndependent() throws Exception {
+  public void testChainedInferenceTypeParamsOrderIndependent() throws Exception {
     doTest();
   }
 
