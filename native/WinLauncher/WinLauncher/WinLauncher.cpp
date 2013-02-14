@@ -28,6 +28,12 @@ HMODULE hJVM = NULL;
 JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
+bool terminating = false;
+
+HANDLE hFileMapping;
+HANDLE hEvent;
+HANDLE hSingleInstanceWatcherThread;
+const int FILE_MAPPING_SIZE = 16000;
 
 std::string LoadStdString(int id)
 {
@@ -378,9 +384,8 @@ jobjectArray PrepareCommandLine()
 
 bool RunMainClass()
 {
-	char mainClassName[_MAX_PATH];
-	if (!LoadStringA(hInst, IDS_MAIN_CLASS, mainClassName, _MAX_PATH-1)) return false;
-	jclass mainClass = env->FindClass(mainClassName);
+	std::string mainClassName = LoadStdString(IDS_MAIN_CLASS);
+	jclass mainClass = env->FindClass(mainClassName.c_str());
 	if (!mainClass)
 	{
 		char buf[_MAX_PATH];
@@ -402,6 +407,107 @@ bool RunMainClass()
 	return true;
 }
 
+void CallCommandLineProcessor(const std::wstring& curDir, const std::wstring& args)
+{
+	JNIEnv *env;
+	JavaVMAttachArgs attachArgs;
+	attachArgs.version = JNI_VERSION_1_2;
+	attachArgs.name = "WinLauncher external command processing thread";
+	attachArgs.group = NULL;
+	jvm->AttachCurrentThread((void**) &env, &attachArgs);
+
+	std::string processorClassName = LoadStdString(IDS_COMMAND_LINE_PROCESSOR_CLASS);
+	jclass processorClass = env->FindClass(processorClassName.c_str());
+	if (processorClass)
+	{
+		jmethodID processMethodID = env->GetStaticMethodID(processorClass, "processWindowsLauncherCommandLine", "(Ljava/lang/String;Ljava/lang/String;)V");
+		if (processMethodID)
+		{
+			jstring jCurDir = env->NewString((const jchar *) curDir.c_str(), curDir.size());
+			jstring jArgs = env->NewString((const jchar *) args.c_str(), args.size());
+			env->CallStaticVoidMethod(processorClass, processMethodID, jCurDir, jArgs);
+			jthrowable exc = env->ExceptionOccurred();
+			if (exc)
+			{
+				MessageBox(NULL, _T("Error sending command line to existing instance"), _T("Error"), MB_OK);
+			}
+		}
+	}
+
+	jvm->DetachCurrentThread();
+}
+
+DWORD WINAPI SingleInstanceThread(LPVOID args)
+{
+	while(true)
+	{
+		WaitForSingleObject(hEvent, INFINITE);
+		if (terminating) break;
+
+		wchar_t *view = static_cast<wchar_t *>(MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+		if (!view) continue;
+		std::wstring command(view);
+		int pos = command.find('\n');
+		if (pos >= 0)
+		{
+			std::wstring curDir = command.substr(0, pos);
+			std::wstring args = command.substr(pos+1);
+
+			CallCommandLineProcessor(curDir, args);
+		}
+
+		UnmapViewOfFile(view);
+	}
+	return 0;
+}
+
+void SendCommandLineToFirstInstance()
+{
+	wchar_t curDir[_MAX_PATH];
+	GetCurrentDirectoryW(_MAX_PATH-1, curDir);
+	std::wstring command(curDir);
+	command += _T("\n");
+	command += GetCommandLineW();
+
+	void *view = MapViewOfFile(hFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (view)
+	{
+		memcpy(view, command.c_str(), (command.size()+1) * sizeof(wchar_t));
+		UnmapViewOfFile(view);
+	}
+	SetEvent(hEvent);	
+}
+
+bool CheckSingleInstance()
+{
+	char moduleFileName[_MAX_PATH];
+	GetModuleFileNameA(NULL, moduleFileName, _MAX_PATH-1);
+	for(char *p = moduleFileName; *p; p++)
+	{
+		if (*p == ':' || *p == '\\') *p = '_';
+	}
+	std::string mappingName = std::string("IntelliJLauncherMapping.") + moduleFileName;
+	std::string eventName = std::string("IntelliJLauncherEvent.") + moduleFileName;
+
+	hEvent = CreateEventA(NULL, FALSE, FALSE, eventName.c_str());
+
+	hFileMapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+	if (!hFileMapping)
+	{
+		hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, 
+			mappingName.c_str());
+		hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
+		return true;
+	}
+	else
+	{
+		SendCommandLineToFirstInstance();
+		CloseHandle(hFileMapping);
+		CloseHandle(hEvent);
+		return false;
+	}
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPTSTR    lpCmdLine,
@@ -412,6 +518,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	hInst = hInstance;
 
+	if (!CheckSingleInstance()) return 1;
+
 	if (!LocateJVM()) return 1;
 	if (!LoadVMOptions()) return 1;
 	if (!LoadJVMLibrary()) return 1;
@@ -420,8 +528,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	jvm->DestroyJavaVM();
 
+	terminating = true;
+	SetEvent(hEvent);
+	WaitForSingleObject(hSingleInstanceWatcherThread, INFINITE);
+	CloseHandle(hEvent);
+	CloseHandle(hFileMapping);
+
 	return 0;
 }
-
-
-
