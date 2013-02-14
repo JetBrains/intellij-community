@@ -29,15 +29,14 @@ JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
 
-bool IsValidJRE(char* path)
+bool IsValidJRE(const char* path)
 {
-	char dllPath[_MAX_PATH];
-	strcpy_s(dllPath, path);
-	strcat_s(dllPath, "\\bin\\client\\jvm.dll");
-	return GetFileAttributesA(dllPath) != INVALID_FILE_ATTRIBUTES;
+	std::string dllPath(path);
+	dllPath += "\\bin\\client\\jvm.dll";
+	return GetFileAttributesA(dllPath.c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-bool FindValidJVM(char* path)
+bool FindValidJVM(const char* path)
 {
 	if (IsValidJRE(path))
 	{
@@ -57,6 +56,16 @@ bool FindValidJVM(char* path)
 		return true;
 	}
 	return false;
+}
+
+std::string GetAdjacentDir(const char* suffix)
+{
+	char libDir[_MAX_PATH];
+	GetCurrentDirectoryA(_MAX_PATH-1, libDir);
+	char* lastSlash = strrchr(libDir, '\\');
+	strcpy(lastSlash+1, suffix);
+	strcat_s(libDir, "\\");
+	return std::string(libDir);
 }
 
 bool LocateJVM()
@@ -81,6 +90,13 @@ bool LocateJVM()
 			}
 		}
 	}
+
+	std::string jreDir = GetAdjacentDir("jre");
+	if (FindValidJVM(jreDir.c_str()))
+	{
+		return true;
+	}
+
 	return false;
 }
 
@@ -106,6 +122,7 @@ bool LoadVMOptionsFile(const TCHAR* path, std::vector<std::string>& vmOptionLine
 	while(fgets(line, _MAX_PATH-1, f))
 	{
 		TrimLine(line);
+		if (line[0] == '#') continue;
 		if (strcmp(line, "-server") == 0)
 		{
 			bServerJVM = true;
@@ -138,11 +155,8 @@ std::string FindToolsJar()
 
 std::string BuildClassPath()
 {
-	char libDir[_MAX_PATH];
-	GetCurrentDirectoryA(_MAX_PATH-1, libDir);
-	char* lastSlash = strrchr(libDir, '\\');
-	strcpy(lastSlash+1, "lib\\");
-	if (GetFileAttributesA(libDir) == INVALID_FILE_ATTRIBUTES)
+	std::string libDir = GetAdjacentDir("lib");
+	if (GetFileAttributesA(libDir.c_str()) == INVALID_FILE_ATTRIBUTES)
 	{
 		return "";
 	}
@@ -260,6 +274,20 @@ bool CreateJVM()
 	return result == JNI_OK;
 }
 
+jobjectArray PrepareCommandLine()
+{
+	int numArgs;
+	LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &numArgs);
+	jclass stringClass = env->FindClass("java/lang/String");
+	jobjectArray args = env->NewObjectArray(numArgs-1, stringClass, NULL); 
+	for(int i=1; i<numArgs; i++)
+	{
+		const wchar_t* arg = argv[i];
+		env->SetObjectArrayElement(args, i-1, env->NewString((const jchar *) arg, wcslen(argv[i])));
+	}
+	return args;
+}
+
 bool RunMainClass()
 {
 	char mainClassName[_MAX_PATH];
@@ -268,20 +296,19 @@ bool RunMainClass()
 	if (!mainClass)
 	{
 		char buf[_MAX_PATH];
-		sprintf(buf, "Could not find main class %s", mainClassName);
+		sprintf_s(buf, "Could not find main class %s", mainClassName);
 		MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
 		return false;
 	}
 
-	jclass stringClass = env->FindClass("java/lang/String");
-	jobjectArray args = env->NewObjectArray(0, stringClass, NULL);
 	jmethodID mainMethod = env->GetStaticMethodID(mainClass, "main", "([Ljava/lang/String;)V");
-	if (!mainClass)
+	if (!mainMethod)
 	{
 		MessageBoxA(NULL, "Could not find main method", "Error Launching IntelliJ Platform", MB_OK);
 		return false;
 	}
 
+	jobjectArray args = PrepareCommandLine();
 	env->CallStaticVoidMethod(mainClass, mainMethod, args);
 
 	return true;
