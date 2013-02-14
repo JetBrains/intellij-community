@@ -1,11 +1,11 @@
-package org.hanuna.gitalk.ui_controller.table_models;
+package org.hanuna.gitalk.ui.tables;
 
 import org.hanuna.gitalk.commit.Hash;
+import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.log.commit.CommitData;
-import org.hanuna.gitalk.log.commit.CommitDataGetter;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
-import org.hanuna.gitalk.ui_controller.DateConverter;
+import org.hanuna.gitalk.ui.impl.DateConverter;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.*;

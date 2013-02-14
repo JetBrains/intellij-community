@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.ui_controller.table_models;
+package org.hanuna.gitalk.ui.tables;
 
 import org.hanuna.gitalk.refs.Ref;
 
