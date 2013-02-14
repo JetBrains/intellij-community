@@ -104,8 +104,9 @@ public class ReferenceParser {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if ((isSet(flags, WILDCARD) || badWildcard) && tokenType == JavaTokenType.QUEST) {
-      type.drop();
-      typeInfo.marker = parseWildcardType(builder, isSet(flags, WILDCARD));
+      builder.advanceLexer();
+      completeWildcardType(builder, isSet(flags, WILDCARD), type);
+      typeInfo.marker = type;
       return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
@@ -154,11 +155,7 @@ public class ReferenceParser {
     return typeInfo;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseWildcardType(final PsiBuilder builder, final boolean wildcard) {
-    final PsiBuilder.Marker type = builder.mark();
-    builder.advanceLexer();
-
+  private void completeWildcardType(PsiBuilder builder, boolean wildcard, PsiBuilder.Marker type) {
     if (expect(builder, WILDCARD_KEYWORD_SET)) {
       if (parseTypeInfo(builder, EAT_LAST_DOT) == null) {
         error(builder, JavaErrorMessages.message("expected.type"));
@@ -171,7 +168,6 @@ public class ReferenceParser {
     else {
       type.error(JavaErrorMessages.message("wildcard.not.expected"));
     }
-    return type;
   }
 
   @Nullable
