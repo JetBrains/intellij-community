@@ -733,22 +733,23 @@ public class BuildManager implements ApplicationComponent{
 
       final Set<Sdk> candidates = new HashSet<Sdk>();
       final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdk) {
+      if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
         candidates.add(defaultSdk);
       }
 
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
           candidates.add(sdk);
         }
       }
 
       // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+      final JavaSdk javaSdkType = JavaSdk.getInstance();
       for (Sdk candidate : candidates) {
         final String vs = candidate.getVersionString();
         if (vs != null) {
-          final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
+          final JavaSdkVersion candidateVersion = javaSdkType.getVersion(vs);
           if (candidateVersion != null) {
             final int candidateMinorVersion = getMinorVersion(vs);
             if (projectJdk == null) {
@@ -782,7 +783,7 @@ public class BuildManager implements ApplicationComponent{
         compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
       }
       else {
-        compilerPath = ((JavaSdk)projectJdk.getSdkType()).getToolsPath(projectJdk);
+        compilerPath = javaSdkType.getToolsPath(projectJdk);
         if (compilerPath == null) {
           throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
         }
