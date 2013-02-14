@@ -20,6 +20,7 @@ public class GradleConfigurableTest {
   
   def GradleConfigurable configurable
   def projectImpl
+  Project defaultProject = {} as Project
   Project project
   def helper
   Map<Project, GradleSettings> settings = [:].withDefault { new GradleSettings() }
@@ -28,7 +29,10 @@ public class GradleConfigurableTest {
   void setUp() {
     helper = [
       getSettings : { settings[it] },
-      getGradleHome : { new File(VALID_GRADLE_HOME) },
+      applySettings: {linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, serviceDirectoryPath, project -> },
+      applyPreferLocalInstallationToWrapper: { preferLocalInstallationToWrapper, project -> },
+      getGradleHome: { new File(VALID_GRADLE_HOME) },
+      getDefaultProject: { defaultProject },
       isGradleSdkHome: { it == VALID_GRADLE_HOME },
       isGradleWrapperDefined: { it == VALID_LINKED_PATH_WITH_WRAPPER }
     ]
@@ -76,7 +80,7 @@ public class GradleConfigurableTest {
 
   @SuppressWarnings("GroovyAssignabilityCheck")
   @Test
-  void "invalid gradle home is not reported if home control inactive"() {
+  void "invalid gradle home is not reported if home control is inactive"() {
     projectImpl.isDefault = { false }
     settings[project].linkedProjectPath = VALID_LINKED_PATH_WITH_WRAPPER
     settings[project].preferLocalInstallationToWrapper = false
@@ -97,5 +101,16 @@ public class GradleConfigurableTest {
     if (shouldFail) {
       fail()
     }
+  }
+
+  @Test
+  void "do not show 'invalid gradle path' balloon if 'use wrapper' is selected"() {
+    settings[project].linkedProjectPath = VALID_LINKED_PATH_WITH_WRAPPER
+    settings[project].preferLocalInstallationToWrapper = false
+    configurable.useWrapperButton.selected = false
+    configurable.gradleHomePathField.text = INVALID_GRADLE_HOME
+    configurable.useWrapperButton.selected = true
+    helper.showBalloon = { messageType, settingType, long delay -> fail() }
+    configurable.apply()
   }
 }
