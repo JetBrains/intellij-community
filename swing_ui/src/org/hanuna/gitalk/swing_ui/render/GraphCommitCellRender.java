@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swing_ui.render;
 
-import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 
@@ -8,7 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 
-import static org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell.WIDTH_NODE;
+import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.*;
 
 /**
  * @author erokhins

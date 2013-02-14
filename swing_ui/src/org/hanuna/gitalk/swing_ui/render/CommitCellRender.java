@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swing_ui.render;
 
-import org.hanuna.gitalk.ui_controller.table_models.CommitCell;
+import org.hanuna.gitalk.ui.tables.CommitCell;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 
 import javax.swing.*;

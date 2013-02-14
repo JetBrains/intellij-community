@@ -1,6 +1,5 @@
 package org.hanuna.gitalk.swing_ui;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -8,7 +7,7 @@ import java.awt.*;
  */
 public class UI_Utilities {
 
-    public static void setCenterLocation(JFrame frame) {
+    public static void setCenterLocation(Window frame) {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         Dimension frameDimension = frame.getSize();
         int x = screenDimension.width / 2 - frameDimension.width / 2;

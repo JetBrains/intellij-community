@@ -1,13 +1,14 @@
 package org.hanuna.gitalk.swing_ui.render.painters;
 
 import org.hanuna.gitalk.refs.Ref;
-import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
+
+import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
 
 /**
  * @author erokhins
@@ -30,7 +31,7 @@ public class RefPainter {
         FontMetrics metrics = g2.getFontMetrics();
         g2.setColor(DEFAULT_FONT_COLOR);
         int x = padding + REF_PADDING / 2;
-        int y = GraphCommitCell.HEIGHT_CELL / 2 + (metrics.getAscent() - metrics.getDescent()) / 2;
+        int y = HEIGHT_CELL / 2 + (metrics.getAscent() - metrics.getDescent()) / 2;
         g2.drawString(str, x , y);
     }
 
@@ -54,7 +55,7 @@ public class RefPainter {
         int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
         int y = RECTANGLE_Y_PADDING;
         int width = metrics.stringWidth(ref.getName()) + 2 * RECTANGLE_X_PADDING;
-        int height = GraphCommitCell.HEIGHT_CELL -2 * RECTANGLE_Y_PADDING;
+        int height = HEIGHT_CELL -2 * RECTANGLE_Y_PADDING;
         RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
 
         g2.setColor(refBackgroundColor(ref));

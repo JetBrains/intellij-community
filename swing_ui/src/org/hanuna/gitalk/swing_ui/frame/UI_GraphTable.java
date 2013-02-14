@@ -1,13 +1,12 @@
-package org.hanuna.gitalk.swing_ui;
+package org.hanuna.gitalk.swing_ui.frame;
 
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.printmodel.GraphPrintCell;
 import org.hanuna.gitalk.swing_ui.render.GraphCommitCellRender;
 import org.hanuna.gitalk.swing_ui.render.painters.GraphCellPainter;
 import org.hanuna.gitalk.swing_ui.render.painters.SimpleGraphCellPainter;
-import org.hanuna.gitalk.ui_controller.EventsController;
-import org.hanuna.gitalk.ui_controller.UI_Controller;
-import org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell;
+import org.hanuna.gitalk.ui.UI_Controller;
+import org.hanuna.gitalk.ui.tables.GraphCommitCell;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,6 +15,8 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
 
 /**
  * @author erokhins
@@ -35,7 +36,7 @@ public class UI_GraphTable extends JTable {
 
     private void prepare() {
         setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(graphPainter));
-        setRowHeight(GraphCommitCell.HEIGHT_CELL);
+        setRowHeight(HEIGHT_CELL);
         setShowHorizontalLines(false);
         setIntercellSpacing(new Dimension(0, 0));
 
@@ -45,28 +46,19 @@ public class UI_GraphTable extends JTable {
 
         addMouseMotionListener(mouseAdapter);
         addMouseListener(mouseAdapter);
+    }
 
-        ui_controller.addControllerListener(new EventsController.ControllerListener() {
-            @Override
-            public void jumpToRow(int rowIndex) {
-                scrollRectToVisible(getCellRect(rowIndex, 0, false));
-                setRowSelectionInterval(rowIndex, rowIndex);
-                scrollRectToVisible(getCellRect(rowIndex, 0, false));
-            }
-
-            @Override
-            public void updateTable() {
-                updateUI();
-            }
-        });
-
+    public void jumpToRow(int rowIndex) {
+        scrollRectToVisible(getCellRect(rowIndex, 0, false));
+        setRowSelectionInterval(rowIndex, rowIndex);
+        scrollRectToVisible(getCellRect(rowIndex, 0, false));
     }
 
     private class MyMouseAdapter extends MouseAdapter {
         @Nullable
         private GraphElement overCell(MouseEvent e) {
-            int rowIndex = e.getY() / GraphCommitCell.HEIGHT_CELL;
-            int y = e.getY() - rowIndex * GraphCommitCell.HEIGHT_CELL;
+            int rowIndex = e.getY() / HEIGHT_CELL;
+            int y = e.getY() - rowIndex * HEIGHT_CELL;
             int x = e.getX();
             GraphCommitCell commitCell = (GraphCommitCell) UI_GraphTable.this.getModel().getValueAt(rowIndex, 0);
             GraphPrintCell row = commitCell.getPrintCell();

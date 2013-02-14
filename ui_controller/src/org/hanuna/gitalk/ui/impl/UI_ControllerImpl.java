@@ -31,76 +31,49 @@ import java.util.Set;
  */
 public class UI_ControllerImpl implements UI_Controller {
 
-    // if something error happened - return null
-    @Nullable
-    public static UI_ControllerImpl fullLogLoad(final ControllerListener listener) {
-        DataLoader dataLoader = new DataLoaderImpl();
-        listener.setState(ControllerListener.State.PROGRESS);
-        try {
-            dataLoader.readAllLog(new Executor<String>() {
-                @Override
-                public void execute(String key) {
-                    listener.setUpdateProgressMessage(key);
-                }
-            });
-            UI_ControllerImpl ui_controller = new UI_ControllerImpl(dataLoader);
-            ui_controller.addControllerListener(listener);
-            listener.setState(ControllerListener.State.USUAL);
-            return ui_controller;
-        } catch (IOException e) {
-            listener.setState(ControllerListener.State.ERROR);
-            listener.setErrorMessage(e.getMessage());
-        } catch (GitException e) {
-            listener.setState(ControllerListener.State.ERROR);
-            listener.setErrorMessage(e.getMessage());
-        }
-        return null;
-    }
-
-    // if something error happened - return null
-    @NotNull
-    public static UI_ControllerImpl firstPartLogLoad(final ControllerListener listener) {
-        DataLoader dataLoader = new DataLoaderImpl();
-        listener.setState(ControllerListener.State.PROGRESS);
-        try {
-            dataLoader.readNextPart(new Executor<String>() {
-                @Override
-                public void execute(String key) {
-                    listener.setUpdateProgressMessage(key);
-                }
-            });
-            UI_ControllerImpl ui_controller = new UI_ControllerImpl(dataLoader);
-            ui_controller.addControllerListener(listener);
-            listener.setState(ControllerListener.State.USUAL);
-            return ui_controller;
-        } catch (IOException e) {
-            listener.setState(ControllerListener.State.ERROR);
-            listener.setErrorMessage(e.getMessage());
-        } catch (GitException e) {
-            listener.setState(ControllerListener.State.ERROR);
-            listener.setErrorMessage(e.getMessage());
-        }
-        return null;
-    }
-
-
-    private final DataLoader dataLoader;
-    private final DataPack dataPack;
+    private final DataLoader dataLoader = new DataLoaderImpl();
     private final EventsController events = new EventsController();
-    private final RefTableModel refTableModel;
-    private final GraphTableModel graphTableModel;
+
+    private DataPack dataPack;
+    private RefTableModel refTableModel;
+    private GraphTableModel graphTableModel;
 
     private GraphElement prevGraphElement = null;
     private Set<Hash> prevSelectionBranches;
 
-    private UI_ControllerImpl(@NotNull DataLoader dataLoader) {
-        this.dataLoader = dataLoader;
-
-        this.dataPack = dataLoader.getDataPack();
-        this.refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
-        this.graphTableModel = new GraphTableModel(dataPack);
-        this.prevSelectionBranches = new HashSet<Hash>(refTableModel.getCheckedCommits());
+    private void dataInit() {
+        dataPack = dataLoader.getDataPack();
+        refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
+        graphTableModel = new GraphTableModel(dataPack);
     }
+
+    public void init(boolean readAllLog) {
+        events.setState(ControllerListener.State.PROGRESS);
+        Executor<String> statusUpdater = new Executor<String>() {
+            @Override
+            public void execute(String key) {
+                events.setUpdateProgressMessage(key);
+            }
+        };
+
+        try {
+            if (readAllLog) {
+                dataLoader.readAllLog(statusUpdater);
+            } else {
+                dataLoader.readNextPart(statusUpdater);
+            }
+            dataInit();
+            events.setState(ControllerListener.State.USUAL);
+        } catch (IOException e) {
+            events.setState(ControllerListener.State.ERROR);
+            events.setErrorMessage(e.getMessage());
+        } catch (GitException e) {
+            events.setState(ControllerListener.State.ERROR);
+            events.setErrorMessage(e.getMessage());
+        }
+    }
+
+
 
     @Override
     @NotNull

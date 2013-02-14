@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-import static org.hanuna.gitalk.ui_controller.table_models.GraphCommitCell.*;
+import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.*;
 
 /**
  * @author erokhins
