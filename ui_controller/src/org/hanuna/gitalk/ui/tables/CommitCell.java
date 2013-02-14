@@ -8,7 +8,6 @@ import java.util.List;
  * @author erokhins
  */
 public class CommitCell {
-    public static final int HEIGHT_CELL = 22;
 
     private final String text;
     private final List<Ref> refsToThisCommit;
