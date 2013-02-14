@@ -45,6 +45,8 @@ public class UI_ControllerImpl implements UI_Controller {
         dataPack = dataLoader.getDataPack();
         refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
         graphTableModel = new GraphTableModel(dataPack);
+
+        prevSelectionBranches = new HashSet<Hash>(refTableModel.getCheckedCommits());
     }
 
     public void init(boolean readAllLog) {
@@ -140,7 +142,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void updateVisibleBranches() {
-        Set<Hash> checkedCommitHashes = refTableModel.getCheckedCommits();
+        final Set<Hash> checkedCommitHashes = refTableModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommitHashes)) {
             MyTimer timer = new MyTimer("update branch shows");
 
@@ -149,7 +151,7 @@ public class UI_ControllerImpl implements UI_Controller {
                 @NotNull
                 @Override
                 public Boolean get(@NotNull Node key) {
-                    return prevSelectionBranches.contains(key.getCommitHash());
+                    return checkedCommitHashes.contains(key.getCommitHash());
                 }
             });
 
