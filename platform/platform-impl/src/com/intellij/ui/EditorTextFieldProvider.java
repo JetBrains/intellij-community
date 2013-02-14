@@ -28,16 +28,13 @@ import org.jetbrains.annotations.NotNull;
 public interface EditorTextFieldProvider {
 
   /**
-   * This factory method allows creation of an editor where some customizations are explicitly enabled and
-   * other customizations are explicitly disabled using the given {@link EditorFeature} objects.
+   * This factory method allows creation of an editor where the given customizations are applied to the editor.
    *
    * @param language   target language used by document that will be displayed by returned editor
    * @param project    target project
-   * @param features   {@link EditorFeature} objects which explicitly enable (and possibly configure) or disable features
    * @return
    */
   @NotNull
-  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project,
-                                 @NotNull Iterable<EditorFeature> features);
+  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull Iterable<EditorCustomization> features);
 
 }

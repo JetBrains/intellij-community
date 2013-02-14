@@ -27,9 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.ui.EditorCustomization;
-import com.intellij.ui.EditorFeature;
-import com.intellij.ui.SpellCheckingEditorFeature;
+import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashSet;
@@ -46,14 +44,21 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 3:54:42 PM
  */
-public class SpellCheckingEditorCustomization extends EditorCustomization {
+public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
+
+  public static final SpellCheckingEditorCustomization ENABLED = new SpellCheckingEditorCustomization(true);
+  public static final SpellCheckingEditorCustomization DISABLED = new SpellCheckingEditorCustomization(false);
 
   private static final Set<LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashSet<LocalInspectionToolWrapper>();
   private static final boolean READY = init();
 
-  @Override
-  protected Class<? extends EditorFeature> getFeatureClass() {
-    return SpellCheckingEditorFeature.class;
+  @NotNull
+  public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
+    return enabled ? ENABLED : DISABLED;
+  }
+
+  private SpellCheckingEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @SuppressWarnings({"unchecked"})
@@ -75,8 +80,8 @@ public class SpellCheckingEditorCustomization extends EditorCustomization {
   }
 
   @Override
-  protected void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
-    boolean apply = feature.isEnabled();
+  public void customize(@NotNull EditorEx editor) {
+    boolean apply = isEnabled();
 
     if (!READY) {
       return;

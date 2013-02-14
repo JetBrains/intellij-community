@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,20 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.editor.ex.EditorEx;
-import org.jetbrains.annotations.NotNull;
-
 /**
+ * Editor customization that can be on (enabled) or off (disabled).
+ *
  * @author Kirill Likhodedov
  */
-public class OneLineEditorCustomization extends SimpleEditorCustomization {
+public abstract class SimpleEditorCustomization implements EditorCustomization {
 
-  public static final OneLineEditorCustomization ENABLED = new OneLineEditorCustomization(true);
-  public static final OneLineEditorCustomization DISABLED = new OneLineEditorCustomization(false);
+  private final boolean myEnabled;
 
-  private OneLineEditorCustomization(boolean enabled) {
-    super(enabled);
+  protected SimpleEditorCustomization(boolean enabled) {
+    myEnabled = enabled;
   }
 
-  @Override
-  public void customize(@NotNull EditorEx editor) {
-    editor.setOneLineMode(isEnabled());
+  protected boolean isEnabled() {
+    return myEnabled;
   }
-
 }

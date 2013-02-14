@@ -26,15 +26,17 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 4:54:48 PM
  */
-public class SoftWrapsEditorCustomization extends EditorCustomization {
+public class SoftWrapsEditorCustomization extends SimpleEditorCustomization {
 
-  @Override
-  protected Class<? extends EditorFeature> getFeatureClass() {
-    return SoftWrapsEditorFeature.class;
+  public static final SoftWrapsEditorCustomization ENABLED = new SoftWrapsEditorCustomization(true);
+  public static final SoftWrapsEditorCustomization DISABLED = new SoftWrapsEditorCustomization(false);
+
+  private SoftWrapsEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @Override
-  protected void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
-    editor.getSettings().setUseSoftWraps(feature.isEnabled());
+  public void customize(@NotNull EditorEx editor) {
+    editor.getSettings().setUseSoftWraps(isEnabled());
   }
 }

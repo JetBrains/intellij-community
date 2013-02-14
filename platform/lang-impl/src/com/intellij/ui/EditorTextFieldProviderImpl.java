@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,25 +72,18 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
 
   @NotNull
   @Override
-  public EditorTextField getEditorField(@NotNull Language language,
-                                        @NotNull Project project,
-                                        @NotNull final Iterable<EditorFeature> features) {
-    return new MyEditorTextField(language, project) {
-      @Override
-      protected void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor) {
-        for (EditorFeature feature : features) {
-          for (EditorCustomization customization : customizations) {
-              customization.doProcessCustomization(editor, feature);
-          }
-        }
-      }
-    };
+  public EditorTextField getEditorField(@NotNull Language language, @NotNull Project project,
+                                        @NotNull final Iterable<EditorCustomization> features) {
+    return new MyEditorTextField(language, project, features);
   }
 
-  private abstract static class MyEditorTextField extends LanguageTextField {
+  private static class MyEditorTextField extends LanguageTextField {
 
-    MyEditorTextField(Language language, @NotNull Project project) {
+    @NotNull private final Iterable<EditorCustomization> myCustomizations;
+
+    MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<EditorCustomization> customizations) {
       super(language, project, "", false);
+      myCustomizations = customizations;
     }
 
     @Override
@@ -102,12 +94,15 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       EditorSettings settings = ex.getSettings();
       settings.setAdditionalColumnsCount(3);
       settings.setVirtualSpace(false);
-      EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, getProject());
-      applyFeatures(customizations, ex);
+      applyFeatures(ex);
       return ex;
     }
     
-    protected abstract void applyFeatures(@NotNull EditorCustomization[] customizations, @NotNull EditorEx editor);
+    private void applyFeatures(@NotNull EditorEx editor) {
+      for (EditorCustomization customization : myCustomizations) {
+        customization.customize(editor);
+      }
+    }
 
     @Override
     protected boolean isOneLineMode() {

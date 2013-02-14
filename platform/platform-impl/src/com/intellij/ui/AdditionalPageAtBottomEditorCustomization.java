@@ -22,15 +22,17 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 1/21/11 4:06 PM
  */
-public class AdditionalPageAtBottomEditorCustomization extends EditorCustomization {
+public class AdditionalPageAtBottomEditorCustomization extends SimpleEditorCustomization {
 
-  @Override
-  protected Class<? extends EditorFeature> getFeatureClass() {
-    return AdditionalPageAtBottomEditorFeature.class;
+  public static final AdditionalPageAtBottomEditorCustomization ENABLED = new AdditionalPageAtBottomEditorCustomization(true);
+  public static final AdditionalPageAtBottomEditorCustomization DISABLED = new AdditionalPageAtBottomEditorCustomization(false);
+
+  private AdditionalPageAtBottomEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @Override
-  protected void customize(@NotNull EditorEx editor, @NotNull EditorFeature feature) {
-    editor.getSettings().setAdditionalPageAtBottom(feature.isEnabled());
+  public void customize(@NotNull EditorEx editor) {
+    editor.getSettings().setAdditionalPageAtBottom(isEnabled());
   }
 }

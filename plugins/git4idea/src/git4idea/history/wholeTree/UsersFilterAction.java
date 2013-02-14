@@ -30,7 +30,11 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
@@ -168,9 +172,9 @@ public class UsersFilterAction extends BasePopupAction {
   private void createPopup(Project project) {
     final JPanel panel = new JPanel(new BorderLayout());
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    Set<EditorFeature> features = new HashSet<EditorFeature>();
-    features.add(new SoftWrapsEditorFeature(true));
-    features.add(new SpellCheckingEditorFeature(false));
+    Set<EditorCustomization> features = new HashSet<EditorCustomization>();
+    features.add(SoftWrapsEditorCustomization.ENABLED);
+    features.add(SpellCheckingEditorCustomization.DISABLED);
     myEditorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
     myEditorField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), myEditorField.getBorder()));
     myEditorField.setText("s");

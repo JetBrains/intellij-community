@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 
@@ -162,14 +163,14 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
 
-    final Set<EditorFeature> editorFeatures = new HashSet<EditorFeature>();
-    editorFeatures.add(new SpellCheckingEditorFeature(true));
+    final Set<EditorCustomization> editorFeatures = new HashSet<EditorCustomization>();
+    editorFeatures.add(SpellCheckingEditorCustomization.ENABLED);
 
     if (defaultLines == 1) {
-      editorFeatures.add(new HorizontalScrollBarEditorFeature(false));
-      editorFeatures.add(new OneLineEditorFeature(true));
+      editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
+      editorFeatures.add(OneLineEditorCustomization.ENABLED);
     } else {
-      editorFeatures.add(new SoftWrapsEditorFeature(true));
+      editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
     }
     editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();

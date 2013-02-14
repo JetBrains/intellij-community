@@ -21,11 +21,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.*;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,6 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
 
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
-  private final Project         myProject;
   private Consumer<String> myMessageConsumer;
   private TitledSeparator mySeparator;
   private boolean myCheckSpelling;
@@ -51,8 +50,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   public CommitMessage(Project project, final boolean withSeparator) {
     super(new BorderLayout());
     myEditorField = createEditorField(project);
-    myProject = project;
-    
+
     // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
     // IJ code editor uses monospaced font). Hence, we don't need any special actions here
     // (myEditorField.setFontInheritedFromLAF(true) should be used instead).
@@ -115,19 +113,20 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
    * @return a commit message editor
    */
   public static EditorTextField createCommitTextEditor(final Project project, boolean forceSpellCheckOn) {
-    Set<EditorFeature> features = new HashSet<EditorFeature>();
+    Set<EditorCustomization> features = new HashSet<EditorCustomization>();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
-      features.add(new SpellCheckingEditorFeature(forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING));
-      features.add(new RightMarginEditorFeature(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
+      boolean enableSpellChecking = forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+      features.add(SpellCheckingEditorCustomization.getInstance(enableSpellChecking));
+      features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
     } else {
-      features.add(new SpellCheckingEditorFeature(true));
-      features.add(new RightMarginEditorFeature(false, -1));
+      features.add(SpellCheckingEditorCustomization.ENABLED);
+      features.add(new RightMarginEditorCustomization(false, -1));
     }
 
-    features.add(new SoftWrapsEditorFeature(true));
-    features.add(new AdditionalPageAtBottomEditorFeature(false));
+    features.add(SoftWrapsEditorCustomization.ENABLED);
+    features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
@@ -176,16 +175,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
       return;
     }
     EditorEx editorEx = (EditorEx)editor;
-    toggleEditorSpellchecking(myProject, editorEx, check);
-  }
-
-  private static void toggleEditorSpellchecking(Project project, EditorEx editorEx, boolean spellCheckingEnabled) {
-    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, project);
-    SpellCheckingEditorFeature spellCheckFeature = new SpellCheckingEditorFeature(spellCheckingEnabled);
-
-    for (EditorCustomization customization : customizations) {
-      customization.doProcessCustomization(editorEx, spellCheckFeature);
-    }
+    SpellCheckingEditorCustomization.getInstance(check).customize(editorEx);
   }
 
   public void dispose() {
