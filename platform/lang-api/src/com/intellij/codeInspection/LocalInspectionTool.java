@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -156,7 +155,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @Nullable
   public PsiNamedElement getProblemElement(PsiElement psiElement) {
-    return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class);
+    while (psiElement!=null && !(psiElement instanceof PsiFile)) {
+      psiElement = psiElement.getParent();
+    }
+    return (PsiFile)psiElement;
   }
 
   public void inspectionStarted(LocalInspectionToolSession session, boolean isOnTheFly) {}
