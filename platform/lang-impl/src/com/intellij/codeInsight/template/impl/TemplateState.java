@@ -397,6 +397,17 @@ public class TemplateState implements Disposable {
     ApplicationManager.getApplication().runWriteAction(action);
   }
 
+  public void setSegmentsGreedy(boolean greedy) {
+    mySegments.setSegmentsGreedy(greedy);
+  }
+
+  public void setTabStopHighlightersGreedy(boolean greedy) {
+    for (RangeHighlighter highlighter : myTabStopHighlighters) {
+      highlighter.setGreedyToLeft(greedy);
+      highlighter.setGreedyToRight(greedy);
+    }
+  }
+
   private void shortenReferences() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
