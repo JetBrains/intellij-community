@@ -963,6 +963,26 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
+    else if (parent instanceof PsiIfStatement) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiIfStatement)parent).getCondition()))) {
+        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiWhileStatement) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)parent).getCondition()))) {
+        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiForStatement) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiForStatement)parent).getCondition()))) {
+        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiDoWhileStatement) {
+      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiDoWhileStatement)parent).getCondition()))) {
+        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
     else if (parent instanceof PsiReturnStatement) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
