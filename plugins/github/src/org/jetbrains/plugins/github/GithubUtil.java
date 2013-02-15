@@ -131,9 +131,8 @@ public class GithubUtil {
   }
 
   @NotNull
-  private static List<RepositoryInfo> getAvailableRepos(@NotNull String url, @NotNull String login, @NotNull String password,
-                                                       boolean ownOnly) {
-    final String request = (ownOnly ? "/user/repos" : "/user/watched");
+  private static List<RepositoryInfo> getAvailableRepos(@NotNull String url, @NotNull String login, @NotNull String password) {
+    final String request = "/user/repos";
     try {
       JsonElement result = GithubApiUtil.getRequest(url, login, password, request);
       if (result == null) {
@@ -220,11 +219,12 @@ public class GithubUtil {
 
   /**
    * Shows GitHub login settings if credentials are wrong or empty and return the list of all the watched repos by user
+   *
    * @param project
    * @return
    */
   @Nullable
-  public static List<RepositoryInfo> getAvailableRepos(final Project project, final boolean ownOnly) {
+  public static List<RepositoryInfo> getAvailableRepos(final Project project) {
     while (!checkCredentials(project)){
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
@@ -239,7 +239,7 @@ public class GithubUtil {
       @Override
       public List<RepositoryInfo> compute() {
         ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-        return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
+        return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword);
       }
     });
   }

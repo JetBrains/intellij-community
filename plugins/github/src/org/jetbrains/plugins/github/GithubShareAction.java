@@ -108,7 +108,7 @@ public class GithubShareAction extends DumbAwareAction {
     }
 
     BasicAction.saveAll();
-    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, true);
+    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project);
     if (availableRepos == null){
       return;
     }

@@ -43,7 +43,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       return;
     }
     BasicAction.saveAll();
-    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, false);
+    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project);
     if (availableRepos == null){
       return;
     }
