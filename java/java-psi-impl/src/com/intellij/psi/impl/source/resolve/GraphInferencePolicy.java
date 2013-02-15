@@ -65,8 +65,6 @@ public class GraphInferencePolicy extends ProcessCandidateParameterTypeInference
       final Set<JavaResolveResult> results = map.keySet();
       return results.toArray(new JavaResolveResult[results.size()]);
     }
-    map = new WeakHashMap<JavaResolveResult, PsiSubstitutor>();
-    ourResults.get().put(contextCall, map);
 
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall) {
       @Override
@@ -91,6 +89,9 @@ public class GraphInferencePolicy extends ProcessCandidateParameterTypeInference
     };
     PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
     final JavaResolveResult[] results = processor.getResult();
+
+    map = new WeakHashMap<JavaResolveResult, PsiSubstitutor>();
+    ourResults.get().put(contextCall, map);
     for (JavaResolveResult result : results) {
       map.put(result, PsiSubstitutor.UNKNOWN);
     }
