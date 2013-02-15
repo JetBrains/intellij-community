@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ReSTService;
@@ -51,6 +52,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private JPanel myErrorPanel;
   private TextFieldWithBrowseButton myRequirementsPathField;
   private JCheckBox analyzeDoctest;
+  private JPanel myDocStringsPanel;
+  private JPanel myRestPanel;
 
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
     myModule = module;
@@ -67,6 +70,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
+
+    myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
+    myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
   }
 
   @NotNull
