@@ -327,6 +327,29 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/lib/${it}" }.join(":")
 
+  String urlSchemes = ""
+  if (args.urlSchemes != null) {
+    urlSchemes += """
+      <key>CFBundleURLTypes</key>
+      <array>
+        <dict>
+          <key>CFBundleTypeRole</key>
+          <string>Editor</string>
+          <key>CFBundleURLName</key>
+          <string>Stacktrace</string>
+          <key>CFBundleURLSchemes</key>
+          <array>
+"""
+    args.urlSchemes.each { scheme ->
+      urlSchemes += "            <string>${scheme}</string>"
+    }
+    urlSchemes += """
+          </array>
+        </dict>
+      </array>
+"""
+  }
+
   ant.replace(file: "$path/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
     replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
@@ -340,7 +363,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
-    replacefilter(token: "@@url_schemes@@", value: ifNull(args.urlSchemes, ""))
+    replacefilter(token: "@@url_schemes@@", value: urlSchemes)
   }
 
   if (executable != "idea") {

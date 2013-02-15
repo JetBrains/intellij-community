@@ -111,6 +111,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   private static Runnable CURRENT_SETTER = null;
   private static Function<Object, Boolean> CURRENT_GETTER = null;
+  private static CustomProtocolHandler ourProtocolHandler = null;
 
   private boolean myInFullScreen;
   private IdeFrameImpl myFrame;
@@ -206,23 +207,22 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       invoke(pool, "release");
     }
 
-    // install uri handler
-    final ID mainBundle = invoke("NSBundle", "mainBundle");
-    final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
-    if (urlTypes.equals(ID.NIL)) {
-      LOG.warn("no url bundle present");
-      return;
-    }
-    Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+    if (ourProtocolHandler == null) {
+      // install uri handler
+      final ID mainBundle = invoke("NSBundle", "mainBundle");
+      final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
+      if (urlTypes.equals(ID.NIL)) {
+        LOG.warn("no url bundle present");
+        return;
+      }
+      ourProtocolHandler = new CustomProtocolHandler();
+      Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
       @Override
       public void openURI(AppEvent.OpenURIEvent event) {
-        for (CustomProtocolHandler handler : CustomProtocolHandler.EP_NAME.getExtensions()) {
-          if (handler.openLink(event.getURI())) {
-            return;
-          }
-        }
+        ourProtocolHandler.openLink(event.getURI());
       }
     });
+    }
   }
 
   public void remove() {
