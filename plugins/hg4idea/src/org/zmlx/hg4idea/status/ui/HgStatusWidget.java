@@ -167,11 +167,17 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   public void deactivate() {
+    if (isDisposed()) return;
     DvcsUtil.removeStatusBarWidget(myProject, this);
   }
 
   private void update() {
     update(getProject());
+  }
+
+  public void dispose() {
+    deactivate();
+    super.dispose();
   }
 
   private void emptyTextAndTooltip() {
