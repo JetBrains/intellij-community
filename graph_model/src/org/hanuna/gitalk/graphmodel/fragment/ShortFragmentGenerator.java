@@ -16,6 +16,8 @@ import java.util.Set;
  * @author erokhins
  */
 public class ShortFragmentGenerator {
+    private final static int MAX_FRAGMENT_SIZE = 100;
+
     private final Graph graph;
     private Get<Node, Boolean> unhiddenNodes = new Get<Node, Boolean>() {
         @NotNull
@@ -65,10 +67,16 @@ public class ShortFragmentGenerator {
         int startRowIndex = startNode.getRowIndex() + 1;
         int lastIndex = graph.getNodeRows().size() - 1;
 
+        int countNodes = 0;
         boolean isEnd = false;
         for (int currentRowIndex = startRowIndex; currentRowIndex <= lastIndex && !isEnd; currentRowIndex++) {
             for (Node node : graph.getNodeRows().get(currentRowIndex).getNodes()) {
                 if (notAddedNodes.remove(node)) {
+                    countNodes++;
+                    if (countNodes > MAX_FRAGMENT_SIZE) {
+                        isEnd = true;
+                        break;
+                    }
                     if (notAddedNodes.isEmpty() && node.getType() == Node.Type.COMMIT_NODE) {
                         if (allUpNodeHere(upNodes, node)) { // i.e. we found smallFragment
                             endNode = node;
