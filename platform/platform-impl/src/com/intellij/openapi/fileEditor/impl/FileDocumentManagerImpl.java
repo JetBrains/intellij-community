@@ -458,7 +458,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
-  private static String getLineSeparator(Document document, VirtualFile file) {
+  @NotNull
+  public static String getLineSeparator(@NotNull Document document, @NotNull VirtualFile file) {
     String lineSeparator = LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);

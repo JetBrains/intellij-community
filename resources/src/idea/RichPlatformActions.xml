@@ -171,10 +171,6 @@
     <group id="DebuggerActions">
     </group>
 
-    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
-      <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
-    </action>
-
     <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"/>
 
     <reference ref="Compile">
