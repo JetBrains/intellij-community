@@ -79,16 +79,6 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  public NewVirtualFile findChildById(final int id) {
-    return null;
-  }
-
-  @Override
-  public NewVirtualFile findChildByIdIfCached(final int id) {
-    return null;
-  }
-
-  @Override
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }

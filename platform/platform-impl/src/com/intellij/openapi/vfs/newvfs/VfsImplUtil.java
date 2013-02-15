@@ -122,7 +122,7 @@ public class VfsImplUtil {
 
   @Nullable
   private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    String normalizedPath = vfs.normalize(path);
+    String normalizedPath = normalize(vfs, path);
     if (normalizedPath == null) {
       return null;
     }
@@ -140,5 +140,10 @@ public class VfsImplUtil {
 
     Iterable<String> parts = StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS);
     return Pair.create(root, parts);
+  }
+
+  @Nullable
+  public static String normalize(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return vfs.normalize(path);
   }
 }

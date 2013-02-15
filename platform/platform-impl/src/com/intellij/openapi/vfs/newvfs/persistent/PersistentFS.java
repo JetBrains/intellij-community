@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +55,7 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract String[] listPersisted(@NotNull VirtualFile parent);
 
   @NotNull
-  public abstract Pair<String[],int[]> listAll(@NotNull VirtualFile parent);
+  public abstract FSRecords.NameId[] listAll(@NotNull VirtualFile parent);
 
   public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 

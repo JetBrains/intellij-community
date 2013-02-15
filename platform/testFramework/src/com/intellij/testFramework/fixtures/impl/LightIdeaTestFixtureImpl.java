@@ -21,7 +21,8 @@ import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -58,11 +59,11 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkForSettingsDamage();
-    PersistentFS.getInstance().clearIdCache();
 
     LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+    ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
   }
 
 
