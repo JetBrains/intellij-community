@@ -70,11 +70,8 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   public RefreshSessionImpl(@NotNull List<VFileEvent> events) {
-    myIsAsync = false;
-    myIsRecursive = false;
-    myFinishRunnable = null;
-    myEvents = new ArrayList<VFileEvent>(events);
-    myModalityState = ModalityState.NON_MODAL;
+    this(false, false, null, ModalityState.NON_MODAL);
+    myEvents.addAll(events);
   }
 
   @Override
