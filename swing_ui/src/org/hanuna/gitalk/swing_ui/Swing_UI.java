@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.swing_ui;
 
-import org.hanuna.gitalk.swing_ui.frame.ErrorFrame;
+import org.hanuna.gitalk.swing_ui.frame.ErrorModalDialog;
 import org.hanuna.gitalk.swing_ui.frame.MainFrame;
 import org.hanuna.gitalk.swing_ui.frame.ProgressFrame;
 import org.hanuna.gitalk.ui.ControllerListener;
@@ -13,7 +13,7 @@ import javax.swing.*;
  * @author erokhins
  */
 public class Swing_UI {
-    private final ErrorFrame errorFrame = new ErrorFrame("error");
+    private final ErrorModalDialog errorFrame = new ErrorModalDialog("error");
     private final ProgressFrame progressFrame = new ProgressFrame("Begin load");
     private final ControllerListener swingControllerListener = new SwingControllerListener();
     private final UI_Controller ui_controller;
