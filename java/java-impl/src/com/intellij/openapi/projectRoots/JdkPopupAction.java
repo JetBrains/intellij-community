@@ -51,7 +51,7 @@ public class JdkPopupAction extends AnAction {
 
   public JdkPopupAction() {
     super("Show Quick list", "", AllIcons.General.AddJdk);
-    if (SystemInfo.isWindows) {
+    if (/*SystemInfo.isWindows*/false) {
       new SwingWorker() {
         ArrayList<Pair<File, String>> myResult = new ArrayList<Pair<File, String>>();
 
