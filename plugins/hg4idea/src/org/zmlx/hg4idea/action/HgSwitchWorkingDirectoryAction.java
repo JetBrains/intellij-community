@@ -45,6 +45,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
     dialog.setRoots(repos, branchesForRepos);
     dialog.show();
     if (dialog.isOK()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
       new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.switch.description")) {
 
         @Override
@@ -68,7 +69,6 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
     if (dialog.isTagSelected()) {
       command.setRevision(dialog.getTag().getName());
     }
-    FileDocumentManager.getInstance().saveAllDocuments();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
