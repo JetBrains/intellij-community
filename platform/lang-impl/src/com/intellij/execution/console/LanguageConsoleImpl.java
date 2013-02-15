@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -386,20 +387,24 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final int[] offsets = new int[attributedText.size() + 1];
     int i = 0;
-    final Document history = myHistoryViewer.getDocument();
-    offsets[i] = history.getTextLength();
+    offsets[i] = 0;
+    final StringBuilder sb = new StringBuilder();
     for (final Pair<String, TextAttributes> pair : attributedText) {
-      final String str = StringUtil.convertLineSeparators(pair.getFirst());
-      appendToHistoryDocument(history, str);
-      offsets[++i] = history.getTextLength();
+      sb.append(StringUtil.convertLineSeparators(pair.getFirst()));
+      offsets[++i] = sb.length();
     }
+    final DocumentEx history = myHistoryViewer.getDocument();
+    final int oldHistoryLength = history.getTextLength();
+    appendToHistoryDocument(history, sb.toString());
+    assert oldHistoryLength + offsets[i] == history.getTextLength()
+      : "unexpected history length " + oldHistoryLength + " " + offsets[i] + " " + history.getTextLength();
     LOG.debug("printToHistory(): text processed");
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
       markupModel.addRangeHighlighter(
-        offsets[i],
-        offsets[i+1],
+        oldHistoryLength + offsets[i],
+        oldHistoryLength + offsets[i+1],
         HighlighterLayer.SYNTAX,
         pair.getSecond(),
         HighlighterTargetArea.EXACT_RANGE
