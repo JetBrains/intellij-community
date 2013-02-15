@@ -189,18 +189,21 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     list.addVirtualFiles(getRoots());
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator usingCache() {
     myUsingCache = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator withoutSelfModuleOutput() {
     myWithoutSelfModuleOutput = true;
     return this;
   }
 
+  @NotNull
   @Override
   public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider) {
     myCustomRootProvider = provider;
