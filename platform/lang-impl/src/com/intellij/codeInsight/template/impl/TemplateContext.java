@@ -59,7 +59,7 @@ public class TemplateContext {
   private static boolean differsFromDefault(@Nullable TemplateContext defaultContext, String id, boolean mine) {
     Boolean defValue = defaultContext == null ? null : defaultContext.myAdditionalContexts.get(id);
     if (defValue == null) {
-      return mine;
+      return true;
     }
     return mine != defValue;
   }
