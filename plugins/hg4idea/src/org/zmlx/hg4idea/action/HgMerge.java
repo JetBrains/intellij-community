@@ -15,15 +15,14 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgMergeCommand;
@@ -34,6 +33,8 @@ import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Nadya Zabrodina
@@ -41,91 +42,91 @@ import java.util.Collection;
 public class HgMerge extends HgAbstractGlobalAction {
 
   @Override
-  protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
-    return new HgGlobalCommandBuilder() {
-      public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        final HgMergeDialog mergeDialog = new HgMergeDialog(project, ContainerUtil.map(repos, new Function<VirtualFile, FilePath>() {
-          @Override
-          public FilePath fun(VirtualFile file) {
-            return new FilePathImpl(file);
-          }
-        }));
-        mergeDialog.show();
-        if (mergeDialog.isOK()) {
-          return buildCommand(mergeDialog, project);
-        }
-        return null;
-      }
-    };
+
+  public void execute(final Project project, final Collection<VirtualFile> repos) {
+    loadBranchesInBackgroundableAndExecuteAction(project, repos);
   }
 
-  private static HgGlobalCommand buildCommand(final HgMergeDialog dialog, final Project project) {
-    return new HgGlobalCommand() {
-      public VirtualFile getRepo() {
-        return dialog.getRepository();
-      }
-
-      public void execute() throws HgCommandException {
-        UpdatedFiles updatedFiles = UpdatedFiles.create();
-        HgCommandResultNotifier notifier = new HgCommandResultNotifier(project);
-        final VirtualFile repo = dialog.getRepository();
-
-
-        HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repo);
-
-        HgRevisionNumber incomingRevision = null;
-        HgTagBranch branch = dialog.getBranch();
-        if (branch != null) {
-          hgMergeCommand.setBranch(branch.getName());
-          incomingRevision = branch.getHead();
-        }
-
-        HgTagBranch tag = dialog.getTag();
-        if (tag != null) {
-          hgMergeCommand.setRevision(tag.getName());
-          incomingRevision = tag.getHead();
-        }
-
-        String revision = dialog.getRevision();
-        if (revision != null) {
-          hgMergeCommand.setRevision(revision);
-          incomingRevision = HgRevisionNumber.getLocalInstance(revision);
-        }
-
-        HgRevisionNumber otherHead = dialog.getOtherHead();
-        if (otherHead != null) {
-          hgMergeCommand.setRevision(otherHead.getRevision());
-          incomingRevision = otherHead;
-        }
-
-        if (incomingRevision != null) {
+  @Override
+  protected void showDialogAndExecute(final Project project,
+                                      Collection<VirtualFile> repos,
+                                      Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, branchesForRepos);
+    mergeDialog.show();
+    if (mergeDialog.isOK()) {
+      new Task.Backgroundable(project, "Merging changes...") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
-            String warnings = new HgHeadMerger(project, hgMergeCommand)
-              .merge(repo, updatedFiles, incomingRevision).getWarnings();
-
-            if (!StringUtil.isEmptyOrSpaces(warnings)) {
-              //noinspection ThrowableInstanceNeverThrown
-              VcsException warning = new VcsException(warnings);
-              warning.setIsWarning(true);
-              notifier.notifyWarning("Warnings during merge", warnings);
-            }
-
-            new HgConflictResolver(project, updatedFiles).resolve(repo);
+            executeMerge(mergeDialog, project);
+            markDirtyAndHandleErrors(project, mergeDialog.getRepository());
           }
-          catch (VcsException e) {
-            if (e.isWarning()) {
-              notifier.notifyWarning("Warning during merge", e.getMessage());
-            }
-            else {
-              notifier.notifyError(null, "Exception during merge", e.getMessage());
-            }
+          catch (HgCommandException e) {
+            handleException(project, e);
           }
+        }
+      }.queue();
+    }
+  }
+
+  private static void executeMerge(final HgMergeDialog dialog, final Project project) throws HgCommandException {
+    UpdatedFiles updatedFiles = UpdatedFiles.create();
+    HgCommandResultNotifier notifier = new HgCommandResultNotifier(project);
+    final VirtualFile repo = dialog.getRepository();
+
+    HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repo);
+
+    HgRevisionNumber incomingRevision = null;
+    HgTagBranch branch = dialog.getBranch();
+    if (branch != null) {
+      hgMergeCommand.setBranch(branch.getName());
+      incomingRevision = branch.getHead();
+    }
+
+    HgTagBranch tag = dialog.getTag();
+    if (tag != null) {
+      hgMergeCommand.setRevision(tag.getName());
+      incomingRevision = tag.getHead();
+    }
+
+    String revision = dialog.getRevision();
+    if (revision != null) {
+      hgMergeCommand.setRevision(revision);
+      incomingRevision = HgRevisionNumber.getLocalInstance(revision);
+    }
+
+    HgRevisionNumber otherHead = dialog.getOtherHead();
+    if (otherHead != null) {
+      hgMergeCommand.setRevision(otherHead.getRevision());
+      incomingRevision = otherHead;
+    }
+
+    if (incomingRevision != null) {
+      try {
+        String warnings = new HgHeadMerger(project, hgMergeCommand)
+          .merge(repo, updatedFiles, incomingRevision).getWarnings();
+
+        if (!StringUtil.isEmptyOrSpaces(warnings)) {
+          //noinspection ThrowableInstanceNeverThrown
+          VcsException warning = new VcsException(warnings);
+          warning.setIsWarning(true);
+          notifier.notifyWarning("Warnings during merge", warnings);
+        }
+
+        new HgConflictResolver(project, updatedFiles).resolve(repo);
+      }
+      catch (VcsException e) {
+        if (e.isWarning()) {
+          notifier.notifyWarning("Warning during merge", e.getMessage());
         }
         else {
-          //noinspection ThrowableInstanceNeverThrown
-          notifier.notifyError(null, "Merge error", HgVcsMessages.message("hg4idea.error.invalidTarget"));
+          notifier.notifyError(null, "Exception during merge", e.getMessage());
         }
       }
-    };
+    }
+    else {
+      //noinspection ThrowableInstanceNeverThrown
+      notifier.notifyError(null, "Merge error", HgVcsMessages.message("hg4idea.error.invalidTarget"));
+    }
   }
 }

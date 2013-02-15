@@ -14,16 +14,22 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsImplUtil;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.execution.HgCommandException;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction(Icon icon) {
@@ -33,7 +39,6 @@ abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction() {
   }
 
-  protected abstract HgGlobalCommandBuilder getHgGlobalCommandBuilder(Project project);
   private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
   public void actionPerformed(AnActionEvent event) {
@@ -42,21 +47,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (project == null) {
       return;
     }
-
-    HgGlobalCommand command = getHgGlobalCommandBuilder(project).build(HgUtil.getHgRepositories(project));
-    if (command == null) {
-      return;
-    }
-    try {
-      command.execute();
-      HgUtil.markDirectoryDirty(project, command.getRepo());
-    } catch (HgCommandException e) {
-      handleException(project, e);
-    } catch (InvocationTargetException e) {
-      handleException(project, e);
-    } catch (InterruptedException e) {
-      handleException(project, e);
-    }
+    execute(project, HgUtil.getHgRepositories(project));
   }
 
   @Override
@@ -72,19 +63,49 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
   }
 
-  protected interface HgGlobalCommand {
-    VirtualFile getRepo();
-    void execute() throws HgCommandException;
-  }
+  protected abstract void execute(Project project, Collection<VirtualFile> repositories);
 
-  protected interface HgGlobalCommandBuilder {
-    @Nullable
-    HgGlobalCommand build(Collection<VirtualFile> repos);
-  }
-
-  private static void handleException(Project project, Exception e) {
+  protected static void handleException(Project project, Exception e) {
     LOG.info(e);
-    VcsImplUtil.showErrorMessage(project, e.getMessage(), "Error");
+    new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
   }
 
+  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+    try {
+      HgUtil.markDirectoryDirty(project, repository);
+    }
+    catch (InvocationTargetException e) {
+      handleException(project, e);
+    }
+    catch (InterruptedException e) {
+      handleException(project, e);
+    }
+  }
+
+  protected void loadBranchesInBackgroundableAndExecuteAction(final Project project, final Collection<VirtualFile> repos) {
+    final Map<VirtualFile, List<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, List<HgTagBranch>>();
+    new Task.Backgroundable(project, "Update branches...") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (final VirtualFile repo : repos) {
+          new HgTagBranchCommand(project, repo).listBranches(new Consumer<List<HgTagBranch>>() {
+            @Override
+            public void consume(final List<HgTagBranch> branches) {
+              branchesForRepos.put(repo, branches);
+            }
+          });
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        showDialogAndExecute(project, repos, branchesForRepos);
+      }
+    }.queue();
+  }
+
+  protected void showDialogAndExecute(Project project,
+                                      Collection<VirtualFile> repos,
+                                      Map<VirtualFile, List<HgTagBranch>> loadedBranches) {
+  }
 }

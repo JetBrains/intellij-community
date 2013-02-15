@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class HgSwitchDialog extends DialogWrapper {
 
@@ -41,6 +42,7 @@ public class HgSwitchDialog extends DialogWrapper {
   private JRadioButton tagOption;
   private JComboBox tagSelector;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
+  private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
 
   public HgSwitchDialog(Project project) {
     super(project, false);
@@ -65,8 +67,9 @@ public class HgSwitchDialog extends DialogWrapper {
     init();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
     hgRepositorySelectorComponent.setRoots(repos);
+    this.branchesForRepos = branchesForRepos;
     updateRepository();
   }
 
@@ -117,17 +120,7 @@ public class HgSwitchDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
-      @Override
-      public void consume(final List<HgTagBranch> branches) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
-          }
-        });
-      }
-    });
+    branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
@@ -144,7 +137,7 @@ public class HgSwitchDialog extends DialogWrapper {
     });
   }
 
-  private boolean validateOptions() {
+  private static boolean validateOptions() {
     return true;
   }
 
