@@ -24,10 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -431,10 +428,10 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private void initDialog(boolean shouldShowBackground, String cancelText) {
-      if (UIUtil.isUnderAquaLookAndFeel()) {
+      if (SystemInfo.isMac) {
         UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
       }
-      myInnerPanel.setPreferredSize(new Dimension(UIUtil.isUnderAquaLookAndFeel() ? 350 : 450, -1));
+      myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
 
       myCancelButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
