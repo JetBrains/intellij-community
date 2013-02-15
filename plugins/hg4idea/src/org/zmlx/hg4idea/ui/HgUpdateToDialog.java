@@ -29,7 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HgSwitchDialog extends DialogWrapper {
+public class HgUpdateToDialog extends DialogWrapper {
 
   private final Project project;
 
@@ -44,7 +44,7 @@ public class HgSwitchDialog extends DialogWrapper {
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
   private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
 
-  public HgSwitchDialog(Project project) {
+  public HgUpdateToDialog(Project project) {
     super(project, false);
     this.project = project;
     hgRepositorySelectorComponent.setTitle("Select repository to switch");
