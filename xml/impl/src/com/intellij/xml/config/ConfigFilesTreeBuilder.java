@@ -19,7 +19,6 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -132,8 +131,8 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
-  private static String getFileTypeNodeName(FileType key) {
-    return StringUtil.capitalize(key.getDefaultExtension()) + " based context files" ;
+  private static String getFileTypeNodeName(FileType fileType) {
+    return fileType.getName() + " context files" ;
   }
 
   private boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
