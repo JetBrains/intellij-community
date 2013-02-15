@@ -38,7 +38,7 @@ public abstract class CustomProtocolHandler {
 
   public boolean openLink(@NotNull URI uri) {
     final List<String> args = getOpenArgs(uri);
-    return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args) != null;
+    return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args, null) != null;
   }
 
   @NotNull
