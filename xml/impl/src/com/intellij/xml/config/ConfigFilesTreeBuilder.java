@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +35,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.HashSet;
 
 public class ConfigFilesTreeBuilder {
 
@@ -172,7 +172,8 @@ public class ConfigFilesTreeBuilder {
       final Icon icon = fileType.getIcon();
       renderer.setIcon(icon);
       renderer.append(getFileTypeNodeName(fileType), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } if (object instanceof Module) {
+    }
+    else if (object instanceof Module) {
       final Module module = (Module)object;
       final Icon icon = ModuleType.get(module).getIcon();
       renderer.setIcon(icon);
