@@ -212,6 +212,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
         if (result != null && result.length > 0) {
+          for (PsiElement element : result) {
+            if (element == null) {
+              LOG.error("Null target element is returned by " + handler.getClass().getCanonicalName());
+              return null;
+            }
+          }
           return result;
         }
       }
