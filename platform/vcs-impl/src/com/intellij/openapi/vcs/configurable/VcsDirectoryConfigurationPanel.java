@@ -79,6 +79,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JCheckBox myShowChangedRecursively;
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
+  private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -285,6 +286,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myScopeFilterConfig.reset();
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    myCommitMessageMarginConfigurable.reset();
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {
@@ -367,6 +369,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
+    panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
 
     return panel;
   }
@@ -486,6 +489,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return myShowVcsRootErrorNotification;
   }
 
+  private JComponent createUseCommitMessageRightMargin() {
+    myCommitMessageMarginConfigurable =  new VcsCommitMessageMarginConfigurable(myProject);
+    return myCommitMessageMarginConfigurable.createComponent();
+  }
+
   private JComponent createShowRecursivelyDirtyOption() {
     myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     return myShowChangedRecursively;
@@ -503,6 +511,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS = myShowVcsRootErrorNotification.isSelected();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
+    myCommitMessageMarginConfigurable.apply();
     initializeModel();
   }
 
@@ -515,6 +524,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return true;
     }
     if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
+      return true;
+    }
+    if (myCommitMessageMarginConfigurable.isModified()) {
       return true;
     }
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());

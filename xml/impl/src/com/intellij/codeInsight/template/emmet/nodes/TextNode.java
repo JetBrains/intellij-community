@@ -1,12 +1,10 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -33,12 +31,12 @@ public class TextNode extends ZenCodingNode {
                                      int totalIterations, String surroundedText,
                                      CustomTemplateCallback callback,
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
-    final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
+    final TemplateToken templateToken = new TemplateToken("");
     final boolean containsSurroundedTextMarker = ZenCodingUtil.containsSurroundedTextMarker(myText);
 
     final String text = ZenCodingUtil.replaceMarkers(myText.replace("${nl}", "\n"), numberInIteration, totalIterations, surroundedText);
     final TemplateImpl template = new TemplateImpl("", text, "");
-    ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
+    templateToken.setTemplate(template, callback);
 
     final GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
                                                    containsSurroundedTextMarker ? null : surroundedText,

@@ -55,6 +55,7 @@ PsiJavaFile:Errors4.java
             PsiJavaToken:EQ('=')
             PsiWhiteSpace(' ')
             PsiNewExpression:new Linked
+        @Deprecated
               PsiKeyword:new('new')
               PsiReferenceParameterList
                 <empty list>
@@ -63,22 +64,22 @@ PsiJavaFile:Errors4.java
                 PsiIdentifier:Linked('Linked')
                 PsiReferenceParameterList
                   <empty list>
+              PsiWhiteSpace('\n        ')
+              PsiAnnotation
+                PsiJavaToken:AT('@')
+                PsiJavaCodeReferenceElement:Deprecated
+                  PsiIdentifier:Deprecated('Deprecated')
+                  PsiReferenceParameterList
+                    <empty list>
+                PsiAnnotationParameterList
+                  <empty list>
               PsiErrorElement:'(' or '[' expected
                 <empty list>
             PsiErrorElement:';' expected
               <empty list>
-        PsiWhiteSpace('\n        ')
+        PsiWhiteSpace(' ')
         PsiDeclarationStatement
-          PsiTypeElement:@Deprecated List<Object>
-            PsiAnnotation
-              PsiJavaToken:AT('@')
-              PsiJavaCodeReferenceElement:Deprecated
-                PsiIdentifier:Deprecated('Deprecated')
-                PsiReferenceParameterList
-                  <empty list>
-              PsiAnnotationParameterList
-                <empty list>
-            PsiWhiteSpace(' ')
+          PsiTypeElement:List<Object>
             PsiJavaCodeReferenceElement:List<Object>
               PsiIdentifier:List('List')
               PsiReferenceParameterList

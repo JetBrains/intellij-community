@@ -15,47 +15,28 @@
  */
 package com.intellij.ui;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
 
 /**
  * Defines contract for functionality that is able to customize editors.
  * <p/>
- * It's assumed that it works in terms of {@link Feature features} that can be applied to editors, i.e. every
- * customization implementation is assumed to be able to provide support for <code>[1; *]</code> features.
+ * Such customizations can be then passed to {@link EditorTextFieldProvider#getEditorField(Language, Project, Iterable)} to get editor
+ * with all necessary features applied or disabled.
  *
  * @author Denis Zhdanov
  * @since Aug 20, 2010 4:26:04 PM
  */
 public interface EditorCustomization {
 
-  enum Feature {
-    SOFT_WRAP, SPELL_CHECK, HORIZONTAL_SCROLLBAR, ONE_LINE, ADDITIONAL_PAGE_AT_BOTTOM
-  }
-
-  ExtensionPointName<EditorCustomization> EP_NAME = ExtensionPointName.create("com.intellij.editorCustomization");
-
   /**
-   * @return    set of editor customization features supported by the current class
-   */
-  Set<Feature> getSupportedFeatures();
-
-  /**
-   * Asks to perform customization of the given editor for the given feature.
+   * Applies this customization to the given editor.
+   * Subclasses should apply their customizations to the editor in this method.
    *
-   * @param editor      editor to customize
-   * @param feature     feature to apply to the given editor
+   * @param editor The editor to customize
    */
-  void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
+  void customize(@NotNull EditorEx editor);
 
-  /**
-   * Asks to un-apply customization performed earlier during {@link #addCustomization(EditorEx, Feature)} processing (if any).
-   * 
-   * @param editor      editor to customize
-   * @param feature     feature to un-apply to the given editor
-   */
-  void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
 }

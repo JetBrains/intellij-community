@@ -101,6 +101,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("mystyle.css", "mystyle.css");
   }
 
+  public void testStylesheetsStringValue() throws Exception {
+    doTest("mystyle.css", "mystyle.css");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

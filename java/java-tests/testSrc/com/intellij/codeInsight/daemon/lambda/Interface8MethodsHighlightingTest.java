@@ -22,24 +22,22 @@ import org.jetbrains.annotations.NonNls;
 public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/interfaceMethods";
 
-  public void testStaticMethod() throws Exception {
-    doTest();
-  }
-  
-  public void testNotInheritFromUnrelatedDefault() throws Exception { doTest(true, false); }
-  public void testDefaultMethodVisibility() throws Exception { doTest(true, false); }
-  public void testInheritUnrelatedDefaults() throws Exception { doTest(true, false); }
-  public void testExtensionMethods() throws Exception { doTest(false, false); }
-  public void testExtensionMethodSyntax() throws Exception {
+  public void testStaticMethod() { doTest(); }
+  public void testNotInheritFromUnrelatedDefault() { doTest(true, false); }
+  public void testDefaultMethodVisibility() { doTest(true, false); }
+  public void testInheritUnrelatedDefaults() { doTest(true, false); }
+  public void testExtensionMethods() { doTest(false, false); }
+
+  public void testExtensionMethodSyntax() {
     enableInspectionTools(DeprecatedDefenderSyntaxInspection.class);
-    doTest(true, false); 
+    doTest(true, false);
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false, false);
   }
 
-  private void doTest(final boolean checkWarnings, final boolean checkInfos) throws Exception {
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 }

@@ -159,6 +159,7 @@ infile
 init
 initializer
 initrans
+injectable
 inline
 innodb
 inout

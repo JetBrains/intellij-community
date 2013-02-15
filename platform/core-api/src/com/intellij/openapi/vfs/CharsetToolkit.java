@@ -120,10 +120,7 @@ public class CharsetToolkit {
    */
   public CharsetToolkit(@NotNull byte[] buffer, Charset defaultCharset) {
     this.buffer = buffer;
-    if (defaultCharset != null)
-      this.defaultCharset = defaultCharset;
-    else
-      this.defaultCharset = getDefaultSystemCharset();
+    this.defaultCharset = defaultCharset == null ? getDefaultSystemCharset() : defaultCharset;
   }
 
   /**
@@ -188,12 +185,7 @@ public class CharsetToolkit {
         // if no byte with an high order bit set, the encoding is US-ASCII
         // (it might have been UTF-7, but this encoding is usually internally used only by mail systems)
         // returns the default charset rather than US-ASCII if the enforce8Bit flag is set.
-        if (enforce8Bit) {
-          return defaultCharset;
-        }
-        else {
-          return Charset.forName("US-ASCII");
-        }
+        return enforce8Bit ? defaultCharset : Charset.forName("US-ASCII");
       case INVALID_UTF8:
         return defaultCharset;
       case VALID_UTF8:
@@ -515,8 +507,8 @@ public class CharsetToolkit {
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
-  public static boolean canHaveBom(@NotNull Charset charset, @Nullable byte[] bom) {
-    return bom != null && charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM);
+  public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
+    return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM) || Arrays.equals(getBom(charset), bom);
   }
 
   @Nullable

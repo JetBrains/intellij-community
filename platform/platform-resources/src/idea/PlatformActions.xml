@@ -86,11 +86,17 @@
       <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
       <action id="EditorTextEndWithSelection" class="com.intellij.openapi.editor.actions.TextEndWithSelectionAction"/>
       <action id="EditorNextWord" class="com.intellij.openapi.editor.actions.NextWordAction"/>
-      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorNextWordInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeAction"/>
       <action id="EditorNextWordWithSelection" class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
+      <action id="EditorNextWordInDifferentHumpsModeWithSelection" class="com.intellij.openapi.editor.actions.NextWordInDifferentHumpsModeWithSelectionAction"/>
+      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorPreviousWordInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeAction"/>
       <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
+      <action id="EditorPreviousWordInDifferentHumpsModeWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordInDifferentHumpsModeWithSelectionAction"/>
       <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
+      <action id="EditorDeleteToWordStartInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.DeleteToWordStartInDifferentHumpsModeAction"/>
       <action id="EditorDeleteToWordEnd" class="com.intellij.openapi.editor.actions.DeleteToWordEndAction"/>
+      <action id="EditorDeleteToWordEndInDifferentHumpsMode" class="com.intellij.openapi.editor.actions.DeleteToWordEndInDifferentHumpsModeAction"/>
       <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAction"/>
       <action id="EditorKillToWordStart" class="com.intellij.openapi.editor.actions.KillToWordStartAction"/>
       <action id="EditorKillToWordEnd" class="com.intellij.openapi.editor.actions.KillToWordEndAction"/>
@@ -162,8 +168,8 @@
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         
-        <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.FileChangeEncodingGroup">
-        </group>
+        <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
+
         <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
@@ -421,7 +427,7 @@
       <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
-      <reference ref="ChangeFileEncodingGroup"/>
+      <reference ref="ChangeFileEncodingAction"/>
     </group>
 
     <group id="ConsoleEditorPopupMenu">
@@ -560,6 +566,7 @@
         </action>
 
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
+        <action id="ColorPicker" internal="true" class="com.intellij.internal.colorpicker.ColorPickerAction" text="Color Picker"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />

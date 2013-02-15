@@ -34,6 +34,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -43,8 +45,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.EditorListenerTracker;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -111,6 +115,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
       moduleFixtureBuilder.getFixture().tearDown();
     }
+    ((DirectoryIndexImpl)DirectoryIndex.getInstance(getProject())).assertAncestorConsistent();
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override

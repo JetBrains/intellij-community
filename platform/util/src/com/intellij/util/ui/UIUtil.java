@@ -93,7 +93,7 @@ public class UIUtil {
 
     JComponent c = (JComponent)comp;
 
-    if (isUnderAquaLookAndFeel()) {
+    if (SystemInfo.isMac) {
       c.putClientProperty("JComponent.sizeVariant",
                           componentStyle == ComponentStyle.REGULAR ? "regular" : componentStyle == ComponentStyle.SMALL ? "small" : "mini");
     }

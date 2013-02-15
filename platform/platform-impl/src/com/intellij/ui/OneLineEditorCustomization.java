@@ -21,14 +21,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class OneLineEditorCustomization extends AbstractEditorCustomization {
+public class OneLineEditorCustomization extends SimpleEditorCustomization {
 
-  public OneLineEditorCustomization() {
-    super(Feature.ONE_LINE);
+  public static final OneLineEditorCustomization ENABLED = new OneLineEditorCustomization(true);
+  public static final OneLineEditorCustomization DISABLED = new OneLineEditorCustomization(false);
+
+  private OneLineEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
-    editor.setOneLineMode(apply);
+  public void customize(@NotNull EditorEx editor) {
+    editor.setOneLineMode(isEnabled());
   }
+
 }

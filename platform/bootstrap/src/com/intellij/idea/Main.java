@@ -139,7 +139,7 @@ public class Main {
 
     Collections.addAll(args,
                        System.getProperty("java.home") + "/bin/java",
-                       "-Xmx700m",
+                       "-Xmx500m",
                        "-classpath",
                        copyPatchFile.getPath(),
                        "com.intellij.updater.Runner",

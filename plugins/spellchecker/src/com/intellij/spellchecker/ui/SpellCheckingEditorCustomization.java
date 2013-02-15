@@ -27,7 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.ui.AbstractEditorCustomization;
+import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
 import gnu.trove.THashSet;
@@ -44,11 +44,23 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 3:54:42 PM
  */
-public class SpellCheckingEditorCustomization extends AbstractEditorCustomization {
+public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
+
+  public static final SpellCheckingEditorCustomization ENABLED = new SpellCheckingEditorCustomization(true);
+  public static final SpellCheckingEditorCustomization DISABLED = new SpellCheckingEditorCustomization(false);
 
   private static final Set<LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashSet<LocalInspectionToolWrapper>();
   private static final boolean READY = init();
-  
+
+  @NotNull
+  public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
+    return enabled ? ENABLED : DISABLED;
+  }
+
+  private SpellCheckingEditorCustomization(boolean enabled) {
+    super(enabled);
+  }
+
   @SuppressWarnings({"unchecked"})
   private static boolean init() {
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
@@ -66,13 +78,11 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
     }
     return true;
   }
-  
-  public SpellCheckingEditorCustomization() {
-    super(Feature.SPELL_CHECK);
-  }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
+  public void customize(@NotNull EditorEx editor) {
+    boolean apply = isEnabled();
+
     if (!READY) {
       return;
     }

@@ -78,23 +78,21 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
 
+    if (createConstantField()) {
+      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+    } else {
+      if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+      }
+      if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+      }
+    }
 
     field = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
-
-    if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
-      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-    }
-
-    if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
-      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-    }
-
-    if (createConstantField()) {
-      PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-    }
 
     final Editor newEditor = positionCursor(project, targetFile, field);
     if (newEditor == null) return;

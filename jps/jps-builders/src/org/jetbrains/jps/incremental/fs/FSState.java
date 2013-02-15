@@ -102,11 +102,19 @@ public class FSState {
   public boolean markDirty(@Nullable CompileContext context, final File file, final BuildRootDescriptor rd, final @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompile(rd, file);
     if (marked) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+      }
       if (saveEventStamp) {
         myRegistrationStamps.put(file, System.currentTimeMillis());
       }
       if (tsStorage != null) {
         tsStorage.removeStamp(file, rd.getTarget());
+      }
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(rd.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
       }
     }
     return marked;

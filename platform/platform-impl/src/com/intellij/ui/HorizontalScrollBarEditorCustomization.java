@@ -23,14 +23,17 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 12/6/10
  *         Time: 10:18 AM
  */
-public class HorizontalScrollBarEditorCustomization extends AbstractEditorCustomization {
+public class HorizontalScrollBarEditorCustomization extends SimpleEditorCustomization {
 
-  public HorizontalScrollBarEditorCustomization() {
-    super(Feature.HORIZONTAL_SCROLLBAR);
+  public static final HorizontalScrollBarEditorCustomization ENABLED = new HorizontalScrollBarEditorCustomization(true);
+  public static final HorizontalScrollBarEditorCustomization DISABLED = new HorizontalScrollBarEditorCustomization(false);
+
+  private HorizontalScrollBarEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
-    editor.setHorizontalScrollbarVisible(apply);
+  public void customize(@NotNull EditorEx editor) {
+    editor.setHorizontalScrollbarVisible(isEnabled());
   }
 }

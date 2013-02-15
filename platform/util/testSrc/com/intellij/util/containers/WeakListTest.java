@@ -42,6 +42,17 @@ public class WeakListTest extends WeaksTestCase {
     myHolder.add(obj);
     checkSameNotNulls(null);
   }
+
+  public void testClear() {
+    for (int i = 0; i < 20; i++) {
+      addElement(new Object(), myCollection);
+    }
+    assertEquals(20, myWeakList.size());
+    myHolder.clear();
+    gc();
+    myWeakList.clear();
+    assertFalse(myWeakList.iterator().hasNext());
+  }
   
   public void testIterator() {
     myCollection.add(new Object());

@@ -77,6 +77,14 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
     return myArray.remove(index);
   }
 
+  @Override
+  protected void removeRange(int fromIndex, int toIndex) {
+    for (int i = fromIndex; i < toIndex; i++) {
+      myArray.remove(i);
+    }
+    tryReduceCapacity(-1);
+  }
+
   @NotNull
   @Override
   public Iterator<T> iterator() {

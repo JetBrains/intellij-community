@@ -19,19 +19,20 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link EditorCustomization} for {@link EditorCustomization.Feature#ADDITIONAL_PAGE_AT_BOTTOM}.
- * 
  * @author Denis Zhdanov
  * @since 1/21/11 4:06 PM
  */
-public class AdditionalPageAtBottomEditorCustomization extends AbstractEditorCustomization {
+public class AdditionalPageAtBottomEditorCustomization extends SimpleEditorCustomization {
 
-  public AdditionalPageAtBottomEditorCustomization() {
-    super(Feature.ADDITIONAL_PAGE_AT_BOTTOM);
+  public static final AdditionalPageAtBottomEditorCustomization ENABLED = new AdditionalPageAtBottomEditorCustomization(true);
+  public static final AdditionalPageAtBottomEditorCustomization DISABLED = new AdditionalPageAtBottomEditorCustomization(false);
+
+  private AdditionalPageAtBottomEditorCustomization(boolean enabled) {
+    super(enabled);
   }
 
   @Override
-  protected void doProcessCustomization(@NotNull EditorEx editor, @NotNull Feature feature, boolean apply) {
-    editor.getSettings().setAdditionalPageAtBottom(apply);
+  public void customize(@NotNull EditorEx editor) {
+    editor.getSettings().setAdditionalPageAtBottom(isEnabled());
   }
 }

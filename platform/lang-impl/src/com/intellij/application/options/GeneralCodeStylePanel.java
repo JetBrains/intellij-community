@@ -28,15 +28,18 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.DisplayPriority;
+import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
@@ -49,12 +52,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String MACINTOSH_STRING = ApplicationBundle.message("combobox.crlf.mac");
 
 
-  private JTextField myRightMarginField;
+  private JSpinner myRightMarginSpinner;
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JPanel myDefaultIndentOptionsPanel;
-  private int myRightMargin;
   private SmartIndentOptionsEditor myIndentOptionsEditor;
 
 
@@ -85,17 +87,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
 
-    myRightMargin = settings.RIGHT_MARGIN;
-
-    myRightMarginField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(final DocumentEvent e) {
-        int valueFromControl = getRightMarginImpl();
-        if (valueFromControl > 0) {
-          myRightMargin = valueFromControl;
-        }
-      }
-    });
+    myRightMarginSpinner.setModel(new SpinnerNumberModel(settings.RIGHT_MARGIN, 1, 1000000, 1));
 
     myIndentOptionsEditor = new SmartIndentOptionsEditor();
     myDefaultIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
@@ -115,7 +107,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected int getRightMargin() {
-    return myRightMargin;
+    return ((Number) myRightMarginSpinner.getValue()).intValue();
   }
 
   @Override
@@ -134,24 +126,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
-    int rightMarginImpl = getRightMarginImpl();
-    if (rightMarginImpl > 0) {
-      settings.RIGHT_MARGIN = rightMarginImpl;
-    }
+    settings.RIGHT_MARGIN = ((Number) myRightMarginSpinner.getValue()).intValue();
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
     myIndentOptionsEditor.setEnabled(true);
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
-  }
-
-
-  private int getRightMarginImpl() {
-    if (myRightMarginField == null) return -1;
-    try {
-      return Integer.parseInt(myRightMarginField.getText());
-    }
-    catch (NumberFormatException e) {
-      return -1;
-    }
   }
 
   @Nullable
@@ -179,7 +157,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN))) return true;
+    if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.RIGHT_MARGIN)) return true;
     myIndentOptionsEditor.setEnabled(true);
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
@@ -206,7 +184,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginField.setText(String.valueOf(settings.RIGHT_MARGIN));
+    myRightMarginSpinner.setValue(settings.RIGHT_MARGIN);
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
     myIndentOptionsEditor.setEnabled(true);

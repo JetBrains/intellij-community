@@ -110,10 +110,10 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        return createGroup("<System Default>", selected.get(), new Function<Charset, String>() {
+        return createCharsetsActionGroup("<System Default>", selected.get(), new Function<Charset, String>() {
           @Override
           public String fun(Charset charset) {
-            return "Choose encoding '"+charset+"'";
+            return "Choose encoding '" + charset + "'";
           }
         });
       }

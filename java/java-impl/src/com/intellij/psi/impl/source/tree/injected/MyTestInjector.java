@@ -68,6 +68,9 @@ public class MyTestInjector {
     registerForStringVarInitializer(parent, project, js, "js", null, null);
     registerForStringVarInitializer(parent, project, js, "jsSeparated", " + ", " + 'separator'");
     registerForStringVarInitializer(parent, project, js, "jsBrokenPrefix", "xx ", "");
+
+    registerForStringVarInitializer(parent, project, Language.findLanguageByID("Oracle"), "oracle", null, null);
+
     registerForParameterValue(parent, project, Language.findLanguageByID("Groovy"), "groovy");
   }
 

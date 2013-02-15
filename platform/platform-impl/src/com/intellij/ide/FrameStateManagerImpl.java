@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
         return myApp.isActive();
       }
     };
-
 
     myShouldSynchronize = false;
     mySyncAlarm = new Alarm();
@@ -114,12 +113,14 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
 
   public synchronized void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
     myListeners.add(listener);
-    if (disposable != null) Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeListener(listener);
-      }
-    });
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          removeListener(listener);
+        }
+      });
+    }
   }
 
   public synchronized void removeListener(@NotNull FrameStateListener listener) {
