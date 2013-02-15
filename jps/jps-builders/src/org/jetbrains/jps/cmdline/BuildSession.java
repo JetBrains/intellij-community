@@ -13,16 +13,15 @@ import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -364,14 +363,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
         boolean hasWorkToDoWithModules = false;
-        for (JpsModule module : pd.getProject().getModules()) {
-          for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-            if (state.hasWorkToDo(new ModuleBuildTarget(module, type))) {
-              hasWorkToDoWithModules = true;
-              break;
-            }
-          }
-          if (hasWorkToDoWithModules) {
+        for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
+          if (state.hasWorkToDo(target)) {
+            hasWorkToDoWithModules = true;
             break;
           }
         }
@@ -389,7 +383,6 @@ final class BuildSession implements Runnable, CanceledStatus {
       FileUtil.delete(file);
     }
   }
-
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
     FileOutputStream fos = null;
     try {
