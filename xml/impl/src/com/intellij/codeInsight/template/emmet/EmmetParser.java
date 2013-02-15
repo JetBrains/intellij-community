@@ -219,7 +219,7 @@ public abstract class EmmetParser {
     if (template == null) {
       return false;
     }
-    return ZenCodingTemplate.doSetTemplate(token, template, myCallback);
+    return token.setTemplate(template, myCallback);
   }
 
   @Nullable
