@@ -57,7 +57,11 @@ public class CommitParser {
         String timestampStr = line.substring(0, firstSeparatorIndex);
         long timestamp;
         try {
-            timestamp = Long.parseLong(timestampStr);
+            if (timestampStr.isEmpty()) {
+                timestamp = 0;
+            } else {
+                timestamp = Long.parseLong(timestampStr);
+            }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("bad timestamp in line: " + line);
         }
