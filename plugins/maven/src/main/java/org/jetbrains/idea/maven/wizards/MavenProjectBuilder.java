@@ -114,7 +114,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     String profilesList = System.getProperty("idea.maven.import.enabled.profiles");
     if (profilesList != null) {
       Set<String> selectedProfilesSet = new LinkedHashSet<String>(selectedProfiles);
-      for (String profile : StringUtil.split(profilesList, ",")) {
+      for (String profile : StringUtil.split(profilesList.trim(), ",")) {
         selectedProfilesSet.add(profile.trim());
       }
 
