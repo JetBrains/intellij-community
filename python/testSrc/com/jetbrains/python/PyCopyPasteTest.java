@@ -270,6 +270,10 @@ public class PyCopyPasteTest extends PyTestCase {
   }
 
   public void testIndentTab() {
+    doTestTabs();
+  }
+
+  private void doTestTabs() {
     final CommonCodeStyleSettings.IndentOptions indentOptions =
       CodeStyleSettingsManager.getSettings(myFixture.getProject())
         .getIndentOptions(PythonFileType.INSTANCE);
@@ -280,6 +284,10 @@ public class PyCopyPasteTest extends PyTestCase {
     finally {
       indentOptions.USE_TAB_CHARACTER = false;
     }
+  }
+
+  public void testIndentTabIncrease() {
+    doTestTabs();
   }
 
   private void doTest() {
