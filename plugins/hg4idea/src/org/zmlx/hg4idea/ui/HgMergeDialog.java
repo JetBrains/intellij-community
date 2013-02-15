@@ -188,4 +188,8 @@ public class HgMergeDialog extends DialogWrapper {
     return contentPanel;
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
 }
