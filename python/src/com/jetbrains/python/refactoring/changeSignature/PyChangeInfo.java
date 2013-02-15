@@ -37,6 +37,7 @@ public class PyChangeInfo implements ChangeInfo {
 
     if (oldParameters.length != newParameterInfo.length) {
       myIsParameterSetOrOrderChanged = true;
+      myIsParametersNameChanged = true;
     }
     else {
       myIsParameterSetOrOrderChanged = false;
