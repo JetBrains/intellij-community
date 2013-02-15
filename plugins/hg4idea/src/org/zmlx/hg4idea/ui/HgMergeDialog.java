@@ -75,6 +75,7 @@ public class HgMergeDialog extends DialogWrapper {
     tagOption.addChangeListener(changeListener);
     revisionOption.addChangeListener(changeListener);
     otherHeadRadioButton.addChangeListener(changeListener);
+    setTitle("Merge");
     init();
   }
 
@@ -145,7 +146,7 @@ public class HgMergeDialog extends DialogWrapper {
         }
 
         HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root).getFirst();
-        for (Iterator<HgRevisionNumber> it = heads.iterator() ; it.hasNext(); ) {
+        for (Iterator<HgRevisionNumber> it = heads.iterator(); it.hasNext(); ) {
           final HgRevisionNumber rev = it.next();
           if (rev.getRevisionNumber().equals(currentParent.getRevisionNumber())) {
             it.remove();
@@ -162,7 +163,8 @@ public class HgMergeDialog extends DialogWrapper {
               otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
             }
           });
-        } else {
+        }
+        else {
           //apparently we are not at one of the heads
           disableOtherHeadsChoice();
         }
