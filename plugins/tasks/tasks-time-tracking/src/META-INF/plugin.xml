@@ -14,8 +14,10 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectConfigurable instance="com.intellij.tasks.timeTracking.TimeTrackingConfigurable" displayName="Time Tracking" id="tasks.timeTracking"
-                  parentId="tasks"/>
+    <projectConfigurable instance="com.intellij.tasks.timeTracking.TimeTrackingConfigurable" displayName="Time Tracking"
+                         id="tasks.timeTracking"
+                         nonDefaultProject="true"
+                         parentId="tasks"/>
 
     <toolWindow id="Time Tracking" anchor="right" secondary="false" icon="TasksIcons.Clock"
                 factoryClass="com.intellij.tasks.timeTracking.TasksToolWindowFactory"
