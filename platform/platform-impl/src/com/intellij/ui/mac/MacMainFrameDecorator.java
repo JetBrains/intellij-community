@@ -15,9 +15,7 @@
  */
 package com.intellij.ui.mac;
 
-import com.apple.eawt.AppEvent;
-import com.apple.eawt.FullScreenAdapter;
-import com.apple.eawt.FullScreenUtilities;
+import com.apple.eawt.*;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -26,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -206,6 +205,24 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     finally {
       invoke(pool, "release");
     }
+
+    // install uri handler
+    final ID mainBundle = invoke("NSBundle", "mainBundle");
+    final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
+    if (urlTypes.equals(ID.NIL)) {
+      LOG.warn("no url bundle present");
+      return;
+    }
+    Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+      @Override
+      public void openURI(AppEvent.OpenURIEvent event) {
+        for (CustomProtocolHandler handler : CustomProtocolHandler.EP_NAME.getExtensions()) {
+          if (handler.openLink(event.getURI())) {
+            return;
+          }
+        }
+      }
+    });
   }
 
   public void remove() {

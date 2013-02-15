@@ -340,6 +340,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
+    replacefilter(token: "@@url_schemes@@", value: ifNull(args.urlSchemes, ""))
   }
 
   if (executable != "idea") {
