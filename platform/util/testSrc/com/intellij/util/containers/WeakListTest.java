@@ -48,6 +48,7 @@ public class WeakListTest extends WeaksTestCase {
       addElement(new Object(), myCollection);
     }
     assertEquals(20, myWeakList.size());
+    myHolder.clear();
     gc();
     myWeakList.clear();
     assertFalse(myWeakList.iterator().hasNext());
