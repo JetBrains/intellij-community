@@ -43,7 +43,7 @@ public class PyPathEvaluator {
         return argValue == null ? null : new File(argValue).getParent();
       }
       else if (call.isCalleeText(PyNames.JOIN) && args.length >= 1) {
-        return evaluatePathInJoin(containingFilePath, args, args.length);
+        return evaluatePathInJoin(containingFilePath, args, args.length, visited);
       }
       else if (call.isCalleeText(PyNames.ABSPATH) && args.length == 1) {
         String argValue = evaluate(args[0], containingFilePath, visited);
@@ -97,10 +97,10 @@ public class PyPathEvaluator {
     return null;
   }
 
-  public static String evaluatePathInJoin(String containingFilePath, PyExpression[] args, int endElement) {
+  public static String evaluatePathInJoin(String containingFilePath, PyExpression[] args, int endElement, Set<PyExpression> visited) {
     String result = null;
     for (int i = 0; i < endElement; i++) {
-      String arg = evaluate(args[i], containingFilePath, new HashSet<PyExpression>());
+      String arg = evaluate(args[i], containingFilePath, visited);
       if (arg == null) {
         return null;
       }
