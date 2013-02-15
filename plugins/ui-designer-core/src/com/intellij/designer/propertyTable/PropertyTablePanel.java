@@ -16,15 +16,21 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.propertyTable.actions.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,8 +41,17 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public final class PropertyTablePanel extends JPanel implements ListSelectionListener {
+  private static final String BUTTON_KEY = "SWING_BUTTON_KEY";
+
   private final RadPropertyTable myPropertyTable;
   private final AnAction[] myActions;
+  private final JPanel myTabPanel;
+  private final JPanel myActionPanel;
+
+  private PropertyTableTab[] myTabs;
+  private PropertyTableTab myCurrentTab;
+  private TablePanelActionPolicy myActionPolicy;
+  private final JLabel myTitleLabel;
 
   public PropertyTablePanel(Project project) {
     myPropertyTable = new RadPropertyTable(project);
@@ -44,11 +59,13 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
-    JLabel titleLabel = new JLabel(DesignerBundle.message("designer.properties.title"));
-    titleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    add(titleLabel,
-        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(2, 5, 2, 0), 0, 0));
+    int gridX = 0;
+
+    myTitleLabel = new JLabel(DesignerBundle.message("designer.properties.title"));
+    myTitleLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    add(myTitleLabel,
+        new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+                               new Insets(2, 5, 2, 10), 0, 0));
 
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -65,13 +82,24 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
     actionGroup.add(new ShowExpert(myPropertyTable));
 
+    myTabPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+    add(myTabPanel,
+        new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
+                               new Insets(2, 0, 2, 0), 0, 0));
+
+    myActionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+    add(myActionPanel,
+        new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                               new Insets(2, 0, 2, 2), 0, 0));
+
     myActions = actionGroup.getChildren(null);
     for (int i = 0; i < myActions.length; i++) {
       AnAction action = myActions[i];
       if (!(action instanceof Separator)) {
-        add(new ActionButton(action, action.getTemplatePresentation(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),
-            new GridBagConstraints(i + 1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                   new Insets(2, 0, 2, i == myActions.length - 1 ? 2 : 0), 0, 0));
+        Presentation presentation = action.getTemplatePresentation();
+        ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+        myActionPanel.add(button);
+        presentation.putClientProperty(BUTTON_KEY, button);
       }
     }
 
@@ -87,14 +115,71 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPropertyTable);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myPropertyTable.initQuickFixManager(scrollPane.getViewport());
-    add(scrollPane, new GridBagConstraints(0, 1, myActions.length + 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+    add(scrollPane, new GridBagConstraints(0, 1, gridX, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(0, 0, 0, 0), 0, 0));
 
     myPropertyTable.setPropertyTablePanel(this);
   }
 
+  public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
+    PropertyTableTab[] tabs = designer == null ? null : designer.getPropertyTableTabs();
+    if (!Comparing.equal(myTabs, tabs)) {
+      myTabs = tabs;
+      myTabPanel.removeAll();
+
+      if (tabs != null && tabs.length > 1) {
+        if (!ArrayUtil.contains(myCurrentTab, tabs)) {
+          myCurrentTab = tabs[0];
+        }
+
+        for (PropertyTableTab tab : tabs) {
+          myTabPanel.add(new TableTabAction(this, tab).getButton());
+        }
+      }
+      else {
+        myCurrentTab = null;
+      }
+
+      myTitleLabel.setVisible(myCurrentTab == null);
+      myTabPanel.revalidate();
+    }
+
+    TablePanelActionPolicy policy = designer == null ? TablePanelActionPolicy.EMPTY : designer.getTablePanelActionPolicy();
+    if (!Comparing.equal(myActionPolicy, policy)) {
+      myActionPolicy = policy;
+
+      for (AnAction action : myActions) {
+        JComponent button = (JComponent)action.getTemplatePresentation().getClientProperty(BUTTON_KEY);
+        if (button != null) {
+          button.setVisible(policy.showAction(action));
+        }
+      }
+
+      myActionPanel.revalidate();
+    }
+
+    myPropertyTable.setArea(designer, area);
+  }
+
   public RadPropertyTable getPropertyTable() {
     return myPropertyTable;
+  }
+
+  @Nullable
+  public PropertyTableTab getCurrentTab() {
+    return myCurrentTab;
+  }
+
+  public void setCurrentTab(@NotNull PropertyTableTab currentTab) {
+    myCurrentTab = currentTab;
+
+    for (Component component : myTabPanel.getComponents()) {
+      ActionButton button = (ActionButton)component;
+      TableTabAction action = (TableTabAction)button.getAction();
+      action.updateState();
+    }
+
+    myPropertyTable.update();
   }
 
   @Override

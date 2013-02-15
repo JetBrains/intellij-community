@@ -110,13 +110,13 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     myComponentTree.newModel();
     if (designer == null) {
       myComponentTree.setDesignerPanel(null);
-      myPropertyTablePanel.getPropertyTable().setArea(null, null);
+      myPropertyTablePanel.setArea(null, null);
       myToolWindow.setAvailable(false, null);
     }
     else {
       myComponentTree.setDesignerPanel(designer);
       myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
-      myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
+      myPropertyTablePanel.setArea(designer, myTreeBuilder.getTreeArea());
       myToolWindow.setAvailable(true, null);
       myToolWindow.show(null);
     }

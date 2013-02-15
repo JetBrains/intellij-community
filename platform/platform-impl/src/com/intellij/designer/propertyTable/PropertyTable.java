@@ -380,6 +380,10 @@ public abstract class PropertyTable extends JBTable {
     return PROPERTY_COMPARATOR;
   }
 
+  protected List<Property> getProperties(PropertiesContainer component) {
+    return component.getProperties();
+  }
+
   private void restoreSelection(Property selection) {
     List<Property> propertyPath = new ArrayList<Property>(2);
     while (selection != null) {
@@ -424,7 +428,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (size > 0) {
       List<Property> rootProperties = new ArrayList<Property>();
-      for (Property each : (Iterable<? extends Property>)myContainers.get(0).getProperties()) {
+      for (Property each : (Iterable<? extends Property>)getProperties(myContainers.get(0))) {
         addIfNeeded(getCurrentComponent(), each, rootProperties);
       }
       sortPropertiesAndCreateGroups(rootProperties);
@@ -482,7 +486,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
-    for (Property each : component.getProperties()) {
+    for (Property each : getProperties(component)) {
       if (addIfNeeded(component, each, properties)) {
         addExpandedChildren(component, each, properties);
       }

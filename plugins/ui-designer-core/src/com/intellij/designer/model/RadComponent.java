@@ -191,6 +191,10 @@ public abstract class RadComponent extends PropertiesContainer {
     return Collections.emptyList();
   }
 
+  public List<Property> getProperties(String key) {
+    return Collections.emptyList();
+  }
+
   @Nullable
   public String getPropertyValue(String name) {
     if (getProperties() == null) {
