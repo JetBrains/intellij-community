@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -46,9 +47,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
 
-  public JavaMethodsConflictResolver(PsiExpressionList list) {
-    myArgumentsList = list;
-    myActualParameterTypes = list.getExpressionTypes();
+  public JavaMethodsConflictResolver(@NotNull PsiExpressionList list) {
+    this(list, list.getExpressionTypes());
   }
 
   public JavaMethodsConflictResolver(final PsiElement argumentsList, final PsiType[] actualParameterTypes) {

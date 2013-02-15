@@ -144,12 +144,14 @@ public class PsiScopesUtil {
     }
   }
 
-  public static boolean resolveAndWalk(PsiScopeProcessor processor, PsiJavaCodeReferenceElement ref, @Nullable PsiElement maxScope) {
+  public static boolean resolveAndWalk(@NotNull PsiScopeProcessor processor,
+                                       @NotNull PsiJavaCodeReferenceElement ref,
+                                       @Nullable PsiElement maxScope) {
     return resolveAndWalk(processor, ref, maxScope, false);
   }
 
-  public static boolean resolveAndWalk(PsiScopeProcessor processor,
-                                       PsiJavaCodeReferenceElement ref,
+  public static boolean resolveAndWalk(@NotNull PsiScopeProcessor processor,
+                                       @NotNull PsiJavaCodeReferenceElement ref,
                                        @Nullable PsiElement maxScope,
                                        boolean incompleteCode) {
     final PsiElement qualifier = ref.getQualifier();
