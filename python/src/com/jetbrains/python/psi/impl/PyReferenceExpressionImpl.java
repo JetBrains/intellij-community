@@ -65,15 +65,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return PyImportReference.forElement(this, importParent, context);
     }
 
-    if (file != null) {
-      // Return special reference
-      final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
-      if (communication != null) {
-        if (qualifier != null) {
-          return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
-        }
-        return new PydevConsoleReference(this, communication, "");
+    // Return special reference
+    final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+    if (communication != null) {
+      if (qualifier != null) {
+        return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
       }
+      return new PydevConsoleReference(this, communication, "");
     }
 
     if (qualifier != null) {
