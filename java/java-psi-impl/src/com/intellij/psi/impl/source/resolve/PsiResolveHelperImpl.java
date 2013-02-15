@@ -909,7 +909,9 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
       PsiClassType.ClassResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
       PsiClass argClass = argResult.getElement();
-      if (argClass != paramClass) return null;
+      if (argClass != paramClass) {
+        return inferBySubtypingConstraint(patternType, constraintType, depth, paramClass, argClass);
+      }
 
       Pair<PsiType,ConstraintType> wildcardCaptured = null;
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(paramClass)) {
@@ -942,6 +944,28 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return wildcardCaptured;
     }
 
+    return null;
+  }
+
+  private static Pair<PsiType, ConstraintType> inferBySubtypingConstraint(PsiType patternType,
+                                                                          ConstraintType constraintType,
+                                                                          int depth,
+                                                                          PsiClass paramClass, PsiClass argClass) {
+    if (argClass instanceof PsiTypeParameter && paramClass instanceof PsiTypeParameter && PsiUtil.isLanguageLevel8OrHigher(argClass)) {
+      final PsiClassType[] argExtendsListTypes = argClass.getExtendsListTypes();
+      final PsiClassType[] paramExtendsListTypes = paramClass.getExtendsListTypes();
+      if (argExtendsListTypes.length == paramExtendsListTypes.length) {
+        for (int i = 0; i < argExtendsListTypes.length; i++) {
+          PsiClassType argBoundType = argExtendsListTypes[i];
+          PsiClassType paramBoundType = paramExtendsListTypes[i];
+          final Pair<PsiType, ConstraintType> constraint =
+            getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
+          if (constraint != null) {
+            return constraint;
+          }
+        }
+      }
+    }
     return null;
   }
 
