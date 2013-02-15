@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@ public class JarHandlerBase {
       };
     }
     catch (IOException e) {
-      LOG.warn(e.getMessage() + ": " + originalFile.getPath());
+      LOG.warn(e.getMessage() + ": " + originalFile.getPath(), e);
       return null;
     }
   }
