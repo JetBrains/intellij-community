@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -313,16 +314,24 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiManagerEx manager = getManager();
+    FileElement fileElement = SharedImplUtil.findFileElement(this);
+    if (fileElement == null) {
+      LOG.error("fileElement == null!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    final PsiManagerEx manager = fileElement.getManager();
     if (manager == null) {
       LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    if (!isValid()) {
+    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
+    boolean valid = file != null && file.isValid();
+    if (!valid) {
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    Project project = manager.getProject();
+    ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
