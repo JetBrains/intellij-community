@@ -57,7 +57,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @Override
-  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
+  public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
