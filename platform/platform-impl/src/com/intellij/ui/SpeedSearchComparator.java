@@ -43,8 +43,16 @@ public class SpeedSearchComparator {
     myShouldMatchCamelCase = shouldMatchCamelCase;
   }
 
+  public int matchingDegree(String pattern, String text) {
+    return obtainMatcher(pattern).matchingDegree(text);
+  }
+
   @Nullable
   public Iterable<TextRange> matchingFragments(String pattern, String text) {
+    return obtainMatcher(pattern).matchingFragments(text);
+  }
+
+  private MinusculeMatcher obtainMatcher(String pattern) {
     if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
       myRecentSearchText = pattern;
       if (myShouldMatchCamelCase) {
@@ -55,7 +63,7 @@ public class SpeedSearchComparator {
       }
       myMinusculeMatcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
     }
-    return myMinusculeMatcher.matchingFragments(text);
+    return myMinusculeMatcher;
   }
 
   public String getRecentSearchText() {
