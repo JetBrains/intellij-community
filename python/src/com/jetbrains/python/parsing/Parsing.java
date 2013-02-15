@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,6 +52,10 @@ public class Parsing {
 
   protected boolean atToken(@Nullable final IElementType tokenType) {
     return myBuilder.getTokenType() == tokenType;
+  }
+
+  protected boolean atToken(@NotNull final IElementType tokenType, @NotNull String tokenText) {
+    return myBuilder.getTokenType() == tokenType && tokenText.equals(myBuilder.getTokenText());
   }
 
   protected boolean atAnyOfTokens(final IElementType... tokenTypes) {
