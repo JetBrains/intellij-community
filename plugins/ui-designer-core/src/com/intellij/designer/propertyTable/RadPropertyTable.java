@@ -54,15 +54,6 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
     myProject = project;
 
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myDesigner != null) {
-          myDesigner.setSelectionProperty(getCurrentKey(), getSelectionProperty());
-        }
-      }
-    });
-
     getModel().addTableModelListener(new TableModelListener() {
       @Override
       public void tableChanged(TableModelEvent e) {
@@ -71,6 +62,23 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
         }
       }
     });
+  }
+
+  private final ListSelectionListener myListener = new ListSelectionListener() {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      if (myDesigner != null) {
+        myDesigner.setSelectionProperty(getCurrentKey(), getSelectionProperty());
+      }
+    }
+  };
+
+  private void addSelectionListener() {
+    getSelectionModel().addListSelectionListener(myListener);
+  }
+
+  private void removeSelectionListener() {
+    getSelectionModel().removeListSelectionListener(myListener);
   }
 
   public void initQuickFixManager(JViewport viewPort) {
@@ -133,11 +141,18 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @Override
   public void update() {
-    if (myArea == null) {
-      update(Collections.<PropertiesContainer>emptyList(), null);
+    try {
+      removeSelectionListener();
+
+      if (myArea == null) {
+        update(Collections.<PropertiesContainer>emptyList(), null);
+      }
+      else {
+        update(myArea.getSelection(), myDesigner.getSelectionProperty(getCurrentKey()));
+      }
     }
-    else {
-      update(myArea.getSelection(), myDesigner.getSelectionProperty(getCurrentKey()));
+    finally {
+      addSelectionListener();
     }
   }
 
