@@ -424,6 +424,19 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
   }
 
+  // PY-8788
+  public void testRenameShadowingBuiltins() {
+    doInspectionTest("RenameShadowingBuiltins.py", PyShadowingBuiltinsInspection.class,
+                     "Rename element", true, true);
+  }
+
+  // PY-8788
+  public void testRenameFunctionShadowingBuiltins() {
+    doInspectionTest("RenameFunctionShadowingBuiltins.py", PyShadowingBuiltinsInspection.class,
+                     "Rename element", true, true);
+
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

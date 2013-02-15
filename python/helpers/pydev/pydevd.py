@@ -103,7 +103,8 @@ DONT_TRACE = {
               'pydevd_vm_type.py':1,
               'pydevd.py':1 ,
               'pydevd_psyco_stub.py':1,
-              '_pydev_execfile.py':1
+              '_pydev_execfile.py':1,
+              '_pydev_jython_execfile.py':1
               }
 
 if IS_PY3K:
@@ -135,11 +136,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-        run_traced = True
-
-        import pydevd_tracing
-        if run_traced:
-            pydevd_tracing.SetTrace(None) # no debugging on this thread
+        threading.settrace(None) # no debugging on this thread
 
         try:
             while not self.killReceived:

@@ -171,7 +171,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private ProcessHandler startRemoteProcess(Sdk sdk, GeneralCommandLine commandLine) throws ExecutionException {
     PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
     if (manager != null) {
-
       ProcessHandler processHandler =
         null;
 
@@ -288,12 +287,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                     boolean passParentEnvs,
                                     List<String> pathList,
                                     final String interpreterPath) {
+    Map<String, String> envs = commandLine.getEnvParams();
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
     if (flavor != null) {
       flavor.initPythonPath(commandLine, pathList);
     }
     else {
-      PythonSdkFlavor.initPythonPath(commandLine.getEnvParams(), passParentEnvs, pathList);
+      PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
     }
   }
 
@@ -339,8 +339,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
 
     return pythonPath;
-
-
   }
 
   @NotNull

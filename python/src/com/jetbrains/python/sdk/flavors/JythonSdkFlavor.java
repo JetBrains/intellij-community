@@ -5,12 +5,14 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author yole
@@ -22,14 +24,6 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   public static JythonSdkFlavor INSTANCE = new JythonSdkFlavor();
-
-  public static String appendSystemJythonPath(String pythonPath) {
-    String syspath = System.getenv(JYTHONPATH);
-    if (syspath != null) {
-      pythonPath += File.pathSeparator + syspath;
-    }
-    return pythonPath;
-  }
 
   public boolean isValidSdkPath(@NotNull File file) {
     return FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("jython");
@@ -47,11 +41,17 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    final String jythonPath = StringUtil.join(path, File.pathSeparator);
-    addToEnv(cmd, JYTHONPATH, appendSystemJythonPath(jythonPath));
+    initPythonPath(path, getEnv(cmd));
     ParamsGroup param_group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
     assert param_group != null;
     param_group.addParameter(getPythonPathCmdLineArgument(path));
+  }
+
+  @Override
+  public void initPythonPath(Collection<String> path, Map<String, String> env) {
+    path = appendSystemEnvPaths(path, JYTHONPATH);
+    final String jythonPath = StringUtil.join(path, File.pathSeparator);
+    addToEnv(JYTHONPATH, jythonPath, env);
   }
 
   @NotNull
@@ -61,7 +61,7 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   public static String getPythonPathCmdLineArgument(Collection<String> path) {
-    return "-Dpython.path=" + appendSystemJythonPath(StringUtil.join(path, File.pathSeparator));
+    return "-Dpython.path=" + StringUtil.join(appendSystemEnvPaths(path, JYTHONPATH), File.pathSeparator);
   }
 
   @Override
