@@ -177,7 +177,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           return;
         }
 
-        if (chooseAttributeName) {
+        if (chooseAttributeName && myAttrValueMarker.isValid()) {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();
           new WriteCommandAction.Simple(project) {
