@@ -58,7 +58,7 @@
       <separator/>
 
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
-      <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
+      <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>

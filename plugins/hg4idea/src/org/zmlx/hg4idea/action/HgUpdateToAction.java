@@ -24,14 +24,14 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.ui.HgSwitchDialog;
+import org.zmlx.hg4idea.ui.HgUpdateToDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
+public class HgUpdateToAction extends HgAbstractGlobalAction {
 
   protected void execute(final Project project, final Collection<VirtualFile> repos) {
     loadBranchesInBackgroundableAndExecuteAction(project, repos);
@@ -41,12 +41,15 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
   protected void showDialogAndExecute(final Project project,
                                       Collection<VirtualFile> repos,
                                       Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
-    final HgSwitchDialog dialog = new HgSwitchDialog(project);
+    final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
     dialog.setRoots(repos, branchesForRepos);
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.switch.description")) {
+      String updateToValue = dialog.isBranchSelected()
+                             ? dialog.getBranch().getName()
+                             : dialog.isTagSelected() ? dialog.getTag().getName() : dialog.getRevision();
+      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", updateToValue)) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -57,7 +60,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
     }
   }
 
-  public void updateTo(HgSwitchDialog dialog, final Project project) {
+  public void updateTo(HgUpdateToDialog dialog, final Project project) {
     final HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
     command.setClean(dialog.isRemoveLocalChanges());
     if (dialog.isRevisionSelected()) {
