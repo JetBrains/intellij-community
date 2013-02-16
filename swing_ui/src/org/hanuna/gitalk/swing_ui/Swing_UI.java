@@ -29,6 +29,7 @@ public class Swing_UI {
     }
 
     public void setState(ControllerListener.State state) {
+        System.out.println(state);
         switch (state) {
             case USUAL:
                 if (mainFrame == null) {

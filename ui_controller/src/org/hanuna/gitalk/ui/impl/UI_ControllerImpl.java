@@ -170,36 +170,57 @@ public class UI_ControllerImpl implements UI_Controller {
         }
     }
 
+
     @Override
     public void readNextPart() {
-        try {
-            dataLoader.readNextPart(new Executor<String>() {
-                @Override
-                public void execute(String key) {
-                    events.setUpdateProgressMessage(key);
-                }
-            });
-            events.runUpdateUI();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    events.setState(ControllerListener.State.PROGRESS);
 
-        } catch (IOException e) {
-            events.setState(ControllerListener.State.ERROR);
-            events.setErrorMessage(e.getMessage());
-        } catch (GitException e) {
-            events.setState(ControllerListener.State.ERROR);
-            events.setErrorMessage(e.getMessage());
-        }
+                    dataLoader.readNextPart(new Executor<String>() {
+                        @Override
+                        public void execute(String key) {
+                            events.setUpdateProgressMessage(key);
+                        }
+                    });
+
+
+                    events.setState(ControllerListener.State.USUAL);
+                    events.runUpdateUI();
+
+                } catch (IOException e) {
+                    events.setState(ControllerListener.State.ERROR);
+                    events.setErrorMessage(e.getMessage());
+                } catch (GitException e) {
+                    events.setState(ControllerListener.State.ERROR);
+                    events.setErrorMessage(e.getMessage());
+                }
+            }
+        }).start();
+
     }
 
 
     @Override
     public void hideAll() {
-        MyTimer timer = new MyTimer("hide All");
-        dataPack.getGraphModel().getFragmentManager().hideAll();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                events.setState(ControllerListener.State.PROGRESS);
+                events.setUpdateProgressMessage("Hide long branches");
+                MyTimer timer = new MyTimer("hide All");
+                dataPack.getGraphModel().getFragmentManager().hideAll();
 
-        events.runUpdateUI();
-        //TODO:
-        events.runJumpToRow(0);
-        timer.print();
+                events.runUpdateUI();
+                //TODO:
+                events.runJumpToRow(0);
+                timer.print();
+
+                events.setState(ControllerListener.State.USUAL);
+            }
+        }).start();
     }
 
     @Override
