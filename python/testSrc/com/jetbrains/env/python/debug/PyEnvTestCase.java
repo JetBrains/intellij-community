@@ -4,12 +4,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.env.PyTestRemoteSdkProvider;
+import com.jetbrains.env.RemoteSdkTestable;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,52 +91,131 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
       return;
     }
 
-    boolean wasExecuted = false;
 
-    List<String> passedRoots = Lists.newArrayList();
+    TaskRunner taskRunner = new TaskRunner(roots);
 
-    for (String env : roots) {
+    taskRunner.runTask(testTask, testName);
 
-      if (!isSuitableForTask(loadEnvTags(env), testTask)) {
-        continue;
+    if (testTask instanceof RemoteSdkTestable) {
+      if (PyTestRemoteSdkProvider.canRunRemoteSdk()) {
+        taskRunner = new RemoteTaskRunner(roots);
+        taskRunner.runTask(testTask, testName);
       }
+      else {
+        fail("Cant run with remote sdk: password isn't set");
+      }
+    }
+  }
 
-      try {
-        testTask.setUp();
-        wasExecuted = true;
-        if (isJython(env)) {
-          testTask.useLongTimeout();
+
+  private static class TaskRunner {
+    private final List<String> myRoots;
+
+    private TaskRunner(List<String> roots) {
+      myRoots = roots;
+    }
+
+    public void runTask(PyTestTask testTask, String testName) {
+      boolean wasExecuted = false;
+
+      List<String> passedRoots = Lists.newArrayList();
+
+      for (String root : myRoots) {
+
+        if (!isSuitableForTask(loadEnvTags(root), testTask) || !shouldRun(root, testTask)) {
+          continue;
         }
-        else {
-          testTask.useNormalTimeout();
-        }
-        final String executable = PythonSdkType.getPythonExecutable(env);
-        if (executable == null) {
-          throw new RuntimeException("Cannot find Python interpreter in " + env);
-        }
-        testTask.runTestOn(executable);
-        passedRoots.add(env);
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on environment " + env, e);
-      }
-      finally {
+
         try {
-          testTask.tearDown();
+          testTask.setUp();
+          wasExecuted = true;
+          if (isJython(root)) {
+            testTask.useLongTimeout();
+          }
+          else {
+            testTask.useNormalTimeout();
+          }
+          final String executable = getExecutable(root, testTask);
+          if (executable == null) {
+            throw new RuntimeException("Cannot find Python interpreter in " + root);
+          }
+          testTask.runTestOn(executable);
+          passedRoots.add(root);
         }
-        catch (Exception e) {
-          throw new RuntimeException("Couldn't tear down task", e);
+        catch (Throwable e) {
+          throw new RuntimeException(joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on environment " + root, e);
         }
+        finally {
+          try {
+            testTask.tearDown();
+          }
+          catch (Exception e) {
+            throw new RuntimeException("Couldn't tear down task", e);
+          }
+        }
+      }
+
+      if (!wasExecuted) {
+        throw new RuntimeException("test" +
+                                   testName +
+                                   " was not executed.\n" +
+                                   joinStrings(myRoots, "All roots: ") +
+                                   "\n" +
+                                   joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
       }
     }
 
-    if (!wasExecuted) {
-      throw new RuntimeException("test" +
-                                 testName +
-                                 " was not executed.\n" +
-                                 joinStrings(roots, "All roots: ") +
-                                 "\n" +
-                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+    protected boolean shouldRun(String root, PyTestTask task) {
+      return true;
+    }
+
+    protected String getExecutable(String root, PyTestTask testTask) {
+      return PythonSdkType.getPythonExecutable(root);
+    }
+  }
+
+  private static class RemoteTaskRunner extends TaskRunner {
+    private RemoteTaskRunner(List<String> roots) {
+      super(roots);
+    }
+
+    @Override
+    protected String getExecutable(String root, PyTestTask testTask) {
+      try {
+        final Sdk sdk = PyTestRemoteSdkProvider.getInstance().getSdk(getProject(testTask), super.getExecutable(root, testTask));
+
+        if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  ProjectJdkTable.getInstance().addJdk(sdk);
+                }
+              });
+            }
+          });
+        }
+
+        return ((PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getFullInterpreterPath();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Nullable
+    public Project getProject(PyTestTask task) {
+      if (task instanceof PyExecutionFixtureTestTask) {
+        return ((PyExecutionFixtureTestTask)task).getProject();
+      }
+      return null;
+    }
+
+    @Override
+    protected boolean shouldRun(String root, PyTestTask task) {
+      return !isJython(super.getExecutable(root, task)); //TODO: make remote tests work for jython
     }
   }
 

@@ -7,12 +7,14 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
+import com.jetbrains.env.RemoteSdkTestable;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -28,7 +30,7 @@ import java.util.concurrent.Semaphore;
 /**
  * @author traff
  */
-public class PyDebuggerTask extends PyBaseDebuggerTask {
+public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTestable {
 
   private boolean myMultiprocessDebug = false;
   private PythonRunConfiguration myRunConfiguration;
@@ -175,19 +177,29 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
   @Override
   protected void disposeDebugProcess() throws InterruptedException {
     if (myDebugProcess != null) {
+      ProcessHandler processHandler = myDebugProcess.getProcessHandler();
 
       myDebugProcess.stop();
 
-      waitFor(myDebugProcess.getProcessHandler());
+      waitFor(processHandler);
 
-      if (!myDebugProcess.getProcessHandler().isProcessTerminated()) {
-        KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
-
-        h.killProcess();
-        if (!waitFor(h)) {
+      if (!processHandler.isProcessTerminated()) {
+        killDebugProcess();
+        if (!waitFor(processHandler)) {
           new Throwable("Cannot stop debugger process").printStackTrace();
         }
       }
+    }
+  }
+
+  private void killDebugProcess() {
+    if (myDebugProcess.getProcessHandler() instanceof KillableColoredProcessHandler) {
+      KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
+
+      h.killProcess();
+    }
+    else {
+      myDebugProcess.getProcessHandler().destroyProcess();
     }
   }
 }

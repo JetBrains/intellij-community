@@ -98,13 +98,18 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
   }
 
   private void createTempSdk(@NotNull final String sdkHome) {
-    final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
-    if (binary != null) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          mySdk = SdkConfigurationUtil.createAndAddSDK(sdkHome, PythonSdkType.getInstance());
-        }
-      });
+
+    mySdk = PythonSdkType.findSdkByPath(sdkHome);
+
+    if (mySdk == null) {
+      final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
+      if (binary != null) {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          public void run() {
+            mySdk = SdkConfigurationUtil.createAndAddSDK(sdkHome, PythonSdkType.getInstance());
+          }
+        });
+      }
     }
   }
 

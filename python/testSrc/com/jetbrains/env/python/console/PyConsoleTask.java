@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -122,19 +121,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   public void runTestOn(final String sdkHome) throws Exception {
     final Project project = getProject();
 
-    SdkType sdkType = PythonSdkType.getInstance();
-
-    final Sdk sdk = new ProjectJdkImpl("Python Test Sdk " + sdkHome, sdkType) {
-      @Override
-      public String getHomePath() {
-        return sdkHome;
-      }
-
-      @Override
-      public String getVersionString() {
-        return "Python 2 Mock SDK";
-      }
-    };
+    final Sdk sdk = getSdk(sdkHome);
 
     setProcessCanTerminate(false);
 
@@ -205,6 +192,22 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
       disposeConsole();
     }
+  }
+
+  private Sdk getSdk(final String sdkHome) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+
+    return sdk != null ? sdk : new ProjectJdkImpl("Python Test Sdk " + sdkHome, PythonSdkType.getInstance()) {
+      @Override
+      public String getHomePath() {
+        return sdkHome;
+      }
+
+      @Override
+      public String getVersionString() {
+        return "Python 2 Mock SDK";
+      }
+    };
   }
 
   private void disposeConsoleProcess() throws InterruptedException {
