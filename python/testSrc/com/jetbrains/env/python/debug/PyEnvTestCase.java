@@ -143,7 +143,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
           passedRoots.add(root);
         }
         catch (Throwable e) {
-          throw new RuntimeException(joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on environment " + root, e);
+          throw new RuntimeException(
+            joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root, e);
         }
         finally {
           try {
@@ -171,6 +172,10 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     protected String getExecutable(String root, PyTestTask testTask) {
       return PythonSdkType.getPythonExecutable(root);
+    }
+
+    protected String getEnvType() {
+      return "local";
     }
   }
 
@@ -216,6 +221,11 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     @Override
     protected boolean shouldRun(String root, PyTestTask task) {
       return !isJython(super.getExecutable(root, task)); //TODO: make remote tests work for jython
+    }
+
+    @Override
+    protected String getEnvType() {
+      return "remote";
     }
   }
 
