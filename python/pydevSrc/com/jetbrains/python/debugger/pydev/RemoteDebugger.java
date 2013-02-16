@@ -36,6 +36,9 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
+
+  private static final int CONNECTION_TIMEOUT = 60000;
+
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;
   private final int myTimeout;
@@ -71,6 +74,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public void waitForConnect() throws Exception {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
+      myServerSocket.setSoTimeout(CONNECTION_TIMEOUT);
       mySocket = myServerSocket.accept();
       myConnected = true;
     }
