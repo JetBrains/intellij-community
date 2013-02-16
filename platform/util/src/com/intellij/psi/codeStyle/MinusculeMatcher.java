@@ -119,7 +119,7 @@ public class MinusculeMatcher implements Matcher {
 
     int integral = 0; // matching-character-count * hump-index; favors longer fragments matching earlier words
     int humpIndex = 0;
-    int nextHumpStart = NameUtil.nextWord(name, 0);
+    int nextHumpStart = name.isEmpty() ? 0: NameUtil.nextWord(name, 0);
     for (TextRange range : iterable) {
       if (first == null) {
         first = range;
