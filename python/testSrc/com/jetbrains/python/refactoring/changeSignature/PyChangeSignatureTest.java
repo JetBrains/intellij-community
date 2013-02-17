@@ -123,8 +123,11 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testMoveRenameParam() {
-    doChangeSignatureTest("foo", Arrays.asList(new PyParameterInfo(-1, "b", "1", false),
-                                                              new PyParameterInfo(0, "a2", "2", true)));
+    final PyParameterInfo b = new PyParameterInfo(-1, "b", "1", false);
+    final PyParameterInfo a = new PyParameterInfo(0, "a", "2", true);
+    a.setName("a2");
+    doChangeSignatureTest("foo", Arrays.asList(b,
+                                               a));
   }
 
   public void testKeywordOnlyMove() {
@@ -134,8 +137,11 @@ public class PyChangeSignatureTest extends PyTestCase {
   }
 
   public void testRenameAndMoveParam() {
-    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(1, "p2", null, false),
-                                             new PyParameterInfo(0, "p", null, false)));
+    final PyParameterInfo p2 = new PyParameterInfo(1, "p2", null, false);
+    final PyParameterInfo p1 = new PyParameterInfo(0, "p1", null, false);
+    p1.setName("p");
+    doChangeSignatureTest("f", Arrays.asList(p2,
+                                             p1));
   }
 
   public void testEmptyParameterName() {
