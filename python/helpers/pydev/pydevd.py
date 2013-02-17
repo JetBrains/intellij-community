@@ -136,7 +136,8 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-        threading.settrace(None) # no debugging on this thread
+
+        self.pyDb.SetTrace(None) # no debugging on this thread
 
         try:
             while not self.killReceived:
@@ -164,7 +165,7 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
-            pydevd_tracing.SetTrace(None) # no debugging on this thread
+            self.pyDb.SetTrace(None) # no debugging on this thread
             while True:
                 if not self.pyDb.haveAliveThreads():
                     pydev_log.debug("No alive threads, finishing debug session")
@@ -203,7 +204,7 @@ class NewThreadStartup:
 
     def __call__(self):
         global_debugger = GetGlobalDebugger()
-        pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
+        global_debugger.SetTrace(global_debugger.trace_dispatch)
         self.original_func(*self.args, **self.kwargs)
 
 thread.NewThreadStartup = NewThreadStartup
@@ -277,6 +278,7 @@ class PyDB:
         self._finishDebuggingSession = False
         self.force_post_mortem_stop = 0
         self.signature_factory = None
+        self.SetTrace = pydevd_tracing.SetTrace
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
