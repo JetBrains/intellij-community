@@ -13,7 +13,9 @@ import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetIndex;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -22,6 +24,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -362,14 +365,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       try {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
-        boolean hasWorkToDoWithModules = false;
-        for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-          if (state.hasWorkToDo(target)) {
-            hasWorkToDoWithModules = true;
-            break;
-          }
-        }
-        out.writeBoolean(hasWorkToDoWithModules);
+        out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
       }
       finally {
@@ -383,6 +379,19 @@ final class BuildSession implements Runnable, CanceledStatus {
       FileUtil.delete(file);
     }
   }
+
+  private static boolean hasWorkToDo(BuildFSState state, ProjectDescriptor pd) {
+    final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+    for (JpsModule module : pd.getProject().getModules()) {
+      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+        if (state.hasWorkToDo(target)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
     FileOutputStream fos = null;
     try {
