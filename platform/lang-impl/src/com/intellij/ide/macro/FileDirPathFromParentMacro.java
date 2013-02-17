@@ -13,45 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 
-public class FileParentDirMacro extends Macro {
+public class FileDirPathFromParentMacro extends Macro {
   public String getName() {
-    return "FileParentDir";
+    return "FileDirPathFromParent";
   }
 
   public String getDescription() {
-    return IdeBundle.message("macro.file.parent.directory");
+    return IdeBundle.message("macro.file.directory.from.parent");
+  }
+
+  public String expand(DataContext dataContext) {
+    return null;
   }
 
   @Override
   public String expand(DataContext dataContext, String... args) throws ExecutionCancelledException {
-    if(args.length == 0 || StringUtil.isEmpty(args[0])) {
-      return expand(dataContext);
+    if(args.length == 0) {
+      return super.expand(dataContext, args);
     }
     String param = args[0];
     VirtualFile vFile = getVirtualDirOrParent(dataContext);
+    StringBuilder result = new StringBuilder();
     while (vFile != null && !param.equalsIgnoreCase(vFile.getName())) {
+      result.insert(0, vFile.getName() + "/");
       vFile = vFile.getParent();
     }
-    return parentPath(vFile);
-  }
-
-  public String expand(DataContext dataContext) {
-    VirtualFile vFile = getVirtualDirOrParent(dataContext);
-    return parentPath(vFile);
-  }
-
-  private static String parentPath(@Nullable VirtualFile vFile) {
-    if(vFile != null) {
-      vFile = vFile.getParent();
-    }
-    return vFile != null ? getPath(vFile) : null;
+    return result.toString();
   }
 }
