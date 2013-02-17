@@ -96,7 +96,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     taskRunner.runTask(testTask, testName);
 
-    if (testTask instanceof RemoteSdkTestable) {
+    if (PyTestRemoteSdkProvider.shouldRunRemoteSdk(testTask)) {
       if (PyTestRemoteSdkProvider.canRunRemoteSdk()) {
         taskRunner = new RemoteTaskRunner(roots);
         taskRunner.runTask(testTask, testName);

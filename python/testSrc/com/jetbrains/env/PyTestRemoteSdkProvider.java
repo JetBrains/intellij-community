@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.remotesdk.RemoteInterpreterException;
+import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.remote.PyRemoteInterpreterManagerImpl;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import gnu.trove.HashFunctions;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -85,7 +87,7 @@ public class PyTestRemoteSdkProvider {
   }
 
   public static boolean canRunRemoteSdk() {
-    return SystemInfo.isUnix && isPasswordSpecified();
+    return isPasswordSpecified();
   }
 
   private static boolean isPasswordSpecified() {
@@ -107,5 +109,9 @@ public class PyTestRemoteSdkProvider {
 
   public static String getPassword() {
     return System.getenv(SSH_PASSWORD);
+  }
+
+  public static boolean shouldRunRemoteSdk(PyTestTask task) {
+    return SystemInfo.isUnix && task instanceof RemoteSdkTestable;
   }
 }
