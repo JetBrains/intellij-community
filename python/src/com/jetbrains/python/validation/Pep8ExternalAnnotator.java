@@ -143,13 +143,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     for (Problem problem : annotationResult.problems) {
-      String stripTrailingSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
-      if (!stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
-        // ignore trailing spaces errors if they're going to disappear after save
-        if (problem.myCode.equals("W291") || problem.myCode.equals("W293")) {
-          continue;
-        }
-      }
+      if (ignoreDueToSettings(file.getProject(), problem)) continue;
       int offset = StringUtil.lineColToOffset(text, problem.myLine - 1, problem.myColumn - 1);
       PsiElement problemElement = file.findElementAt(offset);
       if (!(problemElement instanceof PsiWhiteSpace) && !(problem.myCode.startsWith("E3"))) {
@@ -185,6 +179,21 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                                            }));
       }
     }
+  }
+
+  private static boolean ignoreDueToSettings(Project project, Problem problem) {
+    String stripTrailingSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+    if (!stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
+      // ignore trailing spaces errors if they're going to disappear after save
+      if (problem.myCode.equals("W291") || problem.myCode.equals("W293")) {
+        return true;
+      }
+    }
+    boolean useTabs = CodeStyleSettingsManager.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
+    if (useTabs && problem.myCode.equals("W191")) {
+      return true;
+    }
+    return false;
   }
 
   private static final Pattern PROBLEM_PATTERN = Pattern.compile(".+:(\\d+):(\\d+): ([EW]\\d{3}) (.+)");

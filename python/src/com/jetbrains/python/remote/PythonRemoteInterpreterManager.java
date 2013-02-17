@@ -11,10 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remotesdk.RemoteCredentials;
-import com.intellij.remotesdk.RemoteInterpreterException;
-import com.intellij.remotesdk.RemoteSdkData;
-import com.intellij.remotesdk.RemoteSshProcess;
+import com.intellij.remotesdk.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -30,7 +27,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public abstract class PythonRemoteInterpreterManager {
+public abstract class PythonRemoteInterpreterManager implements RemoteSdkFactory<PyRemoteSdkAdditionalData> {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =

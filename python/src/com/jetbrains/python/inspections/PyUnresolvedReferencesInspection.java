@@ -17,8 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
-import com.jetbrains.cython.CythonLanguageDialect;
-import com.jetbrains.cython.CythonNames;
 import com.jetbrains.cython.psi.CythonFile;
 import com.jetbrains.cython.types.CythonBuiltinType;
 import com.jetbrains.cython.types.CythonType;
@@ -421,12 +419,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (element instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)element;
         if (PyNames.COMPARISON_OPERATORS.contains(refname)) {
-          return;
-        }
-        if (CythonLanguageDialect.isInsideCythonFile(element) &&
-            (CythonNames.BASE_C_TYPES.contains(text) ||
-             CythonNames.BASE_CYTHON_TYPES.contains(text) ||
-             CythonNames.BUILTINS.contains(text))) {
           return;
         }
         if (refex.getQualifier() != null) {

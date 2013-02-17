@@ -260,6 +260,10 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testAlignInGenerators() {  // PY-8822
+    doTest();
+  }
+
   public void testContinuationIndentForCallInStatementPart() {  // PY-8577
     doTest();
   }

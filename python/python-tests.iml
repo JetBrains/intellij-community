@@ -24,6 +24,7 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
     <orderEntry type="module" module-name="chronon-embedder" />
+    <orderEntry type="module" module-name="python-remote-interpreter" scope="TEST" />
   </component>
 </module>
 
