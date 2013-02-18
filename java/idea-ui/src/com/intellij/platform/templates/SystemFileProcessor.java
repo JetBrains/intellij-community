@@ -17,6 +17,8 @@ package com.intellij.platform.templates;
 
 import com.intellij.ide.util.projectWizard.ProjectTemplateComponent;
 import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
+import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -53,6 +55,8 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
         Element root = new Element("project");
         for (final ProjectTemplateComponent component : componentList) {
           final Element element = new Element("component");
+          String name = ComponentManagerImpl.getComponentName(component);
+          element.setAttribute("name", name);
           root.addContent(element);
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
@@ -66,6 +70,7 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
             }
           });
         }
+        PathMacroManager.getInstance(project).collapsePaths(root);
         return JDOMUtil.writeElement(root);
       }
     }
