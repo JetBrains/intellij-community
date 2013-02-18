@@ -190,6 +190,9 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       @Override
       public void switchPath() {
         final PortableStatus pending = svnHandl[0].getPending();
+        if (pending.isLocked()) {
+          throw new SvnExceptionWrapper(new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_LOCKED)));
+        }
         pending.setChangelistName(changelistName[0]);
         try {
           //if (infoBase != null) {
