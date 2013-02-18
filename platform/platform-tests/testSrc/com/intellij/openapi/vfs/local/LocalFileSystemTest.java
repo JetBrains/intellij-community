@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,7 +235,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes(), 0, 0, requestor);
+      file.setBinaryContent("hello".getBytes("UTF-8"), 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
       final VirtualFile check = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(hardLinkFile);
@@ -280,8 +280,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
   public void testRefreshSeesLatestDirectoryContents() throws Exception {
     File testDir = FileUtil.createTempDirectory("RefreshChildrenTest." + getName(), null);
-    byte[] bytes = "".getBytes();
-    FileUtil.writeToFile(new File(testDir, "Foo.java"), bytes);
+    String content = "";
+    FileUtil.writeToFile(new File(testDir, "Foo.java"), content);
 
     LocalFileSystem local = LocalFileSystem.getInstance();
     VirtualFile virtualDir = local.findFileByIoFile(testDir);
@@ -290,7 +290,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     virtualDir.refresh(false, true);
     checkChildCount(virtualDir, 1);
 
-    FileUtil.writeToFile(new File(testDir, "Bar.java"), bytes);
+    FileUtil.writeToFile(new File(testDir, "Bar.java"), content);
     virtualDir.refresh(false, true);
     checkChildCount(virtualDir, 2);
   }

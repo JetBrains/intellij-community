@@ -383,7 +383,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int[] children = FSRecords.list(parentId);
 
     if (children.length > 0) {
-      // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing noncached children
+      // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
       int nameId = FSRecords.getNameId(childName);
       for (final int childId : children) {
         if (nameId == FSRecords.getNameId(childId)) {
@@ -1048,7 +1048,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       myRootsLock.writeLock().lock();
       try {
         String rootUrl = file.getUrl();
-        VirtualFileSystemEntry root = myRoots.remove(rootUrl);
+        myRoots.remove(rootUrl);
         myRootsById.remove(id);
         FSRecords.deleteRootRecord(id);
       }
