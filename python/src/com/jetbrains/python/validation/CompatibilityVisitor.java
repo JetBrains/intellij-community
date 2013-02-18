@@ -511,6 +511,20 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
+  @Override
+  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+    if (shouldBeCompatibleWithPy2() && node.isEllipsis()) {
+      final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
+      if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
+        return;
+      }
+      final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
+      if (sliceItem != null) {
+        return;
+      }
+      registerProblem(node, "Python versions < 3.0 do not support '...' outside of sequence slicings.");
+    }
+  }
 
   private static class YieldVisitor extends PyElementVisitor {
     private boolean _haveYield = false;
@@ -535,12 +549,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     public void visitPyFunction(final PyFunction node) {
       // do not go to nested functions
     }
-  }
-  private boolean shouldBeCompatibleWithPy3() {
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
-        || myVersionsToProcess.contains(LanguageLevel.PYTHON32))
-      return true;
-    return false;
   }
 
   protected abstract void registerProblem(PsiElement node, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
@@ -581,13 +589,26 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-    if (compatibleWithPy2()) {
+    if (shouldBeCompatibleWithPy2()) {
       registerProblem(node, "nonlocal keyword available only since py3", null, false);
     }
   }
 
-  protected boolean compatibleWithPy2() {
-    return myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
-           myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27);
+  protected boolean shouldBeCompatibleWithPy2() {
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean shouldBeCompatibleWithPy3() {
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isPy3K()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

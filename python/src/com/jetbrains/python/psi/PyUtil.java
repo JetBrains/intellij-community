@@ -624,6 +624,23 @@ public class PyUtil {
     return false;
   }
 
+  @NotNull
+  public static AccessDirection getPropertyAccessDirection(@NotNull PyFunction function) {
+    final Property property = function.getProperty();
+    if (property != null) {
+      if (property.getGetter().valueOrNull() == function) {
+        return AccessDirection.READ;
+      }
+      if (property.getSetter().valueOrNull() == function) {
+        return AccessDirection.WRITE;
+      }
+      else if (property.getDeleter().valueOrNull() == function) {
+        return AccessDirection.DELETE;
+      }
+    }
+    return AccessDirection.READ;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
