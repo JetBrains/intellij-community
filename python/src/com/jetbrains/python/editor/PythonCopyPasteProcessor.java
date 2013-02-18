@@ -42,7 +42,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       CodeStyleSettingsManager.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
     CharFilter NOT_INDENT_FILTER = new CharFilter() {
       public boolean accept(char ch) {
-        return useTabs? ch != '\t' : !Character.isWhitespace(ch);
+        return useTabs? ch != '\t' : ch != ' ';
       }
     };
     final CaretModel caretModel = editor.getCaretModel();

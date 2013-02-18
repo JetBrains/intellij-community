@@ -269,6 +269,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testDictionary() {    //PY-8875
+    doTest();
+  }
+
   public void testIndentTab() {
     doTestTabs();
   }
