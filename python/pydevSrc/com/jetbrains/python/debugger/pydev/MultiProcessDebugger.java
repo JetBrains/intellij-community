@@ -81,6 +81,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
       myMainDebugger.waitForConnect();
 
 
+      disposeAcceptor();
+
       myDebugProcessAcceptor = new DebuggerProcessAcceptor(this, myServerSocket);
       ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
     }
@@ -109,6 +111,14 @@ public class MultiProcessDebugger implements ProcessDebugger {
     return serverSocket;
   }
 
+  @Override
+  public void close() {
+    myMainDebugger.close();
+    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
+      d.close();
+    }
+    disposeAcceptor();
+  }
 
   @Override
   public void disconnect() {
@@ -116,8 +126,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
     for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
       d.disconnect();
     }
+    disposeAcceptor();
+  }
+
+  private void disposeAcceptor() {
     if (myDebugProcessAcceptor != null) {
       myDebugProcessAcceptor.disconnect();
+      myDebugProcessAcceptor = null;
     }
   }
 
@@ -286,14 +301,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void close() {
-    myMainDebugger.close();
-    for (ProcessDebugger d : Lists.newArrayList(myOtherDebuggers)) {
-      d.close();
-    }
-  }
-
-  @Override
   public void run() throws PyDebuggerException {
     myMainDebugger.run();
   }
@@ -428,8 +435,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
         catch (IOException ignore) {
         }
         myServerSocket = null;
-        myShouldAccept = false;
       }
+      myShouldAccept = false;
+      myMultiProcessDebugger = null;
     }
   }
 
