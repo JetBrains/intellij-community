@@ -428,20 +428,7 @@ public class TemplateState implements Disposable {
 
   private void afterChangedUpdate() {
     if (isFinished()) return;
-    String message;
-    if (myPrevTemplate != null) {
-      message = myPrevTemplate.getKey();
-      if (message == null || message.length() == 0) {
-        message = myPrevTemplate.getString();
-        if (message == null) {
-          message = myPrevTemplate.getTemplateText();
-        }
-      }
-    }
-    else {
-      message = "prev template is null";
-    }
-    LOG.assertTrue(myTemplate != null, message);
+    LOG.assertTrue(myTemplate != null, presentTemplate(myPrevTemplate));
     if (myDocumentChanged) {
       if (myDocumentChangesTerminateTemplate || mySegments.isInvalid()) {
         final int oldIndex = myCurrentVariableNumber;
@@ -454,6 +441,21 @@ public class TemplateState implements Disposable {
       }
       myDocumentChanged = false;
     }
+  }
+
+  private static String presentTemplate(@Nullable TemplateImpl template) {
+    if (template == null) {
+      return "no template";
+    }
+
+    String message = template.getKey();
+    if (message == null || message.length() == 0) {
+      message = template.getString();
+      if (message == null) {
+        message = template.getTemplateText();
+      }
+    }
+    return message;
   }
 
   private String getExpressionString(int index) {
@@ -472,7 +474,11 @@ public class TemplateState implements Disposable {
       return -1;
     }
     String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
-    return myTemplate.getVariableSegmentNumber(variableName);
+    int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+    if (segmentNumber < 0) {
+      LOG.error("No segment for variable: var=" + myCurrentVariableNumber + "; name=" + variableName + "; " + presentTemplate(myTemplate));
+    }
+    return segmentNumber;
   }
 
   private void focusCurrentExpression() {
@@ -1181,6 +1187,9 @@ public class TemplateState implements Disposable {
       listener.currentVariableChanged(this, myTemplate, oldIndex, myCurrentVariableNumber);
     }
     if (myCurrentSegmentNumber < 0) {
+      if (myCurrentVariableNumber >= 0) {
+        LOG.error("A variable with no segment: " + myCurrentVariableNumber + "; " + presentTemplate(myTemplate));
+      }
       releaseAll();
     }
   }
