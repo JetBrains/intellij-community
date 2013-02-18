@@ -184,12 +184,6 @@ public class TemplateState implements Disposable {
   }
 
   @Nullable
-  public String getTrimmedVariableValue(int variableIndex) {
-    final TextResult value = getVariableValue(myTemplate.getVariableNameAt(variableIndex));
-    return value == null ? null : value.getText().trim();
-  }
-
-  @Nullable
   public TextResult getVariableValue(@NotNull String variableName) {
     if (variableName.equals(TemplateImpl.SELECTION)) {
       final String selection = (String)getProperties().get(ExpressionContext.SELECTION);
@@ -220,11 +214,6 @@ public class TemplateState implements Disposable {
     int number = getCurrentSegmentNumber();
     if (number == -1) return null;
     return new TextRange(mySegments.getSegmentStart(number), mySegments.getSegmentEnd(number));
-  }
-
-  @Nullable
-  public TextRange getVariableRange(int variableIndex) {
-    return getVariableRange(myTemplate.getVariableNameAt(variableIndex));
   }
 
   @Nullable
