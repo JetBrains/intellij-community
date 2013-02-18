@@ -642,6 +642,11 @@ public class SvnStatusHandler extends DefaultHandler {
         status.setIsConflicted(true);
       }
 
+      final String switched = attributes.getValue("switched");
+      if (switched != null && Boolean.parseBoolean(switched)) {
+        status.setIsSwitched(true);
+      }
+
       final String revision = attributes.getValue("revision");
       if (! StringUtil.isEmptyOrSpaces(revision)) {
         try {
