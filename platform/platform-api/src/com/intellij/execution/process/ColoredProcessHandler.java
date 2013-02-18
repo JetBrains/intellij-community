@@ -23,10 +23,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,7 +62,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   public final void notifyTextAvailable(final String text, final Key outputType) {
-    final List<Pair<String, Key>> textChunks = new ArrayList<Pair<String, Key>>();
+    final List<Pair<String, Key>> textChunks = ContainerUtil.newArrayList();
     int pos = 0;
     while(true) {
       int macroPos = text.indexOf(TEXT_ATTRS_PREFIX, pos);
