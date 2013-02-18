@@ -133,7 +133,7 @@ public class MinusculeMatcher implements Matcher {
         integral += humpIndex;
 
         char c = name.charAt(i);
-        p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
+        p = CharArrayUtil.indexOf(myPattern, c, p + 1, myPattern.length);
         if (p < 0) {
           break;
         }
