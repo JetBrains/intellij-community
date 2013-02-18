@@ -181,7 +181,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return null;
   }
 
-  private void unzip(final String name, String path, final boolean moduleMode) {
+  private void unzip(final @Nullable String projectName, String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
     final WizardInputField basePackage = getBasePackageField();
@@ -202,7 +202,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Override
         public byte[] processContent(byte[] content, String fileName) throws IOException {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
-          return fileType.isBinary() ? content : processTemplates(name, new String(content));
+          return fileType.isBinary() ? content : processTemplates(projectName, new String(content));
         }
       });
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
@@ -236,12 +236,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  private byte[] processTemplates(String projectName, String s) throws IOException {
+  private byte[] processTemplates(@Nullable String projectName, String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
     }
-    properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+    if (projectName != null) {
+      properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
+    }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
