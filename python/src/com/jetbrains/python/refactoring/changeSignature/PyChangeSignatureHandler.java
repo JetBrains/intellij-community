@@ -23,9 +23,6 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * User : ktisha
  */
@@ -137,11 +134,9 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (containingClass == null) {
       return function;
     }
-    final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
-    if (superMethods.size() > 0) {
-      final PyFunction result = PySuperMethodsSearch.getBaseMethod(superMethods,
-                                                                   containingClass);
-      final PyClass baseClass = result.getContainingClass();
+    final PyFunction deepestSuperMethod = PySuperMethodsSearch.findDeepestSuperMethod(function);
+    if (!deepestSuperMethod.equals(function)) {
+      final PyClass baseClass = deepestSuperMethod.getContainingClass();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(baseClass);
       String baseClassName = baseClass == null? "" : baseClass.getName();
       if (cache.hasInBuiltins(baseClass))
@@ -161,7 +156,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
       }
       switch (choice) {
         case 0:
-          return result;
+          return deepestSuperMethod;
         case 1:
           return function;
         default:

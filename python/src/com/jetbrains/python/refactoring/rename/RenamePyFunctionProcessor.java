@@ -13,8 +13,6 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,10 +59,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     if (PyNames.INIT.equals(function.getName())) {
       return containingClass; 
     }
-    final List<PsiElement> superMethods = new ArrayList<PsiElement>(PySuperMethodsSearch.search(function, true).findAll());
-    if (superMethods.size() > 0) {
-      final PyFunction deepestSuperMethod = PySuperMethodsSearch
-        .getBaseMethod(superMethods, containingClass);
+    final PyFunction deepestSuperMethod = PySuperMethodsSearch.findDeepestSuperMethod(function);
+    if (!deepestSuperMethod.equals(function)) {
       String message = "Method " + function.getName() + " of class " + containingClass.getQualifiedName() + "\noverrides method of class "
                        + deepestSuperMethod.getContainingClass().getQualifiedName() + ".\nDo you want to rename the base method?";
       int rc = Messages.showYesNoCancelDialog(element.getProject(), message, "Rename", Messages.getQuestionIcon());

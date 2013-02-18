@@ -6,6 +6,7 @@ import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +25,15 @@ public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PyS
       }
     }
     return (PyFunction) superMethods.get(superMethods.size()-1);
+  }
+
+  public static PyFunction findDeepestSuperMethod(PyFunction function) {
+    List<PsiElement> superMethods = new ArrayList<PsiElement>(search(function, true).findAll());
+    while (superMethods.size() > 0) {
+      function = getBaseMethod(superMethods, function.getContainingClass());
+      superMethods = new ArrayList<PsiElement>(search(function, true).findAll());
+    }
+    return function;
   }
 
   public static class SearchParameters {
