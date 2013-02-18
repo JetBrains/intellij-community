@@ -398,8 +398,8 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     CharSequence chars = myDocument.getCharsSequence();
     LogicalPosition caretPosition = myEditor.getCaretModel().getLogicalPosition();
 
-    if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n' || chars.charAt(startOffset - 1) == '\r') {
-      if (endOffset == myDocument.getTextLength() || chars.charAt(endOffset - 1) == '\n' || chars.charAt(endOffset - 1) == '\r') {
+    if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
+      if (endOffset == myDocument.getTextLength() || chars.charAt(endOffset - 1) == '\n') {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
         CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
         String space;
