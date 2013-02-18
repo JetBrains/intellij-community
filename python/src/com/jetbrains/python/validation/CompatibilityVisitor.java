@@ -536,12 +536,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       // do not go to nested functions
     }
   }
-  private boolean shouldBeCompatibleWithPy3() {
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
-        || myVersionsToProcess.contains(LanguageLevel.PYTHON32))
-      return true;
-    return false;
-  }
 
   protected abstract void registerProblem(PsiElement node, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
 
@@ -581,13 +575,26 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-    if (compatibleWithPy2()) {
+    if (shouldBeCompatibleWithPy2()) {
       registerProblem(node, "nonlocal keyword available only since py3", null, false);
     }
   }
 
-  protected boolean compatibleWithPy2() {
-    return myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
-           myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27);
+  protected boolean shouldBeCompatibleWithPy2() {
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean shouldBeCompatibleWithPy3() {
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isPy3K()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

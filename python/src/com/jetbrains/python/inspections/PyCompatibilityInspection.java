@@ -240,7 +240,7 @@ public class PyCompatibilityInspection extends PyInspection {
       }
       final String errorMessage = "This syntax available only since py3";
       final boolean isPy3 = LanguageLevel.forElement(node).isPy3K();
-      if (compatibleWithPy2() || !isPy3) {
+      if (shouldBeCompatibleWithPy2() || !isPy3) {
         for (final PyElement problemElement : problemElements)
           myHolder.registerProblem(problemElement, errorMessage, isPy3? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
                                                           ProblemHighlightType.GENERIC_ERROR);
