@@ -62,6 +62,7 @@ public class ChunkExtractor {
   private final EditorColorsScheme myColorsScheme;
 
   private final Document myDocument;
+  private long myDocumentStamp;
   private final SyntaxHighlighter myHighlighter;
 
   private final Lexer myLexer;
@@ -121,6 +122,7 @@ public class ChunkExtractor {
     myHighlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
     myLexer = myHighlighter.getHighlightingLexer();
     myLexer.start(myDocument.getCharsSequence());
+    myDocumentStamp = myDocument.getModificationStamp();
   }
 
   public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
@@ -183,8 +185,9 @@ public class ChunkExtractor {
     int i = StringUtil.indexOf(chars, '\n', start, end);
     if (i != -1) end = i;
 
-    if (lexer.getTokenStart() > start) {
+    if (lexer.getTokenStart() > start || myDocumentStamp != myDocument.getModificationStamp()) {
       lexer.start(chars);
+      myDocumentStamp = myDocument.getModificationStamp();
     }
     boolean isBeginning = true;
 
