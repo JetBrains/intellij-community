@@ -74,7 +74,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         if ((operations.contains(op) && !changedParts) || (changedParts && commutativeOperations.contains(op))) {
           if (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression) {
             final PyType type = myTypeEvalContext.getType(rightExpression);
-            if (type != null) {
+            if (type != null && !PyTypeChecker.isUnknown(type)) {
               final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
               final LanguageLevel languageLevel = LanguageLevel.forElement(rightExpression);
               if (isNumeric(type, cache) || (isString(type, cache, languageLevel) && !changedParts)) {
