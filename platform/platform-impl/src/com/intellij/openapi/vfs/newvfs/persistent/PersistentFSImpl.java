@@ -43,7 +43,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -58,10 +57,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
   private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
   private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
-  @Nullable private VirtualFileSystemEntry myFakeRoot;
-  @NotNull private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
-
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
   private final Object myInputLock = new Object();
+
+  @Nullable private VirtualFileSystemEntry myFakeRoot;
+  private boolean myShutDown = false;
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
     myEventsBus = bus;
@@ -78,9 +78,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     performShutdown();
   }
 
-  @NotNull private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(Boolean.FALSE);
-  private void performShutdown() {
-    if (!myShutdownPerformed.getAndSet(Boolean.TRUE)) {
+  private synchronized void performShutdown() {
+    if (!myShutDown) {
+      myShutDown = true;
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed");
