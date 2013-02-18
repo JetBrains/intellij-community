@@ -138,9 +138,11 @@ public class GradleLibraryManager {
       for (File file : entry.getValue()) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (virtualFile == null) {
-          //GradleLog.LOG.warn(
-          //  String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
-          //);
+          if (entry.getKey() == OrderRootType.CLASSES) {
+            GradleLog.LOG.warn(
+              String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
+            );
+          }
           continue;
         }
         if (virtualFile.isDirectory()) {
