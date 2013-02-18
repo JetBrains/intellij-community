@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -186,7 +186,7 @@ public class RefreshSessionImpl extends RefreshSession {
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
       while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-        ((PersistentFSImpl)ManagingFS.getInstance()).processEvents(mergeEventsAndReset());
+        PersistentFS.getInstance().processEvents(mergeEventsAndReset());
         scan();
       }
     }

@@ -736,6 +736,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return filtered;
   }
 
+  @Override
   public void processEvents(@NotNull List<VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
