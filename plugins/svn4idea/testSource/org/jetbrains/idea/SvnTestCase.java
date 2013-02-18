@@ -335,7 +335,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    Assert.assertTrue(FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
+    boolean deleted = false;
+    for (int i = 0; i < 5; i++) {
+      deleted = FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+      if (deleted) break;
+      sleep(200);
+    }
+    Assert.assertTrue(deleted);
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
