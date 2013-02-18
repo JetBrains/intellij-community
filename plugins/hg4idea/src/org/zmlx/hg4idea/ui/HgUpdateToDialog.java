@@ -106,7 +106,6 @@ public class HgUpdateToDialog extends DialogWrapper {
   }
 
   private void update() {
-    setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionOption.isSelected());
     branchSelector.setEnabled(branchOption.isSelected());
     tagSelector.setEnabled(tagOption.isSelected());
@@ -135,10 +134,6 @@ public class HgUpdateToDialog extends DialogWrapper {
         });
       }
     });
-  }
-
-  private static boolean validateOptions() {
-    return true;
   }
 
   protected JComponent createCenterPanel() {
