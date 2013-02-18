@@ -93,12 +93,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
 
-        final boolean canAttach = ProjectAttachProcessor.canAttachToProject();
-        if (parentValue instanceof Project && !canAttach) {
-          final String location = FileUtil.getLocationRelativeToUserHome(((Project)parentValue).getPresentableUrl());
-          data.addText(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        else if (parentValue instanceof Module || (parentValue instanceof Project && canAttach)) {
+        if (parentValue instanceof Module || parentValue instanceof Project) {
           final String location = FileUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl());
           data.addText(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
