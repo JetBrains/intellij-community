@@ -803,4 +803,82 @@ public class SvnParseCommandLineParseTest extends TestCase {
     }
     Assert.assertEquals(2, cntMatched);
   }
+
+  public void testOneFileInChangeListStatus() throws Exception {
+    final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                     "<status>\n" +
+                     "<target\n" +
+                     "   path=\".\">\n" +
+                     "</target>\n" +
+                     "<changelist\n" +
+                     "   name=\"target\">\n" +
+                     "<entry\n" +
+                     "   path=\"a.txt\">\n" +
+                     "<wc-status\n" +
+                     "   props=\"none\"\n" +
+                     "   item=\"added\"\n" +
+                     "   revision=\"-1\">\n" +
+                     "</wc-status>\n" +
+                     "</entry>\n" +
+                     "</changelist>\n" +
+                     "</status>";
+
+    final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
+    final boolean isWindows = SystemInfo.isWindows;
+    final String basePath = isWindows ? "C:/base/" : "/base33729/";
+    final Set<PortableStatus> statuses = new HashSet<PortableStatus>();
+    final String[] clName = new String[1];
+    final SvnStatusHandler handler = new
+      SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
+      @Override
+      public void switchPath() {
+        final PortableStatus pending = handlerArr[0].getPending();
+        pending.setChangelistName(clName[0]);
+        statuses.add(pending);
+        pending.getKind();
+      }
+
+      @Override
+      public void switchChangeList(String newList) {
+        clName[0] = newList;
+      }
+    }, new File(basePath), new Convertor<File, SVNInfo>() {
+      @Override
+      public SVNInfo convert(File o) {
+        try {
+          o.getCanonicalFile();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        if (isWindows) {
+          final int idx = o.getPath().indexOf(":");
+          Assert.assertTrue(idx > 0);
+          final int secondIdx = o.getPath().indexOf(":", idx + 1);
+          Assert.assertTrue(o.getPath(), secondIdx == -1);
+        } else {
+          if (o.getPath().contains(LINUX_ROOT)) {
+            Assert.assertFalse(o.getPath().contains(basePath));
+          }
+        }
+        try {
+          return createStubInfo(basePath + "1", "http://a.b.c");
+        }
+        catch (SVNException e) {
+          //
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    handlerArr[0] = handler;
+
+    final String osChecked = changePathsIfNix(s);
+    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+    parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
+
+    Assert.assertEquals(1, statuses.size());
+    final PortableStatus next = statuses.iterator().next();
+    Assert.assertEquals("a.txt", next.getPath());
+    Assert.assertEquals("target", next.getChangelistName());
+  }
 }

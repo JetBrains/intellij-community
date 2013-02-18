@@ -284,8 +284,8 @@ public class SvnStatusHandler extends DefaultHandler {
       if (createNewChild) {
         assertSAX(myElementsMap.containsKey(qName));
         final ElementHandlerBase newChild = myElementsMap.get(qName).get();
-        newChild.preEffect(myDataCallback);
         newChild.updateStatus(attributes, myPending, myLockWrapper);
+        newChild.preEffect(myDataCallback);
         myParseStack.add(newChild);
         return;
       } else {
