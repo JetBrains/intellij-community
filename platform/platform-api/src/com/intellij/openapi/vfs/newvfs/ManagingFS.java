@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ import java.io.DataOutputStream;
 /**
  * @author max
  */
-public abstract class ManagingFS implements FileSystemInterface, FileSystemPersistence {
+public abstract class ManagingFS implements FileSystemInterface {
   private static class ManagingFSHolder {
     private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
   }
@@ -67,7 +66,6 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
   @NotNull
   public abstract VirtualFile[] getLocalRoots();
 
-  @Override
   @Nullable
   public abstract VirtualFile findFileById(int id);
 }
