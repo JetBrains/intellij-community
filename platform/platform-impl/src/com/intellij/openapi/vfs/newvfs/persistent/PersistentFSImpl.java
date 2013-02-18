@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   private static FSRecords.NameId[] persistAllChildren(@NotNull final VirtualFile file, final int id, @NotNull FSRecords.NameId[] current) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
+
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
     if (delegateNames.length == 0 && current.length > 0) {
       return current;
@@ -176,10 +177,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
 
-    final TIntArrayList childrenIds = new TIntArrayList();
-    result.transformValues(new TObjectFunction<FSRecords.NameId, FSRecords.NameId>() {
+    final TIntArrayList childrenIds = new TIntArrayList(result.size());
+    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithExpectedSize(result.size());
+    result.forEachValue(new TObjectProcedure<FSRecords.NameId>() {
       @Override
-      public FSRecords.NameId execute(FSRecords.NameId nameId) {
+      public boolean execute(FSRecords.NameId nameId) {
         if (nameId.id < 0) {
           FakeVirtualFile child = new FakeVirtualFile(file, nameId.name);
           FileAttributes attributes = fs.getAttributes(child);
@@ -190,15 +192,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         }
         if (nameId.id > 0) {
           childrenIds.add(nameId.id);
+          nameIds.add(nameId);
         }
-        return nameId;
+        return true;
       }
     });
 
     FSRecords.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
 
-    Collection<FSRecords.NameId> nameIds = result.values();
     return nameIds.toArray(new FSRecords.NameId[nameIds.size()]);
   }
 
