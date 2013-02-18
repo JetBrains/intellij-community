@@ -356,10 +356,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testEllipsisAsStatement() {  // PY-7763
-    doTest();
-  }
-
   // PY-8606
   public void testEllipsisInSliceList() {
     doTest();
@@ -372,6 +368,11 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testEmptySubscription() {  // PY-8652
     doTest();
+  }
+
+  // PY-8752
+  public void testEllipsisPython3() {
+    doTest(LanguageLevel.PYTHON33);
   }
 
   public void doTest(LanguageLevel languageLevel) {

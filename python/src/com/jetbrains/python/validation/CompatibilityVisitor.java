@@ -511,6 +511,20 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
+  @Override
+  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+    if (shouldBeCompatibleWithPy2() && node.isEllipsis()) {
+      final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
+      if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
+        return;
+      }
+      final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
+      if (sliceItem != null) {
+        return;
+      }
+      registerProblem(node, "Python versions < 3.0 do not support '...' outside of sequence slicings.");
+    }
+  }
 
   private static class YieldVisitor extends PyElementVisitor {
     private boolean _haveYield = false;
