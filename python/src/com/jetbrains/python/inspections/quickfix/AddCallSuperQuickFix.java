@@ -145,7 +145,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     newFunction.append(superCall).append("\n\t");
     boolean first = true;
     for (PyStatement statement : statements) {
-      if (first && docstring != null) {
+      if (first && docstring != null || statement instanceof PyPassStatement) {
         first = false;
         continue;
       }
