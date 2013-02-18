@@ -62,11 +62,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyMethodOverridingInspection() {
-    LocalInspectionTool inspection = new PyMethodOverridingInspection();
-    doHighlightingTest(inspection);
-  }
-
   public void testPyTrailingSemicolonInspection() {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);

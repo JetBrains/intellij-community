@@ -95,6 +95,7 @@ public class PythonAllTestsSuite {
     PyUnresolvedReferencesInspectionTest.class,
     PyCallingNonCallableInspectionTest.class,
     PyUnboundLocalVariableInspectionTest.class,
+    PyMethodOverridingInspectionTest.class,
     PyUnusedImportTest.class,
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class,
