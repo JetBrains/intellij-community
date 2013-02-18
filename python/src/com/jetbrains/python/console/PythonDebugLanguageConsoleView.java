@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,9 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     add(myPydevConsoleView.getComponent(), PYDEV_CONSOLE_PANEL);
 
     showDebugConsole(PyConsoleOptionsProvider.getInstance(project).isShowDebugConsoleByDefault());
+
+    Disposer.register(this, myPydevConsoleView);
+    Disposer.register(this, myTextConsole);
   }
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
@@ -249,4 +253,6 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
       }
     }
   }
+
+
 }
