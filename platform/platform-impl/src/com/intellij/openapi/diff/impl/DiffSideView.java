@@ -160,12 +160,13 @@ public class DiffSideView {
 
     private final EditorMouseAdapter myMouseListener = new EditorMouseAdapter() {
       public void mouseReleased(EditorMouseEvent e) {
-        if (!isEventHandled(e.getMouseEvent())) {
+        if (!isEventHandled(e.getMouseEvent()) || !isInMyArea(e)) {
           return;
         }
-        if (!isInMyArea(e)) return;
         OpenFileDescriptor descriptor = getOpenFileDescriptor(e);
-        if (descriptor == null) return;
+        if (descriptor == null) {
+          return;
+        }
         myContainer.showSource(descriptor);
       }
     };
@@ -180,7 +181,7 @@ public class DiffSideView {
       return myContent.getOpenFileDescriptor(offset);
     }
 
-    private boolean isInMyArea(EditorMouseEvent e) {
+    private static boolean isInMyArea(EditorMouseEvent e) {
       return e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA;
     }
 
@@ -205,7 +206,9 @@ public class DiffSideView {
     public static void install(DiffContent content, EditorSource source, DiffSidesContainer container) {
       final Editor editor = source.getEditor();
       Project project = container.getProject();
-      if (project == null) return;
+      if (project == null || editor == null) {
+        return;
+      }
       final MouseLineNumberListener listener = new MouseLineNumberListener(content, editor, container, project);
       editor.addEditorMouseListener(listener.myMouseListener);
       editor.addEditorMouseMotionListener(listener.myMouseMotionListener);
