@@ -4,8 +4,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,6 +20,15 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
         PyFunction overridingMethod;
         try {
           overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false);
+          if (overridingMethod != null) {
+            final Property baseProperty = baseMethod.getProperty();
+            final Property overridingProperty = overridingMethod.getProperty();
+            if (baseProperty != null && overridingProperty != null) {
+              final AccessDirection direction = PyUtil.getPropertyAccessDirection(baseMethod);
+              final Callable callable = overridingProperty.getByDirection(direction).valueOrNull();
+              overridingMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
+            }
+          }
         }
         finally {
           accessToken.finish();
