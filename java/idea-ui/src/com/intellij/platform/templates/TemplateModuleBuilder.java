@@ -139,6 +139,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
+  @Nullable
+  @Override
+  public String getBuilderId() {
+    return myTemplate.getName();
+  }
+
   @Override
   public ModuleType getModuleType() {
     return myType;

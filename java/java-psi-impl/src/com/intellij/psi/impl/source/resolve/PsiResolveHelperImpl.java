@@ -743,7 +743,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         Pair<PsiType, ConstraintType> constraint = null;
         final List<PsiExpression> expressions = LambdaUtil.getReturnExpressions(lambdaExpression);
         for (final PsiExpression expression : expressions) {
-          final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression, subst, functionalInterfaceType, typeParam);
+          final boolean independent = lambdaExpression.hasFormalParameterTypes() || LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression, subst, functionalInterfaceType, typeParam);
           if (!independent) {
             if (lowerBound != PsiType.NULL) {
               return null;
@@ -817,7 +817,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final PsiParameter[] methodParameters = method.getParameterList().getParameters();
     PsiType[] methodParamTypes = new PsiType[methodParameters.length];
     for (int i = 0; i < methodParameters.length; i++) {
-      methodParamTypes[i] = subst.substitute(methodParameters[i].getType());
+      methodParamTypes[i] = GenericsUtil.eliminateWildcards(subst.substitute(methodParameters[i].getType()));
     }
     return inferTypeForMethodTypeParameterInner(typeParam, methodParamTypes, lambdaArgs, subst, null, DefaultParameterTypeInferencePolicy.INSTANCE);
   }
@@ -960,22 +960,32 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return null;
   }
 
+  private static Key<Boolean> inferSubtyping = Key.create("infer.subtiping.marker");
   private static Pair<PsiType, ConstraintType> inferBySubtypingConstraint(PsiType patternType,
                                                                           ConstraintType constraintType,
                                                                           int depth,
-                                                                          PsiClass paramClass, PsiClass argClass) {
+                                                                          PsiClass paramClass, 
+                                                                          PsiClass argClass) {
     if (argClass instanceof PsiTypeParameter && paramClass instanceof PsiTypeParameter && PsiUtil.isLanguageLevel8OrHigher(argClass)) {
+      final Boolean alreadyInferBySubtyping = paramClass.getCopyableUserData(inferSubtyping);
+      if (alreadyInferBySubtyping != null) return null;
       final PsiClassType[] argExtendsListTypes = argClass.getExtendsListTypes();
       final PsiClassType[] paramExtendsListTypes = paramClass.getExtendsListTypes();
       if (argExtendsListTypes.length == paramExtendsListTypes.length) {
-        for (int i = 0; i < argExtendsListTypes.length; i++) {
-          PsiClassType argBoundType = argExtendsListTypes[i];
-          PsiClassType paramBoundType = paramExtendsListTypes[i];
-          final Pair<PsiType, ConstraintType> constraint =
-            getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
-          if (constraint != null) {
-            return constraint;
+        try {
+          paramClass.putCopyableUserData(inferSubtyping, true);
+          for (int i = 0; i < argExtendsListTypes.length; i++) {
+            PsiClassType argBoundType = argExtendsListTypes[i];
+            PsiClassType paramBoundType = paramExtendsListTypes[i];
+            final Pair<PsiType, ConstraintType> constraint =
+              getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
+            if (constraint != null) {
+              return constraint;
+            }
           }
+        }
+        finally {
+          paramClass.putCopyableUserData(inferSubtyping, null);
         }
       }
     }
