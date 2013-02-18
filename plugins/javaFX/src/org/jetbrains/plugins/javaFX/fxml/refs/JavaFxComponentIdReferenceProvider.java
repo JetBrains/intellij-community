@@ -68,7 +68,16 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       final String newId = StringUtil.getPackageName(expressionText);
       final String fieldRef = StringUtil.getShortName(expressionText);
 
-      final JavaFxIdReferenceBase idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, newId);
+      final PsiReferenceBase idReferenceBase;
+
+      final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(element.getContainingFile());
+      final PsiField controllerField = controllerClass != null ? controllerClass.findFieldByName(newId, false) : null;
+      if (controllerField == null) {
+        idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, newId);
+      } else {
+        idReferenceBase = new JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef(xmlAttributeValue, controllerField, controllerClass); 
+      }
+
       final TextRange range = idReferenceBase.getRangeInElement();
       final int startOffset = range.getStartOffset() + 2;
       final int endOffset = startOffset + newId.length();
