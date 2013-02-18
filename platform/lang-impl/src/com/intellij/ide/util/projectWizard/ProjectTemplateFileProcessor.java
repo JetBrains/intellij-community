@@ -17,7 +17,6 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +40,6 @@ public abstract class ProjectTemplateFileProcessor {
       String text = processor.encodeFileText(content, file, project);
       if (text != null) return text;
     }
-    return VfsUtilCore.loadText(file);
+    return content;
   }
 }
