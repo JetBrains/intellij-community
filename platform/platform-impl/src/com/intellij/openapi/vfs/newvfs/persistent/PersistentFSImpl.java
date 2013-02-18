@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -58,10 +57,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
   private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
   private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
-  @Nullable private VirtualFileSystemEntry myFakeRoot;
-  @NotNull private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
-
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
   private final Object myInputLock = new Object();
+
+  @Nullable private VirtualFileSystemEntry myFakeRoot;
+  private boolean myShutDown = false;
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
     myEventsBus = bus;
@@ -78,9 +78,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     performShutdown();
   }
 
-  @NotNull private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(Boolean.FALSE);
-  private void performShutdown() {
-    if (!myShutdownPerformed.getAndSet(Boolean.TRUE)) {
+  private synchronized void performShutdown() {
+    if (!myShutDown) {
+      myShutDown = true;
       LOG.info("VFS dispose started");
       FSRecords.dispose();
       LOG.info("VFS dispose completed");
@@ -154,6 +154,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   private static FSRecords.NameId[] persistAllChildren(@NotNull final VirtualFile file, final int id, @NotNull FSRecords.NameId[] current) {
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
+
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
     if (delegateNames.length == 0 && current.length > 0) {
       return current;
@@ -176,10 +177,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
 
-    final TIntArrayList childrenIds = new TIntArrayList();
-    result.transformValues(new TObjectFunction<FSRecords.NameId, FSRecords.NameId>() {
+    final TIntArrayList childrenIds = new TIntArrayList(result.size());
+    final List<FSRecords.NameId> nameIds = ContainerUtil.newArrayListWithExpectedSize(result.size());
+    result.forEachValue(new TObjectProcedure<FSRecords.NameId>() {
       @Override
-      public FSRecords.NameId execute(FSRecords.NameId nameId) {
+      public boolean execute(FSRecords.NameId nameId) {
         if (nameId.id < 0) {
           FakeVirtualFile child = new FakeVirtualFile(file, nameId.name);
           FileAttributes attributes = fs.getAttributes(child);
@@ -190,15 +192,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         }
         if (nameId.id > 0) {
           childrenIds.add(nameId.id);
+          nameIds.add(nameId);
         }
-        return nameId;
+        return true;
       }
     });
 
     FSRecords.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
 
-    Collection<FSRecords.NameId> nameIds = result.values();
     return nameIds.toArray(new FSRecords.NameId[nameIds.size()]);
   }
 
@@ -381,7 +383,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int[] children = FSRecords.list(parentId);
 
     if (children.length > 0) {
-      // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing noncached children
+      // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children
       int nameId = FSRecords.getNameId(childName);
       for (final int childId : children) {
         if (nameId == FSRecords.getNameId(childId)) {
@@ -734,6 +736,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return filtered;
   }
 
+  @Override
   public void processEvents(@NotNull List<VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -1046,7 +1049,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       myRootsLock.writeLock().lock();
       try {
         String rootUrl = file.getUrl();
-        VirtualFileSystemEntry root = myRoots.remove(rootUrl);
+        myRoots.remove(rootUrl);
         myRootsById.remove(id);
         FSRecords.deleteRootRecord(id);
       }

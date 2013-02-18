@@ -52,13 +52,17 @@ public class UnwrapTagFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     if (element != null) {
       final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      final XmlTag parentTag = xmlTag.getParentTag();
-      final PsiElement[] children = PsiTreeUtil.getChildrenOfType(xmlTag, XmlTagChild.class);
-      if (children.length > 0) {
-        parentTag.addRange(children[0], children[children.length - 1]);
+      if (xmlTag != null) {
+        final XmlTag parentTag = xmlTag.getParentTag();
+        final PsiElement[] children = PsiTreeUtil.getChildrenOfType(xmlTag, XmlTagChild.class);
+        if (children != null) {
+          if (children.length > 0) {
+            parentTag.addRange(children[0], children[children.length - 1]);
+          }
+          xmlTag.delete();
+          CodeStyleManager.getInstance(project).reformat(parentTag);
+        }
       }
-      xmlTag.delete();
-      CodeStyleManager.getInstance(project).reformat(parentTag);
     }
   }
 }

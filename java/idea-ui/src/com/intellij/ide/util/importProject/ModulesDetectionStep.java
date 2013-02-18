@@ -58,7 +58,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   public void updateDataModel() {
-    myProjectDescriptor.setModules(myModulesLayoutPanel.getChosenEntries());
+    myProjectDescriptor.appendModules(myModulesLayoutPanel.getChosenEntries());
   }
 
   protected JComponent createResultsPanel() {

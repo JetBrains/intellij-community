@@ -9,7 +9,9 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    </extensionPoint>
     <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
   </extensionPoints>
 

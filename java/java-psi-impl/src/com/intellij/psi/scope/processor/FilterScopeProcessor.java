@@ -90,6 +90,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
     return null;
   }
 
+  @NotNull
   public List<T> getResults() {
     return myResults;
   }

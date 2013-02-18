@@ -71,8 +71,12 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
                            ? SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID
                            : oldSuppressionCommentText.substring(prefix.length()) + "," + myID;
 
-    final PsiComment newComment =
-      parserFacade.createLineCommentFromText((LanguageFileType)comment.getContainingFile().getFileType(), newText);
+    PsiElement parent = comment.getParent();
+    LanguageFileType fileType = parent == null ? null : parent.getLanguage().getAssociatedFileType();
+    if (fileType == null) {
+      fileType = (LanguageFileType)comment.getContainingFile().getFileType();
+    }
+    final PsiComment newComment = parserFacade.createLineCommentFromText(fileType, newText);
     comment.replace(newComment);
   }
 

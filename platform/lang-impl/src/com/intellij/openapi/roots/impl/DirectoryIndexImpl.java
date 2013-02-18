@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -28,16 +32,18 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,24 +55,258 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
-  protected final Project myProject;
-  protected final DirectoryIndexExcludePolicy[] myExcludePolicies;
-  protected volatile IndexState myState;
+  private final ManagingFS myPersistence;
+  private final Project myProject;
+  private final MessageBusConnection myConnection;
+  private final DirectoryIndexExcludePolicy[] myExcludePolicies;
 
+  private volatile IndexState myState = new IndexState();
   private volatile boolean myInitialized = false;
   private volatile boolean myDisposed = false;
   private final PackageSink mySink = new PackageSink();
 
-  public DirectoryIndexImpl(@NotNull Project project) {
+  public DirectoryIndexImpl(@NotNull ManagingFS managingFS, @NotNull Project project, @NotNull StartupManager startupManager) {
+    myPersistence = managingFS;
     myProject = project;
+    myConnection = project.getMessageBus().connect(project);
     myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
-    myState = new IndexState();
+    startupManager.registerPreStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        initialize();
+      }
+    });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         myDisposed = true;
       }
     });
+  }
+
+  public void initialize() {
+    subscribeToFileChanges();
+
+    if (myInitialized) {
+      LOG.error("Directory index is already initialized.");
+      return;
+    }
+
+    if (myDisposed) {
+      LOG.error("Directory index is already disposed for this project");
+      return;
+    }
+
+    myInitialized = true;
+    long l = System.currentTimeMillis();
+    doInitialize();
+    LOG.info("Directory index initialized in " +
+             (System.currentTimeMillis() - l) +
+             " ms, indexed " +
+             myState.myDirToInfoMap.size() +
+             " directories");
+
+    markContentRootsForRefresh();
+  }
+
+  private void subscribeToFileChanges() {
+    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
+      @Override
+      public void fileTypesChanged(FileTypeEvent event) {
+        doInitialize();
+      }
+    });
+
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
+      public void rootsChanged(ModuleRootEvent event) {
+        doInitialize();
+      }
+    });
+
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
+  }
+
+  private void markContentRootsForRefresh() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (Module module : modules) {
+      VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile contentRoot : contentRoots) {
+        if (contentRoot instanceof NewVirtualFile) {
+          ((NewVirtualFile)contentRoot).markDirtyRecursively();
+        }
+      }
+    }
+  }
+
+  protected void dispatchPendingEvents() {
+    myConnection.deliverImmediately();
+  }
+
+  private class MyVirtualFileListener extends VirtualFileAdapter {
+    @Override
+    public void fileCreated(VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
+
+      if (!file.isDirectory()) return;
+
+      VirtualFile parent = file.getParent();
+      if (parent == null) return;
+      DirectoryInfo existing = myState.getInfo(getId(file));
+      assert existing == null : file+" -> "+existing;
+      myState = updateStateWithNewFile(file, parent);
+    }
+
+
+    @NotNull
+    private IndexState updateStateWithNewFile(@NotNull VirtualFile file, @NotNull VirtualFile parent) {
+      final IndexState originalState = myState;
+      IndexState state = originalState;
+      int parentId = getId(parent);
+      DirectoryInfo parentInfo = originalState.getInfo(parentId);
+      if (parentInfo != null) {
+        assertAncestor(parentInfo, parent, parentId);
+      }
+
+      // fill info for all nested roots
+      String fileUrl = file.getUrl();
+      for (Module eachModule : ModuleManager.getInstance(myProject).getModules()) {
+        for (ContentEntry contentRoot : getContentEntries(eachModule)) {
+          if (parentInfo != null) {
+            VirtualFile contFile = contentRoot.getFile();
+            if (contFile != null && contFile.equals(parentInfo.getContentRoot())) continue;
+          }
+
+          String contentRootUrl = contentRoot.getUrl();
+          if (FileUtil.startsWith(contentRootUrl, fileUrl)) {
+            String rel = FileUtil.getRelativePath(fileUrl, contentRootUrl, '/');
+            if (rel != null) {
+              VirtualFile f = file.findFileByRelativePath(rel);
+              if (f != null) {
+                if (state == originalState) state = state.copy(null);
+                state.fillMapWithModuleContent(f, eachModule, f, null);
+              }
+            }
+          }
+        }
+      }
+
+      if (parentInfo == null) return state;
+
+      Module module = parentInfo.getModule();
+
+      for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
+        if (policy.isExcludeRoot(file)) return state;
+      }
+
+      if (state == originalState) state = state.copy(null);
+      VirtualFile parentContentRoot = parentInfo.getContentRoot();
+      state.fillMapWithModuleContent(file, module, parentContentRoot, null);
+
+      String parentPackage = state.myDirToPackageName.get(parentId);
+
+      if (module != null) {
+        if (parentInfo.isInModuleSource()) {
+          String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+          state.fillMapWithModuleSource(module, parentContentRoot, file, newDirPackageName, parentInfo.getSourceRoot(), parentInfo.isTestSource(), null);
+        }
+      }
+
+      if (parentInfo.hasLibraryClassRoot()) {
+        String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+        state.fillMapWithLibraryClasses(file, newDirPackageName, parentInfo.getLibraryClassRoot(), null);
+      }
+
+      if (parentInfo.isInLibrarySource()) {
+        String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
+        state.fillMapWithLibrarySources(file, newDirPackageName, parentInfo.getSourceRoot(), null);
+      }
+
+      OrderEntry[] entries = parentInfo.getOrderEntries();
+      if (entries.length != 0) {
+        state.fillMapWithOrderEntries(file, entries, null, null, null, parentInfo, null);
+      }
+      return state;
+    }
+
+    private final Key<int[]> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
+
+    @Override
+    public void beforeFileDeletion(VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
+      if (!file.isDirectory()) return;
+      if (myState.getInfo(getId(file)) == null) return;
+
+      TIntArrayList list = new TIntArrayList();
+      addDirsRecursively(myState, list, file);
+      file.putUserData(FILES_TO_RELEASE_KEY, list.toNativeArray());
+    }
+
+    private void addDirsRecursively(@NotNull IndexState state, @NotNull TIntArrayList list, @NotNull VirtualFile dir) {
+      if (!(dir instanceof NewVirtualFile)) return;
+      int id = getId(dir);
+      if (state.getInfo(id) == null) return;
+
+      list.add(id);
+
+      for (VirtualFile child : ((NewVirtualFile)dir).getCachedChildren()) {
+        if (child.isDirectory()) {
+          addDirsRecursively(state, list, child);
+        }
+      }
+    }
+
+    @Override
+    public void fileDeleted(VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
+      final int[] list = file.getUserData(FILES_TO_RELEASE_KEY);
+      if (list == null) return;
+
+      IndexState copy = null;
+      for (int id : list) {
+        if (myState.getInfo(id) != null) {
+          if (copy == null) copy = myState.copy(new TIntProcedure() {
+            @Override
+            public boolean execute(int fid) {
+              return ArrayUtil.indexOf(list, fid) == -1;
+            }
+          });
+
+          copy.myDirToInfoMap.remove(id);
+          copy.setPackageName(id, null);
+        }
+      }
+
+      if (copy != null) {
+        myState = copy;
+      }
+      myState.assertAncestorsConsistent();
+    }
+
+    @Override
+    public void beforeFileMovement(VirtualFileMoveEvent event) {
+      super.beforeFileMovement(event);
+    }
+
+    @Override
+    public void fileMoved(VirtualFileMoveEvent event) {
+      VirtualFile file = event.getFile();
+      if (file.isDirectory()) {
+        doInitialize();
+      }
+      myState.assertAncestorsConsistent();
+    }
+
+    @Override
+    public void propertyChanged(VirtualFilePropertyEvent event) {
+      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        VirtualFile file = event.getFile();
+        if (file.isDirectory()) {
+          doInitialize();
+        }
+      }
+      myState.assertAncestorsConsistent();
+    }
   }
 
   private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
@@ -122,10 +362,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return mySink.search(packageName, includeLibrarySources);
   }
 
-  private static class FileSystemPersistenceHolder {
-    private static final FileSystemPersistence persistence = ApplicationManager.getApplication().getComponents(FileSystemPersistence.class)[0];
-  }
-
   @Override
   @TestOnly
   public void checkConsistency() {
@@ -178,23 +414,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return myInitialized;
   }
 
-  public void initialize() {
-    if (myInitialized) {
-      LOG.error("Directory index is already initialized.");
-      return;
-    }
-
-    if (myDisposed) {
-      LOG.error("Directory index is already disposed for this project");
-      return;
-    }
-
-    myInitialized = true;
-    long l = System.currentTimeMillis();
-    doInitialize();
-    LOG.info("Directory index initialized in " + (System.currentTimeMillis() - l) + " ms, indexed " + myState.myDirToInfoMap.size() + " directories");
-  }
-
   protected void doInitialize() {
     IndexState newState = new IndexState();
     newState.doInitialize(false);
@@ -237,18 +456,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return dir instanceof VirtualFileWithId && myState.myProjectExcludeRoots.contains(getId(dir));
   }
 
-  private static VirtualFile findFileById(int dir) {
-    return FileSystemPersistenceHolder.persistence.findFileById(dir);
+  private VirtualFile findFileById(int dir) {
+    return myPersistence.findFileById(dir);
   }
-  
+
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof VirtualFileWithId)) return null;
     return myState.myDirToPackageName.get(getId(dir));
-  }
-
-  protected void dispatchPendingEvents() {
   }
 
   private void checkAvailability() {
@@ -460,7 +676,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {}
     }
-    
+
     private boolean isExcluded(int root, @NotNull VirtualFile dir) {
       if (root == 0) return false;
       Set<String> excludes = myExcludeRootsMap.get(root);
@@ -995,15 +1211,19 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return ((VirtualFileWithId)file).getId();
   }
 
-  static void assertAncestor(@NotNull DirectoryInfo info, @NotNull VirtualFile root, int myId) {
+  void assertAncestor(@NotNull DirectoryInfo info, @NotNull VirtualFile root, int myId) {
     VirtualFile myFile = findFileById(myId);
-    assert myFile.getFileSystem() == root.getFileSystem() : myFile.getFileSystem() +", "+ root.getFileSystem() +"; my file: "+myFile+"; root: "+root + "; "+
-                                                            myFile.getParent().getPath().equals(root.getPath());
-    assert VfsUtilCore.isAncestor(root, myFile, false) : "my file: "+myFile+" ("+getId(myFile)+")" + myFile.getClass() + " - " +System.identityHashCode(myFile) +
-                                                         "; root: "+root +" ("+getId(root)+")" + root.getClass() + " - " +System.identityHashCode(root) +
-                                                         "; equalsToParent:"+ (myFile.getParent() == null ? "" : myFile.getParent().getPath()).equals(root.getPath()) +
-                                                         "; equalsToRoot:"+ myFile.equals(root) +
-                                                         "; equalsToRootPath:"+ myFile.getPath().equals(root.getPath()) +
-                                                         "; my contentRoot: "+info.getContentRoot()+"; my sourceRoot: "+info.getSourceRoot()+"; my classRoot: "+info.getLibraryClassRoot();
+    assert myFile.getFileSystem() == root.getFileSystem() :
+      myFile.getFileSystem() + ", " + root.getFileSystem() + "; my file: " + myFile + "; root: " + root + "; " +
+      myFile.getParent().getPath().equals(root.getPath());
+    assert VfsUtilCore.isAncestor(root, myFile, false) :
+      "my file: " + myFile + " (" + getId(myFile) + ")" + myFile.getClass() + " - " + System.identityHashCode(myFile) +
+      "; root: " + root + " (" + getId(root) + ")" + root.getClass() + " - " + System.identityHashCode(root) +
+      "; equalsToParent:" + (myFile.getParent() == null ? "" : myFile.getParent().getPath()).equals(root.getPath()) +
+      "; equalsToRoot:" + myFile.equals(root) +
+      "; equalsToRootPath:" + myFile.getPath().equals(root.getPath()) +
+      "; my contentRoot: " + info.getContentRoot() +
+      "; my sourceRoot: " + info.getSourceRoot() +
+      "; my classRoot: " + info.getLibraryClassRoot();
   }
 }

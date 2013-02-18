@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -37,13 +39,22 @@ import java.util.List;
  */
 public class GithubCheckoutProvider implements CheckoutProvider {
 
+  private static Logger LOG  = GithubUtil.LOG;
+
   @Override
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     if (!GithubUtil.testGitExecutable(project)){
       return;
     }
     BasicAction.saveAll();
-    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, false);
+    List<RepositoryInfo> availableRepos = null;
+    try {
+      availableRepos = GithubUtil.getAvailableRepos(project);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      GithubUtil.notifyError(project, "Couldn't get the list of GitHub repositories", GithubUtil.getErrorTextFromException(e));
+    }
     if (availableRepos == null){
       return;
     }

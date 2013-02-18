@@ -31,15 +31,14 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl {
   @NotNull
   protected LanguageConsoleImpl myConsole;
 
-  public LanguageConsoleViewImpl(final Project project, String title, final Language language) {
+  public LanguageConsoleViewImpl(Project project, String title, Language language) {
     this(new LanguageConsoleImpl(project, title, language));
   }
 
-  public LanguageConsoleViewImpl(@NotNull final LanguageConsoleImpl console) {
+  public LanguageConsoleViewImpl(@NotNull LanguageConsoleImpl console) {
     super(console.getProject(), true);
     myConsole = console;
     Disposer.register(this, myConsole);
-    Disposer.register(getProject(), this);
   }
 
   @NotNull

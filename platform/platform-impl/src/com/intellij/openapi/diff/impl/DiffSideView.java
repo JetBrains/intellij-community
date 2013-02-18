@@ -25,11 +25,16 @@ import com.intellij.openapi.diff.impl.util.LabeledEditor;
 import com.intellij.openapi.diff.impl.util.SyncScrollSupport;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
 import org.jetbrains.annotations.NonNls;
@@ -38,8 +43,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 public class DiffSideView {
   private final JComponent MOCK_COMPONENT = new JPanel();
@@ -94,6 +102,7 @@ public class DiffSideView {
       editor.getScrollingModel().scrollHorizontally(0);
       insertComponent(editor.getComponent());
       applyHighlighter();
+      setMouseListeners(source);
       MyEditorFocusListener.install(this);
 
       state.restore();
@@ -122,6 +131,11 @@ public class DiffSideView {
     myPanel.updateTitle(myTitle);
   }
 
+  private void setMouseListeners(EditorSource source) {
+    DiffContent content = source.getContent();
+    MouseLineNumberListener.install(content, source, myContainer);
+  }
+
   public void beSlave() {
     myIsMaster = false;
     myLineMarker.hide();
@@ -135,6 +149,77 @@ public class DiffSideView {
       return null;
     }
     return content.getOpenFileDescriptor(editor.getCaretModel().getOffset());
+  }
+
+  private static class MouseLineNumberListener {
+    private static final Cursor HAND__CURSOR = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+    private final Editor myEditor;
+    private final DiffSidesContainer myContainer;
+    private final DiffContent myContent;
+    private final Project myProject;
+
+    private final EditorMouseAdapter myMouseListener = new EditorMouseAdapter() {
+      public void mouseReleased(EditorMouseEvent e) {
+        if (!isEventHandled(e.getMouseEvent()) || !isInMyArea(e)) {
+          return;
+        }
+        OpenFileDescriptor descriptor = getOpenFileDescriptor(e);
+        if (descriptor == null) {
+          return;
+        }
+        myContainer.showSource(descriptor);
+      }
+    };
+
+    private static boolean isEventHandled(MouseEvent e) {
+      int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+      return e.getButton() == MouseEvent.BUTTON1 && (e.getModifiers() & mask) != 0;
+    }
+
+    private OpenFileDescriptor getOpenFileDescriptor(EditorMouseEvent e) {
+      int offset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+      return myContent.getOpenFileDescriptor(offset);
+    }
+
+    private static boolean isInMyArea(EditorMouseEvent e) {
+      return e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA;
+    }
+
+    private final EditorMouseMotionAdapter myMouseMotionListener = new EditorMouseMotionAdapter() {
+      public void mouseMoved(EditorMouseEvent e) {
+        Editor editor = e.getEditor();
+        if (editor.getProject() != null && editor.getProject() != myProject && myProject != null/*???*/) return;
+        if (!isInMyArea(e)) return;
+        Cursor cursor = getOpenFileDescriptor(e) != null ? HAND__CURSOR : Cursor.getDefaultCursor();
+        e.getMouseEvent().getComponent().setCursor(cursor);
+        myEditor.getContentComponent().setCursor(cursor);
+      }
+    };
+
+    public MouseLineNumberListener(DiffContent content, Editor editor, DiffSidesContainer container, Project project) {
+      myEditor = editor;
+      myContainer = container;
+      myContent = content;
+      myProject = project;
+    }
+
+    public static void install(DiffContent content, EditorSource source, DiffSidesContainer container) {
+      final Editor editor = source.getEditor();
+      Project project = container.getProject();
+      if (project == null || editor == null) {
+        return;
+      }
+      final MouseLineNumberListener listener = new MouseLineNumberListener(content, editor, container, project);
+      editor.addEditorMouseListener(listener.myMouseListener);
+      editor.addEditorMouseMotionListener(listener.myMouseMotionListener);
+      source.addDisposable(new Disposable() {
+        public void dispose() {
+          editor.removeEditorMouseListener(listener.myMouseListener);
+          editor.removeEditorMouseMotionListener(listener.myMouseMotionListener);
+        }
+      });
+    }
+
   }
 
   private static class MyEditorFocusListener extends FocusAdapter {

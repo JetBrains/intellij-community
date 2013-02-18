@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,27 @@
 package com.intellij.spellchecker.inspection;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Ekaterina Shliakhovetskaja
+ * @author  Ekaterina Shliakhovetskaja
  */
 public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
-
-
   @Override
   protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/commentsWithMistakes";
   }
 
-  public void testJava() throws Throwable {
-    doTest("SPITest1.java", getInspectionTools());
+  public void testJava() {
+    doTest("SPITest1.java");
   }
 
-  public void testXml() throws Throwable {
-    doTest("A.xml", getInspectionTools());
+  public void testXml() {
+    doTest("A.xml");
   }
 
-  public void testHtml() throws Throwable {
-    doTest("test.html", getInspectionTools());
+  public void testHtml() {
+    doTest("test.html");
   }
 
-  public void testTxt() throws Throwable {
-    doTest("test.txt", getInspectionTools());
+  public void testTxt() {
+    doTest("test.txt");
   }
-
-  
 }

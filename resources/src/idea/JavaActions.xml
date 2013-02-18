@@ -323,6 +323,8 @@
     <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction">
       <add-to-group group-id="AnalyzeActions" anchor="last"/>
     </action>
-
+    <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
+      <add-to-group group-id="FileChooserToolbar" anchor="last"/>
+    </action>
   </actions>
 </component>

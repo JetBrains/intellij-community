@@ -40,8 +40,7 @@ public class PathEnvironmentVariableUtil {
 
   private static String calcFixedMacPathEnvVarValue() {
     if (SystemInfo.isMac) {
-      Map<String, String> originalEnvVars = EnvironmentUtil.getEnvironmentProperties();
-      final String originalPath = originalEnvVars.get(PATH_ENV_VAR_NAME);
+      final String originalPath = getOriginalPathEnvVarValue();
       Map<? extends String, ? extends String> envVars = UnixProcessManager.getOrLoadConsoleEnvironment();
       String consolePath = envVars.get(PATH_ENV_VAR_NAME);
       return mergePaths(ContainerUtil.newArrayList(originalPath, consolePath));
@@ -64,6 +63,47 @@ public class PathEnvironmentVariableUtil {
       return null;
     }
     return StringUtil.join(paths, File.pathSeparator);
+  }
+
+  @Nullable
+  private static String getOriginalPathEnvVarValue() {
+    Map<String, String> originalEnvVars = EnvironmentUtil.getEnvironmentProperties();
+    return originalEnvVars.get(PATH_ENV_VAR_NAME);
+  }
+
+  @NotNull
+  private static String getReliablePath() {
+    final String value;
+    if (SystemInfo.isMac) {
+      value = getFixedPathEnvVarValueOnMac();
+    }
+    else {
+      value = getOriginalPathEnvVarValue();
+    }
+    return StringUtil.notNullize(value);
+  }
+
+  /**
+   * Finds an executable file with the specified base name, that is located in a directory
+   * listed in PATH environment variable.
+   *
+   * @param fileBaseName file base name
+   * @return {@code File} instance or null if not found
+   */
+  @Nullable
+  public static File findInPath(@NotNull String fileBaseName) {
+    String pathEnvVarValue = getReliablePath();
+    List<String> paths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
+    for (String path : paths) {
+      File dir = new File(path);
+      if (dir.isAbsolute() && dir.isDirectory()) {
+        File file = new File(dir, fileBaseName);
+        if (file.isFile() && file.canExecute()) {
+          return file;
+        }
+      }
+    }
+    return null;
   }
 
 }

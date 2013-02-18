@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,36 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
-public abstract class SpellcheckerInspectionTestCase extends CodeInsightFixtureTestCase {
-  public static String getSpellcheckerTestDataPath() {
-    return PluginPathManager.getPluginHomePathRelative("spellchecker") + "/testData";
+public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeInsightFixtureTestCase {
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected SpellcheckerInspectionTestCase() {
+    PlatformTestCase.initPlatformLangPrefix();
   }
 
-  protected void doTest(String file, LocalInspectionTool... tools) throws Throwable {
-    myFixture.enableInspections(tools);
+  @Override
+  protected boolean isCommunity() {
+    return true;
+  }
+
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
+  }
+
+  public static String getSpellcheckerTestDataPath() {
+    return "/spellchecker/testData/";
+  }
+
+  protected void doTest(String file) {
+    myFixture.enableInspections(getInspectionTools());
     myFixture.testHighlighting(false, false, true, file);
   }
 
   public static LocalInspectionTool[] getInspectionTools() {
     return new LocalInspectionTool[]{new SpellCheckingInspection()};
-
   }
 }

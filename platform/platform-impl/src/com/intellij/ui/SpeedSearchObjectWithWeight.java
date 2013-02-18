@@ -24,27 +24,27 @@ import java.util.ListIterator;
 */
 public class SpeedSearchObjectWithWeight {
   public final Object node;
-  public final int weight;
+  private final int weight;
 
-  SpeedSearchObjectWithWeight(Object element, String pattern, SpeedSearchBase speedSearch) {
+  SpeedSearchObjectWithWeight(Object element, int weight) {
     this.node = element;
-    String text = speedSearch.getElementText(element);
-    this.weight = text == null ? Integer.MIN_VALUE : speedSearch.getComparator().matchingDegree(pattern, text);
+    this.weight = weight;
   }
 
   public int compareWith(SpeedSearchObjectWithWeight obj) {
     return weight == obj.weight ? 0 : weight < obj.weight ? 1 : -1;
   }
 
-  public static List<SpeedSearchObjectWithWeight> findElement(String s, SpeedSearchBase speedSearch) {
+  public static List<SpeedSearchObjectWithWeight> findElement(String pattern, SpeedSearchBase speedSearch) {
     List<SpeedSearchObjectWithWeight> elements = new ArrayList<SpeedSearchObjectWithWeight>();
-    s = s.trim();
+    pattern = pattern.trim();
     //noinspection unchecked
     final ListIterator<Object> it = speedSearch.getElementIterator(0);
     while (it.hasNext()) {
-      final SpeedSearchObjectWithWeight o = new SpeedSearchObjectWithWeight(it.next(), s, speedSearch);
-      if (o.weight != Integer.MIN_VALUE) {
-        elements.add(o);
+      Object element = it.next();
+      String text = speedSearch.getElementText(element);
+      if (text != null) {
+        elements.add(new SpeedSearchObjectWithWeight(element, speedSearch.getComparator().matchingDegree(pattern, text)));
       }
     }
     SpeedSearchObjectWithWeight cur = null;

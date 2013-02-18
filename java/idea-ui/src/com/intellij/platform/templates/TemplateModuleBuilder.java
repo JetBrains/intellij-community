@@ -139,6 +139,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
+  @Nullable
+  @Override
+  public String getBuilderId() {
+    return myTemplate.getName();
+  }
+
   @Override
   public ModuleType getModuleType() {
     return myType;
@@ -154,7 +160,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
-    unzip(path, true);
+    unzip(null, path, true);
     Module module = ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
     if (myProjectMode) {
       moduleModel.renameModule(module, module.getProject().getName());
@@ -181,7 +187,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return null;
   }
 
-  private void unzip(String path, final boolean moduleMode) {
+  private void unzip(final @Nullable String projectName, String path, final boolean moduleMode) {
     File dir = new File(path);
     ZipInputStream zipInputStream = null;
     final WizardInputField basePackage = getBasePackageField();
@@ -202,7 +208,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Override
         public byte[] processContent(byte[] content, String fileName) throws IOException {
           FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
-          return fileType.isBinary() ? content : processTemplates(new String(content));
+          return fileType.isBinary() ? content : processTemplates(projectName, new String(content));
         }
       });
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
@@ -236,10 +242,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  private byte[] processTemplates(String s) throws IOException {
+  private byte[] processTemplates(@Nullable String projectName, String s) throws IOException {
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
+    }
+    if (projectName != null) {
+      properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
     String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
@@ -249,7 +258,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   @Override
   public Project createProject(String name, final String path) {
     myProjectMode = true;
-    unzip(path, false);
+    unzip(name, path, false);
     return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
       @Nullable
       @Override

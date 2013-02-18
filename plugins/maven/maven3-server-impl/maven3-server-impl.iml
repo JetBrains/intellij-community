@@ -149,6 +149,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Maven3" level="project" />
   </component>
 </module>
 

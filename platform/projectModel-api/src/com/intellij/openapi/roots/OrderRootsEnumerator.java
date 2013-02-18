@@ -60,6 +60,7 @@ public interface OrderRootsEnumerator {
    * option is used
    * @return this instance
    */
+  @NotNull
   OrderRootsEnumerator usingCache();
 
   /**
@@ -69,6 +70,7 @@ public interface OrderRootsEnumerator {
    *
    * @return this instance
    */
+  @NotNull
   OrderRootsEnumerator withoutSelfModuleOutput();
 
   /**
@@ -77,5 +79,6 @@ public interface OrderRootsEnumerator {
    * @param provider function to evaluate roots for an order entry
    * @return this instance
    */
+  @NotNull
   OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider);
 }

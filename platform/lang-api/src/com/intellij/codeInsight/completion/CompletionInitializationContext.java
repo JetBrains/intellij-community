@@ -56,7 +56,7 @@ public class CompletionInitializationContext {
     final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
     myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
 
-    final String text = file.getText();
+    final CharSequence text = editor.getDocument().getCharsSequence();
     int idEnd = selectionEndOffset;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
       idEnd++;

@@ -84,6 +84,6 @@ public class StatisticsInfo {
   }
 
   public String toString() {
-    return myContext + "::::" + myValue + (myConjuncts.isEmpty() ? "" : "::::" + myConjuncts);
+    return myContext + "::::" + myValue + (myConjuncts.size() == 1 ? "" : "::::" + myConjuncts);
   }
 }
