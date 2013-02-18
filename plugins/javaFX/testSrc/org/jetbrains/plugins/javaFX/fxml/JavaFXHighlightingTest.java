@@ -188,6 +188,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRootTagProperties() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false, false, getTestName(true) + ".fxml");
   }

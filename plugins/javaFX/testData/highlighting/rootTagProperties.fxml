@@ -1,0 +1,2 @@
+<fx:root type="javafx.scene.layout.VBox" xmlns:fx="http://javafx.com/fxml"
+         style="-fx-background-color: yellow;" prefHeight="500" <error descr="Attribute unknownProperty is not allowed here">unknownProperty</error>=""/>
