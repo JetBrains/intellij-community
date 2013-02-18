@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -34,13 +35,18 @@ import java.util.Map;
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
   protected void execute(final Project project, final Collection<VirtualFile> repos) {
-    loadBranchesInBackgroundableAndExecuteAction(project, repos);
+    HgActionDialogUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
+
+      @Override
+      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
+        showUpdateDialogAndExecute(project, repos, branches);
+      }
+    });
   }
 
-  @Override
-  protected void showDialogAndExecute(final Project project,
-                                      Collection<VirtualFile> repos,
-                                      Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+  private void showUpdateDialogAndExecute(final Project project,
+                                          Collection<VirtualFile> repos,
+                                          Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
     dialog.setRoots(repos, branchesForRepos);
     dialog.show();
