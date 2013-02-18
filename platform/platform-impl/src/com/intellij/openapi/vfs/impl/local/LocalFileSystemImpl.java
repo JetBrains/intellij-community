@@ -40,7 +40,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.*;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
@@ -141,7 +140,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @TestOnly
-  public void cleanupForNextTest(@NotNull Set<VirtualFile> survivors) throws IOException {
+  public void cleanupForNextTest() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -195,7 +194,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
           }
         }
 
-        if (currentNode.watchRequest.isToWatchRecursively() && currentNode.nodes.size() > 0) {
+        if (currentNode.watchRequest.isToWatchRecursively() && !currentNode.nodes.isEmpty()) {
           // since we are watching this node recursively, we can remove it's children
           visitTree(currentNode, new Consumer<TreeNode>() {
             @Override
@@ -388,12 +387,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (rootPaths.isEmpty() || !myWatcher.isOperational()) {
       return Collections.emptySet();
     }
-    else if (watchRecursively) {
+    if (watchRecursively) {
       return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), rootPaths, null);
     }
-    else {
-      return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), null, rootPaths);
-    }
+    return replaceWatchedRoots(Collections.<WatchRequest>emptySet(), null, rootPaths);
   }
 
   @Override
@@ -401,6 +398,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (watchRequests.isEmpty()) return;
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         synchronized (myLock) {
           final boolean update = doRemoveWatchedRoots(watchRequests);
@@ -429,6 +427,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     final Set<VirtualFile> filesToSync = new HashSet<VirtualFile>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         synchronized (myLock) {
           final boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result, filesToSync) ||

@@ -338,14 +338,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().cleanupForNextTest();
     }
 
-    try {
-      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-      if (localFileSystem != null) {
-        localFileSystem.cleanupForNextTest(eternallyLivingFiles());
-      }
-    }
-    catch (IOException e) {
-      // ignore
+    LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+    if (localFileSystem != null) {
+      localFileSystem.cleanupForNextTest();
     }
 
     LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
