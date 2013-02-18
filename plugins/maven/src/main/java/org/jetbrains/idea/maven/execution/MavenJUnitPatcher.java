@@ -42,18 +42,30 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (mavenProject == null) return;
 
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
+    if (config == null) return;
+
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
-    if (paths.isEmpty()) return;
+    if (paths.size() > 0) {
+      MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
-    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());;
+      for (String path : paths) {
+        if (domModel != null) {
+          path = MavenPropertyResolver.resolve(path, domModel);
+        }
 
-    for (String path : paths) {
-      if (domModel != null) {
-        path = MavenPropertyResolver.resolve(path, domModel);
+        javaParameters.getClassPath().add(path);
       }
+    }
 
-      javaParameters.getClassPath().add(path);
+    Element systemPropertyVariables = config.getChild("systemPropertyVariables");
+    if (systemPropertyVariables != null) {
+      for (Element element : (List<Element>)systemPropertyVariables.getChildren()) {
+        String propertyName = element.getName();
+        String value = element.getValue();
+
+        javaParameters.getVMParametersList().addProperty(propertyName, value);
+      }
     }
   }
 }
