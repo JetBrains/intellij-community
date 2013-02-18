@@ -93,7 +93,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           CodeStyleSettingsManager.getSettings(project).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = new CharFilter() {
           public boolean accept(char ch) {
-            return useTabs? ch != '\t' : !Character.isWhitespace(ch);
+            return useTabs? ch != '\t' : ch != ' ';
           }
         };
         String pastedText = document.getText(TextRange.create(bounds));
