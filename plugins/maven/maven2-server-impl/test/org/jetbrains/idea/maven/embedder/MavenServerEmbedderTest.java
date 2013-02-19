@@ -71,7 +71,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     myEmbedder = null;
   }
 
-  public void testSettingLocalRepository() throws Exception {
+  public void _testSettingLocalRepository() throws Exception {
     assertEquals(getRepositoryFile(), myEmbedderImpl.getLocalRepositoryFile());
 
     File repo = new File(myDir, "/repo");
@@ -81,12 +81,12 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertEquals(getRepositoryFile(), myEmbedderImpl.getLocalRepositoryFile());
   }
 
-  public void testReleasingTwice() throws Exception {
+  public void _testReleasingTwice() throws Exception {
     myEmbedder.release();
     myEmbedder.release();
   }
 
-  public void testExecutionGoals() throws Exception {
+  public void _testExecutionGoals() throws Exception {
     createProjectSubFile("src/main/java/A.java", "public class A {}");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -105,7 +105,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertEquals("project", project.getMavenId().getArtifactId());
   }
 
-  public void testResolvingProject() throws Exception {
+  public void _testResolvingProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -129,7 +129,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertEquals(1, project.getDependencies().size());
   }
 
-  public void testResolvingProjectPropertiesInFolders() throws Exception {
+  public void _testResolvingProjectPropertiesInFolders() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>");
@@ -144,7 +144,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     PlatformTestUtil.assertPathsEqual(myProjectRoot.getPath() + "/src/main/java", project.getBuild().getSources().get(0));
   }
 
-  public void testResolvingProjectWithExtensions() throws Exception {
+  public void _testResolvingProjectWithExtensions() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -181,7 +181,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertEquals("rb.swc", p.getDependencies().get(0).getExtension());
   }
 
-  public void testResolvingProjectWithRegisteredExtensions() throws Exception {
+  public void _testResolvingProjectWithRegisteredExtensions() throws Exception {
     ComponentDescriptor desc = new ComponentDescriptor();
     desc.setRole(ArtifactHandler.ROLE);
     desc.setRoleHint("foo");
@@ -250,7 +250,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     }
   }
 
-  public void testUnresolvedArtifacts() throws Exception {
+  public void _testUnresolvedArtifacts() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -270,7 +270,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("fff", "zzz", "666"));
   }
 
-  public void testUnresolvedSystemArtifacts() throws Exception {
+  public void _testUnresolvedSystemArtifacts() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -292,7 +292,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("fff", "zzz", "666"));
   }
 
-  public void testDependencyWithUnresolvedParent() throws Exception {
+  public void _testDependencyWithUnresolvedParent() throws Exception {
     File repo = new File(myDir, "/repo");
     setRepositoryPath(repo.getPath());
 
@@ -345,7 +345,7 @@ public class MavenServerEmbedderTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(result.unresolvedArtifacts, new MavenId("test", "foo-parent", "1"));
   }
 
-  public void testUnresolvedSystemArtifactsWithoutPath() throws Exception {
+  public void _testUnresolvedSystemArtifactsWithoutPath() throws Exception {
     if (ignore()) return; // need to repair model before resolving
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

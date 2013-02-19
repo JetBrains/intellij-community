@@ -218,7 +218,7 @@ public class GithubShareAction extends DumbAwareAction {
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     addRemoteHandler.setNoSSH(true);
     addRemoteHandler.setSilent(true);
-    final String remoteUrl = "https://github.com/" + login + "/" + name + ".git";
+    final String remoteUrl = GithubApiUtil.getGitHost() + "/" + login + "/" + name + ".git";
     addRemoteHandler.addParameters("add", "origin", remoteUrl);
     try {
       addRemoteHandler.run();
