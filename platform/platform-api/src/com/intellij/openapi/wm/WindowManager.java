@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,6 @@ public abstract class WindowManager {
     return ApplicationManager.getApplication().getComponent(WindowManager.class);
   }
 
-  /**
-   */
   public abstract void doNotSuggestAsParent(Window window);
 
   /**
@@ -127,9 +125,9 @@ public abstract class WindowManager {
   public abstract void removeListener(WindowManagerListener listener);
 
   /**
-   * @return <code>true</code> if fullscreen mode is supported in current OS
+   * @return <code>true</code> if full screen mode is supported in current OS.
    */
-  public static boolean isFullScreenSupportedInCurrentOS() {
+  public boolean isFullScreenSupportedInCurrentOS() {
     return SystemInfo.isMacOSLion || SystemInfo.isWindows;
   }
 }

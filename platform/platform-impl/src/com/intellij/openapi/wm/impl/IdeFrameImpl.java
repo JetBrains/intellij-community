@@ -71,11 +71,11 @@ import java.io.File;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
-// Made non-final for Fabrique
 public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
-  public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("should.open.in.fullscreen");
+  public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
+
   private static final String FULL_SCREEN = "FullScreen";
+
   private String myTitle;
 
   private String myFileTitle;
@@ -88,8 +88,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private final BalloonLayout myBalloonLayout;
   private static boolean myUpdatingTitle;
   private MacMainFrameDecorator myFrameDecorator;
-  
-  private boolean myRestoreFullscreen;
+
+  private boolean myRestoreFullScreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application) {
@@ -116,9 +116,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
     if (SystemInfo.isMac) setIconImage(null);
-    // enable fullscreen titlebar button
+    // enable full screen title bar button
     if (SystemInfo.isMacOSLion && MacMainFrameDecorator.FULL_SCREEN_AVAILABLE) FullScreenUtilities.setWindowCanFullScreen(this, true);
-    
+
     MouseGestureManager.getInstance().add(this);
   }
 
@@ -189,7 +189,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
                 ApplicationManagerEx.getApplicationEx().exit();
                 return;
               }
-              
+
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
               if (openProjects.length > 1 || (openProjects.length == 1 && SystemInfo.isMacSystemMenu)) {
                 if (myProject != null && myProject.isOpen()) {
@@ -257,12 +257,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       final Builder builder = new Builder();
       if (SystemInfo.isMac) {
         builder.append(fileTitle).append(title)
-          .append(ProjectManager.getInstance().getOpenProjects().length == 0 
+          .append(ProjectManager.getInstance().getOpenProjects().length == 0
                   || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT") ? applicationName : null);
       } else {
         builder.append(title).append(fileTitle).append(applicationName);
       }
-      
+
       frame.setTitle(builder.sb.toString());
     }
     finally {
@@ -278,7 +278,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   private static final class Builder {
     public StringBuilder sb = new StringBuilder();
-    
+
     public Builder append(@Nullable final String s) {
       if (s == null || s.length() == 0) return this;
       if (sb.length() > 0) sb.append(" - ");
@@ -302,14 +302,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void setProject(final Project project) {
-    if (WindowManager.isFullScreenSupportedInCurrentOS() && myProject != project && project != null) {
-      myRestoreFullscreen = myProject == null && shouldRestoreFullScreen(project);
-      
+    if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && myProject != project && project != null) {
+      myRestoreFullScreen = myProject == null && shouldRestoreFullScreen(project);
+
       if (myProject != null) {
         storeFullScreenStateIfNeeded(false); // disable for old project
       }
     }
-    
+
     myProject = project;
     if (project != null) {
       ProjectFrameBounds.getInstance(project);   // make sure the service is initialized and its state will be saved
@@ -329,23 +329,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (project == null) {
       FocusTrackback.release(this);
     }
-    
-    if (isVisible() && myRestoreFullscreen) {
+
+    if (isVisible() && myRestoreFullScreen) {
       WindowManagerEx.getInstanceEx().setFullScreen(this, true);
-      myRestoreFullscreen = false;
+      myRestoreFullScreen = false;
     }
   }
 
   @Override
   public void setVisible(boolean b) {
     super.setVisible(b);
-    
-    if (b && myRestoreFullscreen) {
+
+    if (b && myRestoreFullScreen) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           WindowManagerEx.getInstanceEx().setFullScreen(IdeFrameImpl.this, true);
-          myRestoreFullscreen = false;
+          myRestoreFullScreen = false;
         }
       });
     }
@@ -427,22 +427,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void storeFullScreenStateIfNeeded(boolean state) {
-    if (!WindowManager.isFullScreenSupportedInCurrentOS()) return;
-    
+    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) return;
+
     if (myProject != null) {
-      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, Boolean.valueOf(state).toString());
+      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, String.valueOf(state));
     }
   }
 
-  public static boolean shouldRestoreFullScreen(Project project) {
-    if (!WindowManager.isFullScreenSupportedInCurrentOS() || project == null) return false;
-    return project.getUserData(SHOULD_OPEN_IN_FULLSCREEN) == Boolean.TRUE
-           || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false);
+  public static boolean shouldRestoreFullScreen(@Nullable Project project) {
+    return WindowManager.getInstance().isFullScreenSupportedInCurrentOS() &&
+           project != null &&
+           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false));
   }
 
   @Override
   public void paint(Graphics g) {
     UIUtil.applyRenderingHints(g);
+    //noinspection Since15
     super.paint(g);
   }
 
