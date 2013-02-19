@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
@@ -51,7 +50,6 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   protected LabeledComponent<EditorTextField> goalsComponent;
   private LabeledComponent<EditorTextField> profilesComponent;
   private JBLabel myFakeLabel;
-  private JCheckBox myResolveToWorkspaceCheckBox;
   private JComponent anchor;
 
   public MavenRunnerParametersConfigurable(@NotNull final Project project) {
@@ -128,7 +126,6 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private void setData(final MavenRunnerParameters data) {
     data.setWorkingDirPath(workingDirComponent.getComponent().getText());
     data.setGoals(ParametersListUtil.parse(goalsComponent.getComponent().getText()));
-    data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isSelected());
 
     Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
 
@@ -149,7 +146,6 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private void getData(final MavenRunnerParameters data) {
     workingDirComponent.getComponent().setText(data.getWorkingDirPath());
     goalsComponent.getComponent().setText(ParametersList.join(data.getGoals()));
-    myResolveToWorkspaceCheckBox.setSelected(data.isResolveToWorkspace());
 
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<String, Boolean> entry : data.getProfilesMap().entrySet()) {

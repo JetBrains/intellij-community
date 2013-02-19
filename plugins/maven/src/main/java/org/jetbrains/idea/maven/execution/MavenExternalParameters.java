@@ -25,8 +25,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -35,37 +33,29 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.PathUtil;
-import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
-import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.io.*;
-import java.util.*;
-import java.util.zip.ZipOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Ralf Quebbemann
  */
 public class MavenExternalParameters {
-
-  private static final Logger LOG = Logger.getInstance(MavenExternalParameters.class);
-
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
   @NonNls private static final String JAVA_HOME = "JAVA_HOME";
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
@@ -117,27 +107,6 @@ public class MavenExternalParameters {
 
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
-    File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
-    if (!confFile.isFile()) {
-      throw new ExecutionException("Configuration file is not exists in maven home: " + confFile.getAbsolutePath());
-    }
-
-    if (project != null && parameters.isResolveToWorkspace()) {
-      try {
-        String resolverJar = getArtifactResolverJar(MavenUtil.isMaven3(mavenHome));
-        confFile = patchConfFile(confFile, resolverJar);
-
-        File modulesPathsFile = dumpModulesPaths(project);
-        params.getVMParametersList().addProperty(MavenModuleMap.PATHS_FILE_PROPERTY, modulesPathsFile.getAbsolutePath());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        throw new ExecutionException("Failed to run maven configuration", e);
-      }
-    }
-
-    params.getVMParametersList().addProperty("classworlds.conf", confFile.getPath());
-
     for (String path : getMavenClasspathEntries(mavenHome)) {
       params.getClassPath().add(path);
     }
@@ -151,112 +120,6 @@ public class MavenExternalParameters {
     addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
 
     return params;
-  }
-
-  private static File patchConfFile(File conf, String library) throws IOException {
-    File tmpConf = File.createTempFile("idea-", "-mvn.conf");
-    tmpConf.deleteOnExit();
-    patchConfFile(conf, tmpConf, library);
-
-    return tmpConf;
-  }
-
-  private static void patchConfFile(File originalConf, File dest, String library) throws IOException {
-    Scanner sc = new Scanner(originalConf);
-
-    try {
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)));
-
-      try {
-        boolean patched = false;
-
-        while (sc.hasNextLine()) {
-          String line = sc.nextLine();
-
-          out.append(line);
-          out.newLine();
-
-          if (!patched && "[plexus.core]".equals(line)) {
-            out.append("load ").append(library);
-            out.newLine();
-
-            patched = true;
-          }
-        }
-      }
-      finally {
-        out.close();
-      }
-    }
-    finally {
-      sc.close();
-    }
-
-  }
-
-  private static String getArtifactResolverJar(boolean isMaven3) throws IOException {
-    Class marker = isMaven3 ? MavenArtifactResolvedM3RtMarker.class : MavenArtifactResolvedM2RtMarker.class;
-
-    File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
-
-    if (!classDirOrJar.isDirectory()) {
-      return classDirOrJar.getAbsolutePath(); // it's a jar in IDEA installation.
-    }
-
-    // it's a classes directory, we are in development mode.
-    File tempFile = FileUtil.createTempFile("idea-", "-artifactResolver.jar");
-    tempFile.deleteOnExit();
-
-    ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(tempFile));
-    try {
-      ZipUtil.addDirToZipRecursively(zipOutput, null, classDirOrJar, "", null, null);
-
-      if (isMaven3) {
-        File m2Module = new File(PathUtil.getJarPathForClass(MavenModuleMap.class));
-
-        String commonClassesPath = MavenModuleMap.class.getPackage().getName().replace('.', '/');
-        ZipUtil.addDirToZipRecursively(zipOutput, null, new File(m2Module, commonClassesPath), commonClassesPath, null, null);
-      }
-    } finally {
-      zipOutput.close();
-    }
-
-    return tempFile.getAbsolutePath();
-  }
-
-  private static File dumpModulesPaths(@NotNull Project project) throws IOException {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    Properties res = new Properties();
-
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    for (MavenProject mavenProject : manager.getProjects()) {
-      res.setProperty(mavenProject.getMavenId().getGroupId()
-                      + ':' + mavenProject.getMavenId().getArtifactId()
-                      + ":pom"
-                      + ':' + mavenProject.getMavenId().getVersion(),
-                      mavenProject.getFile().getPath());
-
-      res.setProperty(mavenProject.getMavenId().getGroupId()
-                      + ':' + mavenProject.getMavenId().getArtifactId()
-                      + ':' + mavenProject.getPackaging()
-                      + ':' + mavenProject.getMavenId().getVersion(),
-                      mavenProject.getOutputDirectory());
-    }
-
-    File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");
-    file.getParentFile().mkdirs();
-
-    OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-    try {
-      res.store(out, null);
-    }
-    finally {
-      out.close();
-    }
-
-    return file;
   }
 
   @NotNull
@@ -313,6 +176,8 @@ public class MavenExternalParameters {
     parametersList.addParametersString(System.getenv(MAVEN_OPTS));
 
     parametersList.addParametersString(runnerSettings.getVmOptions());
+
+    parametersList.addProperty("classworlds.conf", MavenUtil.getMavenConfFile(new File(mavenHome)).getPath());
 
     parametersList.addProperty("maven.home", mavenHome);
   }
@@ -445,8 +310,8 @@ public class MavenExternalParameters {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
-
-    boolean atLeastMaven3 = MavenUtil.isMaven3(mavenHome);
+    String version = MavenUtil.getMavenVersion(mavenHome);
+    boolean atLeastMaven3 = version != null && version.compareTo("3.0.0") >= 0;
 
     if (!atLeastMaven3) {
       addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());

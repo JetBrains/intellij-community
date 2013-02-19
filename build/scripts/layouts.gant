@@ -252,17 +252,6 @@ public def layoutCommunityPlugins(String home) {
         module("maven3-server-impl")
       }
 
-      jar("artifact-resolver-m2.jar") {
-        module("maven-artifact-resolver-m2")
-      }
-
-      jar("artifact-resolver-m3.jar") {
-        module("maven-artifact-resolver-m3")
-        module("maven-artifact-resolver-m2") {
-          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
-        }
-      }
-
       dir("maven3") {
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "*.jar")}
         fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
