@@ -250,15 +250,36 @@ public class InstrumentationClassFinder {
       return null;
     }
 
-    public PseudoMethod findMethodInHierarchy(String name, String descriptor) throws IOException, ClassNotFoundException {
-      PseudoMethod method = findMethod(name, descriptor);
-      if (method == null) {
-        PseudoClass superClass = getSuperClass();
-        if (superClass != null) {
-          method = superClass.findMethodInHierarchy(name, descriptor);
+    public PseudoMethod findMethodInHierarchy(final String name, final String descriptor) throws IOException, ClassNotFoundException {
+      // first find in superclasses
+      for (PseudoClass c = this; c != null; c = c.getSuperClass()) {
+        final PseudoMethod method = c.findMethod(name, descriptor);
+        if (method != null) {
+          return method;
         }
       }
-      return method;
+      // second, check interfaces
+      for (PseudoClass iface : getInterfaces()) {
+        final PseudoMethod method = findInterfaceMethodRecursively(iface, name, descriptor);
+        if (method != null) {
+          return method;
+        }
+      }
+      return null;
+    }
+
+    private static PseudoMethod findInterfaceMethodRecursively(PseudoClass fromIface, final String name, final String descriptor) throws IOException, ClassNotFoundException {
+      PseudoMethod method = fromIface.findMethod(name, descriptor);
+      if (method != null) {
+        return method;
+      }
+      for (PseudoClass superIface : fromIface.getInterfaces()) {
+        method = findInterfaceMethodRecursively(superIface, name, descriptor);
+        if (method != null) {
+          return method;
+        }
+      }
+      return null;
     }
 
     public InstrumentationClassFinder getFinder() {
