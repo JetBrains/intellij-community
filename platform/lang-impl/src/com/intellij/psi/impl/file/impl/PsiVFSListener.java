@@ -88,11 +88,6 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void contentsChanged(final VirtualFileEvent event) {
-    // handled by FileDocumentManagerListener
-  }
-
-  @Override
   public void fileCreated(VirtualFileEvent event) {
     final VirtualFile vFile = event.getFile();
 
@@ -326,7 +321,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
       myFileManager.setViewProvider(vFile, viewProvider);
       PsiFile newPsiFile = ObjectUtils.assertNotNull(myManager.findFile(vFile));
       if (!viewProvider.isPhysical()) {
-        PsiDocumentManagerImpl.cachePsi(viewProvider.getDocument(), newPsiFile);
+        Document document = viewProvider.getDocument();
+        if (document != null) {
+          PsiDocumentManagerImpl.cachePsi(document, newPsiFile);
+        }
       }
       if (parentDir != null) {
         PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
