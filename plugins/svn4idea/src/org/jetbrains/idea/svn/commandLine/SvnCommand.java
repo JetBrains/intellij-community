@@ -46,7 +46,7 @@ public abstract class SvnCommand {
   private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
   private final File myWorkingDirectory;
-  protected Process myProcess;
+  private Process myProcess;
   private OSProcessHandler myHandler;
   private final Object myLock;
 
