@@ -138,6 +138,10 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("DictCreationTuple.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
   }
 
+  public void testDictCreationDuplicate() {  //PY-7318
+    doInspectionTest("DictCreationDuplicate.py", PyDictCreationInspection.class, PyBundle.message("QFIX.dict.creation"), true, true);
+  }
+
   public void testTransformClassicClass() {
     doInspectionTest("TransformClassicClass.py", PyClassicStyleClassInspection.class,
                      PyBundle.message("QFIX.classic.class.transform"), true, true);

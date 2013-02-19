@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,11 +43,13 @@ public class DictCreationQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final List<String> statements = Lists.newArrayList();
+    final Map<String, String> statementsMap = Maps.newLinkedHashMap();
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
-      for (PyExpression expression: ((PyDictLiteralExpression)assignedValue).getElements()) {
-        statements.add(expression.getText());
+      for (PyKeyValueExpression expression: ((PyDictLiteralExpression)assignedValue).getElements()) {
+        final PyExpression value = expression.getValue();
+        if (value != null)
+          statementsMap.put(expression.getKey().getText(), value.getText());
       }
 
       PyStatement statement = PsiTreeUtil.getNextSiblingOfType(myStatement, PyStatement.class);
@@ -73,13 +77,17 @@ public class DictCreationQuickFix implements LocalQuickFix {
              valueText = "("+targetToValue.second.getText()+")";
             else
               valueText = targetToValue.second.getText();
-            statements.add(indexText + ": " + valueText);
+
+            statementsMap.put(indexText, valueText);
             statement.delete();
           }
           statement = nextStatement;
         }
       }
-
+      List<String> statements = Lists.newArrayList();
+      for (Map.Entry<String, String> entry : statementsMap.entrySet()) {
+        statements.add(entry.getKey() + ": " + entry.getValue());
+      }
       final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement),
                                                                     "{" + StringUtil.join(statements, ", ") + "}");
       if (expression != null)
