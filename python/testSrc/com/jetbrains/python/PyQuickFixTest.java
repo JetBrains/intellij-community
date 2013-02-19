@@ -312,6 +312,11 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
   }
 
+  public void testConvertSingleQuotedDocstringEscape() {                      //PY-8926
+    doInspectionTest("ConvertSingleQuotedDocstringEscape.py", PySingleQuotedDocstringInspection.class,
+                     PyBundle.message("QFIX.convert.single.quoted.docstring"), true, true);
+  }
+
   public void testDefaultArgument() {                      //PY-3127
     doInspectionTest("DefaultArgument.py", PyDefaultArgumentInspection.class,
                      PyBundle.message("QFIX.default.argument"), true, true);

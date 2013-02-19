@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -37,7 +38,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       int prefixLength = PyStringLiteralExpressionImpl
         .getPrefixLength(stringText);
       String prefix = stringText.substring(0, prefixLength);
-      String content = expression.getText().substring(prefixLength);
+      String content = stringText.substring(prefixLength);
       if (content.startsWith("'''") ) {
         content = content.substring(3, content.length()-3);
       } else if (content.startsWith("\"\"\""))
@@ -45,6 +46,8 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       else {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
+
+      content = StringUtil.escapeQuotes(content);
 
       PyExpression newString = elementGenerator.createDocstring(prefix+"\"\"\"" + content + "\"\"\"").getExpression();
       expression.replace(newString);
