@@ -20,6 +20,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -78,22 +79,23 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpMethod doREST(@NotNull String host, @Nullable String login, @Nullable String password, @NotNull String path,
-                                   @Nullable String requestBody, final boolean post) throws IOException {
-    final HttpClient client = getHttpClient(login, password);
-    final String uri = getApiUrl(host) + path;
-    final HttpMethod method;
-    if (post) {
-      method = new PostMethod(uri);
-      if (requestBody != null) {
-        ((PostMethod)method).setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
-      }
-    }
-    else {
-      method = new GetMethod(uri);
-    }
-
-    client.executeMethod(method);
-    return method;
+                                   @Nullable final String requestBody, final boolean post) throws IOException {
+    HttpClient client = getHttpClient(login, password);
+    String uri = getApiUrl(host) + path;
+    return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
+     new ThrowableConvertor<String, HttpMethod, IOException>() {
+       @Override
+       public HttpMethod convert(String uri) throws IOException {
+         if (post) {
+           PostMethod method = new PostMethod(uri);
+           if (requestBody != null) {
+             method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+           }
+           return method;
+         }
+         return new GetMethod(uri);
+       }
+     });
   }
 
   @NotNull

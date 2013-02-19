@@ -29,6 +29,9 @@ import com.intellij.openapi.ui.Messages;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * @author oleg
  */
@@ -48,12 +51,16 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
   private static final String PRIVATE_GIST = "Private";
   public static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
+  private static final String TRUSTED_HOSTS = "GITHUB_TRUSTED_HOSTS";
+  private static final String TRUSTED_HOST = "HOST";
+  private static final String TRUSTED_URL = "URL";
 
   private String myLogin;
   private String myHost;
   private boolean myAnonymousGist;
   private boolean myOpenInBrowserGist = true;
   private boolean myPrivateGist;
+  private Collection<String> myTrustedHosts = new ArrayList<String>();
 
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
   private boolean passwordChanged = false;
@@ -89,6 +96,13 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     element.setAttribute(ANONIMOUS_GIST, String.valueOf(isAnonymous()));
     element.setAttribute(PRIVATE_GIST, String.valueOf(isPrivateGist()));
     element.setAttribute(OPEN_IN_BROWSER_GIST, String.valueOf(isOpenInBrowserGist()));
+    Element trustedHosts = new Element(TRUSTED_HOSTS);
+    for (String host : myTrustedHosts) {
+      Element hostEl = new Element(TRUSTED_HOST);
+      hostEl.setAttribute(TRUSTED_URL, host);
+      trustedHosts.addContent(hostEl);
+    }
+    element.addContent(trustedHosts);
     return element;
   }
 
@@ -100,6 +114,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONIMOUS_GIST)));
       setPrivateGist(Boolean.valueOf(element.getAttributeValue(PRIVATE_GIST)));
       setOpenInBrowserGist(Boolean.valueOf(element.getAttributeValue(OPEN_IN_BROWSER_GIST)));
+      for (Object trustedHost : element.getChildren(TRUSTED_HOSTS)) {
+        addTrustedHost(trustedHost.toString());
+      }
     }
     catch (Exception e) {
       LOG.error("Error happened while loading github settings: " + e);
@@ -185,5 +202,16 @@ public class GithubSettings implements PersistentStateComponent<Element> {
 
   public void setOpenInBrowserGist(final boolean openInBrowserGist) {
     myOpenInBrowserGist = openInBrowserGist;
+  }
+
+  @NotNull
+  public Collection<String> getTrustedHosts() {
+    return myTrustedHosts;
+  }
+
+  public void addTrustedHost(String host) {
+    if (!myTrustedHosts.contains(host)) {
+      myTrustedHosts.add(host);
+    }
   }
 }
