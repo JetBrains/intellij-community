@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -15,11 +17,16 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.appengine.util.StringUtils;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
@@ -32,8 +39,11 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -45,6 +55,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String CLIENT_PARAM = "--client";
   public static final String PORT_PARAM = "--port";
   public static final String FILE_PARAM = "--file";
+  public static final String PYCHARM_PROJECT_ROOTS = "PYCHARM_PROJECT_ROOTS";
 
   @NotNull
   public String getRunnerId() {
@@ -139,7 +150,9 @@ public class PyDebugRunner extends GenericProgramRunner {
     return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
-  private static CommandLinePatcher createDebugServerPatcher(final Project project, final PythonCommandLineState pyState, final int serverLocalPort) {
+  private static CommandLinePatcher createDebugServerPatcher(final Project project,
+                                                             final PythonCommandLineState pyState,
+                                                             final int serverLocalPort) {
     return new CommandLinePatcher() {
       public void patchCommandLine(GeneralCommandLine commandLine) {
 
@@ -160,12 +173,16 @@ public class PyDebugRunner extends GenericProgramRunner {
           }
         }
 
-        fillDebugParameters(project, debugParams, serverLocalPort, pyState);
+        fillDebugParameters(project, debugParams, serverLocalPort, pyState, commandLine);
       }
     };
   }
 
-  private static void fillDebugParameters(Project project, ParamsGroup debugParams, int serverLocalPort, PythonCommandLineState pyState) {
+  private static void fillDebugParameters(@NotNull Project project,
+                                          @NotNull ParamsGroup debugParams,
+                                          int serverLocalPort,
+                                          @NotNull PythonCommandLineState pyState,
+                                          @NotNull GeneralCommandLine generalCommandLine) {
     debugParams.addParameter(PythonHelpersLocator.getHelperPath(DEBUGGER_MAIN));
     if (pyState.isMultiprocessDebug()) {
       debugParams.addParameter("--multiproc");
@@ -177,6 +194,7 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSaveCallSignatures()) {
       debugParams.addParameter("--save-signatures");
+      addProjectRootsToEnv(project, generalCommandLine);
     }
 
     final String[] debuggerArgs = new String[]{
@@ -187,5 +205,21 @@ public class PyDebugRunner extends GenericProgramRunner {
     for (String s : debuggerArgs) {
       debugParams.addParameter(s);
     }
+  }
+
+  private static void addProjectRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+    Map<String, String> params = commandLine.getEnvParams();
+
+    if (params == null) {
+      params = Maps.newHashMap();
+      commandLine.setEnvParams(params);
+    }
+
+    List<String> roots = Lists.newArrayList();
+    for (VirtualFile contentRoot : ProjectRootManager.getInstance(project).getContentRoots()) {
+      roots.add(contentRoot.getPath());
+    }
+
+    params.put(PYCHARM_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
   }
 }
