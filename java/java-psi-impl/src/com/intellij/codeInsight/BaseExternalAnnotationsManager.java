@@ -20,6 +20,7 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -112,7 +113,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   public PsiAnnotation findExternalAnnotation(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
     List<AnnotationData> list = collectExternalAnnotations(listOwner);
     AnnotationData data = findByFQN(list, annotationFQN);
-    return data == null ? null : data.getAnnotation();
+    return data == null ? null : data.getAnnotation(this);
   }
 
   @Override
@@ -138,7 +139,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY, new Function<AnnotationData, PsiAnnotation>() {
       @Override
       public PsiAnnotation fun(AnnotationData data) {
-        return data.getAnnotation();
+        return data.getAnnotation(BaseExternalAnnotationsManager.this);
       }
     });
   }
@@ -231,7 +232,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
                 LOG.error("Duplicate annotation '" + annotationFQN+"' for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
               }
             }
-            AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters));
+            AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters, file.getVirtualFile()));
 
             data.add(externalName, annData);
           }
@@ -300,7 +301,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       Collection<AnnotationData> data = (Collection<AnnotationData>)fileData.get(externalName);
       for (AnnotationData ad : data) {
         if (result.contains(ad)) {
-          LOG.error("Duplicate signature:\n" + externalName + "; in  " + toVirtualFiles(files));
+          // there can be compatible annotations in different files
+          if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
+            LOG.error("Duplicate signature:\n" + externalName + "; in  " + file);
+          }
         }
         else {
           result.add(ad);
@@ -464,21 +468,23 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
-  private class AnnotationData {
+  private static class AnnotationData {
     @NotNull private final String annotationClassFqName;
     @NotNull private final String annotationParameters;
+    private final VirtualFile virtualFile;
     private PsiAnnotation annotation;
 
-    private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters) {
+    private AnnotationData(@NotNull String annotationClassFqName, @NotNull String annotationParameters, VirtualFile virtualFile) {
       this.annotationClassFqName = annotationClassFqName;
       this.annotationParameters = annotationParameters;
+      this.virtualFile = virtualFile;
     }
 
     @NotNull
-    private PsiAnnotation getAnnotation() {
+    private PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
       PsiAnnotation a = annotation;
       if (a == null) {
-        annotation = a = createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
+        annotation = a = context.createAnnotationFromText("@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "("+annotationParameters+")"));
       }
       return a;
     }
