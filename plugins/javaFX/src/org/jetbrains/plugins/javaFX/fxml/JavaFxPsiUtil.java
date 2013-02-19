@@ -201,7 +201,10 @@ public class JavaFxPsiUtil {
     if (containingFile instanceof XmlFile) {
       final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
       if (rootTag != null) {
-        final XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+        XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
+        if (attribute == null && FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
+          attribute = rootTag.getAttribute(FxmlConstants.TYPE);
+        }
         if (attribute != null) {
           final String attributeValue = attribute.getValue();
           if (!StringUtil.isEmptyOrSpaces(attributeValue)) {

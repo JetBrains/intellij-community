@@ -10,6 +10,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -98,12 +99,24 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("javafx.geometry.Pos", "CENTER");
   }
 
+  public void testCustomComponentFields() throws Exception {
+    doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
+  }
+
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
-    configureByFiles(null, getTestName(true) + ".fxml");
+    doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private void doTestNavigation(String resultClassName, String resultFieldName, String... additionalPaths) throws Exception {
+    if (additionalPaths.length == 0) {
+      configureByFiles(null, getTestName(true) + ".fxml");
+    } else {
+      configureByFiles(null, additionalPaths);
+    }
     final int offset = myEditor.getCaretModel().getOffset();
     final PsiReference reference = myFile.findReferenceAt(offset);
     assertNotNull(reference);
-    final PsiClass resultClass = myJavaFacade.findClass(resultClassName, ProjectScope.getLibrariesScope(getProject()));
+    final PsiClass resultClass = myJavaFacade.findClass(resultClassName, ProjectScope.getAllScope(getProject()));
     assertNotNull("Class " + resultClassName + " not found", resultClass);
     final PsiField resultField = resultClass.findFieldByName(resultFieldName, false);
     assertNotNull(resultField);
