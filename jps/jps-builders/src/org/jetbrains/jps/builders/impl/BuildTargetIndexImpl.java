@@ -25,8 +25,8 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -46,7 +46,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     myTargets = new THashMap<BuildTargetType<?>, List<? extends BuildTarget<?>>>();
     myModuleBasedTargets = new THashMap<JpsModule, List<ModuleBasedTarget>>();
     List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<List<? extends BuildTarget<?>>>();
-    for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
+    for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
       List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
       myTargets.put(type, targets);
       targetsByType.add(targets);
