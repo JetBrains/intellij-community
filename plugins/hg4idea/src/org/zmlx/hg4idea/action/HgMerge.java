@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
+import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +46,7 @@ public class HgMerge extends HgAbstractGlobalAction {
   @Override
 
   public void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgActionDialogUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
 
       @Override
       public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {

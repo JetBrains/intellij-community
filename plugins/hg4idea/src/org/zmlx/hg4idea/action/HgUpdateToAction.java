@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgUpdateToDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.Map;
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
   protected void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgActionDialogUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
 
       @Override
       public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
