@@ -266,6 +266,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyStringFormatInspection.class);
   }
 
+  public void testPyStringFormatInspectionSlice() {    //PY-6756
+    doHighlightingTest(PyStringFormatInspection.class);
+  }
+
   public void testPyUnnecessaryBackslashInspection() {    //PY-2952
     setLanguageLevel(LanguageLevel.PYTHON27);
     doHighlightingTest(PyUnnecessaryBackslashInspection.class);

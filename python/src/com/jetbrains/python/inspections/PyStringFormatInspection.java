@@ -183,7 +183,11 @@ public class PyStringFormatInspection extends PyInspection {
         }
         else if (rightExpression instanceof PySliceExpression && s != null) {
           final PyType type = myTypeEvalContext.getType(((PySliceExpression)rightExpression).getOperand());
-          if (type == null || "list".equals(type.getName()) || "str".equals(type.getName())) {
+          final PyType stringType = PyBuiltinCache.getInstance(rightExpression).getStringType(LanguageLevel.forElement(rightExpression));
+          final PyType listType = PyBuiltinCache.getInstance(rightExpression).getListType();
+
+          if (type == null || PyTypeChecker.match(listType, type, myTypeEvalContext)
+              || PyTypeChecker.match(stringType, type, myTypeEvalContext)) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
                                 PyTypeParser.getTypeByName(problemTarget, s));
             return 1;
