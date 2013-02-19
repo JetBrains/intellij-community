@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.action;
+package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * @author Nadya Zabrodina
  */
-public class HgActionDialogUtil {
+public class HgUiUtil {
 
   public static void loadBranchesInBackgroundableAndExecuteAction(final Project project,
                                                                   final Collection<VirtualFile> repos,
