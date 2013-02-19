@@ -119,6 +119,11 @@ public class GithubApiUtil {
     return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
   }
 
+  @NotNull
+  public static String getApiUrl() {
+    return getApiUrl(GithubSettings.getInstance().getHost());
+  }
+
   /**
    * Returns the "host" part of Git URLs.
    * E.g.: https://github.com

@@ -221,7 +221,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     String requestBody = prepareJsonRequest(description, isPrivate, contents);
     try {
-      JsonElement jsonElement = GithubApiUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
+      JsonElement jsonElement = GithubApiUtil.postRequest(GithubApiUtil.getApiUrl(), login, password, "/gists", requestBody);
       if (jsonElement == null) {
         LOG.info("Null JSON response returned by GitHub");
         showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);
