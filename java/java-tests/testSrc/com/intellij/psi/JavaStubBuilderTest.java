@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.security.SecureRandom;
 
+@SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
 
@@ -115,7 +116,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "}\n" +
            "interface I {\n" +
            "  void m1();\n" +
-           "  void m2() default { }\n" +
+           "  default void m2() { }\n" +
            "}",
 
            "PsiJavaFileStub []\n" +
@@ -347,27 +348,10 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
-  public void testAnnotationParameters() throws Exception {
-    doTest("@Deprecated(\"bar\")\n" +
-           "class Foo  {\n" +
-           "}",
-
-           "PsiJavaFileStub []\n" +
-           "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]\n" +
-           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
-           "      ANNOTATION:PsiAnnotationStub[@Deprecated(\"bar\")]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "          NAME_VALUE_PAIR:PsiNameValuePairStubImpl\n" +
-           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
-           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
-           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
-  }
-
-  public void testAnnotation() throws Exception {
+  public void testAnnotations() throws Exception {
     doTest("@Deprecated\n" +
-           "class Foo  {\n" +
-           "}",
+           "@SuppressWarnings(\"UnusedDeclaration\")\n" +
+           "class Foo { }",
 
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
@@ -375,6 +359,9 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
            "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "      ANNOTATION:PsiAnnotationStub[@SuppressWarnings(\"UnusedDeclaration\")]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "          NAME_VALUE_PAIR:PsiNameValuePairStubImpl\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");

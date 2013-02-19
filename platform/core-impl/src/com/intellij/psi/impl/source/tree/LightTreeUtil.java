@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,35 +28,52 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-
 public class LightTreeUtil {
   private LightTreeUtil() { }
 
   @Nullable
-  public static LighterASTNode firstChildOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
+  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
     List<LighterASTNode> children = tree.getChildren(node);
     for (int i = 0, size = children.size(); i < size; ++i) {
-      final LighterASTNode child = children.get(i);
+      LighterASTNode child = children.get(i);
       if (child.getTokenType() == type) return child;
     }
 
     return null;
   }
 
+  @Nullable
+  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (int i = 0, size = children.size(); i < size; ++i) {
+      LighterASTNode child = children.get(i);
+      if (types.contains(child.getTokenType())) return child;
+    }
+
+    return null;
+  }
+
   @NotNull
-  public static LighterASTNode requiredChildOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
-    final LighterASTNode child = firstChildOfType(tree, node, type);
+  public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
+    LighterASTNode child = firstChildOfType(tree, node, type);
     assert child != null : "Required child " + type + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
     return child;
   }
 
   @NotNull
-  public static List<LighterASTNode> getChildrenOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
+  public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+    LighterASTNode child = firstChildOfType(tree, node, types);
+    assert child != null : "Required child " + types + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
+    return child;
+  }
+
+  @NotNull
+  public static List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
     List<LighterASTNode> result = null;
 
     List<LighterASTNode> children = tree.getChildren(node);
     for (int i = 0, size = children.size(); i < size; ++i) {
-      final LighterASTNode child = children.get(i);
+      LighterASTNode child = children.get(i);
       if (child.getTokenType() == type) {
         if (result == null) result = new SmartList<LighterASTNode>();
         result.add(child);
@@ -66,13 +83,13 @@ public class LightTreeUtil {
     return result != null ? result: Collections.<LighterASTNode>emptyList();
   }
 
-  public static String toFilteredString(final LighterAST tree, final LighterASTNode node, @Nullable final TokenSet skipTypes) {
-    final StringBuilder buffer = new StringBuilder(node.getEndOffset() - node.getStartOffset());
+  public static String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+    StringBuilder buffer = new StringBuilder(node.getEndOffset() - node.getStartOffset());
     toBuffer(tree, node, buffer, skipTypes);
     return buffer.toString();
   }
 
-  private static void toBuffer(final LighterAST tree, final LighterASTNode node, final StringBuilder buffer, @Nullable final TokenSet skipTypes) {
+  private static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
     if (skipTypes != null && skipTypes.contains(node.getTokenType())) return;
 
     if (node instanceof LighterASTTokenNode) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
@@ -42,10 +43,15 @@ import java.util.Arrays;
 
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
+
   private volatile PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
-    super(stub, JavaStubElementTypes.PARAMETER);
+    this(stub, JavaStubElementTypes.PARAMETER);
+  }
+
+  protected PsiParameterImpl(@NotNull PsiParameterStub stub, @NotNull IStubElementType type) {
+    super(stub, type);
   }
 
   public PsiParameterImpl(@NotNull ASTNode node) {
@@ -69,23 +75,34 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public final String getName() {
-    final PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getStub();
     if (stub != null) {
       return stub.getName();
     }
-    return getNameIdentifier().getText();
+
+    return getParameterIdentifier().getText();
   }
 
   @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiImplUtil.setName(getNameIdentifier(), name);
+  public final PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    if (this instanceof PsiReceiverParameter) {
+      throw new IncorrectOperationException("Cannot rename receiver parameter");
+    }
+
+    PsiImplUtil.setName(getParameterIdentifier(), name);
     return this;
   }
 
   @Override
-  @NotNull
   public final PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
+    return PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
+  }
+
+  @NotNull
+  private PsiElement getParameterIdentifier() {
+    PsiJavaToken identifier = PsiTreeUtil.getChildOfAnyType(this, PsiIdentifier.class, PsiKeyword.class);
+    assert identifier != null : this;
+    return identifier;
   }
 
   @Override
@@ -97,7 +114,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public PsiType getType() {
-    final PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getStub();
     if (stub != null) {
       PatchedSoftReference<PsiType> cachedType = myCachedType;
       if (cachedType != null) {
@@ -106,8 +123,9 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       }
 
       String typeText = TypeInfo.createTypeText(stub.getType(true));
+      assert typeText != null : stub;
       try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -119,19 +137,22 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
     myCachedType = null;
 
-    final PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null && isLambdaParameter()) {
+    PsiTypeElement typeElement = getTypeElement();
+    if (typeElement == null) {
+      assert isLambdaParameter() : this;
       return LambdaUtil.getLambdaParameterType(this);
     }
-
-    return JavaSharedImplUtil.getType(typeElement, getNameIdentifier(), this);
+    else {
+      return JavaSharedImplUtil.getType(typeElement, getParameterIdentifier(), this);
+    }
   }
 
   @Override
   public PsiType getTypeNoResolve() {
-    final PsiParameterStub stub = getStub();
+    PsiParameterStub stub = getStub();
     if (stub != null) {
       String typeText = TypeInfo.createTypeText(stub.getType(false));
+      assert typeText != null : stub;
       try {
         return JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
       }
@@ -142,11 +163,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     final PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null && isLambdaParameter()) {
+    if (typeElement == null) {
+      assert isLambdaParameter() : this;
       return new PsiLambdaParameterType(this);
     }
-
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, getNameIdentifier(), this);
+    else {
+      return JavaSharedImplUtil.getTypeNoResolve(typeElement, getParameterIdentifier(), this);
+    }
   }
 
   private boolean isLambdaParameter() {
@@ -156,13 +179,15 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public PsiTypeElement getTypeElement() {
-    return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
+    return PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
   }
 
   @Override
   @NotNull
   public PsiModifierList getModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    assert modifierList != null : this;
+    return modifierList;
   }
 
   @Override

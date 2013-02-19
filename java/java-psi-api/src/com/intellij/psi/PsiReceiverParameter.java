@@ -13,27 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs;
-
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.stubs.NamedStub;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.psi;
 
 /**
- * @author max
+ * Represents a receiver parameter of a Java method (Java 8).
+ *
+ * @since 12.1
  */
-public interface PsiParameterStub extends NamedStub<PsiParameter> {
-  @NotNull
-  @Override
-  String getName();
-
-  boolean isParameterTypeEllipsis();
-
-  @NotNull
-  TypeInfo getType(boolean doResolve);
-
-  PsiModifierListStub getModList();
-
-  boolean isReceiver();
+public interface PsiReceiverParameter extends PsiParameter {
 }

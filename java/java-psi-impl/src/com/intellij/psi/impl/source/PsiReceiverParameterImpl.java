@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.java.stubs;
+package com.intellij.psi.impl.source;
 
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.impl.cache.TypeInfo;
-import com.intellij.psi.stubs.NamedStub;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiReceiverParameter;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public interface PsiParameterStub extends NamedStub<PsiParameter> {
-  @NotNull
+public class PsiReceiverParameterImpl extends PsiParameterImpl implements PsiReceiverParameter {
+  public PsiReceiverParameterImpl(@NotNull PsiParameterStub stub) {
+    super(stub, JavaStubElementTypes.RECEIVER_PARAMETER);
+  }
+
+  public PsiReceiverParameterImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
   @Override
-  String getName();
-
-  boolean isParameterTypeEllipsis();
-
-  @NotNull
-  TypeInfo getType(boolean doResolve);
-
-  PsiModifierListStub getModList();
-
-  boolean isReceiver();
+  public String toString() {
+    return "PsiReceiverParameter";
+  }
 }
