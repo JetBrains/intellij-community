@@ -5,9 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonStringUtil;
+import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +27,19 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final Pair<String,String> quotes =
         PythonStringUtil.getQuotes(stringLiteralExpression.getText());
-      return quotes != null? quotes.getFirst()+"\n" : "\"\n";
+      final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
+      if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
+        final PyStatementList statementList = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyStatementList.class);
+        final PsiElement whiteSpace = statementList.getPrevSibling();
+        String indent;
+        if (whiteSpace instanceof PsiWhiteSpace)
+          indent = whiteSpace.getText();
+        else
+          indent = "\n";
+        return quotes != null? quotes.getFirst()+ indent : "\"" + indent;
+      }
+      else
+        return quotes != null? quotes.getFirst() : "\"";
     }
     return element instanceof PsiComment? "# " : "";
   }
@@ -37,7 +52,19 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     if (stringLiteralExpression != null) {
       final Pair<String,String> quotes =
         PythonStringUtil.getQuotes(stringLiteralExpression.getText());
-      return quotes != null? "\n" + quotes.getSecond() : "\n\"";
+      final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
+      if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
+        final PyStatementList statementList = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyStatementList.class);
+        final PsiElement whiteSpace = statementList.getPrevSibling();
+        String indent;
+        if (whiteSpace instanceof PsiWhiteSpace)
+          indent = whiteSpace.getText();
+        else
+          indent = "\n";
+        return quotes != null? indent + quotes.getSecond() : indent + "\"";
+      }
+      else
+        return quotes != null? quotes.getSecond() : "\"";
     }
     return "";
   }
