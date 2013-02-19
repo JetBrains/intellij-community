@@ -250,6 +250,17 @@ public class InstrumentationClassFinder {
       return null;
     }
 
+    public PseudoMethod findMethodRecursive(String name, String descriptor) throws IOException, ClassNotFoundException {
+      PseudoMethod method = findMethod(name, descriptor);
+      if (method == null) {
+        PseudoClass superClass = getSuperClass();
+        if (superClass != null) {
+          method = superClass.findMethodRecursive(name, descriptor);
+        }
+      }
+      return method;
+    }
+
     public InstrumentationClassFinder getFinder() {
       return myFinder;
     }
