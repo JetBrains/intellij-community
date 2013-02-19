@@ -71,15 +71,12 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
         (elementType == XmlTokenType.XML_TAG_CHARACTERS && getParent() instanceof XmlProcessingInstruction)
       ) {
       return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlToken.class);
-    } else if (elementType == XmlTokenType.XML_NAME) {
-      if (getParent() instanceof PsiErrorElement) {
-        final PsiElement element = getPrevSibling();
-
-        if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
-          return new PsiReference[]{TagNameReference.createTagNameReference(this, getNode(), false)};
-        }
+    } else if (elementType == XmlTokenType.XML_NAME && getParent() instanceof PsiErrorElement) {
+      final PsiElement element = getPrevSibling();
+      
+      if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
+        return new PsiReference[] {TagNameReference.createTagNameReference(this, getNode(), false)};
       }
-      return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlToken.class);
     }
 
     return super.getReferences();
