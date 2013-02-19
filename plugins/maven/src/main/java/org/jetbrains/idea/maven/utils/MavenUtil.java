@@ -615,6 +615,11 @@ public class MavenUtil {
     return null;
   }
 
+  public static boolean isMaven3(String mavenHome) {
+    String version = getMavenVersion(mavenHome);
+    return version != null && version.compareTo("3.0.0") >= 0;
+  }
+
   @Nullable
   public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
