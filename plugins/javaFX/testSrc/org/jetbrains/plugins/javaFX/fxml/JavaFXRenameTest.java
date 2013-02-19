@@ -38,6 +38,10 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     doTest("newFieldName");
   }
 
+  public void testCustomComponentTag() throws Exception {
+    doTest("Foo");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase
