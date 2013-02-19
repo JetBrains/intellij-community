@@ -129,6 +129,7 @@ frontend
 ftlvariable
 fulltext
 func
+fxml
 gdata
 geocode
 geometrycollection
@@ -174,6 +175,7 @@ javabeans
 javac
 javadoc
 javaee
+javafx
 javascript
 javax
 jetbrains
