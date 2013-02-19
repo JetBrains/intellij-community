@@ -545,8 +545,8 @@ public class AsmCodeGenerator {
             }
             //componentClass.getMethod(property.getWriteMethodName(), new Class[] { setterClass } );
             final String descriptor = "(L"+setterClass.getName().replace('.', '/') + ";)V";
-            final InstrumentationClassFinder.PseudoMethod setter = componentClass.findMethodRecursive(property.getWriteMethodName(),
-                                                                                                      descriptor);
+            final InstrumentationClassFinder.PseudoMethod setter = componentClass.findMethodInHierarchy(property.getWriteMethodName(),
+                                                                                                        descriptor);
             if (setter == null) {
               continue;
             }
