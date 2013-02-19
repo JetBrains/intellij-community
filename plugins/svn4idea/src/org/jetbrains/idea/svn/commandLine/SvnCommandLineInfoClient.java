@@ -139,7 +139,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
   private File correctUpToExistingParent(File base) {
     while (base != null) {
-      if (base.exists()) return base;
+      if (base.exists() && base.isDirectory()) return base;
       base = base.getParentFile();
     }
     return null;
