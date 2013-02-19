@@ -241,6 +241,19 @@ public class PortableStatus extends SVNStatus {
     return url == null ? null : url.toString();
   }
 
+  @Override
+  public SVNRevision getRevision() {
+    final SVNRevision revision = super.getRevision();
+    if (revision != null && revision.isValid()) return revision;
+
+    final SVNStatusType status = getContentsStatus();
+    if (SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
+        SVNStatusType.STATUS_ADDED.equals(status)) return revision;
+
+    final SVNInfo info = initInfo();
+    return info == null ? revision : info.getRevision();
+  }
+
   /**
    * Gets the revision of the item's ancestor from which the item was copied
    * (the item is added with history).
