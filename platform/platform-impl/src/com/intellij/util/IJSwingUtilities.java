@@ -23,10 +23,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
 
 public class IJSwingUtilities {
@@ -200,5 +204,15 @@ public class IJSwingUtilities {
         UIUtil.addInsets(label, new Insets(0,3,0,0));
       }
     }
+  }
+
+  public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
+    URL url = null;
+    try {
+      url = new URL(href);
+    }
+    catch (MalformedURLException ignored) {
+    }
+    return new HyperlinkEvent(source, HyperlinkEvent.EventType.ACTIVATED, url, href);
   }
 }

@@ -32,7 +32,8 @@ class GithubUser {
     BRONZE,
     SILVER,
     GOLD,
-    PLATINUM;
+    PLATINUM,
+    ENTERPRISE;
 
     public boolean isPrivateRepoAllowed() {
       return this != FREE;

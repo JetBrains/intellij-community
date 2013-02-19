@@ -23,7 +23,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
@@ -58,7 +58,7 @@ public class BuildTargetsState {
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);
       LOG.debug("Loading all target types to calculate max target id");
-      for (BuildTargetType<?> type : BuilderRegistry.getInstance().getTargetTypes()) {
+      for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
         getTypeState(type);
       }
     }

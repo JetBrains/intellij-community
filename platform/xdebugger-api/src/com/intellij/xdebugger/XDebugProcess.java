@@ -29,6 +29,8 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
+
 /**
  * Extends this class to provide debugging capabilities for custom language/framework.
  *
@@ -190,4 +192,8 @@ public abstract class XDebugProcess {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
   }
 
+  @Nullable
+  public HyperlinkListener getCurrentStateHyperlinkListener() {
+    return null;
+  }
 }

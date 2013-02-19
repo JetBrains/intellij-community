@@ -40,7 +40,9 @@ public class ParagraphFillHandler {
     for (String string : subStrings) {
       final String startTrimmed = StringUtil.trimStart(string.trim(), prefix.trim());
       final String str = StringUtil.trimEnd(startTrimmed, postfix.trim());
-      stringBuilder.append(str.trim()).append(" ");
+      final String finalString = str.trim();
+      if (!StringUtil.isEmptyOrSpaces(finalString))
+        stringBuilder.append(finalString).append(" ");
     }
     appendPostfix(element, text, stringBuilder);
 

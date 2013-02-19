@@ -128,7 +128,7 @@ public class JdkPopupAction extends AnAction {
                 if (selectedFile != null) {
                   selected = homes.getFirst().getAbsolutePath().equals(VfsUtilCore.virtualToIoFile(selectedFile).getAbsolutePath());
                 }
-                e.getPresentation().setIcon(selected ? AllIcons.Actions.Checked_small : null);
+                e.getPresentation().setIcon(selected ? AllIcons.Diff.CurrentLine : null);
               }
 
               @Override

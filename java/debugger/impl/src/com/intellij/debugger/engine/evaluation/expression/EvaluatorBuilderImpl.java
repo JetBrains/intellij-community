@@ -864,15 +864,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] argExpressions = argumentList.getExpressions();
-      List<Evaluator> argumentEvaluators = new ArrayList<Evaluator>(argExpressions.length);
+      final Evaluator[] argumentEvaluators = new Evaluator[argExpressions.length];
       // evaluate arguments
-      for (PsiExpression psiExpression : argExpressions) {
+      for (int idx = 0; idx < argExpressions.length; idx++) {
+        final PsiExpression psiExpression = argExpressions[idx];
         psiExpression.accept(this);
         if (myResult == null) {
           // cannot build evaluator
           throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", psiExpression.getText()));
         }
-        argumentEvaluators.add(new DisableGC(myResult));
+        argumentEvaluators[idx] = new DisableGC(myResult);
       }
       PsiReferenceExpression methodExpr = expression.getMethodExpression();
 
@@ -953,35 +954,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       if (psiMethod != null) {
-        // handle autoboxing
-        final PsiParameter[] declaredParams = psiMethod.getParameterList().getParameters();
-        if (declaredParams.length > 0) {
-          final int paramCount = Math.max(declaredParams.length, argExpressions.length);
-          PsiType varargType = null;
-          for (int idx = 0; idx < paramCount; idx++) {
-            if (idx >= argExpressions.length) {
-              break; // actual arguments count is less than number of declared params
-            }
-            PsiType declaredParamType;
-            if (idx < declaredParams.length) {
-              declaredParamType = resolveResult.getSubstitutor().substitute(declaredParams[idx].getType());
-              if (declaredParamType instanceof PsiEllipsisType) {
-                declaredParamType = varargType = ((PsiEllipsisType)declaredParamType).getComponentType();
-              }
-            }
-            else if (varargType != null) {
-              declaredParamType = varargType;
-            }
-            else {
-              break;
-            }
-            final PsiType actualArgType = argExpressions[idx].getType();
-            if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
-              final Evaluator argEval = argumentEvaluators.get(idx);
-              argumentEvaluators.set(idx, declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval));
-            }
-          }
-        }
+        processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
       }
 
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators);
@@ -1163,8 +1136,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         if (argumentList == null) {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())); return;
         }
-        PsiExpression[] argExpressions = argumentList.getExpressions();
-        PsiMethod constructor = expression.resolveConstructor();
+        final PsiExpression[] argExpressions = argumentList.getExpressions();
+        final JavaResolveResult constructorResolveResult = expression.resolveMethodGenerics();
+        final PsiMethod constructor = (PsiMethod)constructorResolveResult.getElement();
         if (constructor == null && argExpressions.length > 0) {
           throw new EvaluateRuntimeException(new EvaluateException(
             DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", expression.getText()), null));
@@ -1181,6 +1155,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", argExpression.getText()));
           }
         }
+
+        if (constructor != null) {
+          processBoxingConversions(constructor.getParameterList().getParameters(), argExpressions, constructorResolveResult.getSubstitutor(), argumentEvaluators);
+        }
+
         //noinspection HardCodedStringLiteral
         JVMName signature = constructor != null ? JVMNameUtil.getJVMSignature(constructor) : JVMNameUtil.getJVMRawText("()V");
         myResult = new NewClassInstanceEvaluator(
@@ -1249,6 +1228,39 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", element.toString()));
       }
       return new ExpressionEvaluatorImpl(myResult);
+    }
+  }
+
+  private static void processBoxingConversions(final PsiParameter[] declaredParams,
+                                               final PsiExpression[] actualArgumentExpressions,
+                                               final PsiSubstitutor methodResolveSubstitutor,
+                                               final Evaluator[] argumentEvaluators) {
+    if (declaredParams.length > 0) {
+      final int paramCount = Math.max(declaredParams.length, actualArgumentExpressions.length);
+      PsiType varargType = null;
+      for (int idx = 0; idx < paramCount; idx++) {
+        if (idx >= actualArgumentExpressions.length) {
+          break; // actual arguments count is less than number of declared params
+        }
+        PsiType declaredParamType;
+        if (idx < declaredParams.length) {
+          declaredParamType = methodResolveSubstitutor.substitute(declaredParams[idx].getType());
+          if (declaredParamType instanceof PsiEllipsisType) {
+            declaredParamType = varargType = ((PsiEllipsisType)declaredParamType).getComponentType();
+          }
+        }
+        else if (varargType != null) {
+          declaredParamType = varargType;
+        }
+        else {
+          break;
+        }
+        final PsiType actualArgType = actualArgumentExpressions[idx].getType();
+        if (TypeConversionUtil.boxingConversionApplicable(declaredParamType, actualArgType)) {
+          final Evaluator argEval = argumentEvaluators[idx];
+          argumentEvaluators[idx] = declaredParamType instanceof PsiPrimitiveType ? new UnBoxingEvaluator(argEval) : new BoxingEvaluator(argEval);
+        }
+      }
     }
   }
 }
