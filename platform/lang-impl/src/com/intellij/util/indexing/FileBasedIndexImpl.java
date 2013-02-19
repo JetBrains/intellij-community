@@ -127,6 +127,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
   private final AtomicInteger myUpdatingFiles = new AtomicInteger();
+  private final ConcurrentHashSet<Project> myProjectsBeingUpdated = new ConcurrentHashSet<Project>();
+
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
   // need this variable for memory barrier
 
@@ -1022,10 +1024,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  void filesUpdateFinished() {
-    if (myUpdatingFiles.decrementAndGet() == 0) {
-      ++myFilesModCount;
-    }
+  void filesUpdateFinished(@NotNull Project project) {
+    myProjectsBeingUpdated.remove(project);
+    ++myFilesModCount;
   }
 
   private final Lock myCalcIndexableFilesLock = new SequenceLock();
@@ -1033,6 +1034,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Nullable
   public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
     if (project == null || myUpdatingFiles.get() > 0) return null;
+    if (myProjectsBeingUpdated.contains(project)) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
     ProjectIndexableFilesFilter data = reference != null ? reference.get() : null;
@@ -1894,7 +1896,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       });
       IndexingStamp.flushCache(null);
       if (!contentChange) {
-        filesUpdateFinished();
+        if (myUpdatingFiles.decrementAndGet() == 0) {
+          ++myFilesModCount;
+        }
       }
     }
 
@@ -2082,7 +2086,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo,
                              boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
+      ProjectIndexableFilesFilter indexableFilesFilter = projectIndexableFiles(project);
+
       for (VirtualFile file : getAllFilesToUpdate()) {
+        if (indexableFilesFilter != null &&
+            file instanceof VirtualFileWithId &&
+            !indexableFilesFilter.contains(((VirtualFileWithId)file).getId())) {
+          continue;
+        }
+
         if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
           try {
             myForceUpdateSemaphore.down();
@@ -2257,8 +2269,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  public CollectingContentIterator createContentIterator(@Nullable ProgressIndicator indicator) {
-    myUpdatingFiles.incrementAndGet();
+  public CollectingContentIterator createContentIterator(@Nullable ProgressIndicator indicator, @NotNull Project project) {
+    myProjectsBeingUpdated.add(project);
     return new UnindexedFilesFinder(indicator);
   }
 
