@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,6 +29,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +125,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
   private void setData(final MavenRunnerParameters data) {
     data.setWorkingDirPath(workingDirComponent.getComponent().getText());
-    data.setGoals(Strings.tokenize(goalsComponent.getComponent().getText(), " "));
+    data.setGoals(ParametersListUtil.parse(goalsComponent.getComponent().getText()));
 
     Map<String, Boolean> profilesMap = new LinkedHashMap<String, Boolean>();
 
@@ -143,7 +145,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
   private void getData(final MavenRunnerParameters data) {
     workingDirComponent.getComponent().setText(data.getWorkingDirPath());
-    goalsComponent.getComponent().setText(Strings.detokenize(data.getGoals(), ' '));
+    goalsComponent.getComponent().setText(ParametersList.join(data.getGoals()));
 
     StringBuilder sb = new StringBuilder();
     for (Map.Entry<String, Boolean> entry : data.getProfilesMap().entrySet()) {

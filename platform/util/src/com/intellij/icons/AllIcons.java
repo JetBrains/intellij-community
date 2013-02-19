@@ -485,6 +485,7 @@ public class AllIcons {
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); // 12x12
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); // 12x12
     public static final Icon Warning = IconLoader.getIcon("/general/warning.png"); // 16x16
+    public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.png"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.png"); // 32x32
     public static final Icon Web = IconLoader.getIcon("/general/web.png"); // 13x13
 

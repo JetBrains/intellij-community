@@ -22,6 +22,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
@@ -122,7 +123,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       ) {
       return;
     }
-    if (!isGoodCharset(virtualFile, text, charset)) {
+    if (!isGoodCharset(virtualFile, text, charset, file.getProject())) {
       descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
                                                       RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
     }
@@ -132,7 +133,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   // returns true if text converted with charset is equals to the bytes currently on disk
   private static boolean isGoodCharset(@NotNull VirtualFile virtualFile,
                                        @NotNull String text,
-                                       @NotNull Charset charset) {
+                                       @NotNull Charset charset,
+                                       @NotNull Project project) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();
@@ -140,9 +142,15 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     catch (IOException e) {
       return true;
     }
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document document = documentManager.getDocument(virtualFile);
     if (document == null) return true;
-    String separator = FileDocumentManagerImpl.getLineSeparator(document, virtualFile);
+    String separator = LoadTextUtil.detectLineSeparator(virtualFile, false);
+    if (separator == null) {
+      separator = documentManager.isDocumentUnsaved(document) ?
+                  FileDocumentManagerImpl.getLineSeparator(document, virtualFile) :
+                  CodeStyleFacade.getInstance(project).getLineSeparator();
+    }
     String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();
     byte[] bytesToSave = toSave.getBytes(charset);

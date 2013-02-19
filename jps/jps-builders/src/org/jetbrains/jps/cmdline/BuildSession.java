@@ -24,23 +24,28 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
+import gnu.trove.THashMap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
+import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -226,13 +231,50 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static boolean scopeContainsModulesOnly(List<TargetTypeBuildScope> scopes) {
+    Map<String, BuildTargetType<?>> allTypes = null;
     for (TargetTypeBuildScope scope : scopes) {
-      String typeId = scope.getTypeId();
-      if (!typeId.equals(JavaModuleBuildTargetType.PRODUCTION.getTypeId()) && !typeId.equals(JavaModuleBuildTargetType.TEST.getTypeId())) {
+      final String typeId = scope.getTypeId();
+      if (isJavaModuleBuildType(typeId)) { // fast check
+        continue;
+      }
+      if (allTypes == null) {
+        // lazy init
+        allTypes = new THashMap<String, BuildTargetType<?>>();
+        for (BuilderService builderService : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
+          for (BuildTargetType<?> targetType : builderService.getTargetTypes()) {
+            allTypes.put(targetType.getTypeId(), targetType);
+          }
+        }
+      }
+      final BuildTargetType<?> targetType = allTypes.get(typeId);
+      if (targetType != null && !isModuleBasedTargetType(targetType)) {
         return false;
       }
     }
     return true;
+  }
+
+  private static boolean isJavaModuleBuildType(String typeId) {
+    for (JavaModuleBuildTargetType moduleBuildTargetType : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (moduleBuildTargetType.getTypeId().equals(typeId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isModuleBasedTargetType(final BuildTargetType targetType) {
+    Class<?> aClass = targetType.getClass();
+    while (!BuildTargetType.class.equals(aClass.getSuperclass())) {
+      aClass = aClass.getSuperclass();
+    }
+    final ParameterizedType generic = (ParameterizedType)aClass.getGenericSuperclass();
+    for (Type type : generic.getActualTypeArguments()) {
+      if (type instanceof Class && ModuleBasedTarget.class.isAssignableFrom((Class)type)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void saveData(final BuildFSState fsState, File dataStorageRoot) {
@@ -388,14 +430,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       try {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
-        boolean hasWorkToDoWithModules = false;
-        for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-          if (state.hasWorkToDo(target)) {
-            hasWorkToDoWithModules = true;
-            break;
-          }
-        }
-        out.writeBoolean(hasWorkToDoWithModules);
+        out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
       }
       finally {
@@ -409,6 +444,19 @@ final class BuildSession implements Runnable, CanceledStatus {
       FileUtil.delete(file);
     }
   }
+
+  private static boolean hasWorkToDo(BuildFSState state, ProjectDescriptor pd) {
+    final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+    for (JpsModule module : pd.getProject().getModules()) {
+      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+        if (state.hasWorkToDo(target)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
     FileOutputStream fos = null;
     try {

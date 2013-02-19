@@ -827,15 +827,15 @@ public final class PsiUtil extends PsiUtilCore {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
     final PsiFile file = element.getContainingFile();
     if (file == null) {
-      final LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(element.getProject());
-      return instance != null ? instance.getLanguageLevel() : LanguageLevel.HIGHEST;
+      LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(element.getProject());
+      return instance == null ? LanguageLevel.HIGHEST : instance.getLanguageLevel();
     }
 
     if (!(file instanceof PsiJavaFile)) {
       final PsiElement context = file.getContext();
       if (context != null) return getLanguageLevel(context);
-      final LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(file.getProject());
-      return instance != null ? instance.getLanguageLevel() : LanguageLevel.HIGHEST;
+      LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(file.getProject());
+      return instance == null ? LanguageLevel.HIGHEST : instance.getLanguageLevel();
     }
 
     return ((PsiJavaFile)file).getLanguageLevel();

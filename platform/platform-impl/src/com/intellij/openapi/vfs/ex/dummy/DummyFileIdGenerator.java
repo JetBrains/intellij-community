@@ -17,14 +17,16 @@
 /*
  * @author max
  */
-package com.intellij.testFramework;
+package com.intellij.openapi.vfs.ex.dummy;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DummyFileIdGenerator {
-  private static int ourId = Integer.MAX_VALUE / 2;
+  private static final AtomicInteger ourId = new AtomicInteger(Integer.MAX_VALUE / 2);
 
   private DummyFileIdGenerator() {}
 
   public static int next() {
-    return ourId++;
+    return ourId.getAndIncrement();
   }
 }

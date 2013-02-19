@@ -43,12 +43,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
   private PsiElement myCurrentFileContext;
 
-  public ClassResolverProcessor(String className, PsiElement place) {
+  public ClassResolverProcessor(String className, @NotNull PsiElement startPlace, PsiFile containingFile) {
     myClassName = className;
-    final PsiFile file = place.getContainingFile();
-    if (file instanceof JavaCodeFragment) {
-      if (((JavaCodeFragment)file).getVisibilityChecker() != null) place = null;
-    }
+    PsiElement place = containingFile instanceof JavaCodeFragment && ((JavaCodeFragment)containingFile).getVisibilityChecker() != null ? null : startPlace;
     myPlace = place;
     if (place instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement expression = (PsiJavaCodeReferenceElement)place;
@@ -69,6 +66,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
+  @NotNull
   public JavaResolveResult[] getResult() {
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
@@ -160,8 +158,8 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
 
     // everything wins over class from default package
-    boolean isDefault = StringUtil.getPackageName(fqName).length() == 0;
-    boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).length() == 0;
+    boolean isDefault = StringUtil.getPackageName(fqName).isEmpty();
+    boolean otherDefault = otherQName != null && StringUtil.getPackageName(otherQName).isEmpty();
     if (isDefault && !otherDefault) {
       return Domination.DOMINATED_BY;
     }

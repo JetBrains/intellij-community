@@ -33,7 +33,7 @@ public class GradleConfigurableTest {
       applyPreferLocalInstallationToWrapper: { preferLocalInstallationToWrapper, project -> },
       getGradleHome: { new File(VALID_GRADLE_HOME) },
       getDefaultProject: { defaultProject },
-      isGradleSdkHome: { it == VALID_GRADLE_HOME },
+      isGradleSdkHome: { it.path == VALID_GRADLE_HOME },
       isGradleWrapperDefined: { it == VALID_LINKED_PATH_WITH_WRAPPER }
     ]
     projectImpl = [:]
@@ -42,16 +42,6 @@ public class GradleConfigurableTest {
     configurable = new GradleConfigurable(project, helper as GradleConfigurable.Helper)
   }
 
-  @Test
-  void "default project with 'prefer wrapper' and valid linked project path brings disabled gradle home"() {
-    projectImpl.isDefault = { true }
-    settings[project].linkedProjectPath = VALID_LINKED_PATH_WITH_WRAPPER
-    settings[project].preferLocalInstallationToWrapper = false
-    settings[project].gradleHome = VALID_GRADLE_HOME
-    configurable.reset()
-    assertTrue(configurable.gradleHomePathField.textField.isEnabled())
-  }
-  
   @Test
   void "'use wrapper' is reset for valid project on importing"() {
     projectImpl.isDefault = { true }
@@ -112,5 +102,16 @@ public class GradleConfigurableTest {
     configurable.useWrapperButton.selected = true
     helper.showBalloon = { messageType, settingType, long delay -> fail() }
     configurable.apply()
+  }
+
+  @Test
+  void "'use wrapper' is not automatically applied if a user selected 'use local installation' previously for non-default project"() {
+    projectImpl.isDefault = { false }
+    settings[project].linkedProjectPath = VALID_LINKED_PATH_WITH_WRAPPER
+    settings[project].preferLocalInstallationToWrapper = true
+    settings[project].gradleHome = VALID_GRADLE_HOME
+    configurable.reset()
+    
+    assertFalse(configurable.useWrapperButton.selected)
   }
 }

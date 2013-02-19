@@ -579,4 +579,21 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'psiElement', 'PsiElement'
   }
 
+  public void testHonorRecency() {
+    invokeCompletion(getTestName(false) + ".java")
+    myFixture.completeBasic()
+    myFixture.type('setou\nz.')
+
+    myFixture.completeBasic()
+    myFixture.type('set')
+    assertPreferredItems 0, 'setOurText', 'setText'
+    myFixture.type('te')
+    assertPreferredItems 0, 'setText', 'setOurText'
+    myFixture.type('\nz.')
+
+    myFixture.completeBasic()
+    myFixture.type('set')
+    assertPreferredItems 0, 'setText', 'setOurText'
+  }
+
 }

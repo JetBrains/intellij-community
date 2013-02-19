@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,12 +31,15 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 /**
  * @author oleg
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
+  private static Logger LOG  = GithubUtil.LOG;
+
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
@@ -60,10 +64,17 @@ public class GithubSettingsPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         String password = isPasswordModified() ? getPassword() : settings.getPassword();
-        if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), password)){
-          Messages.showInfoMessage(myPane, "Connection successful", "Success");
-        } else {
-          Messages.showErrorDialog(myPane, "Cannot login to the " + getHost() + " using given credentials", "Failure");
+        try {
+          if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), password)){
+            Messages.showInfoMessage(myPane, "Connection successful", "Success");
+          } else {
+            Messages.showErrorDialog(myPane, "Can't login to " + getHost() + " using given credentials", "Login Failure");
+          }
+        }
+        catch (IOException ex) {
+          LOG.info(ex);
+          Messages.showErrorDialog(myPane, String.format("Can't login to %s: %s", getHost(), GithubUtil.getErrorTextFromException(ex)),
+                                   "Login Failure");
         }
         setPassword(password);
       }

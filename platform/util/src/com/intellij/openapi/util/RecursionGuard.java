@@ -33,7 +33,7 @@ public abstract class RecursionGuard {
   @SuppressWarnings("JavaDoc")
   @Deprecated
   @Nullable
-  public <T> T doPreventingRecursion(@NotNull Object key, Computable<T> computation) {
+  public <T> T doPreventingRecursion(@NotNull Object key, @NotNull Computable<T> computation) {
     return doPreventingRecursion(key, false, computation);
   }
 
@@ -46,7 +46,7 @@ public abstract class RecursionGuard {
    * @return the result of the computation or null if we're entering a computation with this key on this thread recursively,
    */
   @Nullable
-  public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation);
+  public abstract <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation);
 
   /**
    * Used in pair with {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()} to ensure that cached are only the reliable values,
@@ -65,11 +65,13 @@ public abstract class RecursionGuard {
 
    * @return an object representing the current stack state, managed by {@link RecursionManager}
    */
+  @NotNull
   public abstract StackStamp markStack();
 
   /**
    * @return the current thread-local stack of keys passed to {@link #doPreventingRecursion(Object, Computable)}
    */
+  @NotNull
   public abstract List<Object> currentStack();
 
   /**

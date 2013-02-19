@@ -22,6 +22,7 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -79,7 +80,9 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   
   @NotNull 
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode);
+    PsiElement element = getElement();
+    PsiFile file = element.getContainingFile();
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode,file);
   }
 
   @NotNull

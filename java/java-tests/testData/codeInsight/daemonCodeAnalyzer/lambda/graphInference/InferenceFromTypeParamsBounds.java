@@ -20,7 +20,7 @@ public class IDEA10166 {
                                                                             Supplier<M1> mapSupplier,
                                                                             BiConsumer<M1, T> accumulator) {
         BinaryOperator<M1> mapBinaryOperator = leftMapMerger(mergeFunction);
-        return null;//new CollectorImpl<>(mapSupplier, accumulator, leftMapMerger(mergeFunction));
+        return new CollectorImpl<>(mapSupplier, accumulator, leftMapMerger(mergeFunction));
     }
 
     static <K, V, M2 extends Map<K, V>> BinaryOperator<M2> leftMapMerger(BinaryOperator<V> mergeFunction) {

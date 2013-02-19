@@ -18,16 +18,15 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -152,8 +151,14 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
     private void doChange(final PsiTreeChangeEvent event) {
       final PsiFile psiFile = event.getFile();
+      if (psiFile == null) return;
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file == null) return;
+      FileEditor[] editors = getAllEditors(file);
+      if (editors.length == 0) return;
+
       final VirtualFile currentFile = getCurrentFile();
-      if (currentFile != null && psiFile != null && Comparing.equal(psiFile.getVirtualFile(), currentFile)) {
+      if (currentFile != null && Comparing.equal(psiFile.getVirtualFile(), currentFile)) {
         updateFileIcon(currentFile);
       }
     }

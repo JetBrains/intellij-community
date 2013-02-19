@@ -498,7 +498,6 @@
         icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
         icon="AllIcons.Nodes.IdeaProject"/>
-      <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" icon="AllIcons.General.AddJdk"/>
       <separator/>
       <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
         icon="AllIcons.Actions.New"/>
@@ -567,7 +566,6 @@
         </action>
 
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
-        <action id="ColorPicker" internal="true" class="com.intellij.internal.colorpicker.ColorPickerAction" text="Color Picker"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />

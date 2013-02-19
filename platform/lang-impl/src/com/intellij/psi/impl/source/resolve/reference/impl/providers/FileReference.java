@@ -134,7 +134,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @Override
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
+    PsiFile file = getElement().getContainingFile();
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false,file);
   }
 
   protected ResolveResult[] innerResolve() {
@@ -154,7 +155,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         innerResolveInContext(referenceText, context, result, caseSensitive);
       }
     }
-    if (contexts.size() == 0 && isAllowedEmptyPath(referenceText)) {
+    if (contexts.isEmpty() && isAllowedEmptyPath(referenceText)) {
       result.add(new PsiElementResolveResult(getElement().getContainingFile()));
     }
     final int resultCount = result.size();
@@ -235,7 +236,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   private boolean isAllowedEmptyPath(String text) {
-    return text.length() == 0 && isLast() &&
+    return text.isEmpty() && isLast() &&
            (StringUtil.isEmpty(myFileReferenceSet.getPathString()) && myFileReferenceSet.isEmptyPathAllowed() ||
            !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex > 0);
   }

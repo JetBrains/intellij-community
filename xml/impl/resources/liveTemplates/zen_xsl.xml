@@ -226,10 +226,22 @@
       <option name="XSL_TEXT" value="true"/>
     </context>
   </template>
+  <template description="" name="xsl" toReformat="true" toShortenFQNames="true" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+  &lt;xsl:stylesheet version=&quot;1.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot;&gt;&#10;$VAR0$&#10;&lt;/xsl:stylesheet&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="XSL_TEXT" value="true"/>
+    </context>
+  </template>
   <template description="&lt;xsl:key name=&quot;...&quot; match=&quot;...&quot; use=&quot;...&quot; /&gt;" name="key" toReformat="true" toShortenFQNames="true" value="&lt;xsl:key name=&quot;$VAR0$&quot; match=&quot;$VAR1$&quot; use=&quot;$VAR2$&quot; /&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR1"/>
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
+    <context>
+      <option name="XSL_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;" name="!!!" toReformat="true" toShortenFQNames="true" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;">
     <context>
       <option name="XSL_TEXT" value="true"/>
     </context>

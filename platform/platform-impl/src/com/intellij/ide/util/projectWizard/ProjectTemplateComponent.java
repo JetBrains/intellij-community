@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs;
+package com.intellij.ide.util.projectWizard;
 
-import org.jetbrains.annotations.Nullable;
+/**
+ * @author Dmitry Avdeev
+ *         Date: 2/15/13
+ */
+public interface ProjectTemplateComponent {
 
-public interface FileSystemPersistence {
-  @Nullable
-  VirtualFile findFileById(int id);
+  String getStorageFile();
 }

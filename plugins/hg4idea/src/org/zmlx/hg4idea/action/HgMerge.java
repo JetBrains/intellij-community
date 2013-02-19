@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -31,6 +32,7 @@ import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.provider.update.HgHeadMerger;
 import org.zmlx.hg4idea.ui.HgMergeDialog;
+import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,13 +46,18 @@ public class HgMerge extends HgAbstractGlobalAction {
   @Override
 
   public void execute(final Project project, final Collection<VirtualFile> repos) {
-    loadBranchesInBackgroundableAndExecuteAction(project, repos);
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
+
+      @Override
+      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
+        showMergeDialogAndExecute(project, repos, branches);
+      }
+    });
   }
 
-  @Override
-  protected void showDialogAndExecute(final Project project,
-                                      Collection<VirtualFile> repos,
-                                      Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+  private void showMergeDialogAndExecute(final Project project,
+                                         Collection<VirtualFile> repos,
+                                         Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
     final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, branchesForRepos);
     mergeDialog.show();
     if (mergeDialog.isOK()) {

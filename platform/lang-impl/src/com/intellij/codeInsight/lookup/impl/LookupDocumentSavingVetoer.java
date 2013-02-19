@@ -15,12 +15,18 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,15 +35,44 @@ import org.jetbrains.annotations.NotNull;
 public class LookupDocumentSavingVetoer implements FileDocumentSynchronizationVetoer {
   @Override
   public boolean maySaveDocument(@NotNull Document document) {
+    if (ApplicationManager.getApplication().isDisposed()) {
+      return true;
+    }
+
+    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    if (settings == null || EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(settings.getStripTrailingSpaces())) {
+      return true;
+    }
+
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (!project.isInitialized() || project.isDisposed()) {
         continue;
       }
-      if (LookupManager.getInstance(project).getActiveLookup() != null) {
+      LookupEx lookup = LookupManager.getInstance(project).getActiveLookup();
+      if (lookup != null && isInTrailingSpace(lookup, document)) {
         return false;
       }
     }
     return true;
+  }
+
+  private static boolean isInTrailingSpace(Lookup lookup, Document document) {
+    Editor editor = InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor());
+    if (editor.getDocument() != document) {
+      return false;
+    }
+
+    int caret = editor.getCaretModel().getOffset();
+    if (caret <= 0 || caret >= document.getTextLength()) {
+      return false;
+    }
+
+    CharSequence seq = document.getCharsSequence();
+    if (seq.charAt(caret) == '\n' && Character.isWhitespace(seq.charAt(caret - 1))) {
+      return true;
+    }
+
+    return false;
   }
 
   @Override
