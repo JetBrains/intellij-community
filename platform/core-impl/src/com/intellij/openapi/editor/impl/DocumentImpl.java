@@ -65,7 +65,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private volatile long myModificationStamp;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
-  private final Ref<DocumentListener[]> myCachedDocumentListeners = Ref.create(null);
+  private DocumentListener[] myCachedDocumentListeners;
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myCheckGuardedBlocks = 0;
@@ -647,10 +647,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public void addDocumentListener(@NotNull DocumentListener listener) {
-    if (myCachedDocumentListeners != null) {
-      myCachedDocumentListeners.set(null);
-    }
-
+    myCachedDocumentListeners = null;
     LOG.assertTrue(!myDocumentListeners.contains(listener), "Already registered: " + listener);
     boolean added = myDocumentListeners.add(listener);
     LOG.assertTrue(added, listener);
@@ -667,38 +664,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     });
   }
 
-  private static class DocumentListenerDisposable implements Disposable {
-
-    private DocumentListener myListener;
-    private Ref<DocumentListener[]> myCachedDocumentListenersRef;
-    private List<DocumentListener> myDocumentListeners;
-
-    public DocumentListenerDisposable(DocumentListener listener, Ref<DocumentListener[]> cachedDocumentListenersRef, List<DocumentListener> documentListeners) {
-      myListener = listener;
-      myCachedDocumentListenersRef = cachedDocumentListenersRef;
-      myDocumentListeners = documentListeners;
-    }
-
-    @Override
-    public void dispose() {
-      doRemoveDocumentListener(myListener, myCachedDocumentListenersRef, myDocumentListeners);
-    }
-  }
-
   @Override
   public void removeDocumentListener(@NotNull DocumentListener listener) {
-    doRemoveDocumentListener(listener, myCachedDocumentListeners, myDocumentListeners);
-  }
-
-  private static void doRemoveDocumentListener(DocumentListener listener,
-                                               Ref<DocumentListener[]> cachedDocumentListenersRef,
-                                               List<DocumentListener> documentListeners) {
-    if (cachedDocumentListenersRef != null) {
-      cachedDocumentListenersRef.set(null);
-    }
-    boolean success = documentListeners.remove(listener);
+    myCachedDocumentListeners = null;
+    boolean success = myDocumentListeners.remove(listener);
     if (!success) {
-      LOG.error("Can't remove document listener (" + listener + "). Registered cachedDocumentListenersRef: " + documentListeners);
+      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + myDocumentListeners);
     }
   }
 
@@ -743,12 +714,11 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   private DocumentListener[] getCachedListeners() {
-    DocumentListener[] cachedListeners = myCachedDocumentListeners.get();
+    DocumentListener[] cachedListeners = myCachedDocumentListeners;
     if (cachedListeners == null) {
       DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
-      cachedListeners = listeners;
-      myCachedDocumentListeners.set(cachedListeners);
+      myCachedDocumentListeners = cachedListeners = listeners;
     }
 
     return cachedListeners;
