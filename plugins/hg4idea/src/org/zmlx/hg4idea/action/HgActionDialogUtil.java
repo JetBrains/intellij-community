@@ -38,7 +38,7 @@ public class HgActionDialogUtil {
                                                                   final Collection<VirtualFile> repos,
                                                                   final Consumer<Map<VirtualFile, List<HgTagBranch>>> successHandler) {
     final Map<VirtualFile, List<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, List<HgTagBranch>>();
-    new Task.Backgroundable(project, "Update branches...") {
+    new Task.Backgroundable(project, "Collecting information...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final VirtualFile repo : repos) {
