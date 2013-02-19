@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -478,12 +479,16 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
-    int idx = url.indexOf(":/");
-    if (idx >= 0 && idx + 2 < url.length() && url.charAt(idx + 2) != '/') {
-      String prefix = url.substring(0, idx);
-      String suffix = url.substring(idx + 2);
+    int index = url.indexOf(":/");
+    if (index < 0 || (index + 2) >= url.length()) {
+      return url;
+    }
 
-      if (SystemInfo.isWindows) {
+    if (url.charAt(index + 2) != '/') {
+      String prefix = url.substring(0, index);
+      String suffix = url.substring(index + 2);
+
+      if (SystemInfoRt.isWindows) {
         return prefix + "://" + suffix;
       }
       else if (removeLocalhostPrefix && prefix.equals(StandardFileSystems.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
@@ -493,6 +498,19 @@ public class VfsUtil extends VfsUtilCore {
       else {
         return prefix + ":///" + suffix;
       }
+    }
+    else if (SystemInfoRt.isWindows && url.regionMatches(0, LocalFileSystem.PROTOCOL_PREFIX, 0, LocalFileSystem.PROTOCOL_PREFIX.length())) {
+      // file:///C:/test/file.js -> file://C:/test/file.js
+      for (int i = index + 3; i < url.length(); i++) {
+        char c = url.charAt(i);
+        if (c == '/') {
+          return url;
+        }
+        else if (c == ':') {
+          break;
+        }
+      }
+      return LocalFileSystem.PROTOCOL_PREFIX + url.substring(index + 3);
     }
     return url;
   }
