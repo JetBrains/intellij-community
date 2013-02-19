@@ -264,6 +264,7 @@ public class LambdaUtil {
       for (HierarchicalMethodSignature signature : visibleSignatures) {
         final PsiMethod psiMethod = signature.getMethod();
         if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
+        if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) continue;
         if (!overridesPublicObjectMethod(psiMethod)) {
           methods.add(signature);
         }
