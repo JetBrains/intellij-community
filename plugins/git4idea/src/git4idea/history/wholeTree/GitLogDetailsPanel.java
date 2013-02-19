@@ -88,8 +88,8 @@ public class GitLogDetailsPanel {
     myJEditorPane.setBackground(UIUtil.getComboBoxDisabledBackground());
     myJEditorPane.addHyperlinkListener(new BrowserHyperlinkListener() {
       @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && CONFIGURE_BRANCHES.equals(e.getDescription())) {
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        if (CONFIGURE_BRANCHES.equals(e.getDescription())) {
           if (myRoot == null) return;
           final CachedRefs symbolicRefs = refsProvider.convert(myRoot);
           if (symbolicRefs == null) return;
