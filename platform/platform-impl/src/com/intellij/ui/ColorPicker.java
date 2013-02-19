@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -73,8 +74,16 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JLabel myR_after = new JLabel("");
   private final JLabel myG_after = new JLabel("");
   private final JLabel myB_after = new JLabel("");
-  private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"});
-
+  private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"}) {
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
+      if (info != null && info.getName().contains("Windows"))
+        size.width += 10;
+      return size;
+    }
+  };
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
     this(parent, color, true, enableOpacity, new ColorPickerListener[0]);
   }
@@ -151,7 +160,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private JTextField createColorField(boolean hex) {
     final NumberDocument doc = new NumberDocument(hex);
-    final int lafFix = UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
+    int lafFix = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
+    UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
+    if (info != null && (info.getName().startsWith("IDEA") || info.getName().equals("Windows Classic")))
+      lafFix = 1;
     final JTextField field = new JTextField(doc, "", (hex ? 5:2) + lafFix);
     field.setSize(50, -1);
     doc.setSource(field);
