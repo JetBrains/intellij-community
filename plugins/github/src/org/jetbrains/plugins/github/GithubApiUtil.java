@@ -119,6 +119,16 @@ public class GithubApiUtil {
     return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
   }
 
+  /**
+   * Returns the "host" part of Git URLs.
+   * E.g.: https://github.com
+   * Note: there is no trailing slash in the returned url.
+   */
+  @NotNull
+  public static String getGitHost() {
+    return "https://" + removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
+  }
+
   /*
    All API access is over HTTPS, and accessed from the api.github.com domain
    (or through yourdomain.com/api/v3/ for enterprise).
