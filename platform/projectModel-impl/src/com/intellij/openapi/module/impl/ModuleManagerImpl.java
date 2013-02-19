@@ -590,7 +590,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     private Module[] getSortedModules() {
-      Module[] allModules = getModules();
+      Module[] allModules = getModules().clone();
       Arrays.sort(allModules, moduleDependencyComparator());
       return allModules;
     }
