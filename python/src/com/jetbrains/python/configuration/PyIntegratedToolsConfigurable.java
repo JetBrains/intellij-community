@@ -1,5 +1,6 @@
 package com.jetbrains.python.configuration;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
@@ -14,12 +15,17 @@ import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.FileContentUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -179,11 +185,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
       return true;
     }
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
     if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
     if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText())) {
@@ -200,6 +204,22 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
   @Override
   public void apply() throws ConfigurationException {
+    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+    }
+    if (analyzeDoctest.isSelected() != myDocumentationSettings.analyzeDoctest) {
+      final List<VirtualFile> files = Lists.newArrayList();
+      ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory() && PythonFileType.INSTANCE.getDefaultExtension().equals(fileOrDir.getExtension())) {
+            files.add(fileOrDir);
+          }
+          return true;
+        }
+      });
+      FileContentUtil.reparseFiles(myProject, Lists.newArrayList(files), false);
+    }
     myModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
     ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
