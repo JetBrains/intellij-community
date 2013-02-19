@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,18 +51,8 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
 
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlTokenType.XML_NAME).inFile(inFxmlElementPattern()),
-                                        new JavaClassReferenceProvider(){
-                                          @NotNull
-                                          @Override
-                                          public PsiReference[] getReferencesByString(String str,
-                                                                                      @NotNull PsiElement position,
-                                                                                      int offsetInPosition) {
-                                            final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
-                                            if (references.length <= 1) return PsiReference.EMPTY_ARRAY;
-                                            return ArrayUtil.remove(references, references.length - 1);
-                                          }
-                                        });
+    registrar.registerReferenceProvider(XmlPatterns.xmlTag().with(inFxmlCondition()),
+                                        new MyJavaClassReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
                                           .and(attributeValueInFxml),
@@ -130,5 +123,88 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         return JavaFxFileTypeFactory.isFxml(value.getContainingFile());
       }
     };
+  }
+
+  private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
+    @NotNull
+    @Override
+    public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
+      return getReferencesByString(((XmlTag)element).getName(), element, 1);
+    }
+
+    @NotNull
+    @Override
+    public PsiReference[] getReferencesByString(String str,
+                                                @NotNull final PsiElement position,
+                                                int offsetInPosition) {
+      final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
+      if (references.length <= 1) return PsiReference.EMPTY_ARRAY;
+      final PsiReference[] results = new PsiReference[references.length - 1];
+      for (int i = 0; i < results.length; i++) {
+        results[i] = new JavaClassReferenceWrapper(references[i], position);
+      }
+      return results;
+    }
+
+    private static class JavaClassReferenceWrapper implements PsiReference {
+      private final PsiReference myReference;
+      private final PsiElement myPosition;
+
+      public JavaClassReferenceWrapper(PsiReference reference, PsiElement position) {
+        myReference = reference;
+        myPosition = position;
+      }
+
+      @Override
+      public PsiElement getElement() {
+        return myReference.getElement();
+      }
+
+      @Override
+      public TextRange getRangeInElement() {
+        return myReference.getRangeInElement();
+      }
+
+      @Nullable
+      @Override
+      public PsiElement resolve() {
+        return myReference.resolve();
+      }
+
+      @NotNull
+      public String getCanonicalText() {
+        return myReference.getCanonicalText();
+      }
+
+      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+        String oldText = ((XmlTag)myPosition).getName();
+        final TextRange range = getRangeInElement();
+        final String newText =
+          oldText.substring(0, range.getStartOffset() - 1) + newElementName + oldText.substring(range.getEndOffset() - 1);
+        return ((XmlTag)myPosition).setName(newText);
+      }
+
+      public PsiElement bindToElement(@NotNull PsiElement element)
+        throws IncorrectOperationException {
+        String oldText = ((XmlTag)myPosition).getName();
+        final TextRange range = getRangeInElement();
+        final String newText = ((PsiPackage)element).getQualifiedName() +
+                               oldText.substring(range.getEndOffset() - 1);
+        return ((XmlTag)myPosition).setName(newText);
+      }
+
+      public boolean isReferenceTo(PsiElement element) {
+        return myReference.isReferenceTo(element);
+      }
+
+      @NotNull
+      public Object[] getVariants() {
+        return myReference.getVariants();
+      }
+
+      public boolean isSoft() {
+        return true;
+      }
+    }
   }
 }
