@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
 import com.intellij.psi.impl.source.PsiParameterImpl;
+import com.intellij.psi.impl.source.PsiReceiverParameterImpl;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.java.ParameterElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +40,11 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
-  public JavaParameterElementType() {
-    super("PARAMETER");
-  }
+public abstract class JavaParameterElementType extends JavaStubElementType<PsiParameterStub, PsiParameter> {
+  public static final TokenSet ID_TYPES = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.THIS_KEYWORD);
 
-  @NotNull
-  @Override
-  public ASTNode createCompositeNode() {
-    return new ParameterElement();
+  public JavaParameterElementType(@NotNull String id) {
+    super(id);
   }
 
   @Override
@@ -55,36 +53,35 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   }
 
   @Override
-  public PsiParameter createPsi(@NotNull final ASTNode node) {
-    return new PsiParameterImpl(node);
+  public PsiParameter createPsi(@NotNull ASTNode node) {
+    boolean receiver = node.getElementType() == JavaElementType.RECEIVER_PARAMETER;
+    return receiver ? new PsiReceiverParameterImpl(node) : new PsiParameterImpl(node);
   }
 
   @Override
-  public PsiParameterStub createStub(final LighterAST tree,
-                                     final LighterASTNode node,
-                                     final StubElement parentStub) {
-    final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
-    final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
-    final String name = RecordUtil.intern(tree.getCharTable(), id);
+  public PsiParameterStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+    TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
+    LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, ID_TYPES);
+    String name = RecordUtil.intern(tree.getCharTable(), id);
     return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis);
   }
 
   @Override
-  public void serialize(final PsiParameterStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(PsiParameterStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
   @Override
-  public PsiParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
-    boolean isEll = dataStream.readBoolean();
-    return new PsiParameterStubImpl(parentStub, name, type, isEll);
+    boolean isEllipsis = dataStream.readBoolean();
+    return new PsiParameterStubImpl(parentStub, name, type, isEllipsis);
   }
 
   @Override
-  public void indexStub(final PsiParameterStub stub, final IndexSink sink) {
+  public void indexStub(PsiParameterStub stub, IndexSink sink) {
   }
 }

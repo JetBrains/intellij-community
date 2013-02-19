@@ -42,10 +42,28 @@ public class LightTreeUtil {
     return null;
   }
 
+  @Nullable
+  public static LighterASTNode firstChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (int i = 0, size = children.size(); i < size; ++i) {
+      LighterASTNode child = children.get(i);
+      if (types.contains(child.getTokenType())) return child;
+    }
+
+    return null;
+  }
+
   @NotNull
   public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull IElementType type) {
     LighterASTNode child = firstChildOfType(tree, node, type);
     assert child != null : "Required child " + type + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
+    return child;
+  }
+
+  @NotNull
+  public static LighterASTNode requiredChildOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+    LighterASTNode child = firstChildOfType(tree, node, types);
+    assert child != null : "Required child " + types + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
     return child;
   }
 
