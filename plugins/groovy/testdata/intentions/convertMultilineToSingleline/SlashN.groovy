@@ -1,0 +1,1 @@
+print '''pri<caret>nt'''

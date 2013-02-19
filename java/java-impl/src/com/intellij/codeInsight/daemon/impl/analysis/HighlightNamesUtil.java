@@ -225,7 +225,7 @@ public class HighlightNamesUtil {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;
-    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(element.getProject());
+    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(file.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = daemonCodeAnalyzer.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();

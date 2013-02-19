@@ -797,10 +797,10 @@ public class GenericsHighlightUtil {
         if (operandClassType.isRaw()) return true;
         if (castClass.isInheritor(operandClass, true)) {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
+          PsiElementFactory factory = JavaPsiFacade.getInstance(castClass.getProject()).getElementFactory();
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
-            PsiClassType otherType =
-              JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);
+            PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(operandClass)) {
@@ -1272,7 +1272,7 @@ public class GenericsHighlightUtil {
         return;
       }
     }
-    PsiClassType type = JavaPsiFacade.getInstance(enumConstant.getProject()).getElementFactory().createType(containingClass);
+    PsiClassType type = JavaPsiFacade.getInstance(holder.getProject()).getElementFactory().createType(containingClass);
 
     HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder);
   }

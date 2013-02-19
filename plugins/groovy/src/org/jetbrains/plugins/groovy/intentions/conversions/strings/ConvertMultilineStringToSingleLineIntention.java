@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -41,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 public class ConvertMultilineStringToSingleLineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertMultilineStringToSingleLineIntention.class);
 
-  public static final String hint = "Convert to single-line string";
+  public static final String hint = GroovyIntentionsBundle.message("convert.multiline.string.to.single.line.intention.name");
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -106,10 +107,10 @@ public class ConvertMultilineStringToSingleLineIntention extends Intention {
   private static void appendSimpleStringValue(PsiElement element, StringBuilder buffer, String quote) {
     final String text = GrStringUtil.removeQuotes(element.getText());
     if ("'".equals(quote)) {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "n'", "", buffer);
+      GrStringUtil.escapeAndUnescapeSymbols(text, "\n'", "", buffer);
     }
     else {
-      GrStringUtil.escapeAndUnescapeSymbols(text, "\"n", "", buffer);
+      GrStringUtil.escapeAndUnescapeSymbols(text, "\"\n", "", buffer);
     }
   }
 

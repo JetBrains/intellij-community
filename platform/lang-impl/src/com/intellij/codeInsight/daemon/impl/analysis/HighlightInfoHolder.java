@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,5 +114,10 @@ public class HighlightInfoHolder {
       return myCustomColorsScheme;
     }
     return EditorColorsManager.getInstance().getGlobalScheme();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myContextFile.getProject();
   }
 }

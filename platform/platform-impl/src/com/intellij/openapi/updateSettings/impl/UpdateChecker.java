@@ -217,6 +217,7 @@ public final class UpdateChecker {
     if (!toUpdate.isEmpty()) {
       try {
         final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
+        final List<String> disabledPlugins = PluginManager.getDisabledPlugins();
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
           if (!toUpdate.containsKey(idString)) continue;
@@ -225,7 +226,7 @@ public final class UpdateChecker {
             prepareToInstall(downloaded, loadedPlugin);
           } else if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
             updateSettings.myOutdatedPlugins.add(idString);
-            if (installedPlugin.isEnabled()) {
+            if (!disabledPlugins.contains(idString)) {
               prepareToInstall(downloaded, loadedPlugin);
             }
           }

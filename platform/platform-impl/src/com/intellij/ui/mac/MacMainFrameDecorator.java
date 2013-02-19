@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     }
   }
   public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29") && HAS_FULLSCREEN_UTILITIES;
-  
+
   private static boolean SHOWN = false;
 
   private static Callback SET_VISIBLE_CALLBACK = new Callback() {
@@ -157,9 +157,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
             if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
             if (Patches.APPLE_BUG_ID_10207064) {
               // fix problem with bottom empty bar
-              // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
+              // it seems like the title is still visible in full screen but the window itself shifted up for title bar height
               // and the size of the frame is still calculated to be the height of the screen which is wrong
-              // so just add these titlebar height to the frame height once again
+              // so just add these title bar height to the frame height once again
               Timer timer = new Timer(300, new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {

@@ -64,6 +64,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final byte[][] WELL_KNOWN_SUFFIXES_BYTES;
   private static final int[] WELL_KNOWN_SUFFIXES_LENGTH;
   private static final int SUFFIX_BITS = 4;
+  private static final int FLAGS_FIELD_LENGTH = Short.SIZE;
   static {
     WELL_KNOWN_SUFFIXES_BYTES = new byte[WELL_KNOWN_SUFFIXES.length][];
     WELL_KNOWN_SUFFIXES_LENGTH = new int[WELL_KNOWN_SUFFIXES.length];
@@ -97,12 +98,12 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private void storeName(@NotNull String name) {
-    myFlags &= 0xffff >>> SUFFIX_BITS;
+    myFlags &= (1<<FLAGS_FIELD_LENGTH)-1 >>> SUFFIX_BITS;
     for (int i = 0; i < WELL_KNOWN_SUFFIXES.length; i++) {
       String suffix = WELL_KNOWN_SUFFIXES[i];
       if (name.endsWith(suffix)) {
         name = StringUtil.trimEnd(name, suffix);
-        int mask = (i+1) << 16-SUFFIX_BITS;
+        int mask = (i+1) << (FLAGS_FIELD_LENGTH-SUFFIX_BITS);
         myFlags |= mask;
         break;
       }
@@ -138,20 +139,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   private String getEncodedSuffix() {
-    int index = (myFlags >> 16-SUFFIX_BITS) & ((1<<SUFFIX_BITS)-1);
+    int index = getSuffixIndex();
     if (index == 0) return EMPTY;
     return WELL_KNOWN_SUFFIXES[index-1];
   }
   @NotNull
   private byte[] getEncodedSuffixBytes() {
-    int index = (myFlags >> 16-SUFFIX_BITS) & ((1<<SUFFIX_BITS)-1);
+    int index = getSuffixIndex();
     if (index == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
     return WELL_KNOWN_SUFFIXES_BYTES[index-1];
   }
   private int getEncodedSuffixLength() {
-    int index = (myFlags >> 16-SUFFIX_BITS) & ((1<<SUFFIX_BITS)-1);
+    int index = getSuffixIndex();
     if (index == 0) return 0;
     return WELL_KNOWN_SUFFIXES_LENGTH[index-1];
+  }
+
+  private int getSuffixIndex() {
+    return (myFlags >> FLAGS_FIELD_LENGTH - SUFFIX_BITS) & ((1 << SUFFIX_BITS) - 1);
   }
 
   @Override
