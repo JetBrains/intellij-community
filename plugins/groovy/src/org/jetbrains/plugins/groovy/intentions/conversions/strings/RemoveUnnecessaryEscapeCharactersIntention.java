@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.*;
  * @author Max Medvedev
  */
 public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
+  public static final String HINT = "Remove unnecessary escape characters";
+
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final Document document = editor.getDocument();
@@ -51,11 +53,10 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        String text;
+        if (!(element instanceof GrLiteral)) return false;
 
-        return element instanceof GrLiteral &&
-               getStartQuote(text = element.getText()) != null &&
-               !removeUnnecessaryEscapeSymbols((GrLiteral)element).equals(text);
+        String text = element.getText();
+        return getStartQuote(text) != null && !removeUnnecessaryEscapeSymbols((GrLiteral)element).equals(text);
       }
     };
   }
@@ -105,7 +106,7 @@ public class RemoveUnnecessaryEscapeCharactersIntention extends Intention {
           }
           else {
             final int position = buffer.length();
-            escapeAndUnescapeSymbols(value, "", "\"'n", buffer);
+            escapeAndUnescapeSymbols(child.getText(), "", "\"'n", buffer);
             fixAllTripleDoubleQuotes(buffer, position);
           }
         }
