@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
@@ -247,6 +248,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
             changesModel.update(projectWithResolvedLibraries);
           }
         });
+        ServiceManager.getService(project, GradleUserProjectChangesCalculator.class).updateCurrentProjectState();
       }
     });
   }
