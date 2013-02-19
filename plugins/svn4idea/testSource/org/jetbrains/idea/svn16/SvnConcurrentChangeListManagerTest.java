@@ -73,8 +73,8 @@ public class SvnConcurrentChangeListManagerTest extends Svn16TestCase {
 
     final SubTree tree = new SubTree(myWorkingCopyDir);
 
-    verify(runSvn("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath()));
-    verify(runSvn("switch", branchUrl + "/root/target", tree.myTargetDir.getPath()));
+    runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath());
+    runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
