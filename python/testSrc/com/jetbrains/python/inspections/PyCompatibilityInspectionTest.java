@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : catherine
@@ -117,6 +118,25 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
 
   public void testClassBaseList() {
     doTest();
+  }
+
+  // PY-7763
+  public void testEllipsisAsStatementPy2() {
+    doTest(LanguageLevel.PYTHON33);
+  }
+
+  // PY-8606
+  public void testEllipsisInSubscriptionPy2() {
+    doTest(LanguageLevel.PYTHON33);
+  }
+
+  private void doTest(@NotNull LanguageLevel level) {
+    runWithLanguageLevel(level, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   private void doTest() {

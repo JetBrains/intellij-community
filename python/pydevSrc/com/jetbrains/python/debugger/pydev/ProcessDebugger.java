@@ -15,12 +15,6 @@ import java.util.List;
  * @author traff
  */
 public interface ProcessDebugger {
-  boolean isConnected();
-
-  void waitForConnect() throws Exception;
-
-  void disconnect();
-
   String handshake() throws PyDebuggerException;
 
   PyDebugValue evaluate(String threadId,
@@ -55,7 +49,19 @@ public interface ProcessDebugger {
 
   void suspendThread(String threadId);
 
+  /**
+   *  Disconnects current debug process. Closes all resources.
+   */
   void close();
+
+  boolean isConnected();
+
+  void waitForConnect() throws Exception;
+
+  /**
+   * Disconnects currently connected process. After that it can wait for the next.
+   */
+  void disconnect();
 
   void run() throws PyDebuggerException;
 

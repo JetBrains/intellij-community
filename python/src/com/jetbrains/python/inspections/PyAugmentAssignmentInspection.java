@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User: catherine
  *
- * Inspection to detect  assignment that can be replaced with augmented assignment.
+ * Inspection to detect assignments that can be replaced with augmented assignments.
  */
 public class PyAugmentAssignmentInspection extends PyInspection {
   @Nls
@@ -43,15 +43,18 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
     @Override
     public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-      if (node.getAssignedValue() instanceof PyBinaryExpression) {
+      final PyExpression value = node.getAssignedValue();
+      if (value instanceof PyBinaryExpression) {
         final PyExpression target = node.getLeftHandSideExpression();
-        final PyBinaryExpression expression = (PyBinaryExpression)node.getAssignedValue();
-        if (expression == null) return;
+        final PyBinaryExpression expression = (PyBinaryExpression)value;
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
-        if (rightExpression instanceof PyParenthesizedExpression)
+        if (rightExpression instanceof PyParenthesizedExpression) {
           rightExpression = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
-        if (rightExpression == null || target == null) return;
+        }
+        if (rightExpression == null || target == null) {
+          return;
+        }
         boolean changedParts = false;
         final String targetText = target.getText();
         final String rightText = rightExpression.getText();
@@ -64,31 +67,31 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
         final PyElementType op = expression.getOperator();
         final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
-                         PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND, PyTokenTypes.OR,
-                         PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT, PyTokenTypes.EXP);
+                                                    PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
+                                                    PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
+                                                    PyTokenTypes.EXP);
         final TokenSet commutativeOperations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT);
         if ((operations.contains(op) && !changedParts) || (changedParts && commutativeOperations.contains(op))) {
-          if ((leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
-            if (leftExpression.getText().equals(targetText)) {
-              if (rightExpression instanceof PyNumericLiteralExpression) {
-                final AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-                registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
-              }
-              else {
-                final PyType type = myTypeEvalContext.getType(rightExpression);
-                if (type != null) {
-                  final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
-                  if (PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext) ||
-                      (PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(rightExpression)), type,
-                                          myTypeEvalContext) && !changedParts)) {
-                    registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
-                  }
-                }
+          if (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression) {
+            final PyType type = myTypeEvalContext.getType(rightExpression);
+            if (type != null && !PyTypeChecker.isUnknown(type)) {
+              final PyBuiltinCache cache = PyBuiltinCache.getInstance(rightExpression);
+              final LanguageLevel languageLevel = LanguageLevel.forElement(rightExpression);
+              if (isNumeric(type, cache) || (isString(type, cache, languageLevel) && !changedParts)) {
+                registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
               }
             }
           }
         }
       }
+    }
+
+    private boolean isString(PyType type, PyBuiltinCache cache, LanguageLevel level) {
+      return PyTypeChecker.match(cache.getStringType(level), type, myTypeEvalContext);
+    }
+
+    private boolean isNumeric(PyType type, PyBuiltinCache cache) {
+      return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
   }
 }

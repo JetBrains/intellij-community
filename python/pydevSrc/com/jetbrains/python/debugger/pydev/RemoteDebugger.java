@@ -97,23 +97,6 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void disconnect() {
-    synchronized (mySocketObject) {
-      myConnected = false;
-
-      if (mySocket != null && !mySocket.isClosed()) {
-        try {
-          mySocket.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
-
-    cleanUp();
-  }
-
-  @Override
   public String handshake() throws PyDebuggerException {
     final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
@@ -364,6 +347,23 @@ public class RemoteDebugger implements ProcessDebugger {
       myDebuggerReader.close();
     }
     fireCloseEvent();
+  }
+
+  @Override
+  public void disconnect() {
+    synchronized (mySocketObject) {
+      myConnected = false;
+
+      if (mySocket != null && !mySocket.isClosed()) {
+        try {
+          mySocket.close();
+        }
+        catch (IOException ignore) {
+        }
+      }
+    }
+
+    cleanUp();
   }
 
   @Override

@@ -47,6 +47,11 @@ public class PyAugmentAssignmentInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-7605
+  public void testStrOrUnknownFirstArg() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyAugmentAssignmentInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyAugmentAssignmentInspection.class);

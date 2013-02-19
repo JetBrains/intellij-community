@@ -65,7 +65,7 @@ public class FunctionParsing extends Parsing {
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
       if (matchToken(PyTokenTypes.GT)) {
-        if (!myContext.getExpressionParser().parseSingleExpression(false, false)) {
+        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
           myBuilder.error(message("PARSE.expected.expression"));
         }
         maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
@@ -195,13 +195,13 @@ public class FunctionParsing extends Parsing {
       if (!isLambda && myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
         PsiBuilder.Marker annotationMarker = myBuilder.mark();
         nextToken();
-        if (!getExpressionParser().parseSingleExpression(false, false)) {
+        if (!getExpressionParser().parseSingleExpression(false)) {
           myBuilder.error(message("PARSE.expected.expression"));
         }
         annotationMarker.done(PyElementTypes.ANNOTATION);
       }
       if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
-        if (!getExpressionParser().parseSingleExpression(false, false)) {
+        if (!getExpressionParser().parseSingleExpression(false)) {
           PsiBuilder.Marker invalidElements = myBuilder.mark();
           while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
             nextToken();
@@ -251,7 +251,7 @@ public class FunctionParsing extends Parsing {
     }
     if (myBuilder.getTokenType() == PyTokenTypes.EQ) {
       myBuilder.advanceLexer();
-      getExpressionParser().parseSingleExpression(false, false);
+      getExpressionParser().parseSingleExpression(false);
     }
     tuple.done(PyElementTypes.TUPLE_PARAMETER);
   }
