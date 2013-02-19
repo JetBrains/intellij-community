@@ -82,6 +82,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -609,7 +610,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         if (fullText == null) {
           return;
         }
-        String updatedText = DocPreviewUtil.buildPreview(header, qualifiedNameRef.get(), fullText);
+        final String updatedText = DocPreviewUtil.buildPreview(header, qualifiedNameRef.get(), fullText);
         final String newHtml = HintUtil.prepareHintText(updatedText, HintUtil.getInformationHint());
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -620,18 +621,29 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             // new text replaces fully-qualified class names by hyperlinks with short name.
             // That's why we might need to update the control size. We assume that the hint component is located at the
             // layered pane, so, the algorithm is to find an ancestor layered pane and apply new size for the target component.
-            
-            Dimension oldSize = hint.getComponent().getPreferredSize();
+
+            JComponent component = hint.getComponent();
+            Dimension oldSize = component.getPreferredSize();
             newTextConsumer.consume(newHtml);
             
+            final int widthIncrease;
+            if (component instanceof QuickDocInfoPane) {
+              int buttonWidth = ((QuickDocInfoPane)component).getButtonWidth();
+              widthIncrease = calculateWidthIncrease(buttonWidth, updatedText);
+            }
+            else {
+              widthIncrease = 0;
+            }
+
             if (oldSize == null) {
               return;
             }
             
-            Dimension newSize = hint.getComponent().getPreferredSize();
-            if (newSize.width == oldSize.width) {
+            Dimension newSize = component.getPreferredSize();
+            if (newSize.width + widthIncrease == oldSize.width) {
               return;
             }
+            component.setPreferredSize(new Dimension(newSize.width + widthIncrease, newSize.height));
             
             // We're assuming here that there are two possible hint representation modes: popup and layered pane.
             if (hint.isRealPopup()) {
@@ -642,10 +654,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                 // re-show the hint here. Benefits: there is a possible case that we'll be able to show nice layered pane-based balloon;
                 // the popup will be re-positioned according to the new width.
                 hint.hide();
-                tooltipProvider.showHint(new LightweightHint(hint.getComponent()));
+                tooltipProvider.showHint(new LightweightHint(component));
               }
               else {
-                hint.getComponent().setPreferredSize(new Dimension(newSize.width, oldSize.height));
+                component.setPreferredSize(new Dimension(newSize.width + widthIncrease, oldSize.height));
                 hint.pack();
               }
               return;
@@ -653,7 +665,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
             Container topLevelLayeredPaneChild = null;
             boolean adjustBounds = false;
-            for (Container current = hint.getComponent().getParent(); current != null; current = current.getParent()) {
+            for (Container current = component.getParent(); current != null; current = current.getParent()) {
               if (current instanceof JLayeredPane) {
                 adjustBounds = true;
                 break;
@@ -665,12 +677,42 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             
             if (adjustBounds && topLevelLayeredPaneChild != null) {
               Rectangle bounds = topLevelLayeredPaneChild.getBounds();
-              topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + newSize.width - oldSize.width, bounds.height);
+              topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + newSize.width + widthIncrease - oldSize.width, bounds.height);
             }
           }
         });
       }
     }, 0);
+  }
+
+  /**
+   * It's possible that we need to expand quick doc control's width in order to provide better visual representation
+   * (see http://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
+   * 
+   * @param buttonWidth  icon button's width
+   * @param updatedText  text which will be should at the quick doc control
+   * @return             width increase to apply to the target quick doc control (zero if no additional width increase is required)
+   */
+  private static int calculateWidthIncrease(int buttonWidth, String updatedText) {
+    int maxLineWidth = 0;
+    TIntArrayList lineWidths = new TIntArrayList();
+    for (String lineText : StringUtil.split(updatedText, "<br/>")) {
+      String html = HintUtil.prepareHintText(lineText, HintUtil.getInformationHint());
+      int width = new JLabel(html).getPreferredSize().width;
+      maxLineWidth = Math.max(maxLineWidth, width);
+      lineWidths.add(width);
+    }
+
+    if (!lineWidths.isEmpty()) {
+      int firstLineAvailableTrailingWidth = maxLineWidth - lineWidths.get(0);
+      if (firstLineAvailableTrailingWidth >= buttonWidth) {
+        return 0;
+      }
+      else {
+        return buttonWidth - firstLineAvailableTrailingWidth;
+      }
+    }
+    return 0;
   }
 
   private class TooltipProvider {
@@ -805,7 +847,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Consumer<String> newTextConsumer = newTextConsumerRef.get();
       QuickDocInfoPane quickDocPane = null;
       if (docInfo.documentationAnchor != null) {
-        quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label);
+        quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label, docInfo.text);
         quickDocPaneRef.set(quickDocPane);
       }
       
@@ -903,17 +945,22 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   private class QuickDocInfoPane extends JBLayeredPane {
-    
+
     private static final int BUTTON_HGAP = 5;
-    
+
     @NotNull private final List<JComponent> myButtons = new ArrayList<JComponent>();
-    
-    @NotNull private final JComponent                   myBaseDocControl;
-    
+
+    @NotNull private final JComponent myBaseDocControl;
+
     private final int myMinWidth;
     private final int myMinHeight;
+    private final int myButtonWidth;
 
-    QuickDocInfoPane(@NotNull PsiElement documentationAnchor, @NotNull PsiElement elementUnderMouse, @NotNull JComponent baseDocControl) {
+    QuickDocInfoPane(@NotNull PsiElement documentationAnchor,
+                     @NotNull PsiElement elementUnderMouse,
+                     @NotNull JComponent baseDocControl,
+                     @NotNull String text)
+    {
       myBaseDocControl = baseDocControl;
 
       PresentationFactory presentationFactory = new PresentationFactory();
@@ -933,6 +980,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       add(baseDocControl, Integer.valueOf(0));
       int minWidth = 0;
       int minHeight = 0;
+      int buttonWidth = 0;
       for (JComponent button : myButtons) {
         button.setBorder(null);
         button.setBackground(baseDocControl.getBackground());
@@ -941,10 +989,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         Dimension preferredSize = button.getPreferredSize();
         minWidth += preferredSize.width;
         minHeight = Math.max(minHeight, preferredSize.height);
+        buttonWidth = Math.max(buttonWidth, preferredSize.width);
       }
+      myButtonWidth = buttonWidth;
+
       int margin = 2;
       myMinWidth = minWidth + margin * 2 + (myButtons.size() - 1) * BUTTON_HGAP;
       myMinHeight = minHeight + margin * 2;
+    }
+
+    public int getButtonWidth() {
+      return myButtonWidth;
     }
 
     @Override
