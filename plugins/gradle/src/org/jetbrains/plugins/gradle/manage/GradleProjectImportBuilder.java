@@ -151,7 +151,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
               ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
                 @Override
                 public void run() {
-                  myModuleManager.importModules(gradleProject.getModules(), project, true);
+                  myModuleManager.importModules(gradleProject.getModules(), project, true, true);
                 }
               }); 
             }
