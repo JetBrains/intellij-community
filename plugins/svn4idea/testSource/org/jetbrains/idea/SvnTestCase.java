@@ -51,7 +51,6 @@ import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
@@ -214,7 +213,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   @After
   public void tearDown() throws Exception {
     ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
-
+    sleep(100);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -459,14 +458,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     runStatusAcrossLocks(myWcRoot, false, stdoutLines);
   }
 
-  protected void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {
-    runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, new Processor<ProcessOutput>() {
+  private void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {
+    final Processor<ProcessOutput> primitiveVerifier = new Processor<ProcessOutput>() {
       @Override
       public boolean process(ProcessOutput output) {
-        final List<String> lines = output.getStderrLines();
-        for (String line : lines) {
-          if (line.trim().startsWith("L")) return true; // i.e. continue tries
-        }
         if (sorted) {
           verifySorted(output, stdoutLines);  // will assert if err not empty
         } else {
@@ -474,72 +469,58 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         }
         return false;
       }
-    });
-  }
-
-  protected void runInAndVerify(final String... inLines) throws IOException {
-    runAndVerify(inLines, ArrayUtil.EMPTY_STRING_ARRAY);
+    };
+    runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, new Processor<ProcessOutput>() {
+      @Override
+      public boolean process(ProcessOutput output) {
+        final List<String> lines = output.getStderrLines();
+        for (String line : lines) {
+          if (line.trim().startsWith("L")) {
+            return true; // i.e. continue tries
+          }
+        }
+        primitiveVerifier.process(output);
+        return false;
+      }
+    }, primitiveVerifier);
   }
 
   protected void runInAndVerifyIgnoreOutput(final String... inLines) throws IOException {
-    runAndVerifyAcrossLocks(myWcRoot, myRunner, inLines, new Processor<ProcessOutput>() {
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(myWcRoot, myRunner, inLines, verifier, verifier);
+  }
+
+  private static Processor<ProcessOutput> createPrimitiveExitCodeVerifier() {
+    return new Processor<ProcessOutput>() {
       @Override
       public boolean process(ProcessOutput output) {
         Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
         return false;
       }
-    });
-  }
-
-  protected void runInAndVerifyIgnoreOutput(final File root, final String... inLines) throws IOException {
-    runAndVerifyAcrossLocks(root, myRunner, inLines, new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
-        return false;
-      }
-    });
-  }
-
-  protected void runAndVerify(final String[] input, final String... stdoutLines) throws IOException {
-    runAndVerifyAcrossLocks(myWcRoot, myRunner, input, new Processor<ProcessOutput>() {
-          @Override
-          public boolean process(ProcessOutput output) {
-            verify(output, stdoutLines);
-            return false;
-          }
-        });
-  }
-
-  protected void runAndVerify(@Nullable File workingDir, final String... stdoutLines) throws IOException {
-    runAndVerifyAcrossLocks(workingDir, myRunner, ArrayUtil.EMPTY_STRING_ARRAY, new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        verify(output, stdoutLines);
-        return false;
-      }
-    });
+    };
   }
 
   public static void runInAndVerifyIgnoreOutput(File workingDir, final TestClientRunner runner, final String[] input, final String... stdoutLines) throws IOException {
-    runAndVerifyAcrossLocks(workingDir, runner, input, new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
-        return false;// since there would be an assertion if errors
-      }
-    });
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(workingDir, runner, input, verifier, verifier);
   }
 
-  private void runAndVerifyAcrossLocks(@Nullable File workingDir, final String[] input, final Processor<ProcessOutput> verifier) throws IOException {
+  protected void runInAndVerifyIgnoreOutput(final File root, final String... inLines) throws IOException {
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(root, myRunner, inLines, verifier, verifier);
+  }
+
+  private void runAndVerifyAcrossLocks(@Nullable File workingDir, final String[] input, final Processor<ProcessOutput> verifier,
+                                       final Processor<ProcessOutput> primitiveVerifier) throws IOException {
     workingDir = workingDir == null ? myWcRoot : workingDir;
-    runAndVerifyAcrossLocks(workingDir, myRunner, input, verifier);
+    runAndVerifyAcrossLocks(workingDir, myRunner, input, verifier, primitiveVerifier);
   }
 
   /**
    * @param verifier - if returns true, try again
    */
-  public static void runAndVerifyAcrossLocks(File workingDir, final TestClientRunner runner, final String[] input, final Processor<ProcessOutput> verifier) throws IOException {
+  public static void runAndVerifyAcrossLocks(File workingDir, final TestClientRunner runner, final String[] input,
+    final Processor<ProcessOutput> verifier, final Processor<ProcessOutput> primitiveVerifier) throws IOException {
     for (int i = 0; i < 5; i++) {
       final ProcessOutput output = runner.runClient("svn", null, workingDir, input);
       if (output.getExitCode() == 0) {
@@ -564,5 +545,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       }
       return;
     }
+    final ProcessOutput output = runner.runClient("svn", null, workingDir, input);
+    primitiveVerifier.process(output);
   }
 }

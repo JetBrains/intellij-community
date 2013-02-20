@@ -212,7 +212,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
     // rev5: put blocking empty mergeinfo
-    //runInAndVerify("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
+    //runInAndVerifyIgnoreOutput("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
     runInAndVerifyIgnoreOutput("merge", "-r", "3:2", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath());
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
