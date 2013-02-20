@@ -977,14 +977,6 @@ class Foo {
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
-  public void testArrays() {
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    type 'Arrays.'
-    myFixture.checkResult "class Foo {{ Arrays.<caret> }}"
-    assert 'Arrays.asList' in myFixture.lookupElementStrings
-  }
-
-
   public void testExactMatchesFirst() {
     myFixture.configureByText("a.java", """
 public class UTest {
@@ -1066,26 +1058,6 @@ public class UTest {
     myFixture.configureByText "a.java", "class Foo {{ Iterable t; t.<caret> }}"
     type 'iter'
     assert myFixture.lookupElementStrings == ['iterator']
-  }
-
-  public void testTypingNonImportedClassName() {
-    myFixture.addClass("package foo; public class Foo239 {} ")
-    myFixture.addClass("class Foo239Util {} ")
-    myFixture.addClass("class Foo239Util2 {} ")
-
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    type 'Foo239 '
-    assert myFixture.file.text.contains('Foo239 ')
-    
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    type 'Foo239'
-    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
-    type ' '
-    assert myFixture.file.text.contains('Foo239Util2 ')
-
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    type 'new Foo239('
-    assert myFixture.file.text.contains('new Foo239()')
   }
 
   public void testTypingFirstVarargDot() {
@@ -1219,6 +1191,8 @@ class Foo {{
   }
 
   public void testPackageQualifier() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+
     myFixture.addClass("package com.too; public class Util {}")
     myFixture.configureByText 'a.java', 'class Foo { void foo(Object command) { <caret> }}'
     type 'com.t'
@@ -1310,14 +1284,6 @@ class Foo {
     assert myFixture.lookupElementStrings == ['class']
     myFixture.type('\b\n')
     myFixture.checkResult('class <caret>')
-  }
-
-  public void "test check for class existing globally when typing comma"() {
-    myFixture.addClass('package p; public class XYZ {}')
-    myFixture.addClass('public class XYZAspect {}')
-    myFixture.configureByText 'a.java', 'class Foo extends Map<caret>'
-    type '<XYZ, XYZ>'
-    myFixture.checkResult 'class Foo extends Map<XYZ, XYZ><caret>'
   }
 
   void joinCompletion() {
