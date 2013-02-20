@@ -15,13 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-    <None Include="small.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="WinLauncher.ico">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="splash.bmp">
       <Filter>Resource Files</Filter>
     </None>
