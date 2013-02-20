@@ -70,7 +70,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
-  private SSLExceptionsHelper myHelper;
   private boolean myArtificialSaving;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
@@ -361,7 +360,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   @Override
   public void acknowledgeConnectionSuccessful(SVNURL url) {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
-    if (myHelper != null) myHelper.removeInfo();
+    SSLExceptionsHelper.removeInfo();
   }
 
   @Override
@@ -371,7 +370,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
-    if (myHelper != null) myHelper.removeInfo();
+    SSLExceptionsHelper.removeInfo();
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     boolean successSaving = false;
     myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
@@ -389,7 +388,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
-    if (myHelper != null) myHelper.addInfo("Accessing URL: " + url.toString());
+    SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
     CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
     // this code taken from default manager (changed for system properties reading)
     String host = url.getHost();
@@ -984,9 +983,5 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     public boolean isSuccess() {
       return mySuccess;
     }
-  }
-
-  public void setHelper(SSLExceptionsHelper helper) {
-    myHelper = helper;
   }
 }

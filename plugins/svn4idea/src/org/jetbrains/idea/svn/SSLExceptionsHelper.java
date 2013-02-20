@@ -24,15 +24,15 @@ package org.jetbrains.idea.svn;
 public class SSLExceptionsHelper {
   private final static ThreadLocal<String> myAdditionalInfo = new ThreadLocal<String>();
 
-  public void addInfo(final String s) {
+  public static void addInfo(final String s) {
     myAdditionalInfo.set(s);
   }
 
-  public void removeInfo() {
+  public static void removeInfo() {
     myAdditionalInfo.remove();
   }
 
-  public String getAddInfo() {
+  public static String getAddInfo() {
     return myAdditionalInfo.get();
   }
 }
