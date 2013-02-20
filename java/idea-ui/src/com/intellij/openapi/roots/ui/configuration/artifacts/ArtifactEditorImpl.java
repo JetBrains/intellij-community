@@ -49,10 +49,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
-import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
@@ -62,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -213,16 +209,14 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.Help);
     link.setUseIconAsLink(true);
-    link.addHyperlinkListener(new HyperlinkListener() {
+    link.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
-          label.setBorder(HintUtil.createHintBorder());
-          label.setBackground(HintUtil.INFORMATION_COLOR);
-          label.setOpaque(true);
-          HintManager.getInstance().showHint(label, RelativePoint.getSouthEastOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
-        }
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
+        label.setBorder(HintUtil.createHintBorder());
+        label.setBackground(HintUtil.INFORMATION_COLOR);
+        label.setOpaque(true);
+        HintManager.getInstance().showHint(label, RelativePoint.getSouthEastOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
       }
     });
     labelPanel.add(link);
