@@ -41,7 +41,7 @@ class ImportReferenceProvider extends PsiReferenceProvider {
         final String instructionTarget = JavaFxPsiUtil.getInstructionTarget("import", (XmlProcessingInstruction)element);
         if (instructionTarget != null && instructionTarget.equals(importInstr.getText())) {
           final PsiReference[] references =
-            FxmlReferencesContributor.CLASS_REFERENCE_PROVIDER.getReferencesByString(instructionTarget, importInstr, 0);
+            FxmlReferencesContributor.CLASS_REFERENCE_PROVIDER.getReferencesByString(instructionTarget, element, importInstr.getStartOffsetInParent());
           if (instructionTarget.endsWith(".*")) {
             return ArrayUtil.remove(references, references.length - 1);
           }
