@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,11 +85,16 @@ public class IntentionUtils {
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
       builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression(null));
     }
+
     PsiCodeBlock body = method.getBody();
-    assert body != null;
-    PsiElement lbrace = body.getLBrace();
-    assert lbrace != null;
-    builder.setEndVariableAfter(lbrace);
+    if (body != null) {
+      PsiElement lbrace = body.getLBrace();
+      assert lbrace != null;
+      builder.setEndVariableAfter(lbrace);
+    }
+    else {
+      builder.setEndVariableAfter(method.getParameterList());
+    }
 
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();

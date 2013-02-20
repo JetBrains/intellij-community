@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,19 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     info.insert(myTargetClass, findInsertionAnchor(info), false);
     method = info.getPsiMember();
 
+    if (shouldBeAbstract(myTargetClass)) {
+      method.getBody().delete();
+      if (!myTargetClass.isInterface()) {
+        method.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
+      }
+    }
+
     final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class, PsiFile.class);
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, myTargetClass, constraints, false, context);
+  }
+
+  protected boolean shouldBeAbstract(PsiClass aClass) {
+    return aClass.isInterface();
   }
 
   @Nullable
