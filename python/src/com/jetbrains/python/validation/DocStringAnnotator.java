@@ -30,7 +30,7 @@ public class DocStringAnnotator extends PyAnnotator {
   @Override
   public void visitPyAssignmentStatement(PyAssignmentStatement node) {
     PyExpression left = node.getLeftHandSideExpression();
-    if (left != null && "__doc__".equals(left.getText())) {
+    if (left != null && "__doc__".equals(left.getName())) {
       PyExpression right = node.getAssignedValue();
       if (right instanceof PyStringLiteralExpression) {
         Annotation ann = getHolder().createInfoAnnotation(right, null);
