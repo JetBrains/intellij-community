@@ -20,9 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -98,5 +100,17 @@ public class AppUIUtil {
       wmClass += "-debug";
     }
     return PlatformUtils.isCommunity() ? wmClass + "-ce" : wmClass;
+  }
+
+  public static void hideToolWindowBalloon(@NotNull final String id, @NotNull final Project project) {
+    invokeLaterIfProjectAlive(project, new Runnable() {
+      @Override
+      public void run() {
+        Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
+        if (balloon != null) {
+          balloon.hide();
+        }
+      }
+    });
   }
 }

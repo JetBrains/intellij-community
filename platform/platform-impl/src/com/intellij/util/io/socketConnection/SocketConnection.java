@@ -26,16 +26,13 @@ import java.io.IOException;
  */
 public interface SocketConnection<Request extends AbstractRequest, Response extends AbstractResponse> extends Disposable {
   @NotNull
-  ConnectionStatus getStatus();
+  ConnectionState getState();
 
   void open() throws IOException;
 
   void addListener(@NotNull SocketConnectionListener listener, @Nullable Disposable parentDisposable);
 
   int getPort();
-
-  @NotNull
-  String getStatusMessage();
 
   void sendRequest(@NotNull Request request);
 
