@@ -1,9 +1,8 @@
 package org.jetbrains.yaml;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -30,24 +29,14 @@ public class YAMLHighlighter {
   static final String SIGN_ID = "YAML_SIGN";
 
   // Text default attrs
-  public static final TextAttributes SCALAR_KEY_DEFAULT_ATTRS = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
-  public static final TextAttributes COMMENT_DEFAULT_ATTRS = SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_STRING_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_DSTRING_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_LIST_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SIGN_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-
-  static {
-    SCALAR_STRING_DEFAULT_ATTRS.setForegroundColor(new Color(0, 128, 128));
-    SCALAR_STRING_DEFAULT_ATTRS.setFontType(Font.BOLD);
-
-    SCALAR_DSTRING_DEFAULT_ATTRS.setForegroundColor(new Color(0, 128, 0));
-    SCALAR_DSTRING_DEFAULT_ATTRS.setFontType(Font.BOLD);
-
-    SCALAR_LIST_DEFAULT_ATTRS.setBackgroundColor(new Color(218, 233, 246));
-  }
+  public static final TextAttributesKey SCALAR_KEY_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.KEYWORD;
+  public static final TextAttributesKey COMMENT_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.DOC_COMMENT;
+  public static final TextAttributesKey SCALAR_TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  public static final TextAttributesKey SCALAR_STRING_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.STRING;
+  public static final TextAttributesKey SCALAR_DSTRING_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.STRING;
+  public static final TextAttributesKey SCALAR_LIST_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  public static final TextAttributesKey TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT;
+  public static final TextAttributesKey SIGN_DEFAULT_ATTRS = DefaultLanguageHighlighterColors.OPERATION_SIGN;
 
   // text attributes keys
   public static final TextAttributesKey SCALAR_KEY = TextAttributesKey
