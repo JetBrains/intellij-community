@@ -22,13 +22,18 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.PropertyOwner;
+import com.intellij.psi.filters.XmlTagFilter;
+import com.intellij.psi.scope.processor.FilterElementProcessor;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html5SectionTreeElement>, PropertyOwner {
 
@@ -62,9 +67,18 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
     if (!(node instanceof HtmlFileTreeElement)) return Collections.emptyList();
 
     final XmlFile xmlFile = ((HtmlFileTreeElement)node).getElement();
-    final XmlTag rootTag = xmlFile == null ? null : xmlFile.getRootTag();
-    if (rootTag == null) return Collections.emptyList();
+    final XmlDocument document = xmlFile == null ? null : xmlFile.getDocument();
+    if (document == null) return Collections.emptyList();
 
-    return Html5SectionsProcessor.processAndGetRootSections(rootTag);
+    final List<XmlTag> rootTags = new ArrayList<XmlTag>();
+    document.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE, rootTags), document);
+
+    final Collection<Html5SectionTreeElement> result = new ArrayList<Html5SectionTreeElement>();
+
+    for (XmlTag tag : rootTags) {
+      result.addAll(Html5SectionsProcessor.processAndGetRootSections(tag));
+    }
+
+    return result;
   }
 }

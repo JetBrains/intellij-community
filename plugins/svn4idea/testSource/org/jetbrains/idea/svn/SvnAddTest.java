@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -38,7 +37,7 @@ public class SvnAddTest extends Svn17TestCase {
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     checkin();
     copyFileInCommand(file, "b.txt");
-    verify(runSvn("status"), "A + b.txt");
+    runAndVerifyStatusSorted("A + b.txt");
   }
 
   // IDEADEV-16268
@@ -58,8 +57,7 @@ public class SvnAddTest extends Svn17TestCase {
       }
     }.execute();
     
-    final ProcessOutput result = runSvn("status");
-    verify(result, "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
   }
 
   // IDEADEV-19308
@@ -69,7 +67,7 @@ public class SvnAddTest extends Svn17TestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "dir");
     final VirtualFile file = createFileInCommand(dir, "a.txt", "content");
 
-    verify(runSvn("status"), "? dir");
+    runAndVerifyStatusSorted("? dir");
 
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     files.add(file);
@@ -85,7 +83,7 @@ public class SvnAddTest extends Svn17TestCase {
     createFileInCommand("a.txt", "old content");
     checkin();
     undo();
-    verify(runSvn("status"), "D a.txt");
+    runAndVerifyStatusSorted("D a.txt");
     Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "a.txt").exists());
   }
 }

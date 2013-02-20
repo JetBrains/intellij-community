@@ -20,15 +20,15 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.psi.filters.XmlTagFilter;
+import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
 
@@ -46,24 +46,38 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
     }
 
     final XmlFile xmlFile = getElement();
-    if (xmlFile == null) return Collections.emptyList();
+    final XmlDocument document = xmlFile == null ? null : xmlFile.getDocument();
+    if (document == null) return Collections.emptyList();
 
-    final XmlDocument document = xmlFile.getDocument();
-    final XmlTag rootTag = document == null ? null : document.getRootTag();
+    final List<XmlTag> rootTags = new ArrayList<XmlTag>();
+    document.processElements(new FilterElementProcessor(XmlTagFilter.INSTANCE, rootTags), document);
 
-    if (rootTag == null) return Collections.emptyList();
+    if (rootTags.isEmpty()) return Collections.emptyList();
 
-    if ("html".equalsIgnoreCase(rootTag.getLocalName())) {
-      final XmlTag[] subTags = rootTag.getSubTags();
-      if (subTags.length == 1 &&
-          ("head".equalsIgnoreCase(subTags[0].getLocalName()) || "body".equalsIgnoreCase(subTags[0].getLocalName()))) {
-        return new HtmlTagTreeElement(subTags[0]).getChildrenBase();
+    if (rootTags.size() == 1) {
+      final XmlTag rootTag = rootTags.get(0);
+
+      if ("html".equalsIgnoreCase(rootTag.getLocalName())) {
+        final XmlTag[] subTags = rootTag.getSubTags();
+        if (subTags.length == 1 &&
+            ("head".equalsIgnoreCase(subTags[0].getLocalName()) || "body".equalsIgnoreCase(subTags[0].getLocalName()))) {
+          return new HtmlTagTreeElement(subTags[0]).getChildrenBase();
+        }
+
+        return new HtmlTagTreeElement(rootTag).getChildrenBase();
       }
 
-      return new HtmlTagTreeElement(rootTag).getChildrenBase();
+      return Arrays.<StructureViewTreeElement>asList(new HtmlTagTreeElement(rootTag));
     }
+    else {
+      final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
 
-    return Arrays.<StructureViewTreeElement>asList(new HtmlTagTreeElement(rootTag));
+      for (XmlTag tag : rootTags) {
+        result.add(new HtmlTagTreeElement(tag));
+      }
+
+      return result;
+    }
   }
 
   private boolean isHtml5SectionsMode() {

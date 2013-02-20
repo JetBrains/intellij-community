@@ -28,7 +28,7 @@ HMODULE hJVM = NULL;
 JNI_createJavaVM pCreateJavaVM = NULL;
 JavaVM* jvm = NULL;
 JNIEnv* env = NULL;
-bool terminating = false;
+volatile bool terminating = false;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -43,10 +43,16 @@ bool need64BitJRE = false;
 
 std::string LoadStdString(int id)
 {
-	char buf[_MAX_PATH];
-	if (LoadStringA(hInst, id, buf, _MAX_PATH-1))
+	wchar_t *buf = NULL;
+	int len = LoadStringW(hInst, id, reinterpret_cast<LPWSTR>(&buf), 0);
+	if (len) 
 	{
-		return std::string(buf);
+		int cbANSI = WideCharToMultiByte(CP_ACP, 0, buf, len, NULL, 0, NULL, NULL);
+		char* ansiBuf = new char[cbANSI];
+		WideCharToMultiByte(CP_ACP, 0, buf, len, ansiBuf, cbANSI, NULL, NULL);
+		std::string result(ansiBuf, cbANSI);
+		delete[] ansiBuf;
+		return result;
 	}
 	return std::string();
 }
@@ -209,7 +215,7 @@ void TrimLine(char* line)
 	}
 	while(p >= line && (*p == ' ' || *p == '\t'))
 	{
-		*p-- = 0;
+		*p-- = '\0';
 	}
 }
 
@@ -252,7 +258,7 @@ std::string FindToolsJar()
 	return "";
 }
 
-std::string CollectLibJars(char* jarList)
+std::string CollectLibJars(const std::string& jarList)
 {
 	std::string libDir = GetAdjacentDir("lib");
 	if (!FileExists(libDir))
@@ -261,29 +267,28 @@ std::string CollectLibJars(char* jarList)
 	}
 
 	std::string result;
-	char *pJarName = jarList;
-	while(pJarName)
+	int pos = 0;
+	while(pos < jarList.size())
 	{
-		char *pNextJarName = strchr(pJarName, ';');
-		if (pNextJarName)
+		int delimiterPos = jarList.find(';', pos);
+		if (delimiterPos == std::string::npos)
 		{
-			*pNextJarName++ = '\0';
+			delimiterPos = jarList.size();
 		}
 		if (result.size() > 0)
 		{
 			result += ";";
 		}
 		result += libDir;
-		result += pJarName;
-		pJarName = pNextJarName;
+		result += jarList.substr(pos, delimiterPos-pos);
+		pos = delimiterPos+1;
 	}
 	return result;
 }
 
 std::string BuildClassPath()
 {
-	char classpathLibs[_MAX_PATH];
-	LoadStringA(hInst, IDS_CLASSPATH_LIBS, classpathLibs, _MAX_PATH-1);
+	std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
 	std::string result = CollectLibJars(classpathLibs);
 
 	std::string toolsJar = FindToolsJar();
@@ -302,14 +307,11 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
 	if (classPath.size() == 0) return false;
 	vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
 
-	char bootClassPathLibs[_MAX_PATH];
-	if (LoadStringA(hInst, IDS_BOOTCLASSPATH_LIBS, bootClassPathLibs, _MAX_PATH-1))
+	std::string bootClassPathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
+	std::string bootClassPath = CollectLibJars(bootClassPathLibs);
+	if (bootClassPath.size() > 0)
 	{
-		std::string bootClassPath = CollectLibJars(bootClassPathLibs);
-		if (bootClassPath.size() > 0)
-		{
-			vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + bootClassPath);
-		}
+		vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + bootClassPath);
 	}
 
 	return true;
@@ -589,7 +591,7 @@ LRESULT CALLBACK SplashScreenWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-const TCHAR *splashClassName = _T("IntelliJLauncherSplash");
+const TCHAR splashClassName[] = _T("IntelliJLauncherSplash");
 
 void RegisterSplashScreenWndClass()
 {

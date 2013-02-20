@@ -103,10 +103,10 @@ public class SvnExternalTests extends Svn17TestCase {
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
-    verify(runSvn("co", myMainUrl));
+    runInAndVerifyIgnoreOutput("co", myMainUrl);
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File innerDir = new File(sourceDir, "inner1/inner2/inner");
-    verify(runSvn("co", myExternalURL, innerDir.getPath()));
+    runInAndVerifyIgnoreOutput("co", myExternalURL, innerDir.getPath());
     sleep(100);
     myWorkingCopyDir.refresh(false, true);
     // above is preparation

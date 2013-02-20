@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -50,6 +51,7 @@ import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
+import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -67,9 +69,7 @@ import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertTrue;
 
@@ -81,7 +81,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
-  protected boolean myUseNativeAcceleration;
+  protected boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
   private final String myTestDataDir;
   private File myRepoRoot;
@@ -116,6 +116,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
+    System.out.println("Native client for status: " + myUseNativeAcceleration);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -160,10 +161,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
           myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
 
+          verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
+
           initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
-
-          verify(runSvn("co", myRepoUrl, myWorkingCopyDir.getPath()));
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
@@ -210,6 +211,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @After
   public void tearDown() throws Exception {
+    ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+    sleep(100);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -248,11 +251,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected void checkin() throws IOException {
-    verify(runSvn("ci", "-m", "test"));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test");
   }
 
   protected void update() throws IOException {
-    verify(runSvn("up"));
+    runInAndVerifyIgnoreOutput("up");
   }
 
   protected List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
@@ -323,23 +326,29 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   public String prepareBranchesStructure() throws Exception {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final String mainUrl = myRepoUrl + "/trunk";
-    verify(runSvn("mkdir", "-m", "mkdir", mainUrl));
-    verify(runSvn("mkdir", "-m", "mkdir", myRepoUrl + "/branches"));
-    verify(runSvn("mkdir", "-m", "mkdir", myRepoUrl + "/tags"));
+    runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", mainUrl);
+    runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/branches");
+    runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/tags");
 
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    Assert.assertTrue(FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
+    boolean deleted = false;
+    for (int i = 0; i < 5; i++) {
+      deleted = FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
+      if (deleted) break;
+      sleep(200);
+    }
+    Assert.assertTrue(deleted);
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
-    verify(runSvn("co", mainUrl, myWorkingCopyDir.getPath()));
+    runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
     final String branchUrl = myRepoUrl + "/branches/b1";
-    verify(runSvn("copy", "-q", "-m", "coppy", mainUrl, branchUrl));
+    runInAndVerifyIgnoreOutput("copy", "-q", "-m", "coppy", mainUrl, branchUrl);
 
     clManager.forceGoInTestMode();
     refreshSvnMappingsSynchronously();
@@ -378,15 +387,15 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     myWorkingCopyDir.refresh(false, true);
 
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    verify(runSvn("co", mainUrl, sourceDir.getPath()));
+    runInAndVerifyIgnoreOutput("co", mainUrl, sourceDir.getPath());
     CreateExternalAction.addToExternalProperty(vcs, sourceDir, "external", externalURL);
     sleep(100);
 
     if (updateExternal) {
-      verify(runSvn("up", sourceDir.getPath()));
+      runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
     }
     if (commitExternalDefinition) {
-      verify(runSvn("ci", "-m", "test", sourceDir.getPath()));
+      runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
     }
     sleep(100);
 
@@ -409,12 +418,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     FileUtil.copyDir(myRepoRoot, repo);
     myAnotherRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(repo.getPath());
     final File tmpWc = FileUtil.createTempDirectory("hhh", "");
-    verify(runSvn("co", myAnotherRepoUrl, tmpWc.getPath()));
+    runInAndVerifyIgnoreOutput("co", myAnotherRepoUrl, tmpWc.getPath());
     final VirtualFile tmpWcVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpWc);
     Assert.assertNotNull(tmpWcVf);
     final SubTree tree = new SubTree(tmpWcVf);
-    verify(myRunner.runClient("svn", null, tmpWc, "add", "root"));
-    verify(myRunner.runClient("svn", null, tmpWc, "ci", "-m", "fff"));
+    runInAndVerifyIgnoreOutput(tmpWc, "add", "root");
+    runInAndVerifyIgnoreOutput(tmpWc, "ci", "-m", "fff");
     FileUtil.delete(tmpWc);
   }
 
@@ -438,5 +447,104 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
+  }
+
+  protected void runAndVerifyStatusSorted(final String... stdoutLines) throws IOException {
+    runStatusAcrossLocks(myWcRoot, true, stdoutLines);
+  }
+
+  protected void runAndVerifyStatus(final String... stdoutLines) throws IOException {
+    runStatusAcrossLocks(myWcRoot, false, stdoutLines);
+  }
+
+  private void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {
+    final Processor<ProcessOutput> primitiveVerifier = new Processor<ProcessOutput>() {
+      @Override
+      public boolean process(ProcessOutput output) {
+        if (sorted) {
+          verifySorted(output, stdoutLines);  // will assert if err not empty
+        } else {
+          verify(output, stdoutLines);  // will assert if err not empty
+        }
+        return false;
+      }
+    };
+    runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, new Processor<ProcessOutput>() {
+      @Override
+      public boolean process(ProcessOutput output) {
+        final List<String> lines = output.getStderrLines();
+        for (String line : lines) {
+          if (line.trim().startsWith("L")) {
+            return true; // i.e. continue tries
+          }
+        }
+        primitiveVerifier.process(output);
+        return false;
+      }
+    }, primitiveVerifier);
+  }
+
+  protected void runInAndVerifyIgnoreOutput(final String... inLines) throws IOException {
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(myWcRoot, myRunner, inLines, verifier, verifier);
+  }
+
+  private static Processor<ProcessOutput> createPrimitiveExitCodeVerifier() {
+    return new Processor<ProcessOutput>() {
+      @Override
+      public boolean process(ProcessOutput output) {
+        Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
+        return false;
+      }
+    };
+  }
+
+  public static void runInAndVerifyIgnoreOutput(File workingDir, final TestClientRunner runner, final String[] input, final String... stdoutLines) throws IOException {
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(workingDir, runner, input, verifier, verifier);
+  }
+
+  protected void runInAndVerifyIgnoreOutput(final File root, final String... inLines) throws IOException {
+    final Processor<ProcessOutput> verifier = createPrimitiveExitCodeVerifier();
+    runAndVerifyAcrossLocks(root, myRunner, inLines, verifier, verifier);
+  }
+
+  private void runAndVerifyAcrossLocks(@Nullable File workingDir, final String[] input, final Processor<ProcessOutput> verifier,
+                                       final Processor<ProcessOutput> primitiveVerifier) throws IOException {
+    workingDir = workingDir == null ? myWcRoot : workingDir;
+    runAndVerifyAcrossLocks(workingDir, myRunner, input, verifier, primitiveVerifier);
+  }
+
+  /**
+   * @param verifier - if returns true, try again
+   */
+  public static void runAndVerifyAcrossLocks(File workingDir, final TestClientRunner runner, final String[] input,
+    final Processor<ProcessOutput> verifier, final Processor<ProcessOutput> primitiveVerifier) throws IOException {
+    for (int i = 0; i < 5; i++) {
+      final ProcessOutput output = runner.runClient("svn", null, workingDir, input);
+      if (output.getExitCode() == 0) {
+        if (verifier.process(output)) {
+          continue;
+        }
+        return;
+      }
+
+      if (! StringUtil.isEmptyOrSpaces(output.getStderr())) {
+        final String stderr = output.getStderr();
+        /*svn: E155004: Working copy '' locked.
+        svn: E155004: '' is already locked.
+        svn: run 'svn cleanup' to remove locks (type 'svn help cleanup' for details)*/
+        if (stderr.contains("E155004") && stderr.contains("is already locked")) {
+          continue;
+        }
+      }
+      // will throw assertion
+      if (verifier.process(output)) {
+        continue;
+      }
+      return;
+    }
+    final ProcessOutput output = runner.runClient("svn", null, workingDir, input);
+    primitiveVerifier.process(output);
   }
 }

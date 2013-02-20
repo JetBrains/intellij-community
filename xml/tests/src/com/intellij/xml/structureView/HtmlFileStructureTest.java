@@ -45,4 +45,5 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
   public void testSimple() throws Exception {checkTree();}
   public void testNoSectioningRoot() throws Exception {checkTree();}
   public void testImplicitSections() throws Exception {checkTree();}
+  public void testMultipleRootTags() throws Exception {checkTree();}
 }

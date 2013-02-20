@@ -17,11 +17,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +39,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Irina.Chernushina
@@ -98,21 +98,29 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     myWorkingCopyDir = createDirInCommand(myWorkingCopyDir, "test--");
     myTheirs = createDirInCommand(myTheirs, "theirs--");
     // todo debug
-    //final TreeConflictData.Data data = TreeConflictData.DirToDir.MINE_EDIT_THEIRS_DELETE;
+    //final TreeConflictData.Data data = TreeConflictData.DirToDir.MINE_UNV_THEIRS_MOVE;
+    //final TreeConflictData.Data data = TreeConflictData.FileToFile.MINE_EDIT_THEIRS_MOVE;
     for (final TreeConflictData.Data data : TreeConflictData.ourAll) {
       if (myTraceClient) {
         System.out.println("========= TEST " + getTestName(data) + " =========");
       }
 
+      ((ChangeListManagerImpl) myChangeListManager).stopEveryThingIfInTestMode();
       myWorkingCopyDir = createDirInCommand(myWorkingCopyDir.getParent(), "test" + cnt);
       myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
+      sleep(200);
 
-      createSubTree();
+      ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+        Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName())));
+      createSubTree(data);
+      myTheirs.refresh(false, true);
       final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
+      sleep(200);
 
+      ((ChangeListManagerImpl)myChangeListManager).forceGoInTestMode();
       myDirtyScopeManager.markEverythingDirty();
       myChangeListManager.ensureUpToDate(false);
       myDirtyScopeManager.markEverythingDirty();
@@ -219,7 +227,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
-      createSubTree();
+      createSubTree(data);
       final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
 
@@ -313,7 +321,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     return null;
   }
 
-  private void createSubTree() throws Exception {
+  private void createSubTree(TreeConflictData.Data data) throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 

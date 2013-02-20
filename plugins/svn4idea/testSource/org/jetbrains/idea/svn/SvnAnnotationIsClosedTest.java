@@ -114,7 +114,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();  //#2
     editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
-    verify(runSvn("up", "-r", "2"));
+    runInAndVerifyIgnoreOutput("up", "-r", "2");
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
@@ -159,7 +159,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();  //#2
     editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
-    verify(runSvn("up", "-r", "2"));  // take #2
+    runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
@@ -206,7 +206,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();  //#2
     editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
-    verify(runSvn("up", "-r", "2"));  // take #2
+    runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
@@ -356,19 +356,19 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalDir = new File(myWorkingCopyDir.getPath(), "source/external");
-    verify(runSvn("ci", "-m", "test", sourceDir.getPath()));   // #3
-    verify(runSvn("ci", "-m", "test", externalDir.getPath())); // #4
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());   // #3
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #4
 
     editFileInCommand(myProject, vf2, "test externals 12344444" + System.currentTimeMillis());
-    verify(runSvn("ci", "-m", "test", externalDir.getPath())); // #5
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #5
 
     final SvnDiffProvider diffProvider = (SvnDiffProvider) myVcs.getDiffProvider();
 
     assertRevision(vf1, diffProvider, 3);
     assertRevision(vf2, diffProvider, 5);
 
-    verify(runSvn("up", "-r", "4", sourceDir.getPath()));
-    verify(runSvn("up", "-r", "4", externalDir.getPath()));
+    runInAndVerifyIgnoreOutput("up", "-r", "4", sourceDir.getPath());
+    runInAndVerifyIgnoreOutput("up", "-r", "4", externalDir.getPath());
 
     assertRevision(vf1, diffProvider, 3);
     assertRevision(vf2, diffProvider, 4);
@@ -396,7 +396,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     listener.registerAnnotation(vf1, annotation1);
 
     //up
-    verify(runSvn("up", sourceDir.getPath()));
+    runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
     imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
     imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
     myChangeListManager.ensureUpToDate(false);

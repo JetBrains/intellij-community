@@ -85,19 +85,19 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
 
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
@@ -132,26 +132,26 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     // rev 4: record as merged into branch
-    verify(runSvn("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath(), "--record-only"));
+    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath(), "--record-only");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
@@ -191,34 +191,34 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     // rev 4: record as merged into branch
-    verify(runSvn("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
     // rev5: put blocking empty mergeinfo
-    //verify(runSvn("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
-    verify(runSvn("merge", "-r", "3:2", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath()));
+    //runInAndVerifyIgnoreOutput("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
+    runInAndVerifyIgnoreOutput("merge", "-r", "3:2", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
@@ -260,26 +260,26 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     // rev 4: record non inheritable merge
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3*", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3*", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
@@ -319,35 +319,35 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
     // rev4
     editFileInCommand(myProject, vf, "123\n456\n123\n4");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
 
     // rev 4: record non inheritable merge
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3,4", myBranchVcsRoot.getAbsolutePath()));
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3", new File(myBranchVcsRoot, "folder").getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3,4", myBranchVcsRoot.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", new File(myBranchVcsRoot, "folder").getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
@@ -402,12 +402,12 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     f2.createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
@@ -415,20 +415,20 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
     editFileInCommand(myProject, vf2, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
 
     // rev 4: record non inheritable merge
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath());
     // this makes not merged for f2 path
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3*", new File(myBranchVcsRoot, "folder/folder1").getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3*", new File(myBranchVcsRoot, "folder/folder1").getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient wcClient = vcs.createWCClient();
@@ -479,27 +479,27 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     f2.createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", fullBranch.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch/folder/folder1", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", fullBranch.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch/folder/folder1", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3 : f2 changed
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     // rev 4: record as merged into branch using full branch WC
-    verify(runSvn("merge", "-c", "3", myRepoUrl + "/trunk", fullBranch.getAbsolutePath(), "--record-only"));
+    runInAndVerifyIgnoreOutput("merge", "-c", "3", myRepoUrl + "/trunk", fullBranch.getAbsolutePath(), "--record-only");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", fullBranch.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", fullBranch.getAbsolutePath());
 
     Thread.sleep(100);
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     
@@ -534,23 +534,23 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     FileUtil.delete(trunk);
-    verify(runSvn("co", myRepoUrl + "/trunk", trunk.getAbsolutePath()));
-    verify(runSvn("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/trunk", trunk.getAbsolutePath());
+    runInAndVerifyIgnoreOutput("co", myRepoUrl + "/branch", myBranchVcsRoot.getAbsolutePath());
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
     editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", trunk.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
     // rev 4: record non inheritable merge
-    verify(runSvn("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", "/trunk:3", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
-    verify(runSvn("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", myBranchVcsRoot.getAbsolutePath());
 
     Thread.sleep(100);
     // ! no update!
@@ -560,7 +560,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     final SVNPropertyData data = wcClient.doGetProperty(myBranchVcsRoot, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
     assert data != null && data.getValue() != null && "/trunk:3".equals(data.getValue().getString());
 
-    final SVNInfo f1info = wcClient.doInfo(new File(myBranchVcsRoot, "folder/f1.txt"), SVNRevision.WORKING);
+    final SVNInfo f1info = wcClient.doInfo(new File(myBranchVcsRoot, "folder/f1.txt"), SVNRevision.UNDEFINED);
     assert f1info.getRevision().getNumber() == 2;
 
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
@@ -576,7 +576,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
 
     // and after update
-    verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
+    runInAndVerifyIgnoreOutput("up", myBranchVcsRoot.getAbsolutePath());
     Thread.sleep(100);
 
     mergeChecker.clear();
