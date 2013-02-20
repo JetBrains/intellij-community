@@ -361,6 +361,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   @Override
   public void acknowledgeConnectionSuccessful(SVNURL url) {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    if (myHelper != null) myHelper.removeInfo();
   }
 
   @Override
