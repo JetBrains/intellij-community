@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,9 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
     PsiElement parent = element.getParent().getParent();
     if (!(parent instanceof GrCall)) {
       LOG.error("elemText: " + element.getText() +
+                "\nisValid = " + element.isValid() +
                 "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
-                "\nPParent" + (parent == null ? "null" : parent.getClass()));
+                "\nPParent = " + (parent == null ? "null" : parent.getClass()));
     }
     return (GrCall)parent;
   }
