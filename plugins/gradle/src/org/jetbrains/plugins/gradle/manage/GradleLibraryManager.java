@@ -136,7 +136,7 @@ public class GradleLibraryManager {
   {
     for (Map.Entry<OrderRootType, ? extends Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
           if (entry.getKey() == OrderRootType.CLASSES) {
             GradleLog.LOG.warn(

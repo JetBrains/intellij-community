@@ -136,7 +136,7 @@ public class GradleInstallationManager {
     }
 
     final File home = getGradleHome(project);
-    return home == null ? null : LocalFileSystem.getInstance().findFileByIoFile(home);
+    return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
   }
   
   /**
@@ -314,7 +314,7 @@ public class GradleInstallationManager {
       if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()
           || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(file.getName()).matches())
       {
-        final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
+        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
         if (virtualFile != null) {
           ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
         }
