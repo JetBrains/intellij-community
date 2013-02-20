@@ -62,7 +62,7 @@ public class PythonEnvUtil {
       assert source != null;
       Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
       if (!vals.contains(value)) {
-        return source + File.pathSeparatorChar + value;
+        return source + File.pathSeparator + value;
       }
       else {
         return source;
@@ -73,11 +73,11 @@ public class PythonEnvUtil {
 
   public static void addToEnv(Map<String, String> envs, String key, Collection<String> values) {
     for (String val : values) {
-      addToEnv(envs, key, val);
+      addPathToEnv(envs, key, val);
     }
   }
 
-  public static void addToEnv(Map<String, String> envs, String key, String value) {
+  public static void addPathToEnv(Map<String, String> envs, String key, String value) {
     if (!StringUtil.isEmpty(value)) {
       if (envs.containsKey(key)) {
         envs.put(key, appendToPathEnvVar(envs.get(key), value));
@@ -93,13 +93,17 @@ public class PythonEnvUtil {
   }
 
   public static void addToPythonPath(Map<String, String> envs, String value) {
-    addToEnv(envs, PYTHONPATH, value);
+    addPathToEnv(envs, PYTHONPATH, value);
   }
 
 
   @Nullable
   public static List<String> getPythonPathList(Map<String, String> envs) {
-    String pythonPath = envs.get(PYTHONPATH);
+    return getPathListFromEnv(envs, PYTHONPATH);
+  }
+
+  public static List<String> getPathListFromEnv(Map<String, String> envs, String envKey) {
+    String pythonPath = envs.get(envKey);
     if (pythonPath != null) {
       String[] paths = pythonPath.split(Character.toString(File.pathSeparatorChar));
       return Lists.newArrayList(paths);

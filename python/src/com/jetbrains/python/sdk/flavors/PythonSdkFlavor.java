@@ -194,7 +194,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public static void addToEnv(final String key, String value, Map<String, String> envs) {
-    PythonEnvUtil.addToEnv(envs, key, value);
+    PythonEnvUtil.addPathToEnv(envs, key, value);
   }
 
   static Map<String, String> getEnv(GeneralCommandLine cmd) {

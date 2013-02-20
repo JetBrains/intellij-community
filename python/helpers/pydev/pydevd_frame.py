@@ -97,7 +97,7 @@ class PyDBFrame:
                 return None
 
             if event == 'call':
-                sendSignatureCallTrace(mainDebugger, frame)
+                sendSignatureCallTrace(mainDebugger, frame, filename)
 
             if event not in ('line', 'call', 'return'):
                 if event == 'exception':

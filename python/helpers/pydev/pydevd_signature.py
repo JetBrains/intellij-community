@@ -1,5 +1,7 @@
 import inspect
 import trace
+import os
+
 trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
 import gc
 from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
@@ -23,6 +25,17 @@ class Signature(object):
 class SignatureFactory(object):
     def __init__(self):
         self._caller_cache = {}
+        self.project_roots =  os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
+
+    def is_in_scope(self, filename):
+        filename = normcase(realpath(filename))
+        for root in self.project_roots:
+            root = normcase(realpath(root))
+            if filename.startsWith(root):
+                return True
+        return False
+
+
 
     def create_signature(self, frame):
         try:
@@ -109,9 +122,10 @@ def create_signature_message(signature):
     cmdText = ''.join(cmdTextList)
     return NetCommand(CMD_SIGNATURE_CALL_TRACE, 0, cmdText)
 
-def sendSignatureCallTrace(dbg, frame):
+def sendSignatureCallTrace(dbg, frame, filename):
     if dbg.signature_factory:
-        dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
+        if dbg.signature_factory.is_in_scope(filename):
+            dbg.writer.addCommand(create_signature_message(dbg.signature_factory.create_signature(frame)))
 
 
 
