@@ -15,10 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -26,21 +22,17 @@ import java.util.Map;
  * Time: 4:44 PM
  */
 public class SSLExceptionsHelper {
-  private final Map<Thread, String> myAdditionalInfo;
-
-  public SSLExceptionsHelper() {
-    myAdditionalInfo = Collections.synchronizedMap(new HashMap<Thread, String>());
-  }
+  private final static ThreadLocal<String> myAdditionalInfo = new ThreadLocal<String>();
 
   public void addInfo(final String s) {
-    myAdditionalInfo.put(Thread.currentThread(), s);
+    myAdditionalInfo.set(s);
   }
 
   public void removeInfo() {
-    myAdditionalInfo.remove(Thread.currentThread());
+    myAdditionalInfo.remove();
   }
 
   public String getAddInfo() {
-    return myAdditionalInfo.get(Thread.currentThread());
+    return myAdditionalInfo.get();
   }
 }
