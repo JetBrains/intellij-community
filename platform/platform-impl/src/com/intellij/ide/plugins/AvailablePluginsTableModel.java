@@ -89,7 +89,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
 
     if (myVendor != null) {
       final String vendor = descriptor.getVendor();
-      if (vendor != null && !StringUtil.containsIgnoreCase(vendor, myVendor)) {
+      if (vendor == null || !StringUtil.containsIgnoreCase(vendor, myVendor)) {
         return false;
       }
     }
