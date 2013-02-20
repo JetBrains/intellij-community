@@ -32,7 +32,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -236,7 +234,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
   }
 
   private ImageIcon loadIcon(VirtualFile file, int scale) throws IOException {
-    return new ImageIcon(ImageLoader.loadFromStream(URLUtil.openStream(new URL(file.getUrl())), scale));
+    return new ImageIcon(ImageLoader.loadFromStream(file.getInputStream(), scale));
   }
 
   private static boolean isIconClassType(PsiType type) {
