@@ -969,6 +969,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           for (int i = 0; i < argExtendsListTypes.length; i++) {
             PsiClassType argBoundType = argExtendsListTypes[i];
             PsiClassType paramBoundType = paramExtendsListTypes[i];
+            final PsiClassType.ClassResolveResult argResolveResult = argBoundType.resolveGenerics();
+            final PsiClassType.ClassResolveResult paramResolveResult = paramBoundType.resolveGenerics();
+            final PsiClass paramBoundClass = paramResolveResult.getElement();
+            final PsiClass argBoundClass = argResolveResult.getElement();
+            if (argBoundClass != null && paramBoundClass != null && paramBoundClass != argBoundClass) {
+              if (argBoundClass.isInheritor(paramBoundClass, true)) {
+                final PsiSubstitutor superClassSubstitutor =
+                  TypeConversionUtil.getSuperClassSubstitutor(paramBoundClass, argBoundClass, argResolveResult.getSubstitutor());
+                argBoundType = JavaPsiFacade.getElementFactory(argClass.getProject()).createType(paramBoundClass, superClassSubstitutor);
+              } else {
+                return null;
+              }
+            }
             final Pair<PsiType, ConstraintType> constraint =
               getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
             if (constraint != null) {
