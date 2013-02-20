@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -349,6 +350,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
     final List<VirtualFile> roots = myDescriptor.getRoots();
     return roots.size() == 1 ? roots.get(0) : null;
+  }
+
+  public <T> T getData(DataKey<T> key) {
+    return myDescriptor.getUserData(key);
   }
 
   @NotNull

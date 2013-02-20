@@ -477,6 +477,15 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
+  public void testPreferNoWordSkipping() {
+    assertPreference("CBP", "CustomProcessBP", "ComputationBatchProcess", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testWordLengthDoesNotMatter() {
+    MinusculeMatcher matcher = new MinusculeMatcher("PropComp", NameUtil.MatchingCaseSensitivity.NONE);
+    assertEquals(matcher.matchingDegree("PropertyComponent"), matcher.matchingDegree("PropertiesComponent"));
+  }
+
   public void testPreferEarlyMatching() {
     assertPreference(" path", "getAbsolutePath", "findPath");
   }

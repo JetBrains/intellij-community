@@ -288,8 +288,17 @@ public class JavacMain {
     static final Field freelistField;
     static {
       try {
-        freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
-        freelistField.setAccessible(true);
+        Field freelistRef;
+        try {
+          // trying jdk 6
+          freelistRef = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+        }
+        catch (Exception e) {
+          // trying jdk 7
+          freelistRef = Class.forName("com.sun.tools.javac.util.SharedNameTable").getDeclaredField("freelist");
+        }
+        freelistRef.setAccessible(true);
+        freelistField = freelistRef;
       }
       catch (Exception e) {
         throw new RuntimeException(e);

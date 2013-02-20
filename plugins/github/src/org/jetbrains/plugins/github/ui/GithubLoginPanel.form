@@ -43,6 +43,7 @@
           <contentType value="text/html"/>
           <editable value="false"/>
           <enabled value="true"/>
+          <font swing-font="Label.font"/>
         </properties>
         <clientProperties>
           <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>

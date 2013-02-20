@@ -329,7 +329,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     Color sampleBackground = background;
 
-    Object o = item.getObject();
+    Object o = item.isValid() ? item.getObject() : null;
     //noinspection deprecation
     if (o instanceof LookupValueWithUIHint && StringUtil.isEmpty(labelText)) {
       //noinspection deprecation

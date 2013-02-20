@@ -28,11 +28,11 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.FSState;
@@ -227,13 +227,31 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static boolean scopeContainsModulesOnly(List<TargetTypeBuildScope> scopes) {
+    TargetTypeRegistry typeRegistry = null;
     for (TargetTypeBuildScope scope : scopes) {
-      String typeId = scope.getTypeId();
-      if (!typeId.equals(JavaModuleBuildTargetType.PRODUCTION.getTypeId()) && !typeId.equals(JavaModuleBuildTargetType.TEST.getTypeId())) {
+      final String typeId = scope.getTypeId();
+      if (isJavaModuleBuildType(typeId)) { // fast check
+        continue;
+      }
+      if (typeRegistry == null) {
+        // lazy init
+        typeRegistry = TargetTypeRegistry.getInstance();
+      }
+      final BuildTargetType<?> targetType = typeRegistry.getTargetType(typeId);
+      if (targetType != null && !(targetType instanceof ModuleBasedBuildTargetType)) {
         return false;
       }
     }
     return true;
+  }
+
+  private static boolean isJavaModuleBuildType(String typeId) {
+    for (JavaModuleBuildTargetType moduleBuildTargetType : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (moduleBuildTargetType.getTypeId().equals(typeId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void saveData(final BuildFSState fsState, File dataStorageRoot) {
@@ -301,23 +319,25 @@ final class BuildSession implements Runnable, CanceledStatus {
           pd.getFSCache().clear();
           cacheCleared = true;
         }
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying deleted path from fs event: " + file.getPath());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Applying deleted path from fs event: " + file.getPath());
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
           pd.fsState.registerDeleted(rootDescriptor.getTarget(), file, timestamps);
         }
       }
-      else if (Utils.IS_TEST_MODE) {
-        LOG.info("Skipping deleted path: " + file.getPath());
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping deleted path: " + file.getPath());
+        }
       }
     }
     for (String changed : event.getChangedPathsList()) {
       final File file = new File(changed);
       Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null, null);
       if (!descriptors.isEmpty()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Applying dirty path from fs event: " + file.getPath());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Applying dirty path from fs event: " + changed);
         }
         long fileStamp = -1L;
         for (BuildRootDescriptor descriptor : descriptors) {
@@ -325,7 +345,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (fileStamp == -1L) {
               fileStamp = FileSystemUtil.lastModified(file); // lazy init
             }
-            long stamp = timestamps.getStamp(file, descriptor.getTarget());
+            final long stamp = timestamps.getStamp(file, descriptor.getTarget());
             if (stamp != fileStamp) {
               if (!cacheCleared) {
                 pd.getFSCache().clear();
@@ -333,11 +353,18 @@ final class BuildSession implements Runnable, CanceledStatus {
               }
               pd.fsState.markDirty(null, file, descriptor, timestamps, saveEventStamp);
             }
+            else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + changed + "; timestamp= " + stamp);
+              }
+            }
           }
         }
       }
-      else if (Utils.IS_TEST_MODE) {
-        LOG.info("Skipping dirty path: " + file.getPath());
+      else {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipping dirty path: " + file.getPath());
+        }
       }
     }
   }
@@ -380,19 +407,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       try {
         out.writeInt(FSState.VERSION);
         out.writeLong(myLastEventOrdinal);
-        boolean hasWorkToDoWithModules = false;
-        for (JpsModule module : pd.getProject().getModules()) {
-          for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-            if (state.hasWorkToDo(new ModuleBuildTarget(module, type))) {
-              hasWorkToDoWithModules = true;
-              break;
-            }
-          }
-          if (hasWorkToDoWithModules) {
-            break;
-          }
-        }
-        out.writeBoolean(hasWorkToDoWithModules);
+        out.writeBoolean(hasWorkToDo(state, pd));
         state.save(out);
       }
       finally {
@@ -405,6 +420,18 @@ final class BuildSession implements Runnable, CanceledStatus {
       LOG.error(e);
       FileUtil.delete(file);
     }
+  }
+
+  private static boolean hasWorkToDo(BuildFSState state, ProjectDescriptor pd) {
+    final BuildTargetIndex targetIndex = pd.getBuildTargetIndex();
+    for (JpsModule module : pd.getProject().getModules()) {
+      for (ModuleBasedTarget<?> target : targetIndex.getModuleBasedTargets(module, BuildTargetRegistry.ModuleTargetSelector.ALL)) {
+        if (state.hasWorkToDo(target)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {

@@ -30,30 +30,21 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -62,32 +53,6 @@ import java.util.List;
  */
 public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '\0';
-  public static final String ATTRS = "ATTRS";
-
-  private static void addMissingAttributes(XmlTag tag, List<Pair<String, String>> value) {
-    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(value);
-    for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext(); ) {
-      Pair<String, String> pair = iterator.next();
-      if (tag.getAttribute(pair.first) != null) {
-        iterator.remove();
-      }
-    }
-    addAttributesBefore(tag, attr2value);
-  }
-
-  private static void addAttributesBefore(XmlTag tag, List<Pair<String, String>> attr2value) {
-    XmlAttribute firstAttribute = ArrayUtil.getFirstElement(tag.getAttributes());
-    XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
-    for (Pair<String, String> pair : attr2value) {
-      XmlAttribute xmlAttribute = factory.createXmlAttribute(pair.first, "");
-      if (firstAttribute != null) {
-        tag.addBefore(xmlAttribute, firstAttribute);
-      }
-      else {
-        tag.add(xmlAttribute);
-      }
-    }
-  }
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
@@ -99,19 +64,10 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return null;
   }
 
-  @NotNull
-  private static XmlFile parseXmlFileInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
-    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
-      .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
-    VirtualFile vFile = xmlFile.getVirtualFile();
-    if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    }
-    return xmlFile;
-  }
-
   @Nullable
-  private static ZenCodingNode parse(@NotNull String text, @NotNull CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
+  private static ZenCodingNode parse(@NotNull String text,
+                                     @NotNull CustomTemplateCallback callback,
+                                     @NotNull ZenCodingGenerator generator) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
@@ -246,7 +202,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       }
     }
     for (ZenCodingFilter filter : filters) {
-      if(filter instanceof SingleLineEmmetFilter) {
+      if (filter instanceof SingleLineEmmetFilter) {
         builder.setIsToReformat(false);
         break;
       }
@@ -333,8 +289,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public static void doWrap(final String selection,
-                               final String abbreviation,
-                               final CustomTemplateCallback callback) {
+                            final String abbreviation,
+                            final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert defaultGenerator != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -367,16 +323,6 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   }
 
-  protected static boolean containsAttrsVar(TemplateImpl template) {
-    for (int i = 0; i < template.getVariableCount(); i++) {
-      String varName = template.getVariableNameAt(i);
-      if (ATTRS.equals(varName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), false);
     if (generator == null) return null;
@@ -384,27 +330,6 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public boolean supportsWrapping() {
-    return true;
-  }
-
-  public static boolean doSetTemplate(final TemplateToken token, TemplateImpl template, CustomTemplateCallback callback) {
-    token.setTemplate(template);
-    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
-    token.setFile(xmlFile);
-    XmlDocument document = xmlFile.getDocument();
-    final XmlTag tag = document != null ? document.getRootTag() : null;
-    if (token.getAttribute2Value().size() > 0 && tag == null) {
-      return false;
-    }
-    if (tag != null) {
-      if (!containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            addMissingAttributes(tag, token.getAttribute2Value());
-          }
-        });
-      }
-    }
     return true;
   }
 }

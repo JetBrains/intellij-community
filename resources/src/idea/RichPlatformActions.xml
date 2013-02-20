@@ -140,7 +140,7 @@
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction" text="Check VFS sanity"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load all files content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction" text="Load all VFS stored files content"/>
-        <!--<action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>-->
+        <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
         <separator/>
         <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction" text="Prune Empty Directories"/>
         <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction" text="Fix Line Separators"/>
@@ -170,10 +170,6 @@
 
     <group id="DebuggerActions">
     </group>
-
-    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
-      <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
-    </action>
 
     <action id="AnalyzeStacktraceOnError" class="com.intellij.unscramble.AnalyzeStacktraceOnErrorAction" text="Analyze _Stacktrace"/>
 

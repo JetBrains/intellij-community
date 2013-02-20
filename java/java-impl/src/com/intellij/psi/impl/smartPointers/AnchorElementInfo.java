@@ -58,7 +58,7 @@ class AnchorElementInfo extends SelfElementInfo {
     if (stubId != -1) {
       PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
-      return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, myStubElementType);
+      return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, myStubElementType, false);
     }
     if (!mySyncMarkerIsValid) return null;
     PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);

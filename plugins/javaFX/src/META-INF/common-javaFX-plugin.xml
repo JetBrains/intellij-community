@@ -17,6 +17,14 @@
 
     <localInspection language="XML" shortName="JavaFxDefaultTag" displayName="Unnecessary default tag" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>
-
+    <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
+    <applicationConfigurable instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex"/>
   </extensions>
+
+  <actions>
+    <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder" text="Open In SceneBuilder">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

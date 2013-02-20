@@ -5,9 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChange;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -29,11 +32,14 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myWorkingExpandStates
     = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
 
+  private final AtomicReference<Set<GradleUserProjectChange>> myUserChanges
+    = new AtomicReference<Set<GradleUserProjectChange>>(new HashSet<GradleUserProjectChange>());
+
   @NotNull
   public static GradleLocalSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GradleLocalSettings.class);
   }
-  
+
   @Override
   public GradleLocalSettings getState() {
     myExpandStates.get().clear();
@@ -45,7 +51,7 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
 
   @Override
   public void loadState(GradleLocalSettings state) {
-    XmlSerializerUtil.copyBean(state, this); 
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   @SuppressWarnings("UnusedDeclaration")
@@ -75,5 +81,14 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
       myExpandStates.get().putAll(state);
       myWorkingExpandStates.get().putAll(state);
     }
+  }
+
+  @NotNull
+  public Set<GradleUserProjectChange> getUserProjectChanges() {
+    return myUserChanges.get();
+  }
+
+  public void setUserProjectChanges(@Nullable Set<GradleUserProjectChange> changes) {
+    myUserChanges.set(changes);
   }
 }

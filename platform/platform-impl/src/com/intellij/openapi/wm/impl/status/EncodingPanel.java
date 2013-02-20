@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +31,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -40,9 +38,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -176,17 +175,12 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }, this);
   }
 
-  private final EncodingActionsPair encodingActionsPair = new EncodingActionsPair();
   private void showPopup(MouseEvent e) {
     if (!actionEnabled) {
       return;
     }
     DataContext dataContext = getContext();
-    DefaultActionGroup group = encodingActionsPair.createActionGroup();
-
-    ListPopup popup =
-      JBPopupFactory.getInstance().createActionGroupPopup("File Encoding", group, dataContext, true, false, false, null, 2, null);
-
+    ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
     Dimension dimension = popup.getContent().getPreferredSize();
     Point at = new Point(0, -dimension.height);
     popup.show(new RelativePoint(e.getComponent(), at));
@@ -213,12 +207,13 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         if (charset == null && file != null) charset = file.getCharset();
 
         String text = charset == null ? "" : charset.displayName();
-        String failReason = file == null ? null : EncodingActionsPair.checkSomeActionEnabled(file);
-        actionEnabled = file != null && failReason == null;
+        Pair<Charset,String> check = file == null ? null : EncodingUtil.checkSomeActionEnabled(file);
+        String failReason = check == null ? null : check.second;
+        Charset currentCharset = check == null ? null : check.first;
+        actionEnabled = failReason == null;
 
-        Pair<Charset,String> check = file == null ? null : ChooseFileEncodingAction.checkCanReload(file);
         String toolTip = "File Encoding" +
-                         (check == null || check.first == null ? "" : ": "+check.first.displayName()) +
+                         (currentCharset == null ? "" : ": "+currentCharset.displayName()) +
                          (failReason == null ? "" : actionEnabled ? " ("+failReason+")" : " (change disabled: " + failReason + ")");
         myComponent.setToolTipText(toolTip);
         myComponent.setText(text);

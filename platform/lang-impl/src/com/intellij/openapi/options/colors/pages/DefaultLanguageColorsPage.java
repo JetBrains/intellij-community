@@ -55,7 +55,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     TAG_HIGHLIGHTING_MAP.put("keyword", DefaultLanguageHighlighterColors.KEYWORD);
     TAG_HIGHLIGHTING_MAP.put("string", DefaultLanguageHighlighterColors.STRING);
     TAG_HIGHLIGHTING_MAP.put("line_comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
-    TAG_HIGHLIGHTING_MAP.put("block_comment", DefaultLanguageHighlighterColors.BLOCk_COMMENT);
+    TAG_HIGHLIGHTING_MAP.put("block_comment", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
     TAG_HIGHLIGHTING_MAP.put("operation_sign", DefaultLanguageHighlighterColors.OPERATION_SIGN);
     TAG_HIGHLIGHTING_MAP.put("braces", DefaultLanguageHighlighterColors.BRACES);
     TAG_HIGHLIGHTING_MAP.put("doc_comment", DefaultLanguageHighlighterColors.DOC_COMMENT);
@@ -121,7 +121,7 @@ public class DefaultLanguageColorsPage implements ColorSettingsPage, DisplayPrio
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.line.comment"), DefaultLanguageHighlighterColors.LINE_COMMENT),
     new AttributesDescriptor(
-      OptionsBundle.message("options.language.defaults.block.comment"), DefaultLanguageHighlighterColors.BLOCk_COMMENT),
+      OptionsBundle.message("options.language.defaults.block.comment"), DefaultLanguageHighlighterColors.BLOCK_COMMENT),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.doc.comment"), DefaultLanguageHighlighterColors.DOC_COMMENT),
     new AttributesDescriptor(

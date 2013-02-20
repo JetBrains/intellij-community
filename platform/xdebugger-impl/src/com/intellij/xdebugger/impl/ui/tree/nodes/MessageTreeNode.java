@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -25,10 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author nik
@@ -37,7 +42,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   private boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
-  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
+  private MessageTreeNode(XDebuggerTree tree, @Nullable final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
                           @Nullable Icon icon) {
     this(tree, parent, message, attributes, icon, null);
   }
@@ -56,7 +61,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myText.append(message, attributes);
   }
 
-  protected MessageTreeNode(XDebuggerTree tree, XDebuggerTreeNode parent, boolean leaf) {
+  protected MessageTreeNode(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, boolean leaf) {
     super(tree, parent, leaf);
     myEllipsis = false;
   }
@@ -69,8 +74,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return myEllipsis;
   }
 
+  @Nullable
   @Override
-  public XDebuggerTreeNodeHyperlink getLink() {
+  protected XDebuggerTreeNodeHyperlink getLink() {
     return myLink;
   }
 
@@ -105,7 +111,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   public static List<MessageTreeNode> createMessages(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String errorMessage,
                                                      XDebuggerTreeNodeHyperlink link,
                                                      final Icon icon, final SimpleTextAttributes attributes) {
-    List<MessageTreeNode> messages = new ArrayList<MessageTreeNode>(1);
+    List<MessageTreeNode> messages = new SmartList<MessageTreeNode>();
     final List<String> lines = StringUtil.split(errorMessage, "\n", true, false);
     for (int i = 0; i < lines.size(); i++) {
       messages.add(new MessageTreeNode(tree, parent, lines.get(i), attributes,
@@ -114,8 +120,55 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return messages;
   }
 
-  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull String message) {
-    return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                               XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message) {
+    return createInfoMessage(tree, message, null);
+  }
+
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message, @Nullable HyperlinkListener hyperlinkListener) {
+    Matcher matcher = MessageTreeNodeWithLinks.HREF_PATTERN.matcher(message);
+    if (hyperlinkListener == null || !matcher.find()) {
+      return new MessageTreeNode(tree, null, message, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                                 XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+    }
+
+    List<Object> objects = new ArrayList<Object>();
+    int prev = 0;
+    do {
+      if (matcher.start() != prev) {
+        objects.add(message.substring(prev, matcher.start()));
+      }
+      objects.add(new XDebuggerTreeNodeHyperlink.HyperlinkListenerDelegator(matcher.group(2), matcher.group(1), hyperlinkListener));
+      prev = matcher.end();
+    }
+    while (matcher.find());
+
+    if (prev < (message.length() - 1)) {
+      objects.add(message.substring(prev));
+    }
+    return new MessageTreeNodeWithLinks(tree, objects);
+  }
+
+  private static class MessageTreeNodeWithLinks extends MessageTreeNode {
+    private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
+    private final List<Object> objects;
+
+    private MessageTreeNodeWithLinks(XDebuggerTree tree, List<Object> objects) {
+      super(tree, null, true);
+      setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
+      this.objects = objects;
+    }
+
+    @Override
+    public void appendToComponent(SimpleColoredComponent component) {
+      for (Object object : objects) {
+        if (object instanceof String) {
+          component.append((String)object);
+        }
+        else {
+          XDebuggerTreeNodeHyperlink hyperlink = (XDebuggerTreeNodeHyperlink)object;
+          component.append(hyperlink.getLinkText(), SimpleTextAttributes.LINK_ATTRIBUTES, hyperlink);
+        }
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,39 @@
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -43,61 +56,187 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 public class ConvertStringToMultilineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertStringToMultilineIntention.class);
 
-  public static final String hint = "Convert to Multiline";
+  public static final String hint = GroovyIntentionsBundle.message("convert.string.to.multiline.intention.name");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    String quote = element.getText().startsWith("'") ? "'''" : "\"\"\"";
-
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(quote);
-
-    GrExpression old;
-
-    if (element instanceof GrLiteralImpl) {
-      appendSimpleStringValue(element, buffer, quote);
-      old = (GrExpression)element;
+  protected void processIntention(@NotNull PsiElement element, final Project project, final Editor editor) throws IncorrectOperationException {
+    final List<GrExpression> expressions;
+    if (editor.getSelectionModel().hasSelection()) {
+      expressions = Collections.singletonList(((GrExpression)element));
     }
     else {
-      final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class);
-      for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
-          appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
+      final AccessToken accessToken = ReadAction.start();
+      try {
+        expressions = collectExpressions(element);
+      }
+      finally {
+        accessToken.finish();
+      }
+    }
+
+    if (expressions.size() == 1) {
+      invokeImpl(expressions.get(0), project, editor);
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      invokeImpl(expressions.get(expressions.size() - 1), project, editor);
+    }
+    else {
+      final Pass<GrExpression> callback = new Pass<GrExpression>() {
+        public void pass(@NotNull final GrExpression selectedValue) {
+          invokeImpl(selectedValue, project, editor);
         }
-        else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
-          buffer.append(child.getText());
+      };
+      final Function<GrExpression, String> renderer = new Function<GrExpression, String>() {
+        @Override
+        public String fun(@NotNull GrExpression grExpression) {
+          return grExpression.getText();
+        }
+      };
+      IntroduceTargetChooser.showChooser(editor, expressions, callback, renderer);
+    }
+  }
+
+  @NotNull
+  private static List<GrExpression> collectExpressions(@NotNull PsiElement element) {
+    assert element instanceof GrExpression;
+    List<GrExpression> result = ContainerUtil.newArrayList();
+    result.add((GrExpression)element);
+    while (element.getParent() instanceof GrBinaryExpression) {
+      final GrBinaryExpression binary = (GrBinaryExpression)element.getParent();
+      if (!isAppropriateBinary(binary, element)) break;
+
+      result.add(binary);
+      element = binary;
+    }
+    return result;
+  }
+
+  private static boolean isAppropriateBinary(@NotNull GrBinaryExpression binary, @Nullable PsiElement prevChecked) {
+    if (binary.getOperationTokenType() == GroovyTokenTypes.mPLUS) {
+      final GrExpression left = binary.getLeftOperand();
+      final GrExpression right = binary.getRightOperand();
+      if ((left != prevChecked || containsOnlyLiterals(right)) &&
+          (right != prevChecked || containsOnlyLiterals(left))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean containsOnlyLiterals(@Nullable GrExpression expression) {
+    if (expression instanceof GrLiteral) {
+      final String text = expression.getText();
+      if ("'".equals(GrStringUtil.getStartQuote(text))) return true;
+      if ("\"".equals(GrStringUtil.getStartQuote(text))) return true;
+    }
+    else if (expression instanceof GrBinaryExpression) {
+      final IElementType type = ((GrBinaryExpression)expression).getOperationTokenType();
+      if (type != GroovyTokenTypes.mPLUS) return false;
+
+      final GrExpression left = ((GrBinaryExpression)expression).getLeftOperand();
+      final GrExpression right = ((GrBinaryExpression)expression).getRightOperand();
+
+      return containsOnlyLiterals(left) && containsOnlyLiterals(right);
+    }
+
+    return false;
+  }
+
+  @NotNull
+  private static List<GrLiteral> collectOperands(@Nullable PsiElement element, @NotNull List<GrLiteral> initial) {
+    if (element instanceof GrLiteral) {
+      initial.add((GrLiteral)element);
+    }
+    else if (element instanceof GrBinaryExpression) {
+      collectOperands(((GrBinaryExpression)element).getLeftOperand(), initial);
+      collectOperands(((GrBinaryExpression)element).getRightOperand(), initial);
+    }
+    return initial;
+  }
+
+  private void invokeImpl(@NotNull final GrExpression element, @NotNull final Project project, @NotNull final Editor editor) {
+    final List<GrLiteral> literals = collectOperands(element, ContainerUtil.<GrLiteral>newArrayList());
+    if (literals.size() == 0) return;
+
+    final StringBuilder buffer = prepareNewLiteralText(literals);
+
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              final int offset = editor.getCaretModel().getOffset();
+              final TextRange range = element.getTextRange();
+              int shift;
+              if (editor.getSelectionModel().hasSelection()) {
+                shift = 0;
+              }
+              else if (range.getStartOffset() == offset) {
+                shift = 0;
+              }
+              else if (range.getEndOffset() == offset + 1) {
+                shift = -2;
+              }
+              else {
+                shift = 2;
+              }
+
+              final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
+
+              element.replaceWithExpression(newLiteral, true);
+
+              if (shift != 0) {
+                editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
+              }
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+    }, getText(), null);
+  }
+
+  private static StringBuilder prepareNewLiteralText(List<GrLiteral> literals) {
+    String quote = !containsInjections(literals) && literals.get(0).getText().startsWith("'") ? "'''" : "\"\"\"";
+
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(quote);
+
+    for (GrLiteral literal : literals) {
+      if (literal instanceof GrLiteralImpl) {
+        appendSimpleStringValue(literal, buffer, quote);
+      }
+      else {
+        final GrStringImpl gstring = (GrStringImpl)literal;
+        for (ASTNode child = gstring.getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
+          if (child.getElementType() == GroovyTokenTypes.mGSTRING_CONTENT) {
+            appendSimpleStringValue(child.getPsi(), buffer, "\"\"\"");
+          }
+          else if (child.getElementType() == GroovyElementTypes.GSTRING_INJECTION) {
+            buffer.append(child.getText());
+          }
         }
       }
-      old = gstring;
     }
 
     buffer.append(quote);
-    try {
-      final int offset = editor.getCaretModel().getOffset();
-      final TextRange range = old.getTextRange();
-      int shift;
-
-      if (range.getStartOffset() == offset) {
-        shift = 0;
-      }
-      else if (range.getEndOffset() == offset + 1) {
-        shift = -2;
-      }
-      else {
-        shift = 2;
-      }
-
-      final GrExpression newLiteral = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer.toString());
-      old.replaceWithExpression(newLiteral, true);
-
-      if (shift != 0) {
-        editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + shift);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    return buffer;
   }
+
+  private static boolean containsInjections(@NotNull List<GrLiteral> literals) {
+    for (GrLiteral literal : literals) {
+      if (literal instanceof GrString && ((GrString)literal).getInjections().length > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   private static void appendSimpleStringValue(PsiElement element, StringBuilder buffer, String quote) {
     final String text = GrStringUtil.removeQuotes(element.getText());
@@ -118,23 +257,15 @@ public class ConvertStringToMultilineIntention extends Intention {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (element instanceof GrLiteralImpl) {
-          final ASTNode node = element.getFirstChild().getNode();
-          final IElementType type = node.getElementType();
-          if (type == GroovyTokenTypes.mSTRING_LITERAL) {
-            return GrStringUtil.isPlainStringLiteral(node);
-          }
-          if (type == GroovyTokenTypes.mGSTRING_LITERAL) {
-            return GrStringUtil.isPlainGString(node);
-          }
-        }
-        else {
-          final GrStringImpl gstring = PsiTreeUtil.getParentOfType(element, GrStringImpl.class, false, GrMember.class, GroovyFile.class);
-          if (gstring == null) return false;
-          return gstring.isPlainString();
-        }
-        return false;
+        return element instanceof GrLiteral && ("\"".equals(GrStringUtil.getStartQuote(element.getText())) ||
+                                                "\'".equals(GrStringUtil.getStartQuote(element.getText())))
+               || element instanceof GrBinaryExpression && isAppropriateBinary((GrBinaryExpression)element, null);
       }
     };
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

@@ -569,7 +569,7 @@ public class EditorActionUtil {
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
 
-  public static void moveCaretToNextWord(Editor editor, boolean isWithSelection) {
+  public static void moveCaretToNextWord(Editor editor, boolean isWithSelection, boolean camel) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -593,7 +593,6 @@ public class EditorActionUtil {
       }
       maxOffset = document.getLineEndOffset(lineNumber + 1);
     }
-    boolean camel = editor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
       if (isWordStart(text, newOffset, camel)) {
         break;
@@ -651,7 +650,7 @@ public class EditorActionUtil {
     editor.putUserData(PREV_POS, pos);
   }
 
-  public static void moveCaretToPreviousWord(Editor editor, boolean isWithSelection) {
+  public static void moveCaretToPreviousWord(Editor editor, boolean isWithSelection, boolean camel) {
     Document document = editor.getDocument();
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getLeadSelectionOffset();
@@ -667,7 +666,6 @@ public class EditorActionUtil {
     CharSequence text = document.getCharsSequence();
     int newOffset = offset - 1;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-    boolean camel = editor.getSettings().isCamelWords();
     for (; newOffset > minOffset; newOffset--) {
       if (isWordStart(text, newOffset, camel)) break;
     }

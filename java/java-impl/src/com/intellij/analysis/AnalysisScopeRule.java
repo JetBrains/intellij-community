@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 
@@ -39,8 +40,9 @@ public class AnalysisScopeRule implements GetDataRule {
     Object psiTarget = dataProvider.getData(LangDataKeys.PSI_ELEMENT.getName());
     if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
-      if (!pack.getManager().isInProject(pack)) return null;
-      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
+      PsiManager manager = pack.getManager();
+      if (!manager.isInProject(pack)) return null;
+      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(manager.getProject()));
       if (dirs.length == 0) return null;
       return new JavaAnalysisScope(pack, (Module)dataProvider.getData(LangDataKeys.MODULE.getName()));
     }

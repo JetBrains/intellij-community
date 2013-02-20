@@ -169,9 +169,6 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       ExecutionResult result = state.execute(executor, runner);
       //noinspection ConstantConditions
       processHandler = result.getProcessHandler();
-      if (processHandler instanceof OSProcessHandler) {
-        ((OSProcessHandler)processHandler).setShouldDestroyProcessRecursively(true);
-      }
     }
     catch (Exception e) {
       dropProcessInfo(key, ExceptionUtil.getUserStackTrace(e, LOG), processHandler);

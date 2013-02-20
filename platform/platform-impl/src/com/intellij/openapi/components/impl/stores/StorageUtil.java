@@ -19,10 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorageException;
@@ -84,9 +81,15 @@ public class StorageUtil {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
         if (!macros.isEmpty()) {
-          String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a>.</p>";
-          String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are");
-          new UnknownMacroNotification("Load Error", "Load error: undefined path variables!", content, NotificationType.ERROR,
+          String format = "<p><i>%s</i> %s undefined. <a href=\"define\">Fix it</a></p>";
+          String productName = ApplicationNamesInfo.getInstance().getProductName();
+          String content = String.format(format, StringUtil.join(macros, ", "), macros.size() == 1 ? "is" : "are") +
+                           "<br>Path variables are used to substitute absolute paths " +
+                           "in " + productName + " project files " +
+                           "and allow project file sharing in version control systems.<br>" +
+                           "Some of the files describing the current project settings contain unknown path variables " +
+                           "and " + productName + " cannot restore those paths.";
+          new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
                                        new NotificationListener() {
                                          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                                            ((ProjectEx)project).checkUnknownMacros(true);

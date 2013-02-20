@@ -612,7 +612,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private static boolean weAreSureThereAreNoUsages(PsiMember member, ProgressIndicator progress, GlobalUsageHelper helper) {
+  private static boolean weAreSureThereAreNoUsages(@NotNull PsiMember member, ProgressIndicator progress, GlobalUsageHelper helper) {
     if (!helper.shouldCheckUsages(member)) return false;
 
     String name = member.getName();

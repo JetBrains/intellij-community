@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -93,6 +93,11 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
             Collections.addAll(descriptors, attributesDescriptors);
           }
         }
+      } else {
+        final JavaFxClassBackedElementDescriptor rootTagDescriptor = getRootTagDescriptor(context);
+        if (rootTagDescriptor != null) {
+          Collections.addAll(descriptors, rootTagDescriptor.getAttributesDescriptors(context));
+        }
       }
       return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
     }
@@ -136,6 +141,25 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
         if (referencedDescriptor != null) {
           return referencedDescriptor.getAttributeDescriptor(attributeName, referencedTag);
+        }
+      }
+      final JavaFxClassBackedElementDescriptor rootTagDescriptor = getRootTagDescriptor(context);
+      if (rootTagDescriptor != null) {
+        return rootTagDescriptor.getAttributeDescriptor(attributeName, context);
+      }
+    }
+    return null;
+  }
+
+  private JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
+    if (context != null && FxmlConstants.FX_ROOT.equals(getName())) {
+      final XmlAttribute typeAttr = context.getAttribute(FxmlConstants.TYPE);
+      if (typeAttr != null) {
+        final String rootClassName = typeAttr.getValue();
+        final Project project = context.getProject();
+        final PsiClass rootClass = JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project));
+        if (rootClass != null) {
+          return new JavaFxClassBackedElementDescriptor(getName(), rootClass);
         }
       }
     }

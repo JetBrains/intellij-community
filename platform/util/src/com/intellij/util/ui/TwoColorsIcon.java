@@ -36,8 +36,9 @@ public class TwoColorsIcon extends EmptyIcon {
   public void paintIcon(final Component component, final Graphics g, final int x, final int y) {
     final int w = getIconWidth();
     final int h = getIconHeight();
+    GraphicsUtil.setupAAPainting(g);
     g.setColor(myColor1);
-    g.fillPolygon(new int[]{x, x + w - 1, x}, new int[]{y, y, y + h - 1}, 3);
+    g.fillPolygon(new int[]{x, x + w, x}, new int[]{y, y, y + h}, 3);
     g.setColor(myColor2);
     g.fillPolygon(new int[]{x + w, x + w, x}, new int[]{y, y + h, y + h}, 3);
   }

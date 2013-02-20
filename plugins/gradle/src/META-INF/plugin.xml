@@ -81,6 +81,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleProjectStructureContext"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
 

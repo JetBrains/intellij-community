@@ -46,10 +46,12 @@ public abstract class BasicUndoableAction implements UndoableAction {
     }
   }
 
+  @Override
   public DocumentReference[] getAffectedDocuments() {
     return myRefs;
   }
 
+  @Override
   public boolean isGlobal() {
     return false;
   }

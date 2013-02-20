@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.util.text.DateFormatUtil;
 
@@ -29,6 +30,7 @@ import java.util.Date;
  * @author yole
  */
 public class CurrentDateMacro extends SimpleMacro {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.CurrentDateMacro");
   protected CurrentDateMacro() {
     super("date");
   }
@@ -43,7 +45,13 @@ public class CurrentDateMacro extends SimpleMacro {
     if (params.length == 1) {
       Result format = params[0].calculateResult(context);
       if (format != null) {
-        return new SimpleDateFormat(format.toString()).format(new Date(time));
+        String pattern = format.toString();
+        try {
+          return new SimpleDateFormat(pattern).format(new Date(time));
+        }
+        catch (Exception e) {
+          return "Problem when formatting date/time for pattern \"" + pattern + "\": " + e.getMessage();
+        }
       }
     }
     return date ? DateFormatUtil.formatDate(time) : DateFormatUtil.formatTime(time);

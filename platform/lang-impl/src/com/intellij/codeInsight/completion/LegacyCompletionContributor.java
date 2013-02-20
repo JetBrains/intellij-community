@@ -16,8 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -33,6 +35,7 @@ import java.util.Set;
  * @author peter
  */
 public class LegacyCompletionContributor extends CompletionContributor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.LegacyCompletionContributor");
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet _result) {
@@ -108,13 +111,24 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                        final int startOffset,
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
-    final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+    PsiElement element = reference.getElement();
+    final int offsetInElement = startOffset - element.getTextRange().getStartOffset();
     if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) {
       return;
     }
 
-    final String prefix = reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
-    consumer.consume(reference, result.withPrefixMatcher(prefix));
+    TextRange range = reference.getRangeInElement();
+    try {
+      final String prefix = element.getText().substring(range.getStartOffset(), offsetInElement);
+      consumer.consume(reference, result.withPrefixMatcher(prefix));
+    }
+    catch (StringIndexOutOfBoundsException e) {
+      LOG.error("Reference=" + reference +
+                "; element=" + element + " of " + element.getClass() +
+                "; range=" + range +
+                "; offset=" + offsetInElement,
+                e);
+    }
   }
 
 

@@ -20,10 +20,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.model.ErrorInfo;
-import com.intellij.designer.model.PropertiesContainer;
-import com.intellij.designer.model.PropertyContext;
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.*;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,18 +54,6 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
     myProject = project;
 
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myDesigner != null) {
-          myDesigner.setSelectionProperty(getSelectionProperty());
-        }
-        if (myPropertyTablePanel != null) {
-          myPropertyTablePanel.updateActions();
-        }
-      }
-    });
-
     getModel().addTableModelListener(new TableModelListener() {
       @Override
       public void tableChanged(TableModelEvent e) {
@@ -77,6 +62,23 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
         }
       }
     });
+  }
+
+  private final ListSelectionListener myListener = new ListSelectionListener() {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      if (myDesigner != null) {
+        myDesigner.setSelectionProperty(getCurrentKey(), getSelectionProperty());
+      }
+    }
+  };
+
+  private void addSelectionListener() {
+    getSelectionModel().addListSelectionListener(myListener);
+  }
+
+  private void removeSelectionListener() {
+    getSelectionModel().removeListSelectionListener(myListener);
   }
 
   public void initQuickFixManager(JViewport viewPort) {
@@ -139,12 +141,34 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @Override
   public void update() {
-    if (myArea == null) {
-      update(Collections.<PropertiesContainer>emptyList(), null);
+    try {
+      removeSelectionListener();
+
+      if (myArea == null) {
+        update(Collections.<PropertiesContainer>emptyList(), null);
+      }
+      else {
+        update(myArea.getSelection(), myDesigner.getSelectionProperty(getCurrentKey()));
+      }
     }
-    else {
-      update(myArea.getSelection(), myDesigner.getSelectionProperty());
+    finally {
+      addSelectionListener();
     }
+  }
+
+  @Nullable
+  private String getCurrentKey() {
+    PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
+    return tab == null ? null : tab.getKey();
+  }
+
+  @Override
+  protected List<Property> getProperties(PropertiesContainer component) {
+    PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
+    if (tab != null) {
+      return ((RadComponent)component).getProperties(tab.getKey());
+    }
+    return super.getProperties(component);
   }
 
   @Override

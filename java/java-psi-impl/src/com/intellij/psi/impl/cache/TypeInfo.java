@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.BitUtil.isSet;
+
 /**
  * @author max
  */
@@ -52,14 +54,9 @@ public class TypeInfo {
   private static final TIntObjectHashMap<String> ourIndexFrequentType = new TIntObjectHashMap<String>();
   private static final TObjectIntHashMap<String> ourFrequentTypeIndex = new TObjectIntHashMap<String>();
 
-  public final StringRef text;
-  public final byte arrayCount;
-  public final boolean isEllipsis;
-  private final List<PsiAnnotationStub> myAnnotationStubs;
-
   private static void registerFrequentType(String typeText) {
     int index = ourFrequentTypeIndex.size() + 1;
-    assert index < 15; // 0xf is reserved
+    assert index > 0 && index < 15 : "reserved: " + index + " (" + typeText + ")";
     ourFrequentTypeIndex.put(typeText, index);
     ourIndexFrequentType.put(index, typeText);
   }
@@ -78,8 +75,21 @@ public class TypeInfo {
     registerFrequentType("Object");
     registerFrequentType(CommonClassNames.JAVA_LANG_OBJECT);
     registerFrequentType("String");
-    registerFrequentType("java.lang.String");
+    registerFrequentType(CommonClassNames.JAVA_LANG_STRING);
   }
+
+  private static final int NULL_FLAGS = 0x0F;
+  private static final int FREQUENT_INDEX_MASK = 0x0F;
+  private static final int HAS_ANNOTATIONS = 0x10;
+  private static final int HAS_ARRAY_COUNT = 0x20;
+  private static final int HAS_ELLIPSIS = 0x40;
+
+  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false, Collections.<PsiAnnotationStub>emptyList());
+
+  public final StringRef text;
+  public final byte arrayCount;
+  public final boolean isEllipsis;
+  private final List<PsiAnnotationStub> myAnnotationStubs;
 
   public TypeInfo(StringRef text, byte arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
     this.text = text;
@@ -101,8 +111,8 @@ public class TypeInfo {
   }
 
   @NotNull
-  public static TypeInfo create(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
-    final String text;
+  public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement parentStub) {
+    String text;
     int arrayCount = 0;
     boolean isEllipsis = false;
 
@@ -113,7 +123,7 @@ public class TypeInfo {
       LighterASTNode typeElement = null;
 
       for (final LighterASTNode child : tree.getChildren(element)) {
-        final IElementType type = child.getTokenType();
+        IElementType type = child.getTokenType();
         if (type == JavaElementType.TYPE) {
           typeElement = child;
         }
@@ -123,8 +133,10 @@ public class TypeInfo {
       }
 
       if (typeElement == null && element.getTokenType() == JavaElementType.FIELD) {
-        final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, tree.getParent(element), JavaElementType.FIELD);
-        final int idx = fields.indexOf(element);
+        LighterASTNode parent = tree.getParent(element);
+        assert parent != null : element;
+        List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, parent, JavaElementType.FIELD);
+        int idx = fields.indexOf(element);
         for (int i = idx - 1; i >= 0 && typeElement == null; i--) {  // int i, j
           typeElement = LightTreeUtil.firstChildOfType(tree, fields.get(i), JavaElementType.TYPE);
         }
@@ -135,7 +147,7 @@ public class TypeInfo {
       isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
 
       while (true) {
-        final LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
+        LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
         if (nested == null) break;
         typeElement = nested;
         arrayCount++;  // Java-style array
@@ -144,7 +156,7 @@ public class TypeInfo {
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    final List<PsiAnnotationStub> annotations = Collections.emptyList();  // todo[r.sh] JDK 8 type annotations
+    List<PsiAnnotationStub> annotations = Collections.emptyList();  // todo[r.sh] JDK 8 type annotations
 
     return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, annotations);
   }
@@ -175,35 +187,25 @@ public class TypeInfo {
     return fromString(typeText, isEllipsis);
   }
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false, Collections.<PsiAnnotationStub>emptyList());
-  
   @NotNull
-  public static TypeInfo readTYPE(StubInputStream record, StubElement parentStub) throws IOException {
-    final int flags = 0xFF & record.readByte();
+  public static TypeInfo readTYPE(@NotNull StubInputStream record, StubElement parentStub) throws IOException {
+    int flags = 0xFF & record.readByte();
     if (flags == NULL_FLAGS) {
       return NULL;
     }
 
-    // flags bits
-    // ZeroPad:1 IsEllipsis:1 ArrayCountPresent:1 AnnotationsArePresent:1 FrequentIndex:4
+    int frequentIndex = FREQUENT_INDEX_MASK & flags;
+    boolean hasAnnotations = isSet(flags, HAS_ANNOTATIONS);
+    byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
+    boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
-    final int frequentIndex = 0xF & flags;
+    StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType.get(frequentIndex));
 
-    byte arrayCount = (flags & 0x20) != 0 ? record.readByte() : 0;
-    boolean isEllipsis = (flags & 0x40) != 0;
-    StringRef text;
-    if (frequentIndex == 0) {
-      text = record.readName();
-    }
-    else {
-      text = StringRef.fromString(ourIndexFrequentType.get(frequentIndex));
-    }
-    boolean annotationsArePresent = (flags & 0x10) != 0;
     List<PsiAnnotationStub> annotationStubs;
-    if (annotationsArePresent) {
+    if (hasAnnotations) {
       int size = 0xFF & record.readByte();
       annotationStubs = new ArrayList<PsiAnnotationStub>(size);
-      for (int i =0; i<size; i++) {
+      for (int i = 0; i < size; i++) {
         PsiAnnotationStub annotationStub = JavaStubElementTypes.ANNOTATION.deserialize(record, parentStub);
         annotationStubs.add(annotationStub);
       }
@@ -211,32 +213,27 @@ public class TypeInfo {
     else {
       annotationStubs = Collections.emptyList();
     }
-    return new TypeInfo(text, arrayCount, isEllipsis, annotationStubs);
+
+    return new TypeInfo(text, arrayCount, hasEllipsis, annotationStubs);
   }
 
-  private static final int NULL_FLAGS = 0x0F;
-  public static void writeTYPE(final StubOutputStream dataStream, @NotNull TypeInfo typeInfo) throws IOException {
+  public static void writeTYPE(@NotNull StubOutputStream dataStream, @NotNull TypeInfo typeInfo) throws IOException {
     if (typeInfo == NULL) {
       dataStream.writeByte(NULL_FLAGS);
       return;
     }
 
-    boolean isEllipsis = typeInfo.isEllipsis;
+    boolean hasEllipsis = typeInfo.isEllipsis;
     String text = typeInfo.text.getString();
     byte arrayCount = typeInfo.arrayCount;
-
     int frequentIndex = ourFrequentTypeIndex.get(text);
-    LOG.assertTrue(frequentIndex < 15, frequentIndex);
-
-    // flags bits
-    // ZeroPad:1 IsEllipsis:1 ArrayCountPresent:1 AnnotationsArePresent:1 FrequentIndex:4
-
     List<PsiAnnotationStub> annotations = typeInfo.myAnnotationStubs;
-    boolean annotationsArePresent = !annotations.isEmpty();
-    int flags = ((isEllipsis ? 1 : 0) << 6) |
-                  ((arrayCount == 0 ? 0 : 1) << 5) |
-                      ((annotationsArePresent ? 1 : 0)<<4) |
-                           frequentIndex;
+    boolean hasAnnotations = !annotations.isEmpty();
+    int flags = (hasEllipsis ? HAS_ELLIPSIS : 0) |
+                (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
+                (hasAnnotations ? HAS_ANNOTATIONS : 0) |
+                frequentIndex;
+
     dataStream.writeByte(flags);
     if (arrayCount != 0) {
       dataStream.writeByte(arrayCount);
@@ -244,7 +241,7 @@ public class TypeInfo {
     if (frequentIndex == 0) {
       dataStream.writeName(text);
     }
-    if (annotationsArePresent) {
+    if (hasAnnotations) {
       LOG.assertTrue(annotations.size() < 256, annotations.size());
       dataStream.writeByte(annotations.size());
       for (PsiAnnotationStub annotation : annotations) {
@@ -255,18 +252,25 @@ public class TypeInfo {
 
   @Nullable
   public static String createTypeText(@NotNull TypeInfo typeInfo) {
-    if (typeInfo == NULL) return null;
-    if (typeInfo.text == null) return null;
-    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.isEmpty()) return typeInfo.text.getString();
+    if (typeInfo == NULL || typeInfo.text == null) {
+      return null;
+    }
+    if (typeInfo.arrayCount == 0 && typeInfo.myAnnotationStubs.isEmpty()) {
+      return typeInfo.text.getString();
+    }
 
-    String text = typeInfo.text.getString();
-    StringBuilder buf = new StringBuilder(text.length());
+    StringBuilder buf = new StringBuilder();
+
     for (PsiAnnotationStub stub : typeInfo.myAnnotationStubs) {
       buf.append(stub.getText()).append(" ");
     }
-    buf.append(text);
-    final int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
-    for (int i = 0; i < arrayCount; i++) buf.append("[]");
+
+    buf.append(typeInfo.text.getString());
+
+    int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
+    for (int i = 0; i < arrayCount; i++) {
+      buf.append("[]");
+    }
     if (typeInfo.isEllipsis) {
       buf.append("...");
     }

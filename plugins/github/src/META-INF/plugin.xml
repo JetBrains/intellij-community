@@ -16,6 +16,9 @@
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
     <checkoutCompletedListener implementation="org.jetbrains.plugins.github.GithubCheckoutListener" order="after PlatformProjectCheckoutListener"/>
     <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
+
+    <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSslSupport"
+                        serviceImplementation="org.jetbrains.plugins.github.GithubSslSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

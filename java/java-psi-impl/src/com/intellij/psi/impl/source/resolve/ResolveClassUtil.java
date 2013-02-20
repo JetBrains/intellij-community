@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -28,7 +27,8 @@ public class ResolveClassUtil {
 
   @Nullable
   public static PsiClass resolveClass(PsiJavaCodeReferenceElement ref) {
-    if (ref instanceof PsiJavaCodeReferenceElementImpl && ((PsiJavaCodeReferenceElementImpl)ref).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND){
+    if (ref instanceof PsiJavaCodeReferenceElementImpl &&
+        ((PsiJavaCodeReferenceElementImpl)ref).getKind() == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
       PsiElement parent = ref.getParent();
       if (parent instanceof PsiAnonymousClass){
         parent = parent.getParent();
@@ -63,7 +63,7 @@ public class ResolveClassUtil {
     long time1 = System.currentTimeMillis();
     */
 
-    ClassResolverProcessor processor = new ClassResolverProcessor(className, ref);
+    ClassResolverProcessor processor = new ClassResolverProcessor(className, ref, ref.getContainingFile());
     PsiScopesUtil.resolveAndWalk(processor, ref, null);
 
 

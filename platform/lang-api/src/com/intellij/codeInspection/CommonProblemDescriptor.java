@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,6 +26,14 @@ import org.jetbrains.annotations.NotNull;
  * @see InspectionManager#createProblemDescriptor(String, QuickFix[])
  */
 public interface CommonProblemDescriptor {
+  CommonProblemDescriptor[] EMPTY_ARRAY = new CommonProblemDescriptor[0];
+  ArrayFactory<CommonProblemDescriptor> ARRAY_FACTORY = new ArrayFactory<CommonProblemDescriptor>() {
+    @Override
+    public CommonProblemDescriptor[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new CommonProblemDescriptor[count];
+    }
+  };
+
   /**
    * Returns the template from which the problem description is built. The template may
    * contain special markers: <code>#ref</code> is replaced with the text of the element

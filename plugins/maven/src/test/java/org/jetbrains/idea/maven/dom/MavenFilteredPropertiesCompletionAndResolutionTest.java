@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.idea.Bombed;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -24,6 +25,8 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
+
+import java.util.Calendar;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
   public void testBasic() throws Exception {
@@ -557,6 +560,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
+  @Bombed(year = 2013, month = Calendar.APRIL, day = 17, user = "sergey.evdokimov")
   public void testDontAddReferenceToDelimiterDefinition() throws Exception {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +

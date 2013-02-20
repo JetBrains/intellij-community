@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -35,11 +36,11 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   private final TypeInfo myType;
   private final boolean myIsEllipsis;
 
-  public PsiParameterStubImpl(final StubElement parent, final String name, @NotNull TypeInfo type, final boolean isEllipsis) {
+  public PsiParameterStubImpl(StubElement parent, @NotNull String name, @NotNull TypeInfo type, boolean isEllipsis) {
     this(parent, StringRef.fromString(name), type, isEllipsis);
   }
 
-  public PsiParameterStubImpl(final StubElement parent, final StringRef name, @NotNull TypeInfo type, final boolean isEllipsis) {
+  public PsiParameterStubImpl(StubElement parent, @NotNull StringRef name, @NotNull TypeInfo type, boolean isEllipsis) {
     super(parent, JavaStubElementTypes.PARAMETER);
     myName = name;
     myType = type;
@@ -52,10 +53,14 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   }
 
   @Override
+  public boolean isReceiver() {
+    return PsiKeyword.THIS.equals(getName());
+  }
+
+  @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
-    if (!doResolve) return myType;
-    return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myType);
+    return doResolve ? PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myType) : myType;
   }
 
   @Override
@@ -68,6 +73,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     return null;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return StringRef.toString(myName);
@@ -91,11 +97,6 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.
-      append("PsiParameterStub[").
-      append(myName).append(':').append(TypeInfo.createTypeText(getType(false))).
-      append(']');
-    return builder.toString();
+    return "PsiParameterStub[" + myName + ':' + TypeInfo.createTypeText(getType(false)) + ']';
   }
 }

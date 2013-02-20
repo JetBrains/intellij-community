@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
@@ -41,11 +42,14 @@ public final class DirectoryInfo {
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
 
-  private static final byte TEST_SOURCE_FLAG = 1; // (makes sense only if MODULE_SOURCE_FLAG is set)
-  private static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
-  private static final byte MODULE_SOURCE_FLAG = 4; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
+  public static final byte TEST_SOURCE_FLAG = 1; // (makes sense only if MODULE_SOURCE_FLAG is set)
+  public static final byte LIBRARY_SOURCE_FLAG = 2; // set if it's a directory with sources of some library
+  public static final byte MODULE_SOURCE_FLAG = 4; // set if files in this directory belongs to sources of the module (if field 'module' is not null)
 
   @MagicConstant(flags = {TEST_SOURCE_FLAG, LIBRARY_SOURCE_FLAG, MODULE_SOURCE_FLAG})
+  public @interface SourceFlag {}
+
+  @SourceFlag
   private final byte sourceFlag;
 
   /**
@@ -54,12 +58,15 @@ public final class DirectoryInfo {
    */
   private final OrderEntry[] orderEntries;
 
-  public DirectoryInfo(Module module,
-                       VirtualFile contentRoot,
-                       VirtualFile sourceRoot,
-                       VirtualFile libraryClassRoot,
-                       @MagicConstant(flags = {TEST_SOURCE_FLAG, LIBRARY_SOURCE_FLAG, MODULE_SOURCE_FLAG}) byte sourceFlag,
-                       OrderEntry[] orderEntries) {
+  public static DirectoryInfo createNew() {
+    return new DirectoryInfo(null, null, null, null, (byte)0, null);
+  }
+  private DirectoryInfo(Module module,
+                        VirtualFile contentRoot,
+                        VirtualFile sourceRoot,
+                        VirtualFile libraryClassRoot,
+                        @SourceFlag byte sourceFlag,
+                        OrderEntry[] orderEntries) {
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
     this.contentRoot = contentRoot;
@@ -75,14 +82,12 @@ public final class DirectoryInfo {
 
     DirectoryInfo info = (DirectoryInfo)o;
 
-    if (sourceFlag != info.sourceFlag) return false;
-    if (contentRoot != null ? !contentRoot.equals(info.contentRoot) : info.contentRoot != null) return false;
-    if (libraryClassRoot != null ? !libraryClassRoot.equals(info.libraryClassRoot) : info.libraryClassRoot != null) return false;
-    if (module != null ? !module.equals(info.module) : info.module != null) return false;
-    if (!Arrays.equals(orderEntries, info.orderEntries)) return false;
-    if (sourceRoot != null ? !sourceRoot.equals(info.sourceRoot) : info.sourceRoot != null) return false;
-
-    return true;
+    return sourceFlag == info.sourceFlag &&
+           Comparing.equal(contentRoot, info.contentRoot) &&
+           Comparing.equal(libraryClassRoot, info.libraryClassRoot) &&
+           Comparing.equal(module, info.module) &&
+           Arrays.equals(orderEntries, info.orderEntries) &&
+           Comparing.equal(sourceRoot, info.sourceRoot);
   }
 
   @Override
@@ -209,10 +214,7 @@ public final class DirectoryInfo {
   }
 
   // orderEntries must be sorted BY_OWNER_MODULE
-  @NotNull
-  public DirectoryInfo withOrderEntries(@NotNull OrderEntry[] orderEntries,
-                                 @Nullable final DirectoryInfo parentInfo,
-                                 @Nullable final OrderEntry[] oldParentEntries) {
+  OrderEntry[] calcNewOrderEntries(@NotNull OrderEntry[] orderEntries, @Nullable DirectoryInfo parentInfo, @Nullable OrderEntry[] oldParentEntries) {
     OrderEntry[] newOrderEntries;
     if (orderEntries.length == 0) {
       newOrderEntries = null;
@@ -226,8 +228,7 @@ public final class DirectoryInfo {
     else {
       newOrderEntries = mergeWith(orderEntries);
     }
-    
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, newOrderEntries);
+    return newOrderEntries;
   }
 
   // entries must be sorted BY_OWNER_MODULE
@@ -293,54 +294,32 @@ public final class DirectoryInfo {
     return BitUtil.isSet(sourceFlag, MODULE_SOURCE_FLAG);
   }
 
-  @NotNull
-  public DirectoryInfo withInModuleSource(boolean inModuleSource) {
-    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, MODULE_SOURCE_FLAG, inModuleSource);
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
-  }
-
   public boolean isTestSource() {
     return BitUtil.isSet(sourceFlag, TEST_SOURCE_FLAG);
-  }
-
-  @NotNull
-  public DirectoryInfo withTestSource(boolean testSource) {
-    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, TEST_SOURCE_FLAG, testSource);
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 
   public boolean isInLibrarySource() {
     return BitUtil.isSet(sourceFlag, LIBRARY_SOURCE_FLAG);
   }
 
-  @NotNull
-  public DirectoryInfo withInLibrarySource(boolean inLibrarySource) {
-    byte sourceFlag = (byte)BitUtil.set(this.sourceFlag, LIBRARY_SOURCE_FLAG, inLibrarySource);
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
-  }
-
   public Module getModule() {
     return module;
   }
 
-  @NotNull
-  public DirectoryInfo withModule(Module module) {
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
+  private static <T> T iff(T value, T defaultValue) {
+    return value == null ? defaultValue : value;
   }
 
   @NotNull
-  public DirectoryInfo withLibraryClassRoot(@NotNull VirtualFile libraryClassRoot) {
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
-  }
-
-  @NotNull
-  public DirectoryInfo withContentRoot(VirtualFile contentRoot) {
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
-  }
-
-  @NotNull
-  public DirectoryInfo withSourceRoot(@NotNull VirtualFile sourceRoot) {
-    return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
+  public DirectoryInfo with(Module module,
+                            VirtualFile contentRoot,
+                            VirtualFile sourceRoot,
+                            VirtualFile libraryClassRoot,
+                            @SourceFlag byte sourceFlag,
+                            OrderEntry[] orderEntries) {
+    return new DirectoryInfo(iff(module, this.module), iff(contentRoot, this.contentRoot), iff(sourceRoot, this.sourceRoot),
+                             iff(libraryClassRoot, this.libraryClassRoot), sourceFlag == 0 ? this.sourceFlag : sourceFlag,
+                             iff(orderEntries, this.orderEntries));
   }
 
   @NotNull
@@ -354,5 +333,10 @@ public final class DirectoryInfo {
     for (int i=1; i<entries.length; i++) {
       assert BY_OWNER_MODULE.compare(entries[i-1], entries[i]) <= 0;
     }
+  }
+
+  @SourceFlag
+  public int getSourceFlag() {
+    return sourceFlag;
   }
 }

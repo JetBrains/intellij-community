@@ -537,7 +537,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
   public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> elements) {
-    addAll(collection, elements.iterator());
+    addAllNotNull(collection, elements.iterator());
   }
 
   /**

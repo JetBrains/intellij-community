@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,8 +26,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
@@ -65,14 +67,24 @@ public class GithubUtil {
    * @deprecated TODO Use background progress
    */
   @Deprecated
-  public static <T> T accessToGithubWithModalProgress(final Project project, final Computable<T> computable) {
+  public static <T> T accessToGithubWithModalProgress(@NotNull final Project project,
+                                                      @NotNull final ThrowableComputable<T, IOException> computable) throws IOException {
     final Ref<T> result = new Ref<T>();
+    final Ref<IOException> exception = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
-        result.set(computable.compute());
+        try {
+          result.set(computable.compute());
+        }
+        catch (IOException e) {
+          exception.set(e);
+        }
       }
     });
-    return result.get();
+    if (exception.isNull()) {
+      return result.get();
+    }
+    throw exception.get();
   }
 
   /**
@@ -87,21 +99,16 @@ public class GithubUtil {
     });
   }
 
-  private static boolean testConnection(final String url, final String login, final String password) {
+  private static boolean testConnection(final String url, final String login, final String password) throws IOException {
     GithubUser user = retrieveCurrentUserInfo(url, login, password);
     return user != null;
   }
 
   @Nullable
-  private static GithubUser retrieveCurrentUserInfo(@NotNull String url, @NotNull String login, @NotNull String password) {
-    try {
-      JsonElement result = GithubApiUtil.getRequest(url, login, password, "/user");
-      return parseUserInfo(result);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      return null;
-    }
+  private static GithubUser retrieveCurrentUserInfo(@NotNull String url, @NotNull String login,
+                                                    @NotNull String password) throws IOException {
+    JsonElement result = GithubApiUtil.getRequest(url, login, password, "/user");
+    return parseUserInfo(result);
   }
 
   @Nullable
@@ -131,9 +138,8 @@ public class GithubUtil {
   }
 
   @NotNull
-  private static List<RepositoryInfo> getAvailableRepos(@NotNull String url, @NotNull String login, @NotNull String password,
-                                                       boolean ownOnly) {
-    final String request = (ownOnly ? "/user/repos" : "/user/watched");
+  private static List<RepositoryInfo> getAvailableRepos(@NotNull String url, @NotNull String login, @NotNull String password) {
+    final String request = "/user/repos";
     try {
       JsonElement result = GithubApiUtil.getRequest(url, login, password, request);
       if (result == null) {
@@ -192,7 +198,7 @@ public class GithubUtil {
     }
   }
 
-  public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) {
+  public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) throws IOException {
     GithubUser user = retrieveCurrentUserInfo(url, login, password);
     if (user == null) {
       return false;
@@ -200,18 +206,30 @@ public class GithubUtil {
     return user.getPlan().isPrivateRepoAllowed();
   }
 
+  /**
+   * Checks if user has set up correct user credentials for GitHub access in the settings.
+   * @return true if we could successfully login with these credentials, false if authentication failed or in the case of some other error.
+   */
   public static boolean checkCredentials(final Project project) {
     final GithubSettings settings = GithubSettings.getInstance();
-    return checkCredentials(project, settings.getHost(), settings.getLogin(), settings.getPassword());
+    try {
+      return checkCredentials(project, settings.getHost(), settings.getLogin(), settings.getPassword());
+    }
+    catch (IOException e) {
+      // this method is a quick-check if we've got valid user setup.
+      // if an exception happens, we'll show the reason in the login dialog that will be shown right after checkCredentials failure.
+      LOG.info(e);
+      return false;
+    }
   }
 
-  public static boolean checkCredentials(final Project project, final String url, final String login, final String password) {
+  public static boolean checkCredentials(Project project, final String url, final String login, final String password) throws IOException {
     if (StringUtil.isEmptyOrSpaces(url) || StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)){
       return false;
     }
-    return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+    return accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
       @Override
-      public Boolean compute() {
+      public Boolean compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
         return testConnection(url, login, password);
       }
@@ -220,11 +238,12 @@ public class GithubUtil {
 
   /**
    * Shows GitHub login settings if credentials are wrong or empty and return the list of all the watched repos by user
+   *
    * @param project
    * @return
    */
   @Nullable
-  public static List<RepositoryInfo> getAvailableRepos(final Project project, final boolean ownOnly) {
+  public static List<RepositoryInfo> getAvailableRepos(final Project project) throws IOException {
     while (!checkCredentials(project)){
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
@@ -235,11 +254,11 @@ public class GithubUtil {
     // Otherwise our credentials are valid and they are successfully stored in settings
     final GithubSettings settings = GithubSettings.getInstance();
     final String validPassword = settings.getPassword();
-    return accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
+    return accessToGithubWithModalProgress(project, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
       @Override
-      public List<RepositoryInfo> compute() {
+      public List<RepositoryInfo> compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-        return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
+        return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword);
       }
     });
   }
@@ -250,12 +269,12 @@ public class GithubUtil {
    * @return
    */
   @Nullable
-  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) {
+  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) throws IOException {
     final GithubSettings settings = GithubSettings.getInstance();
     final String password = settings.getPassword();
-    final Boolean validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+    final Boolean validCredentials = accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
       @Override
-      public Boolean compute() {
+      public Boolean compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
         return testConnection(settings.getHost(), settings.getLogin(), password);
       }
@@ -272,7 +291,7 @@ public class GithubUtil {
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     final String validPassword = settings.getPassword();
-    return accessToGithubWithModalProgress(project, new Computable<RepositoryInfo>() {
+    return accessToGithubWithModalProgress(project, new ThrowableComputable<RepositoryInfo, IOException>() {
       @Nullable
       @Override
       public RepositoryInfo compute() {
@@ -347,7 +366,7 @@ public class GithubUtil {
   }
 
   public static boolean isGithubUrl(@NotNull String url) {
-    return url.contains("github.com");
+    return url.contains(GithubApiUtil.getGitHost());
   }
 
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
@@ -415,4 +434,14 @@ public class GithubUtil {
     }
     return url;
   }
+
+  @NotNull
+  public static String getErrorTextFromException(@NotNull IOException e) {
+    return e.getMessage();
+  }
+
+  public static void notifyError(@NotNull Project project, @NotNull String title, @NotNull String message) {
+    new Notification(GITHUB_NOTIFICATION_GROUP, title, message, NotificationType.ERROR).notify(project);
+  }
+
 }

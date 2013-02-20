@@ -39,7 +39,14 @@ public class JavaFxTagNameReference extends TagNameReference{
       if (qualifiedName != null) {
         final String shortName = StringUtil.getShortName(qualifiedName);
         final XmlTag tagElement = getTagElement();
-        return tagElement != null ? tagElement.setName(shortName) : getElement();
+        if (tagElement != null) {
+          final String oldTagName = tagElement.getName();
+          if (oldTagName.contains(".")) {
+            return tagElement.setName(qualifiedName);
+          }
+          return tagElement.setName(shortName);
+        }
+        return getElement();
       }
     }
     return super.bindToElement(element);

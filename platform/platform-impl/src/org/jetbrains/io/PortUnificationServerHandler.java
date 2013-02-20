@@ -109,4 +109,9 @@ final class PortUnificationServerHandler extends FrameDecoder {
     pipeline.remove(this);
     return buffer.readBytes(buffer.readableBytes());
   }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
+    WebServer.LOG.error(event.getCause());
+  }
 }

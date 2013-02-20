@@ -51,13 +51,8 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     final ComponentConfig config = myProject.getConfig(component.getClass());
     assert config != null : "Couldn't find old storage for " + component.getClass().getName();
 
-    String macro = StoragePathMacros.getMacroName(StoragePathMacros.PROJECT_FILE);
-
     final boolean workspace = isWorkspace(config.options);
-
-    if (workspace) {
-      macro = StoragePathMacros.getMacroName(StoragePathMacros.WORKSPACE_FILE);
-    }
+    String macro = StoragePathMacros.getMacroName(workspace ? StoragePathMacros.WORKSPACE_FILE : StoragePathMacros.PROJECT_FILE);
 
     String name = "$" + macro + "$";
 

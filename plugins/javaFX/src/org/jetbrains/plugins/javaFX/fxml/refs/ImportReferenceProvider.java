@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -32,15 +34,20 @@ class ImportReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    final PsiElement parent = element.getParent();
-    if (parent instanceof XmlProcessingInstruction) {
-      final String instructionTarget = JavaFxPsiUtil.getInstructionTarget("import", (XmlProcessingInstruction)parent);
-      if (instructionTarget != null && instructionTarget.equals(element.getText())) {
-        final PsiReference[] references = FxmlReferencesContributor.CLASS_REFERENCE_PROVIDER.getReferencesByString(instructionTarget, element, 0);
-        if (instructionTarget.endsWith(".*")) {
-          return ArrayUtil.remove(references, references.length - 1);
-        } else {
-          return references;
+    if (element instanceof XmlProcessingInstruction) {
+      final ASTNode importNode = element.getNode().findChildByType(XmlTokenType.XML_TAG_CHARACTERS);
+      if (importNode != null) {
+        final PsiElement importInstr = importNode.getPsi();
+        final String instructionTarget = JavaFxPsiUtil.getInstructionTarget("import", (XmlProcessingInstruction)element);
+        if (instructionTarget != null && instructionTarget.equals(importInstr.getText())) {
+          final PsiReference[] references =
+            FxmlReferencesContributor.CLASS_REFERENCE_PROVIDER.getReferencesByString(instructionTarget, importInstr, 0);
+          if (instructionTarget.endsWith(".*")) {
+            return ArrayUtil.remove(references, references.length - 1);
+          }
+          else {
+            return references;
+          }
         }
       }
     }

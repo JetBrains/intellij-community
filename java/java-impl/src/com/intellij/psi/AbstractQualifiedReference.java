@@ -68,7 +68,8 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @Override
   @NotNull
   public final ResolveResult[] multiResolve(final boolean incompleteCode) {
-    return ResolveCache.getInstance(getProject()).resolveWithCaching(this, MY_RESOLVER, true, false);
+    PsiFile file = getContainingFile();
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MY_RESOLVER, true, false,file);
   }
 
   @Override

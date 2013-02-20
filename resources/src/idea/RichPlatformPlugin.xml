@@ -302,6 +302,7 @@
     <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
     -->
     <projectTemplatesFactory implementation="com.intellij.platform.templates.PlainModuleTemplatesFactory"/>
+    <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
 
     <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
 

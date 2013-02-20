@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -108,37 +109,38 @@ public class GithubShareAction extends DumbAwareAction {
     }
 
     BasicAction.saveAll();
-    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, true);
-    if (availableRepos == null){
-      return;
-    }
-    final HashSet<String> names = new HashSet<String>();
-    for (RepositoryInfo info : availableRepos) {
-      names.add(info.getName());
-    }
-
-    final GithubSettings settings = GithubSettings.getInstance();
-    final String password = settings.getPassword();
-    final Boolean privateRepoAllowed = GithubUtil.accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-        return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), password);
-      }
-    });
-    if (privateRepoAllowed == null) {
-      return;
-    }
-    final GithubShareDialog shareDialog = new GithubShareDialog(project, names, privateRepoAllowed);
-    shareDialog.show();
-    if (!shareDialog.isOK()) {
-      return;
-    }
-
-    final boolean isPrivate = shareDialog.isPrivate();
-    final String name = shareDialog.getRepositoryName();
-    final String description = shareDialog.getDescription();
     try {
+      final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project);
+      if (availableRepos == null){
+        return;
+      }
+      final HashSet<String> names = new HashSet<String>();
+      for (RepositoryInfo info : availableRepos) {
+        names.add(info.getName());
+      }
+
+      final GithubSettings settings = GithubSettings.getInstance();
+      final String password = settings.getPassword();
+      final Boolean privateRepoAllowed =
+        GithubUtil.accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
+        @Override
+        public Boolean compute() throws IOException {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          return GithubUtil.isPrivateRepoAllowed(settings.getHost(), settings.getLogin(), password);
+        }
+      });
+      if (privateRepoAllowed == null) {
+        return;
+      }
+      final GithubShareDialog shareDialog = new GithubShareDialog(project, names, privateRepoAllowed);
+      shareDialog.show();
+      if (!shareDialog.isOK()) {
+        return;
+      }
+
+      final boolean isPrivate = shareDialog.isPrivate();
+      final String name = shareDialog.getRepositoryName();
+      final String description = shareDialog.getDescription();
       LOG.info("Creating GitHub repository");
       boolean repositoryCreated =
         createGithubRepository(settings.getHost(), settings.getLogin(), settings.getPassword(), name, description, isPrivate);
@@ -149,13 +151,11 @@ public class GithubShareAction extends DumbAwareAction {
         Messages.showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository");
         return;
       }
+      bindToGithub(project, root, gitDetected, settings.getLogin(), name);
     }
     catch (final Exception e1) {
       Messages.showErrorDialog(e1.getMessage(), "Failed to create new GitHub repository");
-      return;
     }
-
-    bindToGithub(project, root, gitDetected, settings.getLogin(), name);
   }
 
   private static boolean createGithubRepository(@NotNull String host, @NotNull String login, @NotNull String password, @NotNull String name,
@@ -218,7 +218,7 @@ public class GithubShareAction extends DumbAwareAction {
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     addRemoteHandler.setNoSSH(true);
     addRemoteHandler.setSilent(true);
-    final String remoteUrl = "https://github.com/" + login + "/" + name + ".git";
+    final String remoteUrl = GithubApiUtil.getGitHost() + "/" + login + "/" + name + ".git";
     addRemoteHandler.addParameters("add", "origin", remoteUrl);
     try {
       addRemoteHandler.run();

@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -26,11 +27,13 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createInfoMessage;
 
 /**
  * @author nik
@@ -74,8 +77,15 @@ public class XVariablesView extends XDebugViewBase {
     }
     else {
       tree.setSourcePosition(null);
-      String message = !mySession.isStopped() && mySession.isPaused() ? "Frame is not available" : mySession.getDebugProcess().getCurrentStateMessage();
-      tree.setRoot(MessageTreeNode.createInfoMessage(tree, null, message), true);
+      XDebugProcess debugProcess = mySession.getDebugProcess();
+      XDebuggerTreeNode node;
+      if (!mySession.isStopped() && mySession.isPaused()) {
+        node = createInfoMessage(tree, "Frame is not available");
+      }
+      else {
+        node = createInfoMessage(tree, debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
+      }
+      tree.setRoot(node, true);
     }
   }
 

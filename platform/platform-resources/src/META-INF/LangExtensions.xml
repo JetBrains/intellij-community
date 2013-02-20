@@ -580,6 +580,8 @@
     <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
     <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
     <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
+    <editorCustomization implementation="com.intellij.ui.RightMarginEditorCustomization"/>
+
     <!-- Colors & Fonts-->
     <editorOptionsProvider instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors"/>

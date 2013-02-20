@@ -355,7 +355,8 @@ public class HtmlUtil {
           public String getName() {
             return JSFC;
           }
-        }
+        },
+        XmlAttributeDescriptor.class
       );
     }
     return descriptors;

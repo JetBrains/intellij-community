@@ -20,6 +20,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -28,6 +29,7 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,22 +79,23 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpMethod doREST(@NotNull String host, @Nullable String login, @Nullable String password, @NotNull String path,
-                                   @Nullable String requestBody, final boolean post) throws IOException {
-    final HttpClient client = getHttpClient(login, password);
-    final String uri = getApiUrl(host) + path;
-    final HttpMethod method;
-    if (post) {
-      method = new PostMethod(uri);
-      if (requestBody != null) {
-        ((PostMethod)method).setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
-      }
-    }
-    else {
-      method = new GetMethod(uri);
-    }
-
-    client.executeMethod(method);
-    return method;
+                                   @Nullable final String requestBody, final boolean post) throws IOException {
+    HttpClient client = getHttpClient(login, password);
+    String uri = getApiUrl(host) + path;
+    return GithubSslSupport.getInstance().executeSelfSignedCertificateAwareRequest(client, uri,
+     new ThrowableConvertor<String, HttpMethod, IOException>() {
+       @Override
+       public HttpMethod convert(String uri) throws IOException {
+         if (post) {
+           PostMethod method = new PostMethod(uri);
+           if (requestBody != null) {
+             method.setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+           }
+           return method;
+         }
+         return new GetMethod(uri);
+       }
+     });
   }
 
   @NotNull
@@ -114,6 +117,21 @@ public class GithubApiUtil {
   @NotNull
   private static String getApiUrl(@NotNull String urlFromSettings) {
     return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
+  }
+
+  @NotNull
+  public static String getApiUrl() {
+    return getApiUrl(GithubSettings.getInstance().getHost());
+  }
+
+  /**
+   * Returns the "host" part of Git URLs.
+   * E.g.: https://github.com
+   * Note: there is no trailing slash in the returned url.
+   */
+  @NotNull
+  public static String getGitHost() {
+    return "https://" + removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
   }
 
   /*
@@ -151,8 +169,10 @@ public class GithubApiUtil {
   @NotNull
   private static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
-    client.getParams().setConnectionManagerTimeout(3000);
-    client.getParams().setSoTimeout(CONNECTION_TIMEOUT);
+    HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
+    params.setConnectionTimeout(CONNECTION_TIMEOUT); //set connection timeout (how long it takes to connect to remote host)
+    params.setSoTimeout(CONNECTION_TIMEOUT); //set socket timeout (how long it takes to retrieve data from remote host)
+
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
@@ -170,6 +190,7 @@ public class GithubApiUtil {
     }
     return client;
   }
+
 
   @NotNull
   private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {

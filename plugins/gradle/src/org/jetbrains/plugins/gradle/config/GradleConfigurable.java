@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
@@ -85,7 +84,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   @NotNull private TextFieldWithBrowseButton myLinkedGradleProjectPathField;
   @NotNull private TextFieldWithBrowseButton myGradleHomePathField;
   @NotNull private TextFieldWithBrowseButton myServiceDirectoryPathField;
-  @NotNull private JBCheckBox                myPreferWrapperWheneverPossibleCheckBox;
   @NotNull private JBRadioButton             myUseWrapperButton;
   @NotNull private JBRadioButton             myUseLocalDistributionButton;
 
@@ -155,12 +153,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   }
 
   public boolean isPreferLocalInstallationToWrapper() {
-    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
-      return !myPreferWrapperWheneverPossibleCheckBox.isSelected();
-    }
-    else {
-      return myUseLocalDistributionButton.isSelected();
-    }
+    return myUseLocalDistributionButton.isSelected();
   }
 
   public void setLinkedGradleProjectPath(@NotNull String path) {
@@ -185,14 +178,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     assert myComponent != null;
 
     GridBag pathLabelConstraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(0);
-    GridBag pathConstraints = new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST)
-      .insets(myPreferWrapperWheneverPossibleCheckBox.getInsets());
+    GridBag pathConstraints = new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST);
     myComponent.add(myLinkedProjectLabel, pathLabelConstraints);
     myComponent.add(myLinkedGradleProjectPathField, pathConstraints);
 
-    // Define 'prefer to use gradle wrapper' as a general recommendation. Use a checkbox for that.
     GridBag constraints = new GridBag().coverLine().anchor(GridBagConstraints.WEST);
-    myComponent.add(myPreferWrapperWheneverPossibleCheckBox, constraints);
     
     // Provide radio buttons if gradle wrapper can be used for particular project.
     myComponent.add(myUseWrapperButton, constraints);
@@ -294,21 +284,14 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       myUseLocalDistributionButton.setSelected(true);
     }
     else {
-      myUseWrapperButton.setEnabled(true);
       myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
-      if (myProject == null || myHelper.getSettings(myProject).isPreferLocalInstallationToWrapper()) {
-        myUseLocalDistributionButton.setSelected(true);
-      }
-      else {
-        myUseWrapperButton.setSelected(true);
-        myGradleHomePathField.setEnabled(false);
-      }
+      myUseWrapperButton.setEnabled(true);
+      myUseWrapperButton.setSelected(true);
+      myGradleHomePathField.setEnabled(false);
     }
   }
 
   private void initWrapperVsLocalControls() {
-    myPreferWrapperWheneverPossibleCheckBox = new JBCheckBox(GradleBundle.message("gradle.config.text.prefer.wrapper.when.possible"), true);
-
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -406,12 +389,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     }
     
     boolean preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
-    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
-      if (myPreferWrapperWheneverPossibleCheckBox.isSelected() == preferLocalToWrapper) {
-        return true;
-      }
-    }
-    else if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
+    if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
       return true;
     }
 
@@ -441,7 +419,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return;
     }
 
-    GradleSettings settings = GradleSettings.getInstance(myProject);
+    GradleSettings settings = myHelper.getSettings(myProject);
 
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
     final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
@@ -449,18 +427,12 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
                                                settings.getServiceDirectoryPath(),
                                                myServiceDirectoryPathField.getText());
     
-    boolean preferLocalToWrapper;
-    if (myPreferWrapperWheneverPossibleCheckBox.isVisible()) {
-      preferLocalToWrapper = !myPreferWrapperWheneverPossibleCheckBox.isSelected();
-    }
-    else {
-      preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
-    }
-    GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
+    boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
+    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
 
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    Project defaultProject = myHelper.getDefaultProject();
     if (myProject != defaultProject) {
-      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+      myHelper.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
     }
 
     if (isValidGradleHome(gradleHomePath)) {
@@ -476,7 +448,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
       }
     }
-    else {
+    else if (preferLocalToWrapper) {
       if (StringUtil.isEmpty(gradleHomePath)) {
         myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
       }
@@ -541,8 +513,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       myLinkedGradleProjectPathField.setText(linkedProjectPath);
     }
     
-    myPreferWrapperWheneverPossibleCheckBox.setVisible(!myAlwaysShowLinkedProjectControls && myProject.isDefault());
-    myPreferWrapperWheneverPossibleCheckBox.setSelected(!settings.isPreferLocalInstallationToWrapper());
     myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
     myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
     if (myAlwaysShowLinkedProjectControls && linkedProjectPath == null) {
@@ -553,13 +523,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       if (myHelper.isGradleWrapperDefined(linkedProjectPath)) {
         myUseWrapperButton.setEnabled(true);
         myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
-        if (settings.isPreferLocalInstallationToWrapper()) {
-          myUseLocalDistributionButton.setSelected(true);
-          myGradleHomePathField.setEnabled(true);
+        if (myProject.isDefault() || !settings.isPreferLocalInstallationToWrapper()) {
+          myUseWrapperButton.setSelected(true);
+          myGradleHomePathField.setEnabled(false);
         }
         else {
-          myUseWrapperButton.setSelected(true);
-          myGradleHomePathField.setEnabled(myProject.isDefault());
+          myUseLocalDistributionButton.setSelected(true);
+          myGradleHomePathField.setEnabled(true);
         }
       }
       else {
@@ -631,7 +601,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   public void disposeUIResources() {
     myComponent = null;
     myGradleHomePathField = null;
-    myPreferWrapperWheneverPossibleCheckBox = null;
     myUseWrapperButton = null;
     myUseLocalDistributionButton = null;
   }
@@ -697,7 +666,18 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     File getGradleHome(@Nullable Project project);
 
     @NotNull
+    Project getDefaultProject();
+    
+    @NotNull
     GradleSettings getSettings(@NotNull Project project);
+
+    void applySettings(@Nullable String linkedProjectPath,
+                       @Nullable String gradleHomePath,
+                       boolean preferLocalInstallationToWrapper,
+                       @Nullable String serviceDirectoryPath,
+                       @NotNull Project project);
+    
+    void applyPreferLocalInstallationToWrapper(boolean preferLocalToWrapper, @NotNull Project project);
 
     boolean isGradleWrapperDefined(@Nullable String linkedProjectPath);
     
@@ -722,11 +702,32 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     public File getGradleHome(@Nullable Project project) {
       return myInstallationManager.getGradleHome(project);
     }
-
+    
+    @NotNull
+    @Override
+    public Project getDefaultProject() {
+      return ProjectManager.getInstance().getDefaultProject();
+    }
+    
     @NotNull
     @Override
     public GradleSettings getSettings(@NotNull Project project) {
       return GradleSettings.getInstance(project);
+    }
+
+    @Override
+    public void applySettings(@Nullable String linkedProjectPath,
+                              @Nullable String gradleHomePath,
+                              boolean preferLocalInstallationToWrapper,
+                              @Nullable String serviceDirectoryPath,
+                              @NotNull Project project)
+    {
+      GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, serviceDirectoryPath, project); 
+    }
+
+    @Override
+    public void applyPreferLocalInstallationToWrapper(boolean preferLocalToWrapper, @NotNull Project project) {
+      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, project);
     }
 
     @Override

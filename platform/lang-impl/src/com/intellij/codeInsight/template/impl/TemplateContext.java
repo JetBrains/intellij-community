@@ -31,24 +31,24 @@ import java.util.List;
 import java.util.Map;
 
 public class TemplateContext {
-  private final Map<String, Boolean> myAdditionalContexts = ContainerUtil.newLinkedHashMap();
+  private final Map<String, Boolean> myContextStates = ContainerUtil.newLinkedHashMap();
 
   public TemplateContext createCopy()  {
     TemplateContext cloneResult = new TemplateContext();
-    cloneResult.myAdditionalContexts.putAll(myAdditionalContexts);
+    cloneResult.myContextStates.putAll(myContextStates);
     return cloneResult;
   }
 
   Map<TemplateContextType, Boolean> getDifference(@Nullable TemplateContext defaultContext) {
-    Map<TemplateContextType, Boolean> result = ContainerUtil.newHashMap();
-    synchronized (myAdditionalContexts) {
+    Map<TemplateContextType, Boolean> result = ContainerUtil.newLinkedHashMap();
+    synchronized (myContextStates) {
       //noinspection NestedSynchronizedStatement
-      synchronized (defaultContext == null ? myAdditionalContexts : defaultContext.myAdditionalContexts) {
+      synchronized (defaultContext == null ? myContextStates : defaultContext.myContextStates) {
         for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-          String id = contextType.getContextId();
-          Boolean mine = myAdditionalContexts.get(id);
-          if (mine != null && differsFromDefault(defaultContext, id, mine)) {
-            result.put(contextType, mine);
+          String context = contextType.getContextId();
+          Boolean myStateInContext = myContextStates.get(context);
+          if (myStateInContext != null && differsFromDefault(defaultContext, context, myStateInContext)) {
+            result.put(contextType, myStateInContext);
           }
         }
       }
@@ -56,12 +56,12 @@ public class TemplateContext {
     return result;
   }
 
-  private static boolean differsFromDefault(@Nullable TemplateContext defaultContext, String id, boolean mine) {
-    Boolean defValue = defaultContext == null ? null : defaultContext.myAdditionalContexts.get(id);
-    if (defValue == null) {
-      return mine;
+  private static boolean differsFromDefault(@Nullable TemplateContext defaultContext, String context, boolean myStateInContext) {
+    Boolean defaultStateInContext = defaultContext == null ? null : defaultContext.myContextStates.get(context);
+    if (defaultStateInContext == null) {
+      return true;
     }
-    return mine != defValue;
+    return myStateInContext != defaultStateInContext;
   }
 
   public boolean isEnabled(TemplateContextType contextType) {
@@ -77,22 +77,22 @@ public class TemplateContext {
   }
 
   private Boolean isEnabledBare(TemplateContextType contextType) {
-    synchronized (myAdditionalContexts) {
-      return myAdditionalContexts.get(contextType.getContextId());
+    synchronized (myContextStates) {
+      return myContextStates.get(contextType.getContextId());
     }
   }
 
   public void setEnabled(TemplateContextType contextType, boolean value) {
-    synchronized (myAdditionalContexts) {
-      myAdditionalContexts.put(contextType.getContextId(), value);
+    synchronized (myContextStates) {
+      myContextStates.put(contextType.getContextId(), value);
     }
   }
 
   void setDefaultContext(@NotNull TemplateContext defContext) {
-    HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myAdditionalContexts);
-    myAdditionalContexts.clear();
-    myAdditionalContexts.putAll(defContext.myAdditionalContexts);
-    myAdditionalContexts.putAll(copy);
+    HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myContextStates);
+    myContextStates.clear();
+    myContextStates.putAll(defContext.myContextStates);
+    myContextStates.putAll(copy);
   }
 
   void readTemplateContext(Element element) throws InvalidDataException {
@@ -103,7 +103,7 @@ public class TemplateContext {
         String name = option.getAttributeValue("name");
         String value = option.getAttributeValue("value");
         if (name != null && value != null) {
-          myAdditionalContexts.put(name, Boolean.parseBoolean(value));
+          myContextStates.put(name, Boolean.parseBoolean(value));
         }
       }
     }

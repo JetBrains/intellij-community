@@ -45,7 +45,8 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
 
   @Override
   public PsiManagerEx getManager() {
-    if (getTreeParent() != null) return getTreeParent().getManager();
+    CompositeElement treeParent = getTreeParent();
+    if (treeParent != null) return treeParent.getManager();
     return (PsiManagerEx)getPsi().getManager(); //TODO: cache?
   }
 

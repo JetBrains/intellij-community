@@ -1,7 +1,6 @@
 package com.intellij.tasks.timeTracking;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.GuiUtils;
@@ -17,7 +16,7 @@ import java.awt.event.ActionListener;
  * User: Evgeny.Zakrevsky
  * Date: 11/19/12
  */
-public class TimeTrackingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, Configurable.NoScroll {
+public class TimeTrackingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JCheckBox myEnableTimeTrackingCheckBox;
   private JTextField myTimeTrackingSuspendDelay;
   private JPanel myTimeTrackingSettings;

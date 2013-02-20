@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.xml.IDTDElementType;
-import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -67,9 +66,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     final IElementType elementType = getElementType();
 
     if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||
-        elementType == XmlTokenType.XML_CHAR_ENTITY_REF ||
-        (elementType == XmlTokenType.XML_TAG_CHARACTERS && getParent() instanceof XmlProcessingInstruction)
-      ) {
+        elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
       return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlToken.class);
     } else if (elementType == XmlTokenType.XML_NAME && getParent() instanceof PsiErrorElement) {
       final PsiElement element = getPrevSibling();

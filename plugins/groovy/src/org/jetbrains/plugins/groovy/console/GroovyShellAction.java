@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -36,6 +37,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -52,6 +54,7 @@ import java.util.*;
  * @author peter
  */
 public class GroovyShellAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.console.GroovyShellAction");
 
   private static final String GROOVY_SHELL_LAST_MODULE = "Groovy.Shell.LastModule";
   public static final Key<Boolean> GROOVY_SHELL_FILE = Key.create("GROOVY_SHELL_FILE");
@@ -197,7 +200,8 @@ public class GroovyShellAction extends DumbAwareAction {
       runner.initAndRun();
     }
     catch (ExecutionException e1) {
-      throw new RuntimeException(e1);
+      LOG.info(e1);
+      Messages.showErrorDialog(module.getProject(), e1.getMessage(), "Cannot run Groovy Shell");
     }
   }
 

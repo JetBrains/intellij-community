@@ -26,36 +26,25 @@ import java.util.Collection;
 
 public class HgCreateTagAction extends HgAbstractGlobalAction {
 
-  protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
-    return new HgGlobalCommandBuilder() {
-      public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        HgTagDialog dialog = new HgTagDialog(project);
-        dialog.setRoots(repos);
-        dialog.show();
-        if (dialog.isOK()) {
-          return buildCommand(dialog, project);
-        }
-        return null;
-      }
-    };
-  }
-
-  private static HgGlobalCommand buildCommand(final HgTagDialog dialog, final Project project) {
-    return new HgGlobalCommand() {
-      public VirtualFile getRepo() {
-        return dialog.getRepository();
-      }
-
-      public void execute() throws HgCommandException {
+  protected void execute(final Project project, Collection<VirtualFile> repos) {
+    final HgTagDialog dialog = new HgTagDialog(project);
+    dialog.setRoots(repos);
+    dialog.show();
+    if (dialog.isOK()) {
+      try {
         new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-              new HgCommandResultNotifier(project).notifyError(result, "Creation failed", "Tag creation [" + dialog.getTagName() + "] failed");
+              new HgCommandResultNotifier(project)
+                .notifyError(result, "Creation failed", "Tag creation [" + dialog.getTagName() + "] failed");
             }
           }
         });
       }
-    };
+      catch (HgCommandException e) {
+        handleException(project, e);
+      }
+    }
   }
 }
