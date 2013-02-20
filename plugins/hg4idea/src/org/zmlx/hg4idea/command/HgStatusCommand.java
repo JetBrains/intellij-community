@@ -187,7 +187,7 @@ public class HgStatusCommand {
     return changes;
   }
 
-  private void setOnlyUntrackedTrue() {
+  public void setOnlyUntrackedTrue() {
     includeAdded = false;
     includeModified = false;
     includeRemoved = false;
