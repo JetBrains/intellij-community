@@ -91,7 +91,7 @@ public class LauncherGenerator {
     bmpRes.setBytes(bitmapData);
   }
 
-  public void injectIcon(String name, final InputStream iconStream) throws IOException {
+  public void injectIcon(int id, final InputStream iconStream) throws IOException {
     File f = File.createTempFile("launcher", "ico");
     Files.copy(new InputSupplier<InputStream>() {
       @Override
@@ -100,6 +100,6 @@ public class LauncherGenerator {
       }
     }, f);
     IconResourceInjector iconInjector = new IconResourceInjector();
-    iconInjector.injectIcon(f, myRoot, "IRD101");
+    iconInjector.injectIcon(f, myRoot, "IRD" + id);
   }
 }

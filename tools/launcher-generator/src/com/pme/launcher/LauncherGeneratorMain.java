@@ -132,7 +132,7 @@ public class LauncherGeneratorMain {
       }
 
       generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
-      generator.injectIcon(icoUrl, iconStream);
+      generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
 
       generator.generate();
     } catch (IOException e) {

@@ -136,7 +136,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="small.ico" />
     <None Include="splash.bmp" />
     <None Include="WinLauncher.ico" />
   </ItemGroup>

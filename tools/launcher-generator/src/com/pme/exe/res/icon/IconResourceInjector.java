@@ -33,6 +33,25 @@ public class IconResourceInjector {
     IconFile iconFile = new IconFile(file);
     iconFile.read();
 
+    //updateGroupIcon(root, iconId, iconFile);
+
+    DirectoryEntry iconsDir = root.findSubDir("IRD3");
+    Level iconFileLevel = (Level) iconFile.getMember("Level");
+    ArrayList icons = iconFileLevel.getMembers();
+    if (icons.size() == iconsDir.getSubDirs().size()) {
+      for (int i = 0; i < icons.size(); i++) {
+        DirectoryEntry subDirIcon = iconsDir.findSubDir("IRD" + (i+1));
+        IconDirectory iconDirectory = (IconDirectory) iconFileLevel.getMembers().get(i);
+        RawResource rawResource = subDirIcon.getRawResource(0);
+        rawResource.setBytes(iconDirectory.getRawBytes());
+      }
+    }
+    else {
+      throw new IOException("Count of icons in template file doesn't match the count of icons in provided icon file");
+    }
+  }
+
+  private void updateGroupIcon(DirectoryEntry root, String iconId, IconFile iconFile) throws IOException {
     DirectoryEntry subDirGroupIcon = root.findSubDir("IRD14").findSubDir(iconId);
     RawResource groupIcon = subDirGroupIcon.getRawResource(0);
 
@@ -51,18 +70,6 @@ public class IconResourceInjector {
     DataOutputStream stream = new DataOutputStream(bytesStream);
     groupIconResource.write(stream);
     groupIcon.getBytes().setBytes(bytesStream.toByteArray());
-
-    DirectoryEntry iconsDir = root.findSubDir("IRD3");
-    DirectoryEntry subDirIcon = iconsDir.findSubDir("IRD1");
-    RawResource rawResource = subDirIcon.getRawResource(0);
-    Level iconFileLevel = (Level) iconFile.getMember("Level");
-    IconDirectory iconDirectory = (IconDirectory) iconFileLevel.getMembers().get(0);
-    rawResource.setBytes(iconDirectory.getRawBytes());
-
-    ArrayList icons = iconFileLevel.getMembers();
-    for (int i = 1; i < icons.size(); i++) {
-      insertIcon(iconsDir, (IconDirectory) icons.get(i), i);
-    }
   }
 
   private void insertIcon(DirectoryEntry iconsDir, IconDirectory iconDirectory, int index) {
