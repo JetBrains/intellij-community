@@ -17,13 +17,16 @@ package com.intellij.ide.util.importProject;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
  */
 public class ProjectDescriptor {
-  private final List<ModuleDescriptor> myModules = new ArrayList<ModuleDescriptor>();
+  private List<ModuleDescriptor> myModules = Collections.emptyList();
   private List<LibraryDescriptor> myLibraries = Collections.emptyList();
   private Set<LibraryDescriptor> myLibrariesSet = Collections.emptySet();
 
@@ -36,12 +39,7 @@ public class ProjectDescriptor {
   }
 
   public void setModules(@NotNull List<ModuleDescriptor> modules) {
-    myModules.clear();
-    myModules.addAll(modules);
-  }
-
-  public void appendModules(@NotNull List<ModuleDescriptor> modules) {
-    myModules.addAll(modules);
+    myModules = modules;
   }
 
   public void setLibraries(List<LibraryDescriptor> libraries) {
