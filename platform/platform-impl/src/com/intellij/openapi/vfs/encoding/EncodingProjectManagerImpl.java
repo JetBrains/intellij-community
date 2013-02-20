@@ -217,7 +217,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
     myModificationCount++;
     if (virtualFileOrDir != null) {
-      virtualFileOrDir.setCharset(charset);
+      virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
     }
     reloadAllFilesUnder(virtualFileOrDir);
   }
@@ -322,7 +322,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
             final Charset newCharset = newMap.get(changedFile);
             Charset oldCharset = oldMap.get(changedFile);
             if (!Comparing.equal(newCharset, oldCharset)) {
-              reloadDir(changedFile, reloadProcessor);
+              processSubFiles(changedFile, reloadProcessor);
             }
           }
         }
@@ -351,15 +351,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     };
   }
 
-  private void reloadDir(VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
+  private boolean processSubFiles(@Nullable("null means in the project") VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
     if (file == null) {
       for (VirtualFile virtualFile : ProjectRootManager.getInstance(myProject).getContentRoots()) {
-        reloadDir(virtualFile, processor);
+        if (!processSubFiles(virtualFile, processor)) return false;
       }
-      return;
+      return true;
     }
 
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    return VirtualFileVisitor.CONTINUE == VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull final VirtualFile file) {
         return processor.process(file);
@@ -416,7 +416,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     startReloadWithProgress(new Runnable() {
       @Override
       public void run() {
-        reloadDir(root, new Processor<VirtualFile>() {
+        processSubFiles(root, new Processor<VirtualFile>() {
           @Override
           public boolean process(final VirtualFile file) {
             if (!(file instanceof VirtualFileSystemEntry)) return true;

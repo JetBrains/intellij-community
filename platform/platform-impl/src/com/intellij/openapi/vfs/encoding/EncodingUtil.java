@@ -241,15 +241,11 @@ public class EncodingUtil {
     if (virtualFile.isDirectory()) {
       return "file is a directory";
     }
-    //String reason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
-    //if (reason == null) {
-    //  return null;
-    //}
     String failReason = null;
 
     Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
     if (charsetFromContent != null) {
-      failReason = "hard coded in text";
+      failReason = "Encoding is hard-coded in the text";
     }
     else {
       Pair<Charset, String> check = checkHardcodedCharsetFileType(virtualFile);
@@ -259,7 +255,7 @@ public class EncodingUtil {
     }
 
     if (failReason != null) {
-      return failReason;//MessageFormat.format(failReason, charsetFromContent == null ? "" : charsetFromContent.displayName());
+      return failReason;
     }
     return null;
   }
