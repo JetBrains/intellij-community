@@ -582,20 +582,20 @@ public abstract class Bin {
     }
   }
 
-  public static class ArrayOfBins extends Bin {
+  public static class ArrayOfBins<T extends Bin> extends Bin {
     private Bin[] myValues;
     private Bin.Value mySize;
     private Class myClass;
     private Bin.Value myCountHolder = null;
 
-    public ArrayOfBins(String name, Class cl, Bin.Value size) {
+    public ArrayOfBins(String name, Class<T> cl, Bin.Value size) {
       super(name);
       myClass = cl;
       mySize = size;
       init();
     }
 
-    public ArrayOfBins(String name, Class cl, int size) {
+    public ArrayOfBins(String name, Class<T> cl, int size) {
       this(name, cl, new DWord("size").setValue(size));
     }
 
@@ -654,8 +654,9 @@ public abstract class Bin {
       return myValues;
     }
 
-    public Bin get(int index) {
-      return myValues[index];
+    public T get(int index) {
+      //noinspection unchecked
+      return (T) myValues[index];
     }
 
     public long sizeInBytes() {

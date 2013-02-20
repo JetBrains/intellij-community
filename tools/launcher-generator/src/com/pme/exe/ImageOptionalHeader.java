@@ -54,7 +54,7 @@ public class ImageOptionalHeader extends Bin.Structure {
     addMember( new DWord( "SizeOfHeapCommit" ) );
     addMember( new DWord( "LoaderFlags" ) );
     DWord numberOfRvaAndSizes = (DWord)addMember( new DWord( "NumberOfRvaAndSizes") );
-    ArrayOfBins imageDataDirectories = new ArrayOfBins( "ImageDataDirectories", ImageDataDirectory.class, numberOfRvaAndSizes);
+    ArrayOfBins<ImageDataDirectory> imageDataDirectories = new ArrayOfBins<ImageDataDirectory>("ImageDataDirectories", ImageDataDirectory.class, numberOfRvaAndSizes);
     imageDataDirectories.setCountHolder( numberOfRvaAndSizes );
 
     addMember( imageDataDirectories );

@@ -27,14 +27,16 @@ import java.util.ArrayList;
  * Time: 11:22:12 PM
  */
 public class DirectoryEntry extends LevelEntry {
-  private ArrayOfBins myNamedEntries;
-  private ArrayOfBins myIdEntries;
+  private ArrayOfBins<EntryDescription> myNamedEntries;
+  private ArrayOfBins<EntryDescription> myIdEntries;
   private ResourceSectionReader mySection;
-  private ArrayList mySubDirs = new ArrayList();
-  private ArrayList myDatas = new ArrayList();
+  private ArrayList<DirectoryEntry> mySubDirs = new ArrayList<DirectoryEntry>();
+  private ArrayList<DataEntry> myDatas = new ArrayList<DataEntry>();
+  private long myIdOrName;
 
-  public DirectoryEntry( ResourceSectionReader section, EntryDescription entry ) {
+  public DirectoryEntry(ResourceSectionReader section, EntryDescription entry, long idOrName) {
     super( createName( entry ) );
+    myIdOrName = idOrName;
     addMember(new DWord("Characteristics"));
     addMember(new DWord("TimeDateStamp"));
     addMember(new Word("MajorVersion"));
@@ -49,6 +51,10 @@ public class DirectoryEntry extends LevelEntry {
     }
   }
 
+  public long getIdOrName() {
+    return myIdOrName;
+  }
+
   public ResourceSectionReader getSection(){
     return mySection;
   }
@@ -61,26 +67,22 @@ public class DirectoryEntry extends LevelEntry {
     return name;
   }
 
+  public ArrayList<DirectoryEntry> getSubDirs() {
+    return mySubDirs;
+  }
+
   public DirectoryEntry findSubDir( String name ){
-    for (int i = 0; i < mySubDirs.size(); i++) {
-      DirectoryEntry directoryEntry = (DirectoryEntry) mySubDirs.get(i);
-      if ( directoryEntry.getName().equals( name ) ){
+    for (DirectoryEntry directoryEntry : mySubDirs) {
+      if (directoryEntry.getName().equals(name)) {
         return directoryEntry;
       }
     }
     return null;
   }
 
-  public ArrayList getSubDirs(){
-    return mySubDirs;
-  }
-
-  public RawResource getRawResource( int index ){
-    DataEntry dataEntry = (DataEntry)myDatas.get(index);
+  public RawResource getRawResource(int index) {
+    DataEntry dataEntry = myDatas.get(index);
     return dataEntry.getRawResource();
-  }
-  public ArrayList getDatas() {
-    return myDatas;
   }
 
   public long sizeInBytes() {
@@ -106,10 +108,11 @@ public class DirectoryEntry extends LevelEntry {
     getLevel().addLevelEntry( dir );
     mySubDirs.add( dir );
   }
+
   public void addIdEntry( EntryDescription entry ){
     if ( myIdEntries == null ){
       Word numberOfNamedEntries = (Word) getMember("NumberOfIdEntries");
-      myIdEntries = new ArrayOfBins("Id entries", EntryDescription.class, 0);
+      myIdEntries = new ArrayOfBins<EntryDescription>("Id entries", EntryDescription.class, 0);
       addMember(myIdEntries);
       myIdEntries.setCountHolder(numberOfNamedEntries);
     }
@@ -120,13 +123,13 @@ public class DirectoryEntry extends LevelEntry {
     super.read(stream);
 
     Word numberOfNamedEntries = (Word) getMember("NumberOfNamedEntries");
-    myNamedEntries = new ArrayOfBins("Named entries", EntryDescription.class, numberOfNamedEntries);
+    myNamedEntries = new ArrayOfBins<EntryDescription>("Named entries", EntryDescription.class, numberOfNamedEntries);
     addMember(myNamedEntries);
     myNamedEntries.setCountHolder(numberOfNamedEntries);
     myNamedEntries.read(stream);
 
     Word numberOfIdEntries = (Word) getMember("NumberOfIdEntries");
-    myIdEntries = new ArrayOfBins("Id entries", EntryDescription.class, numberOfIdEntries);
+    myIdEntries = new ArrayOfBins<EntryDescription>("Id entries", EntryDescription.class, numberOfIdEntries);
     addMember(myIdEntries);
     myIdEntries.setCountHolder(numberOfIdEntries);
     myIdEntries.read(stream);
@@ -135,14 +138,15 @@ public class DirectoryEntry extends LevelEntry {
     processEntries(myIdEntries);
   }
 
-  private void processEntries(ArrayOfBins entries) {
+  private void processEntries(ArrayOfBins<EntryDescription> entries) {
     for (int i = 0; i < entries.size(); ++i) {
-      EntryDescription entry = (EntryDescription) entries.get(i);
+      EntryDescription entry = entries.get(i);
       Bin.Value offset = entry.getValueMember("OffsetToData");
+      Bin.Value name = entry.getValueMember("Name");
       if ((offset.getValue() & 0x80000000) != 0) {
-        addDirectoryEntry( new DirectoryEntry( mySection, entry ) );
+        addDirectoryEntry( new DirectoryEntry( mySection, entry, name.getValue()) );
       } else {
-        addDataEntry( new DataEntry( mySection, offset ) );
+        addDataEntry( new DataEntry( mySection, offset) );
       }
     }
   }

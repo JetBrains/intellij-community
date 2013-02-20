@@ -73,7 +73,7 @@ public class IconResourceInjector {
     Bin.Value name = entryDescription.getValueMember("Name");
     name.setValue(index + 1);
 
-    DirectoryEntry entryDirIcon2 = new DirectoryEntry(iconsDir.getSection(), entryDescription);
+    DirectoryEntry entryDirIcon2 = new DirectoryEntry(iconsDir.getSection(), entryDescription, name.getValue());
     iconsDir.insertDirectoryEntry(index, entryDirIcon2);
     iconsDir.addIdEntry(entryDescription);
 

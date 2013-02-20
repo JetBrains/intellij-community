@@ -20,10 +20,7 @@ package com.pme.launcher;
 import com.pme.exe.ExeReader;
 import com.pme.exe.SectionReader;
 import com.pme.exe.Bin;
-import com.pme.exe.res.ResourceSectionReader;
-import com.pme.exe.res.DirectoryEntry;
-import com.pme.exe.res.RawResource;
-import com.pme.exe.res.StringTable;
+import com.pme.exe.res.*;
 import com.pme.exe.res.bmp.PictureResourceInjector;
 import com.pme.exe.res.icon.IconResourceInjector;
 import com.pme.exe.res.vi.VersionInfo;
@@ -40,132 +37,58 @@ public class LauncherGenerator {
   private File myIcon;
   private File myBmp;
   private File myExePath;
-  private int mySplashTimeout = 3;
-  private String myJreBundlePath;
-  private String myVmParameters;
-  private String myStartJar;
-  private String myWorkDir;
-  private String myJavaVersion;
-  private boolean mySearchJdkOnly = false;
+  private StringTableDirectory myStringTableDirectory;
+  private DirectoryEntry myRoot;
+  private ExeReader myReader;
 
   public LauncherGenerator(File template, File exePath) {
     myTemplate = template;
     myExePath = exePath;
   }
 
-  public void setWorkDir(String workDir) {
-    myWorkDir = workDir;
-  }
 
-  public void setSplashTimeout(int splashTimeout) {
-    mySplashTimeout = splashTimeout;
-  }
-
-  public void setJreBundlePath(String jreBundlePath) {
-    myJreBundlePath = jreBundlePath;
-  }
-
-  public void setVmParameters(String vmParameters) {
-    myVmParameters = vmParameters;
-  }
-
-  public void setStartJar(String startJar) {
-    myStartJar = startJar;
-  }
-
-  public void setIcon(File icon) {
-    myIcon = icon;
-  }
-
-  public void setBmp(File bmp) {
-    myBmp = bmp;
+  public void load() throws  IOException {
+    myReader = new ExeReader(myTemplate.getName());
+    RandomAccessFile stream = new RandomAccessFile(myTemplate, "r");
+    myReader.read(stream);
+    stream.close();
+    SectionReader sectionReader = myReader.getSectionReader(".rsrc");
+    ResourceSectionReader resourceReader = (ResourceSectionReader) sectionReader.getMember(".rsrc");
+    myRoot = resourceReader.getRoot();
+    DirectoryEntry subDir = myRoot.findSubDir("IRD6");
+    myStringTableDirectory = new StringTableDirectory(subDir);
   }
 
   public void generate() throws IOException {
-    ExeReader reader = new ExeReader(myTemplate.getName());
-    RandomAccessFile stream = new RandomAccessFile(myTemplate, "r");
-    reader.read(stream);
-    stream.close();
-    SectionReader sectionReader = reader.getSectionReader(".rsrc");
-    ResourceSectionReader resourceReader = (ResourceSectionReader) sectionReader.getMember(".rsrc");
-    DirectoryEntry root = resourceReader.getRoot();
-    DirectoryEntry subDir = root.findSubDir("IRD6");
-    DirectoryEntry ird7 = subDir.findSubDir("IRD7");
-
-    RawResource rawResource = ird7.getRawResource(0);
-    Bin.Bytes bytes = rawResource.getBytes();
-    StringTable srtingTable = new StringTable(bytes.getBytes());
-
-    if (myBmp != null) {
-      srtingTable.setString(0, "splash"); // show splash
-    }
-    srtingTable.setString(1, "alive"); // stay alive
-    srtingTable.setString(2, "" + mySplashTimeout); // splash timeout
-    if (myJreBundlePath != null) {
-      srtingTable.setString(3, myJreBundlePath); // jre bundled path
-    }
-    if (myVmParameters != null) {
-      srtingTable.setString(4, myVmParameters); // PROP_VM_PARAMETERS
-    }
-    if (myStartJar != null) {
-      srtingTable.setString(5, myStartJar); // PROP_START_JAR
-    }
-    srtingTable.setString(6, "waitForWindow"); // PROP_WAIT_FOR_WINDOW
-
-    if (myWorkDir != null) {
-      srtingTable.setString(7, myWorkDir); // PROP_WORK_DIR
-    }
-
-    if (myJavaVersion != null) {
-      StringBuffer buffer = new StringBuffer( myJavaVersion.length() );
-      for( int i = 0; i < myJavaVersion.length(); ++i){
-        char ch = myJavaVersion.charAt( i );
-        if ( Character.isDigit( ch ) || ch == '.' ){
-          buffer.append( ch );
-        }
-      }
-      srtingTable.setString(8, buffer.toString()); // PROP_JAVA_VERSION
-    }
-    if (mySearchJdkOnly) {
-      srtingTable.setString(9, "SearchJdkOnly"); // PROP_SEARCH_JDK_ONLY
-    }
-
-    byte[] a = srtingTable.getBytes();
-    rawResource.setBytes(a);
+    myStringTableDirectory.save();
 
     if (myIcon != null) {
       IconResourceInjector iconInjector = new IconResourceInjector();
-      iconInjector.injectIcon(myIcon, root, "IRD101");
+      iconInjector.injectIcon(myIcon, myRoot, "IRD101");
     }
 
     if (myBmp != null) {
       PictureResourceInjector bmpInjector = new PictureResourceInjector();
-      bmpInjector.inject(myBmp, root, "IRD104");
+      bmpInjector.inject(myBmp, myRoot, "IRD104");
     }
 
-
-
-    DirectoryEntry viDir = root.findSubDir("IRD16").findSubDir( "IRD1" );
+    DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
     Bin.Bytes viBytes = viDir.getRawResource( 0 ).getBytes();
     ByteArrayInputStream bytesStream = new ByteArrayInputStream(viBytes.getBytes());
 
     VersionInfo viReader = new VersionInfo();
     viReader.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
 
-    reader.resetOffsets(0);
+    myReader.resetOffsets(0);
 
     myExePath.getParentFile().mkdirs();
     myExePath.createNewFile();
     RandomAccessFile exeStream = new RandomAccessFile(myExePath, "rw");
-    reader.write(exeStream);
+    myReader.write(exeStream);
     exeStream.close();
   }
 
-  public void setJavaVersion(String javaVersion) {
-    myJavaVersion = javaVersion;
-  }
-
-  public void setSearchJdkOnly(boolean searchJdkOnly) {
-    mySearchJdkOnly = searchJdkOnly;
+  public void setResourceString(int id, String value) {
+    myStringTableDirectory.setString(id, value);
   }
 }

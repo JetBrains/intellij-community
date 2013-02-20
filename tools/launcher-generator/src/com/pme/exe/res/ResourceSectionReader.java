@@ -51,7 +51,7 @@ public class ResourceSectionReader extends Bin.Structure {
     addSizeHolder(mySize);
     addSizeHolder(virtualSize);
     addSizeHolder(size);
-    myRoot.addLevelEntry(new DirectoryEntry( this, null ));
+    myRoot.addLevelEntry(new DirectoryEntry( this, null, 0));
     addMember(myRoot);
   }
 
