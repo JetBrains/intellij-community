@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,32 @@ import com.intellij.ide.BrowserUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.net.URL;
 
-/**
- * @author spleaner
- */
 public interface NotificationListener {
-
   void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event);
 
-  NotificationListener URL_OPENING_LISTENER = new NotificationListener() {
+  abstract class Adapter implements NotificationListener {
     @Override
-    public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull final HyperlinkEvent event) {
+    public final void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        BrowserUtil.browse(event.getURL());
+        hyperlinkActivated(notification, event);
+      }
+    }
+
+    protected abstract void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e);
+  }
+
+  NotificationListener URL_OPENING_LISTENER = new Adapter() {
+    @Override
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      URL url = event.getURL();
+      if (url == null) {
+        BrowserUtil.browse(event.getDescription());
+      }
+      else {
+        BrowserUtil.browse(url);
       }
     }
   };
-
 }
