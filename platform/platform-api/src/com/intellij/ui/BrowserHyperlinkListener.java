@@ -25,6 +25,6 @@ import javax.swing.event.HyperlinkEvent;
 public class BrowserHyperlinkListener extends HyperlinkAdapter {
   @Override
   protected void hyperlinkActivated(HyperlinkEvent e) {
-    BrowserUtil.launchBrowser(e.getDescription());
+    BrowserUtil.browse(e.getDescription());
   }
 }

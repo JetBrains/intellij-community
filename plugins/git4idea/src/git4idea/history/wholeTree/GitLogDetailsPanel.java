@@ -109,7 +109,7 @@ public class GitLogDetailsPanel {
           }
           return;
         }
-        super.hyperlinkUpdate(e);
+        super.hyperlinkActivated(e);
       }
     });
 
