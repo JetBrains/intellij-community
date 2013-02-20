@@ -38,7 +38,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,7 +318,11 @@ public class PsiVFSListener extends VirtualFileAdapter {
     if (FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
       FileViewProvider viewProvider = myFileManager.createFileViewProvider(vFile, true);
       myFileManager.setViewProvider(vFile, viewProvider);
-      PsiFile newPsiFile = ObjectUtils.assertNotNull(myManager.findFile(vFile));
+      PsiFile newPsiFile = myManager.findFile(vFile);
+      if (newPsiFile == null) {
+        LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
+        return;
+      }
       if (!viewProvider.isPhysical()) {
         Document document = viewProvider.getDocument();
         if (document != null) {
