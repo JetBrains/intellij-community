@@ -17,6 +17,8 @@
 
 package com.pme.launcher;
 
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.pme.exe.Bin;
 import com.pme.exe.ExeReader;
 import com.pme.exe.SectionReader;
@@ -36,11 +38,11 @@ import java.io.*;
  */
 public class LauncherGenerator {
   private File myTemplate;
-  private File myIcon;
   private File myExePath;
   private StringTableDirectory myStringTableDirectory;
   private DirectoryEntry myRoot;
   private ExeReader myReader;
+  private VersionInfo myVersionInfo;
 
   public LauncherGenerator(File template, File exePath) {
     myTemplate = template;
@@ -58,22 +60,17 @@ public class LauncherGenerator {
     myRoot = resourceReader.getRoot();
     DirectoryEntry subDir = myRoot.findSubDir("IRD6");
     myStringTableDirectory = new StringTableDirectory(subDir);
-  }
-
-  public void generate() throws IOException {
-    myStringTableDirectory.save();
-
-    if (myIcon != null) {
-      IconResourceInjector iconInjector = new IconResourceInjector();
-      iconInjector.injectIcon(myIcon, myRoot, "IRD101");
-    }
 
     DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
     Bin.Bytes viBytes = viDir.getRawResource( 0 ).getBytes();
     ByteArrayInputStream bytesStream = new ByteArrayInputStream(viBytes.getBytes());
 
-    VersionInfo viReader = new VersionInfo();
-    viReader.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
+    myVersionInfo = new VersionInfo();
+    myVersionInfo.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
+  }
+
+  public void generate() throws IOException {
+    myStringTableDirectory.save();
 
     myReader.resetOffsets(0);
 
@@ -92,5 +89,17 @@ public class LauncherGenerator {
     DirectoryEntry subDirBmp = myRoot.findSubDir("IRD2").findSubDir("IRD" + id);
     RawResource bmpRes = subDirBmp.getRawResource(0);
     bmpRes.setBytes(bitmapData);
+  }
+
+  public void injectIcon(String name, final InputStream iconStream) throws IOException {
+    File f = File.createTempFile("launcher", "ico");
+    Files.copy(new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return iconStream;
+      }
+    }, f);
+    IconResourceInjector iconInjector = new IconResourceInjector();
+    iconInjector.injectIcon(f, myRoot, "IRD101");
   }
 }

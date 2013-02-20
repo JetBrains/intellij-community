@@ -21,10 +21,7 @@ import com.pme.exe.Bin;
 import com.pme.exe.res.Level;
 import com.pme.exe.res.LevelEntry;
 
-import java.io.DataInput;
-import java.io.IOException;
-import java.io.File;
-import java.io.RandomAccessFile;
+import java.io.*;
 
 /**
  * Date: Apr 27, 2006
@@ -62,12 +59,11 @@ public class IconFile extends Bin.Structure {
     try {
       super.read(stream);
       Word idCount = (Word) ((Bin.Structure) getMember("Header")).getMember("idCount");
-      ArrayOfBins iconDirs = new ArrayOfBins("Icon directories", IconDirectory.class, idCount);
+      ArrayOfBins<IconDirectory> iconDirs = new ArrayOfBins<IconDirectory>("Icon directories", IconDirectory.class, idCount);
       iconDirs.setCountHolder(idCount);
       addMember(myImages);
       Bin[] array = iconDirs.getArray();
-      for (int i = 0; i < array.length; i++) {
-        Bin bin = array[i];
+      for (Bin bin : array) {
         myImages.addLevelEntry((LevelEntry) bin);
       }
       myImages.read(stream);

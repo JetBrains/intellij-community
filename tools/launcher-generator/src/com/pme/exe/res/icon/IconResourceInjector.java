@@ -17,13 +17,10 @@
 
 package com.pme.exe.res.icon;
 
-import com.pme.exe.res.*;
 import com.pme.exe.Bin;
+import com.pme.exe.res.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 
 /**

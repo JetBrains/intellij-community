@@ -56,7 +56,7 @@ public class LauncherGeneratorMain {
     try {
       appInfo = new SAXBuilder().build(appInfoStream);
     } catch (Exception e) {
-      System.err.println("Error loading application info file " + appInfoStream + ": " + e.getMessage());
+      System.err.println("Error loading application info file " + args[1] + ": " + e.getMessage());
       System.exit(4);
       return;
     }
@@ -79,6 +79,17 @@ public class LauncherGeneratorMain {
     catch (Exception e) {
       System.err.println("Error converting splash screen to BMP: " + e.getMessage());
       System.exit(6);
+    }
+
+    String icoUrl = appInfo.getRootElement().getChild("icon").getAttributeValue("ico");
+    if (icoUrl == null) {
+      System.err.println(".ico file URL not specified in application info file " + args[1]);
+      System.exit(11);
+    }
+    InputStream iconStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(icoUrl);
+    if (iconStream == null) {
+      System.err.println(".ico file " + icoUrl + " not found");
+      System.exit(12);
     }
 
     Map<String, Integer> resourceIDs;
@@ -121,6 +132,7 @@ public class LauncherGeneratorMain {
       }
 
       generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
+      generator.injectIcon(icoUrl, iconStream);
 
       generator.generate();
     } catch (IOException e) {
