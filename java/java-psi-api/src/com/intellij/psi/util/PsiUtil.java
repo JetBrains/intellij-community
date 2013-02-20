@@ -465,14 +465,16 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;
 
-    if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod)) return ApplicabilityLevel.NOT_APPLICABLE;
+    final boolean isRaw = isRawSubstitutor(method, substitutorForMethod);
+    if (!areFirstArgumentsApplicable(args, parms, languageLevel, substitutorForMethod, isRaw)) return ApplicabilityLevel.NOT_APPLICABLE;
     if (args.length == parms.length) {
       if (parms.length == 0) return ApplicabilityLevel.FIXED_ARITY;
       PsiType parmType = getParameterType(parms[parms.length - 1], languageLevel, substitutorForMethod);
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
       if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
-      if (isRawSubstitutor(method, substitutorForMethod)) {
+      
+      if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
         final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
         if (erasedArgType != null &&  erasedParamType != null &&
@@ -507,13 +509,19 @@ public final class PsiUtil extends PsiUtilCore {
   private static boolean areFirstArgumentsApplicable(@NotNull PsiType[] args,
                                                      @NotNull final PsiParameter[] parms,
                                                      @NotNull LanguageLevel languageLevel,
-                                                     @NotNull final PsiSubstitutor substitutorForMethod) {
+                                                     @NotNull final PsiSubstitutor substitutorForMethod, boolean isRaw) {
     for (int i = 0; i < parms.length - 1; i++) {
       final PsiType type = args[i];
       if (type == null) return false;
       final PsiParameter parameter = parms[i];
       final PsiType substitutedParmType = getParameterType(parameter, languageLevel, substitutorForMethod);
-      if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
+      if (isRaw) {
+        final PsiType substErasure = TypeConversionUtil.erasure(substitutedParmType);
+        final PsiType typeErasure = TypeConversionUtil.erasure(type);
+        if (substErasure != null && typeErasure != null && !TypeConversionUtil.isAssignable(substErasure, typeErasure)) {
+          return false;
+        }
+      } else if (!TypeConversionUtil.isAssignable(substitutedParmType, type)) {
         return false;
       }
     }
