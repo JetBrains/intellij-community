@@ -29,7 +29,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author ik, dsl
@@ -103,8 +102,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
 
-        final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
-        if (lists != null && !lists.isEmpty() || !stackStamp.mayCacheNow()) {
+         if (!stackStamp.mayCacheNow()) {
           return inferredSubstitutor;
         }
 

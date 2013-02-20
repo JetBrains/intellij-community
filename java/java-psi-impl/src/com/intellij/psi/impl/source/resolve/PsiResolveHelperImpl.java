@@ -18,7 +18,10 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -40,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl");
@@ -718,12 +720,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiSubstitutor subst = LambdaUtil.getSubstitutor(method, resolveResult);
       final Pair<PsiType, ConstraintType> constraintFromFormalParams = inferConstraintFromLambdaFormalParams(typeParam, subst, method, lambdaExpression);
       if (constraintFromFormalParams != null) return constraintFromFormalParams;
-
-      final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
-      if (lists != null && lists.contains(lambdaExpression.getParameterList()) && 
-          ourGraphGuard.currentStack().isEmpty()){
-        return null;
-      }
 
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
       if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {
