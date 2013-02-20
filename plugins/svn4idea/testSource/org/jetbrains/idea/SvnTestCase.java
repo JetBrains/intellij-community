@@ -69,9 +69,7 @@ import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertTrue;
 
@@ -83,7 +81,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
-  protected boolean myUseNativeAcceleration = true;
+  protected boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
   private final String myTestDataDir;
   private File myRepoRoot;
@@ -118,6 +116,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
+    System.out.println("Native client for status: " + myUseNativeAcceleration);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
