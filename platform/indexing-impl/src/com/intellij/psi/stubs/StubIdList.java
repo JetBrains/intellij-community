@@ -18,7 +18,7 @@ package com.intellij.psi.stubs;
 import com.intellij.util.IncorrectOperationException;
 
 // List of nonnegative ints, monotonically increasing, optimized for one int case (90% of our lists one element)
-final class StubIdList {
+public final class StubIdList {
   private final int myData;
   private final int[] myArray;
 

@@ -154,15 +154,12 @@ public class CommitHelper {
   private void delegateCommitToVcsThread(final GeneralCommitProcessor processor) {
     final ProgressIndicator indicator = new DelegatingProgressIndicator();
 
-    final Semaphore startSemaphore = new Semaphore();
     final Semaphore endSemaphore = new Semaphore();
-    startSemaphore.down();
     endSemaphore.down();
 
     ChangeListManagerImpl.getInstanceImpl(myProject).executeOnUpdaterThread(new Runnable() {
       @Override
       public void run() {
-        startSemaphore.up();
         indicator.setText("Performing VCS commit...");
         try {
           ProgressManager.getInstance().runProcess(new Runnable() {
@@ -180,10 +177,6 @@ public class CommitHelper {
     });
 
     indicator.setText("Waiting for VCS background tasks to finish...");
-    while (!startSemaphore.waitFor(20)) {
-      indicator.checkCanceled();
-    }
-
     while (!endSemaphore.waitFor(20)) {
       indicator.checkCanceled();
     }

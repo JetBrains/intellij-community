@@ -17,16 +17,12 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +31,7 @@ import java.util.Map;
 /**
  * @author Alexander Lobas
  */
-public abstract class MetaManager {
+public abstract class MetaManager extends ModelLoader {
   private static final String META = "meta";
   private static final String PALETTE = "palette";
   private static final String GROUP = "group";
@@ -43,8 +39,6 @@ public abstract class MetaManager {
   private static final String ITEM = "item";
   private static final String TAG = "tag";
   private static final String WRAP_IN = "wrap-in";
-
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.designer.model.MetaManager");
 
   private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
   private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
@@ -54,18 +48,11 @@ public abstract class MetaManager {
   private Map<Object, Object> myCache = new HashMap<Object, Object>();
 
   protected MetaManager(Project project, String name) {
-    try {
-      InputStream stream = getClass().getResourceAsStream(name);
-      Document document = new SAXBuilder().build(stream);
-      stream.close();
-
-      loadDocument(document.getRootElement());
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
+    super(project);
+    load(name);
   }
 
+  @Override
   protected void loadDocument(Element rootElement) throws Exception {
     ClassLoader classLoader = getClass().getClassLoader();
 

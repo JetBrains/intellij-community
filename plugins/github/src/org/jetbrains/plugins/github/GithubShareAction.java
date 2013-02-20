@@ -122,7 +122,7 @@ public class GithubShareAction extends DumbAwareAction {
       final GithubSettings settings = GithubSettings.getInstance();
       final String password = settings.getPassword();
       final Boolean privateRepoAllowed =
-        GithubUtil.accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
+        GithubUtil.accessToGithubWithModalProgress(project, settings.getHost(), new ThrowableComputable<Boolean, IOException>() {
         @Override
         public Boolean compute() throws IOException {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");

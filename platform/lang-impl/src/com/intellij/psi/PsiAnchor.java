@@ -379,6 +379,7 @@ public abstract class PsiAnchor {
     private final int myIndex;
     private final Language myLanguage;
     private final IStubElementType myElementType;
+    private final long myCreationModCount;
 
     public StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
       myLanguage = language;
@@ -386,6 +387,7 @@ public abstract class PsiAnchor {
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
+      myCreationModCount = file.getManager().getModificationTracker().getModificationCount();
     }
 
     @Override
@@ -425,7 +427,9 @@ public abstract class PsiAnchor {
         return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
       }
       catch (AssertionError e) {
-        return e.getMessage();
+        return e.getMessage() +
+               "; current modCount=" + PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount() +
+               "; creation modCount=" + myCreationModCount;
       }
     }
 
