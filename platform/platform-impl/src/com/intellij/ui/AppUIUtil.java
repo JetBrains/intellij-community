@@ -22,9 +22,11 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -134,5 +136,17 @@ public class AppUIUtil {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  public static void hideToolWindowBalloon(@NotNull final String id, @NotNull final Project project) {
+    invokeLaterIfProjectAlive(project, new Runnable() {
+      @Override
+      public void run() {
+        Balloon balloon = ToolWindowManager.getInstance(project).getToolWindowBalloon(id);
+        if (balloon != null) {
+          balloon.hide();
+        }
+      }
+    });
   }
 }
