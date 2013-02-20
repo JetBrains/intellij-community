@@ -17,6 +17,9 @@
 
 package com.pme.util;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 /**
  * Date: Mar 30, 2006
  * Time: 7:10:10 PM
@@ -59,5 +62,11 @@ public class BitsUtil {
   public static String byteToHexString( int value ){
     return toHexString( value, 2 );
   }
-  
+
+  public static char readChar(DataInput stream) throws IOException {
+    int b1 = stream.readByte();
+    int b2 = stream.readByte();
+    return (char) (b1 + (b2 << 8));
+
+  }
 }

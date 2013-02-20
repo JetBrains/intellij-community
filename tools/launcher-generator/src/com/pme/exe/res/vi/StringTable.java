@@ -23,9 +23,10 @@ import com.pme.util.OffsetTrackingInputStream;
 import java.io.DataInput;
 import java.io.IOException;
 
-public class StringFileInfo extends Bin.Structure {
-  public StringFileInfo() {
-    super("StringFileInfo");
+public class StringTable extends Bin.Structure {
+
+  public StringTable(String name) {
+    super(name);
     addMember(new Word("wLength"));
     addMember(new Word("wValueLength"));
     addMember(new Word("wType"));
@@ -33,7 +34,6 @@ public class StringFileInfo extends Bin.Structure {
     addMember(new Padding(4));
   }
 
-  @Override
   public void read(DataInput stream) throws IOException {
     OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
     long startOffset = inputStream.getOffset();
@@ -41,9 +41,9 @@ public class StringFileInfo extends Bin.Structure {
     long length = getValue("wLength");
     int i = 0;
     while(inputStream.getOffset() < startOffset + length) {
-      StringTable stringTableReader = new StringTable("StringTable" + (i++));
-      stringTableReader.read(inputStream);
-      addMember(stringTableReader);
+      StringTableEntry stringTableEntry = new StringTableEntry();
+      stringTableEntry.read(inputStream);
+      addMember(stringTableEntry);
     }
   }
 }

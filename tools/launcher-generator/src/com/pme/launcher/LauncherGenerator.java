@@ -26,7 +26,8 @@ import com.pme.exe.res.RawResource;
 import com.pme.exe.res.StringTable;
 import com.pme.exe.res.bmp.PictureResourceInjector;
 import com.pme.exe.res.icon.IconResourceInjector;
-import com.pme.exe.res.vi.VersionInfoReader;
+import com.pme.exe.res.vi.VersionInfo;
+import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
 
@@ -148,8 +149,8 @@ public class LauncherGenerator {
     Bin.Bytes viBytes = viDir.getRawResource( 0 ).getBytes();
     ByteArrayInputStream bytesStream = new ByteArrayInputStream(viBytes.getBytes());
 
-    VersionInfoReader viReader = new VersionInfoReader();
-    viReader.read(new DataInputStream(bytesStream));
+    VersionInfo viReader = new VersionInfo();
+    viReader.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
 
     reader.resetOffsets(0);
 

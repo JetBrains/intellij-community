@@ -18,6 +18,7 @@
 package com.pme.exe;
 
 import com.pme.util.BitsUtil;
+import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -356,6 +357,40 @@ public abstract class Bin {
     }
   }
 
+  public static class Padding extends Bin {
+    private int myBytes;
+
+    public Padding(int bytes) {
+      super("Padding");
+      myBytes = bytes;
+    }
+
+    @Override
+    public long sizeInBytes() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void read(DataInput stream) throws IOException {
+      if (stream instanceof OffsetTrackingInputStream) {
+        long offset = ((OffsetTrackingInputStream) stream).getOffset();
+        int offsetMask = myBytes-1;
+        long offsetBits = offset & offsetMask;
+        if (offsetBits > 0) {
+          stream.skipBytes((int) (myBytes - offsetBits));
+        }
+      }
+    }
+
+    @Override
+    public void write(DataOutput stream) throws IOException {
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) throws IOException {
+    }
+  }
+
   public static class Txt extends Bin {
     private StringBuffer myBuffer = new StringBuffer();
     private Bin.Value mySize;
@@ -367,6 +402,7 @@ public abstract class Bin {
       mySize = new DWord("").setValue(bytes.length);
       setValue();
     }
+
     public Txt(String name, String string) {
       super(name);
       myBytes = new byte[string.length() * 2];
@@ -420,6 +456,44 @@ public abstract class Bin {
 
     public void report(OutputStreamWriter writer) throws IOException {
       _report(writer, myBuffer.toString());
+    }
+  }
+
+  public static class WChar extends Bin {
+    private String myValue;
+
+    public WChar(String name) {
+      super(name);
+    }
+
+    @Override
+    public long sizeInBytes() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void read(DataInput stream) throws IOException {
+      StringBuilder valueBuilder = new StringBuilder();
+      while(true) {
+        char c = BitsUtil.readChar(stream);
+        if (c == 0) break;
+        valueBuilder.append(c);
+      }
+      myValue = valueBuilder.toString();
+    }
+
+    @Override
+    public void write(DataOutput stream) throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) throws IOException {
+      _report(writer, myValue);
+    }
+
+    public String getValue() {
+      return myValue;
     }
   }
 

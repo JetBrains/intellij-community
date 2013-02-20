@@ -18,58 +18,34 @@
 package com.pme.exe.res.vi;
 
 import com.pme.exe.Bin;
+import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.*;
 import java.util.ArrayList;
 
-/**
- * Date: May 10, 2006
- * Time: 8:26:03 PM
- */
 public class StringTableEntry extends Bin.Structure {
-  public StringTableEntry(String key) {
-    super(key);
+  public StringTableEntry() {
+    super("<unnamed>");
     addMember(new Word("wLength"));
     addMember(new Word("wValueLength"));
     addMember(new Word("wType"));
-    addMember(new Bytes("key", key.length() * 2));
+    addMember(new WChar("szKey"));
+    addMember(new Padding(4));
+    addMember(new WChar("Value"));
+    addMember(new Padding(4));
   }
 
-  public void readWithPadding(DataInput stream, long offset) throws IOException {
-    read(stream);
-    long off = offset + sizeInBytes();
-    Bytes padding = new Bytes("Padding", off % 8);
-    padding.read(stream);
-    addMember(padding);
-    ArrayList list = new ArrayList();
-    for(int i = 0;;++i){
-      Word word = new Word( "" + i );
-      word.read( stream );
-      list.add( word );
-      if ( word.getValue() == 0 ) break;
-    }
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(list.size() * 2);
-    DataOutputStream bytesStream = new DataOutputStream( byteArrayOutputStream );
-    for (int i = 0; i < list.size(); ++i) {
-      Word word = (Word)list.get(i);
-      word.write( bytesStream );
-    }
-    bytesStream.close();
+  @Override
+  public void read(DataInput stream) throws IOException {
+    super.read(stream);
+    WChar key = (WChar) getMember("szKey");
+    setName(key.getValue());
+  }
 
-    Txt txt = new Txt("Value", byteArrayOutputStream.toByteArray());
-    System.out.println( txt.getText() );
-    addMember( txt );
-
-    offset += sizeInBytes();
-
-    System.out.println( "" + offset % 8 );
-    System.out.println( "" + offset % 4 );
-    System.out.println( "" + offset % 16 );
-    long r = offset % 8;
-    if ( r > 0 ){
-      Bytes padding2 = new Bytes( "Padding2", r );
-      padding2.read( stream );
-      addMember( padding2 );
-    }
+  @Override
+  public String toString() {
+    WChar key = (WChar) getMember("szKey");
+    WChar value = (WChar) getMember("Value");
+    return key.getValue() + " = " + value.getValue();
   }
 }

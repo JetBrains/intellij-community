@@ -22,22 +22,12 @@ import com.pme.exe.Bin;
 import java.io.DataInput;
 import java.io.IOException;
 
-/**
- * Date: May 10, 2006
- * Time: 1:33:34 PM
- */
-public class VersionInfoReader extends Bin.Structure {
-  public VersionInfoReader() {
+public class VersionInfo extends Bin.Structure {
+  public VersionInfo() {
     super("VersionInfo");
-    addMember( new Word("wLength") );
-    addMember( new Bytes( "Bytes", 38 ) );
-    addMember( new FixedFileInfo() );
-  }
-
-  public void read(DataInput stream) throws IOException {
-    super.read(stream);
-    StringFileInfo stringFileInfo = new StringFileInfo();
-    stringFileInfo.readWithPadding( stream, sizeInBytes() );
-    addMember( stringFileInfo );
+    addMember(new Word("wLength"));
+    addMember(new Bytes("Bytes", 38));
+    addMember(new FixedFileInfo());
+    addMember(new StringFileInfo());
   }
 }
