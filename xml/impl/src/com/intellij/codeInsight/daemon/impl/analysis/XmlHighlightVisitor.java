@@ -156,8 +156,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-    } else if (tokenType == XmlTokenType.XML_TAG_CHARACTERS && token.getParent() instanceof XmlProcessingInstruction) {
-      checkReferences(token);
     }
   }
 
@@ -217,6 +215,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(e).descriptionAndTooltip(description).create());
       }
     }
+    checkReferences(processingInstruction);
   }
 
   private void bindMessageToAstNode(final PsiElement childByRole,
