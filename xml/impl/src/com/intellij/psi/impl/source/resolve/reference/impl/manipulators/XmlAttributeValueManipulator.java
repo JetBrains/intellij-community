@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
@@ -40,12 +41,18 @@ import com.intellij.util.IncorrectOperationException;
 public class XmlAttributeValueManipulator extends AbstractElementManipulator<XmlAttributeValue> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
 
-  public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException{
+  public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException {
+    return handleContentChange(element, range, newContent, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
+  }
 
+  public static <T extends PsiElement> T handleContentChange(T element,
+                                                             TextRange range,
+                                                             String newContent,
+                                                             final IElementType tokenType) {
     CheckUtil.checkWritable(element);
     final CompositeElement attrNode = (CompositeElement)element.getNode();
     final ASTNode valueNode = attrNode.findLeafElementAt(range.getStartOffset());
-    LOG.assertTrue(valueNode != null, "Leaf not found in " + attrNode + " at offset " + range.getStartOffset());
+    LOG.assertTrue(valueNode != null, "Leaf not found in " + attrNode + " at offset " + range.getStartOffset() + " in element " + element);
     final PsiElement elementToReplace = valueNode.getPsi();
 
     String text;
@@ -60,7 +67,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
       throw e;
     }
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(attrNode);
-    final LeafElement newValueElement = Factory.createSingleLeafElement(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, text, charTableByTree, element.getManager());
+    final LeafElement newValueElement = Factory.createSingleLeafElement(tokenType, text, charTableByTree, element.getManager());
 
     attrNode.replaceChildInternal(valueNode, newValueElement);
     return element;

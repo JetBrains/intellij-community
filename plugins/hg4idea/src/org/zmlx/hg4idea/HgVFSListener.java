@@ -140,6 +140,22 @@ public class HgVFSListener extends VcsVFSListener {
       @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
         final ArrayList<VirtualFile> adds = new ArrayList<VirtualFile>();
         final HashMap<VirtualFile, VirtualFile> copies = new HashMap<VirtualFile, VirtualFile>(); // from -> to
+        //delete unversioned and ignored files from copy source
+        if (myProject != null) {
+          Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
+          final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
+          HgStatusCommand statusCommand = new HgStatusCommand(myProject);
+          statusCommand.setOnlyUntrackedTrue();
+          statusCommand.setIncludeIgnored(true);
+          for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
+            Set<HgChange> changes = statusCommand.execute(repo);
+            for (HgChange change : changes) {
+              unversionedAndIgnoredFiles.add(change.afterFile().toFilePath().getVirtualFile());
+            }
+          }
+          copyFromMap.values().removeAll(unversionedAndIgnoredFiles);
+        }
+
 
         // separate adds from copies
         for (VirtualFile file : addedFiles) {

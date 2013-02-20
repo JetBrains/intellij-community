@@ -112,6 +112,8 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlText"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTextManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlProcessingInstruction"
+                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlProcessingInstructionManipulator"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
