@@ -158,7 +158,10 @@ public class PersistentHashMapValueStorage {
 
       while(records.size() > 0) {
         final PersistentHashMap.CompactionRecordInfo info = records.peek();
-        if (info.valueAddress >= lastReadOffset - bytesRead) {
+        if (info.valueAddress >= readStartOffset) {
+          if (info.valueAddress >= lastReadOffset) {
+            throw new IOException("Value storage is corrupted: value file size:" + mySize + ", readStartOffset:"+ readStartOffset + ", record address:"+info.valueAddress);
+          }
           // record start is inside our buffer
 
           final int recordStartInBuffer = (int) (info.valueAddress - readStartOffset);
