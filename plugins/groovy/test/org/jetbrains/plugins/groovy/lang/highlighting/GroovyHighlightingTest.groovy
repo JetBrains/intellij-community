@@ -1085,4 +1085,17 @@ def book = new Book(title: "Other Title", author: [name: "Other Name"])
 assert book.toString() == 'Other Title by Other Name'
 ''')
   }
+
+  void testArrayAccessForMapProperty() {
+
+    testHighlighting('''\
+def bar() {
+    return [list:[1, 2, 3]]
+}
+
+def testConfig = bar()
+print testConfig.list[0]
+print testConfig.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+''', true, false, false, GrUnresolvedAccessInspection)
+  }
 }
