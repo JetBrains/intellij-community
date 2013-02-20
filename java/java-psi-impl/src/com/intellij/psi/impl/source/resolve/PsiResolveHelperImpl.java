@@ -739,7 +739,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             continue;
           }
           if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == null) continue;
-          PsiType exprType = expression.getType();
+          PsiType exprType = ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+            @Override
+            public PsiType compute() {
+              return expression.getType(); 
+            }
+          });
           if (exprType instanceof PsiLambdaParameterType) {
             final PsiParameter parameter = ((PsiLambdaParameterType)exprType).getParameter();
             final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex(parameter);

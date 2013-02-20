@@ -88,9 +88,10 @@ public class JavaResolveCache {
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     PsiType type = getCachedType(expr);
     if (type == null) {
-      final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+      final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+      final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
-      if (!stackStamp.mayCacheNow()) {
+      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow()) {
         return type;
       }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;

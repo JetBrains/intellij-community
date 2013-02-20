@@ -212,6 +212,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testInferenceFromSecondLambda() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
