@@ -1098,4 +1098,17 @@ print testConfig.list[0]
 print testConfig.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
 ''', true, false, false, GrUnresolvedAccessInspection)
   }
+
+  void testGStringInjectionLFs() {
+    testHighlighting('''\
+print "<error descr="GString injection must not contain line feeds">${
+}</error>"
+
+print """${
+}"""
+
+print "<error descr="GString injection must not contain line feeds">${ """
+"""}</error>"
+''')
+  }
 }
