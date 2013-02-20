@@ -213,6 +213,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public boolean activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWIthSameAnchor) {
+      return true;
+    }
+
+    @Override
     public void showContentPopup(InputEvent inputEvent) {
     }
 
