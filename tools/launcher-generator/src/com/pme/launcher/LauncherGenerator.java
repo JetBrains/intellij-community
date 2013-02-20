@@ -17,11 +17,13 @@
 
 package com.pme.launcher;
 
+import com.pme.exe.Bin;
 import com.pme.exe.ExeReader;
 import com.pme.exe.SectionReader;
-import com.pme.exe.Bin;
-import com.pme.exe.res.*;
-import com.pme.exe.res.bmp.PictureResourceInjector;
+import com.pme.exe.res.DirectoryEntry;
+import com.pme.exe.res.RawResource;
+import com.pme.exe.res.ResourceSectionReader;
+import com.pme.exe.res.StringTableDirectory;
 import com.pme.exe.res.icon.IconResourceInjector;
 import com.pme.exe.res.vi.VersionInfo;
 import com.pme.util.OffsetTrackingInputStream;
@@ -35,7 +37,6 @@ import java.io.*;
 public class LauncherGenerator {
   private File myTemplate;
   private File myIcon;
-  private File myBmp;
   private File myExePath;
   private StringTableDirectory myStringTableDirectory;
   private DirectoryEntry myRoot;
@@ -67,11 +68,6 @@ public class LauncherGenerator {
       iconInjector.injectIcon(myIcon, myRoot, "IRD101");
     }
 
-    if (myBmp != null) {
-      PictureResourceInjector bmpInjector = new PictureResourceInjector();
-      bmpInjector.inject(myBmp, myRoot, "IRD104");
-    }
-
     DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
     Bin.Bytes viBytes = viDir.getRawResource( 0 ).getBytes();
     ByteArrayInputStream bytesStream = new ByteArrayInputStream(viBytes.getBytes());
@@ -90,5 +86,11 @@ public class LauncherGenerator {
 
   public void setResourceString(int id, String value) {
     myStringTableDirectory.setString(id, value);
+  }
+
+  public void injectBitmap(int id, byte[] bitmapData) {
+    DirectoryEntry subDirBmp = myRoot.findSubDir("IRD2").findSubDir("IRD" + id);
+    RawResource bmpRes = subDirBmp.getRawResource(0);
+    bmpRes.setBytes(bitmapData);
   }
 }

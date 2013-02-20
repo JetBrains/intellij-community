@@ -17,9 +17,12 @@
 
 package com.pme.launcher;
 
+import org.apache.sanselan.ImageFormat;
+import org.apache.sanselan.Sanselan;
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
 
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -41,20 +44,41 @@ public class LauncherGeneratorMain {
     File template = new File(args[0]);
     if (!template.exists()) {
       System.err.println("Launcher template EXE file " + args[0] + " not found");
-      System.exit(1);
+      System.exit(2);
     }
 
     InputStream appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(args[1]);
     if (appInfoStream == null) {
       System.err.println("Application info file " + appInfoStream + " not found");
-      System.exit(1);
+      System.exit(3);
     }
     Document appInfo;
     try {
       appInfo = new SAXBuilder().build(appInfoStream);
     } catch (Exception e) {
       System.err.println("Error loading application info file " + appInfoStream + ": " + e.getMessage());
-      System.exit(1);
+      System.exit(4);
+      return;
+    }
+
+    String splashUrl = appInfo.getRootElement().getChild("logo").getAttributeValue("url");
+    if (splashUrl.startsWith("/")) {
+      splashUrl = splashUrl.substring(1);
+    }
+    InputStream splashStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(splashUrl);
+    if (splashStream == null) {
+      System.err.println("Splash screen image file file " + splashUrl + " not found");
+      System.exit(5);
+    }
+
+    ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
+    try {
+      BufferedImage bufferedImage = Sanselan.getBufferedImage(splashStream);
+      Sanselan.writeImage(bufferedImage, splashBmpStream, ImageFormat.IMAGE_FORMAT_BMP, new HashMap());
+    }
+    catch (Exception e) {
+      System.err.println("Error converting splash screen to BMP: " + e.getMessage());
+      System.exit(6);
     }
 
     Map<String, Integer> resourceIDs;
@@ -63,7 +87,7 @@ public class LauncherGeneratorMain {
     }
     catch (Exception e) {
       System.err.println("Error loading resource.h: " + e.getMessage());
-      System.exit(1);
+      System.exit(7);
       return;
     }
 
@@ -79,7 +103,7 @@ public class LauncherGeneratorMain {
     }
     catch (IOException e) {
       System.err.println("Error loading launcher properties: " + e.getMessage());
-      System.exit(1);
+      System.exit(8);
     }
 
     LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
@@ -91,14 +115,17 @@ public class LauncherGeneratorMain {
         Integer id = resourceIDs.get(key);
         if (id == null) {
           System.err.println("Invalid stringtable ID found: " + key);
-          System.exit(1);
+          System.exit(9);
         }
         generator.setResourceString(id, (String) pair.getValue());
       }
 
+      generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
+
       generator.generate();
     } catch (IOException e) {
       e.printStackTrace();
+      System.exit(10);
     }
   }
 
