@@ -40,7 +40,7 @@ public class LambdaHighlightingUtil {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         if (!LambdaUtil.getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";
-      } else if (body instanceof PsiExpression) {
+      } else if (body instanceof PsiReferenceExpression || body instanceof PsiLiteralExpression) {
         final PsiType type = ((PsiExpression)body).getType();
         if (type != PsiType.VOID) {
           return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
