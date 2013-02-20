@@ -126,8 +126,18 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public void activate(@Nullable final Runnable runnable, boolean autoFocusContents, boolean forced) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    activate(runnable, autoFocusContents, forced, true);
+  }
 
+  @Override
+  public boolean activate(@Nullable final Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWithSameAnchor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ignoreActiveWindowWithSameAnchor) {
+      String windowId = myToolWindowManager.getActiveToolWindowId();
+      if (windowId != null && windowId != myId && myToolWindowManager.getToolWindowAnchor(windowId) == getAnchor()) {
+        return false;
+      }
+    }
     final UiActivity activity = new UiActivity.Focus("toolWindow:" + myId);
     UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
 
@@ -146,6 +156,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
         });
       }
     });
+    return true;
   }
 
   public final boolean isActive() {

@@ -41,6 +41,7 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -209,6 +210,18 @@ public class CompilerTask extends Task.Backgroundable {
           closeUI();
         }
         stopAppIconProgress();
+
+        Runnable runnable = new Runnable() {
+          public void run() {
+            NotificationInfo notificationInfo = getNotificationInfo();
+            if (notificationInfo != null && !myMessagesAutoActivated && (myErrorCount > 0 || (myWarningCount > 0 && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()))) {
+              MessageType messageType = myErrorCount > 0 ? MessageType.ERROR : myWarningCount > 0 ? MessageType.WARNING : MessageType.INFO;
+              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType,
+                                                                       getNotificationInfo().getNotificationText(), null, null);
+            }
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(runnable);
       }
 
       private void stopAppIconProgress() {
@@ -319,7 +332,6 @@ public class CompilerTask extends Task.Backgroundable {
             (CompilerMessageCategory.WARNING.equals(category) && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings())
           );
         if (shouldAutoActivate) {
-          myMessagesAutoActivated = true;
           activateMessageView();
         }
       }
@@ -444,7 +456,7 @@ public class CompilerTask extends Task.Backgroundable {
       if (myErrorTreeView != null) {
         final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (tw != null) {
-          tw.activate(null, false);
+          myMessagesAutoActivated = tw.activate(null, false, false, false);
         }
       }
     }
