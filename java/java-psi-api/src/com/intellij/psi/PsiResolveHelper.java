@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiResolveHelper {
   RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
+  RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
   class SERVICE {
     private SERVICE() {
