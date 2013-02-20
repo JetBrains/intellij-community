@@ -22,6 +22,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.*;
@@ -86,8 +87,11 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       if (!ALL.equals(myCategory) && !category.equals(myCategory)) return false;
     }
 
-    if (myVendor != null && !descriptor.getVendor().toLowerCase().contains(myVendor.toLowerCase())) {
-      return false;
+    if (myVendor != null) {
+      final String vendor = descriptor.getVendor();
+      if (vendor != null && !StringUtil.containsIgnoreCase(vendor, myVendor)) {
+        return false;
+      }
     }
 
     final String repositoryName = ((PluginNode)descriptor).getRepositoryName();
