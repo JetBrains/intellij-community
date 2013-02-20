@@ -154,7 +154,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
   }
 
   private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
+    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
 
     JavaClassNameCompletionContributor.addAllClasses(parameters,
                                                      true, result.getPrefixMatcher(), new Consumer<LookupElement>() {

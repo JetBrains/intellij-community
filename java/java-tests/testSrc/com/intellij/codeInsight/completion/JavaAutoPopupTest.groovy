@@ -1119,18 +1119,35 @@ class Foo {{
     assert end == myFixture.editor.caretModel.logicalPosition
   }
 
-  public void testNonImportedClass() {
+  public void "test two non-imported classes when space selects first autopopup item"() {
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.configureByText 'a.java', 'class Foo extends <caret>'
     type 'Abcde '
     myFixture.checkResult 'import foo.Abcdefg;\n\nclass Foo extends Abcdefg <caret>'
   }
 
-  public void testTwoNonImportedClasses() {
+  public void "test two non-imported classes when space does not select first autopopup item"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+
     myFixture.addClass("package foo; public class Abcdefg {}")
     myFixture.addClass("package bar; public class Abcdefg {}")
     myFixture.configureByText 'a.java', 'class Foo extends <caret>'
-    type 'Abcde '
+    type 'Abcde'
+    assert lookup.items.size() == 2
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    type ' '
+    myFixture.checkResult '''import bar.Abcdefg;
+
+class Foo extends Abcdefg <caret>'''
+  }
+
+  public void testTwoNonImportedClasses_() {
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.addClass("package bar; public class Abcdefg {}")
+    myFixture.configureByText 'a.java', 'class Foo extends <caret>'
+    type 'Abcde'
+    assert lookup.items.size() == 1
+    type ' '
     myFixture.checkResult 'class Foo extends Abcdefg <caret>'
   }
 

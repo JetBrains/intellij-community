@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.util.Consumer;
@@ -28,8 +29,8 @@ public class ClassByNameMerger implements Consumer<LookupElement> {
   private final boolean myShouldMerge;
   private final CompletionResultSet myResult;
 
-  public ClassByNameMerger(boolean shouldMerge, CompletionResultSet result) {
-    myShouldMerge = shouldMerge;
+  public ClassByNameMerger(CompletionParameters parameters, CompletionResultSet result) {
+    myShouldMerge = parameters.getInvocationCount() == 0 && CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
     myResult = result;
   }
 
