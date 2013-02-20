@@ -268,7 +268,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 myHolder.add(result);
               }
               else {
-                final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+                final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+                final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
                   final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
@@ -279,7 +280,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     myHolder.add(result);
                   }
                   else {
-                    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
                     for (int i = 0; i < lambdaParameters.length; i++) {
                       PsiParameter lambdaParameter = lambdaParameters[i];
                       if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(),
@@ -291,6 +291,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                         myHolder.add(result);
                         break;
                       }
+                    }
+                  }
+                  if (!myHolder.hasErrorResults()) {
+                    final PsiClass samClass = resolveResult.getElement();
+                    if (!PsiUtil.isAccessible(samClass, expression, null)) {
+                      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                                     .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
                     }
                   }
                 }
@@ -1054,6 +1061,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create();
             myHolder.add(result1);
           }
+        }
+      }
+      if (!myHolder.hasErrorResults()) {
+        final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+        final PsiClass psiClass = resolveResult.getElement();
+        if (psiClass != null && !PsiUtil.isAccessible(psiClass, expression, null)) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+                         .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
         }
       }
     }
