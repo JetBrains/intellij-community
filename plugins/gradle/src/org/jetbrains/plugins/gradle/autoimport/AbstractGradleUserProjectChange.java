@@ -23,6 +23,12 @@ import org.jetbrains.annotations.Nullable;
  * @since 2/18/13 8:29 PM
  */
 public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUserProjectChange> implements GradleUserProjectChange<T> {
+  
+  private long myTimestamp;
+
+  protected AbstractGradleUserProjectChange() {
+    myTimestamp = System.currentTimeMillis();
+  }
 
   @SuppressWarnings("unchecked")
   @Nullable
@@ -34,5 +40,15 @@ public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUs
   @Override
   public void loadState(T state) {
     XmlSerializerUtil.copyBean(state, this); 
+  }
+
+  @Override
+  public long getTimestamp() {
+    return myTimestamp;
+  }
+
+  @Override
+  public void setTimestamp(long timestamp) {
+    myTimestamp = timestamp;
   }
 }

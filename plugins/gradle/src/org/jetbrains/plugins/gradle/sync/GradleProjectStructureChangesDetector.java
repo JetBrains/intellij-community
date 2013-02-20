@@ -67,14 +67,15 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
       @Override
       public void onChangeEnd(@NotNull Object entity) {
         if (myImportCounter.decrementAndGet() <= 0) {
-          
+
+          myUserProjectChangesCalculator.updateCurrentProjectState();
           myUserProjectChangesCalculator.filterOutdatedChanges();
 
           GradleProject project = myChangesModel.getGradleProject();
           if (project != null) {
             myChangesModel.update(project, true);
           }
-          
+
           // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
           // triggered by gradle.
           rebuildTreeModel();
