@@ -57,7 +57,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   private final List<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
-  private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
+  private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_STATE_IN_DOCUMENT");
 
   CodeFoldingManagerImpl(Project project) {
@@ -83,7 +83,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public void disposeComponent() {
     for (Document document : myDocumentsWithFoldingInfo) {
       if (document != null) {
-        document.putUserData(FOLDING_INFO_IN_DOCUMENT_KEY, null);
+        document.putUserData(myFoldingInfoInDocumentKey, null);
       }
     }
   }
@@ -345,12 +345,14 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @NotNull
   private DocumentFoldingInfo getDocumentFoldingInfo(@NotNull Document document) {
-    DocumentFoldingInfo info = document.getUserData(FOLDING_INFO_IN_DOCUMENT_KEY);
+    DocumentFoldingInfo info = document.getUserData(myFoldingInfoInDocumentKey);
     if (info == null) {
       info = new DocumentFoldingInfo(myProject, document);
-      DocumentFoldingInfo written = ((UserDataHolderEx)document).putUserDataIfAbsent(FOLDING_INFO_IN_DOCUMENT_KEY, info);
-      if (written != info) {
+      DocumentFoldingInfo written = ((UserDataHolderEx)document).putUserDataIfAbsent(myFoldingInfoInDocumentKey, info);
+      if (written == info) {
         myDocumentsWithFoldingInfo.add(document);
+      }
+      else {
         info = written;
       }
     }

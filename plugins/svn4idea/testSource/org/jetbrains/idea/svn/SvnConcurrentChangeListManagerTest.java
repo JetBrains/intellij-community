@@ -374,9 +374,9 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
   private void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
     System.out.println("Checking files for list: " + listName);
-    assert manager.findChangeList(listName) != null;
+    Assert.assertNotNull(manager.findChangeList(listName));
     final Collection<Change> changes = manager.findChangeList(listName).getChanges();
-    assert changes.size() == files.length;
+    Assert.assertEquals(changes.size(), files.length);
 
     for (Change change : changes) {
       final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();

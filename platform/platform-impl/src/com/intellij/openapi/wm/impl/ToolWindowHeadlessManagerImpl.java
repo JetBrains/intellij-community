@@ -213,7 +213,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWIthSameAnchor) {
+    public boolean activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWithSameAnchor) {
       return true;
     }
 

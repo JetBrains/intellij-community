@@ -213,6 +213,8 @@ public class CompilerTask extends Task.Backgroundable {
 
         Runnable runnable = new Runnable() {
           public void run() {
+            if (myProject == null || myProject.isDisposed())
+              return;
             NotificationInfo notificationInfo = getNotificationInfo();
             if (notificationInfo != null && !myMessagesAutoActivated && (myErrorCount > 0 || (myWarningCount > 0 && !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()))) {
               MessageType messageType = myErrorCount > 0 ? MessageType.ERROR : myWarningCount > 0 ? MessageType.WARNING : MessageType.INFO;
