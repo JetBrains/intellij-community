@@ -18,8 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.impl.ASTNodeBuilder;
-import com.intellij.openapi.util.Ref;
+import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -33,11 +32,6 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
-  private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
-    JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
-  private static final TokenSet BLOCK_TOKENS = TokenSet.orSet(
-    TokenSet.create(JavaTokenType.AT), ElementType.CLASS_KEYWORD_BIT_SET);
-
   @NotNull
   @Override
   protected StubElement createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
@@ -61,29 +55,12 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     IElementType parentType = parent.getElementType();
     IElementType nodeType = node.getElementType();
 
-    if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
-      return true;
-    }
-    if (nodeType == JavaElementType.PARAMETER_LIST && parentType == JavaElementType.LAMBDA_EXPRESSION) {
-      return true;
-    }
+    if (checkByTypes(parentType, nodeType)) return true;
 
     if (nodeType == JavaElementType.CODE_BLOCK && node instanceof TreeElement) {
-      final Ref<Boolean> skip = Ref.create(true);
-
-      ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-        @Override
-        protected void visitNode(TreeElement element) {
-          if (BLOCK_ELEMENTS.contains(element.getElementType())) {
-            skip.set(false);
-            stopWalking();
-            return;
-          }
-          super.visitNode(element);
-        }
-      });
-
-      return skip.get();
+      CodeBlockVisitor visitor = new CodeBlockVisitor();
+      ((TreeElement)node).acceptTree(visitor);
+      return visitor.result;
     }
 
     return false;
@@ -94,6 +71,18 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     IElementType parentType = parent.getTokenType();
     IElementType nodeType = node.getTokenType();
 
+    if (checkByTypes(parentType, nodeType)) return true;
+
+    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
+      CodeBlockVisitor visitor = new CodeBlockVisitor();
+      ((LighterLazyParseableNode)node).accept(visitor);
+      return visitor.result;
+    }
+
+    return false;
+  }
+
+  private static boolean checkByTypes(IElementType parentType, IElementType nodeType) {
     if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
       return true;
     }
@@ -101,32 +90,44 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       return true;
     }
 
-    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof ASTNodeBuilder.ASTUnparsedNodeMarker) {
-      ASTNodeBuilder.ASTUnparsedNodeMarker nodeMarker = (ASTNodeBuilder.ASTUnparsedNodeMarker)node;
-      ASTNodeBuilder nodeBuilder = nodeMarker.getBuilder();
-      boolean seenNew = false, skip = true;
+    return false;
+  }
 
-      for (int i = nodeMarker.getStartLexemeIndex(), endIndex = nodeMarker.getEndLexemeIndex(); i < endIndex; ++i) {
-        IElementType type = nodeBuilder.getElementType(i);
-        if (type == JavaTokenType.NEW_KEYWORD) {
-          seenNew = true;
-        }
-        else if (seenNew && type == JavaTokenType.LBRACE) {  // anonymous class
-          skip = false;
-          break;
-        }
-        else if (seenNew && type == JavaTokenType.SEMICOLON) {
-          seenNew = false;
-        }
-        else if (BLOCK_TOKENS.contains(type)) {  // annotated local variables, type annotations, local classes
-          skip = false;
-          break;
-        }
+  private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
+    private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
+      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
+    private static final TokenSet BLOCK_TOKENS = TokenSet.orSet(
+      TokenSet.create(JavaTokenType.AT), ElementType.CLASS_KEYWORD_BIT_SET);
+
+    private boolean result = true;
+    private boolean seenNew = false;
+
+    @Override
+    protected void visitNode(TreeElement element) {
+      if (BLOCK_ELEMENTS.contains(element.getElementType())) {
+        result = false;
+        stopWalking();
+        return;
       }
-
-      return skip;
+      super.visitNode(element);
     }
 
-    return false;
+    @Override
+    public boolean visit(IElementType type) {
+      if (type == JavaTokenType.NEW_KEYWORD) {
+        seenNew = true;
+      }
+      else if (seenNew && type == JavaTokenType.LBRACE) {  // anonymous class
+        result = false;
+      }
+      else if (seenNew && type == JavaTokenType.SEMICOLON) {
+        seenNew = false;
+      }
+      else if (BLOCK_TOKENS.contains(type)) {  // annotated local variables, type annotations, local classes
+        result = false;
+      }
+
+      return result;
+    }
   }
 }
