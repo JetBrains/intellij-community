@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
@@ -22,9 +22,9 @@ public class FragmentManagerTest {
         final MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
         FragmentManagerImpl fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
             @Override
-            public Replace runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
+            public UpdateRequest runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
                 graph.updateVisibleRows();
-                return Replace.ID_REPLACE;
+                return UpdateRequest.ID_UpdateRequest;
             }
 
             @Override

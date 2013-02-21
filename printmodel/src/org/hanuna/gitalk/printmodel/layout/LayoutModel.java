@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.printmodel.layout;
 
 import org.hanuna.gitalk.common.compressedlist.CompressedList;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.common.compressedlist.RuntimeGenerateCompressedList;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.hanuna.gitalk.graph.Graph;
@@ -36,7 +36,7 @@ public class LayoutModel {
         return layoutRowCompressedList.getList();
     }
 
-    public void recalculate(@NotNull Replace replace) {
-        layoutRowCompressedList.recalculate(replace);
+    public void recalculate(@NotNull UpdateRequest updateRequest) {
+        layoutRowCompressedList.recalculate(updateRequest);
     }
 }

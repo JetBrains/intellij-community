@@ -15,18 +15,18 @@ public class IntegerCompressedListTest {
     private final int size = 200;
     private final IntegerGenerator generator = new IntegerGenerator(size);
 
-    private final Replace[] simple = {
-            new Replace(1, 5, 1),
-            new Replace(1, 5, 10),
-            new Replace(10, 15, 97)
+    private final UpdateRequest[] simple = {
+            new UpdateRequest(1, 5, 1),
+            new UpdateRequest(1, 5, 10),
+            new UpdateRequest(10, 15, 97)
     };
 
-    private final Replace[] marginal = {
-            new Replace(size - 2, size - 1, 0),
-            new Replace(size - 4, size - 3, 100),
-            new Replace(0, 1, 0),
-            new Replace(0, 1, 100),
-            new Replace(10, 15, 97)
+    private final UpdateRequest[] marginal = {
+            new UpdateRequest(size - 2, size - 1, 0),
+            new UpdateRequest(size - 4, size - 3, 100),
+            new UpdateRequest(0, 1, 0),
+            new UpdateRequest(0, 1, 100),
+            new UpdateRequest(10, 15, 97)
     };
 
     @Test
@@ -51,13 +51,13 @@ public class IntegerCompressedListTest {
     }
 
 
-    public void runTests(CompressedList<Integer> list, Replace[] replaces) {
+    public void runTests(CompressedList<Integer> list, UpdateRequest[] updateRequests) {
         RunCompressedListTest<Integer> runner = new RunCompressedListTest<Integer>(list, generator);
         runner.assertList();
 
-        for (Replace replace : replaces) {
-            generator.replace(replace);
-            runner.runReplace(replace);
+        for (UpdateRequest updateRequest : updateRequests) {
+            generator.replace(updateRequest);
+            runner.runReplace(updateRequest);
         }
     }
 
@@ -90,15 +90,15 @@ public class IntegerCompressedListTest {
             return list.get(0);
         }
 
-        public void replace(Replace replace) {
+        public void replace(UpdateRequest updateRequest) {
             replaceCount++;
             int shift = replaceCount * 1000;
-            list.subList(replace.from(), replace.to() + 1).clear();
-            List<Integer> newLists = new ArrayList<Integer>(replace.addedElementCount());
-            for (int i = 0; i < replace.addedElementCount(); i++) {
+            list.subList(updateRequest.from(), updateRequest.to() + 1).clear();
+            List<Integer> newLists = new ArrayList<Integer>(updateRequest.addedElementCount());
+            for (int i = 0; i < updateRequest.addedElementCount(); i++) {
                 newLists.add(shift + i);
             }
-            list.addAll(replace.from(), newLists);
+            list.addAll(updateRequest.from(), newLists);
         }
     }
 }

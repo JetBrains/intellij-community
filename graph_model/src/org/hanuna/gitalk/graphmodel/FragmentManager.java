@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel;
 
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +16,10 @@ public interface FragmentManager {
     public GraphFragment relateFragment(@NotNull GraphElement graphElement);
 
     @NotNull
-    public Replace show(@NotNull GraphFragment fragment);
+    public UpdateRequest show(@NotNull GraphFragment fragment);
 
     @NotNull
-    public Replace hide(@NotNull GraphFragment fragment);
+    public UpdateRequest hide(@NotNull GraphFragment fragment);
 
     //true, if node is unhiddenNode
     public void setUnhiddenNodes(@NotNull Get<Node, Boolean> unhiddenNodes);

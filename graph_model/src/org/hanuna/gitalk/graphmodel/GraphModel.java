@@ -2,7 +2,7 @@ package org.hanuna.gitalk.graphmodel;
 
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.log.commit.CommitParents;
@@ -25,7 +25,7 @@ public interface GraphModel {
     @NotNull
     public FragmentManager getFragmentManager();
 
-    public void addUpdateListener(@NotNull Executor<Replace> listener);
+    public void addUpdateListener(@NotNull Executor<UpdateRequest> listener);
 
     public void removeAllListeners();
 }

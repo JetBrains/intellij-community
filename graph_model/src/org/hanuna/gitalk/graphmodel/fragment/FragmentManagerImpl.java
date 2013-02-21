@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -37,7 +37,7 @@ public class FragmentManagerImpl implements FragmentManager {
     }
 
     public interface CallBackFunction {
-        public Replace runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode);
+        public UpdateRequest runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode);
         public void fullUpdate();
     }
 
@@ -119,7 +119,7 @@ public class FragmentManagerImpl implements FragmentManager {
 
     @NotNull
     @Override
-    public Replace show(@NotNull GraphFragment fragment) {
+    public UpdateRequest show(@NotNull GraphFragment fragment) {
         if (fragment.isVisible()) {
             throw new IllegalArgumentException("is not hide fragment: " + fragment);
         }
@@ -129,13 +129,13 @@ public class FragmentManagerImpl implements FragmentManager {
         if (updateFlag) {
             return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
         } else {
-            return Replace.ID_REPLACE;
+            return UpdateRequest.ID_UpdateRequest;
         }
     }
 
     @NotNull
     @Override
-    public Replace hide(@NotNull GraphFragment fragment) {
+    public UpdateRequest hide(@NotNull GraphFragment fragment) {
         if (!fragment.isVisible()) {
             throw new IllegalArgumentException("is hide fragment: " + fragment);
         }
@@ -146,7 +146,7 @@ public class FragmentManagerImpl implements FragmentManager {
         if (updateFlag) {
             return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
         } else {
-            return Replace.ID_REPLACE;
+            return UpdateRequest.ID_UpdateRequest;
         }
     }
 

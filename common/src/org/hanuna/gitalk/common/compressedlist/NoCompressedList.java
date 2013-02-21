@@ -41,15 +41,15 @@ public class NoCompressedList<T> implements CompressedList<T> {
 
 
     @Override
-    public void recalculate(@NotNull Replace replace) {
-        if (replace == Replace.ID_REPLACE) {
+    public void recalculate(@NotNull UpdateRequest updateRequest) {
+        if (updateRequest == UpdateRequest.ID_UpdateRequest) {
             return;
         }
-        if (replace.to() >= size) {
-            throw new IllegalArgumentException("Bad replace: " + replace.from() + ", " +
-                    + replace.to() + ", " + replace.addedElementCount());
+        if (updateRequest.to() >= size) {
+            throw new IllegalArgumentException("Bad updateRequest: " + updateRequest.from() + ", " +
+                    + updateRequest.to() + ", " + updateRequest.addedElementCount());
         }
-        size = replace.addedElementCount() - replace.removedElementCount() + size;
+        size = updateRequest.addedElementCount() - updateRequest.removedElementCount() + size;
         generate();
     }
 }

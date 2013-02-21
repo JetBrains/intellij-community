@@ -103,23 +103,23 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         return mediateSave;
     }
 
-    private void checkReplace(Replace replace) {
-        if (replace.to() >= size) {
-            throw new IllegalArgumentException("size= "+size + "Bad replace: " + replace);
+    private void checkReplace(UpdateRequest updateRequest) {
+        if (updateRequest.to() >= size) {
+            throw new IllegalArgumentException("size= "+size + "Bad updateRequest: " + updateRequest);
         }
     }
 
     @Override
-    public void recalculate(@NotNull Replace replace) {
-        if (replace == Replace.ID_REPLACE) {
+    public void recalculate(@NotNull UpdateRequest updateRequest) {
+        if (updateRequest == UpdateRequest.ID_UpdateRequest) {
             return;
         }
-        checkReplace(replace);
+        checkReplace(updateRequest);
         cache.clear();
-        int deltaSize = replace.addedElementCount() - replace.removedElementCount();
+        int deltaSize = updateRequest.addedElementCount() - updateRequest.removedElementCount();
 
-        int upSaveIndex = binarySearch(replace.from());
-        if (upSaveIndex > 0) { // update started from replace.from()
+        int upSaveIndex = binarySearch(updateRequest.from());
+        if (upSaveIndex > 0) { // update started from updateRequest.from()
             upSaveIndex--;
         } else {
             positionItems.set(0, new PositionItem(0, generator.generateFirst()));
@@ -127,7 +127,7 @@ public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
         PositionItem upSavePositionItem = positionItems.get(upSaveIndex);
 
         int downSaveIndex = upSaveIndex;
-        while (downSaveIndex < positionItems.size() && positionItems.get(downSaveIndex).getPosition() <= replace.to()) {
+        while (downSaveIndex < positionItems.size() && positionItems.get(downSaveIndex).getPosition() <= updateRequest.to()) {
             downSaveIndex++;
         }
 

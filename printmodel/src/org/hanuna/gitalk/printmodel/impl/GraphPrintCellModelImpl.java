@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.printmodel.impl;
 
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.printmodel.*;
 import org.hanuna.gitalk.printmodel.layout.LayoutModel;
@@ -26,8 +26,8 @@ public class GraphPrintCellModelImpl implements GraphPrintCellModel {
         return prevPreModel.downShortEdges();
     }
 
-    public void recalculate(@NotNull Replace replace) {
-        layoutModel.recalculate(replace);
+    public void recalculate(@NotNull UpdateRequest updateRequest) {
+        layoutModel.recalculate(updateRequest);
     }
 
     @Override

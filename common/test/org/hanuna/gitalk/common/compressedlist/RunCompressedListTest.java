@@ -43,14 +43,14 @@ public class RunCompressedListTest<T> {
         assertEquals(message, ActualListStr(), CompressedListStr());
     }
 
-    public void runReplace(Replace replace) {
-        compressedList.recalculate(replace);
-        assertList(replaceToStr(replace));
+    public void runReplace(UpdateRequest updateRequest) {
+        compressedList.recalculate(updateRequest);
+        assertList(replaceToStr(updateRequest));
     }
 
 
-    public String replaceToStr(Replace replace) {
-        return "Replace: from: " + replace.from() + ", to: " + replace.to() + ", addedElementCounts: " + replace.addedElementCount();
+    public String replaceToStr(UpdateRequest updateRequest) {
+        return "UpdateRequest: from: " + updateRequest.from() + ", to: " + updateRequest.to() + ", addedElementCounts: " + updateRequest.addedElementCount();
     }
 
 }

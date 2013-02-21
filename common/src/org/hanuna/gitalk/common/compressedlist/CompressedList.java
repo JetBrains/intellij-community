@@ -13,5 +13,5 @@ public interface CompressedList<T> {
     @NotNull
     public List<T> getList();
 
-    public void recalculate(@NotNull Replace replace);
+    public void recalculate(@NotNull UpdateRequest updateRequest);
 }

@@ -3,7 +3,7 @@ package org.hanuna.gitalk.data.impl;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -40,9 +40,9 @@ public class DataPackImpl implements DataPack {
         timer.clear("build printModel");
         final GraphPrintCellModel printCellModel = new GraphPrintCellModelImpl(graphModel.getGraph());
         timer.print();
-        graphModel.addUpdateListener(new Executor<Replace>() {
+        graphModel.addUpdateListener(new Executor<UpdateRequest>() {
             @Override
-            public void execute(Replace key) {
+            public void execute(UpdateRequest key) {
                 printCellModel.recalculate(key);
             }
         });

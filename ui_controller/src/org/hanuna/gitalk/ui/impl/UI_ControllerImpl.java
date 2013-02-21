@@ -4,7 +4,7 @@ import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Get;
 import org.hanuna.gitalk.common.MyTimer;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataLoader;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.data.impl.DataLoaderImpl;
@@ -129,15 +129,15 @@ public class UI_ControllerImpl implements UI_Controller {
         if (fragment == null) {
             return;
         }
-        Replace replace;
+        UpdateRequest updateRequest;
         if (fragment.isVisible()) {
-            replace = fragmentController.hide(fragment);
+            updateRequest = fragmentController.hide(fragment);
         } else {
-            replace = fragmentController.show(fragment);
+            updateRequest = fragmentController.show(fragment);
         }
         events.runUpdateUI();
         //TODO:
-        events.runJumpToRow(replace.from());
+        events.runJumpToRow(updateRequest.from());
     }
 
     @Override

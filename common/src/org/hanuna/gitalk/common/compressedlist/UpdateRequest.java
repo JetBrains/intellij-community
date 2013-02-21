@@ -3,8 +3,8 @@ package org.hanuna.gitalk.common.compressedlist;
 /**
  * @author erokhins
  */
-public class Replace {
-    public static Replace ID_REPLACE = new Replace(0, 0, 1);
+public class UpdateRequest {
+    public static UpdateRequest ID_UpdateRequest = new UpdateRequest(0, 0, 1);
 
     /**
      * This class describe replace in list or another ordered set's
@@ -13,24 +13,24 @@ public class Replace {
      * Elements from - 1, to + 1, if they exist, shouldn't change after this replace
      *
      * Example:
-     * Replace(1, 3, 2)
+     * UpdateRequest(1, 3, 2)
      * before:   10, 20, 30, 40, 50, ...
      * after:    10, 20,  1,  2, 40, 50, ...
      */
 
-    public static Replace buildFromToInterval(int oldFrom, int oldTo, int newFrom, int newTo) {
+    public static UpdateRequest buildFromToInterval(int oldFrom, int oldTo, int newFrom, int newTo) {
         if (oldFrom != newFrom || oldFrom > oldTo || newFrom > newTo) {
             throw new IllegalArgumentException("oldFrom: " + oldFrom + ", oldTo: " + oldTo +
                     ", newFrom: " + newFrom + ", newTo: " + newTo);
         }
-        return new Replace(oldFrom, oldTo, newTo - newFrom + 1);
+        return new UpdateRequest(oldFrom, oldTo, newTo - newFrom + 1);
     }
 
     private final int from;
     private final int to;
     private final int addedElementCount;
 
-    public Replace(int from, int to, int addedElementCount) {
+    public UpdateRequest(int from, int to, int addedElementCount) {
         if (from < 0 || from > to || addedElementCount < 0) {
             throw new IllegalArgumentException("from: " + from + "to: " + to +
                     "addedElementCount: " + addedElementCount);
@@ -58,7 +58,7 @@ public class Replace {
 
     @Override
     public String toString() {
-        return "Replace{" +
+        return "UpdateRequest{" +
                 "from=" + from +
                 ", to=" + to +
                 ", addedElementCount=" + addedElementCount +

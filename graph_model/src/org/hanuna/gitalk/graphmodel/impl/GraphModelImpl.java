@@ -2,7 +2,7 @@ package org.hanuna.gitalk.graphmodel.impl;
 
 import org.hanuna.gitalk.common.Executor;
 import org.hanuna.gitalk.common.Get;
-import org.hanuna.gitalk.common.compressedlist.Replace;
+import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -26,7 +26,7 @@ public class GraphModelImpl implements GraphModel {
     private final MutableGraph graph;
     private final FragmentManagerImpl fragmentManager;
     private final BranchVisibleNodes visibleNodes;
-    private final List<Executor<Replace>> listeners = new ArrayList<Executor<Replace>>();
+    private final List<Executor<UpdateRequest>> listeners = new ArrayList<Executor<UpdateRequest>>();
     private final GraphBranchShowFixer branchShowFixer;
 
     private Get<Node, Boolean> isStartedBranchVisibilityNode = new Get<Node, Boolean>() {
@@ -41,7 +41,7 @@ public class GraphModelImpl implements GraphModel {
         this.graph = graph;
         this.fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
             @Override
-            public Replace runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
+            public UpdateRequest runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
                 return GraphModelImpl.this.updateIntermediate(upNode, downNode);
             }
 
@@ -74,21 +74,21 @@ public class GraphModelImpl implements GraphModel {
     }
 
     @NotNull
-    private Replace updateIntermediate(@NotNull Node upNode, @NotNull Node downNode) {
+    private UpdateRequest updateIntermediate(@NotNull Node upNode, @NotNull Node downNode) {
         int upRowIndex = upNode.getRowIndex();
         int downRowIndex = downNode.getRowIndex();
         graph.updateVisibleRows();
 
-        Replace replace = Replace.buildFromToInterval(upRowIndex, downRowIndex, upNode.getRowIndex(), downNode.getRowIndex());
-        callUpdateListener(replace);
-        return replace;
+        UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(upRowIndex, downRowIndex, upNode.getRowIndex(), downNode.getRowIndex());
+        callUpdateListener(updateRequest);
+        return updateRequest;
     }
 
     private void fullUpdate() {
         int oldSize = graph.getNodeRows().size();
         graph.updateVisibleRows();
-        Replace replace = Replace.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
-        callUpdateListener(replace);
+        UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
+        callUpdateListener(updateRequest);
     }
 
     @NotNull
@@ -104,8 +104,8 @@ public class GraphModelImpl implements GraphModel {
         visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
         graph.updateVisibleRows();
 
-        Replace replace = Replace.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
-        callUpdateListener(replace);
+        UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
+        callUpdateListener(updateRequest);
     }
 
     @Override
@@ -124,14 +124,14 @@ public class GraphModelImpl implements GraphModel {
         return fragmentManager;
     }
 
-    private void callUpdateListener(@NotNull Replace replace) {
-        for (Executor<Replace> listener : listeners) {
-            listener.execute(replace);
+    private void callUpdateListener(@NotNull UpdateRequest updateRequest) {
+        for (Executor<UpdateRequest> listener : listeners) {
+            listener.execute(updateRequest);
         }
     }
 
     @Override
-    public void addUpdateListener(@NotNull Executor<Replace> listener) {
+    public void addUpdateListener(@NotNull Executor<UpdateRequest> listener) {
         listeners.add(listener);
     }
 
