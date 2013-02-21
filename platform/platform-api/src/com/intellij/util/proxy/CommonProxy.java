@@ -171,6 +171,7 @@ public class CommonProxy extends ProxySelector {
 
   @Override
   public List<Proxy> select(URI uri) {
+    if (uri == null) return NO_PROXY_LIST;
     LOG.debug("CommonProxy.select called for " + uri.toString());
     isInstalledAssertion();
 
