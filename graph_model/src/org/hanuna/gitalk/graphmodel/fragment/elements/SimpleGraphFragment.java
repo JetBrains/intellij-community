@@ -13,7 +13,6 @@ public class SimpleGraphFragment implements GraphFragment {
     private final Node upNode;
     private final Node downNode;
     private final Collection<Node> intermediateNodes;
-    private boolean visibility = true;
 
     public SimpleGraphFragment(Node upNode, Node downNode, Collection<Node> intermediateNodes) {
         this.upNode = upNode;
@@ -21,14 +20,6 @@ public class SimpleGraphFragment implements GraphFragment {
         this.intermediateNodes = intermediateNodes;
     }
 
-    @Override
-    public boolean isVisible() {
-        return visibility;
-    }
-
-    public void setVisibility(boolean visibility) {
-        this.visibility = visibility;
-    }
 
     @Override
     @NotNull

@@ -8,15 +8,14 @@ import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.fragment.elements.HideFragmentEdge;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
  */
 public class FragmentGraphDecorator implements GraphDecorator {
     private final Set<Node> hideNodes = new HashSet<Node>();
+    private final Map<Edge, GraphFragment> hideFragments = new HashMap<Edge, GraphFragment>();
     private final MultiMap<Node, Edge> upNodeEdges = new MultiMap<Node, Edge>();
     private final MultiMap<Node, Edge> downNodeEdges = new MultiMap<Node, Edge>();
 
@@ -47,18 +46,36 @@ public class FragmentGraphDecorator implements GraphDecorator {
         return null;
     }
 
-    public void show(@NotNull GraphFragment fragment, @NotNull Edge hideFragmentEdge) {
-        upNodeEdges.remove(hideFragmentEdge.getUpNode(), hideFragmentEdge);
-        downNodeEdges.remove(hideFragmentEdge.getDownNode(), hideFragmentEdge);
-        hideNodes.removeAll(fragment.getIntermediateNodes());
+    @NotNull
+    private Edge getHideFragmentEdge(@NotNull GraphFragment fragment) {
+        if (!fragment.getIntermediateNodes().isEmpty()) {
+            throw new IllegalArgumentException("is not hide fragment: " + fragment);
+        }
+        List<Edge> downEdges = fragment.getUpNode().getDownEdges();
+        if (downEdges.size() == 1)  {
+            Edge edge = downEdges.get(0);
+            if (edge.getType() == Edge.Type.HIDE_FRAGMENT && edge.getDownNode() == fragment.getDownNode()) {
+                return edge;
+            }
+        }
+        throw new IllegalArgumentException("is bad hide fragment: " + fragment);
     }
 
-    public Edge hide(@NotNull GraphFragment fragment) {
+    public void show(@NotNull GraphFragment fragment) {
+        Edge hideFragmentEdge = getHideFragmentEdge(fragment);
+        upNodeEdges.remove(hideFragmentEdge.getUpNode(), hideFragmentEdge);
+        downNodeEdges.remove(hideFragmentEdge.getDownNode(), hideFragmentEdge);
+
+        GraphFragment hideFragment = hideFragments.remove(hideFragmentEdge);
+        hideNodes.removeAll(hideFragment.getIntermediateNodes());
+    }
+
+    public void hide(@NotNull GraphFragment fragment) {
         Edge edge = new HideFragmentEdge(fragment.getUpNode(), fragment.getDownNode());
         upNodeEdges.put(edge.getUpNode(), edge);
         downNodeEdges.put(edge.getDownNode(), edge);
         hideNodes.addAll(fragment.getIntermediateNodes());
-        return edge;
+        hideFragments.put(edge, fragment);
     }
 
 }

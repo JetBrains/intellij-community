@@ -26,12 +26,10 @@ public class SelectController {
         for (Edge edge : fragment.getUpNode().getDownEdges()) {
             selectedElements.add(edge);
         }
-        if (fragment.isVisible()) {
-            selectedElements.addAll(fragment.getIntermediateNodes());
-            for (Node node : fragment.getIntermediateNodes()) {
-                for (Edge edge : node.getDownEdges()) {
-                    selectedElements.add(edge);
-                }
+        selectedElements.addAll(fragment.getIntermediateNodes());
+        for (Node node : fragment.getIntermediateNodes()) {
+            for (Edge edge : node.getDownEdges()) {
+                selectedElements.add(edge);
             }
         }
     }

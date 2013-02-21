@@ -13,9 +13,7 @@ import org.hanuna.gitalk.graphmodel.fragment.elements.SimpleGraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
 
 /**
  * @author erokhins
@@ -23,7 +21,6 @@ import java.util.Map;
 public class FragmentManagerImpl implements FragmentManager {
     private final MutableGraph graph;
     private final FragmentGenerator fragmentGenerator;
-    private final Map<Edge, GraphFragment> hideFragments = new HashMap<Edge, GraphFragment>();
     private final FragmentGraphDecorator graphDecorator = new FragmentGraphDecorator();
     private final CallBackFunction callBackFunction;
 
@@ -46,6 +43,8 @@ public class FragmentManagerImpl implements FragmentManager {
         fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
     }
 
+    @NotNull
+    @Override
     public GraphDecorator getGraphDecorator() {
         return graphDecorator;
     }
@@ -72,9 +71,7 @@ public class FragmentManagerImpl implements FragmentManager {
         if (node != null) {
             Edge edge = getHideEdge(node);
             if (edge != null) {
-                GraphFragment fragment = hideFragments.get(edge);
-                assert fragment != null;
-                return fragment;
+                return new SimpleGraphFragment(edge.getUpNode(), edge.getDownNode(), Collections.<Node>emptySet());
             } else {
                 GraphFragment fragment = fragmentGenerator.getFragment(node);
                 if (fragment != null && fragment.getDownNode().getRowIndex() >= node.getRowIndex()) {
@@ -87,9 +84,7 @@ public class FragmentManagerImpl implements FragmentManager {
             Edge edge = graphElement.getEdge();
             assert edge != null : "bad graphElement: edge & node is null";
             if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
-                GraphFragment fragment = hideFragments.get(edge);
-                assert fragment != null;
-                return fragment;
+                return new SimpleGraphFragment(edge.getUpNode(), edge.getDownNode(), Collections.<Node>emptySet());
             } else {
                 GraphFragment fragment = fragmentGenerator.getFragment(edge.getUpNode());
                 if (fragment != null && fragment.getDownNode().getRowIndex() >= edge.getDownNode().getRowIndex()) {
@@ -101,30 +96,21 @@ public class FragmentManagerImpl implements FragmentManager {
         }
     }
 
-    @NotNull
-    private Edge getHideFragmentEdge(@NotNull GraphFragment fragment) {
-        if (fragment.isVisible()) {
-            throw new IllegalArgumentException("is not hide fragment: " + fragment);
-        }
-        List<Edge> downEdges = fragment.getUpNode().getDownEdges();
-        if (downEdges.size() == 1)  {
-            Edge edge = downEdges.get(0);
-            if (edge.getType() == Edge.Type.HIDE_FRAGMENT && edge.getDownNode() == fragment.getDownNode()) {
-                return edge;
-            }
-        }
-        throw new IllegalArgumentException("is bad hide fragment: " + fragment);
-    }
 
 
     @NotNull
     @Override
-    public UpdateRequest show(@NotNull GraphFragment fragment) {
-        if (fragment.isVisible()) {
-            throw new IllegalArgumentException("is not hide fragment: " + fragment);
+    public UpdateRequest changeVisibility(@NotNull GraphFragment fragment) {
+        if (fragment.getIntermediateNodes().isEmpty()) {
+            return show(fragment);
+        } else {
+            return hide(fragment);
         }
-        graphDecorator.show(fragment, getHideFragmentEdge(fragment));
-        ((SimpleGraphFragment) fragment).setVisibility(true);
+    }
+
+    @NotNull
+    public UpdateRequest show(@NotNull GraphFragment fragment) {
+        graphDecorator.show(fragment);
 
         if (updateFlag) {
             return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());
@@ -134,14 +120,8 @@ public class FragmentManagerImpl implements FragmentManager {
     }
 
     @NotNull
-    @Override
     public UpdateRequest hide(@NotNull GraphFragment fragment) {
-        if (!fragment.isVisible()) {
-            throw new IllegalArgumentException("is hide fragment: " + fragment);
-        }
-        Edge edge = graphDecorator.hide(fragment);
-        hideFragments.put(edge, fragment);
-        ((SimpleGraphFragment) fragment).setVisibility(false);
+        graphDecorator.hide(fragment);
 
         if (updateFlag) {
             return callBackFunction.runIntermediateUpdate(fragment.getUpNode(), fragment.getDownNode());

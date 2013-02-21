@@ -4,11 +4,13 @@ import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
+import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static org.hanuna.gitalk.graph.GraphStrUtils.toStr;
 import static org.hanuna.gitalk.graph.GraphTestUtils.getCommitNode;
 import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.toStr;
@@ -18,9 +20,9 @@ import static org.hanuna.gitalk.graphmodel.fragment.GraphModelUtils.toStr;
  */
 public class FragmentManagerTest {
 
-    public void runTest(String inputGraph, int nodeRowIndex, String fragmentStr, String hideGraphStr) {
+    public void runTest(String inputGraph, int hideNodeRowIndex, String fragmentStr, int showNodeRowIndex, String hideGraphStr) {
         final MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
-        FragmentManagerImpl fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
+        FragmentManager fragmentManager = new FragmentManagerImpl(graph, new FragmentManagerImpl.CallBackFunction() {
             @Override
             public UpdateRequest runIntermediateUpdate(@NotNull Node upNode, @NotNull Node downNode) {
                 graph.updateVisibleRows();
@@ -34,7 +36,7 @@ public class FragmentManagerTest {
         });
         graph.setGraphDecorator(fragmentManager.getGraphDecorator());
 
-        Node node = getCommitNode(graph, nodeRowIndex);
+        Node node = getCommitNode(graph, hideNodeRowIndex);
         GraphFragment fragment = fragmentManager.relateFragment(node);
         assertEquals(fragmentStr, toStr(fragment));
 
@@ -43,14 +45,14 @@ public class FragmentManagerTest {
         }
 
         String saveGraphStr = toStr(graph);
-        assertTrue(fragment.isVisible());
 
-        fragmentManager.hide(fragment);
-        assertFalse(fragment.isVisible());
+        fragmentManager.changeVisibility(fragment);
         assertEquals(hideGraphStr, toStr(graph));
 
-        fragmentManager.show(fragment);
-        assertTrue(fragment.isVisible());
+        fragment = fragmentManager.relateFragment(getCommitNode(graph, showNodeRowIndex));
+        assertNotNull(fragment);
+
+        fragmentManager.changeVisibility(fragment);
         assertEquals(saveGraphStr, toStr(graph));
     }
 
@@ -62,6 +64,8 @@ public class FragmentManagerTest {
                 1,
 
                 "a0:0|-a1:1|-a2:2",
+
+                0,
 
                 "a0|-|-a0:a2:HIDE_FRAGMENT:a0|-COMMIT_NODE|-a0|-0\n" +
                 "a2|-a0:a2:HIDE_FRAGMENT:a0|-|-COMMIT_NODE|-a0|-1"
@@ -76,6 +80,8 @@ public class FragmentManagerTest {
 
                 "null",
 
+                0,
+
                 ""
         );
     }
@@ -87,6 +93,8 @@ public class FragmentManagerTest {
                 1,
 
                 "null",
+
+                0,
 
                 ""
         );
@@ -102,6 +110,8 @@ public class FragmentManagerTest {
                 2,
 
                 "a1:1|-a2:2|-a3:3",
+
+                1,
 
                 "a0|-|-a0:a1:USUAL:a0#a1 a0:a4:USUAL:a0#a4|-COMMIT_NODE|-a0|-0\n" +
                 "a1|-a0:a1:USUAL:a0#a1|-a1:a3:HIDE_FRAGMENT:a0#a1|-COMMIT_NODE|-a0#a1|-1\n" +
@@ -120,6 +130,8 @@ public class FragmentManagerTest {
                 4,
 
                 "a0:0|-a1:1 a2:2 a3:3|-a4:4",
+
+                1,
 
                 "a0|-|-a0:a4:HIDE_FRAGMENT:a0|-COMMIT_NODE|-a0|-0\n" +
                 "a4|-a0:a4:HIDE_FRAGMENT:a0|-|-COMMIT_NODE|-a0#a4|-1"

@@ -129,12 +129,7 @@ public class UI_ControllerImpl implements UI_Controller {
         if (fragment == null) {
             return;
         }
-        UpdateRequest updateRequest;
-        if (fragment.isVisible()) {
-            updateRequest = fragmentController.hide(fragment);
-        } else {
-            updateRequest = fragmentController.show(fragment);
-        }
+        UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
         events.runUpdateUI();
         //TODO:
         events.runJumpToRow(updateRequest.from());

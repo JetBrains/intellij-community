@@ -10,8 +10,6 @@ import java.util.Collection;
  */
 public interface GraphFragment {
 
-    public boolean isVisible();
-
     @NotNull
     public Node getUpNode();
 
