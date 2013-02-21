@@ -112,19 +112,22 @@ public class PyDocstringGenerator {
       throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
     }
 
-    builder.replaceRange(TextRange.create(getStartOffset(), getEndOffset()), getDefaultType());
+    int offset = getStartOffset();
+    if (offset > 0) {
+      builder.replaceRange(TextRange.create(offset, getEndOffset()), getDefaultType());
 
-    Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(
-      myProject,
-      myFile.getVirtualFile(),
-      myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
-    );
-    Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
-    if (targetEditor != null) {
-      targetEditor.getCaretModel().moveToOffset(myDocStringExpression.getTextOffset());
-      TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(
+        myProject,
+        myFile.getVirtualFile(),
+        myDocStringOwner.getTextOffset() + myDocStringOwner.getTextLength()
+      );
+      Editor targetEditor = FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+      if (targetEditor != null) {
+        targetEditor.getCaretModel().moveToOffset(myDocStringExpression.getTextOffset());
+        TemplateManager.getInstance(myProject).startTemplate(targetEditor, template);
+      }
     }
   }
 
@@ -177,14 +180,13 @@ public class PyDocstringGenerator {
     return docstring != null ? docstring.getText() : "\"\"\"\"\"\"";
   }
 
-  public static Collection<DocstringParam> getParamsToAdd(StructuredDocString structuredDocString,
+  public static Collection<DocstringParam> getParamsToAdd(final StructuredDocString structuredDocString,
                                                           List<DocstringParam> params) {
-    final List<String> existingParameters =
-      structuredDocString != null ? structuredDocString.getParameters() : Lists.<String>newArrayList();
     return Collections2.filter(params, new Predicate<DocstringParam>() {
       @Override
       public boolean apply(DocstringParam input) {
-        return !existingParameters.contains(input.getName());
+        Substring s = structuredDocString != null ? structuredDocString.getParamByNameAndKind(input.getName(), input.getKind()) : null;
+        return s == null;
       }
     });
   }
@@ -309,9 +311,14 @@ public class PyDocstringGenerator {
   }
 
   public int getStartOffset() {
+    Pair<Integer, Integer> offsets = getOffsets();
+    return offsets != null ? offsets.first : -1;
+  }
+
+  private Pair<Integer, Integer> getOffsets() {
     DocstringParam paramToEdit = getParamToEdit();
     String paramName = paramToEdit.getName();
-    return myParamTypesOffset.get(paramName).first;
+    return myParamTypesOffset.get(paramName);
   }
 
   private DocstringParam getParamToEdit() {
@@ -322,12 +329,11 @@ public class PyDocstringGenerator {
   }
 
   public int getEndOffset() {
-    DocstringParam paramToEdit = getParamToEdit();
-    String paramName = paramToEdit.getName();
-    return myParamTypesOffset.get(paramName).second;
+    Pair<Integer, Integer> offsets = getOffsets();
+    return offsets != null ? offsets.second : -1;
   }
 
-  private static class DocstringParam {
+  public static class DocstringParam {
     private String myKind;
     private String myName;
     private String myType;

@@ -41,6 +41,7 @@ public class PyIntentionTest extends PyTestCase {
 
   /**
    * Ensures that intention with given hint <i>is not</i> active.
+   *
    * @param hint
    */
   private void doNegativeTest(String hint) {
@@ -201,6 +202,7 @@ public class PyIntentionTest extends PyTestCase {
     final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
     assertNull(action);
   }
+
   public void testDictLiteralFormToConstructor3() {
     myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor3" + ".py");
     final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
@@ -262,7 +264,7 @@ public class PyIntentionTest extends PyTestCase {
   public void testTransformConditionalExpression() { //PY-3094
     doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
   }
-  
+
   public void testImportFromToImport() {
     doTest("Convert to 'import sys'");
   }
@@ -289,6 +291,10 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testTypeInDocstring6() {         //PY-7973
     doNegativeTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
+  public void testTypeInDocstring7() {         //PY-8930
+    doDocReferenceTest();
   }
 
   private void doDocReferenceTest() {
