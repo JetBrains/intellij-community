@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -62,6 +63,7 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
+      final PsiElement parent = string.getParent();
       String stringText = string.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       String prefix = stringText.substring(0, prefixLength);
@@ -69,7 +71,6 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
       stringText = string.getStringValue();
       List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
-
 
       StringBuilder result = new StringBuilder();
       if (subStrings.size() != 1)
@@ -91,7 +92,12 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       if (subStrings.size() != 1)
         result.append(")");
       PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
-      string.replace(e.getExpression());
+
+      PyExpression expression = e.getExpression();
+      if (parent instanceof PyTupleExpression && expression instanceof PyParenthesizedExpression)
+        expression = ((PyParenthesizedExpression)expression).getContainedExpression();
+      if (expression != null)
+        string.replace(expression);
     }
   }
 
