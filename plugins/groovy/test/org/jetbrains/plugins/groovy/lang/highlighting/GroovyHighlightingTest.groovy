@@ -1119,4 +1119,44 @@ print([1:2])
 print(<error descr="Collection literal contains named and expression arguments at the same time">[1:2, 4]</error>)
 ''')
   }
+
+  public void testAnnotationCollectorInterfaceWithAttrs() {
+    testHighlighting('''\
+@interface Foo {
+  int foo()
+}
+
+
+@groovy.transform.AnnotationCollector
+@Foo
+@interface <error descr="Annotation type annotated with @AnnotationCollector cannot have attributes">A</error> {
+  int bar()
+}
+
+@A(foo = 2)
+class X{}
+''')
+  }
+
+  public void testAnnotationCollectorClass() {
+    testHighlighting('''
+@interface Foo {
+  int foo()
+}
+
+@groovy.transform.AnnotationCollector
+@Foo
+class A {
+  int bar() {}
+}
+
+class B{}
+
+@A(foo = 2)
+@<error descr="'B' is not an annotation">B</error>
+class X {}
+''')
+
+
+  }
 }

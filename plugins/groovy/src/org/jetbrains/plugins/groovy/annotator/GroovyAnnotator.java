@@ -87,6 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
@@ -359,6 +360,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
+
+    checkAnnotationCollector(myHolder, typeDefinition);
+  }
+
+  private static void checkAnnotationCollector(AnnotationHolder holder, GrTypeDefinition definition) {
+    if (definition.isAnnotationType() &&
+        GrAnnotationCollector.findAnnotationCollector(definition) != null &&
+        definition.getCodeMethods().length > 0) {
+      holder.createErrorAnnotation(definition.getNameIdentifierGroovy(), GroovyBundle.message("annotation.collector.cannot.have.attributes"));
+    }
   }
 
   private static void checkConstructors(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
@@ -786,7 +797,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
     PsiElement resolved = refElement.resolve();
-    if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+    if (resolved instanceof PsiClass &&
+        (((PsiClass)resolved).isAnnotationType() ||
+                                         GrAnnotationCollector.findAnnotationCollector(resolved) != null &&
+                                         refElement.getParent() instanceof GrAnnotation)) {
       myHolder.createInfoAnnotation(refElement, null).setTextAttributes(ANNOTATION);
     }
   }
@@ -1330,7 +1344,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     PsiClass anno = (PsiClass)resolved;
     String qname = anno.getQualifiedName();
-    if (!anno.isAnnotationType()) {
+    if (!anno.isAnnotationType() && GrAnnotationCollector.findAnnotationCollector(anno) == null) {
       if (qname != null) {
         myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", qname));
       }
