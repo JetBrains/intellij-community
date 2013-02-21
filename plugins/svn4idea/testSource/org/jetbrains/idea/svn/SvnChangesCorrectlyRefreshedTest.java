@@ -69,7 +69,9 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
     if (updateException != null) {
       updateException.printStackTrace();
     }
-    Assert.assertNull(updateException == null ? null : updateException.getMessage(), updateException);
+    if (! SvnVcs.ourBusyExceptionProcessor.process(updateException)) {
+      Assert.assertNull(updateException == null ? null : updateException.getMessage(), updateException);
+    }
 
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
 
