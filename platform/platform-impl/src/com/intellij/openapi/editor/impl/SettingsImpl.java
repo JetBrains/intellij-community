@@ -76,6 +76,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myUseCustomSoftWrapIndent               = null;
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
+  private Boolean myWrapWhenTypingReachesRightMargin      = null;
 
   public SettingsImpl(@Nullable EditorEx editor) {
     myEditor = editor;
@@ -147,7 +148,19 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
-    return CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
+    return myWrapWhenTypingReachesRightMargin != null ?
+           myWrapWhenTypingReachesRightMargin.booleanValue() :
+           CodeStyleFacade.getInstance(project).isWrapWhenTypingReachesRightMargin();
+  }
+
+  @Override
+  public void setWrapWhenTypingReachesRightMargin(boolean val) {
+    Boolean newValue = Boolean.valueOf(val);
+    if (newValue.equals(myWrapWhenTypingReachesRightMargin)) {
+      return;
+    }
+    myWrapWhenTypingReachesRightMargin = newValue;
+    fireEditorRefresh();
   }
 
   @Override

@@ -120,6 +120,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
       boolean enableSpellChecking = forceSpellCheckOn || configuration.CHECK_COMMIT_MESSAGE_SPELLING;
       features.add(SpellCheckingEditorCustomization.getInstance(enableSpellChecking));
       features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, configuration.COMMIT_MESSAGE_MARGIN_SIZE));
+      features.add(WrapWhenTypingReachesRightMarginCustomization.getInstance(configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN));
     } else {
       features.add(SpellCheckingEditorCustomization.ENABLED);
       features.add(new RightMarginEditorCustomization(false, -1));
