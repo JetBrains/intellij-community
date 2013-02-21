@@ -372,6 +372,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
+  public void scopesChanged() {
+    for (ScopeToolState toolState : getAllTools()) {
+      toolState.scopesChanged();
+    }
+    InspectionProfileManager.getInstance().fireProfileChanged(this);
+  }
+
+  @Override
   public void setEditable(final String displayName) {
     myEnabledTool = displayName;
   }

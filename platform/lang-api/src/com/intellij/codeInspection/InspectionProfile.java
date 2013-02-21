@@ -63,4 +63,6 @@ public interface InspectionProfile extends Profile {
 
   @NotNull
   String getDisplayName();
+
+  void scopesChanged();
 }

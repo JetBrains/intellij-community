@@ -149,4 +149,8 @@ public class ScopeToolState {
     }
     return false;
   }
+
+  public void scopesChanged() {
+    myScope = null;
+  }
 }
