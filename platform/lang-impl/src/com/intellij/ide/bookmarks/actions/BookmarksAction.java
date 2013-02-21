@@ -104,7 +104,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       popup.cancel();
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
         public void run() {
-          bookmark.navigate();
+          bookmark.navigate(true);
         }
       });
     }
@@ -133,7 +133,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (item instanceof BookmarkItem && withEnterOrDoubleClick) {
       Bookmark bookmark = ((BookmarkItem)item).getBookmark();
       popup.cancel();
-      bookmark.navigate();
+      bookmark.navigate(true);
     }
   }
 
