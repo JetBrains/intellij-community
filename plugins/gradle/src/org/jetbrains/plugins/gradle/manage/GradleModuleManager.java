@@ -7,6 +7,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -16,6 +18,7 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +64,7 @@ public class GradleModuleManager {
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        removeExistingModulesConfigs(modules);
+        removeExistingModulesConfigs(modules, project);
         Application application = ApplicationManager.getApplication();
         final Map<GradleModule, Module> moduleMappings = new HashMap<GradleModule, Module>();
         application.runWriteAction(new Runnable() {
@@ -130,18 +133,28 @@ public class GradleModuleManager {
     }
   }
 
-  private static void removeExistingModulesConfigs(@NotNull Collection<? extends  GradleModule> modules) {
-    for (GradleModule module : modules) {
-      // Remove existing '*.iml' file if necessary.
-      final String moduleFilePath = module.getModuleFilePath();
-      File file = new File(moduleFilePath);
-      if (file.isFile()) {
-        boolean success = file.delete();
-        if (!success) {
-          GradleLog.LOG.warn("Can't remove existing module file at '" + moduleFilePath + "'");
-        }
-      }
+  private void removeExistingModulesConfigs(@NotNull final Collection<? extends  GradleModule> modules, @NotNull Project project) {
+    if (modules.isEmpty()) {
+      return;
     }
+    GradleUtil.executeProjectChangeAction(project, modules, true, new Runnable() {
+      @Override
+      public void run() {
+        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+        for (GradleModule module : modules) {
+          // Remove existing '*.iml' file if necessary.
+          VirtualFile file = fileSystem.refreshAndFindFileByPath(module.getModuleFilePath());
+          if (file != null) {
+            try {
+              file.delete(this);
+            }
+            catch (IOException e) {
+              GradleLog.LOG.warn("Can't remove existing module file at '" + module.getModuleFilePath() + "'");
+            }
+          }
+        } 
+      }
+    });
   }
 
   @SuppressWarnings("MethodMayBeStatic")

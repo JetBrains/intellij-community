@@ -324,6 +324,11 @@ public class GradleProjectStructureHelper {
   }
 
   @Nullable
+  public GradleModuleDependency findGradleModuleDependency(@NotNull GradleModuleDependencyId id) {
+    return findGradleModuleDependency(id.getOwnerModuleName(), id.getDependencyName());
+  }
+  
+  @Nullable
   public GradleModuleDependency findGradleModuleDependency(@NotNull final String ownerModuleName,
                                                            @NotNull final String dependencyModuleName)
   {
@@ -344,6 +349,11 @@ public class GradleProjectStructureHelper {
       dependency.invite(visitor);
     }
     return ref.get();
+  }
+
+  @Nullable
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull final GradleModuleDependencyId id) {
+    return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName());
   }
   
   @Nullable

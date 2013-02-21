@@ -44,6 +44,7 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   private String  myGradleHome;
   private String  myServiceDirectoryPath;
   private boolean myPreferLocalInstallationToWrapper;
+  private boolean myUseAutoImport = true; // Turned on by default.
 
   @Override
   public GradleSettings getState() {
@@ -139,9 +140,27 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
     }
   }
 
+  public boolean isUseAutoImport() {
+    return myUseAutoImport;
+  }
+
+  public void setUseAutoImport(boolean useAutoImport) {
+    myUseAutoImport = useAutoImport;
+  }
+
+  public static void applyUseAutoImport(boolean useAutoImport, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    final boolean oldValue = settings.isUseAutoImport();
+    if (oldValue != useAutoImport) {
+      settings.setUseAutoImport(useAutoImport);
+      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onUseAutoImportChange(oldValue, useAutoImport);
+    }
+  }
+
   public static void applySettings(@Nullable String linkedProjectPath,
                                    @Nullable String gradleHomePath,
                                    boolean preferLocalInstallationToWrapper,
+                                   boolean useAutoImport,
                                    @Nullable String serviceDirectoryPath,
                                    @NotNull Project project)
   {
@@ -151,6 +170,7 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
       applyLinkedProjectPath(linkedProjectPath, project);
       applyGradleHome(gradleHomePath, project);
       applyPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper, project);
+      applyUseAutoImport(useAutoImport, project);
       applyServiceDirectoryPath(serviceDirectoryPath, project);
     }
     finally {

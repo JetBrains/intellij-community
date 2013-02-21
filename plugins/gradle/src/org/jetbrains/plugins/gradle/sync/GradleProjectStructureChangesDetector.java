@@ -11,6 +11,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter;
 import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
@@ -43,14 +44,17 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   @NotNull private final GradleProjectStructureChangesModel myChangesModel;
   @NotNull private final Project                            myProject;
   @NotNull private final GradleUserProjectChangesCalculator myUserProjectChangesCalculator;
+  @NotNull private final GradleAutoImporter                 myAutoImporter;
 
   public GradleProjectStructureChangesDetector(@NotNull Project project,
                                                @NotNull GradleProjectStructureChangesModel model,
-                                               @NotNull GradleUserProjectChangesCalculator calculator)
+                                               @NotNull GradleUserProjectChangesCalculator calculator,
+                                               @NotNull GradleAutoImporter importer)
   {
     myProject = project;
     myChangesModel = model;
     myUserProjectChangesCalculator = calculator;
+    myAutoImporter = importer;
     myChangesModel.addListener(this);
     subscribeToGradleImport(project);
     subscribeToRootChanges(project);
@@ -69,7 +73,6 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
         if (myImportCounter.decrementAndGet() <= 0) {
 
           myUserProjectChangesCalculator.updateCurrentProjectState();
-          myUserProjectChangesCalculator.filterOutdatedChanges();
 
           GradleProject project = myChangesModel.getGradleProject();
           if (project != null) {
@@ -81,9 +84,9 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
           rebuildTreeModel();
         }
       }
-    });    
+    });
   }
-  
+
   private void subscribeToRootChanges(@NotNull Project project) {
     project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
@@ -98,7 +101,7 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   private void rebuildTreeModel() {
     final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(myProject);
     if (treeModel != null) {
-      treeModel.rebuild();
+      treeModel.rebuild(myAutoImporter.isInProgress());
     }
   }
 

@@ -89,6 +89,7 @@ public class GradleUserProjectChangesCalculator {
   public GradleProject updateCurrentProjectState() {
     GradleProject state = buildCurrentIdeProject();
     myLastProjectState = state;
+    filterOutdatedChanges();
     return state;
   }
 
@@ -101,10 +102,8 @@ public class GradleUserProjectChangesCalculator {
   public void updateChanges() {
     GradleProject lastProjectState = myLastProjectState;
     if (lastProjectState == null) {
-      lastProjectState = updateCurrentProjectState();
-      if (lastProjectState == null) {
-        return;
-      }
+      updateCurrentProjectState();
+      return;
     }
 
     GradleProject currentProjectState = buildCurrentIdeProject();
@@ -116,6 +115,8 @@ public class GradleUserProjectChangesCalculator {
 
     buildModulePresenceChanges(context);
     buildDependencyPresenceChanges(context);
+    filterOutdatedChanges();
+    context.currentChanges.addAll(mySettings.getUserProjectChanges());
     mySettings.setUserProjectChanges(context.currentChanges);
     myLastProjectState = currentProjectState;
   }
