@@ -53,9 +53,21 @@ public class HgUpdateToAction extends HgAbstractGlobalAction {
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      String updateToValue = dialog.isBranchSelected()
-                             ? dialog.getBranch().getName()
-                             : dialog.isTagSelected() ? dialog.getTag().getName() : dialog.getRevision();
+      String updateToValue;
+      if (dialog.isBranchSelected() && dialog.getBranch() != null) {
+        updateToValue = dialog.getBranch().getName();
+      }
+      else if (dialog.isTagSelected() && dialog.getTag() != null) {
+        updateToValue = dialog.getTag().getName();
+      }
+      else if (dialog.isRevisionSelected()) {
+        updateToValue = dialog.getRevision();
+      }
+      else {
+        new HgCommandResultNotifier(project).notifyError(null, "Update failed", "Couldn't execute Mercurial command");
+        return;// hg execute command error occurs//
+      }
+
       new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", updateToValue)) {
 
         @Override

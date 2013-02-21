@@ -1,0 +1,7 @@
+-Matcher2.java
+ -Matcher2
+  getIcon(): void
+  -A
+   getIcon(): Icon
+  -B
+   [getIcon(): Icon]

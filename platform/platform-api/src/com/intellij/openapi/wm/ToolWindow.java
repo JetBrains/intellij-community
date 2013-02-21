@@ -51,7 +51,7 @@ public interface ToolWindow extends BusyObject {
    * If it's <code>false</code> and current active window has same anchor, activation will be cancelled
    * @return <code>false</code> if activation was cancelled, otherwise <code>true</code>
    */
-  boolean activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWIthSameAnchor);
+  boolean activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced, boolean ignoreActiveWindowWithSameAnchor);
 
   /**
    * @return whether the tool window is visible or not.

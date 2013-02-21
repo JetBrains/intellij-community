@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,10 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.impl.ApplicationStatementUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.method.ExtractMethodInfoHelper;
 
@@ -288,7 +290,9 @@ public class ExtractUtil {
     String typeText = getTypeString(helper, false, modifier);
     buffer.append(modifier);
     buffer.append(typeText);
-    buffer.append(helper.getName());
+
+    appendName(buffer, helper.getName());
+
     buffer.append("(");
     for (String param : getParameterString(helper, true)) {
       buffer.append(param);
@@ -304,6 +308,17 @@ public class ExtractUtil {
     GrMethod method = factory.createMethodFromText(methodText);
     LOG.assertTrue(method != null);
     return method;
+  }
+
+  public static void appendName(@NotNull final StringBuilder buffer, @NotNull final String name) {
+    if (GroovyNamesUtil.isIdentifier(name)) {
+      buffer.append(name);
+    }
+    else {
+      buffer.append("'");
+      buffer.append(GrStringUtil.escapeSymbolsForString(name, true, false));
+      buffer.append("'");
+    }
   }
 
   public static void generateBody(ExtractInfoHelper helper, boolean isVoid, StringBuilder buffer, boolean forceReturn) {
@@ -432,7 +447,8 @@ public class ExtractUtil {
 
   private static GrMethodCallExpression createMethodCall(ExtractInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append(helper.getName()).append("(");
+    appendName(buffer, helper.getName());
+    buffer.append("(");
     int number = 0;
     for (ParameterInfo info : helper.getParameterInfos()) {
       if (info.passAsParameter()) number++;
