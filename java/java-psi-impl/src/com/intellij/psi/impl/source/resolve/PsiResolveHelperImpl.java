@@ -1073,7 +1073,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       expectedType = ((PsiTypeCastExpression)parent).getType();
     } else if (parent instanceof PsiConditionalExpression) {
       if (PsiUtil.isLanguageLevel8OrHigher(parent)) {
-        return inferMethodTypeParameterFromParent(parent.getParent(), (PsiExpression)parent, typeParameter, substitutor, policy);
+        try {
+          return inferMethodTypeParameterFromParent(PsiUtil.skipParenthesizedExprUp(parent.getParent()), (PsiExpression)parent, typeParameter, substitutor, policy);
+        }
+        finally {
+          GraphInferencePolicy.forget(parent);
+        }
       }
     }
 
