@@ -45,10 +45,13 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
   private List<MethodConditionCheck> myAssertTrueMethods = new ArrayList<MethodConditionCheck>();
   private List<MethodConditionCheck> myAssertFalseMethods = new ArrayList<MethodConditionCheck>();
 
-  private static Project myProject;
+  private Project myProject;
+
+  public ConditionCheckManager(Project project) {
+    myProject = project;
+  }
 
   public static ConditionCheckManager getInstance(Project project) {
-    myProject = project;
     return ServiceManager.getService(project, ConditionCheckManager.class);
   }
 
