@@ -16,6 +16,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface for IsNull, IsNotNull Method Checks and Assert True/False/IsNull/IsNotNull Method Checks to be performed by the Constant Condition Inspection.
@@ -51,5 +52,6 @@ public interface ConditionChecker {
 
   boolean overlaps(ConditionChecker checker);
 
+  @NotNull
   Type getType();
 }
