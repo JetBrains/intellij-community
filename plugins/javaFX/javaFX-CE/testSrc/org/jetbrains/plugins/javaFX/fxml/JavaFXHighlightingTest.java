@@ -119,6 +119,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
   }
 
+  public void testCustomComponent_Fields() throws Exception {
+    configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/_CustomVBox.java");
+    doDoTest(false, false);
+  }
+
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
     doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
   }

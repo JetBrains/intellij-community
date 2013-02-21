@@ -98,7 +98,7 @@ public class JavaFxPsiUtil {
 
       PsiFile file = tag.getContainingFile();
       for (String anImport : imports) {
-        if (StringUtil.endsWith(anImport, "." + name)) {
+        if (StringUtil.getShortName(anImport).equals(name)) {
           psiClass = psiFacade.findClass(anImport, file.getResolveScope()); 
         } else if (StringUtil.endsWith(anImport, ".*")) {
           psiClass = psiFacade.findClass(StringUtil.trimEnd(anImport, "*") + name, file.getResolveScope());
@@ -157,15 +157,6 @@ public class JavaFxPsiUtil {
       }
     }
     return null;
-  }
-
-  public static boolean isClassTag(String name) {
-    final String shortName = StringUtil.getShortName(name);
-    final boolean capitalized = StringUtil.isCapitalized(name);
-    if (name.equals(shortName)) {
-      return capitalized;
-    }
-    return !capitalized;
   }
 
   public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {

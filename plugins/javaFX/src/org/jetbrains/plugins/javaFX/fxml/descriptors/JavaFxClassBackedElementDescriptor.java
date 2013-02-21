@@ -136,23 +136,27 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
-    if (JavaFxPsiUtil.isClassTag(name)) {
-      return new JavaFxClassBackedElementDescriptor(name, childTag);
+    if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
+      return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
     }
-    else {
-      final String shortName = StringUtil.getShortName(name);
-      if (!name.equals(shortName)) { //static property
-        final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(name, childTag);
-        if (propertySetter != null) {
-          return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName, true);
-        }
+    final String shortName = StringUtil.getShortName(name);
+    if (!name.equals(shortName)) { //static property
+      final PsiMethod propertySetter = JavaFxPsiUtil.findPropertySetter(name, childTag);
+      if (propertySetter != null) {
+        return new JavaFxPropertyElementDescriptor(propertySetter.getContainingClass(), shortName, true);
+      }
+
+      final Project project = childTag.getProject();
+      if (JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project)) == null) {
         return null;
       }
-      if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
-        return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
-      }
-      return myPsiClass != null ? new JavaFxPropertyElementDescriptor(myPsiClass, name, false) : null;
     }
+
+    final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
+    if (myPsiClass != null && elementDescriptor.getDeclaration() != null) {
+      return elementDescriptor;
+    }
+    return new JavaFxClassBackedElementDescriptor(name, childTag);
   }
 
   @Override
