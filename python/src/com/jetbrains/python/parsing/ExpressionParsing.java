@@ -606,13 +606,21 @@ public class ExpressionParsing extends Parsing {
       return false;
     }
     if (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
+      PsiBuilder.Marker conditionMarker = myBuilder.mark();
       myBuilder.advanceLexer();
       if (!parseORTestExpression(stopOnIn, isTargetExpression)) {
         myBuilder.error(message("PARSE.expected.expression"));
       }
       else {
         if (myBuilder.getTokenType() != PyTokenTypes.ELSE_KEYWORD) {
-          myBuilder.error(message("PARSE.expected.else"));
+          if (atToken(PyTokenTypes.COLON)) {   // it's regular if statement. Bracket wasn't closed or new line was lost
+            conditionMarker.rollbackTo();
+            condExpr.drop();
+            return true;
+          }
+          else {
+            myBuilder.error(message("PARSE.expected.else"));
+          }
         }
         else {
           myBuilder.advanceLexer();
@@ -621,6 +629,7 @@ public class ExpressionParsing extends Parsing {
           }
         }
       }
+      conditionMarker.drop();
       condExpr.done(PyElementTypes.CONDITIONAL_EXPRESSION);
     }
     else {
