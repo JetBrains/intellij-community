@@ -5,12 +5,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.DefaultStubBuilder;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -26,18 +24,13 @@ public class PyFileStubBuilder extends DefaultStubBuilder {
   }
 
   @Override
-  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement element, @NotNull PsiElement child) {
-    return element instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)element);
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
+    return parent instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)parent);
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
-    if (parent != null) {
-      final PsiElement psi = parent.getPsi();
-      if (psi != null) {
-        return psi instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)psi);
-      }
-    }
-    return super.skipChildProcessingWhenBuildingStubs(parent, childType);
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+    PsiElement psi = parent.getPsi();
+    return psi instanceof PyIfStatement && PyUtil.isIfNameEqualsMain((PyIfStatement)psi);
   }
 }
