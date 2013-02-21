@@ -96,11 +96,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
   private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
     private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
       JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
-    private static final TokenSet BLOCK_TOKENS = TokenSet.orSet(
-      TokenSet.create(JavaTokenType.AT), ElementType.CLASS_KEYWORD_BIT_SET);
 
     private boolean result = true;
-    private boolean seenNew = false;
 
     @Override
     protected void visitNode(TreeElement element) {
@@ -112,22 +109,36 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       super.visitNode(element);
     }
 
+    private IElementType last = null;
+    private boolean seenNew = false;
+
     @Override
     public boolean visit(IElementType type) {
-      if (type == JavaTokenType.NEW_KEYWORD) {
-        seenNew = true;
+      if (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type)) {
+        return true;
       }
-      else if (seenNew && type == JavaTokenType.LBRACE) {  // anonymous class
-        result = false;
+
+      // annotations
+      if (type == JavaTokenType.AT) {
+        return (result = false);
+      }
+      // anonymous classes
+      else if (type == JavaTokenType.NEW_KEYWORD) {
+        seenNew = true;
       }
       else if (seenNew && type == JavaTokenType.SEMICOLON) {
         seenNew = false;
       }
-      else if (BLOCK_TOKENS.contains(type)) {  // annotated local variables, type annotations, local classes
-        result = false;
+      else if (seenNew && type == JavaTokenType.LBRACE && last != JavaTokenType.RBRACKET) {
+        return (result = false);
+      }
+      // local classes
+      else if (type == JavaTokenType.CLASS_KEYWORD && last != JavaTokenType.DOT) {
+        return (result = false);
       }
 
-      return result;
+      last = type;
+      return true;
     }
   }
 }
