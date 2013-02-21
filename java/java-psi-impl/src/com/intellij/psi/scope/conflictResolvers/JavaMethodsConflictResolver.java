@@ -550,7 +550,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
     if (isMoreSpecific == null) {
       if (!JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7) ||
-          !MethodSignatureUtil.areParametersErasureEqual(method1, method2)) {
+          !MethodSignatureUtil.areParametersErasureEqual(method1, method2) ||
+           InheritanceUtil.isInheritorOrSelf(class1, class2, true) ||
+           InheritanceUtil.isInheritorOrSelf(class2, class1, true)) {
         if (typeParameters1.length < typeParameters2.length) return Specifics.FIRST;
         if (typeParameters1.length > typeParameters2.length) return Specifics.SECOND;
       }
