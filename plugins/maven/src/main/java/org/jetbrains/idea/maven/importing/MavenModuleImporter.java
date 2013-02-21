@@ -91,6 +91,8 @@ public class MavenModuleImporter {
   }
 
   public void preConfigFacets() {
+    if (myModule.isDisposed()) return;
+
     final ModuleType moduleType = ModuleType.get(myModule);
 
     for (final MavenImporter importer : getSuitableImporters()) {
