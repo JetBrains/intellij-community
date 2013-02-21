@@ -606,6 +606,7 @@ def layout_jps(String home, String target) {
       include(name: "asm4-all.jar")
       include(name: "nanoxml-*.jar")
       include(name: "protobuf-*.jar")
+      include(name: "cli-parser-*.jar")
       include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")
