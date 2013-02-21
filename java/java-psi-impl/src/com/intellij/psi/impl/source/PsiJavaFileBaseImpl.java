@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,14 +139,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   @NotNull
   public PsiImportList getImportList() {
-    final StubElement<?> stub = getStub();
+    StubElement<?> stub = getStub();
     if (stub != null) {
-      final PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
-      assert nodes.length == 1 : getFileType() + ", " + getName();
+      PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
+      assert nodes.length == 1 : stub + "; " + stub.getChildrenStubs();
       return nodes[0];
     }
 
-    final ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
+    ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
     assert node != null : getFileType() + ", " + getName();
     return SourceTreeToPsiMap.treeToPsiNotNull(node);
   }
@@ -272,10 +272,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     assert isValid();
-    
+
     // TODO den remove
     boolean allowCaching = true;
-    
+
     if (allowCaching && processor instanceof ClassResolverProcessor && isPhysical() &&
         (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
       final ClassResolverProcessor hint = (ClassResolverProcessor)processor;

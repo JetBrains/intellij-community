@@ -77,6 +77,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -758,7 +759,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    checkNamedArgs(listOrMap.getNamedArguments(), false);
+    final GrNamedArgument[] namedArguments = listOrMap.getNamedArguments();
+    final GrExpression[] expressionArguments = listOrMap.getInitializers();
+
+    if (namedArguments.length != 0 && expressionArguments.length != 0) {
+      myHolder.createErrorAnnotation(listOrMap, GroovyBundle.message("collection.literal.contains.named.argument.and.expression.items"));
+    }
+
+    checkNamedArgs(namedArguments, false);
   }
 
   @Override
@@ -1254,6 +1262,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (!GrStringUtil.parseStringCharacters(part, new StringBuilder(part.length()), null)) {
         myHolder.createErrorAnnotation(gstring, GroovyBundle.message("illegal.escape.character.in.string.literal"));
         return;
+      }
+    }
+
+  }
+
+  @Override
+  public void visitGStringInjection(GrStringInjection injection) {
+    if (((GrString)injection.getParent()).isPlainString()) {
+      if (StringUtil.indexOf(injection.getText(), '\n') != -1) {
+        myHolder.createErrorAnnotation(injection, GroovyBundle.message("injection.should.not.contain.line.feeds"));
       }
     }
   }

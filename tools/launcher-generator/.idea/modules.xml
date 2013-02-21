@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../community-resources/community-resources.iml" filepath="$PROJECT_DIR$/../../community-resources/community-resources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../platform/icons/icons.iml" filepath="$PROJECT_DIR$/../../platform/icons/icons.iml" />
+      <module fileurl="file://$PROJECT_DIR$/launcher-generator.iml" filepath="$PROJECT_DIR$/launcher-generator.iml" />
+    </modules>
+  </component>
+</project>
+

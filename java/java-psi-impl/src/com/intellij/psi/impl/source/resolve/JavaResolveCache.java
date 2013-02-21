@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -87,7 +88,12 @@ public class JavaResolveCache {
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     PsiType type = getCachedType(expr);
     if (type == null) {
+      final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+      final RecursionGuard.StackStamp gStackStamp = PsiResolveHelper.ourGraphGuard.markStack();
       type = f.fun(expr);
+      if (!dStackStamp.mayCacheNow() || !gStackStamp.mayCacheNow()) {
+        return type;
+      }
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
       Reference<PsiType> ref = new SoftReference<PsiType>(type);
       Reference<PsiType> storedRef = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, ref);

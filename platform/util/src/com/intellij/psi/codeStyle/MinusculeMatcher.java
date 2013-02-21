@@ -268,7 +268,10 @@ public class MinusculeMatcher implements Matcher {
       if (!allowSpecialChars && myHasDots && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
         return null;
       }
-      if (!isUpperCase[patternIndex] || NameUtil.isWordStart(name, nextOccurrence)) {
+      // uppercase should match either uppercase or a word start
+      if (!isUpperCase[patternIndex] ||
+          star && Character.isUpperCase(name.charAt(nextOccurrence)) ||
+          NameUtil.isWordStart(name, nextOccurrence)) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, matchingState);
         if (ranges != null) {
           return ranges;
@@ -312,8 +315,9 @@ public class MinusculeMatcher implements Matcher {
     }
 
     // middle matches have to be at least of length 2, to prevent too many irrelevant matches
-    int minFragment = isPatternChar(patternIndex - 1, '*') && Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil
-      .isWordStart(name, nameIndex) ? 2 : 1;
+    int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
+                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
+                      ? 2 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() &&

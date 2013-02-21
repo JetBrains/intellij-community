@@ -328,10 +328,17 @@ public class NameUtil {
 
   static boolean isWordStart(String text, int i) {
     char c = text.charAt(i);
-    if (isWordStart(c)) {
+    if (Character.isUpperCase(c)) {
+      if (i > 0 && Character.isUpperCase(text.charAt(i - 1))) {
+        // check that we're not in the middle of an all-caps word
+        return i + 1 < text.length() && Character.isLowerCase(text.charAt(i + 1));
+      }
       return true;
     }
-    if (!Character.isLetterOrDigit(c)) {
+    if (Character.isDigit(c)) {
+      return true;
+    }
+    if (!Character.isLetter(c)) {
       return false;
     }
     return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));

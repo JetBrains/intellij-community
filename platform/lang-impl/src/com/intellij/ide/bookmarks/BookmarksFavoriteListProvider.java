@@ -77,17 +77,17 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
 
         @Override
         public boolean canNavigate() {
-          return true;
+          return bookmark.canNavigate();
         }
 
         @Override
         public boolean canNavigateToSource() {
-          return true;
+          return bookmark.canNavigateToSource();
         }
 
         @Override
         public void navigate(boolean requestFocus) {
-          bookmark.navigate();
+          bookmark.navigate(requestFocus);
         }
 
         @Override

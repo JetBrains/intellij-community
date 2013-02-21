@@ -14,24 +14,23 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,8 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
 
-  private final ThreadLocal<ProjectConnection>                  myCurrentConnection = new ThreadLocal<ProjectConnection>();
-  private final BlockingQueue<ProjectConnection>                myConnections       = new LinkedBlockingQueue<ProjectConnection>();
   private final AtomicReference<RemoteGradleProcessSettings>    mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
   private final GradleLibraryNamesMixer                         myLibraryNamesMixer = new GradleLibraryNamesMixer();
   private final ConcurrentHashSet<GradleTaskId>                 myTasksInProgress   = new ConcurrentHashSet<GradleTaskId>();
@@ -55,23 +52,19 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
+    ProjectConnection connection = getConnection(projectPath);
     try {
-      return doResolveProjectInfo(id, projectPath, downloadLibraries);
+      return doResolveProjectInfo(id, projectPath, connection, downloadLibraries);
     }
     catch (Throwable e) {
       throw new GradleApiException(e);
     }
     finally {
-      final ProjectConnection connection = myCurrentConnection.get();
-      if (connection != null) {
-        myCurrentConnection.set(null);
-        myConnections.remove();
-        try {
-          connection.close();
-        }
-        catch (Throwable e) {
-          // ignore
-        }
+      try {
+        connection.close();
+      }
+      catch (Throwable e) {
+        // ignore
       }
     }
   }
@@ -90,12 +83,14 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private GradleProject doResolveProjectInfo(@NotNull final GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
+  private GradleProject doResolveProjectInfo(@NotNull final GradleTaskId id,
+                                             @NotNull String projectPath,
+                                             @NotNull ProjectConnection connection,
+                                             boolean downloadLibraries)
     throws RemoteException, IllegalArgumentException, IllegalStateException
   {
     final GradleTaskNotificationListener progressManager = myNotificationListener.get();
     progressManager.onStart(id);
-    ProjectConnection connection = getConnection(projectPath);
     ModelBuilder<? extends IdeaProject> modelBuilder = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
     final RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
@@ -437,34 +432,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
         "Can't create connection to the target project via gradle tooling api. Project path: '%s'", projectPath
       ));
     }
-    myConnections.add(connection);
-    myCurrentConnection.set(connection);
     return connection;
   }
   
-  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
-  @Override
-  public void unreferenced() {
-    releaseConnectionIfPossible();
-    super.unreferenced();
-  }
-
-  private void releaseConnectionIfPossible() {
-    while (!myConnections.isEmpty()) {
-      try {
-        ProjectConnection connection = myConnections.poll(1, TimeUnit.SECONDS);
-        connection.close();
-      }
-      catch (InterruptedException e) {
-        GradleLog.LOG.warn("Detected unexpected thread interruption on releasing gradle connections", e);
-        Thread.currentThread().interrupt();
-      }
-      catch (Throwable e) {
-        GradleLog.LOG.warn("Got unexpected exception on closing project connection created by the gradle tooling api", e);
-      }
-    }
-  }
-
   @Override
   public void setSettings(@NotNull RemoteGradleProcessSettings settings) {
     mySettings.set(settings); 

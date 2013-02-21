@@ -195,7 +195,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
       @Override
       public int getAdditionalWidth() {
-        return UIUtil.DEFAULT_HGAP;
+        return DEFAULT_HGAP;
       }
     };
 
@@ -295,14 +295,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     result[0] = VcsDescriptor.createFictive();
     System.arraycopy(vcsDescriptors, 0, result, 1, vcsDescriptors.length);
     return new DefaultComboBoxModel(result);
-  }
-
-  protected String getLabelText() {
-    return null;
-  }
-
-  protected JButton[] createButtons() {
-    return new JButton[]{};
   }
 
   private void addMapping() {

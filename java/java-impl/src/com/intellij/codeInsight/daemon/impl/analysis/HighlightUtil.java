@@ -231,7 +231,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  private static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiJavaCodeReferenceElement place) {
+  private static PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
     if (place instanceof PsiReferenceExpression) {
       // check for package local classes in the middle
       PsiReferenceExpression expression = (PsiReferenceExpression)place;
@@ -1440,12 +1440,12 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  static String buildProblemWithAccessDescription(@NotNull final PsiJavaCodeReferenceElement reference, @NotNull final JavaResolveResult result) {
+  static String buildProblemWithAccessDescription(@NotNull final PsiElement reference, @NotNull final JavaResolveResult result) {
     return buildProblemWithAccessDescription(reference, result, result.getElement());
   }
 
   @NotNull
-  static String buildProblemWithAccessDescription(@NotNull final PsiJavaCodeReferenceElement reference,
+  static String buildProblemWithAccessDescription(@NotNull final PsiElement reference,
                                                   @NotNull final JavaResolveResult result,
                                                   @NotNull final PsiElement resolved) {
     assert resolved instanceof PsiModifierListOwner : resolved;

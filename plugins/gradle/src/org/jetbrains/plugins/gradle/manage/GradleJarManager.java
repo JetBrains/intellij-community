@@ -69,6 +69,7 @@ public class GradleJarManager {
         }
         Library.ModifiableModel model = library.getModifiableModel();
         try {
+          LocalFileSystem fileSystem = LocalFileSystem.getInstance();
           for (GradleJar jar : jars) {
             OrderRootType ideJarType = myLibraryPathTypeMapper.map(jar.getPathType());
             for (VirtualFile file : model.getFiles(ideJarType)) {
@@ -77,11 +78,12 @@ public class GradleJarManager {
               }
             }
 
-            VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(jar.getPath()));
+            File jarFile = new File(jar.getPath());
+            VirtualFile virtualFile = fileSystem.refreshAndFindFileByIoFile(jarFile);
             if (virtualFile == null) {
-              //GradleLog.LOG.warn(
-              //  String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
-              //);
+              GradleLog.LOG.warn(
+                String.format("Can't find a jar of the library '%s' at path '%s'", jar.getLibraryId().getLibraryName(), jar.getPath())
+              );
               return;
             }
             if (virtualFile.isDirectory()) {

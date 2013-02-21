@@ -18,7 +18,10 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -40,19 +43,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl");
   public static final Pair<PsiType,ConstraintType> RAW_INFERENCE = new Pair<PsiType, ConstraintType>(null, ConstraintType.EQUALS);
   private final PsiManager myManager;
-
-  public static final ThreadLocal<Map<PsiElement, PsiType>> OUR_CONSTRUCTORS = new ThreadLocal<Map<PsiElement, PsiType>>(){
-    @Override
-    protected Map<PsiElement, PsiType> initialValue() {
-      return new HashMap<PsiElement, PsiType>();
-    }
-  };
 
   public PsiResolveHelperImpl(PsiManager manager) {
     myManager = manager;
@@ -83,13 +78,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(aClass, anonymous, substitutor));
     }
     else {
-      final PsiType alreadyThere = OUR_CONSTRUCTORS.get().put(argumentList, type);
-      try {
-        processor = new MethodResolverProcessor(aClass, argumentList, place);
-      }
-      finally {
-        if (alreadyThere == null) OUR_CONSTRUCTORS.get().remove(argumentList);
-      }
+      processor = new MethodResolverProcessor(aClass, argumentList, place);
     }
 
     ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
@@ -175,11 +164,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiType[] argTypes = new PsiType[arguments.length];
     if (parameters.length > 0) {
       for (int j = 0; j < argTypes.length; j++) {
-        PsiExpression argument = arguments[j];
+        final PsiExpression argument = arguments[j];
         if (argument == null) continue;
         if (argument instanceof PsiMethodCallExpression && ourGuard.currentStack().contains(argument)) continue;
-        if (ourGraphGuard.currentStack().contains(argument)) continue;
+
+        final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
         argTypes[j] = argument.getType();
+        if (!stackStamp.mayCacheNow()) {
+          argTypes[j] = null;
+          continue;
+        }
 
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
         if (j >= parameters.length && !parameter.isVarArgs()) break;
@@ -727,12 +721,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final Pair<PsiType, ConstraintType> constraintFromFormalParams = inferConstraintFromLambdaFormalParams(typeParam, subst, method, lambdaExpression);
       if (constraintFromFormalParams != null) return constraintFromFormalParams;
 
-      final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
-      if (lists != null && lists.contains(lambdaExpression.getParameterList()) && 
-          ourGraphGuard.currentStack().isEmpty()){
-        return null;
-      }
-
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
       if (methodParamsDependOn(typeParam, lambdaExpression, functionalInterfaceType, methodParameters, subst)) {
         return null;
@@ -751,7 +739,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             continue;
           }
           if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == null) continue;
-          PsiType exprType = expression.getType();
+          PsiType exprType = ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+            @Override
+            public PsiType compute() {
+              return expression.getType(); 
+            }
+          });
           if (exprType instanceof PsiLambdaParameterType) {
             final PsiParameter parameter = ((PsiLambdaParameterType)exprType).getParameter();
             final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex(parameter);
@@ -977,6 +970,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           for (int i = 0; i < argExtendsListTypes.length; i++) {
             PsiClassType argBoundType = argExtendsListTypes[i];
             PsiClassType paramBoundType = paramExtendsListTypes[i];
+            final PsiClassType.ClassResolveResult argResolveResult = argBoundType.resolveGenerics();
+            final PsiClassType.ClassResolveResult paramResolveResult = paramBoundType.resolveGenerics();
+            final PsiClass paramBoundClass = paramResolveResult.getElement();
+            final PsiClass argBoundClass = argResolveResult.getElement();
+            if (argBoundClass != null && paramBoundClass != null && paramBoundClass != argBoundClass) {
+              if (argBoundClass.isInheritor(paramBoundClass, true)) {
+                final PsiSubstitutor superClassSubstitutor =
+                  TypeConversionUtil.getSuperClassSubstitutor(paramBoundClass, argBoundClass, argResolveResult.getSubstitutor());
+                argBoundType = JavaPsiFacade.getElementFactory(argClass.getProject()).createType(paramBoundClass, superClassSubstitutor);
+              } else {
+                return null;
+              }
+            }
             final Pair<PsiType, ConstraintType> constraint =
               getSubstitutionForTypeParameterInner(paramBoundType, argBoundType, patternType, constraintType, depth);
             if (constraint != null) {
@@ -1164,7 +1170,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
   private static final ProcessCandidateParameterTypeInferencePolicy GRAPH_INFERENCE_POLICY = new GraphInferencePolicy();
 
   private static Pair<PsiType, ConstraintType> graphInferenceFromCallContext(@NotNull final PsiExpression methodCall,
@@ -1172,8 +1177,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                              @NotNull final PsiCallExpression parentCall) {
     if (Registry.is("disable.graph.inference", false)) return null;
     final PsiExpressionList argumentList = parentCall.getArgumentList();
-    final PsiType inferDiamond = OUR_CONSTRUCTORS.get().get(argumentList);
-    if (inferDiamond != null) {
+    if (PsiDiamondType.ourDiamondGuard.currentStack().contains(parentCall)) {
+      PsiDiamondType.ourDiamondGuard.prohibitResultCaching(parentCall);
       return FAILED_INFERENCE;
     }
     return ourGraphGuard.doPreventingRecursion(methodCall, true, new Computable<Pair<PsiType, ConstraintType>>() {

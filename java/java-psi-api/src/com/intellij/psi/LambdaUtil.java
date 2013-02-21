@@ -37,7 +37,6 @@ import java.util.*;
  */
 public class LambdaUtil {
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
-  public static ThreadLocal<Set<PsiParameterList>> ourParams = new ThreadLocal<Set<PsiParameterList>>();
   @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
   @Nullable
@@ -525,34 +524,22 @@ public class LambdaUtil {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
 
-          Set<PsiParameterList> currentStack = ourParams.get();
-          if (currentStack == null) {
-            currentStack = new HashSet<PsiParameterList>();
-            ourParams.set(currentStack);
-          }
-
           final PsiParameterList parameterList = lambdaExpression.getParameterList();
-          final boolean add = currentStack.add(parameterList);
-          try {
-            PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
-            if (type == null) {
-              type = getFunctionalInterfaceType(lambdaExpression, false);
-            }
-            if (type instanceof PsiIntersectionType) {
-              final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-              for (PsiType conjunct : conjuncts) {
-                final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, conjunct);
-                if (lambdaParameterFromType != null) return lambdaParameterFromType;
-              }
-            } else {
-              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, type);
-              if (lambdaParameterFromType != null) {
-                return lambdaParameterFromType;
-              }
-            }
+          PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
+          if (type == null) {
+            type = getFunctionalInterfaceType(lambdaExpression, false);
           }
-          finally {
-            if (add) currentStack.remove(parameterList);
+          if (type instanceof PsiIntersectionType) {
+            final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+            for (PsiType conjunct : conjuncts) {
+              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, conjunct);
+              if (lambdaParameterFromType != null) return lambdaParameterFromType;
+            }
+          } else {
+            final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, type);
+            if (lambdaParameterFromType != null) {
+              return lambdaParameterFromType;
+            }
           }
         }
       }

@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -59,6 +60,9 @@ import java.util.*;
 public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
+
+  private static final Logger LOG = Logger.getInstance("#" + ShowImplementationsAction.class.getName());
+
   private WeakReference<JBPopup> myPopupRef;
   private WeakReference<BackgroundUpdaterTask> myTaskRef;
 
@@ -306,7 +310,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   private static PsiElement[] filterElements(final PsiElement[] targetElements) {
     Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
     for (PsiElement elt : targetElements) {
-      PsiFile psiFile = elt.getContainingFile().getOriginalFile();
+      final PsiFile containingFile = elt.getContainingFile();
+      LOG.assertTrue(containingFile != null, elt);
+      PsiFile psiFile = containingFile.getOriginalFile();
       if (psiFile.getVirtualFile() == null) unique.remove(elt);
     }
     // special case for Python (PY-237)

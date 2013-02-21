@@ -74,7 +74,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
+    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
 
     GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
       @Override

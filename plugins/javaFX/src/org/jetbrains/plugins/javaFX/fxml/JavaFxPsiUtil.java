@@ -189,7 +189,17 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
-    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
+    PsiMethod getter = findPropertyGetter(attributeName, classWithStaticProperty, null);
+    if (getter != null) {
+      return getter;
+    }
+    return findPropertyGetter(attributeName, classWithStaticProperty, PsiType.BOOLEAN);
+  }
+
+  private static PsiMethod findPropertyGetter(final String attributeName,
+                                              final PsiClass classWithStaticProperty,
+                                              final PsiType propertyType) {
+    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), propertyType);
     final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
     if (getters.length >= 1) {
       return getters[0];

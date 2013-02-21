@@ -13,7 +13,6 @@ import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Thread-safe.
@@ -23,16 +22,15 @@ import java.util.Collections;
  */
 public class GradleContentRootManager {
 
-  public void importContentRoots(@NotNull GradleContentRoot contentRoot, @NotNull Module module) {
-    importContentRoots(Collections.singleton(contentRoot), module);
-  }
-  
   @SuppressWarnings("MethodMayBeStatic")
-  public void importContentRoots(@NotNull final Collection<GradleContentRoot> contentRoots, @NotNull final Module module) {
+  public void importContentRoots(@NotNull final Collection<GradleContentRoot> contentRoots,
+                                 @NotNull final Module module,
+                                 boolean synchronous)
+  {
     if (contentRoots.isEmpty()) {
       return;
     }
-    GradleUtil.executeProjectChangeAction(module.getProject(), contentRoots, new Runnable() {
+    GradleUtil.executeProjectChangeAction(module.getProject(), contentRoots, synchronous, new Runnable() {
       @Override
       public void run() {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -63,12 +61,12 @@ public class GradleContentRootManager {
   }
   
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeContentRoots(@NotNull final Collection<ModuleAwareContentRoot> contentRoots) {
+  public void removeContentRoots(@NotNull final Collection<ModuleAwareContentRoot> contentRoots, boolean synchronous) {
     if (contentRoots.isEmpty()) {
       return;
     }
     Project project = contentRoots.iterator().next().getModule().getProject();
-    GradleUtil.executeProjectChangeAction(project, contentRoots, new Runnable() {
+    GradleUtil.executeProjectChangeAction(project, contentRoots, synchronous, new Runnable() {
       @Override
       public void run() {
         for (ModuleAwareContentRoot contentRoot : contentRoots) {

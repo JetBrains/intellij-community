@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ public class InspectionNode extends InspectionTreeNode {
     TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   }
 
+  private boolean myTooBigForOnlineRefresh = false;
+
   public InspectionNode(InspectionTool tool) {
     super(tool);
   }
@@ -48,6 +50,11 @@ public class InspectionNode extends InspectionTreeNode {
 
   public Icon getIcon(boolean expanded) {
     return TOOL;
+  }
+
+  public boolean isTooBigForOnlineRefresh() {
+    if(!myTooBigForOnlineRefresh) myTooBigForOnlineRefresh = getProblemCount()>1000;
+    return myTooBigForOnlineRefresh;
   }
 
   public int getProblemCount() {

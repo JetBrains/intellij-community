@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -28,6 +29,8 @@ import java.util.List;
  * Date: 1/8/13
  */
 public class JavaFxTagNameReference extends TagNameReference{
+  private static final Logger LOGGER = Logger.getInstance("#" + JavaFxTagNameReference.class.getName());
+
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
     super(element, startTagFlag);
   }
@@ -65,7 +68,9 @@ public class JavaFxTagNameReference extends TagNameReference{
       variants = TagNameReference.<XmlElementDescriptor>getTagNameVariants(xmlTag, Arrays.asList(xmlTag.knownNamespaces()), new ArrayList<String>(), Function.ID);
     final List<LookupElement> elements = new ArrayList<LookupElement>(variants.size());
     for (XmlElementDescriptor descriptor : variants) {
-      LookupElementBuilder lookupElement = LookupElementBuilder.create(descriptor, descriptor.getName(element));
+      final String descriptorName = descriptor.getName(element);
+      LOGGER.assertTrue(descriptorName != null, "Descriptor: " + descriptor + "; tag: " + xmlTag.getName());
+      LookupElementBuilder lookupElement = LookupElementBuilder.create(descriptor, descriptorName);
       elements.add(lookupElement.withInsertHandler(JavaFxTagInsertHandler.INSTANCE));
     }
     return elements.toArray(new LookupElement[elements.size()]);

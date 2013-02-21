@@ -117,8 +117,7 @@ public class GradleUserProjectChangesCalculator {
     buildModulePresenceChanges(context);
     buildDependencyPresenceChanges(context);
     mySettings.setUserProjectChanges(context.currentChanges);
-    
-    
+    myLastProjectState = currentProjectState;
   }
 
   /**
