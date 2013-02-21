@@ -759,7 +759,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    checkNamedArgs(listOrMap.getNamedArguments(), false);
+    final GrNamedArgument[] namedArguments = listOrMap.getNamedArguments();
+    final GrExpression[] expressionArguments = listOrMap.getInitializers();
+
+    if (namedArguments.length != 0 && expressionArguments.length != 0) {
+      myHolder.createErrorAnnotation(listOrMap, GroovyBundle.message("collection.literal.contains.named.argument.and.expression.items"));
+    }
+
+    checkNamedArgs(namedArguments, false);
   }
 
   @Override

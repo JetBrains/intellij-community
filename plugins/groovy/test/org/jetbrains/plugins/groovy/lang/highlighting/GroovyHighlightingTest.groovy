@@ -1111,4 +1111,12 @@ print "<error descr="GString injection must not contain line feeds">${ """
 """}</error>"
 ''')
   }
+
+  void testListOrMapErrors() {
+    testHighlighting('''\
+print([1])
+print([1:2])
+print(<error descr="Collection literal contains named and expression arguments at the same time">[1:2, 4]</error>)
+''')
+  }
 }
