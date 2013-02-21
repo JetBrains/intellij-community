@@ -195,11 +195,15 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     if (anchor != null && anchor != aClass) {
       anchor = anchor.getNextSibling();
       while (anchor instanceof PsiJavaToken && (anchor.getText().equals(",") || anchor.getText().equals(";"))) {
+        final boolean afterComma = anchor.getText().equals(",");
         anchor = anchor.getNextSibling();
+        if (afterComma) {
+          newAnchor = skipWhitespaces(aClass, anchor);
+          if (newAnchor != null) return newAnchor;
+        }
       }
       if (anchor != null) {
-        newAnchor = skipWhitespaces(aClass, anchor);
-        return newAnchor != null ? newAnchor : anchor;
+        return anchor;
       }
     }
 
