@@ -12,18 +12,21 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.UnindentingInsertHandler;
+import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PlatformPatterns.psiFile;
 import static com.intellij.patterns.StandardPatterns.or;
 
 /**
@@ -140,7 +143,10 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       if (p instanceof PsiComment) return false; // just in case
       int point = p.getTextOffset();
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
-      Document doc = docMgr.getDocument(p.getContainingFile().getOriginalFile());
+      final PsiFile file = p.getContainingFile().getOriginalFile();
+      Document doc = docMgr.getDocument(file);
+      String indentCharacters = file.getViewProvider() instanceof InjectedFileViewProvider? " \t>": " \t";
+
       if (doc != null) {
         CharSequence chs = doc.getCharsSequence();
         char c;
@@ -150,7 +156,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
           c = chs.charAt(point);
           if (c == '\n') return true;
         }
-        while (c == ' ' || c == '\t');
+        while (indentCharacters.indexOf(c) >= 0);
       }
       return false;
     }
@@ -213,7 +219,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     psiElement().inside(PsiComment.class);
 
   private static final PsiElementPattern.Capture<PsiElement> IN_STRING_LITERAL =
-    psiElement().inside(PyStringLiteralExpression.class);
+    psiElement().inside(PyStringLiteralExpression.class).andNot(
+      psiElement().inFile(psiFile(PyDocstringFile.class)));
 
   private static final ElementPattern<PsiElement> IN_FUNCTION_HEADER =
     or(psiElement().inside(PyFunction.class).andNot(psiElement().inside(false, psiElement(PyStatementList.class), psiElement(PyFunction.class))),

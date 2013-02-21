@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class TypeIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (editor instanceof EditorWindow) return false;
     updateText(false);
 
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());

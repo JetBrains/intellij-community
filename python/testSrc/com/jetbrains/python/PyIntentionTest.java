@@ -273,6 +273,10 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
+  public void testTypeInDocstringParameterInCallable() {
+    doDocReferenceTest();
+  }
+
   public void testTypeInDocstring5() {
     doDocReferenceTest();
   }

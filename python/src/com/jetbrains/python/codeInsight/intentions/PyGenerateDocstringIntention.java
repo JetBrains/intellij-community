@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -36,6 +37,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (editor instanceof EditorWindow) return false;
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) {
       return false;
