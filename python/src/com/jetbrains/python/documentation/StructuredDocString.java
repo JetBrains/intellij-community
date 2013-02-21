@@ -203,6 +203,16 @@ public abstract class StructuredDocString {
     return results;
   }
 
+  @Nullable
+  public Substring getParamByNameAndKind(@NotNull String name, String kind)  {
+    for (Substring s: getTagArguments(kind)) {
+      if (name.equals(s.getValue())) {
+        return s;
+      }
+    }
+    return null;
+  }
+
   public abstract List<String> getParameters();
   public abstract List<String> getKeywordArguments();
 
