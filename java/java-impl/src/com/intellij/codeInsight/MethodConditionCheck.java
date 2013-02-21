@@ -154,6 +154,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
     return false;
   }
 
+  @NotNull
   @Override
   public Type getType() {
     return myType;
@@ -161,7 +162,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
 
   private void validatePsiMethod() {
     PsiElement psiElement = myPsiMethod.getContainingClass();
-    if (!(psiElement instanceof PsiClass))
+    if (psiElement == null)
       throw new IllegalArgumentException("PsiMethod " + myPsiMethod + " can not have a null containing class.");
 
     PsiType returnType = myPsiMethod.getReturnType();
@@ -192,9 +193,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
   }
 
   private String initClassNameFromPsiMethod() {
-    PsiElement psiElement = myPsiMethod.getContainingClass();
-    PsiClass psiClass = (PsiClass) psiElement;
-    return psiClass.getQualifiedName();
+    return myPsiMethod.getContainingClass().getQualifiedName();
   }
 
   private String initMethodNameFromPsiMethod() {
@@ -224,7 +223,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
     return psiType.getCanonicalText() + " " + psiParameter.getName();
   }
 
-  private String initFullName(String className, String methodName, List<String> parameters) {
+  private static String initFullName(String className, String methodName, List<String> parameters) {
     String s = className + "." + methodName + "(";
     for (String parameterName : parameters) {
       s += parameterName + ", ";
@@ -234,7 +233,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
     return s;
   }
 
-  private String initShortName(String methodName, List<String> parameterNames) {
+  private static String initShortName(String methodName, List<String> parameterNames) {
     String shortName = methodName + "(";
     for (String parameterName : parameterNames) {
       if (parameterNames.lastIndexOf(".") > -1)
@@ -330,7 +329,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
       return new MethodConditionCheck(psiMethod, psiParameter, type);
     }
 
-    private String parseClassNameAndMethodName(String fullyQualifiedClassMethodAndParameterName) {
+    private static String parseClassNameAndMethodName(String fullyQualifiedClassMethodAndParameterName) {
       if (!fullyQualifiedClassMethodAndParameterName.contains("(")) {
         throw new IllegalArgumentException("Name should contain a opening parenthesis.  " + fullyQualifiedClassMethodAndParameterName);
       } else if (!fullyQualifiedClassMethodAndParameterName.contains(")")) {
@@ -350,7 +349,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
       return classNameAndMethodName;
     }
 
-    private PsiMethod findPsiMethodWithMatchingParameters(List<PsiMethod> psiMethods, String allParametersSubString) {
+    private static PsiMethod findPsiMethodWithMatchingParameters(List<PsiMethod> psiMethods, String allParametersSubString) {
       String[] parameterClassAndNameArray = allParametersSubString.split(",");
       List<String> parameterClassToMatch = new ArrayList<String>();
       for (String parameterClassAndName : parameterClassAndNameArray) {
@@ -378,7 +377,7 @@ public class MethodConditionCheck implements ConditionChecker, Comparable<Method
       return null;
     }
 
-    private List<PsiMethod> findPsiMethodsInPsiClassWithMatchingMethodName(PsiClass psiClass, String methodName) {
+    private static List<PsiMethod> findPsiMethodsInPsiClassWithMatchingMethodName(PsiClass psiClass, String methodName) {
       List<PsiMethod> psiMethods = new ArrayList<PsiMethod>();
       for (int i = 0; i < psiClass.getMethods().length; i++) {
         PsiMethod possibleMatchPsiMethod = psiClass.getMethods()[i];
