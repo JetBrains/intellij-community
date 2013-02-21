@@ -32,7 +32,12 @@ public class LambdaHighlightingUtil {
     final List<MethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return "Target type of a lambda conversion must be an interface";
     if (signatures.isEmpty()) return "No target method found";
-    return signatures.size() == 1 ? null : "Multiple non-overriding abstract methods found";
+    if (signatures.size() == 1) {
+      final MethodSignature functionalMethod = signatures.get(0);
+      if (functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
+      return null;
+    }
+    return "Multiple non-overriding abstract methods found";
   }
 
   public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
