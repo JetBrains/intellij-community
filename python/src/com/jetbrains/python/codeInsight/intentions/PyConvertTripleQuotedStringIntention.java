@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,6 +48,8 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
       String stringText = string.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      stringText = stringText.substring(prefixLength);
       if (stringText.length() >= 6) {
         if (stringText.startsWith("'''") && stringText.endsWith("'''") ||
               stringText.startsWith("\"\"\"") && stringText.endsWith("\"\"\"")) return true;
@@ -59,15 +62,21 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
-      String stringText = string.getStringValue();
+      String stringText = string.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      String prefix = stringText.substring(0, prefixLength);
+      Character firstQuote = stringText.substring(prefixLength).charAt(0);
+
+      stringText = string.getStringValue();
       List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
 
-      Character firstQuote = string.getText().charAt(0);
+
       StringBuilder result = new StringBuilder();
       if (subStrings.size() != 1)
         result.append("(");
       boolean lastString = false;
       for (String s : subStrings) {
+        result.append(prefix);
         result.append(firstQuote);
         String validSubstring = convertToValidSubString(s, firstQuote);
 

@@ -1,0 +1,2 @@
+s = u"""<caret>string
+"""

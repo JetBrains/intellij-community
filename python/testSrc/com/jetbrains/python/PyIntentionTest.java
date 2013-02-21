@@ -251,6 +251,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
 
+  public void testConvertTripleQuotedUnicodeString() { //PY-7152
+    doTest(PyBundle.message("INTN.triple.quoted.string"));
+  }
+
   public void testTransformConditionalExpression() { //PY-3094
     doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
   }
