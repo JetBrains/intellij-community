@@ -19,7 +19,7 @@ public class MutableNode implements Node {
     private final Branch branch;
     private final Hash hash;
     private MutableNodeRow nodeRow = null;
-    private Type type;
+    private NodeType type;
 
     private final List<Edge> upEdges = new OneElementList<Edge>();
     private final List<Edge> downEdges = new OneElementList<Edge>();
@@ -48,13 +48,13 @@ public class MutableNode implements Node {
         this.nodeRow = nodeRow;
     }
 
-    public void setType(Type type) {
+    public void setType(NodeType type) {
         this.type = type;
     }
 
     @NotNull
     @Override
-    public Type getType() {
+    public NodeType getType() {
         return type;
     }
 

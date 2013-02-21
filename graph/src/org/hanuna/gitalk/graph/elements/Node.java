@@ -13,7 +13,7 @@ public interface Node extends GraphElement {
     public int getRowIndex();
 
     @NotNull
-    public Type getType();
+    public NodeType getType();
 
     @NotNull
     public List<Edge> getUpEdges();
@@ -30,7 +30,7 @@ public interface Node extends GraphElement {
     @NotNull
     public Hash getCommitHash();
 
-    public static enum Type{
+    public static enum NodeType {
         COMMIT_NODE,
         EDGE_NODE,
         END_COMMIT_NODE

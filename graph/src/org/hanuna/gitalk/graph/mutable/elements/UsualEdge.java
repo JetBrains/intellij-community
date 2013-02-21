@@ -33,8 +33,8 @@ public class UsualEdge implements Edge {
 
     @NotNull
     @Override
-    public Type getType() {
-        return Type.USUAL;
+    public EdgeType getType() {
+        return EdgeType.USUAL;
     }
 
     @NotNull

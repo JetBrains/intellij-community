@@ -45,7 +45,7 @@ class PrePrintCellModel {
             GraphElement element = visibleElementsInThisRow.get(i);
             Node node = element.getNode();
             if (node != null) {
-                if (node.getType() == Node.Type.COMMIT_NODE) {
+                if (node.getType() == Node.NodeType.COMMIT_NODE) {
                     specialPrintElements.add(new SpecialPrintElement(node, i, SpecialPrintElement.Type.COMMIT_NODE,
                             selectController.isSelected(node)));
                 }

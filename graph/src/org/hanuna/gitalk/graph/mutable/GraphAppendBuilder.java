@@ -11,9 +11,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static org.hanuna.gitalk.graph.elements.Node.Type.COMMIT_NODE;
-import static org.hanuna.gitalk.graph.elements.Node.Type.EDGE_NODE;
-import static org.hanuna.gitalk.graph.elements.Node.Type.END_COMMIT_NODE;
+import static org.hanuna.gitalk.graph.elements.Node.NodeType.COMMIT_NODE;
+import static org.hanuna.gitalk.graph.elements.Node.NodeType.EDGE_NODE;
+import static org.hanuna.gitalk.graph.elements.Node.NodeType.END_COMMIT_NODE;
 
 /**
  * @author erokhins

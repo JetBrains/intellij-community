@@ -25,7 +25,7 @@ public class GraphTestUtils {
     public static Node getCommitNode(Graph graph, int rowIndex) {
         NodeRow row = graph.getNodeRows().get(rowIndex);
         for (Node node : row.getNodes()) {
-            if (node.getType() == Node.Type.COMMIT_NODE) {
+            if (node.getType() == Node.NodeType.COMMIT_NODE) {
                 return node;
             }
         }

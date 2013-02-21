@@ -53,7 +53,7 @@ public class ShortFragmentGenerator {
 
     @Nullable
     public GraphFragment getDownShortFragment(@NotNull Node startNode) {
-        if (startNode.getType() == Node.Type.EDGE_NODE) {
+        if (startNode.getType() == Node.NodeType.EDGE_NODE) {
             throw new IllegalArgumentException("small fragment may start only with COMMIT_NODE, but this node is: " + startNode);
         }
 
@@ -77,7 +77,7 @@ public class ShortFragmentGenerator {
                         isEnd = true;
                         break;
                     }
-                    if (notAddedNodes.isEmpty() && node.getType() == Node.Type.COMMIT_NODE) {
+                    if (notAddedNodes.isEmpty() && node.getType() == Node.NodeType.COMMIT_NODE) {
                         if (allUpNodeHere(upNodes, node)) { // i.e. we found smallFragment
                             endNode = node;
                         }
@@ -120,7 +120,7 @@ public class ShortFragmentGenerator {
 
     @Nullable
     public GraphFragment getUpShortFragment(@NotNull Node startNode) {
-        if (startNode.getType() == Node.Type.EDGE_NODE) {
+        if (startNode.getType() == Node.NodeType.EDGE_NODE) {
             throw new IllegalArgumentException("small fragment may start only with COMMIT_NODE, but this node is: " + startNode);
         }
 
@@ -138,7 +138,7 @@ public class ShortFragmentGenerator {
         for (int currentRowIndex = startRowIndex; currentRowIndex >= lastIndex && !isEnd; currentRowIndex--) {
             for (Node node : graph.getNodeRows().get(currentRowIndex).getNodes()) {
                 if (notAddedNodes.remove(node)) {
-                    if (notAddedNodes.isEmpty() && node.getType() == Node.Type.COMMIT_NODE) {
+                    if (notAddedNodes.isEmpty() && node.getType() == Node.NodeType.COMMIT_NODE) {
                         if (allDownNodeHere(downNodes, node)) { // i.e. we found smallFragment
                             endNode = node;
                         }

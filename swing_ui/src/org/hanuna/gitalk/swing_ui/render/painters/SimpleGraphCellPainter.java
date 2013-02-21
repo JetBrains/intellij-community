@@ -114,13 +114,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                 case UP_ARROW:
                     edge = printElement.getGraphElement().getEdge();
                     assert edge != null;
-                    setStroke(edge.getType() == Edge.Type.USUAL, printElement.isSelected());
+                    setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
                     paintShow(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 case DOWN_ARROW:
                     edge = printElement.getGraphElement().getEdge();
                     assert edge != null;
-                    setStroke(edge.getType() == Edge.Type.USUAL, printElement.isSelected());
+                    setStroke(edge.getType() == Edge.EdgeType.USUAL, printElement.isSelected());
                     paintHide(printElement.getPosition(), ColorGenerator.getColor(edge.getBranch()));
                     break;
                 default:

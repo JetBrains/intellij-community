@@ -54,7 +54,7 @@ public class FragmentGraphDecorator implements GraphDecorator {
         List<Edge> downEdges = fragment.getUpNode().getDownEdges();
         if (downEdges.size() == 1)  {
             Edge edge = downEdges.get(0);
-            if (edge.getType() == Edge.Type.HIDE_FRAGMENT && edge.getDownNode() == fragment.getDownNode()) {
+            if (edge.getType() == Edge.EdgeType.HIDE_FRAGMENT && edge.getDownNode() == fragment.getDownNode()) {
                 return edge;
             }
         }

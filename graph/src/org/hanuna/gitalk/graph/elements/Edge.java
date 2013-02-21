@@ -14,9 +14,9 @@ public interface Edge extends GraphElement {
     public Node getDownNode();
 
     @NotNull
-    public Type getType();
+    public EdgeType getType();
 
-    public static enum Type{
+    public static enum EdgeType {
         USUAL,
         HIDE_FRAGMENT
     }

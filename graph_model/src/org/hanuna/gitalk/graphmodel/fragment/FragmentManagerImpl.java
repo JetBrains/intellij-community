@@ -52,12 +52,12 @@ public class FragmentManagerImpl implements FragmentManager {
     @Nullable
     private Edge getHideEdge(@NotNull Node node) {
         for (Edge edge : node.getDownEdges()) {
-            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+            if (edge.getType() == Edge.EdgeType.HIDE_FRAGMENT) {
                 return edge;
             }
         }
         for (Edge edge : node.getUpEdges()) {
-            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+            if (edge.getType() == Edge.EdgeType.HIDE_FRAGMENT) {
                 return edge;
             }
         }
@@ -83,7 +83,7 @@ public class FragmentManagerImpl implements FragmentManager {
         } else {
             Edge edge = graphElement.getEdge();
             assert edge != null : "bad graphElement: edge & node is null";
-            if (edge.getType() == Edge.Type.HIDE_FRAGMENT) {
+            if (edge.getType() == Edge.EdgeType.HIDE_FRAGMENT) {
                 return new SimpleGraphFragment(edge.getUpNode(), edge.getDownNode(), Collections.<Node>emptySet());
             } else {
                 GraphFragment fragment = fragmentGenerator.getFragment(edge.getUpNode());
@@ -134,7 +134,7 @@ public class FragmentManagerImpl implements FragmentManager {
     @Nullable
     private Node commitNodeInRow(int rowIndex) {
         for (Node node : graph.getNodeRows().get(rowIndex).getNodes()) {
-            if (node.getType() == Node.Type.COMMIT_NODE) {
+            if (node.getType() == Node.NodeType.COMMIT_NODE) {
                 return node;
             }
         }

@@ -31,8 +31,8 @@ public class HideFragmentEdge implements Edge {
 
     @NotNull
     @Override
-    public Type getType() {
-        return Type.HIDE_FRAGMENT;
+    public EdgeType getType() {
+        return EdgeType.HIDE_FRAGMENT;
     }
 
     @NotNull

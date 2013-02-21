@@ -25,7 +25,7 @@ public class ShortEdge {
     }
 
     public boolean isUsual() {
-        return edge.getType() == Edge.Type.USUAL;
+        return edge.getType() == Edge.EdgeType.USUAL;
     }
 
     public int getUpPosition() {

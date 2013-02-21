@@ -64,7 +64,7 @@ public class GraphStrUtils {
      * a0|-|-a0:a1:USUAL:a0|-COMMIT_NODE|-a0|-0
      *
      * explanation:
-     * getCommitHash|-upEdges|-downEdges|-Type|-branch|-rowIndex
+     * getCommitHash|-upEdges|-downEdges|-NodeType|-branch|-rowIndex
      *
      */
 

@@ -61,7 +61,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
         }
         NodeRow row = graph.getNodeRows().get(rowIndex);
         for (Node node : row.getNodes()) {
-            if (node.getType() == Node.Type.COMMIT_NODE) {
+            if (node.getType() == Node.NodeType.COMMIT_NODE) {
                 return node;
             }
         }

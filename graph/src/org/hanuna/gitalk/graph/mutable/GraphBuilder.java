@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.hanuna.gitalk.graph.elements.Node.Type.*;
+import static org.hanuna.gitalk.graph.elements.Node.NodeType.*;
 
 /**
  * @author erokhins
