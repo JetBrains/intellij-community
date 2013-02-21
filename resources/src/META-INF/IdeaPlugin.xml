@@ -433,6 +433,9 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.ConditionCheckManager"
+                    serviceImplementation="com.intellij.codeInsight.ConditionCheckManager"/>
+
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
 
