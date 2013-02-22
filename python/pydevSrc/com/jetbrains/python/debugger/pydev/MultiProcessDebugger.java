@@ -356,7 +356,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private static class DebuggerProcessAcceptor implements Runnable {
-    private boolean myShouldAccept = true;
+    private volatile boolean myShouldAccept = true;
     private MultiProcessDebugger myMultiProcessDebugger;
     private ServerSocket myServerSocket;
 
@@ -369,7 +369,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
     public void run() {
       while (myShouldAccept) {
         try {
-          Socket socket = myServerSocket.accept();
+          final ServerSocket serverSocketCopy = myServerSocket;
+          if (serverSocketCopy == null) {
+            break;
+          }
+          Socket socket = serverSocketCopy.accept();
 
           try {
             final ServerSocket serverSocket = createServerSocket();
@@ -436,6 +440,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     public void disconnect() {
+      myShouldAccept = false;
       if (myServerSocket != null && !myServerSocket.isClosed()) {
         try {
           myServerSocket.close();
@@ -444,7 +449,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
         }
         myServerSocket = null;
       }
-      myShouldAccept = false;
       myMultiProcessDebugger = null;
     }
   }
