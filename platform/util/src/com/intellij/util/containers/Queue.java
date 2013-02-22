@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ public class Queue<T> {
   private Object[] myArray;
   private int myFirst;
   private int myLast;
-
   // if true, elements are located at myFirst..myArray.length and 0..myLast
   // otherwise, they are at myFirst..myLast
   private boolean isWrapped;
@@ -50,18 +49,18 @@ public class Queue<T> {
       myLast = 0;
     }
   }
-  
+
   public T removeLast() {
     if (myLast == 0) {
       isWrapped = !isWrapped;
       myLast = myArray.length;
     }
     myLast--;
-    T result = (T)myArray[myLast];
+    @SuppressWarnings("unchecked") T result = (T)myArray[myLast];
     myArray[myLast] = null;
     return result;
   }
-  
+
 
   public boolean isEmpty() {
     return size() == 0;
@@ -94,17 +93,18 @@ public class Queue<T> {
     if (isEmpty()) {
       throw new IndexOutOfBoundsException("queue is empty");
     }
-    return (T)myArray[myFirst];
+    @SuppressWarnings("unchecked") T t = (T)myArray[myFirst];
+    return t;
   }
 
-  private int copyFromTo(int first, int last, T[] result, int destPos) {
+  private int copyFromTo(int first, int last, Object[] result, int destinationPos) {
     int length = last - first;
-    System.arraycopy(myArray, first, result, destPos, length);
+    System.arraycopy(myArray, first, result, destinationPos, length);
     return length;
   }
 
   private T[] normalize(int capacity) {
-    T[] result = (T[])new Object[capacity];
+    @SuppressWarnings("unchecked") T[] result = (T[])new Object[capacity];
     if (isWrapped) {
       int tailLength = copyFromTo(myFirst, myArray.length, result, 0);
       copyFromTo(0, myLast, result, tailLength);
@@ -127,31 +127,33 @@ public class Queue<T> {
       if (myFirst + index >= myArray.length) {
         arrayIndex = index - myArray.length + myFirst;
       }
-      else
+      else {
         arrayIndex = myFirst + index;
+      }
     }
     else {
       arrayIndex = myFirst + index;
     }
     final Object old = myArray[arrayIndex];
     myArray[arrayIndex] = value;
-    return (T)old;
+    @SuppressWarnings("unchecked") T t = (T)old;
+    return t;
   }
 
   public boolean process(@NotNull Processor<T> processor) {
     if (isWrapped) {
       for (int i = myFirst; i < myArray.length; i++) {
-        T t = (T)myArray[i];
+        @SuppressWarnings("unchecked") T t = (T)myArray[i];
         if (!processor.process(t)) return false;
       }
       for (int i = 0; i < myLast; i++) {
-        T t = (T)myArray[i];
+        @SuppressWarnings("unchecked") T t = (T)myArray[i];
         if (!processor.process(t)) return false;
       }
     }
     else {
       for (int i = myFirst; i < myLast; i++) {
-        T t = (T)myArray[i];
+        @SuppressWarnings("unchecked") T t = (T)myArray[i];
         if (!processor.process(t)) return false;
       }
     }
@@ -163,8 +165,14 @@ public class Queue<T> {
     if (isEmpty()) return "<empty>";
     List<Object> list = Arrays.asList(myArray);
     if (isWrapped) {
-      return "[[[ " +list.subList(0, myLast) + " ||| ... " + list.subList(myLast, myFirst) + " ... ||| " + list.subList(myFirst, myArray.length) + " ]]]";
+      return "[[[ " + list.subList(0, myLast) + " ||| ... " +
+             list.subList(myLast, myFirst) + " ... ||| " +
+             list.subList(myFirst, myArray.length) + " ]]]";
     }
-    return "[[[ ... " +list.subList(0, myFirst) + " ... ||| " + list.subList(myFirst, myLast) + " ||| ... " + list.subList(myFirst, myArray.length) + " ... ]]]";
+    else {
+      return "[[[ ... " + list.subList(0, myFirst) + " ... ||| " +
+                 list.subList(myFirst, myLast) + " ||| ... " +
+                 list.subList(myFirst, myArray.length) + " ... ]]]";
+    }
   }
 }
