@@ -23,11 +23,6 @@ target('default': "Developers update") {
   ant.delete(dir: patchedDescriptorDir)
 }
 
-target('build-jps': 'Build JPS standalone distribution') {
-  println("Building jps standalone distribution")
-  layout_jps("$home/build/lib/jps")
-}
-
 String appInfoFileName() {
   return "idea/IdeaApplicationInfo.xml"
 }
@@ -569,7 +564,7 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
-def layout_jps(String home, String target) {
+def layoutCommunityJps(String home, String target) {
   layout(target) {
     jar("util.jar") {
       module("annotations")
@@ -596,9 +591,27 @@ def layout_jps(String home, String target) {
     jar("groovy_rt.jar") {
       module("groovy_rt")
     }
-    jar("ui-designer-jps-plugin.jar") {
-      module("ui-designer-jps-plugin")
+    jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
+
+    jar("android-jps-plugin.jar") {
+      module("android-jps-plugin")
+      module("android-common")
+      module("android-rt")
     }
+    fileset(dir: "${home}/plugins/android/lib") {
+      include(name: "**/*.jar")
+      exclude(name: "**/ddmlib_1.jar")
+    }
+
+    jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+    fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+
+    jar("eclipse-jps-plugin.jar") {
+      module("common-eclipse-util")
+      module("eclipse-jps-plugin")
+    }
+    jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
+    jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
     fileset(dir: "$home/lib") {
       include(name: "jdom.jar")
       include(name: "jna.jar")
