@@ -144,7 +144,9 @@ public class DataFlowRunner {
           }
         }
 
-        //System.out.println(instructionState);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(instructionState.toString());
+        }
 
         DfaInstructionState[] after = instruction.accept(this, instructionState.getMemoryState(), visitor);
         if (after != null) {
