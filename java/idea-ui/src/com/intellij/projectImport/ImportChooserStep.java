@@ -32,6 +32,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -50,6 +51,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
   private final ProjectImportProvider[] myProviders;
   private final StepSequence mySequence;
+  @Nullable
   private ProjectImportProvider myFromSourcesProvider;
   private JBList myList;
   private JPanel myPanel;
@@ -73,7 +75,9 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         model.addElement(provider);
       }
     }
-
+    if (myFromSourcesProvider == null) {
+      myCreateFromSources.setVisible(false);
+    }
     myList.setModel(model);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new DefaultListCellRenderer() {
@@ -121,7 +125,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     if (myList.getSelectedValue() != null) return;
 
     final String id = PropertiesComponent.getInstance().getValue(PREFERRED);
-    if (id == null || id.equals(myFromSourcesProvider.getId())) {
+    if (id == null || myFromSourcesProvider != null && id.equals(myFromSourcesProvider.getId())) {
       myCreateFromSources.setSelected(true);
     }
     else {
