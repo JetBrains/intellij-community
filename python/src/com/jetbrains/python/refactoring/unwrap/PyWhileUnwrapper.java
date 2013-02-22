@@ -28,6 +28,7 @@ public class PyWhileUnwrapper extends PyUnwrapper {
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
     final PyWhileStatement whileStatement = (PyWhileStatement)element;
     context.extractPart(whileStatement);
+    context.extractPart(whileStatement.getElsePart());
     context.delete(whileStatement);
   }
 }

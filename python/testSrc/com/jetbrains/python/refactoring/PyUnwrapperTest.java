@@ -21,6 +21,7 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testWhileUnwrap()                       throws Throwable {doTest();}
   public void testWhileUnwrapEmpty()                  throws Throwable {doNegativeTest();}
   public void testWhileUnwrapMultipleStatements()     throws Throwable {doTest();}
+  public void testWhileElseUnwrap()                   throws Throwable {doTest();}
 
   public void testIfWithElseUnwrap()                  throws Throwable {doTest();}
   public void testIfInWhileUnwrap()                   throws Throwable {doTest();}
@@ -40,6 +41,7 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testTryElseFinallyUnwrap()              throws Throwable {doTest();}
 
   public void testForUnwrap()                         throws Throwable {doTest();}
+  public void testForElseUnwrap()                     throws Throwable {doTest();}
 
   public void testWithUnwrap()                        throws Throwable {doTest(LanguageLevel.PYTHON32);}
 
