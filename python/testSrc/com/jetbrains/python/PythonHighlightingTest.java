@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -171,7 +173,14 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testDocstring() {  // PY-8025
-    doTest(false, true);
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.REST);
+    try {
+      doTest(false, true);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   public void testYieldInNestedFunction() {

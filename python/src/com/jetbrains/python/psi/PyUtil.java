@@ -9,6 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -1168,11 +1169,17 @@ public class PyUtil {
     if (element == null) {
       return null;
     }
-    while (caretOffset > 0 && element instanceof PsiWhiteSpace) {
+    int lineStartOffset = 0;
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    if (document != null) {
+      int lineNumber = document.getLineNumber(caretOffset);
+      lineStartOffset = document.getLineStartOffset(lineNumber);
+    }
+    while (caretOffset >= lineStartOffset && element instanceof PsiWhiteSpace) {
       caretOffset--;
       element = psiFile.findElementAt(caretOffset);
     }
-    return element;
+    return element instanceof PsiWhiteSpace ? null : element;
   }
 }
 

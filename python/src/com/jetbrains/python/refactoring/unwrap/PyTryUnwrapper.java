@@ -21,6 +21,7 @@ public class PyTryUnwrapper extends PyUnwrapper {
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
     final PyTryExceptStatement statement = (PyTryExceptStatement)element;
     context.extractPart(statement);
+    context.extractPart(statement.getElsePart());
     context.extractPart(statement.getFinallyPart());
     context.delete(statement);
   }

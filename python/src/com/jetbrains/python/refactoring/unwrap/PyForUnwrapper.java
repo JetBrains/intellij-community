@@ -28,6 +28,7 @@ public class PyForUnwrapper extends PyUnwrapper {
   protected void doUnwrap(final PsiElement element, final Context context) throws IncorrectOperationException {
     final PyForStatement forStatement = (PyForStatement)element;
     context.extractPart(forStatement);
+    context.extractPart(forStatement.getElsePart());
     context.delete(forStatement);
   }
 }
