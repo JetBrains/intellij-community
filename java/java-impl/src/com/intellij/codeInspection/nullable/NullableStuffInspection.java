@@ -85,6 +85,14 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? manager.getNullables() : manager.getNotNulls();
 
+          if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
+            final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+            final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
+            holder.registerProblem(field.getNameIdentifier(), "Nullable/NotNull defaults are not accessible in current context",
+                                   new ChangeNullableDefaultsFix(notNull, nullable, manager));
+            return;
+          }
+
           String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
           final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
           final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
@@ -289,9 +297,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         reported_not_annotated_method_overrides_notnull = true;
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
+        final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
+                                  ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                  : createChangeDefaultNotNullFix(nullableManager, superMethod);
         holder.registerProblem(method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createAnnotateMethodFix(defaultNotNull, annotationsToRemove));
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               fix);
       }
       if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
         PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
@@ -313,10 +325,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             if (!AnnotationUtil.isAnnotated(parameter, nullableManager.getAllAnnotations(), false, false) &&
                 nullableManager.isNotNull(superParameter, false)) {
               reported_not_annotated_parameter_overrides_notnull[i] = true;
+              final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull()) 
+                                        ? new AddNotNullAnnotationFix(parameter) 
+                                        : createChangeDefaultNotNullFix(nullableManager, superParameter);
               holder.registerProblem(parameter.getNameIdentifier(),
                                      InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     new AddNotNullAnnotationFix(parameter));
+                                     fix);
             }
           }
         }
@@ -334,22 +349,34 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       }
       if (hasAnnotatedParameter || annotated.isDeclaredNotNull) {
         PsiManager manager = method.getManager();
+        final String defaultNotNull = nullableManager.getDefaultNotNull();
+        final boolean superMethodApplicable = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull);
         PsiMethod[] overridings =
           OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(manager.getProject()), true).toArray(PsiMethod.EMPTY_ARRAY);
         boolean methodQuickFixSuggested = false;
         for (PsiMethod overriding : overridings) {
           if (!manager.isInProject(overriding)) continue;
+          
+          final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
               && !nullableManager.isNotNull(overriding, false) 
               && (nullableManager.isNullable(overriding, false) || !nullableManager.isNullable(overriding, true))) {
             method.getNameIdentifier(); //load tree
-            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
-            final String defaultNotNull = nullableManager.getDefaultNotNull();
+            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());            
             final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
+
+            final LocalQuickFix fix;
+            if (applicable) {
+              fix = new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove);
+            }
+            else {
+              fix = superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
+            }
+
             holder.registerProblem(annotation, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove));
+                                   fix);
             methodQuickFixSuggested = true;
           }
           if (hasAnnotatedParameter) {
@@ -363,7 +390,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(annotation,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       new AnnotateOverriddenMethodParameterFix(nullableManager.getDefaultNotNull(), nullableManager.getDefaultNullable()));
+                                       !applicable ? createChangeDefaultNotNullFix(nullableManager, parameters[i]) : new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable()));
                 parameterQuickFixSuggested[i] = true;
               }
             }
@@ -371,6 +398,12 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       }
     }
+  }
+
+  private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
+    LOG.assertTrue(annotation != null);
+    return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
   }
 
   protected AnnotateMethodFix createAnnotateMethodFix(final String defaultNotNull, final String[] annotationsToRemove) {
