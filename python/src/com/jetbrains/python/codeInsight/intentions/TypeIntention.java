@@ -56,7 +56,7 @@ public abstract class TypeIntention implements IntentionAction {
   }
 
   @Nullable
-  protected static PyExpression getProblemElement(PsiElement elementAt) {
+  protected static PyExpression getProblemElement(@Nullable PsiElement elementAt) {
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
     if (problemElement == null) return null;
     if (problemElement instanceof PyQualifiedExpression) {

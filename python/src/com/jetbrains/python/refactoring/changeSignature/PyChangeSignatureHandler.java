@@ -37,7 +37,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   @Nullable
   @Override
-  public PsiElement findTargetMember(PsiElement element) {
+  public PsiElement findTargetMember(@Nullable PsiElement element) {
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression != null) {
       return callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
