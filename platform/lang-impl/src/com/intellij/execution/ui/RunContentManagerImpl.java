@@ -342,7 +342,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         // mark the window as "last activated" windows and thus
         // some action like navigation up/down in stactrace wont
         // work correctly
-        window.activate(null, false, false, false);
+        window.activate(null, false, false);
       }
     });
   }
