@@ -15,7 +15,7 @@ import java.util.List;
 public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PySuperMethodsSearch.SearchParameters> {
   public static PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
 
-  public static PyFunction getBaseMethod(List<PsiElement> superMethods,
+  private static PyFunction getBaseMethod(List<PsiElement> superMethods,
                                          PyClass containingClass) {
 
     for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
