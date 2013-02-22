@@ -29,19 +29,26 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
         PythonStringUtil.getQuotes(stringLiteralExpression.getText());
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
-        final PyStatementList statementList = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyStatementList.class);
-        final PsiElement whiteSpace = statementList.getPrevSibling();
-        String indent;
-        if (whiteSpace instanceof PsiWhiteSpace)
-          indent = whiteSpace.getText();
-        else
-          indent = "\n";
+        String indent = getIndent(stringLiteralExpression);
         return quotes != null? quotes.getFirst()+ indent : "\"" + indent;
       }
       else
         return quotes != null? quotes.getFirst() : "\"";
     }
     return element instanceof PsiComment? "# " : "";
+  }
+
+  private static String getIndent(PyStringLiteralExpression stringLiteralExpression) {
+    final PyStatementList statementList = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyStatementList.class);
+    String indent = "";
+    if (statementList != null) {
+      final PsiElement whiteSpace = statementList.getPrevSibling();
+      if (whiteSpace instanceof PsiWhiteSpace)
+        indent = whiteSpace.getText();
+      else
+        indent = "\n";
+    }
+    return indent;
   }
 
   @NotNull
@@ -54,13 +61,7 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
         PythonStringUtil.getQuotes(stringLiteralExpression.getText());
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
-        final PyStatementList statementList = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyStatementList.class);
-        final PsiElement whiteSpace = statementList.getPrevSibling();
-        String indent;
-        if (whiteSpace instanceof PsiWhiteSpace)
-          indent = whiteSpace.getText();
-        else
-          indent = "\n";
+        String indent = getIndent(stringLiteralExpression);
         return quotes != null? indent + quotes.getSecond() : indent + "\"";
       }
       else
