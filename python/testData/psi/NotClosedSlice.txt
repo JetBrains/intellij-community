@@ -1,16 +1,14 @@
 PyFile:NotClosedSlice.py
   PyExpressionStatement
-    PyConditionalExpression
-      PySubscriptionExpression
-        PyReferenceExpression: a
-          PsiElement(Py:IDENTIFIER)('a')
-        PsiElement(Py:LBRACKET)('[')
-        PyConditionalExpression
-          PyStringLiteralExpression: key]
-            PsiElement(Py:SINGLE_QUOTED_STRING)('"key"')
-            PsiElement(Py:SINGLE_QUOTED_STRING)('"]"')
-        PsiErrorElement:']' expected
-          <empty list>
+    PySubscriptionExpression
+      PyReferenceExpression: a
+        PsiElement(Py:IDENTIFIER)('a')
+      PsiElement(Py:LBRACKET)('[')
+      PyStringLiteralExpression: key]
+        PsiElement(Py:SINGLE_QUOTED_STRING)('"key"')
+        PsiElement(Py:SINGLE_QUOTED_STRING)('"]"')
+      PsiErrorElement:']' expected
+        <empty list>
   PsiWhiteSpace('\n')
   PyIfStatement
     PyIfPartIf
