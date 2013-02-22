@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
 
 
   protected static class Context extends AbstractUnwrapper.AbstractContext {
-    public void extractPart(PsiElement from) {
+    public void extractPart(@Nullable PsiElement from) {
       if (from instanceof PyStatementWithElse) {
         extractFromConditionalBlock((PyStatementWithElse)from);
       }
