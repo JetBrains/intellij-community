@@ -42,7 +42,8 @@ public class CommonProxy extends ProxySelector {
   private final CommonAuthenticator myAuthenticator;
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
-  private final static long ourErrorInterval = 10000;
+  private final static long ourErrorInterval = 3 * 60 * 1000;
+  private static volatile int ourNotificationCount;
   private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
   private static final Map<String, String> ourProps = new HashMap<String, String>();
@@ -89,7 +90,11 @@ public class CommonProxy extends ProxySelector {
   }
 
   private static boolean itsTime() {
-    return System.currentTimeMillis() - ourErrorTime > ourErrorInterval;
+    final boolean b = System.currentTimeMillis() - ourErrorTime > ourErrorInterval && ourNotificationCount < 5;
+    if (b) {
+      ++ ourNotificationCount;
+    }
+    return b;
   }
 
   private static void assertSystemPropertiesSet() {
