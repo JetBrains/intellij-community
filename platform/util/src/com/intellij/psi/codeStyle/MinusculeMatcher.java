@@ -303,10 +303,10 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
 
-    // middle matches have to be at least of length 2, to prevent too many irrelevant matches
+    // middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
                       Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
-                      ? 2 : 1;
+                      ? 3 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() &&

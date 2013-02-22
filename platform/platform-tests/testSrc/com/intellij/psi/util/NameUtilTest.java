@@ -256,8 +256,16 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*f", "reformat");
     assertMatches("*f", "reformatCode");
     assertDoesntMatch("*fc", "reformatCode");
+    assertDoesntMatch("*foc", "reformatCode");
+    assertMatches("*forc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
     assertDoesntMatch("*Icon", "LEADING_CONSTRUCTOR");
+    assertMatches("*I", "LEADING_CONSTRUCTOR");
+    assertMatches("*i", "LEADING_CONSTRUCTOR");
+    assertMatches("*in", "LEADING_CONSTRUCTOR");
+    assertMatches("*ing", "LEADING_CONSTRUCTOR");
+    assertDoesntMatch("*inc", "LEADING_CONSTRUCTOR");
+    assertDoesntMatch("*ico", "drawLinePickedOut");
   }
 
   public void testMiddleMatchingUnderscore() {
