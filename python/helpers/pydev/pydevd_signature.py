@@ -28,10 +28,10 @@ class SignatureFactory(object):
         self.project_roots =  os.getenv('PYCHARM_PROJECT_ROOTS', '').split(os.pathsep)
 
     def is_in_scope(self, filename):
-        filename = normcase(realpath(filename))
+        filename = os.path.normcase(filename)
         for root in self.project_roots:
-            root = normcase(realpath(root))
-            if filename.startsWith(root):
+            root = os.path.normcase(root)
+            if filename.startswith(root):
                 return True
         return False
 
