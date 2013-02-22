@@ -4,6 +4,7 @@ import com.intellij.codeInsight.unwrap.UnwrapHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -43,6 +44,8 @@ public class PyUnwrapperTest extends PyTestCase {
 
   public void testEndOfStatementUnwrap()              throws Throwable {doTest();}
   public void testEndOfStatementNextLineUnwrap()      throws Throwable {doNegativeTest();}
+
+  public void testIfInElifBranchUnwrap()              throws Throwable {doNegativeTest(PyBundle.message("unwrap.if"));}
 
   private void doTest() {
     doTest(0);
@@ -85,6 +88,20 @@ public class PyUnwrapperTest extends PyTestCase {
       }
     };
     h.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
-   }
+  }
+
+  private void doNegativeTest(final String optionName) {
+    String before = "refactoring/unwrap/" + getTestName(true) + "_before.py";
+    myFixture.configureByFile(before);
+    UnwrapHandler h = new UnwrapHandler() {
+      @Override
+      protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
+        for (AnAction option : options) {
+          assertFalse("\"" + optionName  + "\" is available to unwrap ", option.toString().contains(optionName));
+        }
+      }
+    };
+    h.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+  }
 
 }
