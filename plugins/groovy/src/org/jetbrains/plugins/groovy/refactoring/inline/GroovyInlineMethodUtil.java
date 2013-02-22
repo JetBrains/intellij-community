@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +25,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
@@ -81,7 +81,7 @@ public class GroovyInlineMethodUtil {
     }
 
     if (invokedOnReference) {
-      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
       if (reference == null) return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
 
       PsiElement element = reference.getElement();
@@ -534,8 +534,7 @@ public class GroovyInlineMethodUtil {
                                                           GrCallExpression call,
                                                           GrExpression oldExpression,
                                                           GrParameter parameter) {
-    Collection<PsiReference> refs =
-      ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(parameter.getProject()), false).findAll();
+    Collection<PsiReference> refs = ReferencesSearch.search(parameter, new LocalSearchScope(method), false).findAll();
 
     final GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(call.getProject());
     GrExpression expression = elementFactory.createExpressionFromText(oldExpression.getText());
