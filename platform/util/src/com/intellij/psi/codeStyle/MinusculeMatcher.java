@@ -31,6 +31,10 @@ import java.util.Iterator;
 * @author peter
 */
 public class MinusculeMatcher implements Matcher {
+  /**
+   * Lowercase humps don't work for parts separated by these characters
+   * Need either an explicit uppercase letter or the same separator character in prefix
+   */
   private static final String HARD_SEPARATORS = " ()";
   private ThreadLocal<MatchingState> myMatchingState = new ThreadLocal<MatchingState>() {
     @Override
