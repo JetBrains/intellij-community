@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportListStub;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -63,17 +65,19 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
     super.subtreeChanged();
   }
 
+  private static final TokenSet IMPORT_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_STATEMENT);
+  private static final TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(JavaElementType.IMPORT_STATIC_STATEMENT);
+
   @Override
   @NotNull
   public PsiImportStatement[] getImportStatements() {
-    return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.ARRAY_FACTORY);
+    return getStubOrPsiChildren(IMPORT_STATEMENT_BIT_SET, PsiImportStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
   @NotNull
   public PsiImportStaticStatement[] getImportStaticStatements() {
-    return getStubOrPsiChildren(ElementType.IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
-
+    return getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
