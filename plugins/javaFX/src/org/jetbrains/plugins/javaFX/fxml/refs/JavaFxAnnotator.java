@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
 import com.intellij.lang.annotation.Annotation;
@@ -32,12 +31,10 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
@@ -47,7 +44,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDesc
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
 
 /**
  * User: anna
@@ -132,8 +128,15 @@ public class JavaFxAnnotator implements Annotator {
     }
 
     @Override
-    public boolean equals(Object obj) {
-      return myElement.equals(obj);
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ColorIconRenderer renderer = (ColorIconRenderer)o;
+
+      if (myElement != null ? !myElement.equals(renderer.myElement) : renderer.myElement != null) return false;
+
+      return true;
     }
 
     @Override
