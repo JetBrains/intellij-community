@@ -16,6 +16,7 @@
 package com.intellij.util.proxy;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
@@ -100,7 +101,9 @@ public class CommonProxy extends ProxySelector {
 
     final String message = getMessageFromProps(props);
     if (message != null) {
-      PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+      if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+      }
       LOG.info(message);
     }
   }
