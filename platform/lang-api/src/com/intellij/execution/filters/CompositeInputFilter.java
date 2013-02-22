@@ -39,13 +39,13 @@ public class CompositeInputFilter implements InputFilter {
 
   @Override
   @Nullable
-  public Pair<String, ConsoleViewContentType> applyFilter(final String text, final ConsoleViewContentType contentType) {
+  public List<Pair<String, ConsoleViewContentType>> applyFilter(final String text, final ConsoleViewContentType contentType) {
     boolean dumb = myDumbService.isDumb();
     for (Pair<InputFilter, Boolean> pair : myFilters) {
       if (!dumb || pair.second == Boolean.TRUE) {
         long t0 = System.currentTimeMillis();
         InputFilter filter = pair.first;
-        Pair<String, ConsoleViewContentType> result = filter.applyFilter(text, contentType);
+        List<Pair<String, ConsoleViewContentType>> result = filter.applyFilter(text, contentType);
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 100) {
           LOG.warn(filter.getClass().getSimpleName() + ".applyFilter() took " + t0 + " ms on '''" + text + "'''");

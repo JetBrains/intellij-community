@@ -531,13 +531,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     
-    Pair<String, ConsoleViewContentType> result = myInputMessageFilter.applyFilter(s, contentType);
+    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(s, contentType);
     if (result == null) {
       printHyperlink(s, contentType, null);
     }
     else {
-      if (result.first != null) {
-        printHyperlink(result.first, result.second == null ? contentType : result.second, null);
+      for (Pair<String, ConsoleViewContentType> item : result) {
+        if (item.first != null) {
+          printHyperlink(item.first, item.second == null ? contentType : item.second, null);
+        }
       }
     }
   }
