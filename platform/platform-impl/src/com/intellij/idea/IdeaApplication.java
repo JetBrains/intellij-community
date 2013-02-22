@@ -80,7 +80,7 @@ public class IdeaApplication {
     }
     else {
       patchSystem();
-      new JFrame(); // this peer will prevent shutting down our application
+      new JFrame().pack(); // this peer will prevent shutting down our application
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
