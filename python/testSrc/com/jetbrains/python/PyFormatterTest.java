@@ -66,6 +66,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testStarExpression() {  // PY-1523
+    doTestPy3();
+  }
+
+  private void doTestPy3() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
       doTest();
@@ -302,6 +306,10 @@ public class PyFormatterTest extends PyTestCase {
     finally {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
+  }
+
+  public void testSpaceInAnnotations() {  // PY-8961
+    doTestPy3();
   }
 
   private void doTest() {
