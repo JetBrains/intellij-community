@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsGlobalLoader extends JpsLoaderBase {
+  private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";
   private static final JpsElementChildRole<JpsSimpleElement<Map<String, String>>> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
@@ -61,6 +63,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   private void load(File optionsDir) {
+    LOG.debug("Loading config from " + optionsDir.getAbsolutePath());
     for (JpsGlobalExtensionSerializer serializer : SERIALIZERS) {
       loadGlobalComponents(optionsDir, serializer);
     }
