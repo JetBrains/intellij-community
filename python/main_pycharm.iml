@@ -14,7 +14,8 @@
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="svn4idea" />
     <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="database-impl" />
+    <orderEntry type="module" module-name="database-plugin" />
+    <orderEntry type="module" module-name="sql-plugin" />
     <orderEntry type="module" module-name="jdbc-console" />
     <orderEntry type="module" module-name="django-db-config" />
     <orderEntry type="module" module-name="JSInspections" />
@@ -37,7 +38,6 @@
     <orderEntry type="module" module-name="pycharm-flask" />
     <orderEntry type="module" module-name="pycharm-numpy" />
     <orderEntry type="module" module-name="python-helpers" />
-    <orderEntry type="module" module-name="sql" />
     <orderEntry type="module" module-name="vagrant" />
   </component>
 </module>

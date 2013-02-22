@@ -33,7 +33,9 @@ jdbc-console
 django-db-config
 database-impl
 DatabaseSupport
+database-plugin
 sql
+sql-plugin
 coffeescript
 remote-run
 python-remote-interpreter
