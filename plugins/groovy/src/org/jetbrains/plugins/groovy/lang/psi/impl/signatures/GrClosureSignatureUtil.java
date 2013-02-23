@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -622,7 +622,7 @@ public class GrClosureSignatureUtil {
 
   @Nullable
   public static Map<GrExpression, Pair<PsiParameter, PsiType>> mapArgumentsToParameters(@NotNull GroovyResolveResult resolveResult,
-                                                                                        @NotNull GroovyPsiElement context,
+                                                                                        @NotNull PsiElement context,
                                                                                         final boolean partial,
                                                                                         final boolean eraseArgs,
                                                                                         @NotNull final GrNamedArgument[] namedArgs,
@@ -683,7 +683,7 @@ public class GrClosureSignatureUtil {
                                                                @NotNull GrNamedArgument[] namedArgs,
                                                                @NotNull GrExpression[] expressionArgs,
                                                                @NotNull GrClosableBlock[] closureArguments,
-                                                               @NotNull GroovyPsiElement context,
+                                                               @NotNull PsiElement context,
                                                                boolean partial, boolean eraseArgs) {
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 
