@@ -216,9 +216,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private Set<HgChange> getLocalChanges() {
-    HgStatusCommand statusCommand = new HgStatusCommand(project);
-    statusCommand.setIncludeIgnored(false);
-    statusCommand.setIncludeUnknown(false);
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeUnknown(false).includeIgnored(false).build(project);
     return statusCommand.execute(repository);
   }
 
@@ -266,7 +264,7 @@ public class HgRegularUpdater implements HgUpdater {
     if (parentAfterUpdate.equals(parentBeforeUpdate)) { // nothing to update => returning not to capture local uncommitted changes
       return;
     }
-    HgStatusCommand statusCommand = new HgStatusCommand(project);
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).build(project);
     statusCommand.setBaseRevision(parentBeforeUpdate);
     statusCommand.setTargetRevision(parentAfterUpdate);
     Set<HgChange> changes = statusCommand.execute(repo);

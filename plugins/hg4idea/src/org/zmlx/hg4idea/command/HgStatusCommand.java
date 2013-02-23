@@ -39,52 +39,72 @@ public class HgStatusCommand {
 
   private final Project project;
 
-  private boolean includeAdded = true;
-  private boolean includeModified = true;
-  private boolean includeRemoved = true;
-  private boolean includeDeleted = true;
-  private boolean includeUnknown = true;
-  private boolean includeIgnored = true;
-  private boolean includeCopySource = true;
+  private final boolean includeAdded;
+  private final boolean includeModified;
+  private final boolean includeRemoved;
+  private final boolean includeDeleted;
+  private final boolean includeUnknown;
+  private final boolean includeIgnored;
+  private final boolean includeCopySource;
+
   @Nullable private HgRevisionNumber baseRevision;
   @Nullable private HgRevisionNumber targetRevision;
   private HgPlatformFacade myPlatformFacade;
 
-  public HgStatusCommand(Project project) {
-    this(project, ServiceManager.getService(project, HgPlatformFacade.class));
+
+  public static class Builder {
+    private boolean includeAdded;
+    private boolean includeModified;
+    private boolean includeRemoved;
+    private boolean includeDeleted;
+    private boolean includeUnknown;
+    private boolean includeIgnored;
+    private boolean includeCopySource;
+
+    public Builder(boolean initValue) {
+      includeAdded = initValue;
+      includeModified = initValue;
+      includeRemoved = initValue;
+      includeDeleted = initValue;
+      includeUnknown = initValue;
+      includeIgnored = initValue;
+      includeCopySource = initValue;
+    }
+
+    public Builder includeUnknown(boolean val) {
+      includeUnknown = val;
+      return this;
+    }
+
+    public Builder includeIgnored(boolean val) {
+      includeIgnored = val;
+      return this;
+    }
+
+    public Builder includeCopySource(boolean val) {
+      includeCopySource = val;
+      return this;
+    }
+
+    public HgStatusCommand build(Project project) {
+      return new HgStatusCommand(project, ServiceManager.getService(project, HgPlatformFacade.class), this);
+    }
+
+    public HgStatusCommand build(Project project, HgPlatformFacade facade) {
+      return new HgStatusCommand(project, facade, this);
+    }
   }
 
-  public HgStatusCommand(Project project, HgPlatformFacade facade) {
+  private HgStatusCommand(Project project, HgPlatformFacade facade, Builder builder) {
     this.project = project;
     myPlatformFacade = facade;
-  }
-
-  public void setIncludeAdded(boolean includeAdded) {
-    this.includeAdded = includeAdded;
-  }
-
-  public void setIncludeModified(boolean includeModified) {
-    this.includeModified = includeModified;
-  }
-
-  public void setIncludeRemoved(boolean includeRemoved) {
-    this.includeRemoved = includeRemoved;
-  }
-
-  public void setIncludeDeleted(boolean includeDeleted) {
-    this.includeDeleted = includeDeleted;
-  }
-
-  public void setIncludeUnknown(boolean includeUnknown) {
-    this.includeUnknown = includeUnknown;
-  }
-
-  public void setIncludeIgnored(boolean includeIgnored) {
-    this.includeIgnored = includeIgnored;
-  }
-
-  public void setIncludeCopySource(boolean includeCopySource) {
-    this.includeCopySource = includeCopySource;
+    includeAdded = builder.includeAdded;
+    includeModified = builder.includeModified;
+    includeRemoved = builder.includeRemoved;
+    includeDeleted = builder.includeDeleted;
+    includeUnknown = builder.includeUnknown;
+    includeIgnored = builder.includeIgnored;
+    includeCopySource = builder.includeCopySource;
   }
 
   public void setBaseRevision(@Nullable HgRevisionNumber base) {
@@ -187,20 +207,9 @@ public class HgStatusCommand {
     return changes;
   }
 
-  public void setOnlyUntrackedTrue() {
-    includeAdded = false;
-    includeModified = false;
-    includeRemoved = false;
-    includeDeleted = false;
-    includeCopySource = false;
-    includeIgnored = false;
-    includeUnknown = true;
-  }
-
   @NotNull
   public Collection<VirtualFile> getHgUntrackedFiles(@NotNull VirtualFile repo, @NotNull List<VirtualFile> files) throws VcsException {
     Collection<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
-    setOnlyUntrackedTrue();
     List<FilePath> filePaths = ObjectsConvertor.vf2fp(files);
     Set<HgChange> change = execute(repo, filePaths);
     for (HgChange hgChange : change) {

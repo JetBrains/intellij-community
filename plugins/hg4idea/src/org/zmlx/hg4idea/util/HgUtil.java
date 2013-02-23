@@ -285,10 +285,8 @@ public abstract class HgUtil {
 
 
   public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
-    HgStatusCommand statCommand = new HgStatusCommand(project);
-    statCommand.setIncludeUnknown(false);
+    HgStatusCommand statCommand = new HgStatusCommand.Builder(true).includeUnknown(false).build(project);
     statCommand.setBaseRevision(vcsRevisionNumber);
-    statCommand.setIncludeCopySource(true);
 
     Set<HgChange> changes = statCommand.execute(localHgFile.getRepo());
 
@@ -402,8 +400,7 @@ public abstract class HgUtil {
                                      @NotNull final FilePath path,
                                      @Nullable final HgFileRevision rev1,
                                      @Nullable final HgFileRevision rev2, HgPlatformFacade facade) {
-    HgStatusCommand statusCommand = new HgStatusCommand(project,facade);
-    statusCommand.setIncludeCopySource(false);
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeCopySource(false).build(project, facade);
     HgRevisionNumber revNumber1 = null;
     if (rev1 != null) {
       revNumber1 = rev1.getRevisionNumber();

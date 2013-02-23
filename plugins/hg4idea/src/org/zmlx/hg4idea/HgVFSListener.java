@@ -96,7 +96,9 @@ public class HgVFSListener extends VcsVFSListener {
           final Collection<VirtualFile> files = e.getValue();
           pi.setText(repo.getPresentableUrl());
           try {
-            untrackedFiles.addAll(new HgStatusCommand(myProject).getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
+            untrackedFiles
+              .addAll(new HgStatusCommand.Builder(false).includeUnknown(true).build(myProject)
+                        .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -144,9 +146,7 @@ public class HgVFSListener extends VcsVFSListener {
         if (myProject != null) {
           Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
           final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
-          HgStatusCommand statusCommand = new HgStatusCommand(myProject);
-          statusCommand.setOnlyUntrackedTrue();
-          statusCommand.setIncludeIgnored(true);
+          HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).includeUnknown(true).includeIgnored(true).build(myProject);
           for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
             Set<HgChange> changes = statusCommand.execute(repo);
             for (HgChange change : changes) {
