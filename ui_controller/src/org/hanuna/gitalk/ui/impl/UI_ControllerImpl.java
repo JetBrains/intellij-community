@@ -2,7 +2,7 @@ package org.hanuna.gitalk.ui.impl;
 
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.DataLoader;
@@ -149,7 +149,7 @@ public class UI_ControllerImpl implements UI_Controller {
             MyTimer timer = new MyTimer("update branch shows");
 
             prevSelectionBranches = new HashSet<Hash>(checkedCommitHashes);
-            dataPack.getGraphModel().setVisibleBranchesNodes(new Get<Node, Boolean>() {
+            dataPack.getGraphModel().setVisibleBranchesNodes(new Function<Node, Boolean>() {
                 @NotNull
                 @Override
                 public Boolean get(@NotNull Node key) {

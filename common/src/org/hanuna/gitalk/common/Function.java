@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author erokhins
 */
-public interface Get<K, V> {
+public interface Function<K, V> {
     @NotNull
     public V get(@NotNull K key);
 }

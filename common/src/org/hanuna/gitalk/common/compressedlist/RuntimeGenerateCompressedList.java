@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.common.compressedlist;
 
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.generator.Generator;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ import java.util.List;
  * index is index positionElement in positionItems
  */
 public class RuntimeGenerateCompressedList<T> implements CompressedList<T> {
-    private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Get<Integer, T>() {
+    private final CacheGet<Integer, T> cache = new CacheGet<Integer, T>(new Function<Integer, T>() {
         @NotNull
         @Override
         public T get(@NotNull Integer key) {

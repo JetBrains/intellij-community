@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.graphmodel.impl;
 
 import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
@@ -29,7 +29,7 @@ public class GraphModelImpl implements GraphModel {
     private final List<Executor<UpdateRequest>> listeners = new ArrayList<Executor<UpdateRequest>>();
     private final GraphBranchShowFixer branchShowFixer;
 
-    private Get<Node, Boolean> isStartedBranchVisibilityNode = new Get<Node, Boolean>() {
+    private Function<Node, Boolean> isStartedBranchVisibilityNode = new Function<Node, Boolean>() {
         @NotNull
         @Override
         public Boolean get(@NotNull Node key) {
@@ -109,7 +109,7 @@ public class GraphModelImpl implements GraphModel {
     }
 
     @Override
-    public void setVisibleBranchesNodes(@NotNull Get<Node, Boolean> isStartedNode) {
+    public void setVisibleBranchesNodes(@NotNull Function<Node, Boolean> isStartedNode) {
         this.isStartedBranchVisibilityNode = isStartedNode;
         Set<Node> prevVisibleNodes = visibleNodes.getVisibleNodes();
         Set<Node> newVisibleNodes = visibleNodes.generateVisibleBranchesNodes(isStartedNode);

@@ -2,7 +2,7 @@ package org.hanuna.gitalk.data.impl;
 
 import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.common.CacheGet;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.data.CommitDataGetter;
 import org.hanuna.gitalk.data.DataPack;
 import org.hanuna.gitalk.git.reader.CommitDataReader;
@@ -24,7 +24,7 @@ public class CacheCommitDataGetter implements CommitDataGetter {
     private static final int DOWN_PRELOAD_COUNT = 40;
 
 
-    private final CacheGet<Hash, CommitData> cache = new CacheGet<Hash, CommitData>(new Get<Hash, CommitData>() {
+    private final CacheGet<Hash, CommitData> cache = new CacheGet<Hash, CommitData>(new Function<Hash, CommitData>() {
         @NotNull
         @Override
         public CommitData get(@NotNull Hash key) {

@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel;
 
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.GraphElement;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -20,7 +20,7 @@ public interface FragmentManager {
     public UpdateRequest changeVisibility(@NotNull GraphFragment fragment);
 
     //true, if node is unhiddenNode
-    public void setUnhiddenNodes(@NotNull Get<Node, Boolean> unhiddenNodes);
+    public void setUnconcealedNodeFunction(@NotNull Function<Node, Boolean> isUnconcealedNode);
 
     void hideAll();
 

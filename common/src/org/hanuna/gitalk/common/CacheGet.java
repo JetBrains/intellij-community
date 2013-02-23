@@ -8,20 +8,20 @@ import java.util.Map;
 /**
  * @author erokhins
  */
-public class CacheGet<K, V> implements Get<K, V> {
-    private final Get<K, V> getFunction;
+public class CacheGet<K, V> implements Function<K, V> {
+    private final Function<K, V> getFunction;
     private final int size;
     private Map<K, V> map;
     private Map<K, V> moreMap;
 
-    public CacheGet(@NotNull Get<K, V> getFunction, int size) {
+    public CacheGet(@NotNull Function<K, V> getFunction, int size) {
         this.getFunction = getFunction;
         this.size = size;
         this.map = new HashMap<K, V>(2 * size);
         this.moreMap = new HashMap<K, V>(2 * size);
     }
 
-    public CacheGet(@NotNull Get<K, V> getFunction) {
+    public CacheGet(@NotNull Function<K, V> getFunction) {
         this(getFunction, 100);
     }
 

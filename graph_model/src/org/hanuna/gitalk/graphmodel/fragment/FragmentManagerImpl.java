@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -39,7 +39,7 @@ public class FragmentManagerImpl implements FragmentManager {
     }
 
     @Override
-    public void setUnhiddenNodes(@NotNull Get<Node, Boolean> unhiddenNodes) {
+    public void setUnconcealedNodeFunction(@NotNull Function<Node, Boolean> unhiddenNodes) {
         fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
     }
 

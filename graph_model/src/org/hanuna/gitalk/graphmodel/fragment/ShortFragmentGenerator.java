@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
@@ -19,7 +19,7 @@ public class ShortFragmentGenerator {
     private final static int MAX_FRAGMENT_SIZE = 100;
 
     private final Graph graph;
-    private Get<Node, Boolean> unhiddenNodes = new Get<Node, Boolean>() {
+    private Function<Node, Boolean> unhiddenNodes = new Function<Node, Boolean>() {
         @NotNull
         @Override
         public Boolean get(@NotNull Node key) {
@@ -31,7 +31,7 @@ public class ShortFragmentGenerator {
         this.graph = graph;
     }
 
-    public void setUnhiddenNodes(Get<Node, Boolean> unhiddenNodes) {
+    public void setUnhiddenNodes(Function<Node, Boolean> unhiddenNodes) {
         this.unhiddenNodes = unhiddenNodes;
     }
 

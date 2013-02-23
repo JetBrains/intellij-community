@@ -1,6 +1,6 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
@@ -43,13 +43,13 @@ public class GraphModelUtils {
         return s.toString();
     }
 
-    public static Get<Node, Boolean> parseUnhiddenNodes(Graph graph, String unhiddenNodeRows) {
+    public static Function<Node, Boolean> parseUnhiddenNodes(Graph graph, String unhiddenNodeRows) {
         Set<Integer> unhiddenNodesRowIndex = parseIntegers(unhiddenNodeRows);
         final Set<Node> unhiddenNodes = new HashSet<Node>();
         for (Integer i : unhiddenNodesRowIndex) {
             unhiddenNodes.add(getCommitNode(graph, i));
         }
-        return new Get<Node, Boolean>() {
+        return new Function<Node, Boolean>() {
             @NotNull
             @Override
             public Boolean get(@NotNull Node key) {

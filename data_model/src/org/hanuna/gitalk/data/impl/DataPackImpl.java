@@ -1,7 +1,7 @@
 package org.hanuna.gitalk.data.impl;
 
 import org.hanuna.gitalk.common.Executor;
-import org.hanuna.gitalk.common.Get;
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.CommitDataGetter;
@@ -48,7 +48,7 @@ public class DataPackImpl implements DataPack {
         });
 
         final RefsModel refsModel = new RefsModel(allRefs);
-        graphModel.getFragmentManager().setUnhiddenNodes(new Get<Node, Boolean>() {
+        graphModel.getFragmentManager().setUnconcealedNodeFunction(new Function<Node, Boolean>() {
             @NotNull
             @Override
             public Boolean get(@NotNull Node key) {
