@@ -111,7 +111,7 @@ public class HgStatusCommand {
     baseRevision = base;
   }
 
-  public void setTargetRevision(HgRevisionNumber target) {
+  public void setTargetRevision(@Nullable HgRevisionNumber target) {
     targetRevision = target;
   }
 
