@@ -14,13 +14,11 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -57,29 +55,15 @@ public class HgTagBranchCommand {
     return output.get(0).trim();
   }
 
-  public void listBranches(final Consumer<List<HgTagBranch>> branchListConsumer) {
-    new HgCommandExecutor(project).execute(repo, "branches", null, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (result != null) {
-          branchListConsumer.consume(tokenize(result));
-        }
-      }
-    });
+  public HgCommandResult collectBranches() {
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "branches", null);
   }
 
-  public void listTags(final Consumer<List<HgTagBranch>> tagListConsumer) {
-    new HgCommandExecutor(project).execute(repo, "tags", null, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (result != null) {
-          tagListConsumer.consume(tokenize(result));
-        }
-      }
-    });
+  public HgCommandResult collectTags() {
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "tags", null);
   }
 
-  private static List<HgTagBranch> tokenize(HgCommandResult result) {
+  public static List<HgTagBranch> parseResult(HgCommandResult result) {
     List<HgTagBranch> branches = new LinkedList<HgTagBranch>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);
