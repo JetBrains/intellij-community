@@ -119,9 +119,8 @@ public class HgUpdateToDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    if (branchesForRepos.get(root) != null) {
-      branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
-    }
+    assert branchesForRepos.get(root) != null;
+    branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
