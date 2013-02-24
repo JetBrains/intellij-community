@@ -40,10 +40,11 @@ public class ShowLogAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(ShowFilePathAction.isSupported());
     presentation.setText(getActionName());
+    presentation.setDescription("Show Log in file manager");
   }
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Reveal Log in Finder" : "Show Log in " + ShowFilePathAction.getFileManagerName();
+    return SystemInfo.isMac ? "Reveal Log in Finder" : "Reveal Log in " + ShowFilePathAction.getFileManagerName();
   }
 }
