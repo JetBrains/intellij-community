@@ -499,18 +499,18 @@ public class VfsUtil extends VfsUtilCore {
         return prefix + ":///" + suffix;
       }
     }
-    else if (SystemInfoRt.isWindows && url.regionMatches(0, LocalFileSystem.PROTOCOL_PREFIX, 0, LocalFileSystem.PROTOCOL_PREFIX.length())) {
+    else if (url.charAt(index + 3) == '/' && SystemInfoRt.isWindows && url.regionMatches(0, LocalFileSystem.PROTOCOL_PREFIX, 0, LocalFileSystem.PROTOCOL_PREFIX.length())) {
       // file:///C:/test/file.js -> file://C:/test/file.js
-      for (int i = index + 3; i < url.length(); i++) {
+      for (int i = index + 4; i < url.length(); i++) {
         char c = url.charAt(i);
         if (c == '/') {
-          return url;
-        }
-        else if (c == ':') {
           break;
         }
+        else if (c == ':') {
+          return LocalFileSystem.PROTOCOL_PREFIX + url.substring(index + 4);
+        }
       }
-      return LocalFileSystem.PROTOCOL_PREFIX + url.substring(index + 3);
+      return url;
     }
     return url;
   }
