@@ -428,7 +428,7 @@ public class ImplementationViewComponent extends JPanel {
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
 
-    if (elt.getText() == null || elt.getTextRange() == null) {
+    if (elt.getTextRange() == null) {
       return null;
     }
 
