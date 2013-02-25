@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -40,11 +39,10 @@ public class ShowLogAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(ShowFilePathAction.isSupported());
     presentation.setText(getActionName());
-    presentation.setDescription("Show Log in file manager");
   }
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Reveal Log in Finder" : "Reveal Log in " + ShowFilePathAction.getFileManagerName();
+    return "Show Log in " + ShowFilePathAction.getFileManagerName();
   }
 }
