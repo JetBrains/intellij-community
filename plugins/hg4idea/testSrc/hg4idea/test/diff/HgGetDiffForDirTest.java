@@ -15,14 +15,13 @@
  */
 package hg4idea.test.diff;
 
-import com.intellij.dvcs.test.MockVirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import hg4idea.test.HgLightTest;
-import org.junit.After;
-import org.junit.Test;
+import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgPlatformFacade;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -30,31 +29,16 @@ import java.io.File;
 import java.util.List;
 
 import static hg4idea.test.HgExecutor.*;
-import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Nadya Zabrodina
  */
+public class HgGetDiffForDirTest extends HgPlatformTest {
 
-public class HgGetDiffForDirTest extends HgLightTest {
-  private final String SHORT_TEMPLATE_REVISION = "{rev}:{node|short}";
-  MockVirtualFile myRepository;
+  private static final String SHORT_TEMPLATE_REVISION = "{rev}:{node|short}";
 
-
-  @Override
-  public void setUp() {
-    super.setUp();
-    myRepository = createRepository(myProjectRoot);
-  }
-
-  @After
-  public void tearDown() {
-    super.tearDown();
-  }
-
-  @Test
   public void testDiffForDir() {
-    cd(myProjectRoot);
+    cd(myRepository);
     touch("A.txt", "dsfdfdsf");
     hg("add A.txt");
     touch("B.txt");
@@ -67,7 +51,7 @@ public class HgGetDiffForDirTest extends HgLightTest {
     hg("add C.txt");
     hg("add D.txt");
     hg("commit -m createDir");
-    File dirFile = new File(myProjectRoot, "dir");
+    File dirFile = new File(myRepository.getPath(), "dir");
     String[] hash1 = hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
     HgRevisionNumber r1number = HgRevisionNumber.getInstance(hash1[0], hash1[1]);
     HgFileRevision rev1 =
@@ -80,7 +64,7 @@ public class HgGetDiffForDirTest extends HgLightTest {
     HgFileRevision rev2 =
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r2number, "", null, "", "", null, null, null, null);
     FilePath dirPath = new com.intellij.openapi.vcs.FilePathImpl(dirFile, dirFile.isDirectory());
-    List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2, myPlatformFacade);
+    List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2, ServiceManager.getService(HgPlatformFacade.class));
     assertEquals(changes.size(), 2);
   }
 }
