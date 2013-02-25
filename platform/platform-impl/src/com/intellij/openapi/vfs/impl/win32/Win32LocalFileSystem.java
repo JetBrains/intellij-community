@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.impl.win32;
 
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
@@ -60,8 +59,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    final FileInfo fileInfo = myFsCache.getInfo(file);
-    return fileInfo != null ? fileInfo.toFileAttributes() : null;
+    return myFsCache.getAttributes(file);
   }
 
   @NotNull
