@@ -29,9 +29,18 @@ import java.util.List;
 public abstract class HierarchicalMethodSignature extends MethodSignatureBackedByPsiMethod {
   public HierarchicalMethodSignature(@NotNull MethodSignatureBackedByPsiMethod signature) {
     super(signature.getMethod(), signature.getSubstitutor(), signature.isRaw(), 
-          signature.getParameterTypes(), signature.getTypeParameters());
+          getParameterTypes(signature.getMethod()), signature.getTypeParameters());
   }
 
+  private static PsiType[] getParameterTypes(PsiMethod method) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final PsiType[] paramTypes = new PsiType[parameters.length];
+    for (int i = 0; i < paramTypes.length; i++) {
+      paramTypes[i] = parameters[i].getType();
+    }
+    return paramTypes;
+  }
+  
   /**
    * Returns the list of super method signatures for the specified signature.
    *

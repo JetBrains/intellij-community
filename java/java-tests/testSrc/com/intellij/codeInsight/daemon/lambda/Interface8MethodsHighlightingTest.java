@@ -29,6 +29,7 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testExtensionMethods() { doTest(false, false); }
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
+  public void testCyclicSubstitutor() { doTest(false, false); }
 
   public void testExtensionMethodSyntax() {
     enableInspectionTools(DeprecatedDefenderSyntaxInspection.class);
