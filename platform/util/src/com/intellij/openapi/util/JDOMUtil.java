@@ -136,7 +136,7 @@ public class JDOMUtil {
 
   @SuppressWarnings({"unchecked"})
   @NotNull
-  public static Object[] getChildNodesWithAttrs(final Element e) {
+  public static Object[] getChildNodesWithAttrs(@NotNull Element e) {
     ArrayList<Object> result = new ArrayList<Object>();
     result.addAll(e.getContent());
     result.addAll(e.getAttributes());
