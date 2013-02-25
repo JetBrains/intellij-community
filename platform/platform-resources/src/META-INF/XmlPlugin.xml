@@ -74,7 +74,6 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
-    <extensionPoint name="xml.importOptimizer" interface="com.intellij.lang.ImportOptimizer"/>
   </extensionPoints>
 
   <project-components>
