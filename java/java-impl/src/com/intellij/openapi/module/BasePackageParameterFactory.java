@@ -60,7 +60,7 @@ public class BasePackageParameterFactory extends ProjectTemplateParameterFactory
 
       @Override
       public String getLabel() {
-        return "Base package:";
+        return "Base \u001Bpackage:";
       }
 
       @Override
