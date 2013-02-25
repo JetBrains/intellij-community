@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.*;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -24,6 +28,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,8 +41,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPIPackageUtil {
   public static Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
-  @NonNls public static String PYPI_URL = "http://pypi.python.org/pypi";
-  @NonNls public static String PYPI_LIST_URL = "http://pypi.python.org/pypi?%3Aaction=index";
+  @NonNls public static String PYPI_URL = "https://pypi.python.org/pypi";
+  @NonNls public static String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
   private XmlRpcClient myXmlRpcClient;
   public static PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
@@ -210,6 +216,22 @@ public class PyPIPackageUtil {
 
     try {
       URL repositoryUrl = new URL(PYPI_LIST_URL);
+
+      // Create a trust manager that does not validate certificate
+      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
+        public X509Certificate[] getAcceptedIssuers(){return null;}
+        public void checkClientTrusted(X509Certificate[] certs, String authType){}
+        public void checkServerTrusted(X509Certificate[] certs, String authType){}
+      }};
+
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+      } catch (Exception e) {
+        LOG.warn(e);
+      }
+
       InputStream is = repositoryUrl.openStream();
       Reader reader = new InputStreamReader(is);
       try{
