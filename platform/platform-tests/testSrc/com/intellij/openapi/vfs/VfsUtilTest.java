@@ -371,7 +371,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
         }
       }.execute().throwException();
     }
-    final VirtualFile theChild = vDir.getChildren()[5111];
+    final VirtualFile theChild = vDir.findChild("5111.txt");
 
     PlatformTestUtil.startPerformanceTest("find child is slow", 450, new ThrowableRunnable() {
       @Override
