@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -118,6 +119,7 @@ class DeclarationCacheKey {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
         result.add(collectScopeDeclarations(scope, lastParent, place));
+        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
         return true;
       }
     });
@@ -127,7 +129,7 @@ class DeclarationCacheKey {
   private DeclarationHolder collectScopeDeclarations(PsiElement scope, PsiElement lastParent, GroovyPsiElement place) {
     MyCollectProcessor plainCollector = new MyCollectProcessor(scope);
     MyCollectProcessor nonCodeCollector = new MyCollectProcessor(scope);
-    ResolveUtil.doProcessDeclarations(place, lastParent, scope, plainCollector, nonCode ? nonCodeCollector : null);
+    ResolveUtil.doProcessDeclarations(place, lastParent, scope, plainCollector, nonCode ? nonCodeCollector : null, ResolveState.initial());
     return new DeclarationHolder(scope, plainCollector.declarations, nonCodeCollector.declarations);
   }
 
@@ -136,7 +138,8 @@ class DeclarationCacheKey {
       CachedValuesManager.getManager(place.getProject()).getCachedValue(place, VALUE_PROVIDER);
     List<DeclarationHolder> declarations = cache.get(this);
     if (declarations == null) {
-      cache.putIfAbsent(this, declarations = collectDeclarations(place));
+      declarations = collectDeclarations(place);
+      cache.putIfAbsent(this, declarations);
     }
     return declarations;
   }

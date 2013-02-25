@@ -92,7 +92,24 @@ public class ResolveUtil {
    * @param processNonCodeMethods - this parameter tells us if we need non code members
    * @return
    */
-  public static boolean treeWalkUp(@NotNull final GroovyPsiElement place, final PsiScopeProcessor processor, boolean processNonCodeMethods) {
+  public static boolean treeWalkUp(@NotNull final GroovyPsiElement place,
+                                   @NotNull final PsiScopeProcessor processor,
+                                   boolean processNonCodeMethods) {
+    return treeWalkUp(place, processor, processNonCodeMethods, ResolveState.initial());
+  }
+
+  /**
+   *
+   * @param place - place to start tree walk up
+   * @param processor
+   * @param processNonCodeMethods - this parameter tells us if we need non code members
+   * @param state
+   * @return
+   */
+  public static boolean treeWalkUp(@NotNull final GroovyPsiElement place,
+                                   @NotNull final PsiScopeProcessor processor,
+                                   boolean processNonCodeMethods,
+                                   @NotNull final ResolveState state) {
     ClassHint hint = processor.getHint(ClassHint.KEY);
     if (hint != null) {
       return new DeclarationCacheKey(getNameHint(processor), hint, processNonCodeMethods).processCachedDeclarations(place, processor);
@@ -102,21 +119,23 @@ public class ResolveUtil {
     return PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
-        if (!doProcessDeclarations(place, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor)) {
+        if (!doProcessDeclarations(place, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
           return false;
         }
+        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
         issueLevelChangeEvents(processor, scope);
         return true;
       }
     });
   }
 
-  static boolean doProcessDeclarations(GroovyPsiElement place,
-                                       PsiElement lastParent,
-                                       PsiElement scope,
+  static boolean doProcessDeclarations(@NotNull GroovyPsiElement place,
+                                       @Nullable PsiElement lastParent,
+                                       @NotNull PsiElement scope,
                                        @NotNull PsiScopeProcessor plainProcessor,
-                                       @Nullable PsiScopeProcessor nonCodeProcessor) {
-    if (!scope.processDeclarations(plainProcessor, ResolveState.initial(), lastParent, place)) return false;
+                                       @Nullable PsiScopeProcessor nonCodeProcessor,
+                                       @NotNull ResolveState state) {
+    if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
     if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
     return true;
   }
