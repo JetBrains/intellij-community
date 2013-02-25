@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.tree.SourceUtil;
+import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
@@ -60,8 +60,8 @@ public class SliceLeafAnalyzer {
               elementToCompare = resolved;
             }
           }
-          return elementToCompare instanceof PsiNamedElement ?
-                 ((PsiNamedElement)elementToCompare).getName() : SourceUtil.getTextSkipWhiteSpaceAndComments(elementToCompare.getNode());
+          return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
+                                                             : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
         }
       });
       return Comparing.hashcode(text);
