@@ -420,12 +420,17 @@ public class ImplementationViewComponent extends JPanel {
   }
 
 
+  @Nullable
   public static String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
+
+    if (elt.getText() == null || elt.getTextRange() == null) {
+      return null;
+    }
 
     final ImplementationTextSelectioner implementationTextSelectioner =
       LanguageImplementationTextSelectioner.INSTANCE.forLanguage(elt.getLanguage());
