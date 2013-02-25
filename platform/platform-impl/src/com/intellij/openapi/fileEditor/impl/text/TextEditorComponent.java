@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -62,7 +59,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-class TextEditorComponent extends JBLoadingPanel implements DataProvider {
+class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
 
   private final Project myProject;
@@ -163,19 +160,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
   Editor getEditor(){
     return myEditor;
   }
-  
+
   /**
    * @return created editor. This editor should be released by {@link #disposeEditor(Editor) }
    * method.
    */
   @NotNull
   private Editor createEditor(){
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Editor[] editors = editorFactory.getEditors(myDocument);
-    if (editors.length == 1) {
-      return editors[0];
-    }
-    final Editor editor = editorFactory.createEditor(myDocument, myProject);
+    Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);
