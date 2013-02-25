@@ -103,6 +103,7 @@ public class DataFlowRunner {
       myFields = flow.getFields();
 
       if (LOG.isDebugEnabled()) {
+        LOG.debug("Analyzing code block: " + psiBlock.getText());
         for (int i = 0; i < myInstructions.length; i++) {
           Instruction instruction = myInstructions[i];
           LOG.debug(i + ": " + instruction.toString());
@@ -111,6 +112,7 @@ public class DataFlowRunner {
 
       Integer tooExpensiveSize = psiBlock.getUserData(TOO_EXPENSIVE_SIZE);
       if (tooExpensiveSize != null && tooExpensiveSize == psiBlock.getText().hashCode()) {
+        LOG.debug("Too complex because hasn't changed since being too complex already");
         return RunnerResult.TOO_COMPLEX;
       }
 
@@ -125,6 +127,7 @@ public class DataFlowRunner {
       int count = 0;
       while (!queue.isEmpty()) {
         if (count % 50 == 0 && !unitTestMode && measurer.isTimeOver()) {
+          LOG.debug("Too complex because the analysis took too long");
           psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
         }
@@ -140,6 +143,7 @@ public class DataFlowRunner {
 
         if (instruction instanceof BranchingInstruction) {
           if (!instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
+            LOG.debug("Too complex because too many different possible states");
             return RunnerResult.TOO_COMPLEX; // Too complex :(
           }
         }
@@ -163,14 +167,17 @@ public class DataFlowRunner {
       }
 
       psiBlock.putUserData(TOO_EXPENSIVE_SIZE, null);
+      LOG.debug("Analysis ok");
       return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException e) {
-      LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
+      LOG.error(psiBlock.getText(), e); // TODO fix in better times
       return RunnerResult.ABORTED;
     }
     catch (EmptyStackException e) {
-      //LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
+      if (LOG.isDebugEnabled()) {
+        LOG.error(e); // TODO fix in better times
+      }
       return RunnerResult.ABORTED;
     }
   }
