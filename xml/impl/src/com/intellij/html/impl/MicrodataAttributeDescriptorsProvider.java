@@ -94,9 +94,10 @@ public class MicrodataAttributeDescriptorsProvider implements XmlAttributeDescri
 
   private static class MicrodataPropertyAttributeDescriptor extends AnyXmlAttributeDescriptor {
 
+    @NotNull
     private final XmlTag myContext;
 
-    public MicrodataPropertyAttributeDescriptor(XmlTag context) {
+    public MicrodataPropertyAttributeDescriptor(@NotNull XmlTag context) {
       super(ITEM_PROP);
       myContext = context;
     }
@@ -114,7 +115,7 @@ public class MicrodataAttributeDescriptorsProvider implements XmlAttributeDescri
 
     @Override
     public String[] getEnumeratedValues() {
-      final XmlTag scopeParent = findScopeTag(myContext);
+      final XmlTag scopeParent = findScopeTag(myContext.getParentTag());
       return scopeParent != null ? findProperties(scopeParent) : super.getEnumeratedValues();
     }
 

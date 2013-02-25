@@ -151,4 +151,25 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
                  "name", "nickname", "photo", "title", "role", "url", "affiliation", "friend", "acquaintance", "address"
     );
   }
+
+  public void testPropValueNestedScopes() throws Throwable {
+    final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
+    final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", personFile.getPath());
+        ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Address", addressFile.getPath());
+      }
+    });
+    doTestInHtml("<div itemscope itemtype=\"http://data-vocabulary.org/Person\">\n" +
+                 "    My name is <span itemprop=\"name\">Smith</span>\n" +
+                 "    <span itemprop=\"<caret>\" itemscope itemtype=\"http://data-vocabulary.org/Address\">\n" +
+                 "        <span itemprop=\"locality\">Albuquerque</span>\n" +
+                 "        <span itemprop=\"region\">NM</span>\n" +
+                 "    </span>\n" +
+                 "</div>",
+                 "name", "nickname", "photo", "title", "role", "url", "affiliation", "friend", "acquaintance", "address"
+    );
+  }
 }
