@@ -17,6 +17,7 @@ package hg4idea.test.diff;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgFile;
@@ -44,14 +45,13 @@ public class HgGetDiffForDirTest extends HgPlatformTest {
     touch("B.txt");
     hg("add B.txt");
     hg("commit -m 2files_added");
-    mkdir("dir");
+    File dirFile = new File(mkdir("dir"));
     cd("dir");
     touch("C.txt");
     touch("D.txt");
     hg("add C.txt");
     hg("add D.txt");
     hg("commit -m createDir");
-    File dirFile = new File(myRepository.getPath(), "dir");
     String[] hash1 = hg("log -l 1 --template=" + SHORT_TEMPLATE_REVISION).split(":");
     HgRevisionNumber r1number = HgRevisionNumber.getInstance(hash1[0], hash1[1]);
     HgFileRevision rev1 =
@@ -63,7 +63,7 @@ public class HgGetDiffForDirTest extends HgPlatformTest {
     HgRevisionNumber r2number = HgRevisionNumber.getInstance(hash2[0], hash2[1]);
     HgFileRevision rev2 =
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r2number, "", null, "", "", null, null, null, null);
-    FilePath dirPath = new com.intellij.openapi.vcs.FilePathImpl(dirFile, dirFile.isDirectory());
+    FilePath dirPath = new FilePathImpl(dirFile, true);
     List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2, ServiceManager.getService(HgPlatformFacade.class));
     assertEquals(changes.size(), 2);
   }
