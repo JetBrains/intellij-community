@@ -145,7 +145,9 @@ class StatusPanel extends JPanel {
 
   private Action createCopyAction() {
     ActionManager actionManager = ActionManager.getInstance();
+    if (actionManager == null) return null;
     AnAction action = actionManager.getAction(IdeActions.ACTION_COPY);
+    if (action == null) return null;
     return new AbstractAction(action.getTemplatePresentation().getText(), action.getTemplatePresentation().getIcon()) {
       @Override
       public void actionPerformed(ActionEvent e) {
