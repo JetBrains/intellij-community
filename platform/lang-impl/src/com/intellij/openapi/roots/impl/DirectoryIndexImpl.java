@@ -139,7 +139,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
   }
 
-  protected void dispatchPendingEvents() {
+  private void dispatchPendingEvents() {
     myConnection.deliverImmediately();
   }
 
@@ -414,7 +414,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return myInitialized;
   }
 
-  protected void doInitialize() {
+  private void doInitialize() {
     IndexState newState = new IndexState();
     newState.doInitialize(false);
     myState = newState;
@@ -428,7 +428,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @NotNull
-  protected static ContentEntry[] getContentEntries(@NotNull Module module) {
+  private static ContentEntry[] getContentEntries(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).getContentEntries();
   }
 
@@ -478,12 +478,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @Nullable
-  protected static String getPackageNameForSubdir(String parentPackageName, String subdirName) {
+  private static String getPackageNameForSubdir(String parentPackageName, String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
-  class IndexState {
+  private class IndexState {
     private final TIntObjectHashMap<Set<String>> myExcludeRootsMap = new TIntObjectHashMap<Set<String>>();
     private final TIntHashSet myProjectExcludeRoots = new TIntHashSet();
     private final TIntObjectHashMap<DirectoryInfo> myDirToInfoMap = new TIntObjectHashMap<DirectoryInfo>();
@@ -551,10 +551,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     @Nullable
-    DirectoryInfo getInfo(int fileId) {
+    private DirectoryInfo getInfo(int fileId) {
       return myDirToInfoMap.get(fileId);
     }
-
 
     private void storeInfo(@NotNull DirectoryInfo info, int id) {
       if (CHECK) {
@@ -567,7 +566,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       myDirToInfoMap.put(id, info);
     }
 
-    void assertAncestorsConsistent() {
+    private void assertAncestorsConsistent() {
       if (CHECK) {
         myDirToInfoMap.forEachEntry(new TIntObjectProcedure<DirectoryInfo>() {
           @Override
@@ -594,10 +593,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    void fillMapWithModuleContent(@NotNull NewVirtualFile root,
-                                  final Module module,
-                                  final NewVirtualFile contentRoot,
-                                  @Nullable final ProgressIndicator progress) {
+    private void fillMapWithModuleContent(@NotNull NewVirtualFile root,
+                                          final Module module,
+                                          final NewVirtualFile contentRoot,
+                                          @Nullable final ProgressIndicator progress) {
       final int contentRootId = contentRoot == null ? 0 : contentRoot.getId();
       if (contentRoot != null) {
         assert VfsUtilCore.isAncestor(contentRoot, root, false) : "Root: "+root+"; contentRoot: "+contentRoot;
@@ -725,13 +724,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    protected void fillMapWithModuleSource(@NotNull final Module module,
-                                           @NotNull final NewVirtualFile contentRoot,
-                                           @NotNull final NewVirtualFile dir,
-                                           @NotNull final String packageName,
-                                           @NotNull final NewVirtualFile sourceRoot,
-                                           final boolean isTestSource,
-                                           @Nullable final ProgressIndicator progress) {
+    private void fillMapWithModuleSource(@NotNull final Module module,
+                                         @NotNull final NewVirtualFile contentRoot,
+                                         @NotNull final NewVirtualFile dir,
+                                         @NotNull final String packageName,
+                                         @NotNull final NewVirtualFile sourceRoot,
+                                         final boolean isTestSource,
+                                         @Nullable final ProgressIndicator progress) {
       assert VfsUtilCore.isAncestor(sourceRoot, dir, false) : "SourceRoot: "+sourceRoot+" ("+sourceRoot.getFileSystem()+"); dir: "+dir+" ("+dir.getFileSystem()+")";
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
         private final Stack<String> myPackages = new Stack<String>();
@@ -945,7 +944,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    protected void setPackageName(int dirId, @Nullable String newPackageName) {
+    private void setPackageName(int dirId, @Nullable String newPackageName) {
       String oldPackageName = myDirToPackageName.get(dirId);
       if (oldPackageName != null) {
         removeDirFromPackage(oldPackageName, dirId);
@@ -962,13 +961,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     // orderEntries must be sorted BY_OWNER_MODULE
-    protected void fillMapWithOrderEntries(@NotNull NewVirtualFile root,
-                                           @NotNull final OrderEntry[] orderEntries,
-                                           @Nullable final Module module,
-                                           @Nullable final NewVirtualFile libraryClassRoot,
-                                           @Nullable final NewVirtualFile librarySourceRoot,
-                                           @Nullable final DirectoryInfo parentInfo,
-                                           @Nullable final ProgressIndicator progress) {
+    private void fillMapWithOrderEntries(@NotNull NewVirtualFile root,
+                                         @NotNull final OrderEntry[] orderEntries,
+                                         @Nullable final Module module,
+                                         @Nullable final NewVirtualFile libraryClassRoot,
+                                         @Nullable final NewVirtualFile librarySourceRoot,
+                                         @Nullable final DirectoryInfo parentInfo,
+                                         @Nullable final ProgressIndicator progress) {
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
 
@@ -1014,7 +1013,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    protected void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
+    private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
       assertAncestorsConsistent();
       ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (progress == null) progress = new EmptyProgressIndicator();
@@ -1148,7 +1147,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     @NotNull
-    IndexState copy(@Nullable final TIntProcedure idFilter) {
+    private IndexState copy(@Nullable final TIntProcedure idFilter) {
       final IndexState copy = new IndexState();
 
       myExcludeRootsMap.forEachEntry(new TIntObjectProcedure<Set<String>>() {
