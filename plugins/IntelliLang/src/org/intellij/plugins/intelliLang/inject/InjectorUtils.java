@@ -223,6 +223,7 @@ public class InjectorUtils {
     String prefix = ObjectUtils.notNull(map.get("prefix"), "");
     String suffix = ObjectUtils.notNull(map.get("suffix"), "");
     BaseInjection injection = new BaseInjection(supportId);
+    injection.setDisplayName(text);
     injection.setInjectedLanguageId(languageId);
     injection.setPrefix(prefix);
     injection.setSuffix(suffix);
