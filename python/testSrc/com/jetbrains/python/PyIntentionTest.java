@@ -297,12 +297,8 @@ public class PyIntentionTest extends PyTestCase {
     doDocReferenceTest();
   }
 
-  private void doDocReferenceTest() {
-    doTest(PyBundle.message("INTN.specify.type"));
-  }
-
-  private void doDocReturnTypeTest() {
-    doTest(PyBundle.message("INTN.specify.return.type"));
+  public void testReturnTypeInDocstring() {
+    doDocReturnTypeTest();
   }
 
   public void testTypeInDocstring1() {
@@ -420,4 +416,13 @@ public class PyIntentionTest extends PyTestCase {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
     }
   }
+
+  private void doDocReferenceTest() {
+    doTest(PyBundle.message("INTN.specify.type"));
+  }
+
+  private void doDocReturnTypeTest() {
+    doTest(PyBundle.message("INTN.specify.return.type"));
+  }
+
 }

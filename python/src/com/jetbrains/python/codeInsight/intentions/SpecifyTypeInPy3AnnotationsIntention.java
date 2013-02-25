@@ -124,37 +124,22 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isTypeDefined(PyExpression problemElement) {
-
-    return isDefinedInAnnotation(problemElement);
+  protected boolean isParamTypeDefined(PyParameter parameter) {
+    return isDefinedInAnnotation(parameter);
   }
 
-  private boolean isDefinedInAnnotation(PyExpression problemElement) {
-    if (LanguageLevel.forElement(problemElement).isOlderThan(LanguageLevel.PYTHON30)) {
+  private boolean isDefinedInAnnotation(PyParameter parameter) {
+    if (LanguageLevel.forElement(parameter).isOlderThan(LanguageLevel.PYTHON30)) {
       return false;
     }
-    PsiReference reference = problemElement.getReference();
-    final PsiElement resolved = reference != null? reference.resolve() : null;
-    PyParameter parameter = getParameter(problemElement, resolved);
-
     if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;
-
-    if (resolved instanceof PyTargetExpression) { // return type
-      final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-      if (assignedValue instanceof PyCallExpression) {
-        final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
-        if (callee != null) {
-          final PsiReference psiReference = callee.getReference();
-          if (psiReference != null && psiReference.resolve() == null) return false;
-        }
-        final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(getResolveContext(problemElement));
-
-        if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() != null) return true;
-      }
-    }
     return false;
   }
 
+  @Override
+  protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
+    return function.getAnnotation() != null;
+  }
 
   @Override
   protected void updateText(boolean isReturn) {
