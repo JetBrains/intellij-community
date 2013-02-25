@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea;
-
-import com.intellij.dvcs.DvcsPlatformFacadeImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.application.options.emmet;
 
 /**
- * @author Nadya Zabrodina
- */
-public class HgPlatformFacadeImpl extends DvcsPlatformFacadeImpl implements HgPlatformFacade {
+* User: zolotov
+* Date: 2/21/13
+*/
+public enum CssPrefix {
+  WEBKIT(0x1), MOZ(0x2), MS(0x4), O(0x8);
 
-  @NotNull
-  @Override
-  public HgVcs getVcs(@NotNull Project project) {
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    return (HgVcs)vcsManager.findVcsByName(HgVcs.VCS_NAME);
+  final int myIntMask;
+
+  CssPrefix(int intMask) {
+    myIntMask = intMask;
+  }
+
+  public String getText() {
+    return "-" + toString().toLowerCase();
   }
 }

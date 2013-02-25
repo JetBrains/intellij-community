@@ -1672,6 +1672,38 @@ void foo() {
 }""")
   }
 
+  public void testAliasAnnotation() {
+    myFixture.addClass '''\
+package groovy.transform;
+
+@java.lang.annotation.Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+public @interface AnnotationCollector {
+    String processor() default "org.codehaus.groovy.transform.AnnotationCollectorTransform";
+    Class[] value() default {};
+}
+'''
+
+    doVariantableTest('''\
+import groovy.transform.AnnotationCollector
+
+@interface Bar {
+    int xxx()
+}
+
+@interface Foo {
+    int yyy()
+}
+
+@Foo @Bar
+@AnnotationCollector()
+@interface Alias1 {}
+
+@Alias1(<caret>)
+class Baz {}''', '', CompletionType.BASIC, CompletionResult.contain, 'xxx', 'yyy')
+  }
+
   public void "test honor statistics"() {
     ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(testRootDisposable)
 

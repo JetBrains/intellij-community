@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   // stores child files. The array is logically divided into the two parts:
   // left subarray for storing real files, right subarray for storing fake files with "suspicious" names
   // files in each subarray are sorted according to the compareNameTo() comparator
-  private VirtualFileSystemEntry[] myChildren = EMPTY_ARRAY; // guarded by this, either real file or fake file (meaning it's not a real child but suspicious name)
+  // guarded by this, either real file or fake file (meaning it's not a real child but suspicious name)
+  private VirtualFileSystemEntry[] myChildren = EMPTY_ARRAY;
 
   public VirtualDirectoryImpl(@NonNls @NotNull final String name,
                               @Nullable final VirtualDirectoryImpl parent,

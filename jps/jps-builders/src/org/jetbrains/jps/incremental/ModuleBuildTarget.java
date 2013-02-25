@@ -22,6 +22,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -50,6 +51,9 @@ import java.util.Set;
  * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
+  public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
+    System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")
+  );
   private final JavaModuleBuildTargetType myTargetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
@@ -169,10 +173,13 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   private int getDependenciesFingerprint() {
-    final JpsModule module = getModule();
-
     int fingerprint = 0;
 
+    if (!REBUILD_ON_DEPENDENCY_CHANGE) {
+      return fingerprint;
+    }
+
+    final JpsModule module = getModule();
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();

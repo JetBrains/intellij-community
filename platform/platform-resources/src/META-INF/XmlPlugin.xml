@@ -74,6 +74,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
+    <extensionPoint name="xml.importOptimizer" interface="com.intellij.lang.ImportOptimizer"/>
   </extensionPoints>
 
   <project-components>
@@ -148,6 +149,12 @@
     <applicationService serviceInterface="com.intellij.application.options.editor.WebEditorOptions"
                         serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
     <exportable serviceInterface="com.intellij.application.options.editor.WebEditorOptions"/>
+
+    <applicationConfigurable provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationService serviceInterface="com.intellij.application.options.emmet.EmmetOptions"
+                        serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
+    <exportable serviceInterface="com.intellij.application.options.emmet.EmmetOptions"/>
+
 
     <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
                         serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
@@ -447,6 +454,7 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
+    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.MicrodataAttributeDescriptorsProvider"/>
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>

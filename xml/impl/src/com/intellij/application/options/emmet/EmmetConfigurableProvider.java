@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea;
+package com.intellij.application.options.emmet;
+
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableProvider;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Nadya Zabrodina
+ * User: zolotov
+ * Date: 2/20/13
  */
-
-import com.intellij.dvcs.DvcsPlatformFacade;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
-public interface HgPlatformFacade extends DvcsPlatformFacade {
-
+public class EmmetConfigurableProvider extends ConfigurableProvider {
+  @Nullable
   @Override
-  @NotNull
-  HgVcs getVcs(@NotNull Project project);
-
+  public Configurable createConfigurable() {
+    return new EmmetConfigurable();
+  }
 }

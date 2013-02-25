@@ -76,7 +76,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     if (annotateOverriddenMethods()) {
       PsiMethod[] methods = OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(project), true).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
-        if (!AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false) && psiMethod.getManager().isInProject(psiMethod)) {
+        if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) && !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false) && psiMethod.getManager().isInProject(psiMethod)) {
           toAnnotate.add(psiMethod);
         }
       }

@@ -15,18 +15,11 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
-import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -39,10 +32,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -246,7 +236,7 @@ public class MavenModuleImporter {
   }
 
   @NotNull
-  private static DependencyScope selectScope(String mavenScope) {
+  public static DependencyScope selectScope(String mavenScope) {
     if (MavenConstants.SCOPE_RUNTIME.equals(mavenScope)) return DependencyScope.RUNTIME;
     if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
     if (MavenConstants.SCOPE_PROVIDEED.equals(mavenScope)) return DependencyScope.PROVIDED;

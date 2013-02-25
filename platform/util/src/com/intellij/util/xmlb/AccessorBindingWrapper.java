@@ -16,6 +16,7 @@
 
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class AccessorBindingWrapper implements Binding {
@@ -33,7 +34,7 @@ class AccessorBindingWrapper implements Binding {
   }
 
   @Nullable
-  public Object deserialize(Object context, Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object... nodes) {
     myAccessor.write(context, myBinding.deserialize(myAccessor.read(context), nodes));
     return context;
   }

@@ -81,7 +81,9 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     for (PsiParameter psiParam : toAnnotate) {
       try {
         assert psiParam != null : toAnnotate;
-        new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());
+        if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
+          new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

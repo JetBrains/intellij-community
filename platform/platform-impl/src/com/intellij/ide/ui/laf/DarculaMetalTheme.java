@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
  */
 package com.intellij.ide.ui.laf;
 
-import com.intellij.ui.UIBundle;
-
+import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
@@ -25,27 +24,46 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class IdeaDarkMetalTheme extends DefaultMetalTheme {
-  public String getName() {
-    return UIBundle.message("idea.blue.metal.theme.name");
-  }
+public class DarculaMetalTheme extends DefaultMetalTheme {
 
-  private static final ColorUIResource darkGray = new ColorUIResource(132, 130, 132);
+  private final ColorUIResource myControlHighlightColor = new ColorUIResource(108, 111, 113);
+  private final ColorUIResource myControlDarkShadowColor = new ColorUIResource(39, 42, 44);
+  private final ColorUIResource myControlColor = new ColorUIResource(UIManager.getColor("control"));
   private static final ColorUIResource white = new ColorUIResource(255, 255, 255);
   private static final ColorUIResource darkBlue = new ColorUIResource(82, 108, 164);
-  //  private static ColorUIResource lightGray = new ColorUIResource(214, 211, 206);
   private static final ColorUIResource lightGray = new ColorUIResource(214, 214, 214);
+  private final ColorUIResource mySeparatorForeground = new ColorUIResource(53, 56, 58);
+
+  public static final ColorUIResource primary1 = new ColorUIResource(53, 56, 58);
+  private static final ColorUIResource primary2 = new ColorUIResource(91, 135, 206);
+  private static final ColorUIResource primary3 = new ColorUIResource(166, 202, 240);
+
+
+
+  public String getName() {
+    return "Darcula theme";
+  }
 
   public ColorUIResource getControl() {
-    return lightGray;
+    return myControlColor;
+  }
+
+  @Override
+  public ColorUIResource getControlHighlight() {
+    return myControlHighlightColor;
+  }
+
+  @Override
+  public ColorUIResource getControlDarkShadow() {
+    return myControlDarkShadowColor;
   }
 
   public ColorUIResource getSeparatorBackground() {
-    return white;
+    return getControl();
   }
 
   public ColorUIResource getSeparatorForeground() {
-    return darkGray;
+    return mySeparatorForeground;
   }
 
   public ColorUIResource getMenuBackground() {
@@ -63,10 +81,6 @@ public class IdeaDarkMetalTheme extends DefaultMetalTheme {
   public ColorUIResource getAcceleratorSelectedForeground() {
     return white;
   }
-
-  public static final ColorUIResource primary1 = new ColorUIResource(10, 36, 106);
-  private static final ColorUIResource primary2 = new ColorUIResource(91, 135, 206);
-  private static final ColorUIResource primary3 = new ColorUIResource(166, 202, 240);
 
   public ColorUIResource getFocusColor() {
     return new ColorUIResource(Color.black);

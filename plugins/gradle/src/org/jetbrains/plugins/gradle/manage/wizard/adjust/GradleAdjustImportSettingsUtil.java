@@ -11,8 +11,6 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 /**
  * @author Denis Zhdanov
@@ -21,41 +19,6 @@ import javax.swing.event.DocumentListener;
 public class GradleAdjustImportSettingsUtil {
 
   private GradleAdjustImportSettingsUtil() {
-  }
-
-  /**
-   * Setups given builder to expose controls for management of the given component's name.
-   *
-   * @param builder    target settings builder
-   * @param component  component which name management should be exposed
-   * @return    UI control that holds target component's name
-   */
-  @NotNull
-  public static JTextField configureNameControl(@NotNull GradleProjectSettingsBuilder builder, @NotNull final Named component) {
-    final JTextField result = new JTextField();
-    result.setText(component.getName());
-    builder.add("gradle.import.structure.settings.label.name", result);
-    result.getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void insertUpdate(DocumentEvent e) {
-        applyNewName();
-      }
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        applyNewName();
-      }
-      @Override
-      public void changedUpdate(DocumentEvent e) {
-      }
-      private void applyNewName() {
-        String text = result.getText();
-        if (text == null) {
-          return;
-        }
-        component.setName(text.trim());
-      }
-    });
-    return result;
   }
 
   /**

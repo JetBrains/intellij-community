@@ -273,6 +273,9 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
     jarParent.mkdir();
     FileUtil.copy(originalJar, jar);
+    assert jar.exists();
+    assert jarParent.exists();
+    assert jarParent.getParentFile().exists();
 
     refreshVFS();
 
@@ -330,6 +333,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
     jarParent.mkdir();
     FileUtil.copy(originalJar, jar);
+    assert jar.exists();
 
     refreshVFS();
 

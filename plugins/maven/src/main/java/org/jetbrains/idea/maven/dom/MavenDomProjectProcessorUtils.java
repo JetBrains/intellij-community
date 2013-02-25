@@ -18,12 +18,17 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.impl.GenericDomValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
@@ -316,12 +321,33 @@ public class MavenDomProjectProcessorUtils {
                 groupId.equals(domDependency.getGroupId().getStringValue())) {
               return domDependency;
             }
+
+            if ("import".equals(domDependency.getScope().getRawText())) {
+              GenericDomValue<String> version = domDependency.getVersion();
+              if (version.getXmlElement() != null) {
+                GenericDomValueReference reference = new GenericDomValueReference(version);
+                PsiElement resolve = reference.resolve();
+
+                if (resolve instanceof XmlFile) {
+                  MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
+                  if (dependModel != null) {
+                    for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
+                      if (artifactId.equals(dep.getArtifactId().getStringValue()) &&
+                          groupId.equals(dep.getGroupId().getStringValue())) {
+                        return domDependency;
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
 
         return null;
       }
     };
+
     processDependenciesInDependencyManagement(model, processor, project);
 
     return processor.myResult;

@@ -83,7 +83,7 @@ public class HgChangeProvider implements ChangeProvider {
       final HgRevisionNumber parentRevision = new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo);
       final Map<HgFile, HgResolveStatusEnum> list = new HgResolveCommand(myProject).getListSynchronously(repo);
 
-      hgChanges.addAll(new HgStatusCommand(myProject).execute(repo, entry.getValue()));
+      hgChanges.addAll(new HgStatusCommand.Builder(true).build(myProject).execute(repo, entry.getValue()));
       sendChanges(builder, hgChanges, list, workingRevision, parentRevision);
     }
     return hgChanges;

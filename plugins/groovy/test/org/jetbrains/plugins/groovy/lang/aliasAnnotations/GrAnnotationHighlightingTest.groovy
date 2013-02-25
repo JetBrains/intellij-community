@@ -81,7 +81,7 @@ import groovy.transform.*
 @AnnotationCollector([EqualsAndHashCode, Immutable])
 @interface Alias {}
 
-@<error descr="'@ToString' not applicable to local variable">Alias</error>(excludes = ['a'])
+@<error descr="'@groovy.transform.EqualsAndHashCode' not applicable to local variable"><error descr="'@groovy.transform.Immutable' not applicable to local variable"><error descr="'@groovy.transform.ToString' not applicable to local variable">Alias</error></error></error>(excludes = ['a'])
 int foo
 ''')
   }
@@ -137,6 +137,66 @@ import groovy.transform.*
 class Foo {
     Integer a, b
 }
+''')
+  }
+
+  public void testAnnotationCollectorInterfaceWithAttrs() {
+    testHighlighting('''\
+@interface Foo {
+  int foo()
+}
+
+
+@groovy.transform.AnnotationCollector
+@Foo
+@interface <error descr="Annotation type annotated with @AnnotationCollector cannot have attributes">A</error> {
+  int bar()
+}
+
+@A(foo = 2)
+class X{}
+''')
+  }
+
+  public void testAnnotationCollectorClass() {
+    testHighlighting('''
+@interface Foo {
+  int foo()
+}
+
+@groovy.transform.AnnotationCollector
+@Foo
+class A {
+  int bar() {}
+}
+
+class B{}
+
+@A(foo = 2)
+@<error descr="'B' is not an annotation">B</error>
+class X {}
+''')
+  }
+
+  void testInapplicableAlias2() {
+    testHighlighting('''\
+import groovy.transform.AnnotationCollector
+import groovy.transform.Immutable
+import groovy.transform.ToString
+
+@AnnotationCollector([Immutable, ToString])
+@interface Alias4 {}
+
+@Immutable
+@ToString
+@AnnotationCollector
+@interface Alias5 {}
+
+@<error descr="'@groovy.transform.Immutable' not applicable to method"><error descr="'@groovy.transform.ToString' not applicable to method">Alias4</error></error>
+def aaa() {}
+
+@<error descr="'@groovy.transform.Immutable' not applicable to method"><error descr="'@groovy.transform.ToString' not applicable to method">Alias5</error></error>
+def bbb() {}
 ''')
   }
 }

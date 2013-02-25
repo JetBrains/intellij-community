@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class PrimitiveValueBinding implements Binding {
@@ -33,7 +34,7 @@ class PrimitiveValueBinding implements Binding {
   }
 
   @Nullable
-  public Object deserialize(Object o, Object... nodes) {
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes != null;
 
     if (nodes.length == 0) {

@@ -96,6 +96,7 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
+  @NotNull
   public ExecutionEnvironment build() {
     ExecutionEnvironment environment =
       new ExecutionEnvironment(myRunProfile, myTarget, myProject, myRunnerSettings, myConfigurationSettings, myContentToReuse,

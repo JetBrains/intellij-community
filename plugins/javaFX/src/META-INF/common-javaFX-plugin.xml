@@ -24,6 +24,8 @@
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <category>JavaFX</category>
     </intentionAction>
+    <xml.importOptimizer implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer"/>
+    <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
   </extensions>
 
   <actions>

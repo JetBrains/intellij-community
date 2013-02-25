@@ -17,6 +17,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class HgVFSListener extends VcsVFSListener {
 
   private final VcsDirtyScopeManager dirtyScopeManager;
+  private static final Logger LOG = Logger.getInstance(HgVFSListener.class);
 
   protected HgVFSListener(final Project project, final HgVcs vcs) {
     super(project, vcs);
@@ -96,7 +98,9 @@ public class HgVFSListener extends VcsVFSListener {
           final Collection<VirtualFile> files = e.getValue();
           pi.setText(repo.getPresentableUrl());
           try {
-            untrackedFiles.addAll(new HgStatusCommand(myProject).getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
+            untrackedFiles
+              .addAll(new HgStatusCommand.Builder(false).includeUnknown(true).build(myProject)
+                        .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -141,21 +145,17 @@ public class HgVFSListener extends VcsVFSListener {
         final ArrayList<VirtualFile> adds = new ArrayList<VirtualFile>();
         final HashMap<VirtualFile, VirtualFile> copies = new HashMap<VirtualFile, VirtualFile>(); // from -> to
         //delete unversioned and ignored files from copy source
-        if (myProject != null) {
-          Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
-          final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
-          HgStatusCommand statusCommand = new HgStatusCommand(myProject);
-          statusCommand.setOnlyUntrackedTrue();
-          statusCommand.setIncludeIgnored(true);
-          for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
-            Set<HgChange> changes = statusCommand.execute(repo);
-            for (HgChange change : changes) {
-              unversionedAndIgnoredFiles.add(change.afterFile().toFilePath().getVirtualFile());
-            }
+        LOG.assertTrue(myProject != null, "Project is null");
+        Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
+        final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
+        HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).includeUnknown(true).includeIgnored(true).build(myProject);
+        for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
+          Set<HgChange> changes = statusCommand.execute(repo);
+          for (HgChange change : changes) {
+            unversionedAndIgnoredFiles.add(change.afterFile().toFilePath().getVirtualFile());
           }
-          copyFromMap.values().removeAll(unversionedAndIgnoredFiles);
         }
-
+        copyFromMap.values().removeAll(unversionedAndIgnoredFiles);
 
         // separate adds from copies
         for (VirtualFile file : addedFiles) {

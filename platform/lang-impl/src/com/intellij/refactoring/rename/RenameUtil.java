@@ -68,7 +68,7 @@ public class RenameUtil {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
 
-    Collection<PsiReference> refs = processor.findReferences(element);
+    Collection<PsiReference> refs = processor.findReferences(element, searchInStringsAndComments);
     for (final PsiReference ref : refs) {
       if (ref == null) {
         LOG.error("null reference from processor " + processor);

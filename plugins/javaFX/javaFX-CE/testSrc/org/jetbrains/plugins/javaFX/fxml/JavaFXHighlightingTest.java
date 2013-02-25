@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
@@ -142,6 +140,18 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     final PsiField resultField = resultClass.findFieldByName(resultFieldName, false);
     assertNotNull(resultField);
     assertEquals(resultField, reference.resolve());
+  }
+
+  public void testNavigationFromMainToFxml() throws Exception {
+    configureByFiles(null, getTestName(false) + ".java", getTestName(true) + ".fxml");
+    final int offset = myEditor.getCaretModel().getOffset();
+    final PsiReference reference = myFile.findReferenceAt(offset);
+    assertNotNull(reference);
+    final PsiElement resolve = reference.resolve();
+    assertNotNull(resolve);
+    final PsiFile containingFile = resolve.getContainingFile();
+    assertNotNull(containingFile);
+    assertEquals(getTestName(true) + ".fxml", containingFile.getName());
   }
 
   public void testSourceAttrRecognition() throws Exception {

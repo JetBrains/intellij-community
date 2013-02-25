@@ -30,6 +30,7 @@ public abstract class ProjectTemplateParameterFactory {
   // standard ids
   public static final String IJ_BASE_PACKAGE = "IJ_BASE_PACKAGE";
   public static final String IJ_PROJECT_NAME = "IJ_PROJECT_NAME";
+  public static final String IJ_APPLICATION_SERVER = "IJ_APPLICATION_SERVER";
 
   public abstract String getParameterId();
 

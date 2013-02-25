@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -23,7 +22,6 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
-import org.zmlx.hg4idea.HgPlatformFacade;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -66,20 +64,14 @@ public final class HgCommandExecutor {
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
-  private HgPlatformFacade myPlatformFacade;
 
   public HgCommandExecutor(Project project) {
-    this(project, null, ServiceManager.getService(project, HgPlatformFacade.class));
+    this(project, null);
   }
 
   public HgCommandExecutor(Project project, @Nullable String destination) {
-    this(project, destination, ServiceManager.getService(project, HgPlatformFacade.class));
-  }
-
-  public HgCommandExecutor(Project project, @Nullable String destination, HgPlatformFacade platformFacade) {
     myProject = project;
-    myPlatformFacade = platformFacade;
-    myVcs = platformFacade.getVcs(project);
+    myVcs = HgVcs.getInstance(project);
     myDestination = destination;
   }
 
@@ -155,9 +147,9 @@ public final class HgCommandExecutor {
     WarningReceiver warningReceiver = new WarningReceiver();
     PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization);
 
-    SocketServer promptServer = new SocketServer(new PromptReceiver(handler), myPlatformFacade);
-    SocketServer warningServer = new SocketServer(warningReceiver, myPlatformFacade);
-    SocketServer passServer = new SocketServer(passReceiver, myPlatformFacade);
+    SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
+    SocketServer warningServer = new SocketServer(warningReceiver);
+    SocketServer passServer = new SocketServer(passReceiver);
 
     try {
       int promptPort = promptServer.start();

@@ -178,13 +178,15 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
       String declaredName = getName();
       String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
 
-      final GrAnnotation collector = GrAnnotationCollector.findAnnotationCollector(resolved);
-      if (collector != null) {
-        return multiResolveFromAlias(annotation, name, collector);
-      }
+      if (resolved instanceof PsiClass) {
+        final GrAnnotation collector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
+        if (collector != null) {
+          return multiResolveFromAlias(annotation, name, collector);
+        }
 
-      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-        return multiResolveFromAnnotationType((PsiClass)resolved, name);
+        if (((PsiClass)resolved).isAnnotationType()) {
+          return multiResolveFromAnnotationType((PsiClass)resolved, name);
+        }
       }
     }
     return GroovyResolveResult.EMPTY_ARRAY;

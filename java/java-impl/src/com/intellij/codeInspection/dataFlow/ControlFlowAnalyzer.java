@@ -1218,7 +1218,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(NOT_FOUND, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myFactory.getTypeFactory().create(ref), null));
+        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(ref), null));
         addThrowCode(ref);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }
@@ -1305,7 +1305,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             return true;
           }
         }
-        else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) || "org.testng.Assert".equals(className)) {
+        else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
+                 "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
             pushParameters(params, false, !testng);

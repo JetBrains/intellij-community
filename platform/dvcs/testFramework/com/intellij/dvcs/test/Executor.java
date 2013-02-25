@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +52,10 @@ public class Executor {
     else {
       cdRel(relativeOrAbsolutePath);
     }
+  }
+
+  public static void cd(VirtualFile dir) {
+    cd(dir.getPath());
   }
 
   public static String pwd() {
@@ -157,15 +162,15 @@ public class Executor {
       for (String dir : path.split(File.pathSeparator)) {
         File file = new File(dir, name);
         if (file.canExecute()) {
-          log("Using $programName from PATH");
+          log("Using " + programName + " from PATH");
           return file.getPath();
         }
       }
     }
 
-    throw new IllegalStateException("$programName executable not found. " +
-                                    "Please define a valid environment variable ${pathEnvs.iterator().next()} " +
-                                    "pointing to the $programName executable.");
+    throw new IllegalStateException(programName + " executable not found. " +
+                                    "Please define a valid environment variable " + pathEnvs.iterator().next() +
+                                    " pointing to the " + programName + " executable.");
   }
 
   protected static void log(String msg) {

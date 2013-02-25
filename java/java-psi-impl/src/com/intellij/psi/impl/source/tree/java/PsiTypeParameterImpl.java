@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -44,7 +42,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- *  @author dsl
+ * @author dsl
  */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
@@ -169,7 +167,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
       return PsiTreeUtil.getParentOfType(this, PsiTypeParameterListOwner.class);
     }
 
-    return (PsiTypeParameterListOwner) parentParent;
+    return (PsiTypeParameterListOwner)parentParent;
   }
 
 
@@ -183,9 +181,10 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
     int ret = 0;
     PsiElement element = getPrevSibling();
-    while(element != null){
-      if(element instanceof PsiTypeParameter)
+    while (element != null) {
+      if (element instanceof PsiTypeParameter) {
         ret++;
+      }
       element = element.getPrevSibling();
     }
     return ret;
@@ -194,11 +193,14 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   @Override
   @NotNull
   public PsiIdentifier getNameIdentifier() {
-    return (PsiIdentifier) calcTreeElement().findChildByRole(ChildRole.NAME);
+    return PsiTreeUtil.getRequiredChildOfType(this, PsiIdentifier.class);
   }
 
   @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
   }
 
@@ -361,7 +363,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
     return "PsiTypeParameter:" + getName();
   }
 
-  public PsiMetaData getMetaData(){
+  public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
   }
 
@@ -384,7 +386,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getStubOrPsiChildren(ElementType.ANNOTATIONS, PsiAnnotation.ARRAY_FACTORY);
+    return getStubOrPsiChildren(JavaStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
   @Override
@@ -397,6 +399,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
+
   @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {

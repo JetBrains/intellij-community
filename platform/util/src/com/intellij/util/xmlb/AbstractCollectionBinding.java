@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Content;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -130,7 +131,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
-  public Object deserialize(Object o, Object... nodes) {
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     Collection result;
 
     if (getTagName(o) != null) {
