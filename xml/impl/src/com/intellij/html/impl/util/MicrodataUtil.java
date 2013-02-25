@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAct
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,17 +36,14 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: Fedor.Korotkov
@@ -68,39 +64,39 @@ public class MicrodataUtil {
   }
 
   @Nullable
-  public static XmlTag findScopeTag(@Nullable XmlTag tag) {
+  public static XmlTag findScopeTag(@Nullable XmlTag context) {
+    Map<String, XmlTag> id2tag = findScopesWithItemRef(context != null ? context.getContainingFile() : null);
+    XmlTag tag = context;
     while (tag != null) {
-      if (tag.getAttribute(ITEM_SCOPE) != null) return tag;
-      XmlTag scopeTag = findInRefsById(tag);
-      if (scopeTag != null) return scopeTag;
+      if (tag != context && tag.getAttribute(ITEM_SCOPE) != null) return tag;
+      final String id = getStripedAttributeValue(tag, "id");
+      if (id != null && id2tag.containsKey(id)) return id2tag.get(id);
       tag = tag.getParentTag();
     }
     return null;
   }
 
-  @Nullable
-  private static XmlTag findInRefsById(XmlTag tag) {
-    XmlAttribute idAttr = tag.getAttribute("id");
-    final XmlAttributeValue idValue = idAttr != null ? idAttr.getValueElement() : null;
-    if (idValue == null) {
-      return null;
-    }
-    final String idToFind = StringUtil.stripQuotesAroundValue(idValue.getText());
-    XmlTag parentTag = tag.getParentTag();
-    while (parentTag != null) {
-      XmlTag scopeTag = ContainerUtil.find(parentTag.getSubTags(), new Condition<XmlTag>() {
-        @Override
-        public boolean value(XmlTag tag) {
-          String refValue = tag.getAttributeValue(ITEM_REF);
-          return refValue != null && refValue.contains(idToFind);
+  private static Map<String, XmlTag> findScopesWithItemRef(@Nullable PsiFile file) {
+    if (!(file instanceof XmlFile)) return Collections.emptyMap();
+    final Map<String, XmlTag> result = new THashMap<String, XmlTag>();
+    file.accept(new XmlRecursiveElementVisitor() {
+      @Override
+      public void visitXmlTag(final XmlTag tag) {
+        super.visitXmlTag(tag);
+        XmlAttribute refAttr = tag.getAttribute(ITEM_REF);
+        if (refAttr != null && tag.getAttribute(ITEM_SCOPE) != null) {
+          getReferencesForAttributeValue(refAttr.getValueElement(), new PairFunction<String, Integer, PsiReference>() {
+            @Nullable
+            @Override
+            public PsiReference fun(String t, Integer v) {
+              result.put(t, tag);
+              return null;
+            }
+          });
         }
-      });
-      if (scopeTag != null) {
-        return scopeTag;
       }
-      parentTag = parentTag.getParentTag();
-    }
-    return null;
+    });
+    return result;
   }
 
   public static List<String> extractProperties(PsiFile file, String type) {
@@ -151,8 +147,11 @@ public class MicrodataUtil {
     });
   }
 
-  public static PsiReference[] getReferencesForAttributeValue(XmlAttributeValue element,
+  public static PsiReference[] getReferencesForAttributeValue(@Nullable XmlAttributeValue element,
                                                               PairFunction<String, Integer, PsiReference> refFun) {
+    if (element == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
     String text = element.getText();
     String urls = StringUtil.stripQuotesAroundValue(text);
     StringTokenizer tokenizer = new StringTokenizer(urls);

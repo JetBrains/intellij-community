@@ -115,7 +115,7 @@ public class MicrodataAttributeDescriptorsProvider implements XmlAttributeDescri
 
     @Override
     public String[] getEnumeratedValues() {
-      final XmlTag scopeParent = findScopeTag(myContext.getParentTag());
+      final XmlTag scopeParent = findScopeTag(myContext);
       return scopeParent != null ? findProperties(scopeParent) : super.getEnumeratedValues();
     }
 

@@ -214,4 +214,29 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
                  "name", "nickname", "photo", "title", "role", "url", "affiliation", "friend", "acquaintance", "address"
     );
   }
+
+  public void testPropValueNestedScopesDifferentTrees() throws Throwable {
+    final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
+    final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Person", personFile.getPath());
+        ExternalResourceManager.getInstance().addResource("http://data-vocabulary.org/Address", addressFile.getPath());
+      }
+    });
+    doTestInHtml("<div itemscope itemtype=\"http://data-vocabulary.org/Person\" >\n" +
+                 "    name is <span itemprop=\"name\">ann</span>\n" +
+                 "    role is <span itemprop=\"role\">smth</span>\n" +
+                 "   <span itemprop=\"address\" itemscope\n" +
+                 "         itemtype=\"http://data-vocabulary.org/Address\" itemref=\"qq\">\n" +
+                 "      <span itemprop=\"locality\">spb</span>\n" +
+                 "   </span>\n" +
+                 "</div>\n" +
+                 "<div>\n" +
+                 "    <span id=\"qq\" itemprop=\"<caret>\">russia</span>\n" +
+                 "</div>",
+                 "street-address", "locality", "region", "postal-code", "country-name"
+    );
+  }
 }
