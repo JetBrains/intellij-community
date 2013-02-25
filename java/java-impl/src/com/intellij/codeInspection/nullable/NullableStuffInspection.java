@@ -402,8 +402,10 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
 
   private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
-    LOG.assertTrue(annotation != null);
-    return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+    if (annotation != null) {
+      return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+    }
+    return null;
   }
 
   protected AnnotateMethodFix createAnnotateMethodFix(final String defaultNotNull, final String[] annotationsToRemove) {
