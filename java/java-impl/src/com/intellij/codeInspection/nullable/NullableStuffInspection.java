@@ -303,7 +303,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         holder.registerProblem(method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               fix);
+                               wrapFix(fix));
       }
       if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
         PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
@@ -331,7 +331,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               holder.registerProblem(parameter.getNameIdentifier(),
                                      InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                     fix);
+                                     wrapFix(fix));
             }
           }
         }
@@ -376,7 +376,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
 
             holder.registerProblem(annotation, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                   fix);
+                                   wrapFix(fix));
             methodQuickFixSuggested = true;
           }
           if (hasAnnotatedParameter) {
@@ -390,7 +390,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 holder.registerProblem(annotation,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       !applicable ? createChangeDefaultNotNullFix(nullableManager, parameters[i]) : new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable()));
+                                       wrapFix(!applicable ? createChangeDefaultNotNullFix(nullableManager, parameters[i]) : new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())));
                 parameterQuickFixSuggested[i] = true;
               }
             }
@@ -398,6 +398,11 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       }
     }
+  }
+
+  private static LocalQuickFix[] wrapFix(LocalQuickFix fix) {
+    if (fix == null) return LocalQuickFix.EMPTY_ARRAY;
+    return new LocalQuickFix[]{fix};
   }
 
   private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
