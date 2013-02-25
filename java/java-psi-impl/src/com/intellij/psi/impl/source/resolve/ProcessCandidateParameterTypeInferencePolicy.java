@@ -43,12 +43,11 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
                                                                           PsiCallExpression contextCall,
                                                                           PsiTypeParameter typeParameter) {
     PsiExpression[] expressions = expressionList.getExpressions();
-    PsiElement parent = innerMethodCall.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
-      innerMethodCall = (PsiExpression)parent;
+    PsiElement parent = innerMethodCall;
+    while (parent.getParent() instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    int i = ArrayUtil.find(expressions, innerMethodCall);
+    int i = ArrayUtil.find(expressions, parent);
     if (i < 0) return null;
     PsiMethod owner = (PsiMethod)typeParameter.getOwner();
     if (owner == null) return null;
