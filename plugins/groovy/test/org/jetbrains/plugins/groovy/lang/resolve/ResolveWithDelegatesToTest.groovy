@@ -123,7 +123,139 @@ class ResolveWithDelegatesToTest extends LightGroovyTestCase {
         ''', 'Xml'
   }
 
+  void testEmbeddedWithAndShadowing() {
+    assertScript '''
+            class A {
+                int foo() { 1 }
+            }
+            class B {
+                int foo() { 2 }
+            }
+            def a = new A()
+            def b = new B()
+            int result
+            a.with {
+                b.with {
+                    result = fo<caret>o()
+                }
+            }
+            assert result == 2
+        ''', 'B'
+  }
 
+  void testEmbeddedWithAndShadowing2() {
+    assertScript '''
+            class A {
+                int foo() { 1 }
+            }
+            class B {
+                int foo() { 2 }
+            }
+            def a = new A()
+            def b = new B()
+            int result
+            b.with {
+                a.with {
+                    result = fo<caret>o()
+                }
+            }
+            assert result == 1
+        ''', 'A'
+  }
+
+  void testEmbeddedWithAndShadowing3() {
+    assertScript '''
+            class A {
+                int foo() { 1 }
+            }
+            class B {
+                int foo() { 2 }
+            }
+            class C {
+                int foo() { 3 }
+                void test() {
+                    def a = new A()
+                    def b = new B()
+                    int result
+                    b.with {
+                        a.with {
+                            result = fo<caret>o()
+                        }
+                    }
+                    assert result == 1
+                }
+            }
+            new C().test()
+        ''', 'A'
+  }
+
+  void testEmbeddedWithAndShadowing4() {
+    assertScript '''
+            class A {
+                int foo() { 1 }
+            }
+            class B {
+                int foo() { 2 }
+            }
+            class C {
+                int foo() { 3 }
+                void test() {
+                    def a = new A()
+                    def b = new B()
+                    int result
+                    b.with {
+                        a.with {
+                            result = this.f<caret>oo()
+                        }
+                    }
+                    assert result == 3
+                }
+            }
+            new C().test()
+        ''', 'C'
+  }
+
+  void testShouldDelegateToParameter() {
+    assertScript '''
+        class Foo {
+            boolean called = false
+            def foo() { called = true }
+        }
+
+        def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
+            arg.delegate = target
+            arg()
+        }
+
+        def test() {
+            def obj = new Foo()
+            with(obj) { fo<caret>o() }
+            assert obj.called
+        }
+        test()
+        ''', 'Foo'
+  }
+
+  void testShouldDelegateToParameterUsingExplicitId() {
+    assertScript '''
+        class Foo {
+            boolean called = false
+            def foo() { called = true }
+        }
+
+        def with(@DelegatesTo.Target('target') Object target, @DelegatesTo(target='target') Closure arg) {
+            arg.delegate = target
+            arg()
+        }
+
+        def test() {
+            def obj = new Foo()
+            with(obj) { f<caret>oo() }
+            assert obj.called
+        }
+        test()
+        ''', 'Foo'
+  }
 
   void testInConstructor() {
     assertScript '''
@@ -138,6 +270,54 @@ class ResolveWithDelegatesToTest extends LightGroovyTestCase {
 
         new Abc({fo<caret>o()})
 ''', 'Foo'
+  }
+
+  void testNamedArgs() {
+    addLinkedHashMap()
+    assertScript '''
+def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure arg) {
+    for (Closure a : arg) {
+        a.delegate = target
+        a.resolveStrategy = Closure.DELEGATE_FIRST
+        a()
+    }
+}
+
+@CompileStatic
+def test() {
+    with(a:2) {
+        print(g<caret>et('a'))
+    }
+}
+
+test()
+''', 'HashMap'
+  }
+
+  void testEllipsisArgs() {
+    addLinkedHashMap()
+
+    assertScript '''
+def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure... arg) {
+    for (Closure a : arg) {
+        a.delegate = target
+        a.resolveStrategy = Closure.DELEGATE_FIRST
+        a()
+    }
+}
+
+@CompileStatic
+def test() {
+    with(a:2, {
+        print(get('a'))
+    }, {
+        print(g<caret>et('a'))
+    } )
+}
+
+test()
+
+''', 'HashMap'
   }
 
   void assertScript(String text, String resolvedClass) {

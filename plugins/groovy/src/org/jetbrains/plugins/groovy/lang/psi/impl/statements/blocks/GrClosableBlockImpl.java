@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -25,23 +24,18 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
+import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -51,18 +45,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-
-import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
@@ -113,137 +103,48 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Nullable
   private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
-    final GrCall call = getContainingCall();
-
-    if (call == null) return null;
-
-    final Map<GrExpression, Pair<PsiParameter, PsiType>> map = mapArgumentsToParameters(place, call);
-    if (map == null) {
+    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegateToInfo(place, this);
+    if (info == null) {
       return null;
     }
 
-    final Pair<PsiParameter, PsiType> pair = map.get(this);
-    final PsiParameter parameter = pair.getFirst();
-    final PsiModifierList modifierList = parameter.getModifierList();
-    if (modifierList == null) return null;
-
-    final PsiAnnotation annotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO);
-    if (annotation == null) return null;
-
-    final PsiAnnotationMemberValue strategy = annotation.findAttributeValue("strategy");
-
-    switch (getStrategyValue(strategy)) {
-      case 0:
+    switch (info.getStrategy()) {
+      case Closure.OWNER_FIRST:
         if (!processOwner(processor, state)) return false;
-        if (!processDelegate(annotation, processor, state, place)) return false;
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         return true;
-      case 1:
-        if (!processDelegate(annotation, processor, state, place)) return false;
+      case Closure.DELEGATE_FIRST:
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         if (!processOwner(processor, state)) return false;
         return true;
-      case 2:
+      case Closure.OWNER_ONLY:
         if (!processOwner(processor, state)) return false;
         return true;
-      case 3:
-        if (!processDelegate(annotation, processor, state, place)) return false;
+      case Closure.DELEGATE_ONLY:
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         return true;
-      case 4:
+      case Closure.TO_SELF:
         return true;
       default:
         return null;
     }
   }
 
-  @Nullable
-  private static Map<GrExpression, Pair<PsiParameter, PsiType>> mapArgumentsToParameters(@NotNull PsiElement place, @NotNull GrCall call) {
-    GroovyResolveResult result = GroovyResolveResult.EMPTY_RESULT;
-
-    if (call instanceof GrMethodCall) {
-      final GrExpression invoked = ((GrMethodCall)call).getInvokedExpression();
-      if (invoked instanceof GrReferenceExpression) {
-        final GroovyResolveResult[] results = ((GrReferenceExpression)invoked).resolveByShape();
-        if (results.length == 1) {
-          result = results[0];
-        }
-      }
-    }
-    else {
-      result = call.advancedResolve();
-    }
-
-    return GrClosureSignatureUtil.mapArgumentsToParameters(
-      result, place, false, true, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments()
-    );
-  }
-
-  private static boolean processDelegate(@NotNull PsiAnnotation delegatesTo,
-                                         @NotNull PsiScopeProcessor processor,
+  private static boolean processDelegate(@NotNull PsiScopeProcessor processor,
                                          @NotNull ResolveState state,
-                                         @NotNull PsiElement place) {
-    final PsiAnnotationMemberValue value = delegatesTo.findAttributeValue("value");
-    if (value instanceof GrReferenceExpression) {
-      final PsiType type = extractTypeFromClassType(((GrReferenceExpression)value).getType());
-      if (type != null) {
-        return ResolveUtil.processAllDeclarations(type, processor, state, place);
-      }
+                                         @NotNull PsiElement place,
+                                         @Nullable final PsiType classToDelegate) {
+    if (classToDelegate != null) {
+      return ResolveUtil.processAllDeclarations(classToDelegate, processor, state, place);
     }
 
     return true;
   }
 
-  @Nullable
-  private static PsiType extractTypeFromClassType(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass resolved = ((PsiClassType)type).resolve();
-      if (resolved != null && CommonClassNames.JAVA_LANG_CLASS.equals(resolved.getQualifiedName())) {
-        final PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length == 1) {
-          return parameters[0];
-        }
-      }
-    }
-    return null;
-  }
-
-
-  private static int getStrategyValue(@Nullable PsiAnnotationMemberValue strategy) {
-    if (strategy == null) return -1;
-
-    final String text = strategy.getText();
-    if ("0".equals(text)) return 0;
-    if ("1".equals(text)) return 1;
-    if ("2".equals(text)) return 2;
-    if ("3".equals(text)) return 3;
-    if ("4".equals(text)) return 4;
-
-    if (text.endsWith("OWNER_FIRST")) return 0;
-    if (text.endsWith("DELEGATE_FIRST")) return 1;
-    if (text.endsWith("OWNER_ONLY")) return 2;
-    if (text.endsWith("DELEGATE_ONLY")) return 3;
-    if (text.endsWith("TO_SELF")) return 4;
-
-    return -1;
-  }
-
-  @Nullable
-  private GrCall getContainingCall() {
-    final PsiElement parent = getParent();
-    if (parent instanceof GrCall && ArrayUtil.contains(this, ((GrCall)parent).getClosureArguments())) {
-      return (GrCall)parent;
-    }
-    else if (parent instanceof GrArgumentList) {
-      final PsiElement parent1 = parent.getParent();
-      if (parent1 instanceof GrCall) {
-        return (GrCall)parent1;
-      }
-    }
-
-    return null;
-  }
-
-  private boolean processClosureClassMembers(PsiScopeProcessor processor,
-                                             ResolveState state, PsiElement lastParent,
-                                             PsiElement place) {
+  private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
+                                             @NotNull ResolveState state,
+                                             @Nullable PsiElement lastParent,
+                                             @NotNull PsiElement place) {
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
@@ -258,10 +159,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return true;
   }
 
-  private boolean processParameters(PsiScopeProcessor processor,
-                                    ResolveState _state,
-                                    ResolveState state,
-                                    PsiElement place) {
+  private boolean processParameters(@NotNull PsiScopeProcessor processor,
+                                    @NotNull ResolveState _state,
+                                    @NotNull ResolveState state,
+                                    @NotNull PsiElement place) {
     if (hasParametersSection()) {
       for (GrParameter parameter : getParameters()) {
         if (!ResolveUtil.processElement(processor, parameter, _state)) return false;
@@ -286,7 +187,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     }
   }
 
-  private boolean isItAlreadyDeclared(PsiElement place) {
+  private boolean isItAlreadyDeclared(@Nullable PsiElement place) {
     while (place != this && place != null) {
       if (place instanceof GrClosableBlock &&
           !((GrClosableBlock)place).hasParametersSection() &&

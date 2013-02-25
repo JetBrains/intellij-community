@@ -183,7 +183,6 @@ public class ResolveUtil {
       if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
 
       if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
-      if (!GdkMethodUtil.withIteration((GrClosableBlock)scope, processor)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -452,7 +451,7 @@ public class ResolveUtil {
         if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor, state)) return false;
 
         PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
-        if (superClass != null && !GdkMethodUtil.processCategoryMethods(((GrClosableBlock)run), processor, state, superClass)) return false;
+        if (superClass != null && !GdkMethodUtil.processCategoryMethods(run, processor, state, superClass)) return false;
       }
 
       if (gpp && run instanceof GrTypeDefinition) {
