@@ -39,6 +39,9 @@ public class FavoritesViewSettings implements ViewSettings {
   @PropertyName("favorites.view.settings.hide.empty.middle.packages")
   public boolean myHideEmptyMiddlePackages = true;
 
+  @PropertyName("favorites.view.settings.abbreviate.qualified.package.names")
+  public boolean myAbbreviateQualifiedPackages = false;
+
 
   public FavoritesViewSettings() {
     PropertiesComponent.getInstance().loadFields(this);
@@ -89,7 +92,7 @@ public class FavoritesViewSettings implements ViewSettings {
 
   @Override
   public boolean isAbbreviatePackageNames() {
-    return false;
+    return myAbbreviateQualifiedPackages;
   }
 
   @Override
@@ -113,6 +116,11 @@ public class FavoritesViewSettings implements ViewSettings {
 
   public void setHideEmptyMiddlePackages(boolean hide) {
     myHideEmptyMiddlePackages = hide;
+    save();
+  }
+
+  public void setAbbreviateQualifiedPackages(boolean abbreviate) {
+    myAbbreviateQualifiedPackages = abbreviate;
     save();
   }
 }

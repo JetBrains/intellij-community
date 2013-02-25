@@ -18,12 +18,35 @@ package com.intellij.ide.favoritesTreeView.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesCompactEmptyMiddlePackagesAction extends FavoritesToolbarButtonAction {
+  public FavoritesCompactEmptyMiddlePackagesAction(Project project, FavoritesViewTreeBuilder builder) {
+    super(project, builder,
+          IdeBundle.message("action.compact.empty.middle.packages"),
+          AllIcons.ObjectBrowser.CompactEmptyPackages);
+  }
+
+  @Override
+  public void updateButton(AnActionEvent e) {
+    super.updateButton(e);
+    Presentation presentation = e.getPresentation();
+    if (getViewSettings().isFlattenPackages()) {
+      presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
+      presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
+    }
+    else {
+      presentation.setText(IdeBundle.message("action.compact.empty.middle.packages"));
+      presentation.setDescription(IdeBundle.message("action.show.compact.empty.middle.packages"));
+    }
+
+  }
+
   @Override
   public boolean isOptionEnabled() {
     return getViewSettings().isHideEmptyMiddlePackages();
@@ -32,11 +55,5 @@ public class FavoritesCompactEmptyMiddlePackagesAction extends FavoritesToolbarB
   @Override
   public void setOption(boolean hide) {
     getViewSettings().setHideEmptyMiddlePackages(hide);
-  }
-
-  public FavoritesCompactEmptyMiddlePackagesAction(Project project, FavoritesViewTreeBuilder builder) {
-    super(project, builder,
-          IdeBundle.message("action.compact.empty.middle.packages"),
-          AllIcons.ObjectBrowser.CompactEmptyPackages);
   }
 }
