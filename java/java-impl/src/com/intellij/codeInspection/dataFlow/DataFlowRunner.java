@@ -46,7 +46,7 @@ import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
-  private static final Key<Integer> TOO_EXPENSIVE_SIZE = Key.create("TOO_EXPENSIVE_SIZE");
+  private static final Key<Integer> TOO_EXPENSIVE_HASH = Key.create("TOO_EXPENSIVE_HASH");
   public static final long ourTimeLimit = 1000 * 1000 * 1000; //1 sec in nanoseconds
 
   private Instruction[] myInstructions;
@@ -110,8 +110,8 @@ public class DataFlowRunner {
         }
       }
 
-      Integer tooExpensiveSize = psiBlock.getUserData(TOO_EXPENSIVE_SIZE);
-      if (tooExpensiveSize != null && tooExpensiveSize == psiBlock.getText().hashCode()) {
+      Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
+      if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
         LOG.debug("Too complex because hasn't changed since being too complex already");
         return RunnerResult.TOO_COMPLEX;
       }
@@ -128,7 +128,7 @@ public class DataFlowRunner {
       while (!queue.isEmpty()) {
         if (count % 50 == 0 && !unitTestMode && measurer.isTimeOver()) {
           LOG.debug("Too complex because the analysis took too long");
-          psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getText().hashCode());
+          psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
         }
         ProgressManager.checkCanceled();
@@ -166,7 +166,7 @@ public class DataFlowRunner {
         count++;
       }
 
-      psiBlock.putUserData(TOO_EXPENSIVE_SIZE, null);
+      psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);
       LOG.debug("Analysis ok");
       return RunnerResult.OK;
     }
