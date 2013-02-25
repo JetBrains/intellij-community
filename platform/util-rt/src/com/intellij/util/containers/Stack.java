@@ -26,6 +26,8 @@ import java.util.*;
  * @author max
  */
 public class Stack<T> extends ArrayList<T> {
+  public Stack() { }
+
   public Stack(int initialCapacity) {
     super(initialCapacity);
   }

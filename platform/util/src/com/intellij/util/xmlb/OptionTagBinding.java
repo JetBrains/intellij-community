@@ -25,6 +25,7 @@ import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ class OptionTagBinding implements Binding {
     return targetElement;
   }
 
-  public Object deserialize(Object o, Object... nodes) {
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     if (nodes.length > 1) {
       LOG.info("Duplicate options for " + o + " will be ignored");
     }

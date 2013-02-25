@@ -334,8 +334,17 @@ public class MavenRootModelAdapter {
     library.addRoot(newUrl, type);
   }
 
-  private static boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier, String extension) {
-    return url.endsWith(artifact.getRelativePathForExtraArtifact(classifier, extension) + JarFileSystem.JAR_SEPARATOR);
+  private static boolean isRepositoryUrl(MavenArtifact artifact, String url, @Nullable String classifier, @Nullable String extension) {
+    if (!url.contains(artifact.getGroupId() + '/' + artifact.getArtifactId() + '/' + artifact.getBaseVersion() + '/' + artifact.getArtifactId() + '-')) {
+      return false;
+    }
+
+    String fileName = artifact.getFileNameWithBaseVersion(classifier, extension);
+    assert StringUtil.startsWithConcatenationOf(fileName, artifact.getArtifactId(), "-", artifact.getVersion());
+
+    String suffix = fileName.substring(artifact.getArtifactId().length() + 1 + artifact.getVersion().length());
+
+    return StringUtil.trimEnd(url, "!/").endsWith(suffix);
   }
 
   public static boolean isChangedByUser(Library library) {

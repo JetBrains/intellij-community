@@ -84,7 +84,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   private static void navigate(@NotNull Project project, @NotNull PsiElement symbolType) {
     PsiElement element = symbolType.getNavigationElement();
-    assert element != null;
+    assert element != null : "SymbolType :"+symbolType+"; file: "+symbolType.getContainingFile();
     VirtualFile file = element.getContainingFile().getVirtualFile();
     if (file != null) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, element.getTextOffset());

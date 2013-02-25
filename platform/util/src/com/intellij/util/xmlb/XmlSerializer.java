@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.net.URL;
 
 public class XmlSerializer {
   private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
+    @Override
     public boolean accepts(Accessor accessor, Object bean) {
       return true;
     }
@@ -54,8 +56,7 @@ public class XmlSerializer {
   @SuppressWarnings({"unchecked"})
   public static <T> T deserialize(Element element, Class<T> aClass) throws XmlSerializationException {
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(TRUE_FILTER);
-      return (T)serializer.getBinding(aClass).deserialize(null, element);
+      return (T)XmlSerializerImpl.getBinding(aClass).deserialize(null, element);
     }
     catch (XmlSerializationException e) {
       throw e;
@@ -91,10 +92,9 @@ public class XmlSerializer {
     }
   }
 
-  public static void deserializeInto(final Object bean, final Element element) {
+  public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(TRUE_FILTER);
-      final Binding binding = serializer.getBinding(bean.getClass());
+      final Binding binding = XmlSerializerImpl.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
 
       ((BeanBinding)binding).deserializeInto(bean, element);
@@ -116,8 +116,7 @@ public class XmlSerializer {
       filter = TRUE_FILTER;
     }
     try {
-      XmlSerializerImpl serializer = new XmlSerializerImpl(filter);
-      final Binding binding = serializer.getBinding(bean.getClass());
+      final Binding binding = XmlSerializerImpl.getBinding(bean.getClass());
       assert binding instanceof BeanBinding;
 
       ((BeanBinding)binding).serializeInto(bean, element, filter);
