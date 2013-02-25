@@ -119,6 +119,48 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     );
   }
 
+  public void testPropValueSchemaOrgFormat() throws Throwable {
+    final VirtualFile virtualFile = myFixture.copyFileToProject("Product.html");
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ExternalResourceManager.getInstance().addResource("http://schema.org/Product", virtualFile.getPath());
+      }
+    });
+    doTestInHtml("<section itemscope itemtype=\"http://schema.org/Product\"><div itemprop=\"<caret>\"></div></section>",
+                 "additionalType",
+                 "aggregateRating",
+                 "brand",
+                 "color",
+                 "depth",
+                 "description",
+                 "gtin13",
+                 "gtin14",
+                 "gtin8",
+                 "height",
+                 "image",
+                 "isAccessoryOrSparePartFor",
+                 "isConsumableFor",
+                 "isRelatedTo",
+                 "isSimilarTo",
+                 "itemCondition",
+                 "logo",
+                 "manufacturer",
+                 "model",
+                 "mpn",
+                 "name",
+                 "offers",
+                 "productID",
+                 "releaseDate",
+                 "review",
+                 "reviews",
+                 "sku",
+                 "url",
+                 "weight",
+                 "width"
+    );
+  }
+
   public void testPropValueFromTwoTypes() throws Throwable {
     final VirtualFile personFile = myFixture.copyFileToProject("Person.html");
     final VirtualFile addressFile = myFixture.copyFileToProject("Address.html");

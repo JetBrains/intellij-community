@@ -115,11 +115,18 @@ public class MicrodataUtil {
 
   private static List<String> collectNames(PsiFile file, String type) {
     if (file instanceof XmlFile) {
-      final CollectNamesVisitor collectNamesVisitor = new CollectNamesVisitor(type);
+      final CollectNamesVisitor collectNamesVisitor = getVisitorByType(type);
       file.accept(collectNamesVisitor);
       return collectNamesVisitor.getValues();
     }
     return Collections.emptyList();
+  }
+
+  private static CollectNamesVisitor getVisitorByType(String type) {
+    if (type.contains("schema.org")) {
+      return new CollectNamesFromSchemaOrgVisitor();
+    }
+    return new CollectNamesByMicrodataVisitor(type);
   }
 
   public static PsiReference[] getUrlReferencesForAttributeValue(final XmlAttributeValue element) {
@@ -172,12 +179,18 @@ public class MicrodataUtil {
   }
 
   private static class CollectNamesVisitor extends XmlRecursiveElementVisitor {
+    protected final Set<String> myValues = new THashSet<String>();
 
-    private final String myType;
+    public List<String> getValues() {
+      return new ArrayList<String>(myValues);
+    }
+  }
+
+  public static class CollectNamesByMicrodataVisitor extends CollectNamesVisitor {
+    protected final String myType;
     private boolean myCollecting = false;
-    private final Set<String> myValues = new THashSet<String>();
 
-    public CollectNamesVisitor(String type) {
+    public CollectNamesByMicrodataVisitor(String type) {
       myType = type;
     }
 
@@ -199,9 +212,18 @@ public class MicrodataUtil {
         myCollecting = false;
       }
     }
+  }
 
-    public List<String> getValues() {
-      return new ArrayList<String>(myValues);
+  public static class CollectNamesFromSchemaOrgVisitor extends CollectNamesVisitor {
+    @Override
+    public void visitXmlTag(XmlTag tag) {
+      super.visitXmlTag(tag);
+      if ("prop-nam".equalsIgnoreCase(getStripedAttributeValue(tag, "class"))) {
+        final String code = tag.getSubTagText("code");
+        if (code != null) {
+          myValues.add(code);
+        }
+      }
     }
   }
 
