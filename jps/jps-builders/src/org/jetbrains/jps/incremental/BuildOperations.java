@@ -22,10 +22,13 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -48,17 +51,25 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-
+    boolean isTargetConfigChange = false;
     if (context.isProjectRebuild()) {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
       configuration.save();
     }
-    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty() || configuration.outputRootWasDeleted(context)) {
+    else if (context.getScope().isRecompilationForced(target) ||
+             (isTargetConfigChange = configuration.isTargetDirty()) ||
+             configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       IncProjectBuilder.clearOutputFiles(context, target);
       pd.dataManager.cleanTargetStorages(target);
       configuration.save();
+
+      if (isTargetConfigChange && ModuleBuildTarget.REBUILD_ON_DEPENDENCY_CHANGE && JavaModuleBuildTargetType.PRODUCTION.equals(target.getTargetType())) {
+        final String moduleName = ((ModuleBuildTarget)target).getModule().getName();
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, "Rebuilding module \"" + moduleName + "\" because of dependencies change"));
+      }
+
     }
     else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);
