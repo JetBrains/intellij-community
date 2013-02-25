@@ -399,8 +399,8 @@ public abstract class HgUtil {
                                      @NotNull final VirtualFile root,
                                      @NotNull final FilePath path,
                                      @Nullable final HgFileRevision rev1,
-                                     @Nullable final HgFileRevision rev2, HgPlatformFacade facade) {
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeCopySource(false).build(project, facade);
+                                     @Nullable final HgFileRevision rev2) {
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeCopySource(false).build(project);
     HgRevisionNumber revNumber1 = null;
     if (rev1 != null) {
       revNumber1 = rev1.getRevisionNumber();

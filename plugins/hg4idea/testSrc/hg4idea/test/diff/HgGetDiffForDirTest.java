@@ -15,14 +15,12 @@
  */
 package hg4idea.test.diff;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import hg4idea.test.HgPlatformTest;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgPlatformFacade;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -64,7 +62,7 @@ public class HgGetDiffForDirTest extends HgPlatformTest {
     HgFileRevision rev2 =
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r2number, "", null, "", "", null, null, null, null);
     FilePath dirPath = new FilePathImpl(dirFile, true);
-    List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2, ServiceManager.getService(HgPlatformFacade.class));
+    List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2);
     assertEquals(changes.size(), 2);
   }
 }

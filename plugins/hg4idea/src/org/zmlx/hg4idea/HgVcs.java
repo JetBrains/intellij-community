@@ -84,7 +84,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
-  protected final @NotNull HgPlatformFacade myPlatformFacade;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -106,7 +105,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager, @NotNull HgPlatformFacade platformFacade) {
+               ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
@@ -121,7 +120,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
-    myPlatformFacade = platformFacade;
   }
 
   public String getDisplayName() {

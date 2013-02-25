@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -49,7 +51,6 @@ public class HgStatusCommand {
 
   @Nullable private HgRevisionNumber baseRevision;
   @Nullable private HgRevisionNumber targetRevision;
-  private HgPlatformFacade myPlatformFacade;
 
 
   public static class Builder {
@@ -87,17 +88,13 @@ public class HgStatusCommand {
     }
 
     public HgStatusCommand build(Project project) {
-      return new HgStatusCommand(project, ServiceManager.getService(project, HgPlatformFacade.class), this);
+      return new HgStatusCommand(project, this);
     }
 
-    public HgStatusCommand build(Project project, HgPlatformFacade facade) {
-      return new HgStatusCommand(project, facade, this);
-    }
   }
 
-  private HgStatusCommand(Project project, HgPlatformFacade facade, Builder builder) {
+  private HgStatusCommand(Project project, Builder builder) {
     this.project = project;
-    myPlatformFacade = facade;
     includeAdded = builder.includeAdded;
     includeModified = builder.includeModified;
     includeRemoved = builder.includeRemoved;
@@ -124,7 +121,7 @@ public class HgStatusCommand {
       return Collections.emptySet();
     }
 
-    HgCommandExecutor executor = new HgCommandExecutor(project, null, myPlatformFacade);
+    HgCommandExecutor executor = new HgCommandExecutor(project, null);
     executor.setSilent(true);
 
     List<String> options = new LinkedList<String>();
