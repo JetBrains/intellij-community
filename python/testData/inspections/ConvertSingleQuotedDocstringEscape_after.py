@@ -1,3 +1,3 @@
 def foo():
-  """bla \"blub\""""
+  """bla "blub\""""
   pass
