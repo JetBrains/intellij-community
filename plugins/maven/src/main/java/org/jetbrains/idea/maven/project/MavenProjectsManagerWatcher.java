@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -251,12 +250,7 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void setExplicitProfiles(Collection<String> profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-
-    if(myManager.getImportingSettings().isImportAutomatically()) {
-      scheduleUpdateAll(false, true);
-    } else {
-      myProjectsTree.updateAll(false, myGeneralSettings, new MavenProgressIndicator());
-    }
+    scheduleUpdateAll(false, false);
   }
 
   public void scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
