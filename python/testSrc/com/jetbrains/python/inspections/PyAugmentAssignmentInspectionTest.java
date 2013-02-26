@@ -19,6 +19,10 @@ public class PyAugmentAssignmentInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testNegativeName() {
+    doTest();
+  }
+
   public void testNegative() {
     doTest();
   }

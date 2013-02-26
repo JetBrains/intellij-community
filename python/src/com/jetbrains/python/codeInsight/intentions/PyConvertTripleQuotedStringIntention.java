@@ -94,7 +94,8 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
 
       PyExpression expression = e.getExpression();
-      if (parent instanceof PyTupleExpression && expression instanceof PyParenthesizedExpression)
+      if ((parent instanceof PyParenthesizedExpression || parent instanceof PyTupleExpression)
+          && expression instanceof PyParenthesizedExpression)
         expression = ((PyParenthesizedExpression)expression).getContainedExpression();
       if (expression != null)
         string.replace(expression);

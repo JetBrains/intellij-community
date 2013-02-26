@@ -80,27 +80,25 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isTypeDefined(PyExpression problemElement) {
-    return isDefinedInDocstring(problemElement);
-  }
-
-  private boolean isDefinedInDocstring(PyExpression problemElement) {
-    PsiReference reference = problemElement.getReference();
-    PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
-    if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
+  protected boolean isParamTypeDefined(PyParameter parameter) {
+    PyFunction pyFunction = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
+    if (pyFunction != null && parameter != null) {
       final String docstring = pyFunction.getDocStringValue();
       if (docstring != null) {
-        String name = problemElement.getName();
-        if (problemElement instanceof PyQualifiedExpression) {
-          final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-          if (qualifier != null) {
-            name = qualifier.getText();
-          }
-        }
         StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
-        return structuredDocString != null && structuredDocString.getParamType(name) != null;
+        return structuredDocString != null && structuredDocString.getParamType(StringUtil.notNullize(parameter.getName())) != null;
       }
       return false;
+    }
+    return false;
+  }
+
+  @Override
+  protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
+    final String docstring = function.getDocStringValue();
+    if (docstring != null) {
+      StructuredDocString structuredDocString = StructuredDocString.parse(docstring);
+      return structuredDocString != null && structuredDocString.getReturnType( ) != null;
     }
     return false;
   }

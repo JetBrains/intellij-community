@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
@@ -46,8 +47,8 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       else {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
-
-      content = StringUtil.escapeQuotes(content);
+      if (content.endsWith("\""))
+        content = StringUtil.replaceSubstring(content, TextRange.create(content.length()-1, content.length()), "\\\"");
 
       PyExpression newString = elementGenerator.createDocstring(prefix+"\"\"\"" + content + "\"\"\"").getExpression();
       expression.replace(newString);
