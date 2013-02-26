@@ -10,7 +10,7 @@ public class MyTest {
         void m(Integer x);
     }
 
-    static void call(int i, I1 s) {}
+    static void call(Integer i, I1 s) {}
     static void call(int i, I2 s) {}
 
     public static void main(String[] args) {

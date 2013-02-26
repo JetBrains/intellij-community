@@ -1,6 +1,6 @@
 class MyTest {
-    class Inner {
-        Inner() {};
+    static class Inner {
+        Inner(MyTest mt) {};
     }
   
     interface I {
@@ -8,6 +8,6 @@ class MyTest {
     }
 
     static {
-        I i1 = (receiver) -> receiver.new Inner();
+        I i1 = (receiver) -> new Inner(receiver);
     }
 }

@@ -1,6 +1,6 @@
 class MyTest {
-    class Inner {
-        Inner() {};
+    static class Inner {
+        Inner(MyTest mt) {};
     }
   
     interface I {
