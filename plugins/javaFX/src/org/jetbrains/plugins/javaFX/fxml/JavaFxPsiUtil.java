@@ -19,12 +19,14 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
@@ -363,6 +365,37 @@ public class JavaFxPsiUtil {
       final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue(null);
       if (memberValue != null) {
         return StringUtil.stripQuotesAroundValue(memberValue.getText());
+      }
+    }
+    return null;
+  }
+
+  public static String isAbleToInstantiate(final PsiClass psiClass) {
+    if(psiClass.getConstructors().length > 0) {
+      final Project project = psiClass.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiMethod noArgConstructor = psiClass
+        .findMethodBySignature(factory.createConstructor(psiClass.getName()), false);
+      if (noArgConstructor == null) {
+        final PsiMethod valueOf = findValueOfMethod(psiClass);
+        if (valueOf == null) {
+          final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
+                                                                                     GlobalSearchScope.allScope(project));
+          if (builderClass != null) {
+            //todo cache this info
+            final PsiTypeParameter typeParameter = builderClass.getTypeParameters()[0];
+            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+              @Override
+              public boolean process(PsiClass aClass) {
+                final PsiType initType =
+                  TypeConversionUtil.getSuperClassSubstitutor(builderClass, aClass, PsiSubstitutor.EMPTY).substitute(typeParameter);
+                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(initType));
+              }
+            })) {
+              return "Unable to instantiate";
+            }
+          }
+        }
       }
     }
     return null;
