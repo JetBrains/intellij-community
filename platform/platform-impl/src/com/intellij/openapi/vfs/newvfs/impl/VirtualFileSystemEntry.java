@@ -67,7 +67,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
     storeName(name);
 
-    if (parent != null) {
+    if (parent != null && parent != VirtualDirectoryImpl.NULL_VIRTUAL_FILE) {
       setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
       setFlagInt(IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
       updateLinkStatus();
@@ -112,29 +112,53 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return StringFactory.createShared(chars);
   }
 
-  boolean nameMatches(@NotNull String pattern, boolean ignoreCase) {
-    Object name = rawName();
+  int compareNameTo(@NotNull String name, boolean ignoreCase) {
+    Object rawName = rawName();
+    if (rawName instanceof String) {
+      String thisName = getName();
+      return compareNames(thisName, name, ignoreCase);
+    }
+
+    byte[] bytes = (byte[])rawName;
+    int bytesLength = bytes.length;
+
     String suffix = getEncodedSuffix();
-    if (name instanceof String) {
-      final String nameStr = (String)name;
-      return pattern.length() == nameStr.length() + suffix.length() &&
-             pattern.regionMatches(ignoreCase, 0, nameStr, 0, nameStr.length()) &&
-             pattern.regionMatches(ignoreCase, nameStr.length(), suffix, 0, suffix.length());
-    }
+    int suffixLength = suffix.length();
 
-    byte[] bytes = (byte[])name;
-    int length = bytes.length;
-    if (length + suffix.length() != pattern.length()) {
-      return false;
-    }
+    int d = bytesLength + suffixLength - name.length();
+    if (d != 0) return d;
 
-    for (int i = 0; i < length; i++) {
-      if (!StringUtil.charsMatch((char)bytes[i], pattern.charAt(i), ignoreCase)) {
-        return false;
-      }
-    }
+    d = compare(bytes, 0, name, 0, bytesLength, ignoreCase);
+    if (d != 0) return d;
 
-    return pattern.regionMatches(ignoreCase, length, suffix, 0, suffix.length());
+    d = compareNames(suffix, name, ignoreCase, bytesLength);
+    return d;
+  }
+
+  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
+    return compareNames(name1, name2, ignoreCase, 0);
+  }
+
+  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase, int offset2) {
+    int d = name1.length() - name2.length() + offset2;
+    if (d != 0) return d;
+    for (int i=0; i<name1.length(); i++) {
+      // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
+      d = StringUtil.compare(name1.charAt(i), name2.charAt(i + offset2), ignoreCase);
+      if (d != 0) return d;
+    }
+    return 0;
+  }
+
+
+  private static int compare(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
+    for (int i1 = offset1, i2=offset2; i1 < offset1 + len; i1++, i2++) {
+      char c1 = (char)name1[i1];
+      char c2 = name2.charAt(i2);
+      int d = StringUtil.compare(c1, c2, ignoreCase);
+      if (d != 0) return d;
+    }
+    return 0;
   }
 
   protected Object rawName() {
@@ -184,9 +208,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void markDirty() {
     if (!isDirty()) {
-      setFlagInt(DIRTY_FLAG, true);
-      if (myParent != null) myParent.markDirty();
+      markDirtyInternal();
+      VirtualDirectoryImpl parent = myParent;
+      if (parent != null) parent.markDirty();
     }
+  }
+
+  protected void markDirtyInternal() {
+    setFlagInt(DIRTY_FLAG, true);
   }
 
   @Override
@@ -433,7 +462,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           content = contentsToByteArray();
         }
         catch (FileNotFoundException e) {
-          // file has already been deleted from disk
+          // file has already been deleted on disk
           return super.getCharset();
         }
         charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
