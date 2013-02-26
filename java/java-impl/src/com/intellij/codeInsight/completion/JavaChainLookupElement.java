@@ -15,16 +15,12 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -97,8 +93,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
 
-    if (getQualifierObject() instanceof PsiClass) {
-      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + qualifierPresentation.getTailText());
+    if (myQualifier instanceof LookupItem && getQualifierObject() instanceof PsiClass) {
+      presentation.setTailText(JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier));
     }
   }
 
