@@ -95,6 +95,14 @@ public class CssPrefixInfo {
   }
 
   @Override
+  public String toString() {
+    return "CssPrefixInfo{" +
+           "myPropertyName='" + myPropertyName + '\'' +
+           ", myEnabledPrefixes=" + myEnabledPrefixes +
+           '}';
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

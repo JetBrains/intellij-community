@@ -26,7 +26,7 @@
     <option name="FILESTATUS_changelistConflict" value="d5756c" />
     <option name="FILESTATUS_modifiedOutside" value="6897bb" />
     <option name="GUTTER_BACKGROUND" value="313335" />
-    <option name="INDENT_GUIDE" value="4d4d4d" />
+    <option name="INDENT_GUIDE" value="373737" />
     <option name="LINE_NUMBERS_COLOR" value="888888" />
     <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
     <option name="MODIFIED_LINES_COLOR" value="7180" />
@@ -35,10 +35,11 @@
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
     <option name="REMOTE_HOST_MAPPED_BACKGROUND_KEY" value="164716" />
     <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
-    <option name="SELECTED_TEARLINE_COLOR" value="ffffff" />
+    <option name="SELECTED_INDENT_GUIDE" value="505050" />
+    <option name="SELECTED_TEARLINE_COLOR" value="787878" />
     <option name="SELECTION_BACKGROUND" value="214283" />
     <option name="SELECTION_FOREGROUND" value="" />
-    <option name="TEARLINE_COLOR" value="909090" />
+    <option name="TEARLINE_COLOR" value="555555" />
     <option name="WHITESPACES" value="404040" />
   </colors>
   <attributes>
@@ -1615,7 +1616,7 @@
     </option>
     <option name="XML_ATTRIBUTE_NAME">
       <value>
-        <option name="FOREGROUND" value="d0d0ff" />
+        <option name="FOREGROUND" value="bababa" />
       </value>
     </option>
     <option name="XML_ATTRIBUTE_VALUE">

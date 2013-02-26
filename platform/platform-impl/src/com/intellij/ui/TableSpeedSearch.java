@@ -87,9 +87,9 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   protected String getElementText(Object element) {
     final int index = ((Integer)element).intValue();
     final TableModel model = myComponent.getModel();
-    int row = index / model.getColumnCount();
-    int col = index % model.getColumnCount();
-    final Object value = model.getValueAt(row, col);
+    int row = myComponent.convertRowIndexToModel(index / model.getColumnCount());
+    int col = myComponent.convertColumnIndexToModel(index % model.getColumnCount());
+    Object value = model.getValueAt(row, col);
     return myToStringConvertor.fun(value, new Cell(row, col));
   }
 

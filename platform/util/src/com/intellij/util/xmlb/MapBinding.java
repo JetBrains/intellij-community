@@ -23,6 +23,7 @@ import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -134,7 +135,7 @@ class MapBinding implements Binding {
     return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
   }
 
-  public Object deserialize(Object o, Object... nodes) {
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     Map map = (Map)o;
     map.clear();
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ import java.util.Map;
  *  @author dsl
  */
 public final class EmptySubstitutorImpl extends EmptySubstitutor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.EmptySubstitutorImpl");
   @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
@@ -42,6 +44,9 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
 
   @Override
   public PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping){
+    if (mapping != null && !mapping.isValid()) {
+      LOG.error("Invalid type in substitutor: " + mapping);
+    }
     return new PsiSubstitutorImpl(classParameter, mapping);
   }
 

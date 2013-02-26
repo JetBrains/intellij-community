@@ -581,7 +581,12 @@ public class GradleUtil {
     };
 
     if (synchronous) {
-      UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        wrappedTask.run();
+      }
+      else {
+        UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+      }
     }
     else {
       UIUtil.invokeLaterIfNeeded(wrappedTask);

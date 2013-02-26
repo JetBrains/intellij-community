@@ -414,6 +414,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   @Override
   public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
+    if (mapping != null && !mapping.isValid()) {
+      LOG.error("Invalid type in substitutor: " + mapping);
+    }
     ret.mySubstitutionMap.put(typeParameter, mapping);
     return ret;
   }
@@ -425,7 +428,11 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       PsiTypeParameter param = params[i];
       assert param != null;
       if (mappings != null && mappings.length > i) {
-        mySubstitutionMap.put(param, mappings[i]);
+        PsiType mapping = mappings[i];
+        mySubstitutionMap.put(param, mapping);
+        if (mapping != null && !mapping.isValid()) {
+          LOG.error("Invalid type in substitutor: " + mapping);
+        }
       }
       else {
         mySubstitutionMap.put(param, null);

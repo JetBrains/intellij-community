@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
@@ -292,6 +293,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getVirtualFile(), scheme, getProject());
     highlighter.setText(getDocument().getText());
+    highlighter.setEditor(new LightHighlighterClient(getDocument(), getProject()));
     return highlighter;
   }
 

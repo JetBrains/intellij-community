@@ -799,7 +799,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement resolved = refElement.resolve();
     if (resolved instanceof PsiClass &&
         (((PsiClass)resolved).isAnnotationType() ||
-                                         GrAnnotationCollector.findAnnotationCollector(resolved) != null &&
+                                         GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved) != null &&
                                          refElement.getParent() instanceof GrAnnotation)) {
       myHolder.createInfoAnnotation(refElement, null).setTextAttributes(ANNOTATION);
     }

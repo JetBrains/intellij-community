@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ class JDOMElementBinding implements Binding {
   }
 
   @Nullable
-  public Object deserialize(Object context, Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object... nodes) {
     Element[] result = new Element[nodes.length];
 
     System.arraycopy(nodes, 0, result, 0, nodes.length);

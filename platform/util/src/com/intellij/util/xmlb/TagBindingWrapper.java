@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 
 //todo: merge with option tag binding
 class TagBindingWrapper implements Binding {
@@ -51,7 +52,7 @@ class TagBindingWrapper implements Binding {
     return e;
   }
 
-  public Object deserialize(Object context, Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object... nodes) {
     assert nodes.length == 1;
 
     Element e = (Element)nodes[0];

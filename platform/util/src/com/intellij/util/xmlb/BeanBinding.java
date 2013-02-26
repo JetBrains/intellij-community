@@ -60,6 +60,7 @@ class BeanBinding implements Binding {
     assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
+  @Override
   public void init() {
     initPropertyBindings(myBeanClass);
   }
@@ -72,6 +73,7 @@ class BeanBinding implements Binding {
     }
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element element = new Element(myTagName);
 
@@ -112,15 +114,16 @@ class BeanBinding implements Binding {
     }
   }
 
-  public void deserializeInto(final Object bean, final Element element) {
+  public void deserializeInto(final Object bean, @NotNull Element element) {
     _deserializeInto(bean, element);
   }
 
-  public Object deserialize(Object o, Object... nodes) {
+  @Override
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     return _deserializeInto(instantiateBean(), nodes);
   }
 
-  private Object _deserializeInto(final Object result, final Object... aNodes) {
+  private Object _deserializeInto(final Object result, @NotNull Object... aNodes) {
     List<Object> nodes = new ArrayList<Object>();
     for (Object aNode : aNodes) {
       if (XmlSerializerImpl.isIgnoredNode(aNode)) continue;
@@ -181,10 +184,12 @@ class BeanBinding implements Binding {
     return result;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Element.class;
   }

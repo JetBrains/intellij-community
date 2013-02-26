@@ -216,6 +216,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAcceptRawSubstForLambda() throws Exception {
+    doTest();
+  }
+
   public void testCheckFunctionalInterfaceAccess() throws Exception {
     doTest();
   }

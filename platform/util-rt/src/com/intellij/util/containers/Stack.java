@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 /**
@@ -24,6 +26,8 @@ import java.util.*;
  * @author max
  */
 public class Stack<T> extends ArrayList<T> {
+  public Stack() { }
+
   public Stack(int initialCapacity) {
     super(initialCapacity);
   }
@@ -32,7 +36,10 @@ public class Stack<T> extends ArrayList<T> {
     super(init);
   }
 
-  public Stack() {
+  public Stack(T... items) {
+    for (T item : items) {
+      push(item);
+    }
   }
 
   public void push(T t) {
@@ -51,6 +58,11 @@ public class Stack<T> extends ArrayList<T> {
     return remove(size - 1);
   }
 
+  @Nullable
+  public T tryPop() {
+    return isEmpty() ? null : pop();
+  }
+
   public boolean empty() {
     return isEmpty();
   }
@@ -58,7 +70,7 @@ public class Stack<T> extends ArrayList<T> {
   @Override
   public boolean equals(Object o) {
     if (o instanceof RandomAccess && o instanceof List) {
-      List other = (List) o;
+      List other = (List)o;
       if (size() != other.size()) {
         return false;
       }
@@ -66,7 +78,7 @@ public class Stack<T> extends ArrayList<T> {
       for (int i = 0; i < other.size(); i++) {
         Object o1 = other.get(i);
         Object o2 = get(i);
-        if (!(o1==null ? o2==null : o1.equals(o2))) {
+        if (!(o1 == null ? o2 == null : o1.equals(o2))) {
           return false;
         }
       }

@@ -38,7 +38,7 @@ public abstract class RefreshQueue {
 
   public abstract RefreshSession createSession(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState state);
 
-  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, VirtualFile... files) {
+  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull VirtualFile... files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
@@ -50,7 +50,7 @@ public abstract class RefreshQueue {
                             boolean recursive,
                             @Nullable Runnable finishRunnable,
                             @NotNull ModalityState state,
-                            VirtualFile... files) {
+                            @NotNull VirtualFile... files) {
     RefreshSession session = createSession(async, recursive, finishRunnable, state);
     session.addAllFiles(files);
     session.launch();

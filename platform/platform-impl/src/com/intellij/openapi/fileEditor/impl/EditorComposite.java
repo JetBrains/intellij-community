@@ -405,6 +405,11 @@ public abstract class EditorComposite implements Disposable {
   }
 
   public void dispose() {
+    for (FileEditor editor : myEditors) {
+      if (!Disposer.isDisposed(editor)) {
+        Disposer.dispose(editor);
+      }
+    }
   }
 
   private static class TopBottomPanel extends JPanel {
