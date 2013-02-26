@@ -163,6 +163,13 @@ public class PsiMethodReferenceUtil {
         final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
         if (interfaceReturnType != null) {
           if (interfaceReturnType == PsiType.VOID) return true;
+          if (onArrayType(((PsiClass)resolve), method.getSignature(PsiSubstitutor.EMPTY))) {
+            final PsiTypeParameter[] parameters = ((PsiClass)resolve).getTypeParameters();
+            if (parameters.length == 1) {
+              final PsiType arrayComponentType = result.getSubstitutor().substitute(parameters[0]);
+              return arrayComponentType != null && TypeConversionUtil.isAssignable(interfaceReturnType, arrayComponentType.createArrayType(), true);
+            }
+          }
           final PsiClassType classType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType((PsiClass)resolve, result.getSubstitutor());
           if (TypeConversionUtil.isAssignable(interfaceReturnType, classType, !((PsiClass)resolve).hasTypeParameters())) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
