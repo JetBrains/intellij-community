@@ -1,12 +1,11 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.Consumer;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
@@ -44,15 +43,21 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyUnresolvedReferencesInspection instance = PyUnresolvedReferencesInspection.getInstance(descriptor.getPsiElement());
-    String name = myIdentifier.toString();
-    if (myIgnoreAllAttributes) {
-      name = name + END_WILDCARD;
-    }
-    if (!instance.ignoredIdentifiers.contains(name)) {
-      instance.ignoredIdentifiers.add(name);
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-      InspectionProfileManager.getInstance().fireProfileChanged(profile);
-    }
+    final PsiElement context = descriptor.getPsiElement();
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
+    profile.modifyProfile(new Consumer<ModifiableModel>() {
+      @Override
+      public void consume(ModifiableModel model) {
+        PyUnresolvedReferencesInspection inspection =
+          (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
+        String name = myIdentifier.toString();
+        if (myIgnoreAllAttributes) {
+          name += END_WILDCARD;
+        }
+        if (!inspection.ignoredIdentifiers.contains(name)) {
+          inspection.ignoredIdentifiers.add(name);
+        }
+      }
+    });
   }
 }
