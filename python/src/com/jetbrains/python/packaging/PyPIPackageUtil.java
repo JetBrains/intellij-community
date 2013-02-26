@@ -27,6 +27,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
@@ -214,25 +215,24 @@ public class PyPIPackageUtil {
           }
         };
 
+    URL repositoryUrl = new URL(PYPI_LIST_URL);
+
+    // Create a trust manager that does not validate certificate
+    TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
+      public X509Certificate[] getAcceptedIssuers(){return null;}
+      public void checkClientTrusted(X509Certificate[] certs, String authType){}
+      public void checkServerTrusted(X509Certificate[] certs, String authType){}
+    }};
+
     try {
-      URL repositoryUrl = new URL(PYPI_LIST_URL);
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustAllCerts, new SecureRandom());
 
-      // Create a trust manager that does not validate certificate
-      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
-        public X509Certificate[] getAcceptedIssuers(){return null;}
-        public void checkClientTrusted(X509Certificate[] certs, String authType){}
-        public void checkServerTrusted(X509Certificate[] certs, String authType){}
-      }};
-
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAllCerts, new SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-      } catch (Exception e) {
-        LOG.warn(e);
+      final URLConnection connection = repositoryUrl.openConnection();
+      if (connection instanceof HttpsURLConnection) {
+        ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
       }
-
-      InputStream is = repositoryUrl.openStream();
+      InputStream is = connection.getInputStream();
       Reader reader = new InputStreamReader(is);
       try{
         new ParserDelegator().parse(reader, callback, true);
@@ -244,7 +244,7 @@ public class PyPIPackageUtil {
         reader.close();
       }
     }
-    catch (MalformedURLException e) {
+    catch (Exception e) {
       LOG.warn(e);
     }
     return packages;
