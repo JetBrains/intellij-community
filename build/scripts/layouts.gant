@@ -178,11 +178,13 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
     layoutCommunityPlugins(home)
 
-    layoutPlugin("javaFX") {
-      dir("lib") {
-        jar("javaFX.jar") {
-          module("javaFX")
-          module("javaFX-CE")
+    dir("plugins") {
+      dir("javaFX") {
+        dir("lib") {
+          jar("javaFX.jar") {
+            module("javaFX")
+            module("javaFX-CE")
+          }
         }
       }
     }
