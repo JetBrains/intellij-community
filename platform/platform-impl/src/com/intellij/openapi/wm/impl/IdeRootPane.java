@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.JBColor;
@@ -256,6 +257,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
 
     myStatusBar.addWidget(myMemoryWidget);
+    myStatusBar.addWidget(new ClockPanel(), "after " + MemoryUsagePanel.WIDGET_ID);
     myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before " + MemoryUsagePanel.WIDGET_ID);
 
     setMemoryIndicatorVisible(myUISettings.SHOW_MEMORY_INDICATOR);
