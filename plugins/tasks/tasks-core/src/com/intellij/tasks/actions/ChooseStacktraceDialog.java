@@ -31,7 +31,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -47,7 +46,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
   public ChooseStacktraceDialog(Project project, final Task issue) {
     super(project, false);
 
-    setTitle("Choose stacktrace to analyze");
+    setTitle("Choose Stacktrace to Analyze");
     Comment[] comments = issue.getComments();
     ArrayList<Comment> list = new ArrayList<Comment>(comments.length + 1);
     final String description = issue.getDescription();
@@ -56,7 +55,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
     }
     ContainerUtil.addAll(list, comments);
 
-    myList.setModel(new CollectionListModel(list));
+    myList.setModel(new CollectionListModel<Comment>(list));
     myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
