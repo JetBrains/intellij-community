@@ -359,19 +359,17 @@ public class XmlUtil {
     return XSLT_URI.equals(ns) || XINCLUDE_URI.equals(ns);
   }
 
-
   public static char getCharFromEntityRef(@NonNls String text) {
-    //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
-    if (text.charAt(1) != '#') {
-      try {
+    try {
+      if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);
+        return XmlTagUtil.getCharacterByEntityName(text);
       }
-      catch (StringIndexOutOfBoundsException e) {
-        LOG.error("Cannot parse ref: '" + text + "'", e);
-      }
-      return XmlTagUtil.getCharacterByEntityName(text);
+      text = text.substring(2, text.length() - 1);
     }
-    text = text.substring(2, text.length() - 1);
+    catch (StringIndexOutOfBoundsException e) {
+      LOG.error("Cannot parse ref: '" + text + "'", e);
+    }
     try {
       int code;
       if (StringUtil.startsWithChar(text, 'x')) {
