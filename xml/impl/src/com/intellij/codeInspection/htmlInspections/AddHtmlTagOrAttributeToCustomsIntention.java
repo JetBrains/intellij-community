@@ -16,21 +16,17 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author Maxim.Mossienko
@@ -72,19 +68,16 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     return true;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    final ModifiableModel model = inspectionProfile.getModifiableModel();
-    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, file);
-    final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
-    xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
-    try {
-      model.commit();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    inspectionProfile.modifyProfile(new Consumer<ModifiableModel>() {
+      @Override
+      public void consume(ModifiableModel model) {
+        XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)model.getUnwrappedTool(myInspectionName, file);
+        xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
+      }
+    });
   }
 
   public boolean startInWriteAction() {
