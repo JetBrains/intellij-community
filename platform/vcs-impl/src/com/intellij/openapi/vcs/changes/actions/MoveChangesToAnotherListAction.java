@@ -45,7 +45,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   public MoveChangesToAnotherListAction() {
     super(ActionsBundle.actionText("ChangesView.Move"),
           ActionsBundle.actionDescription("ChangesView.Move"),
-          AllIcons.Actions.FileStatus);
+          AllIcons.Actions.MoveToAnotherChangelist);
   }
 
   public void update(AnActionEvent e) {
