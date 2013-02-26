@@ -1,10 +1,10 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.execution.process.ProcessOutput;
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -169,7 +170,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           annotation = holder.createWeakWarningAnnotation(problemRange, message);
         }
         annotation.registerUniversalFix(new ReformatFix(), null, null);
-        annotation.registerFix(new IgnoreErrorFix(problem.myCode, annotationResult.ignoredErrors));
+        annotation.registerFix(new IgnoreErrorFix(problem.myCode));
         annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
                                                                            new Computable<String>() {
                                                                              @Override
@@ -211,11 +212,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   private static class IgnoreErrorFix implements IntentionAction {
     private final String myCode;
-    private final List<String> myErrors;
 
-    public IgnoreErrorFix(String code, List<String> errors) {
+    public IgnoreErrorFix(String code) {
       myCode = code;
-      myErrors = errors;
     }
 
     @NotNull
@@ -236,9 +235,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myErrors.add(myCode);
-      DaemonCodeAnalyzer.getInstance(project).restart(file);
+    public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(new Consumer<ModifiableModel>() {
+        @Override
+        public void consume(ModifiableModel model) {
+          PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+          tool.ignoredErrors.add(myCode);
+        }
+      });
     }
 
     @Override
