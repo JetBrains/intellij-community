@@ -91,19 +91,41 @@ public class TypeInfo {
   public final boolean isEllipsis;
   private final List<PsiAnnotationStub> myAnnotationStubs;
 
-  public TypeInfo(StringRef text, byte arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
-    this.text = text;
-    this.arrayCount = arrayCount;
+  public TypeInfo(StringRef _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+    text = _text;
+    arrayCount = _arrayCount;
     isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
 
   public TypeInfo(@NotNull TypeInfo typeInfo) {
-    this.text = typeInfo.text;
-    this.arrayCount = typeInfo.arrayCount;
+    text = typeInfo.text;
+    arrayCount = typeInfo.arrayCount;
     isEllipsis = typeInfo.isEllipsis;
     myAnnotationStubs = new SmartList<PsiAnnotationStub>(typeInfo.myAnnotationStubs);
   }
+
+  public void addAnnotation(PsiAnnotationStub annotation) {
+    myAnnotationStubs.add(annotation);
+  }
+
+  @NotNull
+  public String getShortTypeText() {
+    if (text == null) return "";
+    String name = PsiNameHelper.getShortClassName(text.getString());
+    if (arrayCount > 0) {
+      name += StringUtil.repeat("[]", arrayCount);
+    }
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    String text = createTypeText(this);
+    return text != null ? text : "null";
+  }
+
+  /* factories and serialization */
 
   @NotNull
   public static TypeInfo createConstructorType() {
@@ -162,7 +184,7 @@ public class TypeInfo {
   }
 
   @NotNull
-  public static TypeInfo fromString(String typeText, boolean isEllipsis) {
+  public static TypeInfo fromString(@NotNull String typeText, boolean isEllipsis) {
     assert !typeText.endsWith("...") : typeText;
 
     byte arrayCount = 0;
@@ -276,16 +298,5 @@ public class TypeInfo {
     }
 
     return buf.toString();
-  }
-
-  public void addAnnotation(PsiAnnotationStub annotation) {
-    myAnnotationStubs.add(annotation);
-  }
-
-  @NotNull
-  public String getShortTypeText() {
-    if (text == null) return "";
-    String name = PsiNameHelper.getShortClassName(text.getString());
-    return arrayCount > 0 ? name + StringUtil.repeat("[]", arrayCount) : name;
   }
 }
