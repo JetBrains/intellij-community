@@ -118,7 +118,14 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget{
       int h = getHeight() - 4;
       int w = h / 2;
       float thickness = h * .1F;
-      g.setTransform(new AffineTransform(1, 0, -thickness / h, 1, thickness * 3, thickness / 4));
+      AffineTransform transform = g.getTransform();
+      if (transform == null) {
+        transform = new AffineTransform(1, 0, -thickness / h, 1, thickness * 3, thickness / 4);
+      }
+      else {
+        transform.concatenate(new AffineTransform(1, 0, -thickness / h, 1, thickness * 3, thickness / 4));
+      }
+      g.setTransform(transform);
       g.setStroke(new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
       g.setColor(UIManager.getColor("Label.foreground"));
       myCalendar.setTimeInMillis(System.currentTimeMillis());
