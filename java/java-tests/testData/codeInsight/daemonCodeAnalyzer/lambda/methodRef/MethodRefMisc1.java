@@ -38,7 +38,7 @@ class MyTest1 {
     }
 
     public static void main(String[] args) {
-        call(1, MyTest1::m);
+        call<error descr="Ambiguous method call: both 'MyTest1.call(int, I1)' and 'MyTest1.call(int, I2)' match">(1, MyTest1::m)</error>;
     }
 }
 
@@ -54,7 +54,7 @@ class MyTest2 {
     static void call(Integer i, I s) {   }
 
     static void test() {
-        call<error descr="Ambiguous method call: both 'MyTest2.call(int, I)' and 'MyTest2.call(Integer, I)' match">(1, MyTest2::m)</error>; //ambiguous
+        call(1, MyTest2::m); //call(int i, I s)
     }
 }
 
