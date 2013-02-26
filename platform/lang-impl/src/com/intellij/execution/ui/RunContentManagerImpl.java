@@ -391,8 +391,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager,
-                                                                      final RunContentDescriptor descriptor,
+  private static RunContentDescriptor chooseReuseContentForDescriptor(@NotNull ContentManager contentManager,
+                                                                      @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName) {
     Content content = null;
@@ -403,7 +403,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid()) content = attachedContent;
+      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) content = attachedContent;
     }
     //Stage three: choose the content with name we prefer
     if (content == null) {
@@ -437,9 +437,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         return c;
       }
     }
-    return preferredName != null ? getContentFromManager(contentManager, null, executionId) : null;
+    return preferredName != null  && !contents.isEmpty() ? getContentFromManager(contentManager, null, executionId) : null;
   }
 
+  @NotNull
   private ContentManager getContentManagerForRunner(final Executor executor) {
     final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(executor.getToolWindowId());
     if (contentManager == null) {
