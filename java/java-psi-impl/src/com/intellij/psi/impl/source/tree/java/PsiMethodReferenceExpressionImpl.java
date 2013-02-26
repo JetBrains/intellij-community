@@ -292,15 +292,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             if (containingClass.getConstructors().length == 0 &&
                 !containingClass.isEnum() &&
                 !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              boolean hasReceiver = false;
-              final PsiType[] parameterTypes = signature.getParameterTypes();
-              
-              if (parameterTypes.length == 1 && PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
-                hasReceiver = true;
-              }
-              final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
               ClassCandidateInfo candidateInfo = null;
-              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0) {
                 candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
               }
               return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
