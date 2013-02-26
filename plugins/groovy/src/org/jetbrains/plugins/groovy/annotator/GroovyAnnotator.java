@@ -636,7 +636,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           @SuppressWarnings({"ConstantConditions"})
           final PsiElement context = variable.getContext().getContext();
           if (context instanceof GrClosableBlock) {
-            duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context, new DuplicateVariablesProcessor(variable),
+            duplicate = ResolveUtil.resolveExistingElement((GroovyPsiElement)context.getParent(), new DuplicateVariablesProcessor(variable),
                                                            GrVariable.class, GrReferenceExpression.class);
           }
           else if (context instanceof GrMethod && !(context.getParent() instanceof GroovyFile)) {

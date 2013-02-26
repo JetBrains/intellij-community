@@ -87,8 +87,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (!super.processDeclarations(processor, _state, lastParent, place)) return false;
     if (!processParameters(processor, _state, state, place)) return false;
     if (!ResolveUtil.processElement(processor, getOwner(), _state)) return false;
-    if (!processOwnerAndDelegate(processor, state, place)) return false;
     if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
+    if (!processOwnerAndDelegate(processor, state, place)) return false;
 
     return true;
   }
@@ -97,7 +97,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     Boolean result = processDelegatesTo(processor, state, place);
     if (result != null) return result.booleanValue();
 
-    if (!processOwner(processor, state)) return false;
+    if (!processOwner(processor, state, place)) return false;
     return true;
   }
 
@@ -110,15 +110,15 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     switch (info.getStrategy()) {
       case Closure.OWNER_FIRST:
-        if (!processOwner(processor, state)) return false;
+        if (!processOwner(processor, state, place)) return false;
         if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
         return true;
       case Closure.DELEGATE_FIRST:
         if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
-        if (!processOwner(processor, state)) return false;
+        if (!processOwner(processor, state, place)) return false;
         return true;
       case Closure.OWNER_ONLY:
-        if (!processOwner(processor, state)) return false;
+        if (!processOwner(processor, state, place)) return false;
         return true;
       case Closure.DELEGATE_ONLY:
         if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
@@ -130,11 +130,14 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     }
   }
 
-  private static boolean processDelegate(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull PsiElement place,
-                                         @Nullable final PsiType classToDelegate) {
+  private boolean processDelegate(@NotNull PsiScopeProcessor processor,
+                                  @NotNull ResolveState state,
+                                  @NotNull PsiElement place,
+                                  @Nullable final PsiType classToDelegate) {
     if (classToDelegate != null) {
+      if (state.get(ResolverProcessor.RESOLVE_CONTEXT) == null) {
+        state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+      }
       return ResolveUtil.processAllDeclarations(classToDelegate, processor, state, place);
     }
 
@@ -177,14 +180,13 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return true;
   }
 
-  private boolean processOwner(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
-    final PsiElement parent = this.getParent();
-    if (parent instanceof GroovyPsiElement) {
-      return ResolveUtil.treeWalkUp((GroovyPsiElement)parent, processor, true, state);
+  private boolean processOwner(@NotNull PsiScopeProcessor processor,
+                               @NotNull ResolveState state,
+                               @NotNull PsiElement place) {
+    if (state.get(ResolverProcessor.RESOLVE_CONTEXT) == null) {
+      state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     }
-    else {
-      return true;
-    }
+    return ResolveUtil.treeWalkUp(getParent(), place, processor, true, state);
   }
 
   private boolean isItAlreadyDeclared(@Nullable PsiElement place) {
