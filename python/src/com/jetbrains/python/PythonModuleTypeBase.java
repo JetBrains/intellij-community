@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 
@@ -11,6 +12,10 @@ import javax.swing.*;
  * @author yole
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
+  public static ModuleType getInstance() {
+    return ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
+  }
+
   @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
 
   protected PythonModuleTypeBase() {
