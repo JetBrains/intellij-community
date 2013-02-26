@@ -21,6 +21,7 @@ import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -94,7 +95,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
 
     if (myQualifier instanceof LookupItem && getQualifierObject() instanceof PsiClass) {
-      presentation.setTailText(JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier));
+      String locationString = JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier);
+      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
     }
   }
 
