@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -126,7 +127,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
-    if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
+    if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey) && !StringUtil.containsChar(templateKey, '$')) {
       return null;
     }
 
@@ -139,7 +140,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (!setTemplate(templateToken, template)) {
       return null;
     }
-    return new TemplateNode(templateToken);
+    return new TemplateNode(templateToken, myGenerator);
   }
 
   @Override
