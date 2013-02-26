@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="sanselan-0.98-snapshot">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../lib/sanselan-0.98-snapshot.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -42,6 +42,9 @@ public class FxmlConstants {
   @NonNls public static final String FX_ROOT = "fx:root";
   @NonNls public static final String TYPE = "type";
   
+  @NonNls public static final String STYLE_CLASS = "styleClass";
+  @NonNls public static final String STYLESHEETS = "stylesheets";
+
   public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
   public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
 
@@ -62,5 +65,5 @@ public class FxmlConstants {
     FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
   }
-  
+
 }

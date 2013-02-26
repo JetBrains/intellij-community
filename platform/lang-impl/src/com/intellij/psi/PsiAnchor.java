@@ -327,8 +327,11 @@ public abstract class PsiAnchor {
   @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
-                                                @NotNull IStubElementType elementType) {
-    if (fileImpl == null) return null;
+                                                @NotNull IStubElementType elementType, boolean throwIfNull) {
+    if (fileImpl == null) {
+      if (throwIfNull) throw new AssertionError("Null file");
+      return null;
+    }
     StubTree tree = fileImpl.getStubTree();
 
     boolean foreign = tree == null;
@@ -338,26 +341,36 @@ public abstract class PsiAnchor {
         tree = ((PsiFileImpl)fileImpl).calcStubTree();
       }
       else {
+        if (throwIfNull) throw new AssertionError("Not PsiFileImpl: " + fileImpl.getClass());
         return null;
       }
     }
 
     List<StubElement<?>> list = tree.getPlainList();
-    if (index >= list.size()) return null;
+    if (index >= list.size()) {
+      if (throwIfNull) throw new AssertionError("Too large index: " + index + ">=" + list.size());
+      return null;
+    }
     StubElement stub = list.get(index);
 
-    if (stub.getStubType() != elementType) return null;
+    if (stub.getStubType() != elementType) {
+      if (throwIfNull) throw new AssertionError("Element type mismatch: " + stub.getStubType() + "!=" + elementType);
+      return null;
+    }
 
     if (foreign) {
       final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
       if (cachedPsi != null) return cachedPsi;
 
       final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-      return ast != null ? ast.getPsi() : null;
+      if (ast != null) {
+        return ast.getPsi();
+      }
+
+      if (throwIfNull) throw new AssertionError("No AST for stub");
+      return null;
     }
-    else {
-      return stub.getPsi();
-    }
+    return stub.getPsi();
   }
 
   public static class StubIndexReference extends PsiAnchor {
@@ -366,6 +379,7 @@ public abstract class PsiAnchor {
     private final int myIndex;
     private final Language myLanguage;
     private final IStubElementType myElementType;
+    private final long myCreationModCount;
 
     public StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
       myLanguage = language;
@@ -373,6 +387,7 @@ public abstract class PsiAnchor {
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
+      myCreationModCount = file.getManager().getModificationTracker().getModificationCount();
     }
 
     @Override
@@ -396,9 +411,26 @@ public abstract class PsiAnchor {
       return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
         @Override
         public PsiElement compute() {
-          return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType);
+          return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false);
         }
       });
+    }
+
+    public String diagnoseNull() {
+      try {
+        PsiElement element = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
+          @Override
+          public PsiElement compute() {
+            return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, true);
+          }
+        });
+        return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
+      }
+      catch (AssertionError e) {
+        return e.getMessage() +
+               "; current modCount=" + PsiManager.getInstance(getProject()).getModificationTracker().getModificationCount() +
+               "; creation modCount=" + myCreationModCount;
+      }
     }
 
     @Override

@@ -35,6 +35,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -86,6 +87,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
   private final Editor myEditor;
   private final Project myProject;
   private final StructureViewModel myTreeModel;
@@ -596,12 +598,20 @@ public class FileStructurePopup implements Disposable {
   }
 
   public boolean navigateSelectedElement() {
+    final AbstractTreeNode selectedNode = getSelectedNode();
+    if (ApplicationManager.getApplication().isInternal()) {
+      String enteredPrefix = getSpeedSearch().getEnteredPrefix();
+      String itemText = getSpeedSearchText(selectedNode);
+      if (StringUtil.isNotEmpty(enteredPrefix) && StringUtil.isNotEmpty(itemText)) {
+        LOG.info("Chosen in file structure popup by prefix '" + enteredPrefix + "': '" + itemText + "'");
+      }
+    }
+
     final Ref<Boolean> succeeded = new Ref<Boolean>();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        final AbstractTreeNode selectedNode = getSelectedNode();
         if (selectedNode != null) {
           if (selectedNode.canNavigateToSource()) {
             myPopup.cancel();

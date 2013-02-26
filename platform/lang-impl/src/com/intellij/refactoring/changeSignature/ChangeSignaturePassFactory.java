@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -61,8 +60,8 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
   private static class ChangeSignaturePass extends TextEditorHighlightingPass {
     @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature change was detected";
     private final Project myProject;
-    private PsiFile myFile;
-    private Editor myEditor;
+    private final PsiFile myFile;
+    private final Editor myEditor;
 
     private TextRange myRange;
 
@@ -95,11 +94,14 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
     public void doApplyInformationToEditor() {
       HighlightInfo info = null;
       if (myRange != null)  {
-        info = new HighlightInfo(new TextAttributes(null, null,
-                                                            myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor(),
-                                                            null, Font.PLAIN), null, HighlightInfoType.INFORMATION,
-                                 myRange.getStartOffset(), myRange.getEndOffset(), SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
-                                 SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, HighlightSeverity.INFORMATION, false, true, false);
+        TextAttributes attributes = new TextAttributes(null, null,
+                                                       myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES)
+                                                         .getEffectColor(),
+                                                       null, Font.PLAIN);
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(myRange);
+        builder.textAttributes(attributes);
+        builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
+        info = builder.createUnconditionally();
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
         options.add(new DismissNewSignatureIntentionAction());
         QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction(), options, null);

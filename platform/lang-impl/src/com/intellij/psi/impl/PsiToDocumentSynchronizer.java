@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,22 +106,26 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   @Override
   public void childAdded(@NotNull final PsiTreeChangeEvent event) {
-    doSync(event, false, new DocSyncAction() {
-      @Override
-      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-        insertString(document, event.getOffset(), event.getChild().getText());
-      }
+    if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
+      doSync(event, false, new DocSyncAction() {
+        @Override
+        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+          insertString(document, event.getOffset(), event.getChild().getText());
+        }
     });
+    }
   }
 
   @Override
   public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
-    doSync(event, false, new DocSyncAction() {
-      @Override
-      public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-        deleteString(document, event.getOffset(), event.getOffset() + event.getOldLength());
-      }
-    });
+    if (!(event.getChild() instanceof ForeignLeafPsiElement)) {
+      doSync(event, false, new DocSyncAction() {
+        @Override
+        public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
+          deleteString(document, event.getOffset(), event.getOffset() + event.getOldLength());
+        }
+      });
+    }
   }
 
   @Override
@@ -128,7 +133,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
-        replaceString(document, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewChild().getText());
+        int oldLength = event.getOldChild() instanceof ForeignLeafPsiElement ? 0 : event.getOldLength();
+        String newText = event.getNewChild() instanceof ForeignLeafPsiElement ? "" : event.getNewChild().getText();
+        replaceString(document, event.getOffset(), event.getOffset() + oldLength, newText);
       }
     });
   }

@@ -76,11 +76,11 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
   }
   
   public void testMethodWithTypeParam() throws Exception {
-    doTestFunctionalInterface(null);
+    doTestFunctionalInterface("Target method is generic");
   }
   
   public void testTwoMethodsSameSignatureTypeParams() throws Exception {
-    doTestFunctionalInterface(null);
+    doTestFunctionalInterface("Target method is generic");
   }
 
   public void testAbstractClass() throws Exception {

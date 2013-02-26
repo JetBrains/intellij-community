@@ -355,9 +355,9 @@
     <psi.referenceContributor  language="Properties" implementation="org.jetbrains.plugins.groovy.dgm.DGMReferenceContributor"/>
 
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrWithWeigher"
-             id="groovyWithWeigher" order="before stats"/>
+             id="groovyWithWeigher" order="after prefix"/>
     <weigher key="completion" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrKindWeigher"
-             id="groovyKindWeigher" order="before stats, after groovyWithWeigher"/>
+             id="groovyKindWeigher" order="after groovyWithWeigher, before explicitProximity"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrReferenceListWeigher"
              id="groovyReferenceListWeigher" order="before openedInEditor"/>

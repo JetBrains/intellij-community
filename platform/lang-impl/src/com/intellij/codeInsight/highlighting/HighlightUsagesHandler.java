@@ -46,6 +46,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +213,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
 
-    PsiElement[] elements = PsiUtilBase.toPsiElementArray(otherOccurrences);
+    PsiElement[] elements = PsiUtilCore.toPsiElementArray(otherOccurrences);
     doHighlightElements(editor, elements, attributes, clearHighlights);
   }
 
@@ -316,7 +317,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
     }
     for (RangeHighlighter highlighter : highlighters) {
-      highlighter.setErrorStripeTooltip(getLineTextErrorStripeTooltip(editor.getDocument(), highlighter.getStartOffset()));
+      String tooltip = getLineTextErrorStripeTooltip(editor.getDocument(), highlighter.getStartOffset(), true);
+      highlighter.setErrorStripeTooltip(tooltip);
     }
   }
 
@@ -427,17 +429,15 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (clearHighlights) {
       message = "";
     }
+    else if (refCount > 0) {
+      message = CodeInsightBundle.message(elementName != null ?
+                                          "status.bar.highlighted.usages.message" :
+                                          "status.bar.highlighted.usages.no.target.message", refCount, elementName, getShortcutText());
+    }
     else {
-      if (refCount > 0) {
-        message = CodeInsightBundle.message(elementName != null ?
-                                            "status.bar.highlighted.usages.message" :
-                                            "status.bar.highlighted.usages.no.target.message", refCount, elementName, getShortcutText());
-      }
-      else {
-        message = CodeInsightBundle.message(elementName != null ?
-                                            "status.bar.highlighted.usages.not.found.message" :
-                                            "status.bar.highlighted.usages.not.found.no.target.message", elementName);
-      }
+      message = CodeInsightBundle.message(elementName != null ?
+                                          "status.bar.highlighted.usages.not.found.message" :
+                                          "status.bar.highlighted.usages.not.found.no.target.message", elementName);
     }
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }

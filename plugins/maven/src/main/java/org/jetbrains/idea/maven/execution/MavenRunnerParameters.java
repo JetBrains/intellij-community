@@ -33,6 +33,8 @@ public class MavenRunnerParameters implements Cloneable {
   private Path myWorkingDirPath;
   private final List<String> myGoals = new ArrayList<String>();
 
+  private boolean myResolveToWorkspace;
+
   private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<String, Boolean>();
 
   private final Collection<String> myEnabledProfilesForXmlSerializer = new TreeSet<String>();
@@ -81,6 +83,7 @@ public class MavenRunnerParameters implements Cloneable {
 
   public MavenRunnerParameters(MavenRunnerParameters that) {
     this(that.getWorkingDirPath(), that.isPomExecution, that.myGoals, that.myProfilesMap);
+    myResolveToWorkspace = that.myResolveToWorkspace;
   }
 
   public boolean isPomExecution() {
@@ -180,6 +183,14 @@ public class MavenRunnerParameters implements Cloneable {
     }
   }
 
+  public boolean isResolveToWorkspace() {
+    return myResolveToWorkspace;
+  }
+
+  public void setResolveToWorkspace(boolean resolveToWorkspace) {
+    myResolveToWorkspace = resolveToWorkspace;
+  }
+
   public MavenRunnerParameters clone() {
     return new MavenRunnerParameters(this);
   }
@@ -191,6 +202,7 @@ public class MavenRunnerParameters implements Cloneable {
     final MavenRunnerParameters that = (MavenRunnerParameters)o;
 
     if (isPomExecution != that.isPomExecution) return false;
+    if (myResolveToWorkspace != that.myResolveToWorkspace) return false;
     if (!myGoals.equals(that.myGoals)) return false;
     if (myWorkingDirPath != null ? !myWorkingDirPath.equals(that.myWorkingDirPath) : that.myWorkingDirPath != null) return false;
     if (!myProfilesMap.equals(that.myProfilesMap)) return false;

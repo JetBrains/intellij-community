@@ -55,7 +55,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
 
     final GlobalSearchScope scope = useScope instanceof GlobalSearchScope ? (GlobalSearchScope)useScope : null;
 
-    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, annClass.getProject(), scope);
+    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(), scope);
     for (PsiAnnotation annotation : annotations) {
       PsiModifierList modlist = (PsiModifierList)annotation.getParent();
       final PsiElement owner = modlist.getParent();

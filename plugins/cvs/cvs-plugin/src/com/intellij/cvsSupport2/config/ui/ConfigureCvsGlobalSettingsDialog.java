@@ -21,6 +21,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -64,6 +65,7 @@ public class ConfigureCvsGlobalSettingsDialog extends DialogWrapper {
     return myGlobalCvsSettingsPanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};

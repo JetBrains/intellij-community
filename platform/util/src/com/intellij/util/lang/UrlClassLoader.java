@@ -17,7 +17,8 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashSet;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import sun.misc.Resource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -55,8 +57,28 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
     super(parent);
 
-    myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars, canUseCache, acceptUnescapedUrls);
-    myURLs = new ArrayList<URL>(urls);
+    List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
+      @Override
+      public URL fun(URL url) {
+        return internFileProtocol(url);
+      }
+    });
+    myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls);
+    myURLs = list;
+  }
+
+  @NotNull
+  private static URL internFileProtocol(@NotNull URL url) {
+    try {
+      if ("file".equals(url.getProtocol())) {
+        return new URL("file", url.getHost(), url.getPort(), url.getFile());
+      }
+      return url;
+    }
+    catch (MalformedURLException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public void addURL(URL url) {
@@ -68,6 +90,7 @@ public class UrlClassLoader extends ClassLoader {
     return Collections.unmodifiableList(myURLs);
   }
 
+  @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
     Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
@@ -83,6 +106,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
 
+  @Override
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
     return super.loadClass(name, resolve);
   }
@@ -126,6 +150,7 @@ public class UrlClassLoader extends ClassLoader {
     return defineClass(name, b, 0, b.length);
   }
 
+  @Override
   @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
     final long started = myDebugTime ? System.nanoTime():0;
@@ -168,6 +193,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // Accessed from PluginClassLoader via reflection // TODO do we need it?
+  @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
     return myClassPath.getResources(name, true);
   }

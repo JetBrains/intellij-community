@@ -108,31 +108,24 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public void actionPerformed(final AnActionEvent e) {
     Project project = myEnvironment.getProject();
-    RunnerAndConfigurationSettings settings = myEnvironment.getRunnerAndConfigurationSettings();
     if (project == null)
       return;
-    if (settings != null) {
       if (myProcessHandler != null) {
         ExecutionManager.getInstance(project).restartRunProfile(project,
                                                                 myExecutor,
                                                                 myEnvironment.getExecutionTarget(),
-                                                                settings,
+                                                                myEnvironment.getRunnerAndConfigurationSettings(),
                                                                 myProcessHandler);
       }
       else {
         ExecutionManager.getInstance(project).restartRunProfile(project,
                                                                 myExecutor,
                                                                 myEnvironment.getExecutionTarget(),
-                                                                settings,
+                                                                myEnvironment.getRunnerAndConfigurationSettings(),
                                                                 myDescriptor);
       }
-    }
-    else {
-      restart();
-    }
   }
 
-  //Should be used by android framework only
   public void restart() {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myDescriptor.getComponent()));
     if (ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {

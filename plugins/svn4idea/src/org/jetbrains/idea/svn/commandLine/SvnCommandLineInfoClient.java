@@ -123,9 +123,15 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     }
     catch (VcsException e) {
       final String text = e.getMessage();
-      if (!StringUtil.isEmptyOrSpaces(text) && text.contains("W155010")) {
+      final boolean notEmpty = !StringUtil.isEmptyOrSpaces(text);
+      if (notEmpty && text.contains("W155010")) {
         // just null
         return;
+      }
+      // not a working copy exception
+      // "E155007: '' is not a working copy"
+      if (notEmpty && text.contains("is not a working copy")) {
+        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY), e);
       }
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
     }
@@ -133,7 +139,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
   private File correctUpToExistingParent(File base) {
     while (base != null) {
-      if (base.exists()) return base;
+      if (base.exists() && base.isDirectory()) return base;
       base = base.getParentFile();
     }
     return null;

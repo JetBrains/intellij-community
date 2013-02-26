@@ -34,7 +34,7 @@ import java.util.Iterator;
  *
  * honestly stolen from GitLineHandler
  */
-public class SvnLineCommand extends SvnTextCommand {
+public class SvnLineCommand extends SvnCommand {
   /**
    * the partial line from stdout stream
    */

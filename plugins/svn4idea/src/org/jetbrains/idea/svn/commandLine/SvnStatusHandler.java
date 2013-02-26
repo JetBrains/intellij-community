@@ -284,8 +284,8 @@ public class SvnStatusHandler extends DefaultHandler {
       if (createNewChild) {
         assertSAX(myElementsMap.containsKey(qName));
         final ElementHandlerBase newChild = myElementsMap.get(qName).get();
-        newChild.preEffect(myDataCallback);
         newChild.updateStatus(attributes, myPending, myLockWrapper);
+        newChild.preEffect(myDataCallback);
         myParseStack.add(newChild);
         return;
       } else {
@@ -640,6 +640,11 @@ public class SvnStatusHandler extends DefaultHandler {
       final String treeConflicted = attributes.getValue("tree-conflicted");
       if (treeConflicted != null && Boolean.parseBoolean(treeConflicted)) {
         status.setIsConflicted(true);
+      }
+
+      final String switched = attributes.getValue("switched");
+      if (switched != null && Boolean.parseBoolean(switched)) {
+        status.setIsSwitched(true);
       }
 
       final String revision = attributes.getValue("revision");

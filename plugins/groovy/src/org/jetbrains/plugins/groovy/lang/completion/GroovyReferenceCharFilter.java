@@ -47,11 +47,6 @@ public class GroovyReferenceCharFilter extends CharFilter {
       return Result.ADD_TO_PREFIX;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(' || c == ',') &&
-        JavaCharFilter.isNonImportedClassEntered((LookupImpl)lookup, c == '.')) {
-      return Result.HIDE_LOOKUP;
-    }
-
     int caret = lookup.getEditor().getCaretModel().getOffset();
     if (c == '.' && prefixLength == 0 && !lookup.isSelectionTouched() && caret > 0 &&
         lookup.getEditor().getDocument().getCharsSequence().charAt(caret - 1) == '.') {

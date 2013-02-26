@@ -27,13 +27,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -57,26 +50,6 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   @Override
   public abstract void update(final AnActionEvent e);
-
-  // returns (hardcoded charset from the file type, explanation) or (null, null) if file type does not restrict encoding
-  @NotNull
-  static Pair<Charset, String> checkFileType(@NotNull VirtualFile virtualFile) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType.isBinary()) return Pair.create(null, "binary file");
-    // in lesser IDEs all special file types are plain text so check for that first
-    if (fileType == FileTypes.PLAIN_TEXT) return Pair.create(null, null);
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA GUI Designer form");
-    if (fileType == StdFileTypes.IDEA_MODULE) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA module file");
-    if (fileType == StdFileTypes.IDEA_PROJECT) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA project file");
-    if (fileType == StdFileTypes.IDEA_WORKSPACE) return Pair.create(CharsetToolkit.UTF8_CHARSET, "IDEA workspace file");
-
-    if (fileType == StdFileTypes.PROPERTIES) return Pair.create(virtualFile.getCharset(), ".properties file");
-
-    if (fileType == StdFileTypes.XML || fileType == StdFileTypes.JSPX) {
-      return Pair.create(virtualFile.getCharset(), "XML file");
-    }
-    return Pair.create(null, null);
-  }
 
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
                                   @Nullable VirtualFile virtualFile,
@@ -105,38 +78,6 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       };
       group.add(action);
     }
-  }
-
-  @NotNull
-  // returns existing charset (null means N/A), failReason: null means enabled, notnull means disabled and contains error message
-  public static Pair<Charset, String> checkCanReload(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.isDirectory()) {
-      return Pair.create(null, "file is a directory");
-    }
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    Document document = documentManager.getDocument(virtualFile);
-    if (document == null) return Pair.create(null, "binary file");
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
-    Charset existing = charsetFromContent;
-    String failReason = LoadTextUtil.wasCharsetDetectedFromBytes(virtualFile);
-    if (failReason != null) {
-      // no point changing encoding if it was auto-detected
-      existing = virtualFile.getCharset();
-    }
-    else if (charsetFromContent != null) {
-      failReason = "hard coded in text";
-    }
-    else {
-      Pair<Charset, String> fileTypeCheck = checkFileType(virtualFile);
-      if (fileTypeCheck.second != null) {
-        failReason = fileTypeCheck.second;
-        existing = fileTypeCheck.first;
-      }
-    }
-    if (failReason != null) {
-      return Pair.create(existing, failReason);
-    }
-    return Pair.create(virtualFile.getCharset(), null);
   }
 
   private class ClearThisFileEncodingAction extends AnAction {
@@ -172,9 +113,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   protected abstract void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset);
 
   @NotNull
-  public DefaultActionGroup createGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
-                                        Charset alreadySelected,
-                                        @NotNull Function<Charset, String> charsetFilter) {
+  protected DefaultActionGroup createCharsetsActionGroup(@Nullable("null means do not show 'clear' text") String clearItemText,
+                                                      Charset alreadySelected,
+                                                      @NotNull Function<Charset, String> charsetFilter) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);

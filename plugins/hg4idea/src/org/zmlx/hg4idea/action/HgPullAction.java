@@ -28,42 +28,31 @@ public class HgPullAction extends HgAbstractGlobalAction {
     super(AllIcons.Actions.CheckOut);
   }
 
-  protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
-    return new HgGlobalCommandBuilder() {
-      public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        HgPullDialog dialog = new HgPullDialog(project);
-        dialog.setRoots(repos);
-        dialog.show();
-        if (dialog.isOK()) {
-          dialog.rememberSettings();
-          return buildCommand(dialog, project);
+  protected void execute(final Project project, Collection<VirtualFile> repos) {
+    final HgPullDialog dialog = new HgPullDialog(project);
+    dialog.setRoots(repos);
+    dialog.show();
+    if (dialog.isOK()) {
+      dialog.rememberSettings();
+      new Task.Backgroundable(project, "Pulling changes from " + dialog.getSource(), false) {
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          executePull(dialog, project);
+          markDirtyAndHandleErrors(project, dialog.getRepository());
         }
-        return null;
-      }
-    };
+      }.queue();
+    }
   }
 
-  private static HgGlobalCommand buildCommand(final HgPullDialog dialog, final Project project) {
-    return new HgGlobalCommand() {
-      public VirtualFile getRepo() {
-        return dialog.getRepository();
-      }
+  private static void executePull(final HgPullDialog dialog, final Project project) {
+    final HgPullCommand command = new HgPullCommand(
+      project, dialog.getRepository()
+    );
+    command.setSource(dialog.getSource());
+    command.setRebase(false);
+    command.setUpdate(false);
 
-      public void execute() {
-        final HgPullCommand command = new HgPullCommand(
-          project, dialog.getRepository()
-        );
-        command.setSource(dialog.getSource());
-        command.setRebase(false);
-        command.setUpdate(false);
-        new Task.Backgroundable(project, "Pulling changes from " + dialog.getSource(), false){
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            command.execute();
-          }
-        }.queue();
-      }
-    };
+    command.execute();
   }
-
 }

@@ -12,9 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
 
@@ -22,53 +25,39 @@ import java.util.Collection;
 
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
-  protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
-    return new HgGlobalCommandBuilder() {
-      public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        VirtualFile repository;
-        if (repos.size() > 1) {
-          repository = letUserSelectRepository(repos, project);
-        }
-        else if (repos.size() == 1) {
-          repository = repos.iterator().next();
-        } else {
-          repository = null;
-        }
-        if (repository != null) {
-          return buildResolverCommand(project, repository);
-        }
-        else return null;
-      }
-    };
-  }
+  public void execute(final Project project, Collection<VirtualFile> repos) {
+    final VirtualFile repository;
+    if (repos.size() > 1) {
+      repository = letUserSelectRepository(repos, project);
+    }
+    else if (repos.size() == 1) {
+      repository = repos.iterator().next();
+    }
+    else {
+      repository = null;
+    }
+    if (repository != null) {
+      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.run.conflict.resolver.description")) {
 
-  private VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project) {
-    HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
-    dialog.setRoots(repos);
-    dialog.show();
-
-    if (dialog.isOK()) {
-      return dialog.getRepository();
-    } else {
-      return null;
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          new HgConflictResolver(project).resolve(repository);
+          markDirtyAndHandleErrors(project, repository);
+        }
+      }.queue();
     }
   }
 
-  private HgGlobalCommand buildResolverCommand(final Project project, final VirtualFile repository) {
-    return new HgGlobalCommand() {
-      public VirtualFile getRepo() {
-        return repository;
-      }
 
-      public void execute() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            new HgConflictResolver(project).resolve(repository);
-          }
-        });
-      }
-    };
+  private static VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project) {
+    HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
+    dialog.setRoots(repos);
+    dialog.show();
+    if (dialog.isOK()) {
+      return dialog.getRepository();
+    }
+    else {
+      return null;
+    }
   }
-
 }

@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-  public VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
+  VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
     super(name, parent, id, attributes);
   }
 
@@ -75,16 +75,6 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @Override
   @Nullable
   public NewVirtualFile findChildIfCached(@NotNull final String name) {
-    return null;
-  }
-
-  @Override
-  public NewVirtualFile findChildById(final int id) {
-    return null;
-  }
-
-  @Override
-  public NewVirtualFile findChildByIdIfCached(final int id) {
     return null;
   }
 

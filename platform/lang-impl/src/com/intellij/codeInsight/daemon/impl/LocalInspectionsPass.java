@@ -153,7 +153,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
-      if (toolWrapper == null) continue;
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
         toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), myIgnoreSuppressed);
       }
@@ -303,53 +302,54 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final ArrayList<InspectionContext> init = new ArrayList<InspectionContext>();
     List<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>(tools.entrySet());
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction,
-                                                                               new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
-                                                                                 @Override
-                                                                                 public boolean process(final Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair) {
-                                                                                   indicator.checkCanceled();
-
-                                                                                   ApplicationManager.getApplication()
-                                                                                     .assertReadAccessAllowed();
-                                                                                   final LocalInspectionToolWrapper wrapper = pair.getKey();
-                                                                                   LocalInspectionTool tool = wrapper.getTool();
-                                                                                   final boolean[] applyIncrementally = {isOnTheFly};
-                                                                                   ProblemsHolder holder =
-                                                                                     new ProblemsHolder(iManager, myFile, isOnTheFly) {
-                                                                                       @Override
-                                                                                       public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-                                                                                         super.registerProblem(descriptor);
-                                                                                         if (applyIncrementally[0]) {
-                                                                                           addDescriptorIncrementally(descriptor, wrapper,
-                                                                                                                      indicator);
-                                                                                         }
-                                                                                       }
-                                                                                     };
-                                                                                   Set<String> languages = (Set<String>)pair.getValue();
-                                                                                   PsiElementVisitor visitor =
-                                                                                     createVisitorAndAcceptElements(tool, holder,
-                                                                                                                    isOnTheFly, session,
-                                                                                                                    elements, languages);
-
-                                                                                   synchronized (init) {
-                                                                                     init.add(
-                                                                                       new InspectionContext(wrapper, holder, visitor,
-                                                                                                             languages));
-                                                                                   }
-                                                                                   advanceProgress(1);
-
-                                                                                   if (holder.hasResults()) {
-                                                                                     appendDescriptors(myFile, holder.getResults(),
-                                                                                                       wrapper);
-                                                                                   }
-                                                                                   applyIncrementally[0] =
-                                                                                     false; // do not apply incrementally outside visible range
-                                                                                   return true;
-                                                                                 }
-                                                                               });
+    Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> processor =
+      new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
+        @Override
+        public boolean process(final Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair) {
+          return doVisitElement(pair, iManager, isOnTheFly, indicator, elements, session, init);
+        }
+      };
+    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) throw new ProcessCanceledException();
     inspectInjectedPsi(elements, isOnTheFly, indicator, iManager, true, checkDumbAwareness, wrappers);
     return init;
+  }
+
+  private boolean doVisitElement(@NotNull Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair,
+                                 @NotNull final InspectionManagerEx iManager,
+                                 final boolean isOnTheFly,
+                                 @NotNull final ProgressIndicator indicator,
+                                 @NotNull final List<PsiElement> elements,
+                                 @NotNull final LocalInspectionToolSession session,
+                                 @NotNull List<InspectionContext> init) {
+    indicator.checkCanceled();
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    final LocalInspectionToolWrapper wrapper = pair.getKey();
+    LocalInspectionTool tool = wrapper.getTool();
+    final boolean[] applyIncrementally = {isOnTheFly};
+    ProblemsHolder holder = new ProblemsHolder(iManager, myFile, isOnTheFly) {
+        @Override
+        public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+          super.registerProblem(descriptor);
+          if (applyIncrementally[0]) {
+            addDescriptorIncrementally(descriptor, wrapper, indicator);
+          }
+        }
+    };
+    Set<String> languages = (Set<String>)pair.getValue();
+    PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
+
+    synchronized (init) {
+      init.add(new InspectionContext(wrapper, holder, visitor, languages));
+    }
+    advanceProgress(1);
+
+    if (holder.hasResults()) {
+      appendDescriptors(myFile, holder.getResults(), wrapper);
+    }
+    applyIncrementally[0] = false; // do not apply incrementally outside visible range
+    return true;
   }
 
   private static PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
@@ -455,7 +455,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
     return new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                             severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
+                             severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
   }
 
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
@@ -537,12 +537,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (severity == HighlightSeverity.ERROR) {
           return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
         }
-        else if (severity == HighlightSeverity.WARNING) {
+        if (severity == HighlightSeverity.WARNING) {
           return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
         }
-        else {
-          return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-        }
+        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
       case LIKE_UNUSED_SYMBOL:
         return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
       case INFO:
@@ -620,11 +618,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
-      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, element, hostRange.getStartOffset(),
-                                                                hostRange.getEndOffset(), info.description, info.toolTip);
-      if (patched != null &&
-          (patched.startOffset != patched.endOffset ||
-           info.startOffset == info.endOffset)) {
+      int start = hostRange.getStartOffset();
+      int end = hostRange.getEndOffset();
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(info.type);
+      builder.range(element, start, end);
+      if (info.description != null) {
+        builder.description(info.description);
+      }
+      if (info.toolTip != null) {
+        builder.escapedToolTip(info.toolTip);
+      }
+      HighlightInfo patched = builder.create();
+      if (patched != null && (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset)) {
         patched.fromInjection = true;
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);

@@ -33,6 +33,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -123,6 +124,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     return "#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog";
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getCancelAction(), getHelpAction()};
   }

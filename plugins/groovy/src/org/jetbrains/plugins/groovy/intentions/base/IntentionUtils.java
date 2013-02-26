@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
@@ -85,11 +86,16 @@ public class IntentionUtils {
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
       builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression(null));
     }
+
     PsiCodeBlock body = method.getBody();
-    assert body != null;
-    PsiElement lbrace = body.getLBrace();
-    assert lbrace != null;
-    builder.setEndVariableAfter(lbrace);
+    if (body != null) {
+      PsiElement lbrace = body.getLBrace();
+      assert lbrace != null;
+      builder.setEndVariableAfter(lbrace);
+    }
+    else {
+      builder.setEndVariableAfter(method.getParameterList());
+    }
 
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     Template template = builder.buildTemplate();
@@ -129,7 +135,14 @@ public class IntentionUtils {
             }
             if (method != null) {
               try {
+                final boolean hasNoReturnType = method.getReturnTypeElement() == null && method instanceof GrMethod;
+                if (hasNoReturnType) {
+                  ((GrMethod)method).setReturnType(PsiType.VOID);
+                }
                 CreateFromUsageUtils.setupMethodBody(method);
+                if (hasNoReturnType) {
+                  ((GrMethod)method).setReturnType(null);
+                }
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);

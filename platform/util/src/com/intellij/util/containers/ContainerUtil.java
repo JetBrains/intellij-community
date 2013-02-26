@@ -537,7 +537,7 @@ public class ContainerUtil extends ContainerUtilRt {
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
   public static <T> void addAllNotNull(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> elements) {
-    addAll(collection, elements.iterator());
+    addAllNotNull(collection, elements.iterator());
   }
 
   /**
@@ -770,7 +770,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
-    return findAll(Arrays.asList(collection), condition);
+    final List<T> result = new SmartList<T>();
+    for (T t : collection) {
+      if (condition.value(t)) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 
   @NotNull

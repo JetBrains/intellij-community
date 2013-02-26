@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,17 @@ package org.jetbrains.plugins.groovy.refactoring.extract.method
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
@@ -32,7 +37,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
   private void doAntiTest(String errorMessage) {
-    GroovyExtractMethodHandler handler = configureFromText(readInput()[0]);
+    GroovyExtractMethodHandler handler = configureFromText(readInput()[0], "testMethod");
     try {
       handler.invoke(project, myFixture.editor, myFixture.file, null);
       assertTrue(false);
@@ -46,9 +51,9 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     return TestUtils.readInput(testDataPath + getTestName(true) + ".test");
   }
 
-  private void doTest() {
+  private void doTest(String name = 'testMethod') {
     final List<String> data = readInput();
-    GroovyExtractMethodHandler handler = configureFromText(data[0]);
+    GroovyExtractMethodHandler handler = configureFromText(data[0], name);
 
     def expected = StringUtil.trimEnd(data[1], '\n')
 
@@ -67,7 +72,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     }
   }
 
-  private GroovyExtractMethodHandler configureFromText(String fileText) {
+  private GroovyExtractMethodHandler configureFromText(String fileText, final String name) {
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     fileText = TestUtils.removeBeginMarker(fileText);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
@@ -75,7 +80,17 @@ public class ExtractMethodTest extends LightGroovyTestCase {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
     myFixture.editor.selectionModel.setSelection(startOffset, endOffset);
-    return new GroovyExtractMethodHandler();
+    return new GroovyExtractMethodHandler() {
+      @Override
+      protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
+        final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, name, owner, true);
+        final PsiType type = helper.getOutputType();
+        if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiType.VOID.equals(type)) {
+          helper.setSpecifyType(false);
+        }
+        return helper;
+      }
+    };
   }
 
   public void testClos_em() throws Throwable { doTest(); }
@@ -135,4 +150,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testNoContextConflicts() {doTest()}
 
   public void testTupleDeclaration() { doTest() }
+
+  public void testNonIdentifierName() {doTest('f*f')}
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component-set>
+  <components>
+    <component>
+      <role>org.apache.maven.repository.LocalArtifactRepository</role>
+      <role-hint>ide-workspace</role-hint>
+      <implementation>org.jetbrains.idea.maven.artifactResolver.MyArtifactRepository</implementation>
+      <description />
+      <isolated-realm>false</isolated-realm>
+    </component>
+    <component>
+      <role>org.sonatype.aether.repository.WorkspaceReader</role>
+      <role-hint>ide</role-hint>
+      <implementation>org.jetbrains.idea.maven.artifactResolver.MyWorkspaceReader</implementation>
+      <description />
+      <isolated-realm>false</isolated-realm>
+    </component>
+  </components>
+</component-set>

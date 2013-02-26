@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -42,6 +43,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     return myUploadedPlugins == null ? CommonBundle.getCloseButtonText() : IdeBundle.message("update.plugins.update.action");
   }
 
+  @NotNull
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
     if (myUploadedPlugins != null) {

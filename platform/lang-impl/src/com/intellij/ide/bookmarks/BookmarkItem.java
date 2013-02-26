@@ -63,6 +63,10 @@ public class BookmarkItem extends ItemWrapper {
       renderer.setIcon(fileOrDir.getIcon(0));
     }
 
+    String description = bookmark.getDescription();
+    if (description != null) {
+      renderer.append(description + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
 
     FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
     TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
@@ -80,11 +84,6 @@ public class BookmarkItem extends ItemWrapper {
           renderer.setBackground(color);
         }
       }
-    }
-
-    String description = bookmark.getDescription();
-    if (description != null) {
-      renderer.append(" " + description, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 

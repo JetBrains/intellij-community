@@ -57,21 +57,20 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
 
   public boolean isMarkedAsPlainText(VirtualFile file) {
     if (myNeedsSync) {
-      myNeedsSync = !syncWithOpenProject();
+      myNeedsSync = !syncWithOpenProjects();
     }
     return containsFile(file);
   }
 
-  private boolean syncWithOpenProject() {
+  private boolean syncWithOpenProjects() {
+    boolean success = true;
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) {
-      Project firstOpenProject = openProjects[0];
-      if (!myProcessedProjects.contains(firstOpenProject)) {
-        return syncWithProject(firstOpenProject);
+    for (Project openProject : openProjects) {
+      if (!myProcessedProjects.contains(openProject)) {
+        if (!syncWithProject(openProject)) success = false;
       }
-      return true;
     }
-    return false;
+    return success;
   }
 
   public static boolean isApplicableFor(@NotNull VirtualFile file) {
@@ -152,18 +151,19 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager i
   }
 
   private boolean syncWithProject(Project project) {
-    if (!DirectoryIndex.getInstance(project).isInitialized()) return false;
-    myProcessedProjects.add(project);
+    if (project.isDisposed()) return false;    
     ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
     if (projectPlainTextFileTypeManager == null) return true;
     for (VirtualFile file : projectPlainTextFileTypeManager.getFiles()) {
       addFile(file);
     }
+    if (!DirectoryIndex.getInstance(project).isInitialized()) return false;
     for (VirtualFile file : getFiles()) {
       if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
         projectPlainTextFileTypeManager.addFile(file);
       }
     }
+    myProcessedProjects.add(project);
     return true;
   }
 }

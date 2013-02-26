@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,8 +287,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     if (myBusyIcon != null) {
       if (myBusy) {
-        myBusyIcon.resume();
-        myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
+        if (hasFocus()) {
+          myBusyIcon.resume();
+          myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
+        }
       }
       else {
         myBusyIcon.suspend();

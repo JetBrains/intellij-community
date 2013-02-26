@@ -58,6 +58,8 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="maven-jps-plugin" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-m3" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
   <component name="copyright">
     <Base>

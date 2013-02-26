@@ -18,7 +18,7 @@ package org.jetbrains.jps.maven.model.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
-import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -32,7 +32,7 @@ import java.util.Map;
 * @author Eugene Zhuravlev
 *         Date: 10/24/12
 */
-public class MavenResourcesTargetType extends BuildTargetType<MavenResourcesTarget> {
+public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenResourcesTarget> {
   public static final MavenResourcesTargetType PRODUCTION = new MavenResourcesTargetType("maven-resources-production", false);
   public static final MavenResourcesTargetType TEST = new MavenResourcesTargetType("maven-resources-test", true);
 

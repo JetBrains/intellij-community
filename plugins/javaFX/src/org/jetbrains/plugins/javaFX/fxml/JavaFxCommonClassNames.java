@@ -34,4 +34,5 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_FXML_BUILDER = "javafx.util.Builder";
   @NonNls public static final String JAVAFX_BEANS_OBSERVABLE = "javafx.beans.Observable";
   @NonNls public static final String VALUE_OF = "valueOf";
+  @NonNls public static final String JAVAFX_FXML_FXMLLOADER = "javafx.fxml.FXMLLoader";
 }

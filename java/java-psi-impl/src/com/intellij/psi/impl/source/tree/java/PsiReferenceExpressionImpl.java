@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -190,11 +191,12 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-      resolveAllQualifiers(expression);
-      JavaResolveResult[] result = expression.resolve(parentType);
+      PsiFile file = expression.getContainingFile();
+      resolveAllQualifiers(expression, file);
+      JavaResolveResult[] result = expression.resolve(parentType, file);
 
       if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
-        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION);
+        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, file);
       }
 
       JavaResolveUtil.substituteResults(expression, result);
@@ -202,11 +204,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       return result;
     }
 
-    private static void resolveAllQualifiers(PsiReferenceExpressionImpl expression) {
+    private static void resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, final PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
       if (qualifier == null) return;
-      final ResolveCache resolveCache = ResolveCache.getInstance(expression.getProject());
+      final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -220,14 +222,14 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         protected void elementFinished(PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
           PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          resolveCache.resolveWithCaching(expression, INSTANCE, false, false);
+          resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile);
         }
       });
     }
   }
 
   @NotNull
-  private JavaResolveResult[] resolve(IElementType parentType) {
+  private JavaResolveResult[] resolve(IElementType parentType, PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] result = resolveToVariable();
       if (result.length > 0) {
@@ -239,15 +241,15 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
-      result = resolveToClass(classNameElement);
+      result = resolveToClass(classNameElement, containingFile);
       if (result.length == 1 && !result[0].isAccessible()) {
-        JavaResolveResult[] packageResult = resolveToPackage();
+        JavaResolveResult[] packageResult = resolveToPackage(containingFile);
         if (packageResult.length != 0) {
           result = packageResult;
         }
       }
       else if (result.length == 0) {
-        result = resolveToPackage();
+        result = resolveToPackage(containingFile);
       }
 
       return result;
@@ -258,7 +260,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (parentType == JavaElementType.METHOD_REF_EXPRESSION) {
-      return resolve(JavaElementType.REFERENCE_EXPRESSION);
+      return resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
     }
 
     return resolveToVariable();
@@ -278,12 +280,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @NotNull
-  private JavaResolveResult[] resolveToPackage() {
+  private JavaResolveResult[] resolveToPackage(PsiFile containingFile) {
     final String packageName = getCachedTextSkipWhiteSpaceAndComments();
-    final PsiManager manager = getManager();
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
+    Project project = containingFile.getProject();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiPackage aPackage = psiFacade.findPackage(packageName);
     if (aPackage == null) {
-      return JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)
+      return psiFacade.isPartOfPackagePrefix(packageName)
              ? CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE
              : JavaResolveResult.EMPTY_ARRAY;
     }
@@ -295,10 +298,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
   }
 
-  private JavaResolveResult[] resolveToClass(PsiElement classNameElement) {
+  @NotNull
+  private JavaResolveResult[] resolveToClass(@NotNull PsiElement classNameElement, PsiFile containingFile) {
     final String className = classNameElement.getText();
 
-    final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
+    final ClassResolverProcessor processor = new ClassResolverProcessor(className, this, containingFile);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
     return processor.getResult();
   }
@@ -313,16 +317,24 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiManagerEx manager = getManager();
+    FileElement fileElement = SharedImplUtil.findFileElement(this);
+    if (fileElement == null) {
+      LOG.error("fileElement == null!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    final PsiManagerEx manager = fileElement.getManager();
     if (manager == null) {
       LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    if (!isValid()) {
+    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
+    boolean valid = file != null && file.isValid();
+    if (!valid) {
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    Project project = manager.getProject();
+    ResolveResult[] results = ResolveCache.getInstance(project).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode, file);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 

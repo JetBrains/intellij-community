@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,11 +22,13 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -56,7 +57,7 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract String[] listPersisted(@NotNull VirtualFile parent);
 
   @NotNull
-  public abstract Pair<String[],int[]> listAll(@NotNull VirtualFile parent);
+  public abstract FSRecords.NameId[] listAll(@NotNull VirtualFile parent);
 
   public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
@@ -85,6 +86,8 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract void releaseContent(int contentId);
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
+
+  public abstract void processEvents(@NotNull List<VFileEvent> events);
 
   @NotNull
   public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem fs) {

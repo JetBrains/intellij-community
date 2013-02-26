@@ -25,10 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -87,7 +84,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCachingCommitedChangesProvider commitedChangesProvider;
-  protected final @NotNull HgPlatformFacade myPlatformFacade;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -109,7 +105,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
                @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager, @NotNull HgPlatformFacade platformFacade) {
+               ProjectLevelVcsManager vcsManager) {
     super(project, VCS_NAME);
     this.globalSettings = globalSettings;
     this.projectSettings = projectSettings;
@@ -124,7 +120,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
-    myPlatformFacade = platformFacade;
   }
 
   public String getDisplayName() {
@@ -398,5 +393,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public static VcsKey getKey() {
     return ourKey;
+  }
+
+  @Override
+  public CheckoutProvider getCheckoutProvider() {
+    return new HgCheckoutProvider();
   }
 }

@@ -347,6 +347,11 @@ public final class IconLoader {
     public int getIconHeight() {
       return getRealIcon().getIconHeight();
     }
+
+    @Override
+    public String toString() {
+      return myUrl.toString();
+    }
   }
 
   private static final class MyImageIcon extends ImageIcon {

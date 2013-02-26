@@ -46,6 +46,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
     <!--Project structure management services-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleProjectManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleJarManager"/>
@@ -56,6 +57,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
@@ -80,7 +82,9 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleProjectStructureContext"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleEntityManageHelper"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
 

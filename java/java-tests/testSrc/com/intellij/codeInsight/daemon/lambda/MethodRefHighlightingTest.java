@@ -179,6 +179,15 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNonParameterizedReceiver() throws Exception {
+    doTest();
+  }
+
+  public void testFunctionalInterfaceMethodIsGeneric() throws Exception {
+    //accepted for method ref, though forbidden for lambda
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

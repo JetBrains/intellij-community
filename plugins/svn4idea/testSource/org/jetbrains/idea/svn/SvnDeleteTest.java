@@ -42,11 +42,11 @@ public class SvnDeleteTest extends Svn17TestCase {
     VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
 
-    verify(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
 
     deleteFileInCommand(dir);
-    verify(runSvn("status"), "D child", "D child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("D child", "D child" + File.separatorChar + "a.txt");
 
     refreshVfs();
 
@@ -72,12 +72,12 @@ public class SvnDeleteTest extends Svn17TestCase {
     VirtualFile dir = createDirInCommand(myWorkingCopyDir, "child");
     createFileInCommand(dir, "a.txt", "content");
 
-    verify(runSvn("status"), "A child", "A child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
 
     final File wasFile = new File(dir.getPath());
     deleteFileInCommand(dir);
-    verify(runSvn("status"), "! child", "! child" + File.separatorChar + "a.txt");
+    runAndVerifyStatusSorted("! child", "! child" + File.separatorChar + "a.txt");
     Assert.assertTrue(! wasFile.exists());
   }
 }

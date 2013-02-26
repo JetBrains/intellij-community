@@ -330,9 +330,14 @@ public class ExpectedHighlightingData {
     final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
     if (expectedHighlightingSet.enabled) {
       TextAttributesKey forcedTextAttributesKey = attrKey == null ? null : TextAttributesKey.createTextAttributesKey(attrKey);
-      final HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, forcedTextAttributesKey, type, rangeStart, textOffset.get(), descr, descr,
-                                                            expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null,
-                                                            false);
+      HighlightInfo.Builder builder =
+        HighlightInfo.newHighlightInfo(type).range(rangeStart, textOffset.get()).severity(expectedHighlightingSet.severity);
+
+      if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
+      if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
+      if (descr != null) { builder.description(descr); builder.unescapedToolTip(descr); }
+      if (expectedHighlightingSet.endOfLine) builder.endOfLine();
+      HighlightInfo highlightInfo = builder.createUnconditionally();
       expectedHighlightingSet.infos.add(highlightInfo);
     }
 
@@ -518,7 +523,7 @@ public class ExpectedHighlightingData {
           if (byEOL != 0) return byEOL;
         }
 
-        int bySeverity = i2.severity.compareTo(i1.severity);
+        int bySeverity = i2.getSeverity().compareTo(i1.getSeverity());
         if (bySeverity != 0) return bySeverity;
 
         return Comparing.compare(i1.description, i2.description);

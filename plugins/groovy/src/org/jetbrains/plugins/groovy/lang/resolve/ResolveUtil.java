@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -603,7 +604,7 @@ public class ResolveUtil {
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
-    if (isCall(ref)) return false;
+    if (!(ref.getParent() instanceof GrIndexProperty) && isCall(ref)) return false;
     if (ref.multiResolve(false).length > 0) return false;
     return mayBeKeyOfMap(ref);
   }

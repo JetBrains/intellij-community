@@ -74,7 +74,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
     int recency = Integer.MAX_VALUE;
     for (StatisticsInfo conjunct : info.getConjuncts()) {
-      recency = Math.max(doGetRecency(conjunct), recency);
+      recency = Math.min(doGetRecency(conjunct), recency);
     }
     return recency;
   }

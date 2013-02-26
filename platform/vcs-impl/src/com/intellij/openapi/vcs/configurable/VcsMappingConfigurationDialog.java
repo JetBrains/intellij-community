@@ -137,6 +137,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     pack();
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[] { new ConfigureVcsAction() };

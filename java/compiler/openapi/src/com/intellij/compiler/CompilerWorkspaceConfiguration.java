@@ -32,7 +32,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 )
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
-  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea";
+  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea -XX:+UseConcMarkSweepGC";
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
@@ -42,6 +42,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean PARALLEL_COMPILATION = false;
   public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = DEFAULT_COMPILE_PROCESS_VM_OPTIONS;
+  public boolean REBUILD_ON_DEPENDENCY_CHANGE = true;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

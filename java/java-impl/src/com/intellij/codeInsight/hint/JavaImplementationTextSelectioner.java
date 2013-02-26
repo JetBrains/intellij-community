@@ -21,6 +21,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -44,13 +45,16 @@ public class JavaImplementationTextSelectioner implements ImplementationTextSele
       }
 
       if (element != null) {
-        return element.getTextRange().getStartOffset();
+        TextRange range = element.getTextRange();
+        if (range != null) {
+          return range.getStartOffset();
+        }
+        LOG.error("Range should not be null: " + element + "; " + element.getClass());
       }
-      else {
-        LOG.error("Element should not be null: " + parent.getText());
-        return parent.getTextRange().getStartOffset();
-      }
-    }
+
+    LOG.error("Element should not be null: " + parent.getText());
+    return parent.getTextRange().getStartOffset();
+  }
 
     @Override
     public int getTextEndOffset(@NotNull PsiElement element) {

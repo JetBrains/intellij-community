@@ -386,6 +386,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
             setOKButtonMnemonic('C');
           }
 
+          @NotNull
           @Override
           protected Action[] createActions() {
             return new Action[]{getOKAction()};

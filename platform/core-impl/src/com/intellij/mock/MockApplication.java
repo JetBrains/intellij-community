@@ -122,6 +122,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    return computation.compute();
+  }
+
+  @Override
   public void runWriteAction(@NotNull Runnable action) {
     action.run();
   }

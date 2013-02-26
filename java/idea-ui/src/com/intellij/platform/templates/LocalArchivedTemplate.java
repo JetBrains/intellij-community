@@ -52,7 +52,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   private Icon myIcon;
 
   public LocalArchivedTemplate(String displayName,
-                               URL archivePath) {
+                               URL archivePath, ClassLoader classLoader) {
     super(displayName);
 
     myArchivePath = archivePath;
@@ -69,7 +69,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
         myInputFields = RemoteTemplatesFactory.getFields(templateElement, Namespace.NO_NAMESPACE);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
-          myIcon = IconLoader.findIcon(iconPath);
+          myIcon = IconLoader.findIcon(iconPath, classLoader);
         }
       }
       catch (Exception e) {

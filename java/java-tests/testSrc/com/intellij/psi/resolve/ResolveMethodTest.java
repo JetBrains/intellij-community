@@ -204,7 +204,7 @@ public class ResolveMethodTest extends ResolveTestCase {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
     PsiMethod method = (PsiMethod) target;
-    assertEquals(1, method.getParameterList().getParametersCount());
+    assertEquals(0, method.getParameterList().getParametersCount());
   }
 
   public void testClone() throws Exception{

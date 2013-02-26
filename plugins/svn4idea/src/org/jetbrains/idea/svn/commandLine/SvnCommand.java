@@ -15,20 +15,21 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -41,15 +42,15 @@ public abstract class SvnCommand {
   private static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
 
   protected final Project myProject;
+  private boolean myIsDestroyed;
+  private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
   private final File myWorkingDirectory;
-  protected Process myProcess;
+  private Process myProcess;
+  private OSProcessHandler myHandler;
   private final Object myLock;
-  private Integer myExitCode; // exit code or null if exit code is not yet available
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
-
-  private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // todo check version
   /*c:\Program Files (x86)\CollabNet\Subversion Client17>svn --version --quiet
@@ -71,13 +72,9 @@ public abstract class SvnCommand {
       checkNotStarted();
 
       try {
-        myProcess = startProcess();
-        if (myProcess != null) {
-          startHandlingStreams();
-        } else {
-          SvnVcs.getInstance(myProject).checkCommandLineVersion();
-          myListeners.getMulticaster().startFailed(null);
-        }
+        myProcess = myCommandLine.createProcess();
+        myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+        startHandlingStreams();
       } catch (Throwable t) {
         SvnVcs.getInstance(myProject).checkCommandLineVersion();
         myListeners.getMulticaster().startFailed(t);
@@ -85,20 +82,51 @@ public abstract class SvnCommand {
     }
   }
 
+  private void startHandlingStreams() {
+    final ProcessListener processListener = new ProcessListener() {
+      public void startNotified(final ProcessEvent event) {
+        // do nothing
+      }
+
+      public void processTerminated(final ProcessEvent event) {
+        final int exitCode = event.getExitCode();
+        try {
+          setExitCode(exitCode);
+          //cleanupEnv();   todo
+          SvnCommand.this.processTerminated(exitCode);
+        } finally {
+          listeners().processTerminated(exitCode);
+        }
+      }
+
+      public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
+        // do nothing
+      }
+
+      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+        SvnCommand.this.onTextAvailable(event.getText(), outputType);
+      }
+    };
+
+    myHandler.addProcessListener(processListener);
+    myHandler.startNotify();
+  }
+
   /**
    * Wait for process termination
    */
   public void waitFor() {
     checkStarted();
-    try {
-      if (myInputProcessor != null && myProcess != null) {
-        myInputProcessor.process(myProcess.getOutputStream());
-      }
+    final OSProcessHandler handler;
+    synchronized (myLock) {
+      if (myIsDestroyed) return;
+      handler = myHandler;
     }
-    finally {
-      waitForProcess();
-    }
+    handler.waitFor();
   }
+
+  protected abstract void processTerminated(int exitCode);
+  protected abstract void onTextAvailable(final String text, final Key outputType);
 
   public void cancel() {
     synchronized (myLock) {
@@ -139,15 +167,12 @@ public abstract class SvnCommand {
     }
   }
 
-  public abstract void destroyProcess();
-  protected abstract void waitForProcess();
-
-  protected abstract Process startProcess() throws ExecutionException;
-
-  /**
-   * Start handling process output streams for the handler.
-   */
-  protected abstract void startHandlingStreams();
+  public void destroyProcess() {
+    synchronized (myLock) {
+      myIsDestroyed = true;
+      myHandler.destroyProcess();
+    }
+  }
 
   /**
    * check that process is not started yet
@@ -177,6 +202,12 @@ public abstract class SvnCommand {
   public boolean isStarted() {
     synchronized (myLock) {
       return myProcess != null;
+    }
+  }
+
+  protected int getExitCode() {
+    synchronized (myLock) {
+      return myExitCode;
     }
   }
 }

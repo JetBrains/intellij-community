@@ -78,19 +78,19 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     super.tearDown();
   }
 
-  public void testSeraching() throws Exception {
+  public void _testSeraching() throws Exception {
     addContext("local1", new File(myRepositoryHelper.getTestDataPath("local1_index")), null, null);
     assertSearchWorks();
   }
 
-  public void testUpdatingLocal() throws Exception {
+  public void _testUpdatingLocal() throws Exception {
     IndexingContext c = addContext("local1", myIndexDir, new File(myRepositoryHelper.getTestDataPath("local1")), null);
     myIndexer.scan(c, new NullScanningListener());
 
     assertSearchWorks();
   }
 
-  public void testDownloading() throws Exception {
+  public void _testDownloading() throws Exception {
     String id = "remote";
     String url = "file:///" + myRepositoryHelper.getTestDataPath("remote");
     IndexingContext c = addContext(id, myIndexDir, null, url);
@@ -102,7 +102,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     assertSearchWorks();
   }
 
-  public void testAddingArtifacts() throws Exception {
+  public void _testAddingArtifacts() throws Exception {
     IndexingContext c = addContext("virtual", myIndexDir, null, null);
 
     createProjectPom("");
@@ -130,7 +130,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     }
   }
 
-  public void testIteratingAddedArtifacts() throws Exception {
+  public void _testIteratingAddedArtifacts() throws Exception {
     if (ignore()) return;
 
     IndexingContext c = addContext("virtual", myIndexDir, null, null);
@@ -151,7 +151,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     System.out.println(result);
   }
 
-  public void testSearchingWithLucene() throws Exception {
+  public void _testSearchingWithLucene() throws Exception {
     IndexSearcher searcher = new IndexSearcher(myRepositoryHelper.getTestDataPath("local1_index"));
     Hits result = searcher.search(new TermQuery(new Term(ArtifactInfo.GROUP_ID, "junit")));
 
@@ -160,7 +160,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     searcher.close();
   }
 
-  public void testAddingTwoContextsWithSameId() throws Exception {
+  public void _testAddingTwoContextsWithSameId() throws Exception {
     IndexingContext i1 = addContext("id", new File(myIndexDir, "one"), null, null);
     IndexingContext i2 = addContext("id", new File(myIndexDir, "two"), null, null);
 

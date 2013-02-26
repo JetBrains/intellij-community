@@ -261,7 +261,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     StringInterner interner = new StringInterner();
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
-      Element toolElement = (Element)o;
+      // make clone to avoid retaining memory via o.parent pointers
+      Element toolElement = (Element)((Element)o).clone();
       JDOMUtil.internElement(toolElement, interner);
 
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
@@ -369,6 +370,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public String getDisplayName() {
     return isEditable() ? getName() : myEnabledTool;
+  }
+
+  @Override
+  public void scopesChanged() {
+    for (ScopeToolState toolState : getAllTools()) {
+      toolState.scopesChanged();
+    }
+    InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
   @Override

@@ -114,8 +114,8 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     checkin();
 
     final String d1Path = new File(d1.getPath()).getAbsolutePath();
-    verify(runSvn("delete", d1Path));
-    verify(runSvn("add", d1Path));
+    runInAndVerifyIgnoreOutput("delete", d1Path);
+    runInAndVerifyIgnoreOutput("add", d1Path);
 
     checkin();
 
@@ -202,8 +202,8 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
-    verify(runSvn("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
 
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     vcs.invokeRefreshSvnRoots();
@@ -226,12 +226,12 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     new File(folder, "f2.txt").createNewFile();
     Thread.sleep(100);
 
-    verify(runSvn("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk"));
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
 
     update();
 
-    verify(runSvn("copy", myWorkingCopyDir.getPath() + "/trunk", myWorkingCopyDir.getPath() + "/branch"));
-    verify(runSvn("propset", "testprop", "testval", myWorkingCopyDir.getPath() + "/branch/folder"));
+    runInAndVerifyIgnoreOutput("copy", myWorkingCopyDir.getPath() + "/trunk", myWorkingCopyDir.getPath() + "/branch");
+    runInAndVerifyIgnoreOutput("propset", "testprop", "testval", myWorkingCopyDir.getPath() + "/branch/folder");
 
     checkin();
 

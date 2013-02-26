@@ -55,4 +55,9 @@ public class BuilderBasedTemplate implements ProjectTemplate {
   public ValidationInfo validateSettings() {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

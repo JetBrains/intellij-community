@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,12 +52,11 @@ public final class FileChooserUtil {
   }
 
   @Nullable
-  public static VirtualFile getFileToSelect(@NotNull final FileChooserDescriptor descriptor,
-                                            @Nullable final Project project,
-                                            @Nullable final VirtualFile toSelect,
-                                            @Nullable final VirtualFile lastPath) {
+  public static VirtualFile getFileToSelect(@NotNull FileChooserDescriptor descriptor, @Nullable Project project,
+                                            @Nullable VirtualFile toSelect, @Nullable VirtualFile lastPath) {
     boolean chooseDir = descriptor instanceof FileSaverDescriptor;
     VirtualFile result;
+
     if (toSelect == null && lastPath == null) {
       result = project == null? null : project.getBaseDir();
     }
@@ -74,7 +75,16 @@ public final class FileChooserUtil {
       result = toSelect;
     }
 
-    return chooseDir && result != null && !result.isDirectory() ? result.getParent() : result;
+    if (result != null) {
+      if (chooseDir && !result.isDirectory()) {
+        result = result.getParent();
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      result = VfsUtil.getUserHomeDir();
+    }
+
+    return result;
   }
 
   @NotNull

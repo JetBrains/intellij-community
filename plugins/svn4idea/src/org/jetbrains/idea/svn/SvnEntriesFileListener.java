@@ -61,7 +61,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
       return;
     }
     final VirtualFile file = event.getFile();
-    if (isWcDbFile(file)) {
+    if (isWcDbFile(file) && SvnVcs.ourListenToWcDb) {
       LOG.debug("wc.db had changed");
       final VirtualFile parentWcDb = file.getParent();
       if (parentWcDb != null && SvnUtil.isAdminDirectory(parentWcDb)) {

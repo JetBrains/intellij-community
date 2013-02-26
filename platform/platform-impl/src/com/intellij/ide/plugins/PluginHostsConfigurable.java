@@ -34,6 +34,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -174,6 +175,7 @@ public class PluginHostsConfigurable extends BaseConfigurable {
         super(parentComponent, message, title, icon, initialValue, validator);
       }
 
+      @NotNull
       protected Action[] createActions() {
         final Action[] actions = super.createActions();
         final AbstractAction checkNowAction = new AbstractAction("Check Now") {

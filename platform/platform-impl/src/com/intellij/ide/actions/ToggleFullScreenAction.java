@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public class ToggleFullScreenAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     final Presentation p = e.getPresentation();
 
-    final boolean isApplicable = (SystemInfo.isMac && SystemInfo.isMacOSLion) || SystemInfo.isWindows;
+    final boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS();
 
     p.setVisible(isApplicable);
     p.setEnabled(isApplicable);

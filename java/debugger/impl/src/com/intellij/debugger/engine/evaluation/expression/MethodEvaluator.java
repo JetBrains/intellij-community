@@ -35,7 +35,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
@@ -43,10 +42,10 @@ public class MethodEvaluator implements Evaluator {
   private final JVMName myClassName;
   private final JVMName myMethodSignature;
   private final String myMethodName;
-  private final List myArgumentEvaluators;
+  private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
 
-  public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, List argumentEvaluators) {
+  public MethodEvaluator(Evaluator objectEvaluator, JVMName className, String methodName, JVMName signature, Evaluator[] argumentEvaluators) {
     myObjectEvaluator = new DisableGC(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
@@ -76,9 +75,8 @@ public class MethodEvaluator implements Evaluator {
     if (!(object instanceof ObjectReference || object instanceof ClassType)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
     }
-    List args = new ArrayList(myArgumentEvaluators.size());
-    for (Iterator it = myArgumentEvaluators.iterator(); it.hasNext();) {
-      Evaluator evaluator = (Evaluator)it.next();
+    List args = new ArrayList(myArgumentEvaluators.length);
+    for (Evaluator evaluator : myArgumentEvaluators) {
       args.add(evaluator.evaluate(context));
     }
     try {

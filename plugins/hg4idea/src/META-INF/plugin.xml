@@ -54,11 +54,11 @@
       <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" />
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
-      <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge"/>
+      <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>
       <separator/>
 
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
-      <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
+      <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>

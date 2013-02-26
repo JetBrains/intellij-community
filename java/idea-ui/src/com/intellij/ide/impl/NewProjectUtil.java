@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,13 +198,13 @@ public class NewProjectUtil {
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
-        if (WindowManager.isFullScreenSupportedInCurrentOS()) {
+        if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
           if (lastFocusedFrame != null) {
             boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
             if (fullScreen) {
-              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULLSCREEN, Boolean.TRUE);
+              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
             }
           }
         }

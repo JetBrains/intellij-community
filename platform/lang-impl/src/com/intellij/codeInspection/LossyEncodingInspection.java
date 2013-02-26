@@ -22,24 +22,27 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.ReloadFileInOtherEncodingAction;
+import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingUtil;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -51,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -115,11 +119,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                                      @NotNull Charset charset,
                                                      @NotNull List<ProblemDescriptor> descriptors) {
     if (FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
-        || ChooseFileEncodingAction.checkCanReload(virtualFile).second != null // can't reload in another encoding, no point trying
+        || EncodingUtil.checkCanReload(virtualFile).second != null // can't reload in another encoding, no point trying
       ) {
       return;
     }
-    if (!isGoodCharset(file.getProject(), virtualFile, text, charset)) {
+    if (!isGoodCharset(virtualFile, text, charset, file.getProject())) {
       descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
                                                       RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
     }
@@ -127,10 +131,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
   // check if file was loaded in correct encoding
   // returns true if text converted with charset is equals to the bytes currently on disk
-  private static boolean isGoodCharset(@NotNull Project project,
-                                       @NotNull VirtualFile virtualFile,
+  private static boolean isGoodCharset(@NotNull VirtualFile virtualFile,
                                        @NotNull String text,
-                                       @NotNull Charset charset) {
+                                       @NotNull Charset charset,
+                                       @NotNull Project project) {
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();
@@ -138,16 +142,33 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     catch (IOException e) {
       return true;
     }
-    String separator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, project);
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document document = documentManager.getDocument(virtualFile);
+    if (document == null) return true;
+    String separator = LoadTextUtil.detectLineSeparator(virtualFile, false);
+    if (separator == null) {
+      separator = documentManager.isDocumentUnsaved(document) ?
+                  FileDocumentManagerImpl.getLineSeparator(document, virtualFile) :
+                  CodeStyleFacade.getInstance(project).getLineSeparator();
+    }
     String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();
-    bom = bom == null ? ArrayUtil.EMPTY_BYTE_ARRAY : bom;
     byte[] bytesToSave = toSave.getBytes(charset);
-    if (!ArrayUtil.startsWith(bytesToSave, bom)) {
+    if (bom != null && !ArrayUtil.startsWith(bytesToSave, bom)) {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    return Arrays.equals(bytesToSave, bytes);
+    boolean equals = Arrays.equals(bytesToSave, bytes);
+    if (!equals) {
+      try {
+        FileUtil.writeToFile(new File("C:\\temp\\bytesToSave"), bytesToSave);
+        FileUtil.writeToFile(new File("C:\\temp\\bytes"), bytes);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return equals;
   }
 
   private static void checkIfCharactersWillBeLostAfterSave(@NotNull PsiFile file,
@@ -219,21 +240,18 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
       Editor editor = PsiUtilBase.findEditor(psiFile);
       DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
-      ReloadFileInOtherEncodingAction reloadAction = new ReloadFileInOtherEncodingAction();
-      reloadAction.actionPerformed(new AnActionEvent(null, dataContext, "", reloadAction.getTemplatePresentation(), ActionManager.getInstance(), 0));
+      ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
+      if (popup != null) {
+        popup.showInBestPositionFor(dataContext);
+      }
     }
 
     @NotNull
     public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
-      return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile,
-                                                SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project,
-                                                                                   SimpleDataContext.getSimpleContext(
-                                                                                     PlatformDataKeys.CONTEXT_COMPONENT.getName(),
-                                                                                     editor == null ? null : editor.getComponent(),
-                                                                                     parent)));
+      DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
+      DataContext projectContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project, context);
+      return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
     }
-
-
   }
 }

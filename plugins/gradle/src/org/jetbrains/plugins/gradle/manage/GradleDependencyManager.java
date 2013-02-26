@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -178,5 +179,25 @@ public class GradleDependencyManager {
         }
       });
     }
+  }
+
+  public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
+    Project project = dependency.getOwnerModule().getProject();
+    GradleUtil.executeProjectChangeAction(project, dependency, synchronous, new Runnable() {
+      @Override
+      public void run() {
+        dependency.setScope(scope); 
+      }
+    });
+  }
+
+  public void setExported(final boolean exported, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
+    Project project = dependency.getOwnerModule().getProject();
+    GradleUtil.executeProjectChangeAction(project, dependency, synchronous, new Runnable() {
+      @Override
+      public void run() {
+        dependency.setExported(exported);
+      }
+    });
   }
 }

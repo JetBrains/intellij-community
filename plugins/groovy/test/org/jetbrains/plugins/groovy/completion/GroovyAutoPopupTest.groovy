@@ -120,16 +120,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
 
-  public void testTypingNonImportedClassName() {
-    setFocusLookup()
-
-    myFixture.addClass("package foo; public class Foo239 {} ")
-    myFixture.addClass("class Foo239Util {} ")
-    myFixture.configureByText "a.groovy", "<caret>"
-    type 'Foo239 '
-    myFixture.checkResult 'Foo239 <caret>'
-  }
-
   private def setFocusLookup() {
     CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.ALWAYS
   }
@@ -251,13 +241,6 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.checkResult '[has:<caret>]'
   }
 
-  public void testTypingFqn() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.configureByText 'a.groovy', '<caret>'
-    type 'java.'
-    myFixture.checkResult 'java.<caret>'
-  }
-
   public void testPreferRightCasedVariant() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', '<caret>'
@@ -268,6 +251,8 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testPackageQualifier() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+
     myFixture.addClass("package com.too; public class Util {}")
     myFixture.configureByText 'a.groovy', 'void foo(Object command) { <caret> }'
     type 'com.t'

@@ -18,8 +18,6 @@ package com.intellij.dependencies;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.JavaAnalysisScope;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;

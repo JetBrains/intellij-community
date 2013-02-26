@@ -37,9 +37,9 @@ public abstract class HighlightHandlerBase {
     findManager.setFindNextModel(model);
   }
 
-  public static String getLineTextErrorStripeTooltip(Document document, int offset) {
+  public static String getLineTextErrorStripeTooltip(Document document, int offset, boolean escape) {
     final int lineNumber = document.getLineNumber(offset);
     final String lineText = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
-    return "  " + StringUtil.escapeXml(lineText.trim()) + "  ";
+    return "  " + (escape ? StringUtil.escapeXml(lineText.trim()) : lineText.trim()) + "  ";
   }
 }

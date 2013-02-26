@@ -236,7 +236,6 @@ public final class LoadTextUtil {
     }
   }
 
-
   @NotNull
   private static Pair<Charset, byte[]> charsetForWriting(@Nullable Project project,
                                                          @NotNull VirtualFile virtualFile,
@@ -280,18 +279,24 @@ public final class LoadTextUtil {
 
   @NotNull
   private static byte[] toBytes(@NotNull String text, @Nullable Charset charset) {
+    //noinspection SSBasedInspection
     return charset == null ? text.getBytes() : text.getBytes(charset);
   }
 
   @Nullable("null means not supported, otherwise it is converted byte stream")
   private static byte[] isSupported(@NotNull Charset charset, @NotNull String str) {
-    if (!charset.canEncode()) return null;
-    byte[] bytes = str.getBytes(charset);
-    if (!str.equals(new String(bytes, charset))) {
-      return null;
-    }
+    try {
+      if (!charset.canEncode()) return null;
+      byte[] bytes = str.getBytes(charset);
+      if (!str.equals(new String(bytes, charset))) {
+        return null;
+      }
 
-    return bytes;
+      return bytes;
+    }
+    catch (Exception e) {
+      return null;//wow, some charsets throw NPE inside .getBytes() when unable to encode (JIS_X0212-1990)
+    }
   }
 
   public static Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
@@ -355,11 +360,11 @@ public final class LoadTextUtil {
                                                          boolean saveDetectedSeparators,
                                                          boolean saveBOM) {
     Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM);
-    final Charset charset = pair.getFirst();
+    Charset charset = pair.getFirst();
     byte[] bom = pair.getSecond();
     int offset = bom == null ? 0 : bom.length;
 
-    final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
+    Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
     if (saveDetectedSeparators) {
       virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     }

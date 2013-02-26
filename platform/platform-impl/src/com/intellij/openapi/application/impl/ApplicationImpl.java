@@ -251,7 +251,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Project project = CommandLineProcessor.processExternalCommandLine(args);
+              final Project project = CommandLineProcessor.processExternalCommandLine(args, null);
               final JFrame frame;
               if (project != null) {
                 frame = (JFrame)WindowManager.getInstance().getIdeFrame(project);
@@ -264,6 +264,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           });
         }
       });
+
+      WindowsCommandLineProcessor.LISTENER = new WindowsCommandLineListener() {
+        @Override
+        public void processWindowsLauncherCommandLine(final String currentDirectory, final String commandLine) {
+          LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+          invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
+              args.remove(0);   // process name
+              CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+            }
+          });
+        }
+      };
     }
   }
 
@@ -926,6 +941,28 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
   @Override
   public <T> T runReadAction(@NotNull final Computable<T> computation) {
+    if (isReadAccessAllowed()) {
+      return computation.compute();
+    }
+    else {
+      assertReadActionAllowed();
+      try {
+        myLock.readLock().lockInterruptibly();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+      try {
+        return computation.compute();
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+    }
+  }
+
+  @Override
+  public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     if (isReadAccessAllowed()) {
       return computation.compute();
     }

@@ -114,6 +114,14 @@ public class ArrayUtil extends ArrayUtilRt {
     array[array.length - 1] = value;
     return array;
   }
+  @NotNull
+  public static int[] insert(@NotNull int[] array, int index, int value) {
+    int[] result = new int[array.length + 1];
+    System.arraycopy(array, 0, result, 0, index);
+    result[index] = value;
+    System.arraycopy(array, index, result, index+1, array.length - index);
+    return result;
+  }
 
   @NotNull
   public static byte[] append(@NotNull byte[] array, byte value) {

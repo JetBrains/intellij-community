@@ -15,6 +15,7 @@
  */
 package com.intellij.util.proxy;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,6 +41,8 @@ public class CommonProxy extends ProxySelector {
   private final CommonAuthenticator myAuthenticator;
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
+  private final static long ourErrorInterval = 10000;
+  private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
   private static final Map<String, String> ourProps = new HashMap<String, String>();
   static {
@@ -73,7 +75,7 @@ public class CommonProxy extends ProxySelector {
     final ProxySelector aDefault = ProxySelector.getDefault();
     if (ourInstance != aDefault) {
       // to report only once
-      if (ourWrong != aDefault) {
+      if (ourWrong != aDefault || itsTime()) {
         LOG.error("ProxySelector.setDefault() was changed to [" + aDefault.toString() + "] - other than com.intellij.util.proxy.CommonProxy.ourInstance.\n" +
                   "This will make some " + ApplicationNamesInfo.getInstance().getProductName() + " network calls fail.\n" +
                   "Instead, methods of com.intellij.util.proxy.CommonProxy should be used for proxying.");
@@ -85,24 +87,41 @@ public class CommonProxy extends ProxySelector {
     assertSystemPropertiesSet();
   }
 
+  private static boolean itsTime() {
+    return System.currentTimeMillis() - ourErrorTime > ourErrorInterval;
+  }
+
   private static void assertSystemPropertiesSet() {
+    final Map<String, String> props = getOldStyleProperties();
+
+    if (Comparing.equal(ourProps, props) && ! itsTime()) return;
+    ourProps.clear();
+    ourProps.putAll(props);
+
+    final String message = getMessageFromProps(props);
+    if (message != null) {
+      PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+      LOG.info(message);
+    }
+  }
+
+  public static String getMessageFromProps(Map<String, String> props) {
+    String message = null;
+    for (Map.Entry<String, String> entry : props.entrySet()) {
+      if (! StringUtil.isEmptyOrSpaces(entry.getValue())) {
+        message = CommonBundle.message("label.old.way.jvm.property.used", entry.getKey(), entry.getValue());
+        break;
+      }
+    }
+    return message;
+  }
+
+  public static Map<String, String> getOldStyleProperties() {
     final Map<String, String> props = new HashMap<String, String>();
     props.put(JavaProxyProperty.HTTP_HOST, System.getProperty(JavaProxyProperty.HTTP_HOST));
     props.put(JavaProxyProperty.HTTPS_HOST, System.getProperty(JavaProxyProperty.HTTPS_HOST));
     props.put(JavaProxyProperty.SOCKS_HOST, System.getProperty(JavaProxyProperty.SOCKS_HOST));
-
-    if (Comparing.equal(ourProps, props)) return;
-    ourProps.clear();
-    ourProps.putAll(props);
-
-    for (Map.Entry<String, String> entry : props.entrySet()) {
-      if (! StringUtil.isEmptyOrSpaces(entry.getValue())) {
-        final String message = "You have JVM property '" + entry.getKey() + "' set to '" + entry.getValue() + "'.\n" +
-                               "This may lead to incorrect behaviour. Proxy should be set in Settings | " + HTTPProxySettingsPanel.NAME;
-        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
-        LOG.info(message);
-      }
-    }
+    return props;
   }
 
   public void ensureAuthenticator() {
@@ -171,8 +190,9 @@ public class CommonProxy extends ProxySelector {
 
   @Override
   public List<Proxy> select(URI uri) {
-    LOG.debug("CommonProxy.select called for " + uri.toString());
     isInstalledAssertion();
+    if (uri == null) return NO_PROXY_LIST;
+    LOG.debug("CommonProxy.select called for " + uri.toString());
 
     final String host = uri.getHost() == null ? "" : uri.getHost();
     final int port = uri.getPort();

@@ -16,9 +16,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsImplUtil;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -33,7 +30,6 @@ abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction() {
   }
 
-  protected abstract HgGlobalCommandBuilder getHgGlobalCommandBuilder(Project project);
   private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());
 
   public void actionPerformed(AnActionEvent event) {
@@ -42,21 +38,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (project == null) {
       return;
     }
-
-    HgGlobalCommand command = getHgGlobalCommandBuilder(project).build(HgUtil.getHgRepositories(project));
-    if (command == null) {
-      return;
-    }
-    try {
-      command.execute();
-      HgUtil.markDirectoryDirty(project, command.getRepo());
-    } catch (HgCommandException e) {
-      handleException(project, e);
-    } catch (InvocationTargetException e) {
-      handleException(project, e);
-    } catch (InterruptedException e) {
-      handleException(project, e);
-    }
+    execute(project, HgUtil.getHgRepositories(project));
   }
 
   @Override
@@ -72,19 +54,23 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
   }
 
-  protected interface HgGlobalCommand {
-    VirtualFile getRepo();
-    void execute() throws HgCommandException;
-  }
+  protected abstract void execute(Project project, Collection<VirtualFile> repositories);
 
-  protected interface HgGlobalCommandBuilder {
-    @Nullable
-    HgGlobalCommand build(Collection<VirtualFile> repos);
-  }
-
-  private static void handleException(Project project, Exception e) {
+  protected static void handleException(Project project, Exception e) {
     LOG.info(e);
-    VcsImplUtil.showErrorMessage(project, e.getMessage(), "Error");
+    new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
+  }
+
+  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+    try {
+      HgUtil.markDirectoryDirty(project, repository);
+    }
+    catch (InvocationTargetException e) {
+      handleException(project, e);
+    }
+    catch (InterruptedException e) {
+      handleException(project, e);
+    }
   }
 
 }

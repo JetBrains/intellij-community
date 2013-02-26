@@ -15,63 +15,36 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.TextRange;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
 * @author Konstantin Bulenkov
 */
 public class SpeedSearchObjectWithWeight {
-  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      if (o1.getStartOffset() == o2.getStartOffset()) {
-        return o2.getEndOffset() - o1.getEndOffset(); //longer is better
-      }
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
-  };
-
   public final Object node;
-  final List<TextRange> weights = new ArrayList<TextRange>();
+  private final int weight;
 
-  SpeedSearchObjectWithWeight(Object element, String pattern, SpeedSearchBase speedSearch) {
+  SpeedSearchObjectWithWeight(Object element, int weight) {
     this.node = element;
-    final String text = speedSearch.getElementText(element);
-    if (text != null) {
-      final Iterable<TextRange> ranges = speedSearch.getComparator().matchingFragments(pattern, text);
-      if (ranges != null) {
-        for (TextRange range : ranges) {
-          weights.add(range);
-        }
-      }
-    }
-    Collections.sort(weights, TEXT_RANGE_COMPARATOR);
+    this.weight = weight;
   }
 
   public int compareWith(SpeedSearchObjectWithWeight obj) {
-    final List<TextRange> w = obj.weights;
-    for (int i = 0; i < weights.size(); i++) {
-      if (i >= w.size()) return 1;
-      final int result = TEXT_RANGE_COMPARATOR.compare(weights.get(i), w.get(i));
-      if (result != 0) {
-        return result;
-      }
-    }
-
-    return 0;
+    return weight == obj.weight ? 0 : weight < obj.weight ? 1 : -1;
   }
 
-  public static List<SpeedSearchObjectWithWeight> findElement(String s, SpeedSearchBase speedSearch) {
+  public static List<SpeedSearchObjectWithWeight> findElement(String pattern, SpeedSearchBase speedSearch) {
     List<SpeedSearchObjectWithWeight> elements = new ArrayList<SpeedSearchObjectWithWeight>();
-    s = s.trim();
+    pattern = pattern.trim();
     //noinspection unchecked
     final ListIterator<Object> it = speedSearch.getElementIterator(0);
     while (it.hasNext()) {
-      final SpeedSearchObjectWithWeight o = new SpeedSearchObjectWithWeight(it.next(), s, speedSearch);
-      if (!o.weights.isEmpty()) {
-        elements.add(o);
+      Object element = it.next();
+      String text = speedSearch.getElementText(element);
+      if (text != null) {
+        elements.add(new SpeedSearchObjectWithWeight(element, speedSearch.getComparator().matchingDegree(pattern, text)));
       }
     }
     SpeedSearchObjectWithWeight cur = null;

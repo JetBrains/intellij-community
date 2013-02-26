@@ -60,6 +60,11 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @NotNull
+  public Collection<PsiReference> findReferences(final PsiElement element, boolean searchInCommentsAndStrings) {
+    return findReferences(element);
+  }
+
+  @NotNull
   public Collection<PsiReference> findReferences(final PsiElement element) {
     return ReferencesSearch.search(element).findAll();
   }

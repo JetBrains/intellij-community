@@ -18,6 +18,7 @@ package com.intellij.util.xmlb;
 
 import org.jdom.Content;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TextBinding implements Binding {
@@ -36,7 +37,7 @@ public class TextBinding implements Binding {
   }
 
   @Nullable
-  public Object deserialize(Object context, Object... nodes) {
+  public Object deserialize(Object context, @NotNull Object... nodes) {
     assert nodes.length == 1;
     Object node = nodes[0];
     assert isBoundTo(node);

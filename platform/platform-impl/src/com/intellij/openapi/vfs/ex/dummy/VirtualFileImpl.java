@@ -19,7 +19,6 @@ package com.intellij.openapi.vfs.ex.dummy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.testFramework.DummyFileIdGenerator;
 import org.jetbrains.annotations.NotNull;
 
 abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId {

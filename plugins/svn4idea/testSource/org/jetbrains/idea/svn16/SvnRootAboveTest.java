@@ -86,6 +86,11 @@ public class SvnRootAboveTest extends Svn16TestCase {
     myClManager = ChangeListManager.getInstance(myProject);*/
   }
 
+  @Override
+  public void tearDown() throws Exception {
+    // no setup - no tear down
+  }
+
   private class SubTree {
     private final VirtualFile myOuterDir;
     private final VirtualFile myOuterFile;

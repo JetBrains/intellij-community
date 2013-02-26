@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.projectWizard.ProjectTemplateComponent;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -93,7 +94,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable, ProjectTemplateComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -249,6 +250,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }
+  }
+
+  @Override
+  public String getStorageFile() {
+    return "workspace.xml";
   }
 
   private static class MyBorder implements Border {
@@ -713,6 +719,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       providers = newSelectedComposite.getProviders();
     }
     else {
+      if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+        for (EditorWithProviderComposite composite : window.getEditors()) {
+          Disposer.dispose(composite);
+        }
+      }
+
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
       final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
@@ -1175,6 +1187,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
     List<EditorWithProviderComposite> editorComposites = getEditorComposites(file);
+    if (editorComposites.isEmpty()) return EMPTY_EDITOR_ARRAY;
     List<FileEditor> editors = new ArrayList<FileEditor>();
     for (EditorWithProviderComposite composite : editorComposites) {
       ContainerUtil.addAll(editors, composite.getEditors());

@@ -32,54 +32,13 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 
 public class JavaCharFilter extends CharFilter {
 
   private static boolean isWithinLiteral(final Lookup lookup) {
     PsiElement psiElement = lookup.getPsiElement();
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
-  }
-
-  public static boolean isNonImportedClassEntered(LookupImpl lookup, boolean orPackage) {
-    if (lookup.isSelectionTouched()) return false;
-
-    CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && !process.isAutopopupCompletion()) return false;
-
-    LookupElement item = lookup.getCurrentItem();
-    if (item == null) return false;
-
-    PsiFile file = lookup.getPsiFile();
-    if (file == null) return false;
-
-    final String prefix = lookup.itemPattern(item);
-    for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
-      if (!isObfuscated(aClass) && PsiUtil.isAccessible(aClass, file, null)) {
-        return true;
-      }
-    }
-
-    if (orPackage && prefix.length() > 1 && JavaPsiFacade.getInstance(file.getProject()).findPackage(prefix) != null) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private static boolean isObfuscated(PsiClass psiClass) {
-    if (!(psiClass instanceof PsiCompiledElement)) {
-      return false;
-    }
-
-    String name = psiClass.getName();
-    if (name == null) {
-      return false;
-    }
-    
-    return name.length() <= 2 && Character.isLowerCase(name.charAt(0));
   }
 
   @Override
@@ -116,11 +75,7 @@ public class JavaCharFilter extends CharFilter {
       return Result.HIDE_LOOKUP;
     }
 
-    if ((c == '[' || c == '<' || c == '.' || c == ' ' || c == '(' || c == ',') &&
-        isNonImportedClassEntered((LookupImpl)lookup, c == '.')) {
-      return Result.HIDE_LOOKUP;
-    }
-    
+
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(') {

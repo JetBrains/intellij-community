@@ -41,6 +41,7 @@ public class GitHubCreateGistDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
   }

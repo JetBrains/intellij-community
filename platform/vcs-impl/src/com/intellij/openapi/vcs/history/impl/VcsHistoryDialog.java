@@ -41,6 +41,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -418,6 +419,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
     HelpManager.getInstance().invokeHelp(myHelpId);
   }
 
+  @NotNull
   protected Action[] createActions() {
     Action okAction = getOKAction();
     okAction.putValue(Action.NAME, VcsBundle.message("close.tab.action.name"));

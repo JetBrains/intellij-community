@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
-import static com.intellij.util.BitUtil.isSet;
-import static com.intellij.util.BitUtil.notSet;
-import static com.intellij.util.BitUtil.set;
+import static com.intellij.util.BitUtil.*;
 
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
@@ -38,6 +36,7 @@ public class ReferenceParser {
   public static final int DIAMONDS = 0x08;
   public static final int DISJUNCTIONS = 0x10;
   public static final int CONJUNCTIONS = 0x20;
+  public static final int INCOMPLETE_ANNO = 0x40;
 
   public static class TypeInfo {
     public boolean isPrimitive = false;
@@ -89,13 +88,13 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags, final boolean badWildcard) {
+  private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
 
     PsiBuilder.Marker type = builder.mark();
-    myParser.getDeclarationParser().parseAnnotations(builder);
+    PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
 
     final IElementType tokenType = builder.getTokenType();
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
@@ -105,9 +104,10 @@ public class ReferenceParser {
       parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if ((isSet(flags, WILDCARD) || badWildcard) && tokenType == JavaTokenType.QUEST) {
-      type.drop();
-      typeInfo.marker = parseWildcardType(builder, isSet(flags, WILDCARD));
-      return typeInfo.marker != null ? typeInfo : null;
+      builder.advanceLexer();
+      completeWildcardType(builder, isSet(flags, WILDCARD), type);
+      typeInfo.marker = type;
+      return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       emptyElement(builder, JavaElementType.DIAMOND_TYPE);
@@ -117,6 +117,11 @@ public class ReferenceParser {
     }
     else {
       type.drop();
+      if (anno != null && isSet(flags, INCOMPLETE_ANNO)) {
+        error(builder, JavaErrorMessages.message("expected.type"));
+        typeInfo.hasErrors = true;
+        return typeInfo;
+      }
       return null;
     }
 
@@ -150,11 +155,7 @@ public class ReferenceParser {
     return typeInfo;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseWildcardType(final PsiBuilder builder, final boolean wildcard) {
-    final PsiBuilder.Marker type = builder.mark();
-    builder.advanceLexer();
-
+  private void completeWildcardType(PsiBuilder builder, boolean wildcard, PsiBuilder.Marker type) {
     if (expect(builder, WILDCARD_KEYWORD_SET)) {
       if (parseTypeInfo(builder, EAT_LAST_DOT) == null) {
         error(builder, JavaErrorMessages.message("expected.type"));
@@ -167,12 +168,10 @@ public class ReferenceParser {
     else {
       type.error(JavaErrorMessages.message("wildcard.not.expected"));
     }
-    return type;
   }
 
   @Nullable
-  public PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                  final boolean isNew, final boolean diamonds) {
+  public PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isNew, boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -183,9 +182,8 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseJavaCodeReference(final PsiBuilder builder, final boolean eatLastDot, final boolean parameterList,
-                                                   final boolean isImport, final boolean isStaticImport, final boolean isNew,
-                                                   final boolean diamonds, final TypeInfo typeInfo) {
+  private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
+                                                   boolean isStaticImport, boolean isNew, boolean diamonds, TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -216,6 +214,8 @@ public class ReferenceParser {
 
       final PsiBuilder.Marker dotPos = builder.mark();
       builder.advanceLexer();
+
+      myParser.getDeclarationParser().parseAnnotations(builder);
 
       if (expect(builder, JavaTokenType.IDENTIFIER)) {
         hasIdentifier = true;

@@ -191,11 +191,13 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     return myRootPanel;
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getCancelAction()};
   }
 
+  @NotNull
   @Override
   protected Action getCancelAction() {
     Action action = super.getCancelAction();

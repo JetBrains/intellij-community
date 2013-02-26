@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
@@ -65,6 +67,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     myName = name;
     myBaseRefText = baseRefText;
     myFlags = flags;
+    if (StubBasedPsiElementBase.ourTraceStubAstBinding) {
+      String creationTrace = "Stub creation thread: " + Thread.currentThread() + "\n" + DebugUtil.currentStackTrace();
+      putUserData(StubBasedPsiElementBase.CREATION_TRACE, creationTrace);
+    }
   }
 
   @Override

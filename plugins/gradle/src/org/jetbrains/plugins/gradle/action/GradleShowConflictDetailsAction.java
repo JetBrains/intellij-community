@@ -52,7 +52,7 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
+  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull final Project project, @NotNull Tree tree) {
     assert nodes.size() == 1;
     final GradleProjectStructureNode<?> node = nodes.iterator().next();
     final GradleProjectStructureContext context = ServiceManager.getService(project, GradleProjectStructureContext.class);
@@ -80,7 +80,9 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
     balloon.addListener(new JBPopupAdapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        publisher.afterConflictUiShown();
+        if (!project.isDisposed()) {
+          publisher.afterConflictUiShown();
+        }
       }
     });
     balloon.show(new RelativePoint(tree, hintPosition), Balloon.Position.below);

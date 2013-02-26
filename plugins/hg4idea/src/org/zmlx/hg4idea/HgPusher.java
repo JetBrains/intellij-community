@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ import org.zmlx.hg4idea.ui.HgPushDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -66,7 +65,9 @@ public class HgPusher {
         }
         VirtualFile firstRepo = repositories.get(0);
         final List<HgTagBranch> branches = getBranches(myProject, firstRepo);
-
+        if (branches.isEmpty()) {
+          return;
+        }
         final AtomicReference<HgPushCommand> pushCommand = new AtomicReference<HgPushCommand>();
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -94,14 +95,13 @@ public class HgPusher {
 
   @NotNull
   public static List<HgTagBranch> getBranches(@NotNull Project project, @NotNull VirtualFile root) {
-    final List<HgTagBranch> branchesList = new ArrayList<HgTagBranch>();
-    new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
-      @Override
-      public void consume(final List<HgTagBranch> branches) {
-        branchesList.addAll(branches);
-      }
-    });
-    return branchesList;
+    HgCommandResult branchesResult = new HgTagBranchCommand(project, root).collectBranches();
+    if (branchesResult == null) {
+      new HgCommandResultNotifier(project)
+        .notifyError(branchesResult, "Mercurial command failed", HgVcsMessages.message("hg4idea.branches.error.description"));
+      return Collections.emptyList();
+    }
+    return HgTagBranchCommand.parseResult(branchesResult);
   }
 
   private static void push(final Project project, HgPushCommand command) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
@@ -188,10 +187,6 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
   @Override
   protected ValidationInfo doValidate() {
-    final String text = getEnteredName();
-    if (!GroovyNamesUtil.isIdentifier(text)) {
-      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameField);
-    }
     return null;
   }
 
@@ -214,6 +209,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(HelpID.EXTRACT_METHOD);
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
@@ -319,8 +315,11 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String modifier = ExtractUtil.getModifierString(myHelper);
     buffer.append(modifier);
     buffer.append(ExtractUtil.getTypeString(myHelper, true, modifier));
-    String name = getEnteredName() == null ? "" : getEnteredName();
-    buffer.append(name);
+
+    final String _name = getEnteredName();
+    String name = _name == null ? "" : _name;
+    ExtractUtil.appendName(buffer, name);
+
     buffer.append("(");
     String[] params = ExtractUtil.getParameterString(myHelper, false);
     if (params.length > 0) {

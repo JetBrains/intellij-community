@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -573,12 +574,35 @@ public class GroovyCompletionUtil {
     if (anno != null) {
       GrCodeReferenceElement ref = anno.getClassReference();
       PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-        List<LookupElement> result = new ArrayList<LookupElement>();
-        for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
-          result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
+
+      if (resolved instanceof PsiClass) {
+        final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector((PsiClass)resolved);
+
+        if (annotationCollector != null) {
+          final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
+          GrAnnotationCollector.collectAnnotations(annotations, anno, annotationCollector);
+
+          Set<String> usedNames = ContainerUtil.newHashSet();
+          List<LookupElement> result = new ArrayList<LookupElement>();
+          for (GrAnnotation annotation : annotations) {
+            final PsiElement resolvedAliased = annotation.getClassReference().resolve();
+            if (resolvedAliased instanceof PsiClass && ((PsiClass)resolvedAliased).isAnnotationType()) {
+              for (PsiMethod method : ((PsiClass)resolvedAliased).getMethods()) {
+                if (usedNames.add(method.getName())) {
+                  result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
+                }
+              }
+            }
+          }
+          return result;
         }
-        return result;
+        else if (((PsiClass)resolved).isAnnotationType()) {
+          List<LookupElement> result = new ArrayList<LookupElement>();
+          for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
+            result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
+          }
+          return result;
+        }
       }
     }
 

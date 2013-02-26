@@ -29,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -46,9 +47,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
 
-  public JavaMethodsConflictResolver(PsiExpressionList list) {
-    myArgumentsList = list;
-    myActualParameterTypes = list.getExpressionTypes();
+  public JavaMethodsConflictResolver(@NotNull PsiExpressionList list) {
+    this(list, list.getExpressionTypes());
   }
 
   public JavaMethodsConflictResolver(final PsiElement argumentsList, final PsiType[] actualParameterTypes) {
@@ -57,7 +57,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @Override
-  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
+  public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -67,7 +67,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkSameSignatures(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkAccessLevels(conflicts);
+    checkAccessStaticLevels(conflicts, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, myActualParameterTypes.length, false);
@@ -87,6 +87,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
+    checkAccessStaticLevels(conflicts, false);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
@@ -158,7 +161,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private static void checkAccessLevels(List<CandidateInfo> conflicts) {
+  private static void checkAccessStaticLevels(List<CandidateInfo> conflicts, boolean checkAccessible) {
     int conflictsCount = conflicts.size();
 
     int maxCheckLevel = -1;
@@ -166,7 +169,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     int index = 0;
     for (final CandidateInfo conflict : conflicts) {
       final MethodCandidateInfo method = (MethodCandidateInfo)conflict;
-      final int level = getCheckLevel(method);
+      final int level = checkAccessible ? getCheckAccessLevel(method) : getCheckStaticLevel(method);
       checkLevels[index++] = level;
       maxCheckLevel = Math.max(maxCheckLevel, level);
     }
@@ -379,11 +382,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return level;
   }
 
-  private static int getCheckLevel(MethodCandidateInfo method){
-    boolean visible = method.isAccessible();// && !method.myStaticProblem;
+  private static int getCheckAccessLevel(MethodCandidateInfo method){
+    boolean visible = method.isAccessible();
+    return visible ? 1 : 0;
+  }
+
+  private static int getCheckStaticLevel(MethodCandidateInfo method){
     boolean available = method.isStaticsScopeCorrect();
-    return (visible ? 1 : 0) << 2 |
-           (available ? 1 : 0) << 1 |
+    return (available ? 1 : 0) << 1 |
            (method.getCurrentFileResolveScope() instanceof PsiImportStaticStatement ? 0 : 1);
   }
 
@@ -550,7 +556,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
     if (isMoreSpecific == null) {
       if (!JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7) ||
-          !MethodSignatureUtil.areParametersErasureEqual(method1, method2)) {
+          !MethodSignatureUtil.areParametersErasureEqual(method1, method2) ||
+           InheritanceUtil.isInheritorOrSelf(class1, class2, true) ||
+           InheritanceUtil.isInheritorOrSelf(class2, class1, true)) {
         if (typeParameters1.length < typeParameters2.length) return Specifics.FIRST;
         if (typeParameters1.length > typeParameters2.length) return Specifics.SECOND;
       }

@@ -23,8 +23,8 @@ import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -63,7 +63,7 @@ public class FSState {
   }
 
   public void load(DataInputStream in, JpsModel model, final BuildRootIndex buildRootIndex) throws IOException {
-    BuilderRegistry registry = BuilderRegistry.getInstance();
+    final TargetTypeRegistry registry = TargetTypeRegistry.getInstance();
     int typeCount = in.readInt();
     while (typeCount-- > 0) {
       final String typeId = IOUtil.readString(in);
@@ -102,11 +102,19 @@ public class FSState {
   public boolean markDirty(@Nullable CompileContext context, final File file, final BuildRootDescriptor rd, final @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
     final boolean marked = getDelta(rd.getTarget()).markRecompile(rd, file);
     if (marked) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(rd.getTarget() + ": MARKED DIRTY: " + file.getPath());
+      }
       if (saveEventStamp) {
         myRegistrationStamps.put(file, System.currentTimeMillis());
       }
       if (tsStorage != null) {
         tsStorage.removeStamp(file, rd.getTarget());
+      }
+    }
+    else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(rd.getTarget() + ": NOT MARKED DIRTY: " + file.getPath());
       }
     }
     return marked;

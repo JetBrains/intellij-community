@@ -20,8 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -39,7 +37,6 @@ public class BuilderRegistry {
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
   private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<TargetBuilder<?,?>>();
-  private final Map<String, BuildTargetType<?>> myTargetTypes = new LinkedHashMap<String, BuildTargetType<?>>();
   private final FileFilter myModuleBuilderFileFilter;
 
   public static BuilderRegistry getInstance() {
@@ -66,13 +63,6 @@ public class BuilderRegistry {
         }
         myModuleLevelBuilders.get(builder.getCategory()).add(builder);
       }
-      for (BuildTargetType<?> type : service.getTargetTypes()) {
-        String id = type.getTypeId();
-        BuildTargetType<?> old = myTargetTypes.put(id, type);
-        if (old != null) {
-          LOG.error("Two build target types (" + type + ", " + old + ") use same id (" + id + ")");
-        }
-      }
     }
     if (compilableFileExtensions == null) {
       myModuleBuilderFileFilter = FileUtilRt.ALL_FILES;
@@ -88,18 +78,9 @@ public class BuilderRegistry {
     }
   }
 
-  @Nullable
-  public BuildTargetType<?> getTargetType(String typeId) {
-    return myTargetTypes.get(typeId);
-  }
-
   @NotNull
   public FileFilter getModuleBuilderFileFilter() {
     return myModuleBuilderFileFilter;
-  }
-
-  public Collection<BuildTargetType<?>> getTargetTypes() {
-    return myTargetTypes.values();
   }
 
   public int getModuleLevelBuilderCount() {

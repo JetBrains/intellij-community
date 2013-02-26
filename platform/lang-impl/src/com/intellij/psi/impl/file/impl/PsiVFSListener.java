@@ -38,7 +38,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,11 +84,6 @@ public class PsiVFSListener extends VirtualFileAdapter {
   @Nullable
   private PsiDirectory getCachedDirectory(VirtualFile parent) {
     return parent == null ? null : myFileManager.getCachedDirectory(parent);
-  }
-
-  @Override
-  public void contentsChanged(final VirtualFileEvent event) {
-    // handled by FileDocumentManagerListener
   }
 
   @Override
@@ -324,9 +318,16 @@ public class PsiVFSListener extends VirtualFileAdapter {
     if (FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
       FileViewProvider viewProvider = myFileManager.createFileViewProvider(vFile, true);
       myFileManager.setViewProvider(vFile, viewProvider);
-      PsiFile newPsiFile = ObjectUtils.assertNotNull(myManager.findFile(vFile));
+      PsiFile newPsiFile = myManager.findFile(vFile);
+      if (newPsiFile == null) {
+        LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
+        return;
+      }
       if (!viewProvider.isPhysical()) {
-        PsiDocumentManagerImpl.cachePsi(viewProvider.getDocument(), newPsiFile);
+        Document document = viewProvider.getDocument();
+        if (document != null) {
+          PsiDocumentManagerImpl.cachePsi(document, newPsiFile);
+        }
       }
       if (parentDir != null) {
         PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);

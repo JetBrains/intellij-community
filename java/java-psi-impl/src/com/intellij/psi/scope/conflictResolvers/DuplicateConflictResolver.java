@@ -21,6 +21,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
   }
 
   @Override
-  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
+  public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){
+    if (conflicts.size() == 1) return conflicts.get(0);
     final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
     for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();

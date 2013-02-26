@@ -73,8 +73,8 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
     final SubTree tree = new SubTree(myWorkingCopyDir);
 
-    verify(runSvn("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath()));
-    verify(runSvn("switch", branchUrl + "/root/target", tree.myTargetDir.getPath()));
+    runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath());
+    runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
@@ -90,6 +90,8 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
         Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
       }
     };
+    // do before refresh check
+    check.run();
     myScheme.doTest(check);
 
     changeListManager.ensureUpToDate(false);
@@ -319,7 +321,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
     final String targetName = "target";
     // not parralel, just test of correct detection
-    runSvn("changelist", targetName, file.getPath());
+    runInAndVerifyIgnoreOutput("changelist", targetName, file.getPath());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
@@ -372,9 +374,9 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
   private void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
     System.out.println("Checking files for list: " + listName);
-    assert manager.findChangeList(listName) != null;
+    Assert.assertNotNull(manager.findChangeList(listName));
     final Collection<Change> changes = manager.findChangeList(listName).getChanges();
-    assert changes.size() == files.length;
+    Assert.assertEquals(changes.size(), files.length);
 
     for (Change change : changes) {
       final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();

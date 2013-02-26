@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -49,8 +49,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -60,6 +58,7 @@ import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
+import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
@@ -349,11 +348,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     GitProjectLogManager.getInstance(myProject).activate();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      if (statusBar != null) {
-        myBranchWidget = new GitBranchWidget(myProject);
-        statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
-      }
+      myBranchWidget = new GitBranchWidget(myProject);
+      DvcsUtil.installStatusBarWidget(myProject, myBranchWidget);
     }
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
@@ -388,9 +384,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null && myBranchWidget != null) {
-      statusBar.removeWidget(myBranchWidget.ID());
+    if (myBranchWidget != null) {
+      DvcsUtil.removeStatusBarWidget(myProject, myBranchWidget);
       myBranchWidget = null;
     }
     ((GitCommitsSequentialIndex) ServiceManager.getService(GitCommitsSequentially.class)).deactivate();
@@ -590,5 +585,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
       }
     });
+  }
+
+  @Override
+  public CheckoutProvider getCheckoutProvider() {
+    return new GitCheckoutProvider(ServiceManager.getService(Git.class));
   }
 }

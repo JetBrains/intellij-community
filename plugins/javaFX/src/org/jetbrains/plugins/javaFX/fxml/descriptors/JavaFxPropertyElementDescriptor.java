@@ -89,13 +89,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
       return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
     }
-    if (JavaFxPsiUtil.isClassTag(name)) {
-      return new JavaFxClassBackedElementDescriptor(name, childTag);
-    }
-    else if (myPsiClass != null) {
-      return new JavaFxPropertyElementDescriptor(myPsiClass, name, name.indexOf('.') > 0);
-    }
-    return null;
+    return new JavaFxClassBackedElementDescriptor(name, childTag);
   }
 
   @Override

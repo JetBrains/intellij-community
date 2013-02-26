@@ -165,8 +165,9 @@ public class BuildRunner {
     Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
     Map<BuildTarget<?>, Set<File>> files;
 
+    final TargetTypeRegistry typeRegistry = TargetTypeRegistry.getInstance();
     for (TargetTypeBuildScope scope : scopes) {
-      BuildTargetType<?> targetType = BuilderRegistry.getInstance().getTargetType(scope.getTypeId());
+      final BuildTargetType<?> targetType = typeRegistry.getTargetType(scope.getTypeId());
       if (targetType == null) {
         LOG.info("Unknown target type: " + scope.getTypeId());
         continue;

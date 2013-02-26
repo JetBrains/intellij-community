@@ -23,6 +23,7 @@ import com.intellij.ui.OrderPanelListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
 import javax.swing.*;
@@ -67,6 +68,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

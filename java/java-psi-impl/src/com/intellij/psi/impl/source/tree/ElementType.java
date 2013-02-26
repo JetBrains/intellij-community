@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,12 +70,8 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
     WHILE_STATEMENT, FOR_STATEMENT, FOREACH_STATEMENT, DO_WHILE_STATEMENT, SWITCH_STATEMENT, SWITCH_LABEL_STATEMENT, BREAK_STATEMENT,
     CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT, TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT);
 
-  TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
-  TokenSet IMPORT_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATEMENT);
-  TokenSet IMPORT_STATIC_STATEMENT_BIT_SET = TokenSet.create(IMPORT_STATIC_STATEMENT);
   TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT);
   TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD);
   TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
   TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET, TokenSet.create(CLASS_INITIALIZER));
-  TokenSet ANNOTATIONS = TokenSet.create(ANNOTATION);
 }

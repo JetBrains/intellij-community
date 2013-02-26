@@ -25,6 +25,10 @@ public abstract class GradleConfigNotifierAdapter implements GradleConfigNotifie
   }
 
   @Override
+  public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+  }
+
+  @Override
   public void onBulkChangeStart() {
   }
 

@@ -200,7 +200,7 @@ public class Patch {
       shouldRevert = true;
       cancelled = true;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       shouldRevert = true;
       ui.showError(e);
     }

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -44,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HighlightNamesUtil {
+  private static final Logger LOG = Logger.getInstance("#" + HighlightNamesUtil.class.getName());
+
   @Nullable
   public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
                                                   final PsiElement elementToHighlight,
@@ -61,8 +64,11 @@ public class HighlightNamesUtil {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInherited);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
-      HighlightInfo info = HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, null, attributes);
-      if (info != null) return info;
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      return builder.createUnconditionally();
     }
     return null;
   }
@@ -111,7 +117,11 @@ public class HighlightNamesUtil {
         range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
       }
 
-      return HighlightInfo.createHighlightInfo(type, range, null, null, attributes);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      return builder.createUnconditionally();
     }
     return null;
   }
@@ -124,9 +134,13 @@ public class HighlightNamesUtil {
     if (varType != null) {
       if (variable instanceof PsiField) {
         TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
-        return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, null, attributes);
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
+        if (attributes != null) {
+          builder.textAttributes(attributes);
+        }
+        return builder.createUnconditionally();
       }
-      return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(varType).range(elementToHighlight).create();
     }
     return null;
   }
@@ -199,10 +213,10 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE).range(elementToHighlight).create();
     }
     if (variable instanceof PsiParameter) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER, elementToHighlight, null);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.REASSIGNED_PARAMETER).range(elementToHighlight).create();
     }
     return null;
   }
@@ -211,7 +225,7 @@ public class HighlightNamesUtil {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     TextAttributes result = null;
-    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(element.getProject());
+    final DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(file.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = daemonCodeAnalyzer.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();
@@ -232,7 +246,9 @@ public class HighlightNamesUtil {
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof JspHolderMethod) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
-    int end = method.getThrowsList().getTextRange().getEndOffset();
+    final TextRange throwsRange = method.getThrowsList().getTextRange();
+    LOG.assertTrue(throwsRange != null, method);
+    int end = throwsRange.getEndOffset();
     return new TextRange(start, end);
   }
 

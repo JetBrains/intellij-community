@@ -177,6 +177,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
+  @NotNull
   @Override protected Action[] createLeftSideActions() {
     return new Action[] { new NewKeyValueAction() };
   }

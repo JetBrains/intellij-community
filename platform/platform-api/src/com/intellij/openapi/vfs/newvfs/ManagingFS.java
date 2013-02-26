@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 
 /**
  * @author max
@@ -55,8 +53,6 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract boolean areChildrenLoaded(@NotNull VirtualFile dir);
 
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
-
-  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
 
   @Nullable
   public abstract NewVirtualFile findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs);

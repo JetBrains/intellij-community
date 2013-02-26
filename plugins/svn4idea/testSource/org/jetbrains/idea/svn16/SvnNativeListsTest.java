@@ -60,6 +60,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
   @Test
   public void testAdd() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -67,10 +68,13 @@ public class SvnNativeListsTest extends Svn16TestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
 
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A a.txt");
+    runAndVerifyStatus("","--- Changelist 'newOne':", "A a.txt");
   }
 
   private void ensureAddedToNativeList() {
@@ -83,6 +87,7 @@ public class SvnNativeListsTest extends Svn16TestCase {
   @Test
   public void testDeleted() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -91,17 +96,23 @@ public class SvnNativeListsTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     checkin();
     deleteFileInCommand(file);
-
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "D a.txt");
+    runAndVerifyStatus("","--- Changelist 'newOne':", "D a.txt");
   }
 
   @Test
   public void testEdit() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -109,18 +120,23 @@ public class SvnNativeListsTest extends Svn16TestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     checkin();
     editFileInCommand(myProject, file, "111");
-
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "M a.txt");
   }
 
   @Test
   public void testEditAndMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
-
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -129,29 +145,33 @@ public class SvnNativeListsTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     checkin();
     editFileInCommand(myProject, file, "111");
-
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "M a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "M a.txt");
 
     renameFileInCommand(file, "b.txt");
-    /*A  +    b.txt
-
-    --- Changelist 'newOne':
-    D       a.txt
-    */
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
   }
 
   @Test
   public void testMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -160,17 +180,24 @@ public class SvnNativeListsTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     checkin();
 
     renameFileInCommand(file, "b.txt");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
   }
 
   @Test
   public void testMoveMove() throws Throwable {
     final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    sleepABit();
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -179,18 +206,36 @@ public class SvnNativeListsTest extends Svn16TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     checkin();
 
     renameFileInCommand(file, "b.txt");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
 
     renameFileInCommand(file, "c.txt");
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
+    sleepABit();
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
 
     ensureAddedToNativeList();
 
-    verify(runSvn("status"), "", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+  }
+
+  private void sleepABit() {
+    try {
+      Thread.sleep(50);
+    }
+    catch (InterruptedException e) {
+      //
+    }
   }
 }

@@ -27,6 +27,9 @@ import java.util.List;
 import static org.jetbrains.idea.maven.model.MavenId.append;
 
 public class MavenPlugin implements Serializable {
+
+  static final long serialVersionUID = -6113607480882347420L;
+
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;

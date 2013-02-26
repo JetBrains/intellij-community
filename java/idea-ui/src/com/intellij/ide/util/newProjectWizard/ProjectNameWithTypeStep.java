@@ -41,6 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -100,15 +101,14 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       myInternalPanel.setBorder(null);
     }
     myModuleDescriptionPane.setContentType(UIUtil.HTML_MIME);
-    myModuleDescriptionPane.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          try {
-            BrowserUtil.browse(e.getURL());
-          }
-          catch (IllegalThreadStateException ex) {
-            // it's not a problem
-          }
+    myModuleDescriptionPane.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        try {
+          BrowserUtil.browse(e.getURL());
+        }
+        catch (IllegalThreadStateException ex) {
+          // it's not a problem
         }
       }
     });

@@ -23,11 +23,6 @@ target('default': "Developers update") {
   ant.delete(dir: patchedDescriptorDir)
 }
 
-target('build-jps': 'Build JPS standalone distribution') {
-  println("Building jps standalone distribution")
-  layout_jps("$home/build/lib/jps")
-}
-
 String appInfoFileName() {
   return "idea/IdeaApplicationInfo.xml"
 }
@@ -183,6 +178,15 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
     layoutCommunityPlugins(home)
 
+    layoutPlugin("javaFX") {
+      dir("lib") {
+        jar("javaFX.jar") {
+          module("javaFX")
+          module("javaFX-CE")
+        }
+      }
+    }
+
     dir("plugins") {
       dir("IntelliLang") {
         dir("lib") {
@@ -207,7 +211,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "javaFX", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -241,6 +245,17 @@ public def layoutCommunityPlugins(String home) {
       }
       jar("maven3-server-impl.jar") {
         module("maven3-server-impl")
+      }
+
+      jar("artifact-resolver-m2.jar") {
+        module("maven-artifact-resolver-m2")
+      }
+
+      jar("artifact-resolver-m3.jar") {
+        module("maven-artifact-resolver-m3")
+        module("maven-artifact-resolver-m2") {
+          include(name: 'org/jetbrains/idea/maven/artifactResolver/common/*')
+        }
       }
 
       dir("maven3") {
@@ -549,7 +564,7 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
-def layout_jps(String home, String target) {
+def layoutCommunityJps(String home, String target) {
   layout(target) {
     jar("util.jar") {
       module("annotations")
@@ -576,9 +591,27 @@ def layout_jps(String home, String target) {
     jar("groovy_rt.jar") {
       module("groovy_rt")
     }
-    jar("ui-designer-jps-plugin.jar") {
-      module("ui-designer-jps-plugin")
+    jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
+
+    jar("android-jps-plugin.jar") {
+      module("android-jps-plugin")
+      module("android-common")
+      module("android-rt")
     }
+    fileset(dir: "${home}/plugins/android/lib") {
+      include(name: "**/*.jar")
+      exclude(name: "**/ddmlib_1.jar")
+    }
+
+    jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
+    fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+
+    jar("eclipse-jps-plugin.jar") {
+      module("common-eclipse-util")
+      module("eclipse-jps-plugin")
+    }
+    jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
+    jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
     fileset(dir: "$home/lib") {
       include(name: "jdom.jar")
       include(name: "jna.jar")
@@ -586,6 +619,7 @@ def layout_jps(String home, String target) {
       include(name: "asm4-all.jar")
       include(name: "nanoxml-*.jar")
       include(name: "protobuf-*.jar")
+      include(name: "cli-parser-*.jar")
       include(name: "optimizedFileManager.jar")
       include(name: "log4j.jar")
       include(name: "jgoodies-forms.jar")

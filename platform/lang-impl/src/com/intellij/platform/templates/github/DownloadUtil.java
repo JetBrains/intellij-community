@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,25 +28,62 @@ public class DownloadUtil {
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
   /**
-   * Downloads content of {@code url} to {@code outputFile} and uses .
+   * Downloads content of {@code url} to {@code outputFile} atomically.<br/>
+   * {@code outputFile} isn't modified if an I/O error occurs or {@code contentChecker} is provided and returns false on the downloaded content.
+   * More formally, the steps are:
+   * <ol>
+   *   <li>Download {@code url} to {@code tempFile}. Stop in case of any I/O errors.</li>
+   *   <li>Stop if {@code contentChecker} is provided, and it returns false on the downloaded content.</li>
+   *   <li>Move {@code tempFile} to {@code outputFile}. On most OS this operation is done atomically.</li>
+   * </ol>
+   *
+   * Motivation: some web filtering products return pure HTML with HTTP 200 OK status instead of
+   * the asked content.
+   *
+   * @param indicator   progress indicator
+   * @param url         url to download
+   * @param outputFile  output file
+   * @param tempFile    temporary file to download to. This file is deleted on method exit.
+   * @param contentChecker checks whether the downloaded content is OK or not
+   * @returns true if no {@code contentChecker} is provided or the provided one returned true
+   * @throws IOException if an I/O error occurs
+   */
+  public static boolean downloadAtomically(@Nullable ProgressIndicator indicator,
+                                        @NotNull String url,
+                                        @NotNull File outputFile,
+                                        @NotNull File tempFile,
+                                        @Nullable Predicate<String> contentChecker) throws IOException
+  {
+    try {
+      downloadContentToFile(indicator, url, tempFile);
+      if (contentChecker != null) {
+        String content = FileUtil.loadFile(tempFile);
+        if (!contentChecker.apply(content)) {
+          return false;
+        }
+      }
+      FileUtil.rename(tempFile, outputFile);
+      return true;
+    } finally {
+      FileUtil.delete(tempFile);
+    }
+  }
+
+  /**
+   * Downloads content of {@code url} to {@code outputFile} atomically.
    * {@code outputFile} won't be modified in case of any I/O download errors.
    *
    * @param indicator   progress indicator
    * @param url         url to download
    * @param outputFile  output file
-   * @param tempFile    temporary file to download to. This file will be removed on method exit.
+   * @param tempFile    temporary file to download to. This file is deleted on method exit.
    */
   public static void downloadAtomically(@Nullable ProgressIndicator indicator,
                                         @NotNull String url,
                                         @NotNull File outputFile,
                                         @NotNull File tempFile) throws IOException
   {
-    try {
-      downloadContentToFile(indicator, url, tempFile);
-      FileUtil.rename(tempFile, outputFile);
-    } finally {
-      FileUtil.delete(tempFile);
-    }
+    downloadAtomically(indicator, url, outputFile, tempFile, null);
   }
 
 

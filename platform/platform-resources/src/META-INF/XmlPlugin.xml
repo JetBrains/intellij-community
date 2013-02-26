@@ -74,6 +74,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
+    <extensionPoint name="xml.importOptimizer" interface="com.intellij.lang.ImportOptimizer"/>
   </extensionPoints>
 
   <project-components>
@@ -112,6 +113,8 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.xml.XmlText"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTextManipulator"/>
+    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlProcessingInstruction"
+                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlProcessingInstructionManipulator"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
@@ -146,6 +149,12 @@
     <applicationService serviceInterface="com.intellij.application.options.editor.WebEditorOptions"
                         serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
     <exportable serviceInterface="com.intellij.application.options.editor.WebEditorOptions"/>
+
+    <applicationConfigurable provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationService serviceInterface="com.intellij.application.options.emmet.EmmetOptions"
+                        serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
+    <exportable serviceInterface="com.intellij.application.options.emmet.EmmetOptions"/>
+
 
     <applicationService serviceInterface="com.intellij.application.options.editor.XmlFoldingSettings"
                         serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
@@ -445,10 +454,12 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
+    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.MicrodataAttributeDescriptorsProvider"/>
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
+    <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>

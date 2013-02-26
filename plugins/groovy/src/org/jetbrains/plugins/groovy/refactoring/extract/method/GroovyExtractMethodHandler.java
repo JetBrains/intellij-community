@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     return !dialog.isOK();
   }
 
-  private static void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
+  private void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
     final PsiClass owner = PsiUtil.getContextClass(initialInfo.getStatements()[0]);
     LOG.assertTrue(owner!=null);
 
@@ -189,16 +189,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, "testMethod", owner, true);
-      final PsiType type = helper.getOutputType();
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiType.VOID.equals(type)) {
-        helper.setSpecifyType(false);
-      }
-      return helper;
-    }
-
+  protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
     GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(initialInfo, owner);
     dialog.show();
     if (!dialog.isOK()) return null;

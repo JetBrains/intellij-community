@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +34,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
-import java.util.HashSet;
 
 public class ConfigFilesTreeBuilder {
 
@@ -132,8 +131,8 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
-  private static String getFileTypeNodeName(FileType key) {
-    return StringUtil.capitalize(key.getDefaultExtension()) + " based context files" ;
+  private static String getFileTypeNodeName(FileType fileType) {
+    return fileType.getName() + " context files" ;
   }
 
   private boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
@@ -172,7 +171,8 @@ public class ConfigFilesTreeBuilder {
       final Icon icon = fileType.getIcon();
       renderer.setIcon(icon);
       renderer.append(getFileTypeNodeName(fileType), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    } if (object instanceof Module) {
+    }
+    else if (object instanceof Module) {
       final Module module = (Module)object;
       final Icon icon = ModuleType.get(module).getIcon();
       renderer.setIcon(icon);

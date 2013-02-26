@@ -82,12 +82,8 @@ public class FileContent extends DiffContent {
   }
 
   public static FileContent createFromTempFile(Project project, String name, String ext, @NotNull byte[] content) throws IOException {
-    final File tempFile;
-    if (content.length == 0) {
-      tempFile = FileUtil.createTempFile(name, "txt");
-      FileUtil.writeToFile(tempFile, "Does not exist");
-    } else {
-      tempFile = FileUtil.createTempFile(name, ext);
+    File tempFile = FileUtil.createTempFile(name, "." + ext);
+    if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }
     tempFile.deleteOnExit();

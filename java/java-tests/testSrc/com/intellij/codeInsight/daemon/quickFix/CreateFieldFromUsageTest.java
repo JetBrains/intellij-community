@@ -48,6 +48,10 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase{
     doSingleTest();
   }
 
+  public void testDependantConstant() throws Exception {
+    doSingleTest();
+  }
+
   protected void doSingleTest() {
     doSingleTest(getTestName(false) + ".java");
   }

@@ -304,7 +304,6 @@ java.awt.Window#setOpacity(float;)
 java.awt.Window#getShape()
 java.awt.Window#setShape(java.awt.Shape;)
 java.awt.Window#isOpaque()
-java.awt.Window#paint(java.awt.Graphics;)
 java.awt.GraphicsConfiguration#isTranslucencyCapable()
 java.awt.event.InvocationEvent#dispatched
 java.awt.event.InvocationEvent#isDispatched()

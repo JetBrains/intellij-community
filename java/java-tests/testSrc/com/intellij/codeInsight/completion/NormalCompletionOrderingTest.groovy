@@ -98,11 +98,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa");
+    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
   }
 
   public void testDispreferDeclaredOfExpectedType() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa");
+    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
   }
 
   public void testDispreferImpls() throws Throwable {
@@ -577,6 +577,31 @@ import java.lang.annotation.Target;
     checkPreferredItems 0, 'psiElement', 'PsiElement'
     incUseCount lookup, 1
     assertPreferredItems 0, 'psiElement', 'PsiElement'
+  }
+
+  public void testHonorRecency() {
+    invokeCompletion(getTestName(false) + ".java")
+    myFixture.completeBasic()
+    myFixture.type('setou\nz.')
+
+    myFixture.completeBasic()
+    myFixture.type('set')
+    assertPreferredItems 0, 'setOurText', 'setText'
+    myFixture.type('te')
+    assertPreferredItems 0, 'setText', 'setOurText'
+    myFixture.type('\nz.')
+
+    myFixture.completeBasic()
+    myFixture.type('set')
+    assertPreferredItems 0, 'setText', 'setOurText'
+  }
+
+  public void testEnumConstantStartMatching() {
+    checkPreferredItems(0, 'rMethod', 'Zoo.RIGHT')
+    myFixture.type('i\n;\nreturn r')
+    myFixture.completeBasic()
+    assertPreferredItems 0, 'Zoo.RIGHT', 'rMethod'
+
   }
 
 }

@@ -8,6 +8,7 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiManager;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author Evgeny Zakrevsky
  */
-public class GotoTaskAction extends GotoActionBase {
+public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static final CreateNewTaskAction CREATE_NEW_TASK_ACTION = new CreateNewTaskAction();
   public static final String ID = "tasks.goto";
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,6 +69,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
     return panel;
   }
 
+  @NotNull
   protected Action[] createActions() {
     if (myFeatures.length == 1) {
       return new Action[] {getCancelAction()};

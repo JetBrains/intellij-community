@@ -40,6 +40,10 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected final FACET_TYPE_TYPE myFacetType;
   protected final String myDefaultFacetName;
 
+  protected FacetImporter(String pluginGroupID, String pluginArtifactID, FACET_TYPE_TYPE type) {
+    this(pluginGroupID, pluginArtifactID, type, type.getDefaultFacetName());
+  }
+
   public FacetImporter(String pluginGroupID,
                        String pluginArtifactID,
                        FACET_TYPE_TYPE type,

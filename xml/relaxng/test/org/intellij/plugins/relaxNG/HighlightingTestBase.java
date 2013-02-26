@@ -212,7 +212,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     assertNull("Reference", psiReference.resolve());
     assertTrue("QuickFixProvider", psiReference instanceof QuickFixProvider);
 
-    final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, 0, 0, "");
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0, 0).descriptionAndTooltip("").create();
     ((QuickFixProvider)psiReference).registerQuickfix(info, psiReference);
     assertTrue("One action expected", info.quickFixActionRanges.size() == 1);
 

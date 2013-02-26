@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,19 +35,19 @@ import java.util.Map;
  */
 class Win32FsCache {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
-  private Reference<Map<String, FileInfo>> myCache;
+  private Reference<Map<String, FileAttributes>> myCache;
 
   void clearCache() {
     myCache = null;
   }
 
   @NotNull
-  private Map<String, FileInfo> getMap() {
-    Reference<Map<String, FileInfo>> cache = myCache;
-    Map<String, FileInfo> map = cache == null ? null : cache.get();
+  private Map<String, FileAttributes> getMap() {
+    Reference<Map<String, FileAttributes>> cache = myCache;
+    Map<String, FileAttributes> map = cache == null ? null : cache.get();
     if (map == null) {
-      map = new THashMap<String, FileInfo>();
-      myCache = new SoftReference<Map<String, FileInfo>>(map);
+      map = new THashMap<String, FileAttributes>();
+      myCache = new SoftReference<Map<String, FileAttributes>>(map);
     }
     return map;
   }
@@ -60,10 +61,10 @@ class Win32FsCache {
 
     if (!path.endsWith("/")) path += "/";
     List<String> names = new ArrayList<String>(fileInfo.length);
-    Map<String, FileInfo> map = getMap();
+    Map<String, FileAttributes> map = getMap();
     for (FileInfo info : fileInfo) {
       String name = info.getName();
-      map.put(path + name, info);
+      map.put(path + name, info.toFileAttributes());
       names.add(name);
     }
 
@@ -71,17 +72,18 @@ class Win32FsCache {
   }
 
   @Nullable
-  FileInfo getInfo(@NotNull VirtualFile file) {
+  FileAttributes getAttributes(@NotNull VirtualFile file) {
     String path = file.getPath();
-    Map<String, FileInfo> map = getMap();
-    FileInfo info = map.get(path);
-    if (info == null) {
-      info = myKernel.getInfo(path);
+    Map<String, FileAttributes> map = getMap();
+    FileAttributes attributes = map.get(path);
+    if (attributes == null) {
+      FileInfo info = myKernel.getInfo(path);
       if (info == null) {
         return null;
       }
-      map.put(path, info);
+      attributes = info.toFileAttributes();
+      map.put(path, attributes);
     }
-    return info;
+    return attributes;
   }
 }
