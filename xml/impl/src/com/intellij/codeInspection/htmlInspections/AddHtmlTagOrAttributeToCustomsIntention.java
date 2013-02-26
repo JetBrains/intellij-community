@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -69,9 +68,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   }
 
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    inspectionProfile.modifyProfile(new Consumer<ModifiableModel>() {
+    InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
       @Override
       public void consume(ModifiableModel model) {
         XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)model.getUnwrappedTool(myInspectionName, file);
