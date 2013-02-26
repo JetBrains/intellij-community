@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,7 +26,9 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -126,22 +129,29 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   @NotNull
   @Override
   public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
-    final PsiManagerEx manager = getManager();
+    FileElement fileElement = SharedImplUtil.findFileElement(this);
+    if (fileElement == null) {
+      LOG.error("fileElement == null!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
+    final PsiManagerEx manager = fileElement.getManager();
     if (manager == null) {
       LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    if (!isValid()) {
+    PsiFile file = SharedImplUtil.getContainingFile(fileElement);
+    boolean valid = file != null && file.isValid();
+    if (!valid) {
       LOG.error("invalid!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
+    Project project = manager.getProject();
     final MethodReferenceResolver resolver = new MethodReferenceResolver();
     final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
     if (map != null && map.containsKey(this)) {
       return (JavaResolveResult[])resolver.resolve(this, incompleteCode);
     }
-    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, resolver, true,
-                                                                                        incompleteCode);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, resolver, true, incompleteCode,file);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
@@ -392,7 +402,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
       @Nullable
       @Override
-      public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
+      public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
         if (mySignature == null) return null;
 
         boolean hasReceiver = false;
@@ -472,7 +482,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
 
       @Override
-      public CandidateInfo resolveConflict(List<CandidateInfo> conflicts) {
+      public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
         boolean varargs = false;
         for (CandidateInfo conflict : conflicts) {
           final PsiElement psiElement = conflict.getElement();

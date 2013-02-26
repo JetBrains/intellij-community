@@ -27,8 +27,8 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -57,7 +57,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     myRootToDescriptors = new THashMap<File, List<BuildRootDescriptor>>(FileUtil.FILE_HASHING_STRATEGY);
     myFileFilters = new ConcurrentHashMap<BuildRootDescriptor, FileFilter>();
     final Iterable<AdditionalRootsProviderService> rootsProviders = JpsServiceManager.getInstance().getExtensions(AdditionalRootsProviderService.class);
-    for (BuildTargetType<?> targetType : BuilderRegistry.getInstance().getTargetTypes()) {
+    for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
       for (BuildTarget<?> target : targetIndex.getAllTargets(targetType)) {
         addRoots(dataPaths, rootsProviders, target, model, index, ignoredFileIndex);
       }

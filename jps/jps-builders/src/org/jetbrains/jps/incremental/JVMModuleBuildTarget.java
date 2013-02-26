@@ -19,10 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTargetType;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -38,7 +35,7 @@ import java.util.Set;
  */
 public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extends ModuleBasedTarget<R> {
 
-  public JVMModuleBuildTarget(BuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
+  public JVMModuleBuildTarget(ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
     super(targetType, module);
   }
 

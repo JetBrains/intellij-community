@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
@@ -62,7 +63,7 @@ public class NumericOverflowInspection extends BaseLocalInspectionTool {
 
       @Override
       public void visitExpression(PsiExpression expression) {
-        boolean info = hasOverflow(expression);
+        boolean info = hasOverflow(expression, holder.getProject());
         if (info) {
           holder.registerProblem(expression, JavaErrorMessages.message("numeric.overflow.in.expression"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
@@ -70,12 +71,12 @@ public class NumericOverflowInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private static boolean hasOverflow(PsiExpression expr) {
+  private static boolean hasOverflow(PsiExpression expr, @NotNull Project project) {
     if (!TypeConversionUtil.isNumericType(expr.getType())) return false;
     boolean overflow = false;
     try {
       if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
-        JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr, true);
+        JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(expr, true);
       }
       else {
         overflow = true;

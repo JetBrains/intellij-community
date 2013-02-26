@@ -51,7 +51,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
 
   @Override
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
-    CollectingContentIterator finder = myIndex.createContentIterator(indicator);
+    CollectingContentIterator finder = myIndex.createContentIterator(indicator, myProject);
     long l = System.currentTimeMillis();
     myIndex.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
@@ -72,7 +72,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void updatingDone() {
     if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.filesUpdateFinished();
+      myIndex.filesUpdateFinished(myProject);
       LOG.info("Unindexed files update done in " + (System.currentTimeMillis() - myStarted) + " ms");
     }
   }
@@ -80,7 +80,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void canceled() {
     if (myFinishedUpdate.compareAndSet(false, true)) {
-      myIndex.filesUpdateFinished();
+      myIndex.filesUpdateFinished(myProject);
       LOG.info("Unindexed files update canceled");
     }
   }

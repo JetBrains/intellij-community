@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,26 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkListener;
 import java.awt.event.MouseEvent;
 
 /**
  * Describes a hyperlink inside a debugger node
- *
- * @author nik
  */
 public abstract class XDebuggerTreeNodeHyperlink {
-  private String myLinkText;
+  private final String linkText;
 
   protected XDebuggerTreeNodeHyperlink(@NotNull String linkText) {
-    myLinkText = linkText;
+    this.linkText = linkText;
   }
 
   @NotNull
   public String getLinkText() {
-    return myLinkText;
+    return linkText;
   }
 
   @NotNull
@@ -43,4 +44,21 @@ public abstract class XDebuggerTreeNodeHyperlink {
   }
 
   public abstract void onClick(MouseEvent event);
+
+  public static final class HyperlinkListenerDelegator extends XDebuggerTreeNodeHyperlink {
+    private final HyperlinkListener hyperlinkListener;
+    private final String href;
+
+    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
+      super(linkText);
+
+      this.hyperlinkListener = hyperlinkListener;
+      this.href = href;
+    }
+
+    @Override
+    public void onClick(MouseEvent event) {
+      hyperlinkListener.hyperlinkUpdate(IJSwingUtilities.createHyperlinkEvent(href, getLinkText()));
+    }
+  }
 }

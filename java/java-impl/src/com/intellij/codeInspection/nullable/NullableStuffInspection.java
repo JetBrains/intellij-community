@@ -79,13 +79,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
           return;
         }
-        final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
+        Project project = holder.getProject();
+        final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
         if (annotated.isDeclaredNotNull ^ annotated.isDeclaredNullable) {
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? manager.getNullables() : manager.getNotNulls();
 
-          final String propName = JavaCodeStyleManager.getInstance(field.getProject()).variableNameToPropertyName(field.getName(),
-                                                                                                                  VariableKind.FIELD);
+          String propName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
           final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
           final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);
           final String nullableSimpleName = StringUtil.getShortName(manager.getDefaultNullable());
@@ -223,7 +223,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     }
   }
   private static Annotated check(final PsiModifierListOwner parameter, final ProblemsHolder holder, PsiType type) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
+    final NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
     PsiAnnotation isDeclaredNotNull = AnnotationUtil.findAnnotation(parameter, manager.getNotNulls());
     PsiAnnotation isDeclaredNullable = AnnotationUtil.findAnnotation(parameter, manager.getNullables());
     if (isDeclaredNullable != null && isDeclaredNotNull != null) {

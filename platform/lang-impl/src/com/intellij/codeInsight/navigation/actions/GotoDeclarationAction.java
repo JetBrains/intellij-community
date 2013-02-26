@@ -214,7 +214,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         if (result != null && result.length > 0) {
           for (PsiElement element : result) {
             if (element == null) {
-              LOG.error("Null target element is returned by " + handler.getClass().getCanonicalName());
+              LOG.error("Null target element is returned by " + handler.getClass().getName());
               return null;
             }
           }

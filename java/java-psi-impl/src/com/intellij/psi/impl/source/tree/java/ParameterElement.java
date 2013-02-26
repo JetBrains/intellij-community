@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,50 +18,49 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.java.stubs.JavaParameterElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
-public class ParameterElement extends CompositeElement{
+public class ParameterElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterElement");
 
-  public ParameterElement() {
-    super(JavaElementType.PARAMETER);
-  }
-
-  protected ParameterElement(IElementType type) {
+  public ParameterElement(@NotNull IElementType type) {
     super(type);
   }
 
   @Override
   public int getTextOffset() {
-    return findChildByRole(ChildRole.NAME).getStartOffset();
+    ASTNode node = findChildByType(JavaParameterElementType.ID_TYPES);
+    return node != null ? node.getStartOffset() : getStartOffset();
   }
 
   @Override
-  public ASTNode findChildByRole(int role){
+  public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
-      default:
-        return null;
 
-      case ChildRole.MODIFIER_LIST:
-        return findChildByType(JavaElementType.MODIFIER_LIST);
-
-      case ChildRole.NAME:
-        return findChildByType(JavaTokenType.IDENTIFIER);
-
-      case ChildRole.TYPE:
-        return findChildByType(JavaElementType.TYPE);
-
+    if (role == ChildRole.MODIFIER_LIST) {
+      return findChildByType(JavaElementType.MODIFIER_LIST);
+    }
+    else if (role == ChildRole.NAME) {
+      return findChildByType(JavaTokenType.IDENTIFIER);
+    }
+    else if (role == ChildRole.TYPE) {
+      return findChildByType(JavaElementType.TYPE);
+    }
+    else {
+      return null;
     }
   }
 
   @Override
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
+
     IElementType i = child.getElementType();
     if (i == JavaElementType.MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
@@ -77,4 +76,3 @@ public class ParameterElement extends CompositeElement{
     }
   }
 }
-

@@ -27,7 +27,9 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   @Override
   @NotNull
   public final ResolveResult[] multiResolve(boolean incompleteCode) {
-    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode);
+    PsiElement element = getElement();
+    PsiFile file = element.getContainingFile();
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode,file);
   }
 
   @Override

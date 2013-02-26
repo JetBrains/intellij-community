@@ -164,8 +164,9 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
-    ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
+    PsiFile file = getContainingFile();
+    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
+    ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode,file);
     if (results.length == 0) return JavaResolveResult.EMPTY_ARRAY;
     return (JavaResolveResult[])results;
   }

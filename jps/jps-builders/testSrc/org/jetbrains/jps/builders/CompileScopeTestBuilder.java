@@ -17,10 +17,10 @@ package org.jetbrains.jps.builders;
 
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.CompileScopeImpl;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -85,7 +85,7 @@ public class CompileScopeTestBuilder {
   }
 
   public CompileScopeTestBuilder all() {
-    myTargetTypes.addAll(BuilderRegistry.getInstance().getTargetTypes());
+    myTargetTypes.addAll(TargetTypeRegistry.getInstance().getTargetTypes());
     return this;
   }
 

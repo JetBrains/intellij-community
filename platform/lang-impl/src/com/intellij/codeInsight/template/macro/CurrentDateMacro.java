@@ -45,12 +45,12 @@ public class CurrentDateMacro extends SimpleMacro {
     if (params.length == 1) {
       Result format = params[0].calculateResult(context);
       if (format != null) {
+        String pattern = format.toString();
         try {
-          return new SimpleDateFormat(format.toString()).format(new Date(time));
+          return new SimpleDateFormat(pattern).format(new Date(time));
         }
         catch (Exception e) {
-          LOG.info(e);
-          return "Problem when formatting date/time: " + e.getMessage();
+          return "Problem when formatting date/time for pattern \"" + pattern + "\": " + e.getMessage();
         }
       }
     }

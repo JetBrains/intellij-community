@@ -1212,7 +1212,7 @@ public class HighlightMethodUtil {
     if (list == null) return;
     PsiClass aClass = typeResolveResult.getElement();
     if (aClass == null) return;
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(constructorCall.getProject()).getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper();
     PsiClass accessObjectClass = null;
     if (constructorCall instanceof PsiNewExpression) {
       PsiExpression qualifier = ((PsiNewExpression)constructorCall).getQualifier();

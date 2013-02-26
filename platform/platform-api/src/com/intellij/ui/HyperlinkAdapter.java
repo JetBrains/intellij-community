@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,8 @@ import javax.swing.event.HyperlinkListener;
  * @author Dmitry Avdeev
  */
 public abstract class HyperlinkAdapter implements HyperlinkListener {
-  
   @Override
-  public void hyperlinkUpdate(HyperlinkEvent e) {
+  public final void hyperlinkUpdate(HyperlinkEvent e) {
     if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
       hyperlinkActivated(e);
     }

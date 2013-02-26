@@ -23,8 +23,8 @@ import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -63,7 +63,7 @@ public class FSState {
   }
 
   public void load(DataInputStream in, JpsModel model, final BuildRootIndex buildRootIndex) throws IOException {
-    BuilderRegistry registry = BuilderRegistry.getInstance();
+    final TargetTypeRegistry registry = TargetTypeRegistry.getInstance();
     int typeCount = in.readInt();
     while (typeCount-- > 0) {
       final String typeId = IOUtil.readString(in);

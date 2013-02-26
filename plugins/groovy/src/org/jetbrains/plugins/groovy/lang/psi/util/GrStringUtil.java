@@ -372,7 +372,7 @@ public class GrStringUtil {
   public static String escapeAndUnescapeSymbols(String s, String toEscape, String toUnescape, StringBuilder builder) {
     boolean escaped = false;
     for (int i = 0; i < s.length(); i++) {
-      final char ch = s.charAt(i);
+      char ch = s.charAt(i);
       if (escaped) {
         if (toUnescape.indexOf(ch) < 0) {
           builder.append('\\');
@@ -380,6 +380,7 @@ public class GrStringUtil {
         }
         else {
           if (ch=='n') builder.append('\n');
+          else if (ch=='r') builder.append('\r');
           else if (ch=='b') builder.append('\b');
           else if (ch=='t') builder.append('\t');
           else if (ch=='f') builder.append('\r');
@@ -395,14 +396,14 @@ public class GrStringUtil {
 
       if (toEscape.indexOf(ch) >= 0) {
         builder.append('\\');
+        if (ch == '\n') ch = 'n';
+        else if (ch == '\b') ch = 'b';
+        else if (ch == '\t') ch = 't';
+        else if (ch == '\r') ch = 'r';
+        else if (ch == '\f') ch = 'f';
       }
 
-      if (ch == '\n' && toEscape.indexOf('n') >= 0) {
-        builder.append("\\n");
-      }
-      else {
-        builder.append(ch);
-      }
+      builder.append(ch);
     }
     return builder.toString();
   }
