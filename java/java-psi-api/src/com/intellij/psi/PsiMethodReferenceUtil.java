@@ -18,10 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,12 +76,7 @@ public class PsiMethodReferenceUtil {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
     if (expression != null) {
-      final PsiType expressionType = expression.getType();
-      if (expressionType instanceof PsiArrayType) {
-        containingClass = JavaPsiFacade.getInstance(methodReferenceExpression.getProject())
-          .findClass(CommonClassNames.JAVA_LANG_OBJECT, methodReferenceExpression.getResolveScope());
-        return new QualifierResolveResult(containingClass, substitutor, false);
-      }
+      final PsiType expressionType = getExpandedType(expression.getType(), expression);
       PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
       containingClass = result.getElement();
       if (containingClass != null) {
@@ -152,7 +144,14 @@ public class PsiMethodReferenceUtil {
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 
         final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(left);
-        PsiType methodReturnType = subst.substitute(((PsiMethod)resolve).getReturnType());
+        
+        PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(methodReferenceExpression, methodReferenceExpression,
+                                                                        (PsiMethod)resolve, null,
+                                                                        PsiUtil.getLanguageLevel(methodReferenceExpression));
+        if (returnType == null) {
+          returnType = ((PsiMethod)resolve).getReturnType();
+        }
+        PsiType methodReturnType = subst.substitute(returnType);
         if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
           if (methodReturnType == null) {
             methodReturnType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
