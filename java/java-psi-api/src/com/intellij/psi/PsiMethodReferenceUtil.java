@@ -176,11 +176,7 @@ public class PsiMethodReferenceUtil {
   }
 
   private static boolean isReceiverType(@Nullable PsiClass aClass, @Nullable PsiClass containingClass) {
-    while (containingClass != null) {
-      if (InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true)) return true;
-      containingClass = containingClass.getContainingClass();
-    }
-    return false;
+    return InheritanceUtil.isInheritorOrSelf(aClass, containingClass, true);
   }
 
   public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {

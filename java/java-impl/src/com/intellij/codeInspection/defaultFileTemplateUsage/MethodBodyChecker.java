@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +81,7 @@ public class MethodBodyChecker {
     SoftReference<Map<String, PsiMethod>> ref = aClass.getUserData(CACHE_KEY);
     Map<String, PsiMethod> cache = ref == null ? null : ref.get();
     if (cache == null) {
-      aClass.putUserData(CACHE_KEY, new PatchedSoftReference<Map<String, PsiMethod>>(cache = new ConcurrentHashMap<String, PsiMethod>()));
+      aClass.putUserData(CACHE_KEY, new SoftReference<Map<String, PsiMethod>>(cache = new ConcurrentHashMap<String, PsiMethod>()));
     }
     return cache;
   }
@@ -107,7 +106,7 @@ public class MethodBodyChecker {
 
     if (PsiEquivalenceUtil.areElementsEquivalent(body, templateBody, new Comparator<PsiElement>(){
       public int compare(final PsiElement element1, final PsiElement element2) {
-        // templates may be different on super method name                              
+        // templates may be different on super method name
         if (element1 == superMethod && (element2 == templateMethod || element2 == null)) return 0;
         return 1;
       }

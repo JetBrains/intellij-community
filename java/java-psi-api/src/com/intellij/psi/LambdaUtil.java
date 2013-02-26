@@ -750,7 +750,7 @@ public class LambdaUtil {
 
     public TypeParamsChecker(PsiElement expression, PsiClass aClass) {
       myClass = aClass;
-      PsiElement parent = expression.getParent();
+      PsiElement parent = expression != null ? expression.getParent() : null;
       while (parent instanceof PsiParenthesizedExpression) {
         parent = parent.getParent();
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,17 +67,12 @@ public abstract class PsiNameHelper {
 
   @NotNull
   public static String getShortClassName(@NotNull String referenceText) {
-    return getShortClassName(referenceText, true);
-  }
+    int lessPos = referenceText.length(), bracesBalance = 0, i;
 
-  private static String getShortClassName(String referenceText, boolean removeWhitespace) {
-    int lessPos = referenceText.length();
-    int bracesBalance = 0;
-    int i;
     loop:
     for (i = referenceText.length() - 1; i >= 0; i--) {
-      final char aChar = referenceText.charAt(i);
-      switch (aChar) {
+      char ch = referenceText.charAt(i);
+      switch (ch) {
         case ')':
         case '>':
           bracesBalance++;
@@ -91,22 +86,25 @@ public abstract class PsiNameHelper {
 
         case '@':
         case '.':
-          if (bracesBalance == 0) break loop;
+          if (bracesBalance <= 0) break loop;
           break;
 
         default:
-          if (bracesBalance == 0 && removeWhitespace && !Character.isWhitespace(aChar) && !Character.isJavaIdentifierPart(aChar)) {
-            return getShortClassName(removeWhitespace(referenceText), false);
+          if (Character.isWhitespace(ch) && bracesBalance <= 0) {
+            for (int j = i + 1; j < lessPos; j++) {
+              if (!Character.isWhitespace(referenceText.charAt(j))) break loop;
+            }
+            lessPos = i;
           }
       }
     }
+
     String sub = referenceText.substring(i + 1, lessPos).trim();
     return sub.length() == referenceText.length() ? sub : new String(sub);
   }
 
   public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
     final String referenceName = ref.getReferenceName();
-
     PsiType[] typeParameters = ref.getTypeParameters();
     return getPresentableText(referenceName, typeParameters);
   }
@@ -167,7 +165,7 @@ public abstract class PsiNameHelper {
    * <code>["List&lt;String&gt","Integer"]</code>
    *
    * @param referenceText the text of the reference to calculate type parameters for.
-   * @return the calculated array of type parameters. 
+   * @return the calculated array of type parameters.
    */
   public static String[] getClassParametersText(String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;

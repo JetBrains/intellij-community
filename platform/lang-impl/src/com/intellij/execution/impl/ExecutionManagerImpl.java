@@ -257,7 +257,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
-  @Deprecated
   public void restartRunProfile(@NotNull final Project project,
                                 @NotNull final Executor executor,
                                 @NotNull final ExecutionTarget target,

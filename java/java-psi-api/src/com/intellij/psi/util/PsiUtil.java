@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
@@ -473,7 +474,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType argType = args[args.length - 1];
       if (argType == null) return ApplicabilityLevel.NOT_APPLICABLE;
       if (TypeConversionUtil.isAssignable(parmType, argType)) return ApplicabilityLevel.FIXED_ARITY;
-      
+
       if (isRaw) {
         final PsiType erasedParamType = TypeConversionUtil.erasure(parmType);
         final PsiType erasedArgType = TypeConversionUtil.erasure(argType);
@@ -550,7 +551,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (typeParameters1.length != typeParameters2.length) return false;
     for (int i = 0; i < typeParameters1.length; i++) {
       final PsiType substituted2 = s2.substitute(typeParameters2[i]);
-      if (!Comparing.equal(s1.substituteWithBoundsPromotion(typeParameters1[i]), substituted2) && 
+      if (!Comparing.equal(s1.substituteWithBoundsPromotion(typeParameters1[i]), substituted2) &&
           !Comparing.equal(s1.substitute(typeParameters1[i]), substituted2)) return false;
     }
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) return true;
@@ -858,7 +859,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean hasDefaultConstructor(@NotNull PsiClass clazz) {
     return hasDefaultConstructor(clazz, false);
   }
-  
+
   public static boolean hasDefaultConstructor(@NotNull PsiClass clazz, boolean allowProtected) {
     return hasDefaultConstructor(clazz, allowProtected, true);
   }
@@ -949,8 +950,12 @@ public final class PsiUtil extends PsiUtilCore {
     return parent instanceof PsiIfStatement && element == ((PsiIfStatement)parent).getElseBranch();
   }
 
-  public static boolean isJavaToken(@Nullable final PsiElement element, final IElementType type) {
+  public static boolean isJavaToken(@Nullable PsiElement element, IElementType type) {
     return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == type;
+  }
+
+  public static boolean isJavaToken(@Nullable PsiElement element, @NotNull TokenSet types) {
+    return element instanceof PsiJavaToken && types.contains(((PsiJavaToken)element).getTokenType());
   }
 
   public static boolean isCatchParameter(@Nullable final PsiElement element) {

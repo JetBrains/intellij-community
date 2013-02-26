@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -65,7 +66,13 @@ public interface ModifiableModel extends Profile {
 
   void resetToEmpty();
 
+  /**
+   * @return {@link com.intellij.codeInspection.ex.InspectionToolWrapper}
+   * @see #getUnwrappedTool(String, com.intellij.psi.PsiElement)
+   */
   InspectionProfileEntry getInspectionTool(String shortName, PsiElement element);
+
+  InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
   InspectionProfileEntry[] getInspectionTools(PsiElement element);
 

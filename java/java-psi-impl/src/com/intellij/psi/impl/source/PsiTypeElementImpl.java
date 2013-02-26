@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +45,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
 
   private volatile PsiType myCachedType = null;
-  private volatile PatchedSoftReference<PsiType> myCachedDetachedType = null;
+  private volatile SoftReference<PsiType> myCachedDetachedType = null;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public PsiTypeElementImpl() {
@@ -110,8 +110,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           final List<PsiType> types = ContainerUtil.map(typeElements, new Function<PsiTypeElement, PsiType>() {
               @Override public PsiType fun(final PsiTypeElement psiTypeElement) { return psiTypeElement.getType(); }
           });
-          cachedType = opElement instanceof PsiJavaToken && ((PsiJavaToken)opElement).getTokenType() == JavaTokenType.AND 
-                       ? PsiIntersectionType.createIntersection(types.toArray(new PsiType[types.size()])) 
+          cachedType = opElement instanceof PsiJavaToken && ((PsiJavaToken)opElement).getTokenType() == JavaTokenType.AND
+                       ? PsiIntersectionType.createIntersection(types.toArray(new PsiType[types.size()]))
                        : new PsiDisjunctionType(types, getManager());
         }
       }
@@ -168,14 +168,14 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public PsiType getDetachedType(@NotNull PsiElement context) {
-    PatchedSoftReference<PsiType> cached = myCachedDetachedType;
+    SoftReference<PsiType> cached = myCachedDetachedType;
     PsiType type = cached == null ? null : cached.get();
     if (type != null) return type;
     try {
       String combinedAnnotations = getCombinedAnnotationsText();
       String text = combinedAnnotations.isEmpty() ? getText().trim() : combinedAnnotations + " " + getText().trim();
       type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
-      myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
+      myCachedDetachedType = new SoftReference<PsiType>(type);
     }
     catch (IncorrectOperationException e) {
       return getType();

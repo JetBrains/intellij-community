@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
+import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -78,29 +79,82 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
                                      final @NotNull ResolveState _state,
-                                     final PsiElement lastParent,
+                                     final @Nullable PsiElement lastParent,
                                      final @NotNull PsiElement place) {
     if (lastParent == null) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, _state, lastParent, place)) return false;
     if (!processParameters(processor, _state, state, place)) return false;
-    if (!processOwner(processor, state)) return false;
+    if (!ResolveUtil.processElement(processor, getOwner(), _state)) return false;
     if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
+    if (!processOwnerAndDelegate(processor, state, place)) return false;
 
     return true;
   }
 
-  private boolean processClosureClassMembers(PsiScopeProcessor processor,
-                                             ResolveState state, PsiElement lastParent,
-                                             PsiElement place) {
+  private boolean processOwnerAndDelegate(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    Boolean result = processDelegatesTo(processor, state, place);
+    if (result != null) return result.booleanValue();
+
+    if (!processOwner(processor, state, place)) return false;
+    return true;
+  }
+
+  @Nullable
+  private Boolean processDelegatesTo(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    GrDelegatesToUtil.DelegatesToInfo info = GrDelegatesToUtil.getDelegateToInfo(place, this);
+    if (info == null) {
+      return null;
+    }
+
+    switch (info.getStrategy()) {
+      case Closure.OWNER_FIRST:
+        if (!processOwner(processor, state, place)) return false;
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
+        return true;
+      case Closure.DELEGATE_FIRST:
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
+        if (!processOwner(processor, state, place)) return false;
+        return true;
+      case Closure.OWNER_ONLY:
+        if (!processOwner(processor, state, place)) return false;
+        return true;
+      case Closure.DELEGATE_ONLY:
+        if (!processDelegate(processor, state, place, info.getTypeToDelegate())) return false;
+        return true;
+      case Closure.TO_SELF:
+        return true;
+      default:
+        return null;
+    }
+  }
+
+  private boolean processDelegate(@NotNull PsiScopeProcessor processor,
+                                  @NotNull ResolveState state,
+                                  @NotNull PsiElement place,
+                                  @Nullable final PsiType classToDelegate) {
+    if (classToDelegate != null) {
+      if (state.get(ResolverProcessor.RESOLVE_CONTEXT) == null) {
+        state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+      }
+      return ResolveUtil.processAllDeclarations(classToDelegate, processor, state, place);
+    }
+
+    return true;
+  }
+
+  private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
+                                             @NotNull ResolveState state,
+                                             @Nullable PsiElement lastParent,
+                                             @NotNull PsiElement place) {
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 
       if (place instanceof GroovyPsiElement) {
         GrClosureType closureType = GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/);
-        if (!ResolveUtil.processNonCodeMembers(closureType, processor, (GroovyPsiElement)place, state)) {
+        if (!ResolveUtil.processNonCodeMembers(closureType, processor, place, state)) {
           return false;
         }
       }
@@ -108,10 +162,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return true;
   }
 
-  private boolean processParameters(PsiScopeProcessor processor,
-                                    ResolveState _state,
-                                    ResolveState state,
-                                    PsiElement place) {
+  private boolean processParameters(@NotNull PsiScopeProcessor processor,
+                                    @NotNull ResolveState _state,
+                                    @NotNull ResolveState state,
+                                    @NotNull PsiElement place) {
     if (hasParametersSection()) {
       for (GrParameter parameter : getParameters()) {
         if (!ResolveUtil.processElement(processor, parameter, _state)) return false;
@@ -126,15 +180,16 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return true;
   }
 
-  private boolean processOwner(PsiScopeProcessor processor, ResolveState state) {
-    String nameHint = ResolveUtil.getNameHint(processor);
-    if (nameHint == null || nameHint.equals(OWNER_NAME)) {
-      if (!processor.execute(getOwner(), state)) return false;
+  private boolean processOwner(@NotNull PsiScopeProcessor processor,
+                               @NotNull ResolveState state,
+                               @NotNull PsiElement place) {
+    if (state.get(ResolverProcessor.RESOLVE_CONTEXT) == null) {
+      state = state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     }
-    return true;
+    return ResolveUtil.treeWalkUp(getParent(), place, processor, true, state);
   }
 
-  private boolean isItAlreadyDeclared(PsiElement place) {
+  private boolean isItAlreadyDeclared(@Nullable PsiElement place) {
     while (place != this && place != null) {
       if (place instanceof GrClosableBlock &&
           !((GrClosableBlock)place).hasParametersSection() &&

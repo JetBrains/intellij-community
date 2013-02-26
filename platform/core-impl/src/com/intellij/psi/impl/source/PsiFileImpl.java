@@ -58,7 +58,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -723,7 +722,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     return myManager.isBatchFilesProcessingMode()
                  ? new PatchedWeakReference<ASTNode>(treeElement)
-                 : new PatchedSoftReference<ASTNode>(treeElement);
+                 : new SoftReference<ASTNode>(treeElement);
   }
 
   @Override

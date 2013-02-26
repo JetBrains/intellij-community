@@ -1,0 +1,35 @@
+class BaseLineService {
+    def service() {
+        if (true) {
+
+        } <caret>
+    }
+}
+
+String abc = 5
+-----
+as
+assert
+boolean
+byte
+char
+double
+else
+false
+float
+for
+int
+long
+new
+null
+return
+short
+super
+switch
+synchronized
+this
+throw
+true
+try
+void
+while

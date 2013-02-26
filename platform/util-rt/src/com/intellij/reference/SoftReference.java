@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,25 @@ import java.lang.ref.ReferenceQueue;
  * The class is necessary to debug memory allocations via soft references. All IDEA classes should use this SoftReference
  * instead of original from java.lang.ref. Whenever we suspect soft memory allocation overhead this easily becomes a hard
  * reference so we can see allocations and memory consumption in memory profiler.
+ *
  * @author max
  */
+@SuppressWarnings("ClassNameSameAsAncestorName")
 public class SoftReference<T> extends java.lang.ref.SoftReference<T> {
-//  T myReferent;
+  //private final T myReferent;
+
   public SoftReference(final T referent) {
     super(referent);
-//    myReferent = referent;
+    //myReferent = referent;
   }
 
   public SoftReference(final T referent, final ReferenceQueue<? super T> q) {
     super(referent, q);
-//    myReferent = referent;
+    //myReferent = referent;
   }
 
-  /*
-  @Override
-  public T get() {
-    return myReferent;
-  }
-  */
+  //@Override
+  //public T get() {
+  //  return myReferent;
+  //}
 }

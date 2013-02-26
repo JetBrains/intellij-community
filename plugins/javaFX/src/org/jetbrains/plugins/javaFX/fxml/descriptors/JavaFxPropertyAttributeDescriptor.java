@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -104,9 +106,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)context;
       final PsiElement parent = xmlAttributeValue.getParent();
       if (parent instanceof XmlAttribute && JavaFxPsiUtil.checkIfAttributeHandler((XmlAttribute)parent)) {
-        final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(context.getContainingFile());
         if (value.startsWith("#")) {
-          if (controllerClass == null) {
+          if (JavaFxPsiUtil.getControllerClass(context.getContainingFile()) == null) {
             return "No controller specified for top level element";
           }
         }

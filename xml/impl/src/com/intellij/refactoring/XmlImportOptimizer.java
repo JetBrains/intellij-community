@@ -21,8 +21,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.lang.ImportOptimizer;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -42,8 +40,7 @@ import java.util.Map;
  *         Date: 11/7/11
  */
 public class XmlImportOptimizer implements ImportOptimizer {
-  public static final ExtensionPointName<ImportOptimizer> EP_NAME = ExtensionPointName.create("com.intellij.xml.importOptimizer");
-
+  
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
   private final Condition<ProblemDescriptor> myCondition = new Condition<ProblemDescriptor>() {
     @Override
@@ -62,11 +59,6 @@ public class XmlImportOptimizer implements ImportOptimizer {
   @NotNull
   @Override
   public Runnable processFile(final PsiFile file) {
-    for (ImportOptimizer optimizer : Extensions.getExtensions(EP_NAME)) {
-      if (optimizer.supports(file)) {
-        return optimizer.processFile(file);
-      }
-    }
     return new Runnable() {
       @Override
       public void run() {

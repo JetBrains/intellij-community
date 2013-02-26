@@ -100,6 +100,8 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testAnnotationArg()       { doTest() }
   void testDefaultAnnotationArg(){ doTest() }
   void testDefaultInAnnotation() { doTest() }
+  void testElse1()               { doTest() }
+  void testElse2()               { doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 

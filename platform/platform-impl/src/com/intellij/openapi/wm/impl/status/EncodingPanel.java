@@ -181,10 +181,13 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }
     DataContext dataContext = getContext();
     ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext);
-    Dimension dimension = popup.getContent().getPreferredSize();
-    Point at = new Point(0, -dimension.height);
-    popup.show(new RelativePoint(e.getComponent(), at));
-    Disposer.register(this, popup); // destroy popup on unexpected project close
+
+    if (popup != null) {
+      Dimension dimension = popup.getContent().getPreferredSize();
+      Point at = new Point(0, -dimension.height);
+      popup.show(new RelativePoint(e.getComponent(), at));
+      Disposer.register(this, popup); // destroy popup on unexpected project close
+    }
   }
 
   @NotNull

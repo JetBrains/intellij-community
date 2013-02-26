@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.PairFunction;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -92,7 +94,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
   @Nullable
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    return null;
+    final GroovyResolveResult resolveResult = getClassReference().advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+
+    if (resolved instanceof PsiClass) {
+      return new LightClassReference(getManager(), getClassReference().getText(), (PsiClass)resolved, resolveResult.getSubstitutor());
+    }
+    else {
+      return null;
+    }
   }
 
   public PsiAnnotationMemberValue findAttributeValue(@Nullable String attributeName) {

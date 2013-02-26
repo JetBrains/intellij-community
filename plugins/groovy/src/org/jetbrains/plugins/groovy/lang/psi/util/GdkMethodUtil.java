@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -132,21 +133,6 @@ public class GdkMethodUtil {
       }
     };
     return categoryClass.processDeclarations(delegate, state, null, place);
-  }
-
-  public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor) {
-    GrMethodCall call = checkMethodCall(block, WITH);
-    if (call == null) {
-      call = checkMethodCall(block, IDENTITY);
-    }
-    if (call == null) return true;
-    final GrExpression invoked = call.getInvokedExpression();
-    LOG.assertTrue(invoked instanceof GrReferenceExpression);
-    final GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
-    if (qualifier == null) return true;
-    if (!GrReferenceResolveUtil.processQualifier(processor, qualifier, (GrReferenceExpression)invoked)) return false;
-
-    return true;
   }
 
   @Nullable
@@ -407,5 +393,22 @@ public class GdkMethodUtil {
         });
       }
     });
+  }
+
+  public static boolean isWithOrIdentity(@NotNull GroovyResolveResult result) {
+    PsiElement element = result.getElement();
+
+    if (element instanceof PsiMethod && isWithName(((PsiMethod)element).getName())) {
+      if (element instanceof GrGdkMethod) {
+        element = ((GrGdkMethod)element).getStaticMethod();
+      }
+      final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+      if (containingClass != null) {
+        if (GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

@@ -68,7 +68,7 @@ class MyTest3 {
    static void m() { }
 
    public static void main(String[] args) {
-      I s = new MyTest3()::m;
+      <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest3.I'">I s = new MyTest3()::m;</error>
    }
 }
 

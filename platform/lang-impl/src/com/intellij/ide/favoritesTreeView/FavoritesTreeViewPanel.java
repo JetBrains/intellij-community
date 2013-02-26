@@ -215,7 +215,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
-      .setLineBorder(0, 0, 1, 0)
+      .initPosition()
       .disableAddAction().disableRemoveAction().disableDownAction().disableUpAction()
       .addExtraAction(addActionButton)
       .addExtraAction(editActionButton)

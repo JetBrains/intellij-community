@@ -1202,7 +1202,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
       final PsiType[] paramTypes = {((PsiMethod)typeParameter.getOwner()).getReturnType()};
       if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(elseExpression)) && thenExpression != null) {
-        final PsiType thenType = ourGraphGuard.doPreventingRecursion(thenExpression, true, new Computable<PsiType>() {
+        final PsiType thenType = ourGraphGuard.doPreventingRecursion(parent, true, new Computable<PsiType>() {
           @Override
           public PsiType compute() {
             return thenExpression.getType();
@@ -1212,7 +1212,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           pair = inferTypeForMethodTypeParameterInner(typeParameter, paramTypes, new PsiType[] {thenType}, substitutor, null, policy);
         }
       } else if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(thenExpression)) && elseExpression != null) {
-        final PsiType elseType = ourGraphGuard.doPreventingRecursion(elseExpression, true, new Computable<PsiType>() {
+        final PsiType elseType = ourGraphGuard.doPreventingRecursion(parent, true, new Computable<PsiType>() {
           @Override
           public PsiType compute() {
             return elseExpression.getType(); 

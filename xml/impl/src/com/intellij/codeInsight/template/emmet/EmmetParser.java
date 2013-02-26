@@ -32,7 +32,7 @@ import java.util.List;
 public abstract class EmmetParser {
   private final List<ZenCodingToken> myTokens;
   protected final CustomTemplateCallback myCallback;
-  private final ZenCodingGenerator myGenerator;
+  protected final ZenCodingGenerator myGenerator;
 
   private int myIndex = 0;
 

@@ -7,5 +7,5 @@ class A {
 }
 
 <error descr="Method 'foo' is not implemented">class Y implements X</error>{
-  def foo(X<?> x){}
+  def foo(X<String> x){}
 }

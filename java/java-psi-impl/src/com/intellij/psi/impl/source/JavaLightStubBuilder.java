@@ -44,7 +44,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     if (pkg != null) {
       LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
       if (ref != null) {
-        refText = SourceUtil.getTextSkipWhiteSpaceAndComments(tree, ref);
+        refText = SourceUtil.getReferenceText(tree, ref);
       }
     }
     return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);
@@ -83,6 +83,9 @@ public class JavaLightStubBuilder extends LightStubBuilder {
   }
 
   private static boolean checkByTypes(IElementType parentType, IElementType nodeType) {
+    if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(parentType)) {
+      return true;
+    }
     if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
       return true;
     }
