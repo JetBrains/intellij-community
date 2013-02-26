@@ -16,21 +16,15 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author spleaner
@@ -70,19 +64,13 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiFile file = element.getContainingFile();
 
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    final ModifiableModel model = inspectionProfile.getModifiableModel();
-    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, element);
-    final HtmlUnknownTagInspection inspection = (HtmlUnknownTagInspection)wrapper.getTool();
-    inspection.addCustomPropertyName(myName);
-    try {
-      model.commit();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
+    InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
+      @Override
+      public void consume(ModifiableModel model) {
+        HtmlUnknownTagInspection tool = (HtmlUnknownTagInspection)model.getUnwrappedTool(myInspectionName, element);
+        tool.addCustomPropertyName(myName);
+      }
+    });
   }
 }
