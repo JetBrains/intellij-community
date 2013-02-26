@@ -61,6 +61,7 @@ class InitialInfoBuilder {
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
   
   private final static boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));  
+  private final static boolean DEBUG_ENABLED = false;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final FormatTextRanges affectedRanges,
@@ -277,7 +278,6 @@ class InitialInfoBuilder {
     }
     final LeafBlockWrapper info =
       new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
-    info.setDebugInfo("target block's class: " + rootBlock.getClass());
     if (index == 0) {
       info.arrangeParentTextRange();
     }

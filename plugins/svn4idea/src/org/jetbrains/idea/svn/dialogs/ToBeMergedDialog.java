@@ -41,6 +41,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
@@ -88,6 +89,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {

@@ -63,6 +63,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.IncorrectOperationException;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -458,6 +459,7 @@ public class CreateSnapShotAction extends AnAction {
       return myFormNameTextField;
     }
 
+    @NotNull
     @Override
     protected Action getOKAction() {
       final Action okAction = super.getOKAction();

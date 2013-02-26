@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -50,6 +51,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<Action>();

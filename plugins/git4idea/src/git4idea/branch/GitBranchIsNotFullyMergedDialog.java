@@ -196,11 +196,13 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     return rootPanel;
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[] { getOKAction() };
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     Action cancelAction = getCancelAction();

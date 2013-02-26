@@ -441,7 +441,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return;
     }
 
-    GradleSettings settings = GradleSettings.getInstance(myProject);
+    GradleSettings settings = myHelper.getSettings(myProject);
 
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
     final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
@@ -456,11 +456,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     else {
       preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
     }
-    GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
+    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
 
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    Project defaultProject = myHelper.getDefaultProject();
     if (myProject != defaultProject) {
-      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+      myHelper.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
     }
 
     if (isValidGradleHome(gradleHomePath)) {
@@ -476,7 +476,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
       }
     }
-    else {
+    else if (preferLocalToWrapper) {
       if (StringUtil.isEmpty(gradleHomePath)) {
         myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
       }
@@ -697,7 +697,18 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     File getGradleHome(@Nullable Project project);
 
     @NotNull
+    Project getDefaultProject();
+    
+    @NotNull
     GradleSettings getSettings(@NotNull Project project);
+
+    void applySettings(@Nullable String linkedProjectPath,
+                       @Nullable String gradleHomePath,
+                       boolean preferLocalInstallationToWrapper,
+                       @Nullable String serviceDirectoryPath,
+                       @NotNull Project project);
+    
+    void applyPreferLocalInstallationToWrapper(boolean preferLocalToWrapper, @NotNull Project project);
 
     boolean isGradleWrapperDefined(@Nullable String linkedProjectPath);
     
@@ -722,11 +733,32 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     public File getGradleHome(@Nullable Project project) {
       return myInstallationManager.getGradleHome(project);
     }
-
+    
+    @NotNull
+    @Override
+    public Project getDefaultProject() {
+      return ProjectManager.getInstance().getDefaultProject();
+    }
+    
     @NotNull
     @Override
     public GradleSettings getSettings(@NotNull Project project) {
       return GradleSettings.getInstance(project);
+    }
+
+    @Override
+    public void applySettings(@Nullable String linkedProjectPath,
+                              @Nullable String gradleHomePath,
+                              boolean preferLocalInstallationToWrapper,
+                              @Nullable String serviceDirectoryPath,
+                              @NotNull Project project)
+    {
+      GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, serviceDirectoryPath, project); 
+    }
+
+    @Override
+    public void applyPreferLocalInstallationToWrapper(boolean preferLocalToWrapper, @NotNull Project project) {
+      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, project);
     }
 
     @Override

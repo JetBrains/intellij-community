@@ -35,6 +35,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,6 +106,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myNameField.selectNameWithoutExtension();
   }
 
+  @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),getCancelAction(),getHelpAction()};
   }

@@ -445,6 +445,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     super.doOKAction();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }

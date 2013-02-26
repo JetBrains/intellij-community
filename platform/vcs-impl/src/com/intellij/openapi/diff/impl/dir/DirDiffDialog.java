@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -62,6 +63,7 @@ public class DirDiffDialog extends DialogWrapper {
     return myDiffPanel.getTable();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{};

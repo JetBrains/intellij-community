@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +63,7 @@ public class ViewTextAction extends BaseValueAction {
       myTextViewer.setText(text);
     }
 
+    @NotNull
     protected Action[] createActions() {
       return new Action[] {getCancelAction()};
     }

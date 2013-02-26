@@ -126,6 +126,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     evaluate();
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     if (myEvaluator.isCodeFragmentEvaluationSupported()) {

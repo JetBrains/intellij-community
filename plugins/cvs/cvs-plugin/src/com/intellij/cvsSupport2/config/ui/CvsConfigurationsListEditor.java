@@ -34,6 +34,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -108,6 +109,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     }
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     final AbstractAction globalSettingsAction = new AbstractAction(CvsBundle.message("button.text.global.settings")) {
@@ -296,6 +298,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
     HelpManager.getInstance().invokeHelp("reference.versioncontrol.cvs.roots");
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};

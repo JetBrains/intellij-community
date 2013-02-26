@@ -67,7 +67,11 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
         if (attribute != null) {
           final PsiElement nameElement = variable.getNameIdentifierGroovy();
           assert myInfos != null;
-          myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, nameElement, null, attribute));
+          HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(nameElement);
+          HighlightInfo info = builder.needsUpdateOnTyping(false).textAttributes(attribute).create();
+          if (info != null) {
+            myInfos.add(info);
+          }
         }
       }
     }
@@ -79,7 +83,11 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
       if (attribute != null) {
         final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
         assert myInfos != null;
-        myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, attribute));
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(refNameElement);
+        HighlightInfo info = builder.needsUpdateOnTyping(false).textAttributes(attribute).create();
+        if (info != null) {
+          myInfos.add(info);
+        }
       }
     }
   };

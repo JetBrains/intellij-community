@@ -182,8 +182,13 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   private HighlightInfo createHighlightInfo(TextRange range, HighlightInfoType type, Set<Pair<Object, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
-    String tooltip = start <= myDocument.getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myDocument, start) : null;
-    return HighlightInfo.createHighlightInfo(type, range, null, existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip, null);
+    String tooltip = start <= myDocument.getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myDocument, start, false) : null;
+    String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    if (unescapedTooltip != null) {
+      builder.unescapedToolTip(unescapedTooltip);
+    }
+    return builder.createUnconditionally();
   }
 
   public static void clearMyHighlights(Document document, Project project) {

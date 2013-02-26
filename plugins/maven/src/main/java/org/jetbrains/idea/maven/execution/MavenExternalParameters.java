@@ -173,9 +173,9 @@ public class MavenExternalParameters {
   }
 
   public static void addVMParameters(ParametersList parametersList, String mavenHome, MavenRunnerSettings runnerSettings) {
-    parametersList.addParametersString(runnerSettings.getVmOptions());
-
     parametersList.addParametersString(System.getenv(MAVEN_OPTS));
+
+    parametersList.addParametersString(runnerSettings.getVmOptions());
 
     parametersList.addProperty("classworlds.conf", MavenUtil.getMavenConfFile(new File(mavenHome)).getPath());
 

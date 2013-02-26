@@ -58,12 +58,9 @@ public class SharedImplUtil {
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {
-    TreeElement element;
-    for (element = (TreeElement)thisElement; element.getTreeParent() != null; element = element.getTreeParent()) {
-    }
-
-    PsiElement psiElement = element.getPsi();
-    if (!(psiElement instanceof PsiFile)) return null;
+    TreeElement element = findFileElement(thisElement);
+    PsiElement psiElement = element == null ? null : element.getPsi();
+    if (psiElement == null) return null;
     return psiElement.getContainingFile();
   }
 
@@ -74,8 +71,21 @@ public class SharedImplUtil {
   }
 
   public static boolean isWritable(ASTNode thisElement) {
-    PsiFile file = SourceTreeToPsiMap.treeElementToPsi(thisElement).getContainingFile();
+    PsiFile file = getContainingFile(thisElement);
     return file == null || file.isWritable();
+  }
+
+  public static FileElement findFileElement(@NotNull ASTNode element) {
+    ASTNode parent = element.getTreeParent();
+    while (parent != null) {
+      element = parent;
+      parent = parent.getTreeParent();
+    }
+
+    if (element instanceof FileElement) {
+      return (FileElement)element;
+    }
+    return null;
   }
 
   public static CharTable findCharTableByTree(ASTNode tree) {

@@ -160,7 +160,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       for (int i = 0; i < highlightVisitors.length; i++) {
         HighlightVisitor highlightVisitor = highlightVisitors[i];
         HighlightVisitor cloned = highlightVisitor.clone();
-        assert cloned != null;
         assert cloned.getClass() == highlightVisitor.getClass() : highlightVisitor.getClass()+".clone() must return a copy of "+highlightVisitor.getClass()+"; but got: "+cloned+" of "+cloned.getClass();
         clones[i] = cloned;
       }
@@ -355,8 +354,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
               if (textRange.isEmpty()) continue;
               String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
-              HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND,
-                                                                     textRange, null, desc, injectedAttributes);
+              HighlightInfo.Builder
+                builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND).range(textRange);
+              if (injectedAttributes != null) {
+                builder.textAttributes(injectedAttributes);
+              }
+              builder.unescapedToolTip(desc);
+              HighlightInfo info = builder.createUnconditionally();
               info.fromInjection = true;
               outInfos.add(info);
             }
@@ -383,7 +387,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey,
                                                           info.type, fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
                                                           info.description, info.toolTip, info.type.getSeverity(null),
-                                                          info.isAfterEndOfLine, null, false);
+                                                          info.isAfterEndOfLine, null, false, 0);
                 patched.fromInjection = true;
                 outInfos.add(patched);
               }
@@ -450,7 +454,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       HighlightInfo patched =
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.description, info.toolTip, info.type.getSeverity(null), isAfterEndOfLine, null, false);
+                          info.description, info.toolTip, info.type.getSeverity(null), isAfterEndOfLine, null, false, 0);
       patched.setHint(info.hasHint());
       patched.setGutterIconRenderer(info.getGutterIconRenderer());
 
@@ -540,7 +544,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         forcedAttributes = TextAttributes.ERASE_MARKER;
       }
       else {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, annRange, null,null,TextAttributes.ERASE_MARKER);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).range(annRange).textAttributes(
+          TextAttributes.ERASE_MARKER).createUnconditionally();
         holder.add(info);
 
         Color back = attributes.getBackgroundColor() == null ? myGlobalScheme.getDefaultBackground() : attributes.getBackgroundColor();
@@ -548,7 +553,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         forcedAttributes = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
       }
 
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, annRange, null,null,forcedAttributes);
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT).range(annRange).textAttributes(forcedAttributes)
+          .createUnconditionally();
       holder.add(info);
     }
   }
@@ -826,8 +833,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextRange range = todoItem.getTextRange();
       String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
-      HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description, description, attributes);
-      assert info != null;
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);
+      if (attributes != null) {
+        builder.textAttributes(attributes);
+      }
+      builder.descriptionAndTooltip(description);
+      HighlightInfo info = builder.createUnconditionally();
       if (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
         result.add(info);
       }

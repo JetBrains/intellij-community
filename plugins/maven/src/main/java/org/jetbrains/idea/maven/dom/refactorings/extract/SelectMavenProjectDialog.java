@@ -69,6 +69,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     init();
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }

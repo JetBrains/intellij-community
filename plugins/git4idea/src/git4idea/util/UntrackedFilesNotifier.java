@@ -83,6 +83,7 @@ public class UntrackedFilesNotifier {
       super(project, new ArrayList<VirtualFile>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, false, true);
     }
 
+    @NotNull
     @Override
     protected Action[] createActions() {
       return new Action[]{getOKAction()};

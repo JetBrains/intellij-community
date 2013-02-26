@@ -40,6 +40,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
 
   @Override
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
+    if (conflicts.size() == 1) return conflicts.get(0);
     final Map<Object, CandidateInfo> uniqueItems = new HashMap<Object, CandidateInfo>();
     for (CandidateInfo info : conflicts) {
       final PsiElement element = info.getElement();

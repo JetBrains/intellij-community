@@ -15,12 +15,12 @@ import org.jetbrains.annotations.NotNull;
 public class JavaFxFileTypeFactory extends FileTypeFactory {
   public static final String FXML_EXTENSION = "fxml";
 
-  public static boolean isFxml(PsiFile file) {
+  public static boolean isFxml(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
     return isFxml(virtualFile);
   }
 
-  public static boolean isFxml(VirtualFile virtualFile) {
+  public static boolean isFxml(@NotNull VirtualFile virtualFile) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION);
     return virtualFile.getFileType() == fileType && FXML_EXTENSION.equals(virtualFile.getExtension());
   }

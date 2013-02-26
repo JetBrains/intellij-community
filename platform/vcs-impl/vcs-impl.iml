@@ -17,6 +17,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="sqlite" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>
 

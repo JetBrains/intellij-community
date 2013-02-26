@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.OptionGroup;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -183,6 +184,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(),getCancelAction(), getHelpAction()};
   }

@@ -95,6 +95,7 @@
     <orderEntry type="module" module-name="devkit-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="colorSchemes" />
+    <orderEntry type="module" module-name="javaFX-CE" />
   </component>
 </module>
 

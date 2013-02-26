@@ -101,6 +101,7 @@ public class ConflictsDialog extends DialogWrapper{
     init();
   }
 
+  @NotNull
   protected Action[] createActions(){
     final Action okAction = getOKAction();
     if (myElementConflictDescription == null) {

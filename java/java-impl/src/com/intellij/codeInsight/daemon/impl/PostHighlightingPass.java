@@ -395,8 +395,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return UnusedSymbolLocalInspection.isInjected(element);
   }
 
-  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element, @Nullable String message, @NotNull final HighlightInfoType highlightInfoType) {
-    HighlightInfo info = HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
+  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element, @NotNull String message, @NotNull final HighlightInfoType highlightInfoType) {
+    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
     UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
     for (UnusedDeclarationFixProvider provider : fixProviders) {
       IntentionAction[] fixes = provider.getQuickFixes(element);
@@ -465,10 +465,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (helper.isLocallyUsed(field) || !weAreSureThereAreNoUsages(field, progress, helper)) {
       return false;
     }
-    if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(field, progress, helper)) {
-      return false;
-    }
-    return true;
+    return !(field instanceof PsiEnumConstant) || !isEnumValuesMethodUsed(field, progress, helper);
   }
 
   private HighlightInfo suggestionsToMakeFieldUsed(final PsiField field, final PsiIdentifier identifier, final String message) {
@@ -779,7 +776,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo registerRedundantImport(@NotNull PsiImportStatementBase importStatement, @NotNull HighlightDisplayKey unusedImportKey) {
-    HighlightInfo info = HighlightInfo.createHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT, importStatement, InspectionsBundle.message("unused.import.statement"));
+    String description = InspectionsBundle.message("unused.import.statement");
+    HighlightInfo info =
+      HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT).range(importStatement).descriptionAndTooltip(description)
+        .create();
 
     QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), unusedImportKey);
     QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), unusedImportKey);

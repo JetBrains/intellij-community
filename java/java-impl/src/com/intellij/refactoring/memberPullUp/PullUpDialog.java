@@ -21,6 +21,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -253,6 +256,12 @@ public class PullUpDialog extends RefactoringDialog {
         return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
+        if (currentSuperClass.isInterface()) {
+          final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
+          final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
+          final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
+          if (superClassMethod != null) return false;
+        }
         return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
       }
       return true;

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 
 public class InfoDialog extends DialogWrapper{
   private JCheckBox myShowInFutureCheckBox;
@@ -42,6 +43,7 @@ public class InfoDialog extends DialogWrapper{
     setOKButtonText(RefactoringBundle.message("ok.button"));
   }
 
+  @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction()};
   }

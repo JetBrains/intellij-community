@@ -59,13 +59,16 @@ public class AnnotationsHighlightUtil {
     if (method == null) {
       if (pair.getName() != null) {
         final String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getElement(), description);
+        PsiElement element = ref.getElement();
+        final HighlightInfo highlightInfo =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(element).descriptionAndTooltip(description).create();
         QuickFixAction.registerQuickFixAction(highlightInfo, new CreateAnnotationMethodFromUsageFix(pair));
         return highlightInfo;
       }
       else {
         String description = JavaErrorMessages.message("annotation.missing.method", ref.getCanonicalText());
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref.getElement(), description);
+        PsiElement element = ref.getElement();
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
     }
     else {
@@ -89,7 +92,7 @@ public class AnnotationsHighlightUtil {
       if (Comparing.equal(attribute.getName(), name)) {
         String description = JavaErrorMessages.message("annotation.duplicate.attribute",
                                                        name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, pair, description);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pair).descriptionAndTooltip(description).create();
       }
     }
 
@@ -107,7 +110,7 @@ public class AnnotationsHighlightUtil {
     if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
       if (!(value instanceof PsiClassObjectAccessExpression)) {
         String description = JavaErrorMessages.message("annotation.non.class.literal.attribute.value");
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
       }
     }
 
@@ -130,14 +133,14 @@ public class AnnotationsHighlightUtil {
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
                                                      formatReference(nameRef), HighlightUtil.formatType(expectedType));
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
-    else if (value instanceof PsiArrayInitializerMemberValue) {
+    if (value instanceof PsiArrayInitializerMemberValue) {
       if (expectedType instanceof PsiArrayType) return null;
       String description = JavaErrorMessages.message("annotation.illegal.array.initializer", HighlightUtil.formatType(expectedType));
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
-    else if (value instanceof PsiExpression) {
+    if (value instanceof PsiExpression) {
       PsiExpression expr = (PsiExpression)value;
       PsiType type = expr.getType();
       if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
@@ -148,7 +151,7 @@ public class AnnotationsHighlightUtil {
 
       String description = JavaErrorMessages.message("annotation.incompatible.types",
                                                      HighlightUtil.formatType(type), HighlightUtil.formatType(expectedType));
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
     }
 
     LOG.error("Unknown annotation member value: " + value);
@@ -174,7 +177,8 @@ public class AnnotationsHighlightUtil {
       if (nameRef == null) continue;
       PsiElement aClass = nameRef.resolve();
       if (resolved.equals(aClass)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, JavaErrorMessages.message("annotation.duplicate.annotation"));
+        String description = JavaErrorMessages.message("annotation.duplicate.annotation");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       }
     }
 
@@ -220,7 +224,7 @@ public class AnnotationsHighlightUtil {
         }
 
         String description = JavaErrorMessages.message("annotation.missing.attribute", buff);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
       }
     }
 
@@ -232,7 +236,8 @@ public class AnnotationsHighlightUtil {
     final PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.non.constant.attribute.value"));
+        String description = JavaErrorMessages.message("annotation.non.constant.attribute.value");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
       }
     }
 
@@ -245,7 +250,8 @@ public class AnnotationsHighlightUtil {
     if (type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.invalid.annotation.member.type"));
+    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type");
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
   }
 
   private static final ElementPattern<PsiElement> ANNOTATION_ALLOWED = psiElement().andOr(
@@ -275,14 +281,16 @@ public class AnnotationsHighlightUtil {
       }
       String target = JavaErrorMessages.message("annotation.target." + elementTypeFields[0]);
       String description = JavaErrorMessages.message("annotation.not.applicable", nameRef.getText(), target);
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
+      HighlightInfo highlightInfo =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameRef).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
       return highlightInfo;
     }
 
     if (!ANNOTATION_ALLOWED.accepts(annotation)) {
       String message = JavaErrorMessages.message("annotation.not.allowed.here");
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, message);
+      HighlightInfo highlightInfo =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
       return highlightInfo;
     }
@@ -313,7 +321,9 @@ public class AnnotationsHighlightUtil {
               String description = JavaErrorMessages.message("private.symbol",
                                                              HighlightUtil.formatField((PsiField)resolve),
                                                              HighlightUtil.formatClass((PsiClass)parent));
-              infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, description);
+              HighlightInfo result =
+                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+              infos[0] = result;
             }
           }
         });
@@ -328,7 +338,8 @@ public class AnnotationsHighlightUtil {
     if (nameReferenceElement != null) {
       PsiElement resolved = nameReferenceElement.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameReferenceElement, JavaErrorMessages.message("annotation.annotation.type.expected"));
+        String description = JavaErrorMessages.message("annotation.annotation.type.expected");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameReferenceElement).descriptionAndTooltip(description).create();
       }
     }
     return null;
@@ -339,7 +350,8 @@ public class AnnotationsHighlightUtil {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("annotation.cyclic.element.type"));
+      String description = JavaErrorMessages.message("annotation.cyclic.element.type");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
     return null;
   }
@@ -349,12 +361,14 @@ public class AnnotationsHighlightUtil {
     if (PsiUtil.isAnnotationMethod(parent)) {
       PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
       if (list == method.getThrowsList()) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("annotation.members.may.not.have.throws.list"));
+        String description = JavaErrorMessages.message("annotation.members.may.not.have.throws.list");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
       }
     }
     else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
       if (PsiKeyword.EXTENDS.equals(list.getFirstChild().getText())) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("annotation.may.not.have.extends.list"));
+        String description = JavaErrorMessages.message("annotation.may.not.have.extends.list");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
       }
     }
     return null;
@@ -368,10 +382,11 @@ public class AnnotationsHighlightUtil {
     }
     PsiFile file = statement.getContainingFile();
     if (file != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               statement.getAnnotationList().getTextRange(),
-                                               JavaErrorMessages.message("invalid.package.annotation.containing.file"));
-
+      String description = JavaErrorMessages.message("invalid.package.annotation.containing.file");
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
+      builder.range(statement.getAnnotationList().getTextRange());
+      builder.descriptionAndTooltip(description);
+      return builder.create();
     }
     return null;
   }
@@ -395,9 +410,8 @@ public class AnnotationsHighlightUtil {
         PsiElement target = ((PsiReferenceExpression) initializer).resolve();
         if (target != null) {
           if (targets.contains(target)) {
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                               initializer,
-                                               JavaErrorMessages.message("repeated.annotation.target"));
+            String description = JavaErrorMessages.message("repeated.annotation.target");
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description).create();
           }
           targets.add(target);
         }
@@ -409,7 +423,7 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkFunctionalInterface(PsiAnnotation annotation) {
     final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation);
     if (errorMessage != null) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation, errorMessage);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage).create();
     }
     return null;
   }

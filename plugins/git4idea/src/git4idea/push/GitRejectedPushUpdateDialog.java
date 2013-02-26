@@ -175,14 +175,10 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     return currentBranch;
   }
 
+  @NotNull
   @Override
   protected Action[] createActions() {
     return new Action[] { getCancelAction(), myMergeAction, myRebaseAction};
-  }
-
-  @Override
-  protected Action getHelpAction() {
-    return super.getHelpAction();
   }
 
   boolean shouldUpdateAll() {

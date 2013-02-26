@@ -53,7 +53,7 @@ import java.lang.reflect.Array;
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
   public static final Key<String> CREATION_TRACE = Key.create("CREATION_TRACE");
   private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.StubBasedPsiElementBase");
-  protected static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
+  public static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
   private volatile T myStub;
   private volatile ASTNode myNode;
   private final IElementType myElementType;
@@ -105,6 +105,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
     @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                              (vFile == null ? "<unknown file>" : vFile.getPath()) +
+                             "\nFile:\n" + file.toString() + "@" + System.identityHashCode(file) +
                              "\nFile stub tree:\n" + stubString +
                              "\nLoaded file AST:\n" + astString;
     if (ourTraceStubAstBinding) {
@@ -122,7 +123,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       public void visitComposite(CompositeElement composite) {
         PsiElement psi = composite.getPsi();
         if (psi != null) {
-          traces.append(psi.toString()).append("\n");
+          traces.append(psi.toString()).append("@").append(System.identityHashCode(psi)).append("\n");
           String trace = psi.getUserData(CREATION_TRACE);
           if (trace != null) {
             traces.append(trace).append("\n");

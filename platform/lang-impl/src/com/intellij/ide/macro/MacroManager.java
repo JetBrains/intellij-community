@@ -46,6 +46,8 @@ public final class MacroManager {
   private MacroManager() {
     registerMacro(new SourcepathMacro());
     registerMacro(new FileDirMacro());
+    registerMacro(new FileDirNameMacro());
+    registerMacro(new FileParentDirMacro());
     registerMacro(new FileExtMacro());
     registerMacro(new FileNameMacro());
     registerMacro(new FileNameWithoutExtension());

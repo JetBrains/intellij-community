@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -167,6 +168,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     mySwitchAction.setEnabled(true);
   }
 
+  @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(), getCancelAction(), mySwitchAction, getHelpAction() };
   }

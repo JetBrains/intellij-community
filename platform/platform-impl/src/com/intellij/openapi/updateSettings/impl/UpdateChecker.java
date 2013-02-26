@@ -501,8 +501,8 @@ public final class UpdateChecker {
         }
       };
       dialog.setShowConfirmation(showConfirmation);
-      dialog.show();
       ourUpdateInfoDialogShown = true;
+      dialog.show();
     } else if (alwaysShowResults) {
       final String title = IdeBundle.message("updates.info.dialog.title");
       final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +

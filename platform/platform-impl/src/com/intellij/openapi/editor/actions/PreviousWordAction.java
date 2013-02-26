@@ -37,7 +37,7 @@ public class PreviousWordAction extends TextComponentEditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretToPreviousWord(editor, false);
+      EditorActionUtil.moveCaretToPreviousWord(editor, false, editor.getSettings().isCamelWords());
     }
   }
 }

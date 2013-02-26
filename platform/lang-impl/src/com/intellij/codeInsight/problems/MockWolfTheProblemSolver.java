@@ -16,11 +16,9 @@
 
 package com.intellij.codeInsight.problems;
 
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -115,12 +113,6 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   @Override
   public void clearProblems(@NotNull VirtualFile virtualFile) {
     if (myDelegate != null) myDelegate.clearProblems(virtualFile);
-  }
-
-  @Override
-  public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity, final TextRange textRange,
-                                  final String messageText) {
-    return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, severity, textRange, messageText);
   }
 
   @Override

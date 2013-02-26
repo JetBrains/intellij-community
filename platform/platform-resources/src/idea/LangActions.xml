@@ -75,7 +75,7 @@
     </group>
 
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ChangeFileEncodingGroup"/>
+      <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
     </action>
 
     <group id="PowerSaveGroup">
@@ -586,7 +586,7 @@
     </group>
 
     <reference ref="ChangeTemplateDataLanguage">
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ChangeFileEncodingGroup"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
     </reference>
 
     <group id="UsageView.Popup">

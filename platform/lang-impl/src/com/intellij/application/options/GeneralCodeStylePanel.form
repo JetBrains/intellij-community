@@ -26,17 +26,17 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <labelFor value="535f"/>
+              <labelFor value="fa166"/>
               <text resource-bundle="messages/ApplicationBundle" key="editbox.right.margin.columns"/>
             </properties>
           </component>
-          <component id="535f" class="javax.swing.JTextField" binding="myRightMarginField">
+          <component id="fa166" class="javax.swing.JSpinner" binding="myRightMarginSpinner">
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <maximum-size width="100" height="-1"/>
+              </grid>
             </constraints>
-            <properties>
-              <columns value="5"/>
-            </properties>
+            <properties/>
           </component>
           <component id="15ab4" class="javax.swing.JLabel">
             <constraints>
