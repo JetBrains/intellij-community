@@ -123,7 +123,8 @@ public class BuildManager implements ApplicationComponent{
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
-  private static final String SYSTEM_ROOT = "compile-server";
+  public static final String SYSTEM_ROOT = "compile-server";
+  public static final String TEMP_DIR_NAME = "_temp_";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
@@ -877,7 +878,7 @@ public class BuildManager implements ApplicationComponent{
     workDirectory.mkdirs();
     ensureLogConfigExists(workDirectory);
 
-    cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/_temp_");
+    cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
     cp.add(compilerPath);
