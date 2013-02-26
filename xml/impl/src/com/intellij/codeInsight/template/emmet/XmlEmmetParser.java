@@ -75,10 +75,13 @@ public class XmlEmmetParser extends EmmetParser {
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,
                         CustomTemplateCallback callback,
-                        ZenCodingGenerator generator) {
+                        ZenCodingGenerator generator, boolean surroundWithTemplate) {
     super(tokens, callback, generator);
     PsiElement context = callback.getContext();
     XmlTag parentTag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
+    if (surroundWithTemplate && parentTag != null) {
+      parentTag = PsiTreeUtil.getParentOfType(parentTag, XmlTag.class);
+    }
     if (parentTag != null) {
       hasTagContext = true;
       tagLevel.push(parentTag.getName());
