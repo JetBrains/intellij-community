@@ -117,16 +117,23 @@ public class MinusculeMatcher implements Matcher {
     int p = -1;
     TextRange first = null;
 
-    int integral = 0;
+    int integral = 0; // sum of matching-character-count * hump-index over all matched humps; favors longer fragments matching earlier words
+    int humpIndex = 0;
+    int nextHumpStart = name.isEmpty() ? 0: NameUtil.nextWord(name, 0);
     for (TextRange range : iterable) {
       if (first == null) {
         first = range;
       }
-      int len = range.getLength();
-      integral += range.getStartOffset() * len + len * (len - 1) / 2;
+
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+        while (nextHumpStart < i) {
+          nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
+          humpIndex++;
+        }
+        integral += humpIndex;
+
         char c = name.charAt(i);
-        p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
+        p = CharArrayUtil.indexOf(myPattern, c, p + 1, myPattern.length);
         if (p < 0) {
           break;
         }

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,8 +44,11 @@ public class OpenInSceneBuilderAction extends AnAction {
     LOG.assertTrue(virtualFile != null);
     final String path = virtualFile.getPath();
 
-    final String pathToSceneBuilder = JavaFxSettings.getInstance().getPathToSceneBuilder();
+    String pathToSceneBuilder = JavaFxSettings.getInstance().getPathToSceneBuilder();
     LOG.assertTrue(pathToSceneBuilder != null);
+    if (SystemInfo.isMac) {
+      pathToSceneBuilder += "/Contents/MacOS/JavaAppLauncher";
+    }
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     try {

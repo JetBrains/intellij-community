@@ -58,7 +58,7 @@ public final class DirectoryInfo {
    */
   private final OrderEntry[] orderEntries;
 
-  static DirectoryInfo createNew() {
+  public static DirectoryInfo createNew() {
     return new DirectoryInfo(null, null, null, null, (byte)0, null);
   }
   private DirectoryInfo(Module module,
@@ -336,7 +336,7 @@ public final class DirectoryInfo {
   }
 
   @SourceFlag
-  int getSourceFlag() {
+  public int getSourceFlag() {
     return sourceFlag;
   }
 }

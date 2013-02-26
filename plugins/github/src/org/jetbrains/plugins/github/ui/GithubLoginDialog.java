@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.github.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -7,12 +8,16 @@ import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
+import java.io.IOException;
 
 /**
  * @author oleg
  * @date 10/20/10
  */
 public class GithubLoginDialog extends DialogWrapper {
+
+  private static Logger LOG  = GithubUtil.LOG;
+
   private final GithubLoginPanel myGithubLoginPanel;
   private final Project myProject;
 
@@ -55,14 +60,22 @@ public class GithubLoginDialog extends DialogWrapper {
     final String login = myGithubLoginPanel.getLogin();
     final String password = myGithubLoginPanel.getPassword();
     final String host = myGithubLoginPanel.getHost();
-    if (GithubUtil.checkCredentials(myProject, host, login, password)) {
-      final GithubSettings settings = GithubSettings.getInstance();
-      settings.setLogin(login);
-      settings.setPassword(password);
-      settings.setHost(host);
-      super.doOKAction();
-    } else {
-      setErrorText("Cannot login with given credentials");
+    try {
+      boolean loggedSuccessfully = GithubUtil.checkCredentials(myProject, host, login, password);
+      if (loggedSuccessfully) {
+        final GithubSettings settings = GithubSettings.getInstance();
+        settings.setLogin(login);
+        settings.setPassword(password);
+        settings.setHost(host);
+        super.doOKAction();
+      }
+      else {
+        setErrorText("Can't login with given credentials");
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      setErrorText("Can't login: " + GithubUtil.getErrorTextFromException(e));
     }
   }
 

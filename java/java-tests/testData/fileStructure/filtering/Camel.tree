@@ -1,5 +1,5 @@
 -Camel.java
  -Camel
-  [doSomethingWithMyHead(): void]
+  doSomethingWithMyHead(): void
   getSomeArtHeader(): void
-  getSomeHead(): void
+  [getSomeHead(): void]

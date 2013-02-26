@@ -43,6 +43,7 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -129,7 +130,15 @@ public class GithubRebaseAction extends DumbAwareAction {
       repoName = repoName.substring(0, repoName.length() - 4);
     }
 
-    final RepositoryInfo repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, login, repoName);
+    RepositoryInfo repositoryInfo;
+    try {
+      repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, login, repoName);
+    }
+    catch (IOException ex) {
+      LOG.info(ex);
+      GithubUtil.notifyError(project, "Couldn't get information about the repository", GithubUtil.getErrorTextFromException(ex));
+      return;
+    }
     if (repositoryInfo == null) {
       Messages
         .showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl, CANNOT_PERFORM_GITHUB_REBASE);

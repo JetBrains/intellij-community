@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template.emmet.nodes;
 import com.google.common.base.Strings;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
-import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -213,9 +212,6 @@ public class GenerationNode extends UserDataHolderBase {
         end = e;
       }
     }
-    /*if (end != -1) {
-      builder.insertVariableSegment(end, TemplateImpl.END);
-    }*/
     if(singleLineFilterEnabled) {
       builder.setIsToReformat(false);
     }
@@ -305,8 +301,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     if (flag) {
       builder.append("></").append(tag.getName()).append('>');
-      final XmlTag tag1 = XmlElementFactory.getInstance(tag.getProject()).createTagFromText(builder.toString(), XMLLanguage.INSTANCE);
-      return tag1;
+      return XmlElementFactory.getInstance(tag.getProject()).createTagFromText(builder.toString(), XMLLanguage.INSTANCE);
     }
     return tag;
   }
@@ -372,7 +367,7 @@ public class GenerationNode extends UserDataHolderBase {
     Map<String, String> predefinedValues = null;
     if (attributes != null) {
       predefinedValues = new HashMap<String, String>();
-      predefinedValues.put(ZenCodingTemplate.ATTRS, attributes);
+      predefinedValues.put(TemplateToken.ATTRS, attributes);
     }
     return predefinedValues;
   }

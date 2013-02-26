@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -44,6 +45,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HighlightNamesUtil {
+  private static final Logger LOG = Logger.getInstance("#" + HighlightNamesUtil.class.getName());
+
   @Nullable
   public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
                                                   final PsiElement elementToHighlight,
@@ -243,7 +246,9 @@ public class HighlightNamesUtil {
   public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof JspHolderMethod) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
-    int end = method.getThrowsList().getTextRange().getEndOffset();
+    final TextRange throwsRange = method.getThrowsList().getTextRange();
+    LOG.assertTrue(throwsRange != null, method);
+    int end = throwsRange.getEndOffset();
     return new TextRange(start, end);
   }
 

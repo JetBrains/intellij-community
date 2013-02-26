@@ -118,7 +118,10 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           if (bounds.getStartOffset() == offset) {
             String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
             toIndent = StringUtil.findFirst(toString, NOT_INDENT_FILTER);
-            if ((toIndent < 0 || toString.startsWith("\n")) && initialText.length() >= caretOffset) {
+            if (toIndent < 0 && StringUtil.isEmptyOrSpaces(toString)) {
+              toIndent = toString.length();
+            }
+            else if ((toIndent < 0 || toString.startsWith("\n")) && initialText.length() >= caretOffset) {
               toIndent = caretOffset - offset;
             }
           }
@@ -132,8 +135,8 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
 
         // actual difference in indentation level
         int indent = toIndent - fromIndent;
-        if (useTabs)
-          indent /=
+        if (useTabs)       // indent is counted in tab units
+          indent *=
             CodeStyleSettingsManager.getSettings(project).getTabSize(psiFile.getFileType());
         // don't indent single-line text
         if (!StringUtil.startsWithWhitespace(pastedText) && !StringUtil.endsWithLineBreak(pastedText) &&

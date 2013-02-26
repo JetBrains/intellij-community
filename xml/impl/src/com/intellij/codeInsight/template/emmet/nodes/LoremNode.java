@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.generators.LoremGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -48,8 +47,7 @@ public class LoremNode extends ZenCodingNode {
 
     final TemplateToken templateToken = new TemplateToken("", Collections.<Pair<String, String>>emptyList());
     final TemplateImpl template = new TemplateImpl("", myLoremGenerator.generate(myWordsCount, numberInIteration <= 0), "");
-    ZenCodingTemplate.doSetTemplate(templateToken, template, callback);
-
+    templateToken.setTemplate(template, callback);
     final GenerationNode node = new GenerationNode(templateToken, numberInIteration,
                                                    totalIterations, surroundedText, insertSurroundedTextAtTheEnd, parent);
     return Collections.singletonList(node);

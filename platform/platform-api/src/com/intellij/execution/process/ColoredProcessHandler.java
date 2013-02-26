@@ -22,16 +22,19 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
  */
 public class ColoredProcessHandler extends OSProcessHandler {
-  public static final char TEXT_ATTRS_PREFIX_CH = '\u001B';
-  public static final String TEXT_ATTRS_PREFIX = Character.toString(TEXT_ATTRS_PREFIX_CH) + "[";
+  private static final char TEXT_ATTRS_PREFIX_CH = '\u001B';
+  private static final String TEXT_ATTRS_PREFIX = Character.toString(TEXT_ATTRS_PREFIX_CH) + "[";
   private static final String TEXT_ATTRS_PATTERN = "m" + TEXT_ATTRS_PREFIX_CH + "\\[";
 
   private Key myCurrentColor;
@@ -59,12 +62,13 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   public final void notifyTextAvailable(final String text, final Key outputType) {
+    final List<Pair<String, Key>> textChunks = ContainerUtil.newArrayList();
     int pos = 0;
     while(true) {
       int macroPos = text.indexOf(TEXT_ATTRS_PREFIX, pos);
       if (macroPos < 0) break;
       if (pos != macroPos) {
-        textAvailable(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType));
+        textChunks.add(Pair.create(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType)));
       }
       final int macroEndPos = getEndMacroPos(text, macroPos);
       if (macroEndPos < 0) {
@@ -77,7 +81,14 @@ public class ColoredProcessHandler extends OSProcessHandler {
       pos = macroEndPos;
     }
     if (pos < text.length()) {
-      textAvailable(text.substring(pos), getCurrentOutputAttributes(outputType));
+      textChunks.add(Pair.create(text.substring(pos), getCurrentOutputAttributes(outputType)));
+    }
+    textAvailable(textChunks);
+  }
+
+  protected void textAvailable(@NotNull final List<Pair<String, Key>> textChunks) {
+    for (final Pair<String, Key> textChunk : textChunks) {
+      textAvailable(textChunk.getFirst(), textChunk.getSecond());
     }
   }
 

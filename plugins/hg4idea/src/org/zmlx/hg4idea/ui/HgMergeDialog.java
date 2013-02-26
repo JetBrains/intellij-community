@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -34,8 +33,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class HgMergeDialog extends DialogWrapper {
 
@@ -53,12 +52,14 @@ public class HgMergeDialog extends DialogWrapper {
   private JLabel otherHeadLabel;
 
   private HgRevisionNumber otherHead;
+  private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
 
-  public HgMergeDialog(Project project, Collection<FilePath> roots) {
+  public HgMergeDialog(Project project, Collection<VirtualFile> roots, Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
     super(project, false);
     this.project = project;
-    hgRepositorySelectorComponent.setRoots(pathsToFiles(roots));
-    hgRepositorySelectorComponent.setTitle("Select repository to integrate");
+    this.branchesForRepos = branchesForRepos;
+    setRoots(roots);
+    hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateRepository();
@@ -74,7 +75,12 @@ public class HgMergeDialog extends DialogWrapper {
     tagOption.addChangeListener(changeListener);
     revisionOption.addChangeListener(changeListener);
     otherHeadRadioButton.addChangeListener(changeListener);
+    setTitle("Merge");
     init();
+  }
+
+  public void setRoots(Collection<VirtualFile> repos) {
+    hgRepositorySelectorComponent.setRoots(repos);
     updateRepository();
   }
 
@@ -112,17 +118,7 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
-      @Override
-      public void consume(final List<HgTagBranch> branches) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
-          }
-        });
-      }
-    });
+    branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
@@ -150,7 +146,7 @@ public class HgMergeDialog extends DialogWrapper {
         }
 
         HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root).getFirst();
-        for (Iterator<HgRevisionNumber> it = heads.iterator() ; it.hasNext(); ) {
+        for (Iterator<HgRevisionNumber> it = heads.iterator(); it.hasNext(); ) {
           final HgRevisionNumber rev = it.next();
           if (rev.getRevisionNumber().equals(currentParent.getRevisionNumber())) {
             it.remove();
@@ -167,7 +163,8 @@ public class HgMergeDialog extends DialogWrapper {
               otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
             }
           });
-        } else {
+        }
+        else {
           //apparently we are not at one of the heads
           disableOtherHeadsChoice();
         }
@@ -185,18 +182,14 @@ public class HgMergeDialog extends DialogWrapper {
     });
   }
 
-  private static List<VirtualFile> pathsToFiles(Collection<FilePath> paths) {
-    List<VirtualFile> files = new LinkedList<VirtualFile>();
-    for (FilePath path : paths) {
-      files.add(path.getVirtualFile());
-    }
-    return files;
-  }
-
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
     return contentPanel;
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return getClass().getName();
+  }
 }

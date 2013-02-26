@@ -961,6 +961,28 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    if (isReadAccessAllowed()) {
+      return computation.compute();
+    }
+    else {
+      assertReadActionAllowed();
+      try {
+        myLock.readLock().lockInterruptibly();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeInterruptedException(e);
+      }
+      try {
+        return computation.compute();
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+    }
+  }
+
   private static final ThreadLocal<Boolean> exceptionalThreadWithReadAccessFlag = new ThreadLocal<Boolean>();
 
   private static boolean isExceptionalThreadWithReadAccess() {

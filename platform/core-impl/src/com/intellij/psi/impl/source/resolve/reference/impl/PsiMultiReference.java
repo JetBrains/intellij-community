@@ -189,4 +189,8 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return result.toArray(new ResolveResult[result.size()]);
   }
 
+  @Override
+  public String toString() {
+    return "PsiMultiReference{myReferences=" + Arrays.toString(myReferences) + '}';
+  }
 }

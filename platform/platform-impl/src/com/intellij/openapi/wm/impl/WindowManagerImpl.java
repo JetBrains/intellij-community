@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,14 +186,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
     };
-    
+
     bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appClosing() {
-        // save fullscreen window states
+        // save full screen window states
         if (isFullScreenSupportedInCurrentOS() && GeneralSettings.getInstance().isReopenLastProject()) {
           Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-          
+
           if (openProjects.length > 0) {
             WindowManagerEx wm = WindowManagerEx.getInstanceEx();
             for (Project project : openProjects) {
@@ -821,10 +821,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   public WindowWatcher getWindowWatcher() {
     return myWindowWatcher;
   }
-  
+
   public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) {
-    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen)
+    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen) {
       return;
+    }
 
     try {
       if (SystemInfo.isMacOSLion) {

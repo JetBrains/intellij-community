@@ -563,6 +563,123 @@ bool CheckSingleInstance()
 	}
 }
 
+void DrawSplashImage(HWND hWnd)
+{
+	HBITMAP hSplashBitmap = (HBITMAP) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	PAINTSTRUCT ps;
+	HDC hDC = BeginPaint(hWnd, &ps);
+	HDC hMemDC = CreateCompatibleDC(hDC);
+	HBITMAP hOldBmp = (HBITMAP) SelectObject(hMemDC, hSplashBitmap);   
+	BITMAP splashBitmap;
+	GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
+	BitBlt(hDC, 0, 0, splashBitmap.bmWidth, splashBitmap.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	SelectObject(hMemDC, hOldBmp);
+	DeleteDC(hMemDC);
+	EndPaint(hWnd, &ps);
+}
+
+LRESULT CALLBACK SplashScreenWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch(uMsg)
+	{
+	case WM_PAINT:
+		DrawSplashImage(hWnd);
+		break;
+		}
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+const TCHAR *splashClassName = _T("IntelliJLauncherSplash");
+
+void RegisterSplashScreenWndClass()
+{
+	WNDCLASSEX wcx;
+	wcx.cbSize = sizeof(wcx);
+	wcx.style = 0;
+	wcx.lpfnWndProc = SplashScreenWndProc;
+	wcx.cbClsExtra = 0;
+	wcx.cbWndExtra = 0;
+	wcx.hInstance = hInst;
+	wcx.hIcon = 0;
+	wcx.hCursor = LoadCursor(NULL, IDC_WAIT);
+	wcx.hbrBackground = (HBRUSH) GetStockObject(LTGRAY_BRUSH);
+	wcx.lpszMenuName = 0;
+	wcx.lpszClassName = splashClassName;
+	wcx.hIconSm = 0;
+
+	RegisterClassEx(&wcx);
+}
+
+HWND ShowSplashScreenWindow(HBITMAP hSplashBitmap)
+{
+	RECT workArea;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+	BITMAP splashBitmap;
+	GetObject(hSplashBitmap, sizeof(splashBitmap), &splashBitmap);
+	int x = workArea.left + ((workArea.right - workArea.left) - splashBitmap.bmWidth) / 2;
+	int y = workArea.top + ((workArea.bottom - workArea.top) - splashBitmap.bmHeight) / 2;
+	
+	HWND splashWindow = CreateWindowEx(WS_EX_TOOLWINDOW, splashClassName, splashClassName, WS_POPUP,
+		x, y, splashBitmap.bmWidth, splashBitmap.bmHeight, NULL, NULL, NULL, NULL);
+	SetWindowLongPtr(splashWindow, GWLP_USERDATA, (LONG_PTR) hSplashBitmap);
+	ShowWindow(splashWindow, SW_SHOW);
+	UpdateWindow(splashWindow);
+	return splashWindow;
+}
+
+BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
+{
+	static DWORD currentProcId = GetCurrentProcessId();
+	DWORD procId = 0;
+	GetWindowThreadProcessId(hWnd, &procId);
+	if(currentProcId == procId) 
+	{
+		TCHAR className[_MAX_PATH];
+		GetClassName(hWnd, className, _MAX_PATH-1);
+		if (_tcscmp(className, splashClassName) != 0)
+		{
+			WINDOWINFO wi;
+			wi.cbSize = sizeof(WINDOWINFO);
+			GetWindowInfo(hWnd, &wi);
+			if((wi.dwStyle & WS_VISIBLE) != 0) 
+			{
+				HWND *phNewWindow = (HWND *) lParam;
+				*phNewWindow = hWnd;
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
+
+DWORD WINAPI SplashScreenThread(LPVOID args)
+{
+	HBITMAP hSplashBitmap = static_cast<HBITMAP>(args);
+	RegisterSplashScreenWndClass();
+	HWND splashWindow = ShowSplashScreenWindow(hSplashBitmap);
+
+	MSG msg;
+	while(true)
+	{
+		while (PeekMessage(&msg, splashWindow, 0, 0, PM_REMOVE)) 
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		Sleep(50);
+		HWND hNewWindow = NULL;
+		EnumWindows(EnumWindowsProc, (LPARAM) &hNewWindow);
+		if (hNewWindow)
+		{
+			BringWindowToTop(hNewWindow);
+			DeleteObject(hSplashBitmap);
+			DestroyWindow(splashWindow);
+		}
+	}
+	return 0;
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPTSTR    lpCmdLine,
@@ -574,6 +691,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	hInst = hInstance;
 
 	if (!CheckSingleInstance()) return 1;
+	
+	HANDLE hSplashBitmap = static_cast<HBITMAP>(LoadImage(hInst, MAKEINTRESOURCE(IDB_SPLASH), IMAGE_BITMAP, 0, 0, 0));
+	if (hSplashBitmap)
+	{
+		CreateThread(NULL, 0, SplashScreenThread, hSplashBitmap, 0, NULL);
+	}
 
 	if (!LocateJVM()) return 1;
 	if (!LoadVMOptions()) return 1;

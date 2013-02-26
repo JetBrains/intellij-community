@@ -1873,12 +1873,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return new LockFreeCopyOnWriteArrayList<T>(c);
   }
 
-  public static <T> boolean addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
-    return ContainerUtilRt.addIfNotNull(element, result);
+  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
+    ContainerUtilRt.addIfNotNull(element, result);
   }
 
-  public static <T> boolean addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
-    return ContainerUtilRt.addIfNotNull(result, element);
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
+    ContainerUtilRt.addIfNotNull(result, element);
   }
 
   @NotNull

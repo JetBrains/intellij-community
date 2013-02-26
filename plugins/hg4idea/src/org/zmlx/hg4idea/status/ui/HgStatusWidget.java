@@ -15,15 +15,14 @@
  */
 package org.zmlx.hg4idea.status.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -164,21 +163,21 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     myBusConnection = project.getMessageBus().connect();
     myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (null != statusBar) {
-      statusBar.addWidget(this, project);
-    }
+    DvcsUtil.installStatusBarWidget(myProject, this);
   }
 
   public void deactivate() {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(getProject());
-    if (null != statusBar) {
-      statusBar.removeWidget(ID());
-    }
+    if (isDisposed()) return;
+    DvcsUtil.removeStatusBarWidget(myProject, this);
   }
 
   private void update() {
     update(getProject());
+  }
+
+  public void dispose() {
+    deactivate();
+    super.dispose();
   }
 
   private void emptyTextAndTooltip() {

@@ -65,6 +65,7 @@
 
     <liveTemplateContext implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplateContextType"/>
     <defaultLiveTemplatesProvider implementation="org.jetbrains.idea.maven.utils.MavenLiveTemplatesProvider"/>
+    <projectTemplateFileProcessor implementation="org.jetbrains.idea.maven.utils.MavenTemplateFileProcessor"/>
 
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>

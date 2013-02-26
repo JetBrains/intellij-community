@@ -1929,7 +1929,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkReferenceToOurInstanceInsideThisOrSuper(@NotNull final PsiElement expression,
-                                                                            final PsiClass referencedClass,
+                                                                            @NotNull PsiClass referencedClass,
                                                                             final String resolvedName) {
     if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class) != null) return null;
     PsiElement element = expression.getParent();

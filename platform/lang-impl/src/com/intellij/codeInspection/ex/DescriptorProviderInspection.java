@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
-          problems = problems == null ? descriptions : ArrayUtil.mergeArrays(problems, descriptions);
+          problems = problems == null ? descriptions : ArrayUtil.mergeArrays(problems, descriptions, CommonProblemDescriptor.ARRAY_FACTORY);
           problemElements.put(refElement, problems);
         }
         for (CommonProblemDescriptor description : descriptions) {

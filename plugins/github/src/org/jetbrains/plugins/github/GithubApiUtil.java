@@ -28,6 +28,7 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,8 +152,10 @@ public class GithubApiUtil {
   @NotNull
   private static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
-    client.getParams().setConnectionManagerTimeout(3000);
-    client.getParams().setSoTimeout(CONNECTION_TIMEOUT);
+    HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
+    params.setConnectionTimeout(CONNECTION_TIMEOUT); //set connection timeout (how long it takes to connect to remote host)
+    params.setSoTimeout(CONNECTION_TIMEOUT); //set socket timeout (how long it takes to retrieve data from remote host)
+
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
@@ -170,6 +173,7 @@ public class GithubApiUtil {
     }
     return client;
   }
+
 
   @NotNull
   private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {

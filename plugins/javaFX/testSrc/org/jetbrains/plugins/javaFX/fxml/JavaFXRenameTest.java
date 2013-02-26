@@ -17,14 +17,11 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   @Override
@@ -35,6 +32,10 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
 
   public void testCustomComponent() throws Exception {
     doTest(getTestName(false) + "1");
+  }
+
+  public void testControllerField() throws Exception {
+    doTest("newFieldName");
   }
 
   private void doTest(final String newName) throws Exception {

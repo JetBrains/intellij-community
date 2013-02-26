@@ -59,6 +59,17 @@ public interface Application extends ComponentManager {
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
+   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
+   * immediately if no write action is currently running, or blocked until the currently running write action
+   * completes.
+   *
+   * @param computation the computation to perform.
+   * @return the result returned by the computation.
+   * @exception E re-frown from ThrowableComputable
+   */
+  <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
+
+  /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
    * immediately if no read actions are currently running, or blocked until all read actions complete.
    *

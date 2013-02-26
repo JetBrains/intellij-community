@@ -319,6 +319,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
             prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
             ownName = StringUtil.decapitalize(ownName);
           }
+          if (type instanceof EverywhereContextType) {
+            ownName = "Other";
+          }
           if (sb.length() > 0) {
             sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
           }

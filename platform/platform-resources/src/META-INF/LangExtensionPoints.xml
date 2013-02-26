@@ -605,6 +605,9 @@
 
     <extensionPoint name="projectTemplateParameterFactory"
                     interface="com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory"/>
+    <extensionPoint name="projectTemplateFileProcessor"
+                    interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor"/>
+
     <extensionPoint name="facetType"
                     interface="com.intellij.facet.FacetType"/>
 

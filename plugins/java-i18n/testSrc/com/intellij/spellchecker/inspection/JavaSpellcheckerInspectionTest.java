@@ -24,6 +24,11 @@ public class JavaSpellcheckerInspectionTest extends LightCodeInsightFixtureTestC
     return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspection";
   }
 
+  public void testCorrectJava() { doTest(); }
+  public void testTypoInJava() { doTest(); }
+  public void testVarArg() { doTest(); }
+  public void testJapanese() { doTest(); }
+
   public void testClassName() { doTest(); }
   public void testFieldName() { doTest(); }
   public void testMethodName() { doTest(); }
