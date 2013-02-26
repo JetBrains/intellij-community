@@ -293,7 +293,8 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                 !containingClass.isEnum() &&
                 !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
               ClassCandidateInfo candidateInfo = null;
-              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0) {
+              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
+                  PsiMethodReferenceUtil.onArrayType(containingClass, signature)) {
                 candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
               }
               return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
