@@ -29,6 +29,7 @@ import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -63,6 +64,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LossyEncodingInspection extends LocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LossyEncodingInspection");
+
   private static final LocalQuickFix CHANGE_ENCODING_FIX = new ChangeEncodingFix();
   private static final LocalQuickFix RELOAD_ENCODING_FIX = new ReloadInAnotherEncodingFix();
 
@@ -159,7 +162,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
 
     boolean equals = Arrays.equals(bytesToSave, bytes);
-    if (!equals) {
+    if (!equals && LOG.isDebugEnabled()) {
       try {
         FileUtil.writeToFile(new File("C:\\temp\\bytesToSave"), bytesToSave);
         FileUtil.writeToFile(new File("C:\\temp\\bytes"), bytes);
