@@ -25,6 +25,11 @@ class OnArrayTest {
         T make(int size);
     }
 
+    static class Foo<X> { }
+    interface ObjectArrayReturnType {
+        Object make(int size);
+    }
+
     public static void main(String[] args) {
         Cln s =  int[]::clone;
         IA a =  int[]::new;
@@ -35,5 +40,8 @@ class OnArrayTest {
         ArrayReturnType<String[]> a1 = String[]::new;
         ArrayReturnType<String[][]> a2 = String[][]::new;
         <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.ArrayReturnType<java.lang.String[]>'">ArrayReturnType<String[]> a3 = int[]::new;</error>
+        
+        ObjectArrayReturnType a4 = Foo<?>[]::new;
+        ObjectArrayReturnType a5 = Foo<? extends String>[]::new;
     }
 }
