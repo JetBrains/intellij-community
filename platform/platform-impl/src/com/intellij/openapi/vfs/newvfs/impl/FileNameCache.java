@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml"};
+  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
   private static final TIntObjectHashMap<String> ourSuffixCache = new TIntObjectHashMap<String>();
   private static final TIntObjectHashMap<Object> ourNameCache = new TIntObjectHashMap<Object>();
   private static final Object ourCacheLock = new Object();

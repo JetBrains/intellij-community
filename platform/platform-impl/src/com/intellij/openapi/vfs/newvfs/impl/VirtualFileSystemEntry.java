@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +99,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     String suffix = getEncodedSuffix();
     if (name instanceof String) {
       //noinspection StringEquality
-      return suffix == EMPTY ? (String)name : name + suffix;
+      return suffix == FileNameCache.EMPTY ? (String)name : name + suffix;
     }
 
     byte[] bytes = (byte[])name;
@@ -121,23 +120,31 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     byte[] bytes = (byte[])rawName;
-    int suffixLength = getEncodedSuffixLength();
     int bytesLength = bytes.length;
+
+    String suffix = getEncodedSuffix();
+    int suffixLength = suffix.length();
+
     int d = bytesLength + suffixLength - name.length();
     if (d != 0) return d;
+
     d = compare(bytes, 0, name, 0, bytesLength, ignoreCase);
     if (d != 0) return d;
-    byte[] suffix = getEncodedSuffixBytes();
-    d = compare(suffix, 0, name, bytesLength, suffixLength, ignoreCase);
+
+    d = compareNames(suffix, name, ignoreCase, bytesLength);
     return d;
   }
 
   static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
-    int d = name1.length() - name2.length();
+    return compareNames(name1, name2, ignoreCase, 0);
+  }
+
+  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase, int offset2) {
+    int d = name1.length() - name2.length() + offset2;
     if (d != 0) return d;
     for (int i=0; i<name1.length(); i++) {
       // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
-      d = StringUtil.compare(name1.charAt(i), name2.charAt(i), ignoreCase);
+      d = StringUtil.compare(name1.charAt(i), name2.charAt(i + offset2), ignoreCase);
       if (d != 0) return d;
     }
     return 0;
