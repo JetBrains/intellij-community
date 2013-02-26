@@ -2203,9 +2203,9 @@ public class StringUtil extends StringUtilRt {
         else {
           // similar logic to charsMatch() below
           if (ch1 != ch2) {
-            final int diff1 = Character.toUpperCase(ch1) - Character.toUpperCase(ch2);
+            final int diff1 = StringUtilRt.toUpperCase(ch1) - StringUtilRt.toUpperCase(ch2);
             if (diff1 != 0) {
-              final int diff2 = Character.toLowerCase(ch1) - Character.toLowerCase(ch2);
+              final int diff2 = StringUtilRt.toLowerCase(ch1) - StringUtilRt.toLowerCase(ch2);
               if (diff2 != 0) {
                 return diff2;
               }
@@ -2281,30 +2281,31 @@ public class StringUtil extends StringUtilRt {
     return true;
   }
 
-  public static boolean charsMatch(char c1, char c2, boolean ignoreCase) {
+  public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
-    if (c1 == c2) {
-      return true;
+    int d = c1 - c2;
+    if (d == 0 || !ignoreCase) {
+      return d;
     }
-    if (ignoreCase) {
-      // If characters don't match but case may be ignored,
-      // try converting both characters to uppercase.
-      // If the results match, then the comparison scan should
-      // continue.
-      char u1 = Character.toUpperCase(c1);
-      char u2 = Character.toUpperCase(c2);
-      if (u1 == u2) {
-        return true;
-      }
+    // If characters don't match but case may be ignored,
+    // try converting both characters to uppercase.
+    // If the results match, then the comparison scan should
+    // continue.
+    char u1 = StringUtilRt.toUpperCase(c1);
+    char u2 = StringUtilRt.toUpperCase(c2);
+    d = u1 - u2;
+    if (d != 0) {
       // Unfortunately, conversion to uppercase does not work properly
       // for the Georgian alphabet, which has strange rules about case
       // conversion.  So we need to make one last check before
       // exiting.
-      if (Character.toLowerCase(u1) == Character.toLowerCase(u2)) {
-        return true;
-      }
+      d = StringUtilRt.toLowerCase(u1) - StringUtilRt.toLowerCase(u2);
     }
-    return false;
+    return d;
+  }
+
+  public static boolean charsMatch(char c1, char c2, boolean ignoreCase) {
+    return compare(c1,c2,ignoreCase) == 0;
   }
 
   public static String formatLinks(String message) {

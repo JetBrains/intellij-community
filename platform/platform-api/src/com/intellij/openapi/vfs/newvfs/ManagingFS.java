@@ -16,19 +16,18 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.util.List;
 
 /**
  * @author max
  */
-public abstract class ManagingFS implements FileSystemInterface {
+public abstract class ManagingFS implements FileSystemInterface, FileSystemPersistence {
   private static class ManagingFSHolder {
     private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
   }
@@ -56,8 +55,6 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
 
-  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
-
   @Nullable
   public abstract NewVirtualFile findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs);
 
@@ -70,6 +67,7 @@ public abstract class ManagingFS implements FileSystemInterface {
   @NotNull
   public abstract VirtualFile[] getLocalRoots();
 
+  @Override
   @Nullable
   public abstract VirtualFile findFileById(int id);
 }

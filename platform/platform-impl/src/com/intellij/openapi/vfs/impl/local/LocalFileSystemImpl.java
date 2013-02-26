@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
@@ -150,12 +149,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     });
     PersistentFS.getInstance().clearIdCache();
-
-    for (VirtualFile root : myManagingFS.getRoots(this)) {
-      if (root instanceof VirtualDirectoryImpl) {
-        ((VirtualDirectoryImpl)root).cleanupCachedChildren(survivors);
-      }
-    }
 
     myRootsToWatch.clear();
   }

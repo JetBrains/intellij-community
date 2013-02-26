@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -654,7 +653,7 @@ public class FSRecords implements Forceable {
     return DbConnection.isDirty();
   }
 
-  public static int findRootRecord(String rootUrl) throws IOException {
+  public static int findRootRecord(@NotNull String rootUrl) {
     try {
       try {
         w.lock();
@@ -713,7 +712,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void deleteRootRecord(int id) throws IOException {
+  public static void deleteRootRecord(int id) {
     try {
       try {
         w.lock();
@@ -790,24 +789,34 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static Pair<String[],int[]> listAll(int parentId) {
+  public static class NameId {
+    public static final NameId[] EMPTY_ARRAY = new NameId[0];
+    public final int id;
+    public final String name;
+
+    public NameId(int id, @NotNull String name) {
+      this.id = id;
+      this.name = name;
+    }
+  }
+
+  @NotNull
+  public static NameId[] listAll(int parentId) {
     try {
       r.lock();
       try {
         final DataInputStream input = readAttribute(parentId, CHILDREN_ATT);
-        if (input == null) return Pair.create(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_INT_ARRAY);
+        if (input == null) return NameId.EMPTY_ARRAY;
 
-        final int count = DataInputOutputUtil.readINT(input);
-        final int[] ids = ArrayUtil.newIntArray(count);
-        final String[] names = ArrayUtil.newStringArray(count);
+        int count = DataInputOutputUtil.readINT(input);
+        NameId[] result = count == 0 ? NameId.EMPTY_ARRAY : new NameId[count];
         for (int i = 0; i < count; i++) {
           int id = DataInputOutputUtil.readINT(input);
           id = id >= 0 ? id + parentId : -id;
-          ids[i] = id;
-          names[i] = getName(id);
+          result[i] = new NameId(id, getName(id));
         }
         input.close();
-        return Pair.create(names, ids);
+        return result;
       }
       finally {
         r.unlock();
