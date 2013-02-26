@@ -25,10 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -398,5 +395,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   public static VcsKey getKey() {
     return ourKey;
+  }
+
+  @Override
+  public CheckoutProvider getCheckoutProvider() {
+    return new HgCheckoutProvider();
   }
 }

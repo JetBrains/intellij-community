@@ -653,11 +653,8 @@ public abstract class PropertyTable extends JBTable {
     int selectedRow = getSelectedRow();
     Property property = myProperties.get(rowIndex);
 
-    LOG.assertTrue(myExpandedProperties.remove(property.getPath()));
-    int size = getFilterChildren(property).size();
-    for (int i = 0; i < size; i++) {
-      myProperties.remove(rowIndex + 1);
-    }
+    int size = collapse(property, rowIndex + 1);
+    LOG.assertTrue(size > 0);
     myModel.fireTableDataChanged();
 
     if (selectedRow != -1) {
@@ -667,6 +664,18 @@ public abstract class PropertyTable extends JBTable {
 
       getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
     }
+  }
+
+  private int collapse(Property property, int startIndex) {
+    int totalSize = 0;
+    if (myExpandedProperties.remove(property.getPath())) {
+      int size = getFilterChildren(property).size();
+      totalSize += size;
+      for (int i = 0; i < size; i++) {
+        totalSize += collapse(myProperties.remove(startIndex), startIndex);
+      }
+    }
+    return totalSize;
   }
 
   private void expand(int rowIndex) {

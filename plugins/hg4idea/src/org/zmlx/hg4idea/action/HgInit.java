@@ -116,11 +116,14 @@ public class HgInit extends DumbAwareAction {
         if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
           updateDirectoryMappings(mapRoot);
           new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
-            .notifySuccess("hg4idea.init.created.notification.title", "hg4idea.init.created.notification.description");
-        } else {
+            .notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
+                           HgVcsMessages.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
+        }
+        else {
           new HgCommandResultNotifier(myProject.isDefault() ? null : myProject)
-            .notifyError(result, "hg4idea.init.error.title", HgVcsMessages.message("hg4idea.init.error.description",
-                                                                                 selectedRoot.getPresentableUrl()));
+            .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
+                                                                                                          selectedRoot
+                                                                                                            .getPresentableUrl()));
         }
       }
     });

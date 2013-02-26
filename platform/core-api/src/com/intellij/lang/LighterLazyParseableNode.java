@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface LighterLazyParseableNode extends LighterASTNode {
@@ -26,4 +28,10 @@ public interface LighterLazyParseableNode extends LighterASTNode {
   CharTable getCharTable();
 
   CharSequence getText();
+
+  interface Visitor {
+    boolean visit(IElementType type);
+  }
+
+  boolean accept(@NotNull Visitor visitor);
 }

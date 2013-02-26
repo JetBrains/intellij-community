@@ -78,14 +78,30 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
           Pair<Charset,String> detected = EncodingUtil.checkCanReload(virtualFile);
           String failReason = detected.second;
           Charset autoDetected = detected.first;
-          int res = Messages
-            .showDialog("<html><body>" +
-                        "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding.<br><br>" +
-                        (failReason == null ? "" : "Why: "+ failReason +"<br>") +
-                        (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'") +
+          int res;
+          byte[] bom = virtualFile.getBOM();
+          if (bom != null) {
+            Messages
+              .showErrorDialog("<html><body>" +
+                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding.<br><br>" +
+                          (failReason == null ? "" : "Why: "+ failReason +"<br>") +
+                          (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'") +
+                          "</body></html>",
+                          "Incompatible Encoding: " + charset.displayName()
+                          );
+            res = -1;
+          }
+          else {
+            res = Messages
+              .showDialog("<html><body>" +
+                        "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
+                        "<br><br>" +
+                        (failReason == null ? "" : "Why: " + failReason + "<br>") +
+                        (autoDetected == null ? "" : "Detected encoding: '" + autoDetected.displayName() + "'") +
                         "</body></html>",
                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
                         AllIcons.General.WarningDialog);
+          }
           if (res != 0) {
             doCancelAction();
             return;
@@ -104,7 +120,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
         if (safeToConvert == EncodingUtil.Magic8.NO_WAY) {
           String error = EncodingUtil.checkCanConvert(virtualFile);
           int res = Messages.showDialog("<html><body>" +
-                                        "Cannot convert to '"+charset.displayName()+"'.<br><br>" +
+                                        "Please do not convert to '"+charset.displayName()+"'.<br><br>" +
                                         (error == null ? "Encoding '" + charset.displayName() + "' does not support some characters from the text." : error)+
                                         "</body></html>",
                                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Convert anyway", "Cancel"}, 1,

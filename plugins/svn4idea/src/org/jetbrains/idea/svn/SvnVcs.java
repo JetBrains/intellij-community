@@ -143,7 +143,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private EditFileProvider myEditFilesProvider;
   private SvnCommittedChangesProvider myCommittedChangesProvider;
   private final VcsShowSettingOption myCheckoutOptions;
-  private final static SSLExceptionsHelper myHelper = new SSLExceptionsHelper();
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
@@ -282,7 +281,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     // remove used some time before old notification group ids
     correctNotificationIds();
     myChecker = new SvnExecutableChecker(myProject);
-    myConfiguration.getAuthenticationManager(this).setHelper(myHelper);
   }
 
   private void correctNotificationIds() {
@@ -959,7 +957,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
-    private final static long ourMaxFrequency = 10000;
+    private final static long ourErrorNotificationInterval = 10000;
     private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
@@ -976,9 +974,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
       if (th instanceof SSLHandshakeException) {
         final long time = System.currentTimeMillis();
-        if ((time - myPreviousTime) > ourMaxFrequency) {
+        if ((time - myPreviousTime) > ourErrorNotificationInterval) {
           myPreviousTime = time;
-          String info = myHelper.getAddInfo();
+          String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
             PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);

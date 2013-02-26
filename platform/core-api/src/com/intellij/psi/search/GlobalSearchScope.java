@@ -243,7 +243,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope moduleTestsWithDependentsScope(@NotNull Module module) {
-    return module.getModuleWithDependentsScope();
+    return module.getModuleTestsWithDependentsScope();
   }
 
   @NotNull

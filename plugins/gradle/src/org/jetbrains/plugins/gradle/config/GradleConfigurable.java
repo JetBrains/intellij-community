@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
@@ -64,7 +65,7 @@ import java.util.concurrent.TimeUnit;
 public class GradleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   
   private enum PathColor { NORMAL, DEDUCED }
-  
+
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
@@ -77,8 +78,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @NotNull private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
 
-  @NotNull private final JLabel myLinkedProjectLabel = new JBLabel(GradleBundle.message("gradle.settings.label.select.project"));
-  @NotNull private final JLabel myGradleHomeLabel    = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
+  @NotNull private final JLabel myLinkedProjectLabel    = new JBLabel(GradleBundle.message("gradle.settings.label.select.project"));
+  @NotNull private final JLabel myGradleHomeLabel       = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
   @NotNull private final JLabel myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
 
   @NotNull private TextFieldWithBrowseButton myLinkedGradleProjectPathField;
@@ -86,6 +87,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   @NotNull private TextFieldWithBrowseButton myServiceDirectoryPathField;
   @NotNull private JBRadioButton             myUseWrapperButton;
   @NotNull private JBRadioButton             myUseLocalDistributionButton;
+  @NotNull private JBCheckBox                myUseAutoImportBox;
 
   @Nullable private JComponent myComponent;
 
@@ -156,6 +158,10 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     return myUseLocalDistributionButton.isSelected();
   }
 
+  public boolean isUseAutoImport() {
+    return myUseAutoImportBox.isSelected();
+  }
+
   public void setLinkedGradleProjectPath(@NotNull String path) {
     myLinkedGradleProjectPathField.setText(path);
   }
@@ -175,24 +181,27 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     initWrapperVsLocalControls();
     initGradleHome(testMode);
     initServiceDirectoryHome();
+    myUseAutoImportBox = new JBCheckBox(GradleBundle.message("gradle.settings.use.auto.import"));
     assert myComponent != null;
 
     GridBag pathLabelConstraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(0);
-    GridBag pathConstraints = new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST);
+    GridBag fillLineConstraints = new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST);
     myComponent.add(myLinkedProjectLabel, pathLabelConstraints);
-    myComponent.add(myLinkedGradleProjectPathField, pathConstraints);
+    myComponent.add(myLinkedGradleProjectPathField, fillLineConstraints);
 
     GridBag constraints = new GridBag().coverLine().anchor(GridBagConstraints.WEST);
-    
+
     // Provide radio buttons if gradle wrapper can be used for particular project.
     myComponent.add(myUseWrapperButton, constraints);
     myComponent.add(myUseLocalDistributionButton, constraints);
 
+    myComponent.add(myUseAutoImportBox, fillLineConstraints);
+    
     myComponent.add(myGradleHomeLabel, pathLabelConstraints);
-    myComponent.add(myGradleHomePathField, pathConstraints);
+    myComponent.add(myGradleHomePathField, fillLineConstraints);
 
     myComponent.add(myServiceDirectoryLabel, pathLabelConstraints);
-    myComponent.add(myServiceDirectoryPathField, pathConstraints);
+    myComponent.add(myServiceDirectoryPathField, fillLineConstraints);
 
     myComponent.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
   }
@@ -404,6 +413,10 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     {
       return true;
     }
+
+    if (myUseAutoImportBox.isSelected() != settings.isUseAutoImport()) {
+      return true;
+    }
     
     return false;
   }
@@ -428,7 +441,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
                                                myServiceDirectoryPathField.getText());
     
     boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
-    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, serviceDirPath, myProject);
+    boolean useAutoImport = myUseAutoImportBox.isSelected();
+    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, useAutoImport, serviceDirPath, myProject);
 
     Project defaultProject = myHelper.getDefaultProject();
     if (myProject != defaultProject) {
@@ -563,6 +577,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       myServiceDirectoryPathField.setText(serviceDirectoryPath);
       useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
     }
+    
+    myUseAutoImportBox.setSelected(settings.isUseAutoImport());
   }
 
   private static void useColorForPath(@NotNull PathColor color, @NotNull TextFieldWithBrowseButton pathControl) {
@@ -674,6 +690,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     void applySettings(@Nullable String linkedProjectPath,
                        @Nullable String gradleHomePath,
                        boolean preferLocalInstallationToWrapper,
+                       boolean useAutoImport,
                        @Nullable String serviceDirectoryPath,
                        @NotNull Project project);
     
@@ -719,10 +736,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     public void applySettings(@Nullable String linkedProjectPath,
                               @Nullable String gradleHomePath,
                               boolean preferLocalInstallationToWrapper,
+                              boolean useAutoImport,
                               @Nullable String serviceDirectoryPath,
                               @NotNull Project project)
     {
-      GradleSettings.applySettings(linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, serviceDirectoryPath, project); 
+      GradleSettings.applySettings(
+        linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, useAutoImport, serviceDirectoryPath, project
+      ); 
     }
 
     @Override

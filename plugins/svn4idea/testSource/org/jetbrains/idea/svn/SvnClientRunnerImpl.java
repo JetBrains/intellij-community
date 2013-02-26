@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.testFramework.vcs.TestClientRunner;
+import org.jetbrains.idea.SvnTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,36 +43,36 @@ public class SvnClientRunnerImpl implements SvnClientRunner {
 
   @Override
   public void checkin(final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "ci", "-m", "test", file.getPath()));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(file.getPath()), myTestClientRunner, new String[]{"ci", "-m", "test", file.getPath()});
   }
 
   @Override
   public void update(final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "up", "--accept", "postpone", file.getPath()));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(file.getPath()), myTestClientRunner, new String[]{"up", "--accept", "postpone", file.getPath()});
   }
 
   @Override
   public void checkout(final String repoUrl, final VirtualFile file) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(file, "co", repoUrl, file.getPath()));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(file.getPath()), myTestClientRunner, new String[]{"co", repoUrl, file.getPath()});
   }
 
   @Override
   public void add(VirtualFile root, String path) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(root, "add", path));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(root.getPath()), myTestClientRunner, new String[]{"add", path});
   }
 
   @Override
   public void delete(VirtualFile root, String path) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(root, "delete", path));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(root.getPath()), myTestClientRunner, new String[]{"delete", path});
   }
 
   @Override
   public void copy(VirtualFile root, String path, String from) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(root, "copy", path, from));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(root.getPath()), myTestClientRunner, new String[]{"copy", path, from});
   }
 
   @Override
   public void testSvnVersion(VirtualFile root) throws IOException {
-    AbstractVcsTestCase.verify(runSvn(root, "--version"));
+    SvnTestCase.runInAndVerifyIgnoreOutput(new File(root.getPath()), myTestClientRunner, new String[]{"--version"});
   }
 }

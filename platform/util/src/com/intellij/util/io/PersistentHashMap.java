@@ -638,11 +638,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     });
 
-    LOG.info("Loaded mappings:"+(System.currentTimeMillis() - started) + "ms,");
+    LOG.info("Loaded mappings:"+(System.currentTimeMillis() - started) + "ms, keys:"+infos.size());
     started = System.currentTimeMillis();
     int fragments = 0;
-    if (infos.size() > 0) fragments = myValueStorage.compactValues(infos, newStorage);
-    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+fragments + ", keys:"+infos.size());
+    if (infos.size() > 0) {
+      try {
+        fragments = myValueStorage.compactValues(infos, newStorage);
+      } catch (Throwable t) {
+        if (!(t instanceof IOException)) throw new IOException("Compaction failed", t);
+        throw (IOException)t;
+      }
+    }
+
+    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+fragments);
 
     started = System.currentTimeMillis();
     try {

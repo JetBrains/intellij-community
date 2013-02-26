@@ -58,7 +58,7 @@ public final class DirectoryInfo {
    */
   private final OrderEntry[] orderEntries;
 
-  public static DirectoryInfo createNew() {
+  static DirectoryInfo createNew() {
     return new DirectoryInfo(null, null, null, null, (byte)0, null);
   }
   private DirectoryInfo(Module module,
@@ -261,7 +261,7 @@ public final class DirectoryInfo {
     }
   };
 
-  public static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
+  static final Comparator<OrderEntry> BY_OWNER_MODULE = new Comparator<OrderEntry>() {
     @Override
     public int compare(OrderEntry o1, OrderEntry o2) {
       String name1 = o1.getOwnerModule().getName();
@@ -311,7 +311,7 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  public DirectoryInfo with(Module module,
+  DirectoryInfo with(Module module,
                             VirtualFile contentRoot,
                             VirtualFile sourceRoot,
                             VirtualFile libraryClassRoot,
@@ -323,7 +323,7 @@ public final class DirectoryInfo {
   }
 
   @NotNull
-  public DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
+  DirectoryInfo withInternedEntries(@NotNull OrderEntry[] orderEntries) {
     return new DirectoryInfo(module, contentRoot, sourceRoot, libraryClassRoot, sourceFlag, orderEntries);
   }
 

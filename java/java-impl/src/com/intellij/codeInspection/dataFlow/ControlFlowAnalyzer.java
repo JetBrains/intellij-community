@@ -1218,7 +1218,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(NOT_FOUND, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myFactory.getTypeFactory().create(ref), null));
+        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(ref), null));
         addThrowCode(ref);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }

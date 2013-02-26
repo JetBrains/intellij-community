@@ -15,7 +15,6 @@
  */
 
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -23,6 +22,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
@@ -1669,5 +1670,18 @@ print new foo.Myclass()
 void foo() {
   <caret> = baz
 }""")
+  }
+
+  public void "test honor statistics"() {
+    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(testRootDisposable)
+
+    myFixture.addClass("class Foo { Object getMessage() {} }; class Bar extends Foo { Object getMessages(); }")
+    configure "b = new Bar();\nb.mes<caret>"
+    def items = myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, "messages", "message"
+    myFixture.lookup.currentItem = items[1]
+    myFixture.type('\n\nb.mes')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, "message", "messages"
   }
 }

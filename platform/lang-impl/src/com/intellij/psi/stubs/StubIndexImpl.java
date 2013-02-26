@@ -19,11 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -33,14 +29,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -76,6 +66,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
+  private final StubProcessingHelper myStubProcessingHelper;
+
   private StubIndexState myPreviouslyRegistered;
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
@@ -96,6 +88,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
     dropUnregisteredIndices();
+
+    myStubProcessingHelper = new StubProcessingHelper(fileBasedIndex);
   }
   
   @Nullable
@@ -228,98 +222,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             if (file == null || scope != null && !scope.contains(file)) {
               return true;
             }
-            StubTree stubTree = null;
-
-            final PsiFile _psifile = psiManager.findFile(file);
-            PsiFileWithStubSupport psiFile = null;
-
-            if (_psifile != null && !(_psifile instanceof PsiPlainTextFile)) {
-              if (_psifile instanceof PsiFileWithStubSupport) {
-                psiFile = (PsiFileWithStubSupport)_psifile;
-                stubTree = psiFile.getStubTree();
-                if (stubTree == null && psiFile instanceof PsiFileImpl) {
-                  stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-                }
-              }
-            }
-
-            if (stubTree == null && psiFile == null) {
-              return true;
-            }
-            if (stubTree == null) {
-              ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
-              if (!(objectStubTree instanceof ObjectStubTree)) {
-                return true;
-              }
-              stubTree = (StubTree)objectStubTree;
-              final List<StubElement<?>> plained = stubTree.getPlainList();
-              for (int i = 0, size = value.size(); i < size; i++) {
-                final StubElement<?> stub = plained.get(value.get(i));
-                final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
-
-                if (tree != null) {
-                  if (tree.getElementType() == stubType(stub)) {
-                    Psi psi = (Psi)tree.getPsi();
-                    if (!processor.process(psi)) return false;
-                  }
-                  else {
-                    String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
-
-                    String stubTreeJustBuilt =
-                      ((PsiFileStubImpl)((IStubFileElementType)((PsiFileImpl)psiFile).getContentElementType()).getBuilder()
-                        .buildStubTree(psiFile)).printTree();
-
-                    StringBuilder builder = new StringBuilder();
-                    builder.append("Oops\n");
-
-
-                    builder.append("Recorded stub:-----------------------------------\n");
-                    builder.append(persistedStubTree);
-                    builder.append("\nAST built stub: ------------------------------------\n");
-                    builder.append(stubTreeJustBuilt);
-                    builder.append("\n");
-                    LOG.info(builder.toString());
-
-                    // requestReindex() may want to acquire write lock (for indices not requiring content loading)
-                    // thus, because here we are under read lock, need to use invoke later
-                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                      @Override
-                      public void run() {
-                        fileBasedIndex.requestReindex(file);
-                      }
-                    }, ModalityState.NON_MODAL);
-                  }
-                }
-              }
-            }
-            else {
-              final List<StubElement<?>> plained = stubTree.getPlainList();
-              for (int i = 0, size = value.size(); i < size; i++) {
-                final int stubTreeIndex = value.get(i);
-                if (stubTreeIndex >= plained.size()) {
-                  final VirtualFile virtualFile = psiFile.getVirtualFile();
-                  StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(project, file);
-                  LOG.error(LogMessageEx.createEvent("PSI and index do not match: PSI " + psiFile + ", first stub " + plained.get(0),
-                                                     "Please report the problem to JetBrains with the file attached",
-                                                     new Attachment(virtualFile != null ? virtualFile.getPath() : "vFile.txt", psiFile.getText()),
-                                                     new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()),
-                                                     new Attachment("stubTreeFromIndex.txt", stubTreeFromIndex == null ? "null" : ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree())));
-
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      fileBasedIndex.requestReindex(file);
-                    }
-                  }, ModalityState.NON_MODAL);
-
-                  break;
-                }
-                Psi psi = (Psi)plained.get(stubTreeIndex).getPsi();
-                if (!processor.process(psi)) return false;
-              }
-            }
-            return true;
+            return myStubProcessingHelper.processStubsInFile(project, file, value, processor);
           }
+
         });
       }
       finally {
@@ -341,14 +246,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     return true;
-  }
-
-  private static IElementType stubType(@NotNull final StubElement<?> stub) {
-    if (stub instanceof PsiFileStub) {
-      return ((PsiFileStub)stub).getType();
-    }
-
-    return stub.getStubType();
   }
 
   private static void forceRebuild(@NotNull Throwable e) {

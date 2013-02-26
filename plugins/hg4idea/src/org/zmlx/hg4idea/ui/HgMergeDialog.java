@@ -118,7 +118,9 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
+    if (branchesForRepos.get(root) != null) {
+      branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
+    }
   }
 
   private void loadTags(VirtualFile root) {

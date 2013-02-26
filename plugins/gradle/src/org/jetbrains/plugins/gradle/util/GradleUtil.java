@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
+import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
+import org.jetbrains.plugins.gradle.model.gradle.GradleEntityVisitor;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
@@ -320,7 +322,7 @@ public class GradleUtil {
           });
         }
         else {
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.text")) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.initial.text")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               task.execute(indicator);
@@ -330,6 +332,15 @@ public class GradleUtil {
       }
     });
     return gradleProject.get();
+  }
+  
+  public static void dispatch(@Nullable Object entity, @NotNull GradleEntityVisitor gradleVisitor, @NotNull IdeEntityVisitor ideVisitor) {
+    if (entity instanceof GradleEntity) {
+      ((GradleEntity)entity).invite(gradleVisitor);
+    }
+    else {
+      dispatch(entity, ideVisitor);
+    }
   }
   
   /**

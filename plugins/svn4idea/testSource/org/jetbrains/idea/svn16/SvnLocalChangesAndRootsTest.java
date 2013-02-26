@@ -65,9 +65,9 @@ public class SvnLocalChangesAndRootsTest extends Svn16TestCase {
       myFile.createNewFile();
       sleep100();
 
-      verify(runSvn("import", "-m", "test", myDir.getAbsolutePath(), myRepoUrl + "/" + name));
+      runInAndVerifyIgnoreOutput("import", "-m", "test", myDir.getAbsolutePath(), myRepoUrl + "/" + name);
       FileUtil.delete(myDir);
-      verify(runSvn("co", myRepoUrl + "/" + name, myDir.getAbsolutePath()));
+      runInAndVerifyIgnoreOutput("co", myRepoUrl + "/" + name, myDir.getAbsolutePath());
 
       myUnversioned = new File(myDir, "unversioned.txt");
       myFile.createNewFile();

@@ -187,15 +187,20 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     MemberOrderService service = ServiceManager.getService(MemberOrderService.class);
     PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
 
-    if (anchor != null && PsiTreeUtil.skipSiblingsForward(anchor, PsiWhiteSpace.class) == aClass.getRBrace()) {
-      // Given member should be inserted as the last child.
-      return aClass.getRBrace();
+    PsiElement newAnchor = skipWhitespaces(aClass, anchor);
+    if (newAnchor != null) {
+      return newAnchor;
     }
-    
+
     if (anchor != null && anchor != aClass) {
       anchor = anchor.getNextSibling();
       while (anchor instanceof PsiJavaToken && (anchor.getText().equals(",") || anchor.getText().equals(";"))) {
+        final boolean afterComma = anchor.getText().equals(",");
         anchor = anchor.getNextSibling();
+        if (afterComma) {
+          newAnchor = skipWhitespaces(aClass, anchor);
+          if (newAnchor != null) return newAnchor;
+        }
       }
       if (anchor != null) {
         return anchor;
@@ -215,7 +220,15 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     
     return aClass.getRBrace();
   }
-  
+
+  private static PsiElement skipWhitespaces(PsiClass aClass, PsiElement anchor) {
+    if (anchor != null && PsiTreeUtil.skipSiblingsForward(anchor, PsiWhiteSpace.class) == aClass.getRBrace()) {
+      // Given member should be inserted as the last child.
+      return aClass.getRBrace();
+    }
+    return null;
+  }
+
   // TODO remove as soon as an arrangement sub-system is provided for groovy.
   public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {

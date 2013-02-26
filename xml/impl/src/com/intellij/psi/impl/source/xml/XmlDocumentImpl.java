@@ -217,7 +217,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
-        if (htmlns == null || htmlns.length() == 0) {
+        if (htmlns.length() == 0) {
           htmlns = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);

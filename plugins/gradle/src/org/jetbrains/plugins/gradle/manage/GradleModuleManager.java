@@ -7,6 +7,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -16,8 +18,8 @@ import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -47,25 +49,22 @@ public class GradleModuleManager {
     myDependencyImporter = dependencyImporter;
   }
 
-  public void importModule(@NotNull GradleModule module, @NotNull Project project) {
-    importModules(Collections.singleton(module), project, false);
-  }
-
   public void importModules(@NotNull final Collection<? extends GradleModule> modules,
                             @NotNull final Project project,
-                            final boolean recursive)
+                            final boolean recursive,
+                            final boolean synchronous)
   {
     if (modules.isEmpty()) {
       return;
     }
     if (!project.isInitialized()) {
-      myAlarm.addRequest(new ImportModulesTask(project, modules, recursive), PROJECT_INITIALISATION_DELAY_MS);
+      myAlarm.addRequest(new ImportModulesTask(project, modules, recursive, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable task = new Runnable() {
       @Override
       public void run() {
-        removeExistingModulesConfigs(modules);
+        removeExistingModulesConfigs(modules, project);
         Application application = ApplicationManager.getApplication();
         final Map<GradleModule, Module> moduleMappings = new HashMap<GradleModule, Module>();
         application.runWriteAction(new Runnable() {
@@ -121,34 +120,50 @@ public class GradleModuleManager {
         }
         for (GradleModule gradleModule : modules) {
           final Module intellijModule = moduleMappings.get(gradleModule);
-          myContentRootImporter.importContentRoots(gradleModule.getContentRoots(), intellijModule);
-          myDependencyImporter.importDependencies(gradleModule.getDependencies(), intellijModule, false);
+          myContentRootImporter.importContentRoots(gradleModule.getContentRoots(), intellijModule, synchronous);
+          myDependencyImporter.importDependencies(gradleModule.getDependencies(), intellijModule, synchronous);
         }
+      }
+    };
+    if (synchronous) {
+      UIUtil.invokeAndWaitIfNeeded(task);
+    }
+    else {
+      UIUtil.invokeLaterIfNeeded(task);
+    }
+  }
+
+  private void removeExistingModulesConfigs(@NotNull final Collection<? extends  GradleModule> modules, @NotNull Project project) {
+    if (modules.isEmpty()) {
+      return;
+    }
+    GradleUtil.executeProjectChangeAction(project, modules, true, new Runnable() {
+      @Override
+      public void run() {
+        LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+        for (GradleModule module : modules) {
+          // Remove existing '*.iml' file if necessary.
+          VirtualFile file = fileSystem.refreshAndFindFileByPath(module.getModuleFilePath());
+          if (file != null) {
+            try {
+              file.delete(this);
+            }
+            catch (IOException e) {
+              GradleLog.LOG.warn("Can't remove existing module file at '" + module.getModuleFilePath() + "'");
+            }
+          }
+        } 
       }
     });
   }
 
-  private static void removeExistingModulesConfigs(@NotNull Collection<? extends  GradleModule> modules) {
-    for (GradleModule module : modules) {
-      // Remove existing '*.iml' file if necessary.
-      final String moduleFilePath = module.getModuleFilePath();
-      File file = new File(moduleFilePath);
-      if (file.isFile()) {
-        boolean success = file.delete();
-        if (!success) {
-          GradleLog.LOG.warn("Can't remove existing module file at '" + moduleFilePath + "'");
-        }
-      }
-    }
-  }
-
   @SuppressWarnings("MethodMayBeStatic")
-  public void removeModules(@NotNull final Collection<? extends Module> modules) {
+  public void removeModules(@NotNull final Collection<? extends Module> modules, boolean synchronous) {
     if (modules.isEmpty()) {
       return;
     }
     Project project = modules.iterator().next().getProject();
-    GradleUtil.executeProjectChangeAction(project, modules, new Runnable() {
+    GradleUtil.executeProjectChangeAction(project, modules, synchronous, new Runnable() {
       @Override
       public void run() {
         for (Module module : modules) {
@@ -172,11 +187,17 @@ public class GradleModuleManager {
     private final Project                            myProject;
     private final Collection<? extends GradleModule> myModules;
     private final boolean                            myRecursive;
+    private final boolean                            mySynchronous;
 
-    ImportModulesTask(@NotNull Project project, @NotNull Collection<? extends GradleModule> modules, boolean recursive) {
+    ImportModulesTask(@NotNull Project project,
+                      @NotNull Collection<? extends GradleModule> modules,
+                      boolean recursive,
+                      boolean synchronous)
+    {
       myProject = project;
       myModules = modules;
       myRecursive = recursive;
+      mySynchronous = synchronous;
     }
 
     @Override
@@ -184,13 +205,13 @@ public class GradleModuleManager {
       myAlarm.cancelAllRequests();
       if (!myProject.isInitialized()) {
         myAlarm.addRequest(
-          new ImportModulesTask(myProject, myModules, myRecursive),
+          new ImportModulesTask(myProject, myModules, myRecursive, mySynchronous),
           PROJECT_INITIALISATION_DELAY_MS
         );
         return;
       }
 
-      importModules(myModules, myProject, myRecursive);
+      importModules(myModules, myProject, myRecursive, mySynchronous);
     }
   }
 }

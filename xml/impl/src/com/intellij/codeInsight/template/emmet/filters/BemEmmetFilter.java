@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.Key;
@@ -94,7 +95,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
 
   @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return false; //todo: add setting for enabling this filter by default
+    return EmmetOptions.getInstance().isBemFilterEnabledByDefault();
   }
 
   @Override

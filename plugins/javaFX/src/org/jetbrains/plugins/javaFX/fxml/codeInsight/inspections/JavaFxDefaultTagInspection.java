@@ -19,8 +19,10 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
 /**
  * User: anna
@@ -35,11 +37,12 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
       @Override
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
-        final String tagName = tag.getName();
-        if (!JavaFxPsiUtil.isClassTag(tagName)) {
+        final XmlElementDescriptor descriptor = tag.getDescriptor();
+        if (descriptor instanceof JavaFxPropertyElementDescriptor) {
           final XmlTag parentTag = tag.getParentTag();
           if (parentTag != null) {
             final String propertyName = JavaFxPsiUtil.getDefaultPropertyName(JavaFxPsiUtil.getTagClass(parentTag));
+            final String tagName = tag.getName();
             if (Comparing.strEqual(tagName, propertyName)) {
               holder.registerProblem(tag.getFirstChild(), 
                                      "Default property tag could be removed", 

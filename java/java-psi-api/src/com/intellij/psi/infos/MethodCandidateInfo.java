@@ -18,6 +18,7 @@ package com.intellij.psi.infos;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
@@ -28,7 +29,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author ik, dsl
@@ -98,11 +98,15 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-         final Set<PsiParameterList> lists = LambdaUtil.ourParams.get();
-         if (lists != null && !lists.isEmpty()) {
-            return inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
-         }
-         myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+        final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
+
+        final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+
+         if (!stackStamp.mayCacheNow()) {
+          return inferredSubstitutor;
+        }
+
+        myCalcedSubstitutor = inferredSubstitutor;
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();

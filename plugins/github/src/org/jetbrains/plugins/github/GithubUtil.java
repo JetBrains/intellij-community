@@ -63,12 +63,29 @@ public class GithubUtil {
     return "https://" + GithubSettings.getInstance().getHost();
   }
 
-  /**
-   * @deprecated TODO Use background progress
-   */
-  @Deprecated
-  public static <T> T accessToGithubWithModalProgress(@NotNull final Project project,
+  @Nullable
+  public static <T> T accessToGithubWithModalProgress(@NotNull final Project project, @NotNull String host,
                                                       @NotNull final ThrowableComputable<T, IOException> computable) throws IOException {
+    try {
+      return doAccessToGithubWithModalProgress(project, computable);
+    }
+    catch (IOException e) {
+      GithubSslSupport sslSupport = GithubSslSupport.getInstance();
+      if (GithubSslSupport.isCertificateException(e)) {
+        if (sslSupport.askIfShouldProceed(host)) {
+          // retry with the host being already trusted
+          return doAccessToGithubWithModalProgress(project, computable);
+        }
+        else {
+          return null;
+        }
+      }
+      throw e;
+    }
+  }
+
+  private static <T> T doAccessToGithubWithModalProgress(@NotNull final Project project,
+                                                         @NotNull final ThrowableComputable<T, IOException> computable) throws IOException {
     final Ref<T> result = new Ref<T>();
     final Ref<IOException> exception = new Ref<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
@@ -227,13 +244,14 @@ public class GithubUtil {
     if (StringUtil.isEmptyOrSpaces(url) || StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)){
       return false;
     }
-    return accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
+    Boolean result = accessToGithubWithModalProgress(project, url, new ThrowableComputable<Boolean, IOException>() {
       @Override
       public Boolean compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
         return testConnection(url, login, password);
       }
     });
+    return result == null ? false : result;
   }
 
   /**
@@ -254,7 +272,7 @@ public class GithubUtil {
     // Otherwise our credentials are valid and they are successfully stored in settings
     final GithubSettings settings = GithubSettings.getInstance();
     final String validPassword = settings.getPassword();
-    return accessToGithubWithModalProgress(project, new ThrowableComputable<List<RepositoryInfo>, IOException>() {
+    return accessToGithubWithModalProgress(project, settings.getHost(), new ThrowableComputable<List<RepositoryInfo>, IOException>() {
       @Override
       public List<RepositoryInfo> compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
@@ -272,7 +290,8 @@ public class GithubUtil {
   public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) throws IOException {
     final GithubSettings settings = GithubSettings.getInstance();
     final String password = settings.getPassword();
-    final Boolean validCredentials = accessToGithubWithModalProgress(project, new ThrowableComputable<Boolean, IOException>() {
+    final Boolean validCredentials = accessToGithubWithModalProgress(project, settings.getHost(),
+                                                                     new ThrowableComputable<Boolean, IOException>() {
       @Override
       public Boolean compute() throws IOException {
         ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
@@ -291,7 +310,7 @@ public class GithubUtil {
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     final String validPassword = settings.getPassword();
-    return accessToGithubWithModalProgress(project, new ThrowableComputable<RepositoryInfo, IOException>() {
+    return accessToGithubWithModalProgress(project, settings.getHost(), new ThrowableComputable<RepositoryInfo, IOException>() {
       @Nullable
       @Override
       public RepositoryInfo compute() {

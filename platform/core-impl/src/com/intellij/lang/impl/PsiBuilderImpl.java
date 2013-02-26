@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ import java.util.Map;
 /**
  * @author max
  */
-public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, ASTNodeBuilder {
+public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
 
   // function stored in PsiBuilderImpl' user data which called during reparse when merge algorithm is not sure what to merge
@@ -266,11 +266,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
   private abstract static class Node implements LighterASTNode {
     public abstract int hc();
-  }
-
-  @Override
-  public IElementType getElementType(int lexemeIndex) {
-    return lexemeIndex < myLexemeCount && lexemeIndex >= 0 ? myLexTypes[lexemeIndex] : null;
   }
 
   public abstract static class ProductionMarker extends Node {
@@ -521,7 +516,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   private static class TokenNode extends Token implements LighterASTTokenNode {
   }
 
-  private static class LazyParseableToken extends Token implements LighterLazyParseableNode, ASTUnparsedNodeMarker {
+  private static class LazyParseableToken extends Token implements LighterLazyParseableNode {
     private MyTreeStructure myParent;
     private FlyweightCapableTreeStructure<LighterASTNode> myParsed;
     private int myStartIndex;
@@ -552,20 +547,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
 
     @Override
-    public ASTNodeBuilder getBuilder() {
-      return myBuilder;
-    }
+    public boolean accept(@NotNull Visitor visitor) {
+      for (int i = myStartIndex; i < myEndIndex; i++) {
+        IElementType type = myBuilder.myLexTypes[i];
+        if (!visitor.visit(type)) {
+          return false;
+        }
+      }
 
-    @Override
-    public int getStartLexemeIndex() {
-      return myStartIndex;
+      return true;
     }
-
-    @Override
-    public int getEndLexemeIndex() {
-      return myEndIndex;
-    }
-
   }
 
   private static class DoneMarker extends ProductionMarker {
@@ -1341,7 +1332,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
       boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;
       if (oldIsErrorElement != newIsErrorElement) return ThreeState.NO;
-      if (oldIsErrorElement && newIsErrorElement) {
+      if (oldIsErrorElement) {
         final PsiErrorElement e1 = (PsiErrorElement)oldNode;
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
@@ -1421,7 +1412,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
         boolean isForeign2 = n2.getTokenType() instanceof ForeignLeafType;
         if (isForeign1 != isForeign2) return false;
 
-        if (isForeign1 && isForeign2) {
+        if (isForeign1) {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
         }
 

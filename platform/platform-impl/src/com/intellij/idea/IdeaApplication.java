@@ -37,10 +37,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
@@ -83,6 +80,7 @@ public class IdeaApplication {
     }
     else {
       patchSystem();
+      new JFrame().pack(); // this peer will prevent shutting down our application
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
@@ -276,22 +274,7 @@ public class IdeaApplication {
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       // app.setupIdeQueue(IdeEventQueue.getInstance());
-      final WindowManagerEx windowManager = (WindowManagerEx)WindowManager.getInstance();
-      WindowManagerListener splashDisposer = new WindowManagerListener() {
-        @Override
-        public void frameCreated(IdeFrame frame) {
-          if (mySplash != null) {
-            mySplash.dispose();
-            mySplash = null; // Allow GC collect the splash window
-          }
-          windowManager.removeListener(this);
-        }
-
-        @Override
-        public void beforeFrameReleased(IdeFrame frame) {}
-      };
-
-      windowManager.addListener(splashDisposer);
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
 
       try {
         IdeEventQueue.getInstance().setWindowManager(windowManager);
@@ -304,10 +287,9 @@ public class IdeaApplication {
         if (!willOpenProject.get()) {
           WelcomeFrame.showNow();
           lifecyclePublisher.welcomeScreenDisplayed();
-          splashDisposer.frameCreated(null);
         }
         else {
-          ((WindowManagerImpl)windowManager).showFrame();
+          windowManager.showFrame();
         }
       }
       catch (PluginException e) {
@@ -316,6 +298,16 @@ public class IdeaApplication {
                                  e.getMessage(), "Plugin Error");
         System.exit(-1);
       }
+
+      app.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (mySplash != null) {
+            mySplash.dispose();
+            mySplash = null; // Allow GC collect the splash window
+          }
+        }
+      }, ModalityState.NON_MODAL);
 
       app.invokeLater(new Runnable() {
         @Override

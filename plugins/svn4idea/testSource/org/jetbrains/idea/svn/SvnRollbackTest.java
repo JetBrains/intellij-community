@@ -157,7 +157,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File was = new File(deepUnverioned.getPath());
 
     checkin();
-    verify(runSvn("status"), "? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
+    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
 
     renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
@@ -185,7 +185,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final VirtualFile innerFile = createFileInCommand(inner, "inInner.txt", "kdfjsdisdjiuewjfew wefn w");
 
     checkin();
-    verify(runSvn("status"));
+    runAndVerifyStatus();
 
     editFileInCommand(myProject, innerFile, "some content");
     renameFileInCommand(myProject, tree.mySourceDir, "newName");
@@ -222,7 +222,9 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasInnerFile = new File(innerFile.getPath());
 
     checkin();
-    verify(runSvn("status"));
+    runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" +
+                      File.separator + "inner1" + File.separator + "inner2" + File.separator +
+                      "inner3" + File.separator + "deep.txt");
 
     editFileInCommand(myProject, innerFile, "some content");
     final File inner2Before = new File(inner2.getPath());
@@ -270,7 +272,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final VirtualFile innerFile = createFileInCommand(inner, "inInner.txt", "kdfjsdisdjiuewjfew wefn w");
 
     checkin();
-    verify(runSvn("status"));
+    runAndVerifyStatus();
 
     final File fileBefore = new File(innerFile.getPath());
     setProperty(fileBefore, "abc", "cde");
@@ -627,15 +629,17 @@ public class SvnRollbackTest extends Svn17TestCase {
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     deleteFileInCommand(myProject, tree.mySourceDir);
 
-    verify(runSvn("status"), "D root" + File.separator + "source",
+    runAndVerifyStatusSorted(
+      "! root" + File.separator + "target" + File.separator + "source",
+      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s1.txt",
+      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt",
+           "D root" + File.separator + "source",
            "D root" + File.separator + "source" + File.separator + "s1.txt",
-           "D root" + File.separator + "source" + File.separator + "s2.txt",
-           "! root" + File.separator + "target" + File.separator + "source",
-           "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s1.txt",
-           "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt");
+           "D root" + File.separator + "source" + File.separator + "s2.txt"
+    );
 
     rollbackLocallyDeleted(Collections.<FilePath>singletonList(new FilePathImpl(was, true)), Collections.<FilePath>emptyList());
-    verify(runSvn("status"), "D root" + File.separator + "source",
+    runAndVerifyStatusSorted("D root" + File.separator + "source",
                "D root" + File.separator + "source" + File.separator + "s1.txt",
                "D root" + File.separator + "source" + File.separator + "s2.txt");
   }

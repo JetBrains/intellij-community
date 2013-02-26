@@ -23,9 +23,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -39,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -52,11 +51,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class Bookmark {
+public class Bookmark implements Navigatable {
   public static final Icon DEFAULT_ICON = PlatformIcons.CHECK_ICON;
 
   private final VirtualFile myFile;
-  private final OpenFileDescriptor myTarget;
+  @NotNull private final OpenFileDescriptor myTarget;
   private final Project myProject;
 
   private String myDescription;
@@ -127,7 +126,7 @@ public class Bookmark {
   }
 
   public Icon getIcon() {
-    return myMnemonic == 0 ? DEFAULT_ICON : new MnemonicIcon(myMnemonic);
+    return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
   public String getDescription() {
@@ -167,8 +166,18 @@ public class Bookmark {
     return rangeMarker == null || rangeMarker.isValid();
   }
 
-  public void navigate() {
-    myTarget.navigate(true);
+  @Override
+  public boolean canNavigate() {
+    return myTarget.canNavigate();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return myTarget.canNavigateToSource();
+  }
+
+  public void navigate(boolean requestFocus) {
+    myTarget.navigate(requestFocus);
   }
 
   public int getLine() {
@@ -232,8 +241,21 @@ public class Bookmark {
     return result.toString();
   }
   
-  private static class MnemonicIcon implements Icon {
+  static class MnemonicIcon implements Icon {
+    private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;
+
+    @NotNull
+    static MnemonicIcon getIcon(char mnemonic) {
+      int index = mnemonic - 48;
+      if (index > 9)
+        index -= 7;
+      if (index < 0 || index > cache.length-1)
+        return new MnemonicIcon(mnemonic);
+      if (cache[index] == null)
+        cache[index] = new MnemonicIcon(mnemonic);
+      return cache[index];
+    }
 
     private MnemonicIcon(char mnemonic) {
       myMnemonic = mnemonic;
@@ -274,6 +296,11 @@ public class Bookmark {
       MnemonicIcon that = (MnemonicIcon)o;
 
       return myMnemonic == that.myMnemonic;
+    }
+
+    @Override
+    public int hashCode() {
+      return (int)myMnemonic;
     }
   }
 

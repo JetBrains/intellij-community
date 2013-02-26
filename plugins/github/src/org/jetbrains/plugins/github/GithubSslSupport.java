@@ -15,11 +15,9 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.util.ThrowableConvertor;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -79,12 +77,11 @@ public class GithubSslSupport {
                                                                @NotNull HttpClient client, @NotNull URI uri,
                                                                @NotNull ThrowableConvertor<String, HttpMethod, IOException> methodCreator)
                                                                throws IOException {
-    if (!(e.getCause() instanceof ValidatorException)) {
+    if (!isCertificateException(e)) {
       throw e;
     }
 
-    boolean proceed = isTrusted(host) || askIfShouldProceed(host);
-    if (proceed) {
+    if (isTrusted(host)) {
       // creating a special configuration that allows connections to non-trusted HTTPS hosts
       // see the javadoc to EasySSLProtocolSocketFactory for details
       Protocol easyHttps = new Protocol("https", (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443);
@@ -96,10 +93,13 @@ public class GithubSslSupport {
       // and changing host by hands (HttpMethodBase#setHostConfiguration) is deprecated.
       HttpMethod method = methodCreator.convert(relativeUri);
       client.executeMethod(hc, method);
-      saveToTrusted(host);
       return method;
     }
-    return null;
+    throw e;
+  }
+
+  public static boolean isCertificateException(IOException e) {
+    return e.getCause() instanceof ValidatorException;
   }
 
   private static boolean isTrusted(@NotNull String host) {
@@ -110,19 +110,17 @@ public class GithubSslSupport {
     GithubSettings.getInstance().addTrustedHost(host);
   }
 
-  private static boolean askIfShouldProceed(final String host) {
+  @CalledInAwt
+  public boolean askIfShouldProceed(final String host) {
     final String BACK_TO_SAFETY = "No, I don't trust";
-    final String RISK = "Proceed anyway";
-
-    final Ref<Integer> choice = new Ref<Integer>(-1);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        choice.set(Messages.showDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
-                                       "Not Trusted Certificate", new String[]{BACK_TO_SAFETY, RISK}, 0, Messages.getErrorIcon()));
-      }
-    }, ModalityState.defaultModalityState());
-    return choice.get() == 1;
+    final String TRUST = "Proceed anyway";
+    int choice = Messages.showDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
+                                   "Not Trusted Certificate", new String[] { BACK_TO_SAFETY, TRUST }, 0, Messages.getErrorIcon());
+    boolean trust = (choice == 1);
+    if (trust) {
+      saveToTrusted(host);
+    }
+    return trust;
   }
 
 }

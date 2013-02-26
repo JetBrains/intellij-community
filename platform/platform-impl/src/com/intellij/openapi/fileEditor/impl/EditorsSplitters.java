@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.docking.DockManager;
@@ -159,11 +160,11 @@ public class EditorsSplitters extends JBPanel {
     
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(UIUtil.isUnderDarcula() ? Gray._200 : Gray._100);
+      g.setColor(new JBColor(Gray._100, Gray._160));
       g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.isUnderDarcula() ? 24f : 18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
-      painter.appendLine("No files are open").underlined(UIUtil.isUnderDarcula()? Gray._200 : Gray._150);
+      painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._100));
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(

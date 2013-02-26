@@ -98,7 +98,7 @@ public class JavaFxPsiUtil {
 
       PsiFile file = tag.getContainingFile();
       for (String anImport : imports) {
-        if (StringUtil.endsWith(anImport, "." + name)) {
+        if (StringUtil.getShortName(anImport).equals(name)) {
           psiClass = psiFacade.findClass(anImport, file.getResolveScope()); 
         } else if (StringUtil.endsWith(anImport, ".*")) {
           psiClass = psiFacade.findClass(StringUtil.trimEnd(anImport, "*") + name, file.getResolveScope());
@@ -159,15 +159,6 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static boolean isClassTag(String name) {
-    final String shortName = StringUtil.getShortName(name);
-    final boolean capitalized = StringUtil.isCapitalized(name);
-    if (name.equals(shortName)) {
-      return capitalized;
-    }
-    return !capitalized;
-  }
-
   public static PsiMethod findPropertySetter(String attributeName, XmlTag context) {
     final String packageName = StringUtil.getPackageName(attributeName);
     if (context != null && !StringUtil.isEmptyOrSpaces(packageName)) {
@@ -189,7 +180,17 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiMethod findPropertyGetter(String attributeName, PsiClass classWithStaticProperty) {
-    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), null);
+    PsiMethod getter = findPropertyGetter(attributeName, classWithStaticProperty, null);
+    if (getter != null) {
+      return getter;
+    }
+    return findPropertyGetter(attributeName, classWithStaticProperty, PsiType.BOOLEAN);
+  }
+
+  private static PsiMethod findPropertyGetter(final String attributeName,
+                                              final PsiClass classWithStaticProperty,
+                                              final PsiType propertyType) {
+    final String getterName = PropertyUtil.suggestGetterName(StringUtil.getShortName(attributeName), propertyType);
     final PsiMethod[] getters = classWithStaticProperty.findMethodsByName(getterName, true);
     if (getters.length >= 1) {
       return getters[0];

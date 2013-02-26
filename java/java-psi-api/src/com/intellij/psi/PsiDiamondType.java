@@ -16,12 +16,16 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class PsiDiamondType extends PsiType {
+  public static final RecursionGuard ourDiamondGuard = RecursionManager.createGuard("diamondInference");
+
   public PsiDiamondType(PsiAnnotation[] annotations) {
     super(annotations);
   }

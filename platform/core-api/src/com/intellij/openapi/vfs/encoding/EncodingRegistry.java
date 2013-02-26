@@ -51,7 +51,7 @@ public abstract class EncodingRegistry {
 
   public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
 
-  public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
+  public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);
 
   public static EncodingRegistry getInstance() {
     if (ourInstanceGetter == null) {

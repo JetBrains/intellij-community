@@ -58,7 +58,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   private final ApplicationProfileManager myApplicationProfileManager;
 
   private final Map<String, Profile> myProfiles = new HashMap<String, Profile>();
-  private final DependencyValidationManager myHolder;
+  protected final DependencyValidationManager myHolder;
   private final List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 

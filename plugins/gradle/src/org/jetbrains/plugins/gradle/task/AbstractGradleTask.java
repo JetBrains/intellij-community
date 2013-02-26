@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListenerAdapter;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,7 +87,7 @@ public abstract class AbstractGradleTask implements GradleTask {
     execute(new GradleTaskNotificationListenerAdapter() {
       @Override
       public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
-        indicator.setText2(event.getDescription());
+        indicator.setText(GradleBundle.message("gradle.sync.progress.update.text", event.getDescription()));
       }
     });
   }

@@ -99,7 +99,7 @@ public class GraphInferencePolicy extends ProcessCandidateParameterTypeInference
   }
 
   public static void forget(PsiElement parent) {
-    if (parent instanceof PsiCallExpression) {
+    if (parent instanceof PsiExpression) {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiExpressionList) {
         final PsiElement ggParent = gParent.getParent();

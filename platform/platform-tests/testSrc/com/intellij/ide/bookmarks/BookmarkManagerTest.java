@@ -152,7 +152,7 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
     }
     CaretModel caretModel = myEditor.getCaretModel();
     caretModel.moveToLogicalPosition(new LogicalPosition(anotherLine, 0));
-    bookmark.navigate();
+    bookmark.navigate(true);
     assertEquals(line, caretModel.getLogicalPosition().line);
   }
 }

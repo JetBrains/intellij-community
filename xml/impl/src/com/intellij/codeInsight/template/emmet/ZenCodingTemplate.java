@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
@@ -276,8 +276,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
-    if (!webEditorOptions.isZenCodingEnabled()) {
+    EmmetOptions emmetOptions = EmmetOptions.getInstance();
+    if (!emmetOptions.isEmmetEnabled()) {
       return false;
     }
     if (file == null) {
@@ -320,7 +320,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public char getShortcut() {
-    return (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    return (char)EmmetOptions.getInstance().getEmmetExpandShortcut();
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {

@@ -64,7 +64,15 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferenceFromNotEqualTypeParamsBounds() throws Exception {
+    doTest();
+  }
+
   public void testSOEDuringInferenceFromParamBounds() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondsUsedToDetectArgumentType() throws Exception {
     doTest();
   }
 

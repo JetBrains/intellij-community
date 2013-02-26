@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.emmet.tokens.*;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,8 +90,8 @@ public class EmmetLexer {
 
         if (builder.length() > 0) {
           final String tokenText = builder.toString();
-          final int n = ZenCodingUtil.parseNonNegativeInt(tokenText);
-          if (n >= 0) {
+          final int n = StringUtil.parseInt(tokenText, -1);
+          if (!StringUtil.startsWithChar(tokenText, '0') && n >= 0) {
             result.add(new NumberToken(n));
           }
           else {

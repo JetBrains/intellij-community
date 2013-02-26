@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   protected StubElement createStubForFile(@NotNull PsiFile file) {
-    //noinspection unchecked
-    return new PsiFileStubImpl(file);
+    @SuppressWarnings("unchecked") PsiFileStubImpl stub = new PsiFileStubImpl(file);
+    return stub;
   }
 
   private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
@@ -56,8 +56,8 @@ public class DefaultStubBuilder implements StubBuilder {
         final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
 
         if (type.shouldCreateStub(elt.getNode())) {
-          //noinspection unchecked
-          stub = type.createStub(elt, stub);
+          @SuppressWarnings("unchecked") StubElement s = type.createStub(elt, stub);
+          stub = s;
         }
       }
       else {
@@ -78,7 +78,10 @@ public class DefaultStubBuilder implements StubBuilder {
     return parentStub;
   }
 
-  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement element, @NotNull PsiElement child) {
+  /**
+   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
+   */
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
     return false;
   }
 
@@ -97,19 +100,18 @@ public class DefaultStubBuilder implements StubBuilder {
         final IStubElementType type = (IStubElementType)nodeType;
 
         if (type.shouldCreateStub(node)) {
-          //noinspection unchecked
           PsiElement element = node.getPsi();
           if (!(element instanceof StubBasedPsiElement)) {
             LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + element);
           }
-          //noinspection unchecked
-          stub = type.createStub(element, stub);
+          @SuppressWarnings("unchecked") StubElement s = type.createStub(element, stub);
+          stub = s;
           LOG.assertTrue(stub != null, element);
         }
       }
 
       for (ASTNode childNode = node.getLastChildNode(); childNode != null; childNode = childNode.getTreePrev()) {
-        if (!skipChildProcessingWhenBuildingStubs(node, childNode.getElementType())) {
+        if (!skipChildProcessingWhenBuildingStubs(node, childNode)) {
           parentNodes.push(childNode);
           parentStubs.push(stub);
         }
@@ -117,6 +119,14 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     return parentStub;
+  }
+
+  /**
+   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(PsiElement, PsiElement)}.
+   * todo[r.sh] move to interface (IDEA 13)
+   */
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+    return skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
   }
 
   @Override

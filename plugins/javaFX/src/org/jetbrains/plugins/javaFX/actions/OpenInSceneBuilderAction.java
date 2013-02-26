@@ -23,12 +23,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
+import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 /**
@@ -44,8 +46,16 @@ public class OpenInSceneBuilderAction extends AnAction {
     LOG.assertTrue(virtualFile != null);
     final String path = virtualFile.getPath();
 
-    String pathToSceneBuilder = JavaFxSettings.getInstance().getPathToSceneBuilder();
-    LOG.assertTrue(pathToSceneBuilder != null);
+    final JavaFxSettings settings = JavaFxSettings.getInstance();
+    String pathToSceneBuilder = settings.getPathToSceneBuilder();
+    if (StringUtil.isEmptyOrSpaces(settings.getPathToSceneBuilder())){
+      final VirtualFile sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), e.getProject(), null);
+      if (sceneBuilderFile == null) return;
+
+      pathToSceneBuilder = sceneBuilderFile.getPath();
+      settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(pathToSceneBuilder));
+    }
+
     if (SystemInfo.isMac) {
       pathToSceneBuilder += "/Contents/MacOS/JavaAppLauncher";
     }
@@ -68,8 +78,8 @@ public class OpenInSceneBuilderAction extends AnAction {
     presentation.setVisible(false);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (virtualFile != null && 
-        JavaFxFileTypeFactory.isFxml(virtualFile) && 
-        !StringUtil.isEmptyOrSpaces(JavaFxSettings.getInstance().getPathToSceneBuilder())) {
+        JavaFxFileTypeFactory.isFxml(virtualFile) &&
+        e.getProject() != null) {
       presentation.setEnabled(true);
       presentation.setVisible(true);
     }

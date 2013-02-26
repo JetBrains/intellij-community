@@ -53,6 +53,7 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
+  private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
   static final VirtualDirectoryImpl NULL_VIRTUAL_FILE = new VirtualDirectoryImpl("*?;%NULL", null, LocalFileSystem.getInstance(), -42, 0) {
     public String toString() {
       return "NULL";
@@ -61,7 +62,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private final NewVirtualFileSystem myFS;
 
-  // stores child files. The array is logically divided into the two halves:
+  // stores child files. The array is logically divided into the two parts:
   // left subarray for storing real files, right subarray for storing fake files with "suspicious" names
   // files in each subarray are sorted according to the compareNameTo() comparator
   private VirtualFileSystemEntry[] myChildren = EMPTY_ARRAY; // guarded by this, either real file or fake file (meaning it's not a real child but suspicious name)
@@ -502,6 +503,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static void assertConsistency(@NotNull VirtualFileSystemEntry[] array, boolean ignoreCase) {
+    if (!CHECK) return;
     for (int i = 0; i < array.length; i++) {
       VirtualFileSystemEntry file = array[i];
       if (isSuspiciousName(file) && i != array.length - 1 ) {

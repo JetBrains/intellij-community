@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public class ZenCodingUtil {
               base.append(s.charAt(i));
               i++;
             }
-            int baseInt = parseNonNegativeInt(base.toString()) - 1;
+            int baseInt = StringUtil.parseInt(base.toString(), 0) - 1;
             baseInt = baseInt >= 0 ? baseInt : 0;
             if(baseInt >= 0) {
               int byInt = decrement
@@ -102,15 +103,6 @@ public class ZenCodingUtil {
   public static String getValue(String value, int numberInIteration, int totalIterations, String surroundedText) {
     String s = replaceMarkers(value, numberInIteration, totalIterations, surroundedText);
     return s.replace("\"", "&quot;");
-  }
-
-  public static int parseNonNegativeInt(@NotNull String s) {
-    try {
-      return Integer.parseInt(s);
-    }
-    catch (Throwable ignored) {
-    }
-    return -1;
   }
 
   public static boolean isXML11ValidQName(String str) {
