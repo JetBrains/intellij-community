@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
-  private PatchedSoftReference<PsiClassType> myCachedBaseType = null;
+  private SoftReference<PsiClassType> myCachedBaseType = null;
 
   public PsiAnonymousClassImpl(final PsiClassStub stub) {
     super(stub, JavaStubElementTypes.ANONYMOUS_CLASS);
@@ -92,7 +92,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         type = PsiType.getJavaLangObject(getManager(), getResolveScope());
       }
 
-      myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);
+      myCachedBaseType = new SoftReference<PsiClassType>(type);
       return type;
     }
     else {
