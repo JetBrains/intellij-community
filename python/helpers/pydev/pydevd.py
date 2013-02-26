@@ -1467,6 +1467,6 @@ if __name__ == '__main__':
 
     debugger.connect(host, port)
 
-    connected = True #Mark that we're connected when started from inside eclipse.
+    connected = True #Mark that we're connected when started from inside ide.
 
     debugger.run(setup['file'], None, None)
