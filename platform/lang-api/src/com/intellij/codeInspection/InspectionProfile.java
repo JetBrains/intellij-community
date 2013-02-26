@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +32,19 @@ import org.jetbrains.annotations.Nullable;
 public interface InspectionProfile extends Profile {
 
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
-  
+
+  /**
+   * If you need to modify tool's settings, please use {@link #modifyProfile(com.intellij.util.Consumer)}
+   */
   InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
+
+  @Nullable
+  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
 
   /** Returns (unwrapped) inspection */
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
-  @Nullable
-  @Deprecated
-  InspectionProfileEntry getInspectionTool(@NotNull String shortName);
+  void modifyProfile(Consumer<ModifiableModel> modelConsumer);
 
   /**
    * @param element context element
@@ -50,6 +55,9 @@ public interface InspectionProfile extends Profile {
 
   void cleanup(Project project);
 
+  /**
+   * @see #modifyProfile(com.intellij.util.Consumer)
+   */
   @NotNull
   ModifiableModel getModifiableModel();
 

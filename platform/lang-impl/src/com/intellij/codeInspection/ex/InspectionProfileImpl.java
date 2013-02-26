@@ -38,6 +38,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -336,6 +337,18 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element) {
     InspectionProfileEntry tool = getInspectionTool(shortName, element);
     return tool instanceof InspectionToolWrapper ? ((InspectionToolWrapper)tool).getTool() : tool;
+  }
+
+  @Override
+  public void modifyProfile(Consumer<ModifiableModel> modelConsumer) {
+    ModifiableModel model = getModifiableModel();
+    modelConsumer.consume(model);
+    try {
+      model.commit();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
@@ -812,6 +825,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId).moveScope(idx, dir);
   }
 
+  /**
+   * @return null if it has no base profile
+   */
   @Nullable
   private Map<String, Boolean> getDisplayLevelMap() {
     if (myBaseProfile == null) return null;
