@@ -29,7 +29,10 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -212,6 +215,7 @@ public class BuildManager implements ApplicationComponent{
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
   private volatile int myListenPort = -1;
   private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
+  private int myGlobalsStamp = -1;
   @Nullable
   private final Charset mySystemCharset;
 
@@ -534,11 +538,7 @@ public class BuildManager implements ApplicationComponent{
             return;
           }
 
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = myGlobals;
-          if (globals == null) {
-            globals = buildGlobalSettings();
-            myGlobals = globals;
-          }
+          final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = buildGlobalSettings();
           CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
           synchronized (myProjectDataMap) {
@@ -687,14 +687,22 @@ public class BuildManager implements ApplicationComponent{
     return "com.intellij.compiler.server.BuildManager";
   }
 
-  private static CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings buildGlobalSettings() {
+  private CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings buildGlobalSettings() {
+    final PathMacrosImpl pathVars = PathMacrosImpl.getInstanceEx();
+
+    final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings cached = myGlobals;
+    if (cached != null && myGlobalsStamp == pathVars.getModificationStamp()) {
+      return cached;
+    }
+    myGlobals = null; // ensure the cache is cleared and stamp is current
+    myGlobalsStamp = pathVars.getModificationStamp();
+
     final Map<String, String> data = new HashMap<String, String>();
 
     for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
       data.put(entry.getKey(), FileUtil.toSystemIndependentName(entry.getValue()));
     }
 
-    final PathMacros pathVars = PathMacros.getInstance();
     for (String name : pathVars.getAllMacroNames()) {
       final String path = pathVars.getValue(name);
       if (path != null) {
@@ -717,7 +725,7 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    return cmdBuilder.build();
+    return myGlobals = cmdBuilder.build();
   }
 
   private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
