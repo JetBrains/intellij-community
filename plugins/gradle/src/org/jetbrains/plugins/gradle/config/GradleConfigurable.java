@@ -200,6 +200,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myComponent.add(myGradleHomeLabel, pathLabelConstraints);
     myComponent.add(myGradleHomePathField, fillLineConstraints);
 
+    pathLabelConstraints.insets(5, 0, 0, 0);
+    fillLineConstraints.insets(5, 0, 0, 0);
     myComponent.add(myServiceDirectoryLabel, pathLabelConstraints);
     myComponent.add(myServiceDirectoryPathField, fillLineConstraints);
 
