@@ -327,24 +327,15 @@ public class MavenRootModelAdapter {
     String newUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR;
     for (String url : library.getUrls(type)) {
       if (newUrl.equals(url)) return;
-      if (clearAll || isRepositoryUrl(artifact, url, classifier, extension)) {
+      if (clearAll || isRepositoryUrl(artifact, url)) {
         library.removeRoot(url, type);
       }
     }
     library.addRoot(newUrl, type);
   }
 
-  private static boolean isRepositoryUrl(MavenArtifact artifact, String url, @Nullable String classifier, @Nullable String extension) {
-    if (!url.contains(artifact.getGroupId() + '/' + artifact.getArtifactId() + '/' + artifact.getBaseVersion() + '/' + artifact.getArtifactId() + '-')) {
-      return false;
-    }
-
-    String fileName = artifact.getFileNameWithBaseVersion(classifier, extension);
-    assert StringUtil.startsWithConcatenationOf(fileName, artifact.getArtifactId(), "-", artifact.getVersion());
-
-    String suffix = fileName.substring(artifact.getArtifactId().length() + 1 + artifact.getVersion().length());
-
-    return StringUtil.trimEnd(url, "!/").endsWith(suffix);
+  private static boolean isRepositoryUrl(MavenArtifact artifact, String url) {
+    return url.contains(artifact.getGroupId().replace('.', '/') + '/' + artifact.getArtifactId() + '/' + artifact.getBaseVersion() + '/' + artifact.getArtifactId() + '-');
   }
 
   public static boolean isChangedByUser(Library library) {
