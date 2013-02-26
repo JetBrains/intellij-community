@@ -23,6 +23,7 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -43,6 +44,7 @@ import java.util.*;
  * @author peter
  */
 public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix");
   private final List<PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
@@ -233,9 +235,15 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
   public static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
                                                                    final GlobalSearchScope scope,
                                                                    final PsiManager psiManager) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Getting writable directory list for package '" + (context == null ? null : context.getQualifiedName()) + "', scope=" + scope);
+    }
     final List<PsiDirectory> writableDirectoryList = new ArrayList<PsiDirectory>();
     if (context != null) {
       for (PsiDirectory directory : context.getDirectories()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Package directory: " + directory);
+        }
         if (directory.isWritable() && scope.contains(directory.getVirtualFile())) {
           writableDirectoryList.add(directory);
         }
@@ -244,10 +252,16 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     else {
       for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getContentSourceRoots()) {
         PsiDirectory directory = psiManager.findDirectory(root);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Root: " + root + ", directory: " + directory);
+        }
         if (directory != null && directory.isWritable() && scope.contains(directory.getVirtualFile())) {
           writableDirectoryList.add(directory);
         }
       }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Result " + writableDirectoryList);
     }
     return writableDirectoryList;
   }
