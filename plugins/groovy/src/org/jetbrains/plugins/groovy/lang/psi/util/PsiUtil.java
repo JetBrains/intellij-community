@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1121,7 +1121,11 @@ public class PsiUtil {
         parent instanceof GrVariable) {
       return true;
     }
-    final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expr);
+    return isReturnStatement(expr);
+  }
+
+  public static boolean isReturnStatement(@NotNull PsiElement statement) {
+    final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement);
     if (controlFlowOwner instanceof GrOpenBlock) {
       final PsiElement controlFlowOwnerParent = controlFlowOwner.getParent();
       if (controlFlowOwnerParent instanceof GrMethod && ((GrMethod)controlFlowOwnerParent).isConstructor()) {
@@ -1132,7 +1136,7 @@ public class PsiUtil {
       }
     }
     //noinspection SuspiciousMethodCalls
-    return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(expr);
+    return ControlFlowUtils.collectReturns(controlFlowOwner, true).contains(statement);
   }
 
   @Nullable
