@@ -769,6 +769,14 @@ public class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
+  public boolean sdkHasValidPath(@NotNull Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
+      return true;
+    }
+    VirtualFile homeDir = sdk.getHomeDirectory();
+    return homeDir != null && homeDir.isValid();
+  }
+
   public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
