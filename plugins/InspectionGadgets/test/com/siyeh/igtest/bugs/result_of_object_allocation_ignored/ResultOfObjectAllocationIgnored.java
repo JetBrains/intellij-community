@@ -1,8 +1,8 @@
-package com.siyeh.igtest.bugs;
+package com.siyeh.igtest.bugs.result_of_object_allocation_ignored;
 
-public class ResultOfObjectAllocationIgnoredInspection {
+public class ResultOfObjectAllocationIgnored {
 
-    private ResultOfObjectAllocationIgnoredInspection() {
+    private ResultOfObjectAllocationIgnored() {
         super();
     }
 
