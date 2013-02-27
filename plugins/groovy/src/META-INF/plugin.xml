@@ -503,6 +503,7 @@
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcProjectWithoutLibraryNotificator"/>
 
     <treeCopyHandler implementation="org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport"/>
+    <treeGenerator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.source.impl.GroovyTreeGenerator" order="first"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
