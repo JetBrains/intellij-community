@@ -109,7 +109,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
     for (MavenRemoteRepository each : getMavenProjectManager().getRemoteRepositories()) {
       String id = each.getId();
       String url = each.getUrl();
-      if (id == null || url == null) continue;
+
       result.add(Pair.create(id, url));
     }
     return result;
