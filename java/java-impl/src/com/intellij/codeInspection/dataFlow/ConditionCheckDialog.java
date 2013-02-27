@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ import java.util.List;
  * Dialog that appears when user clicks the "Configure IsNull/IsNotNull/True/False Check/Assertion Methods"
  * on the Errors dialog for the Constant Conditions Inspection.  It is divided into 6 parts
  * <ol>
- *   <li>Is Null Check MethodsPanel</li>
- *   <li>Is Not Null Check MethodsPanel</li>
- *   <li>Assert Is Null MethodsPanel</li>
- *   <li>Assert Is Not Null MethodsPanel</li>
- *   <li>Assert True MethodsPanel</li>
- *   <li>Assert False MethodsPanel</li>
+ * <li>Is Null Check MethodsPanel</li>
+ * <li>Is Not Null Check MethodsPanel</li>
+ * <li>Assert Is Null MethodsPanel</li>
+ * <li>Assert Is Not Null MethodsPanel</li>
+ * <li>Assert True MethodsPanel</li>
+ * <li>Assert False MethodsPanel</li>
  * </ol>
  *
  * @author <a href="mailto:johnnyclark@gmail.com">Johnny Clark</a>
@@ -65,12 +65,12 @@ public class ConditionCheckDialog extends DialogWrapper {
     final Splitter isNullIsNotNullCheckMethodSplitter = new Splitter(false);
     final Splitter assertTrueFalseMethodSplitter = new Splitter(false);
 
-    List<MethodConditionCheck> isNullCheckMethods = new ArrayList<MethodConditionCheck>(manager.getIsNullCheckMethods());
-    List<MethodConditionCheck> isNotNullCheckMethods = new ArrayList<MethodConditionCheck>(manager.getIsNotNullCheckMethods());
-    List<MethodConditionCheck> assertIsNullMethods = new ArrayList<MethodConditionCheck>(manager.getAssertIsNullMethods());
-    List<MethodConditionCheck> assertIsNotNullMethods = new ArrayList<MethodConditionCheck>(manager.getAssertIsNotNullMethods());
-    List<MethodConditionCheck> assertTrueMethods = new ArrayList<MethodConditionCheck>(manager.getAssertTrueMethods());
-    List<MethodConditionCheck> assertFalseMethods = new ArrayList<MethodConditionCheck>(manager.getAssertFalseMethods());
+    List<ConditionChecker> isNullCheckMethods = new ArrayList<ConditionChecker>(manager.getIsNullCheckMethods());
+    List<ConditionChecker> isNotNullCheckMethods = new ArrayList<ConditionChecker>(manager.getIsNotNullCheckMethods());
+    List<ConditionChecker> assertIsNullMethods = new ArrayList<ConditionChecker>(manager.getAssertIsNullMethods());
+    List<ConditionChecker> assertIsNotNullMethods = new ArrayList<ConditionChecker>(manager.getAssertIsNotNullMethods());
+    List<ConditionChecker> assertTrueMethods = new ArrayList<ConditionChecker>(manager.getAssertTrueMethods());
+    List<ConditionChecker> assertFalseMethods = new ArrayList<ConditionChecker>(manager.getAssertFalseMethods());
 
     myAssertIsNullMethodPanel = new MethodsPanel(assertIsNullMethods, ConditionChecker.Type.ASSERT_IS_NULL_METHOD, myProject);
     myAssertIsNotNullMethodPanel = new MethodsPanel(assertIsNotNullMethods, ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD, myProject);
@@ -92,15 +92,27 @@ public class ConditionCheckDialog extends DialogWrapper {
     mainSplitter.setFirstComponent(topThirdSplitter);
     mainSplitter.setSecondComponent(bottomTwoThirdsSplitter);
 
-    topThirdSplitter.setPreferredSize(new Dimension(600, 400));
-    bottomTwoThirdsSplitter.setPreferredSize(new Dimension(600, 800));
+    topThirdSplitter.setPreferredSize(new Dimension(600, 150));
+    bottomTwoThirdsSplitter.setPreferredSize(new Dimension(600, 300));
 
-    myAssertIsNullMethodPanel.setOtherMethodsPanels(myAssertIsNotNullMethodPanel, myIsNullCheckMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel, myAssertFalseMethodPanel);
-    myAssertIsNotNullMethodPanel.setOtherMethodsPanels(myAssertIsNullMethodPanel, myIsNullCheckMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel, myAssertFalseMethodPanel);
-    myIsNullCheckMethodPanel.setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel, myAssertFalseMethodPanel);
-    myIsNotNullCheckMethodPanel.setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNullCheckMethodPanel, myAssertTrueMethodPanel, myAssertFalseMethodPanel);
-    myAssertTrueMethodPanel.setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myIsNullCheckMethodPanel, myAssertFalseMethodPanel);
-    myAssertFalseMethodPanel.setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myIsNullCheckMethodPanel, myAssertTrueMethodPanel);
+    myAssertIsNullMethodPanel
+      .setOtherMethodsPanels(myAssertIsNotNullMethodPanel, myIsNullCheckMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel,
+                             myAssertFalseMethodPanel);
+    myAssertIsNotNullMethodPanel
+      .setOtherMethodsPanels(myAssertIsNullMethodPanel, myIsNullCheckMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel,
+                             myAssertFalseMethodPanel);
+    myIsNullCheckMethodPanel
+      .setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel,
+                             myAssertFalseMethodPanel);
+    myIsNotNullCheckMethodPanel
+      .setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNullCheckMethodPanel, myAssertTrueMethodPanel,
+                             myAssertFalseMethodPanel);
+    myAssertTrueMethodPanel
+      .setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myIsNullCheckMethodPanel,
+                             myAssertFalseMethodPanel);
+    myAssertFalseMethodPanel
+      .setOtherMethodsPanels(myAssertIsNullMethodPanel, myAssertIsNotNullMethodPanel, myIsNotNullCheckMethodPanel, myIsNullCheckMethodPanel,
+                             myAssertTrueMethodPanel);
 
     init();
     setTitle(mainDialogTitle);
@@ -114,12 +126,12 @@ public class ConditionCheckDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final ConditionCheckManager manager = ConditionCheckManager.getInstance(myProject);
-    manager.setIsNotNullCheckMethods(myIsNotNullCheckMethodPanel.getMethodConditionChecker());
-    manager.setIsNullCheckMethods(myIsNullCheckMethodPanel.getMethodConditionChecker());
-    manager.setAssertNotNullMethods(myAssertIsNotNullMethodPanel.getMethodConditionChecker());
-    manager.setAssertNullMethods(myAssertIsNullMethodPanel.getMethodConditionChecker());
-    manager.setAssertTrueMethods(myAssertTrueMethodPanel.getMethodConditionChecker());
-    manager.setAssertFalseMethods(myAssertFalseMethodPanel.getMethodConditionChecker());
+    manager.setIsNotNullCheckMethods(myIsNotNullCheckMethodPanel.getConditionChecker());
+    manager.setIsNullCheckMethods(myIsNullCheckMethodPanel.getConditionChecker());
+    manager.setAssertIsNotNullMethods(myAssertIsNotNullMethodPanel.getConditionChecker());
+    manager.setAssertIsNullMethods(myAssertIsNullMethodPanel.getConditionChecker());
+    manager.setAssertTrueMethods(myAssertTrueMethodPanel.getConditionChecker());
+    manager.setAssertFalseMethods(myAssertFalseMethodPanel.getConditionChecker());
 
     super.doOKAction();
   }
@@ -133,12 +145,12 @@ public class ConditionCheckDialog extends DialogWrapper {
     private final @NotNull Project myProject;
     private Set<MethodsPanel> otherPanels;
 
-    public MethodsPanel(final List<MethodConditionCheck> checkers, final ConditionChecker.Type type, final Project myProject) {
+    public MethodsPanel(final List<ConditionChecker> checkers, final ConditionChecker.Type type, final @NotNull Project myProject) {
       this.myProject = myProject;
-      myList = new JBList(new CollectionListModel<MethodConditionCheck>(checkers));
+      myList = new JBList(new CollectionListModel<ConditionChecker>(checkers));
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(IdeBorderFactory.createTitledBorder(initTitle(type), false, new Insets(10, 0, 0, 0)));
-      myPanel.setPreferredSize(new Dimension(500, 500));
+      myPanel.setPreferredSize(new Dimension(400, 150));
 
       myList.setCellRenderer(new ColoredListCellRenderer() {
         @Override
@@ -147,25 +159,29 @@ public class ConditionCheckDialog extends DialogWrapper {
           if (s.contains("*")) {
             int indexOfAsterix1 = s.indexOf("*");
             int indexOfAsterix2 = s.lastIndexOf("*");
-            if (indexOfAsterix1 >= 0 && indexOfAsterix1 < s.length() && indexOfAsterix2 >= 0 && indexOfAsterix2 < s.length() && indexOfAsterix1 < indexOfAsterix2) {
+            if (indexOfAsterix1 >= 0 &&
+                indexOfAsterix1 < s.length() &&
+                indexOfAsterix2 >= 0 &&
+                indexOfAsterix2 < s.length() &&
+                indexOfAsterix1 < indexOfAsterix2) {
               append(s.substring(0, indexOfAsterix1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(s.substring(indexOfAsterix1 + 1, indexOfAsterix2), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
               append(s.substring(indexOfAsterix2 + 1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            } else {
+            }
+            else {
               append(s, SimpleTextAttributes.REGULAR_ATTRIBUTES);
             }
           }
         }
       });
 
-      final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
-        .setAddAction(new AnActionButtonRunnable() {
+      final ToolbarDecorator toolbarDecorator =
+        ToolbarDecorator.createDecorator(myList).disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
             chooseMethod(null, type, myList.getModel().getSize());
           }
-        })
-        .setRemoveAction(new AnActionButtonRunnable() {
+        }).setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton anActionButton) {
             CollectionListModel model = getCollectionListModel();
@@ -175,57 +191,65 @@ public class ConditionCheckDialog extends DialogWrapper {
           }
         });
 
-      myList.addMouseListener(
-        new MouseAdapter() {
-          public void mouseClicked(MouseEvent e) {
-            if (e.getClickCount() == 2) {
-              int index = myList.locationToIndex(e.getPoint());
-              CollectionListModel<MethodConditionCheck> model = getCollectionListModel();
-              if (index >= 0 && model.getSize() > index) {
-                chooseMethod(model.getElementAt(index), type, index);
-              }
+      myList.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2) {
+            int index = myList.locationToIndex(e.getPoint());
+            CollectionListModel<ConditionChecker> model = getCollectionListModel();
+            if (index >= 0 && model.getSize() > index) {
+              chooseMethod(model.getElementAt(index), type, index);
             }
           }
         }
-      );
+      });
       final JPanel panel = toolbarDecorator.createPanel();
       myPanel.add(panel);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
     private String initTitle(@NotNull ConditionChecker.Type type) {
-      if (type.equals(ConditionChecker.Type.IS_NULL_METHOD))
+      if (type.equals(ConditionChecker.Type.IS_NULL_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.isNull.method.panel.title");
-      else if (type.equals(ConditionChecker.Type.IS_NOT_NULL_METHOD))
+      }
+      else if (type.equals(ConditionChecker.Type.IS_NOT_NULL_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.isNotNull.method.panel.title");
-      else if (type.equals(ConditionChecker.Type.ASSERT_IS_NULL_METHOD))
+      }
+      else if (type.equals(ConditionChecker.Type.ASSERT_IS_NULL_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.assert.isNull.method.panel.title");
-      else if (type.equals(ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD))
+      }
+      else if (type.equals(ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.assert.isNotNull.method.panel.title");
-      else if (type.equals(ConditionChecker.Type.ASSERT_TRUE_METHOD))
+      }
+      else if (type.equals(ConditionChecker.Type.ASSERT_TRUE_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.assert.true.method.panel.title");
-      else if (type.equals(ConditionChecker.Type.ASSERT_FALSE_METHOD))
+      }
+      else if (type.equals(ConditionChecker.Type.ASSERT_FALSE_METHOD)) {
         return InspectionsBundle.message("configure.checker.option.assert.false.method.panel.title");
-      else
+      }
+      else {
         throw new IllegalArgumentException("MethodCheckerDetailsDialog does not support type " + type);
-    }
-
-    private void chooseMethod(@Nullable MethodConditionCheck checker, ConditionChecker.Type type, int index) {
-      MethodCheckerDetailsDialog pickMethodPanel = new MethodCheckerDetailsDialog(checker, type, myProject, myPanel, getConditionCheckers(), getOtherCheckers());
-      pickMethodPanel.show();
-      MethodConditionCheck chk = pickMethodPanel.getMethodConditionChecker();
-      if (chk != null) {
-        CollectionListModel<MethodConditionCheck> model = getCollectionListModel();
-        if (model.getSize() <= index)
-          model.add(chk);
-        else
-          model.setElementAt(chk, index);
       }
     }
 
-    private CollectionListModel<MethodConditionCheck> getCollectionListModel() {
+    private void chooseMethod(@Nullable ConditionChecker checker, ConditionChecker.Type type, int index) {
+      MethodCheckerDetailsDialog pickMethodPanel =
+        new MethodCheckerDetailsDialog(checker, type, myProject, myPanel, getConditionCheckers(), getOtherCheckers());
+      pickMethodPanel.show();
+      ConditionChecker chk = pickMethodPanel.getConditionChecker();
+      if (chk != null) {
+        CollectionListModel<ConditionChecker> model = getCollectionListModel();
+        if (model.getSize() <= index) {
+          model.add(chk);
+        }
+        else {
+          model.setElementAt(chk, index);
+        }
+      }
+    }
+
+    private CollectionListModel<ConditionChecker> getCollectionListModel() {
       //noinspection unchecked
-      return (CollectionListModel<MethodConditionCheck>) myList.getModel();
+      return (CollectionListModel<ConditionChecker>)myList.getModel();
     }
 
     @NotNull
@@ -233,14 +257,14 @@ public class ConditionCheckDialog extends DialogWrapper {
       return myPanel;
     }
 
-    public List<MethodConditionCheck> getMethodConditionChecker() {
-      CollectionListModel<MethodConditionCheck> model = getCollectionListModel();
-      return new ArrayList<MethodConditionCheck>(model.getItems());
+    public List<ConditionChecker> getConditionChecker() {
+      CollectionListModel<ConditionChecker> model = getCollectionListModel();
+      return new ArrayList<ConditionChecker>(model.getItems());
     }
 
     public Set<ConditionChecker> getConditionCheckers() {
       Set<ConditionChecker> set = new HashSet<ConditionChecker>();
-      set.addAll(getMethodConditionChecker());
+      set.addAll(getConditionChecker());
       return set;
     }
 

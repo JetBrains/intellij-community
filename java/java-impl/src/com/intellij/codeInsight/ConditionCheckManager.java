@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,83 +29,77 @@ import java.util.List;
  *         Creation Date: 8/3/12
  */
 @State(
-  name = "IsNullIsNotNullCheckManager",
+  name = "ConditionCheckManager",
   storages = {@Storage(id = "dir", file = StoragePathMacros.PROJECT_CONFIG_DIR + "/checker.xml", scheme = StorageScheme.DIRECTORY_BASED)}
 )
 public class ConditionCheckManager implements PersistentStateComponent<ConditionCheckManager.State> {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private State state;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ConditionCheckManager");
 
-  private List<MethodConditionCheck> myIsNullCheckMethods = new ArrayList<MethodConditionCheck>();
-  private List<MethodConditionCheck> myIsNotNullCheckMethods = new ArrayList<MethodConditionCheck>();
+  private List<ConditionChecker> myIsNullCheckMethods = new ArrayList<ConditionChecker>();
+  private List<ConditionChecker> myIsNotNullCheckMethods = new ArrayList<ConditionChecker>();
 
-  private List<MethodConditionCheck> myAssertIsNullMethods = new ArrayList<MethodConditionCheck>();
-  private List<MethodConditionCheck> myAssertIsNotNullMethods = new ArrayList<MethodConditionCheck>();
+  private List<ConditionChecker> myAssertIsNullMethods = new ArrayList<ConditionChecker>();
+  private List<ConditionChecker> myAssertIsNotNullMethods = new ArrayList<ConditionChecker>();
 
-  private List<MethodConditionCheck> myAssertTrueMethods = new ArrayList<MethodConditionCheck>();
-  private List<MethodConditionCheck> myAssertFalseMethods = new ArrayList<MethodConditionCheck>();
-
-  private Project myProject;
-
-  public ConditionCheckManager(Project project) {
-    myProject = project;
-  }
+  private List<ConditionChecker> myAssertTrueMethods = new ArrayList<ConditionChecker>();
+  private List<ConditionChecker> myAssertFalseMethods = new ArrayList<ConditionChecker>();
 
   public static ConditionCheckManager getInstance(Project project) {
     return ServiceManager.getService(project, ConditionCheckManager.class);
   }
 
-  public void setIsNullCheckMethods(List<MethodConditionCheck> methodConditionChecks) {
+  public void setIsNullCheckMethods(List<ConditionChecker> methodConditionChecks) {
     myIsNullCheckMethods.clear();
     myIsNullCheckMethods.addAll(methodConditionChecks);
   }
 
-  public void setIsNotNullCheckMethods(List<MethodConditionCheck> methodConditionChecks) {
+  public void setIsNotNullCheckMethods(List<ConditionChecker> methodConditionChecks) {
     myIsNotNullCheckMethods.clear();
     myIsNotNullCheckMethods.addAll(methodConditionChecks);
   }
 
-  public void setAssertNullMethods(List<MethodConditionCheck> methodConditionChecks) {
+  public void setAssertIsNullMethods(List<ConditionChecker> methodConditionChecks) {
     myAssertIsNullMethods.clear();
     myAssertIsNullMethods.addAll(methodConditionChecks);
   }
 
-  public void setAssertNotNullMethods(List<MethodConditionCheck> methodConditionChecks) {
+  public void setAssertIsNotNullMethods(List<ConditionChecker> methodConditionChecks) {
     myAssertIsNotNullMethods.clear();
     myAssertIsNotNullMethods.addAll(methodConditionChecks);
   }
 
-  public void setAssertTrueMethods(List<MethodConditionCheck> psiMethodWrappers) {
+  public void setAssertTrueMethods(List<ConditionChecker> psiMethodWrappers) {
     myAssertTrueMethods.clear();
     myAssertTrueMethods.addAll(psiMethodWrappers);
   }
 
-  public void setAssertFalseMethods(List<MethodConditionCheck> psiMethodWrappers) {
+  public void setAssertFalseMethods(List<ConditionChecker> psiMethodWrappers) {
     myAssertFalseMethods.clear();
     myAssertFalseMethods.addAll(psiMethodWrappers);
   }
 
-  public List<MethodConditionCheck> getIsNullCheckMethods() {
+  public List<ConditionChecker> getIsNullCheckMethods() {
     return myIsNullCheckMethods;
   }
 
-  public List<MethodConditionCheck> getIsNotNullCheckMethods() {
+  public List<ConditionChecker> getIsNotNullCheckMethods() {
     return myIsNotNullCheckMethods;
   }
 
-  public List<MethodConditionCheck> getAssertIsNullMethods() {
+  public List<ConditionChecker> getAssertIsNullMethods() {
     return myAssertIsNullMethods;
   }
 
-  public List<MethodConditionCheck> getAssertIsNotNullMethods() {
+  public List<ConditionChecker> getAssertIsNotNullMethods() {
     return myAssertIsNotNullMethods;
   }
 
-  public List<MethodConditionCheck> getAssertFalseMethods() {
+  public List<ConditionChecker> getAssertFalseMethods() {
     return myAssertFalseMethods;
   }
 
-  public List<MethodConditionCheck> getAssertTrueMethods() {
+  public List<ConditionChecker> getAssertTrueMethods() {
     return myAssertTrueMethods;
   }
 
@@ -132,8 +126,8 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     return state;
   }
 
-  private static void loadMethodChecksToState(List<String> listToLoadTo, List<MethodConditionCheck> listToLoadFrom) {
-    for (MethodConditionCheck checker : listToLoadFrom) {
+  private static void loadMethodChecksToState(List<String> listToLoadTo, List<ConditionChecker> listToLoadFrom) {
+    for (ConditionChecker checker : listToLoadFrom) {
       listToLoadTo.add(checker.toString());
     }
   }
@@ -149,20 +143,20 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     loadMethods(myAssertFalseMethods, state.myAssertFalseMethods, ConditionChecker.Type.ASSERT_FALSE_METHOD);
   }
 
-  public void loadMethods(List<MethodConditionCheck> listToLoadTo, List<String> listToLoadFrom, ConditionChecker.Type type){
+  public void loadMethods(List<ConditionChecker> listToLoadTo, List<String> listToLoadFrom, ConditionChecker.Type type){
     listToLoadTo.clear();
     for (String setting : listToLoadFrom) {
       try {
-        listToLoadTo.add(new MethodConditionCheck.Builder(setting, type, myProject).build());
+        listToLoadTo.add(new ConditionChecker.FromConfigBuilder(setting, type).build());
       } catch (Exception e) {
         LOG.error("Problem occurred while attempting to load Condition Check from configuration file. " + e.getMessage());
       }
     }
   }
 
-  public static boolean isMethod(@NotNull PsiMethod psiMethod, List<MethodConditionCheck> checkers) {
-    for (MethodConditionCheck checker : checkers) {
-      if (checker.matches(psiMethod)) {
+  public static boolean isMethod(@NotNull PsiMethod psiMethod, List<ConditionChecker> checkers) {
+    for (ConditionChecker checker : checkers) {
+      if (checker.matchesPsiMethod(psiMethod)) {
         return true;
       }
     }
@@ -227,29 +221,19 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getAssertFalseMethods());
   }
 
-  public static boolean methodMatches(PsiMethod psiMethod, List<MethodConditionCheck> checkers) {
-    for (MethodConditionCheck checker : checkers) {
-      if (checker.matches(psiMethod))
+  public static boolean methodMatches(PsiMethod psiMethod, List<ConditionChecker> checkers) {
+    for (ConditionChecker checker : checkers) {
+      if (checker.matchesPsiMethod(psiMethod))
         return true;
     }
     return false;
   }
 
-  public static boolean methodMatches(PsiMethod psiMethod, int paramIndex, List<MethodConditionCheck> checkers) {
-    for (MethodConditionCheck checker : checkers) {
-      if (checker.matches(psiMethod, paramIndex))
+  public static boolean methodMatches(PsiMethod psiMethod, int paramIndex, List<ConditionChecker> checkers) {
+    for (ConditionChecker checker : checkers) {
+      if (checker.matchesPsiMethod(psiMethod, paramIndex))
         return true;
     }
     return false;
-  }
-
-  public static boolean isNullCheck(PsiMethod psiMethod) {
-    ConditionCheckManager manager = getInstance(psiMethod.getProject());
-    return isMethod(psiMethod, manager.getIsNullCheckMethods()) || isMethod(psiMethod, manager.getAssertIsNullMethods());
-  }
-
-  public static boolean isNotNullCheck(PsiMethod psiMethod) {
-    ConditionCheckManager manager = getInstance(psiMethod.getProject());
-    return isMethod(psiMethod, manager.getIsNotNullCheckMethods()) || isMethod(psiMethod, manager.getAssertIsNotNullMethods());
   }
 }

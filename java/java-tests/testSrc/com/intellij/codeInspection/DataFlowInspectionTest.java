@@ -16,16 +16,14 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.ConditionCheckManager;
-import com.intellij.codeInsight.ConditionChecker;
-import com.intellij.codeInsight.MethodConditionCheck;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 
@@ -167,47 +165,48 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
 
   public void testIsNullCheck() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
-      buildMethodConditionCheck("Value", "isNull", ConditionChecker.Type.IS_NULL_METHOD,
-                                "public class Value { public static boolean isNull(Value o) {if (o == null) return true; else return false;} }"));
+      buildConditionChecker("Value", "isNull", ConditionChecker.Type.IS_NULL_METHOD,
+                            "public class Value { public static boolean isNull(Value o) {if (o == null) return true; else return false;} }"));
     doTest();
   }
 
   public void testIsNotNullCheck() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getIsNotNullCheckMethods().add(
-      buildMethodConditionCheck("Value", "isNotNull", ConditionChecker.Type.IS_NOT_NULL_METHOD,
-                                "public class Value { public static boolean isNotNull(Value o) {if (o == null) return false; else return true;} }"));
+      buildConditionChecker("Value", "isNotNull", ConditionChecker.Type.IS_NOT_NULL_METHOD,
+                            "public class Value { public static boolean isNotNull(Value o) {if (o == null) return false; else return true;} }"));
     doTest();
   }
 
   public void testAssertTrue() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getAssertTrueMethods().add(
-      buildMethodConditionCheck("Assertions", "assertTrue", ConditionChecker.Type.ASSERT_TRUE_METHOD,
-                                "public class Assertions { public static boolean assertTrue(boolean b) {if(!b) throw new Exception();} }"));
+      buildConditionChecker("Assertions", "assertTrue", ConditionChecker.Type.ASSERT_TRUE_METHOD,
+                            "public class Assertions { public static boolean assertTrue(boolean b) {if(!b) throw new Exception();} }"));
     doTest();
   }
 
   public void testAssertFalse() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getAssertFalseMethods().add(
-      buildMethodConditionCheck("Assertions", "assertFalse", ConditionChecker.Type.ASSERT_FALSE_METHOD,
-                                "public class Assertions { public static boolean assertFalse(boolean b) {if(b) throw new Exception();} }"));
+      buildConditionChecker("Assertions", "assertFalse", ConditionChecker.Type.ASSERT_FALSE_METHOD,
+                            "public class Assertions { public static boolean assertFalse(boolean b) {if(b) throw new Exception();} }"));
     doTest();
   }
 
   public void testAssertIsNull() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNullMethods().add(
-      buildMethodConditionCheck("Assertions", "assertIsNull", ConditionChecker.Type.ASSERT_IS_NULL_METHOD,
-                                "public class Assertions { public static boolean assertIsNull(Object o) {if(o != null) throw new Exception();} }"));
+      buildConditionChecker("Assertions", "assertIsNull", ConditionChecker.Type.ASSERT_IS_NULL_METHOD,
+                            "public class Assertions { public static boolean assertIsNull(Object o) {if(o != null) throw new Exception();} }"));
     doTest();
   }
 
   public void testAssertIsNotNull() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getAssertIsNotNullMethods().add(
-      buildMethodConditionCheck("Assertions", "assertIsNotNull", ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD,
-                                "public class Assertions { public static boolean assertIsNotNull(Object o) {if(o == null) throw new Exception();} }"));
+      buildConditionChecker("Assertions", "assertIsNotNull", ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD,
+                            "public class Assertions { public static boolean assertIsNotNull(Object o) {if(o == null) throw new Exception();} }"));
     doTest();
   }
 
-  private MethodConditionCheck buildMethodConditionCheck(String className, String methodName, ConditionChecker.Type type, String classText)
+  @Nullable
+  private ConditionChecker buildConditionChecker(String className, String methodName, ConditionChecker.Type type, String classText)
     throws IOException {
     myFixture.addClass(classText);
     PsiClass psiClass = myFixture.findClass(className);
@@ -219,6 +218,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
         break;
       }
     }
-    return new MethodConditionCheck(psiMethod, psiMethod.getParameterList().getParameters()[0], type);
+    assert psiMethod != null;
+    return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
   }
 }
