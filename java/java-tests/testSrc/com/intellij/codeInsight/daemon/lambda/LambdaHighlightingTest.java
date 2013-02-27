@@ -208,6 +208,18 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAmbiguityReturnValueResolution1() throws Exception {
+    doTest();
+  }
+
+  public void testAmbiguityReturnValueResolution2() throws Exception {
+    doTest(true);
+  }
+
+  public void testAmbiguityReturnValueResolution3() throws Exception {
+    doTest();
+  }
+
   public void testLambdaOnVarargsPlace1() throws Exception {
     doTest();
   }

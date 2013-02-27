@@ -47,7 +47,6 @@ public class AllIcons {
     public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.png"); // 16x16
     public static final Icon Commit = IconLoader.getIcon("/actions/commit.png"); // 16x16
     public static final Icon Compile = IconLoader.getIcon("/actions/compile.png"); // 16x16
-    public static final Icon ConsoleHistory = IconLoader.getIcon("/actions/consoleHistory.png"); // 16x16
     public static final Icon Copy = IconLoader.getIcon("/actions/copy.png"); // 16x16
     public static final Icon CreateFromUsage = IconLoader.getIcon("/actions/createFromUsage.png"); // 16x16
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png"); // 16x16
@@ -77,6 +76,7 @@ public class AllIcons {
     public static final Icon GroupByModule = IconLoader.getIcon("/actions/GroupByModule.png"); // 16x16
     public static final Icon GroupByModuleGroup = IconLoader.getIcon("/actions/GroupByModuleGroup.png"); // 16x16
     public static final Icon GroupByPackage = IconLoader.getIcon("/actions/GroupByPackage.png"); // 16x16
+    public static final Icon GroupByPrefix = IconLoader.getIcon("/actions/GroupByPrefix.png"); // 16x16
     public static final Icon GroupByTestProduction = IconLoader.getIcon("/actions/groupByTestProduction.png"); // 16x16
     public static final Icon Help = IconLoader.getIcon("/actions/help.png"); // 16x16
     public static final Icon Install = IconLoader.getIcon("/actions/install.png"); // 16x16
@@ -236,7 +236,7 @@ public class AllIcons {
     public static final Icon Db_muted_invalid_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png"); // 12x12
     public static final Icon Db_muted_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png"); // 12x12
     public static final Icon Db_muted_method_warning_breakpoint = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png"); // 16x16
-    public static final Icon Db_muted_temporary_breakpoint = IconLoader.getIcon("/debugger/db_muted_temporary_breakpoint.png"); // 16x16
+    public static final Icon Db_muted_temporary_breakpoint = IconLoader.getIcon("/debugger/db_muted_temporary_breakpoint.png"); // 12x12
     public static final Icon Db_muted_verified_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_breakpoint.png"); // 12x12
     public static final Icon Db_muted_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png"); // 12x12
     public static final Icon Db_muted_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_muted_verified_method_breakpoint.png"); // 12x12
@@ -244,7 +244,7 @@ public class AllIcons {
     public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.png"); // 12x12
     public static final Icon Db_primitive = IconLoader.getIcon("/debugger/db_primitive.png"); // 16x16
     public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.png"); // 12x12
-    public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_temporary_breakpoint.png"); // 16x16
+    public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_temporary_breakpoint.png"); // 12x12
     public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.png"); // 12x12
     public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png"); // 12x12
     public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png"); // 12x12
@@ -431,6 +431,7 @@ public class AllIcons {
     public static final Icon Mdot_empty = IconLoader.getIcon("/general/mdot-empty.png"); // 8x8
     public static final Icon Mdot_white = IconLoader.getIcon("/general/mdot-white.png"); // 8x8
     public static final Icon Mdot = IconLoader.getIcon("/general/mdot.png"); // 8x8
+    public static final Icon MessageHistory = IconLoader.getIcon("/general/messageHistory.png"); // 16x16
     public static final Icon Modified = IconLoader.getIcon("/general/modified.png"); // 24x16
     public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.png"); // 16x16
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
@@ -1075,16 +1076,15 @@ public class AllIcons {
   
   public static class Vcs {
     public static final Icon AllRevisions = IconLoader.getIcon("/vcs/allRevisions.png"); // 16x16
-    public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 12x12
-    public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 12x12
+    public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 16x16
+    public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
-    public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 12x12
+    public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.png"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
     public static final Icon MergeSourcesTree = IconLoader.getIcon("/vcs/mergeSourcesTree.png"); // 16x16
-    public static final Icon MessageHistory = IconLoader.getIcon("/vcs/messageHistory.png"); // 16x16
-    public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.png"); // 12x12
+    public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.png"); // 16x16
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16
     public static final Icon StripDown = IconLoader.getIcon("/vcs/stripDown.png"); // 16x16

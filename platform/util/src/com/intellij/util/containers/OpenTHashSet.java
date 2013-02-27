@@ -70,7 +70,7 @@ public class OpenTHashSet<T> extends THashSet<T> {
   }
 
   /**
-   * Returns an element of this set equal to the give one. Can be used for interning objects to save memory.
+   * Returns an element of this set equal to the given one. Can be used for interning objects to save memory.
    */
   @Nullable
   public T get(final T obj) {

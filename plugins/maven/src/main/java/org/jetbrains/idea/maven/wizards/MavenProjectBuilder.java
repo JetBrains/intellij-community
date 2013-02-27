@@ -135,10 +135,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                   : new MavenDefaultModifiableModelsProvider(project));
   }
 
-  public boolean setRootDirectory(final String root) throws ConfigurationException {
+  public boolean setRootDirectory(@Nullable Project projectToUpdate, final String root) throws ConfigurationException {
     getParameters().myFiles = null;
     getParameters().myProfiles.clear();
     getParameters().myMavenProjectTree = null;
+
+    getParameters().myProjectToUpdate = projectToUpdate; // We cannot determinate project in non-EDT thread.
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {

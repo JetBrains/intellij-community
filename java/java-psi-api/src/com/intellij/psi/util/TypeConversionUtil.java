@@ -686,6 +686,9 @@ public class TypeConversionUtil {
         final PsiType lType = lLambdaExpression.getFunctionalInterfaceType();
         return Comparing.equal(rType, lType);
       }
+      if (left instanceof PsiArrayType) {
+        return false;
+      }
       return LambdaUtil.isAcceptable(rLambdaExpression, left, false);
     }
 
