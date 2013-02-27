@@ -64,7 +64,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl = null;
   private String myEditorBackgroundImageUrl = null;
-  
+
   private Calendar myBuildDate = null;
   private Calendar myMajorReleaseBuildDate = null;
   private String myPackageCode = null;
@@ -416,9 +416,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
       try {
-        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH +
-                                                                        ApplicationNamesInfo.getComponentName() +
-                                                                        XML_EXTENSION);
+        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
         ourShadowInstance.readExternal(doc.getRootElement());
       }
       catch (Exception e) {
@@ -496,7 +494,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
-      
+
       String v = aboutLogoElement.getAttributeValue(ATTRIBUTE_ABOUT_FOREGROUND_COLOR);
       if (v != null) {
         myAboutForeground = parseColor(v);
@@ -559,10 +557,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (webHelpUrl != null) {
         myWebHelpUrl = webHelpUrl;
       }
-      
+
       String attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_HELP);
       myHasHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
-      
+
       attValue = helpElement.getAttributeValue(ATTRIBUTE_HAS_CONTEXT_HELP);
       myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
