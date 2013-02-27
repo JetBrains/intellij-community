@@ -63,7 +63,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cs" extensions="cs" description="C# files" name="C#" icon="AllIcons.FileTypes.JavaScript">
+    <filetype binary="false" default_extension="cs" extensions="cs" description="C# files" name="C#" icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//" />
@@ -80,7 +80,7 @@
       </highlighting>
     </filetype>
     
-    <filetype binary="false" default_extension="pl" extensions="pl;pm" description="Perl files" name="Perl" icon="AllIcons.FileTypes.JavaScript">
+    <filetype binary="false" default_extension="pl" extensions="pl;pm" description="Perl files" name="Perl" icon="AllIcons.FileTypes.Custom">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="#" />
