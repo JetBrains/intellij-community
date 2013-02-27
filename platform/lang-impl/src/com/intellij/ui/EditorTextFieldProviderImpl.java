@@ -94,11 +94,11 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       EditorSettings settings = ex.getSettings();
       settings.setAdditionalColumnsCount(3);
       settings.setVirtualSpace(false);
-      applyFeatures(ex);
+      applyCustomizations(ex);
       return ex;
     }
     
-    private void applyFeatures(@NotNull EditorEx editor) {
+    private void applyCustomizations(@NotNull EditorEx editor) {
       for (EditorCustomization customization : myCustomizations) {
         customization.customize(editor);
       }
