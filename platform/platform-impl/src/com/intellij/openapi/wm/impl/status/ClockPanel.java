@@ -38,6 +38,15 @@ import static java.util.Calendar.*;
  */
 public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   @NonNls public static final String WIDGET_ID = "Clock";
+  //              top
+  //              ---
+  //    top-left |   | top-right
+  //             |   |
+  //      middle  ---
+  // bottom-left |   | bottom-right
+  //             |   |
+  //              ---
+  //            bottom
   private static final int[] MASK = new int[]{
     1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9,//top
     1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9,//top-left
