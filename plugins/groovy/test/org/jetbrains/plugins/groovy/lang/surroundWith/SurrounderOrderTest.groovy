@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.WriteAction
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author peter
@@ -28,11 +28,16 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
   public void testStatementSurrounders() {
     def names = getSurrounders("<selection>println a</selection>")
     assertOrderedEquals names,
-                        "if", "if / else", "while",
+                        "if", "if / else",
+                        "while",
                         "{ -> ... }.call()",
-                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "for", "try / catch",
+                        "try / finally",
+                        "try / catch / finally",
                         "shouldFail () {...}",
-                        "(expr)", "((Type) expr)",
+                        "(expr)",
+                        "!(expr)",
+                        "((Type) expr)",
                         "with () {...}"
   }
 
@@ -61,19 +66,29 @@ println c /*also important */
 
   public void testInnerExpressionSurrounders() {
     def names = getSurrounders("boolean a; println <selection>a</selection>")
-    assertOrderedEquals names, "(expr)", "((Type) expr)"
+    assertOrderedEquals names, "(expr)", "!(expr)", "((Type) expr)"
   }
 
   public void testOuterExpressionSurrounders() {
     def names = getSurrounders("boolean a; <selection>a</selection>")
     assertOrderedEquals names,
-                        "if", "if / else", "while",
+                        "if",
+                        "if / else",
+                        "while",
                         "{ -> ... }.call()",
-                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "for",
+                        "try / catch",
+                        "try / finally",
+                        "try / catch / finally",
                         "shouldFail () {...}",
-                        "(expr)", "((Type) expr)",
+                        "(expr)",
+                        "!(expr)",
+                        "((Type) expr)",
                         "with () {...}",
-                        "if (expr)", "if (expr) / else", "while (expr)", "with (expr)"
+                        "if (expr)",
+                        "if (expr) / else",
+                        "while (expr)",
+                        "with (expr)"
   }
 
   private List<String> getSurrounders(final String fileText) {
