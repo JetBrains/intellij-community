@@ -222,7 +222,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
-    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
     List<Sdk> baseSdks = new ArrayList<Sdk>();
     for (Sdk s : allSdks) {
       if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder.isRemoteSdk(s.getHomePath())) {

@@ -32,7 +32,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     List<Sdk> sdks = PythonSdkType.getAllSdks();
     Collections.sort(sdks, new PreferredSdkComparator());
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
-    sdkComboBox.setRenderer(new PySdkListCellRenderer(null));
+    sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PyPackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel(project);
     final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);
