@@ -1,8 +1,8 @@
-package com.siyeh.igtest.encapsulation;
+package com.siyeh.igtest.encapsulation.return_of_date_field;
 
 import java.util.*;
 
-public class ReturnOfDateFieldInspection
+public class ReturnOfDateField
 {
     private Date m_foo;
  //   private List<String> m_fooBar;
@@ -10,10 +10,10 @@ public class ReturnOfDateFieldInspection
 
     public static void main(String[] args)
     {
-        new ReturnOfDateFieldInspection(new Date());
+        new ReturnOfDateField(new Date());
     }
 
-    public ReturnOfDateFieldInspection(Date foo)
+    public ReturnOfDateField(Date foo)
     {
         m_foo = new Date(foo.getTime());
     }
@@ -35,5 +35,7 @@ public class ReturnOfDateFieldInspection
         return m_bar;
     }
 
-
+    private Date hidden() {
+        return m_foo;
+    }
 }

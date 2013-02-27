@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,8 +27,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ReturnOfDateFieldInspection extends BaseInspection {
+
+  @SuppressWarnings({"PublicField"})
+  public boolean ignorePrivateMethods = false;
 
   @Override
   @NotNull
@@ -39,6 +47,13 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
     return InspectionGadgetsBundle.message("return.date.calendar.field.problem.descriptor", type);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("return.of.null.ignore.private.option"),
+                                          this, "ignorePrivateMethods");
   }
 
   @Override
@@ -57,7 +72,7 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Return clone of '" + myType + '\'';
+      return InspectionGadgetsBundle.message("return.date.calendar.field.quickfix", myType);
     }
 
     @Override
@@ -81,13 +96,17 @@ public class ReturnOfDateFieldInspection extends BaseInspection {
     return new ReturnOfDateFieldVisitor();
   }
 
-  private static class ReturnOfDateFieldVisitor extends BaseInspectionVisitor {
+  private class ReturnOfDateFieldVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final PsiExpression returnValue = statement.getReturnValue();
       if (!(returnValue instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class);
+      if (method == null || (ignorePrivateMethods && method.hasModifierProperty(PsiModifier.PRIVATE))) {
         return;
       }
       final PsiReferenceExpression fieldReference = (PsiReferenceExpression)returnValue;
