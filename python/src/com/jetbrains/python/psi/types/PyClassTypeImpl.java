@@ -225,7 +225,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (isDefinition()) {
       return true;
     }
-    if (PyTypeChecker.isMethodType(this)) {
+    if (isMethodType(this)) {
       return true;
     }
     final PyClass cls = getPyClass();
@@ -233,6 +233,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return true;
     }
     return false;
+  }
+
+  private static boolean isMethodType(@NotNull PyClassType type) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
+    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
   }
 
   @Nullable

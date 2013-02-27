@@ -446,11 +446,6 @@ public class PyTypeChecker {
     return false;
   }
 
-  public static boolean isMethodType(@NotNull PyClassType type) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
-    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
-  }
-
   /**
    * Hack for skipping type checking for method calls of union members if there are several call alternatives.
    *
