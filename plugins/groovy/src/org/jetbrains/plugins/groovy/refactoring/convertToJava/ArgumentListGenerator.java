@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -49,10 +50,10 @@ class ArgumentListGenerator {
   }
 
   public void generate(@Nullable GrClosureSignature signature,
-                       GrExpression[] exprs,
-                       GrNamedArgument[] namedArgs,
-                       GrClosableBlock[] clArgs,
-                       GroovyPsiElement context) {
+                       @NotNull GrExpression[] exprs,
+                       @NotNull GrNamedArgument[] namedArgs,
+                       @NotNull GrClosableBlock[] clArgs,
+                       @NotNull GroovyPsiElement context) {
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
       signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, false, false);
 

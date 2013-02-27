@@ -75,6 +75,8 @@
     <extensionPoint name="methodMayBeStaticInspectionFilter" interface="org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspectionFilter"/>
 
     <extensionPoint name="customAnnotationChecker" interface="org.jetbrains.plugins.groovy.annotator.CustomAnnotationChecker"/>
+
+    <extensionPoint name="convertToJava.customMethodInvocator" interface="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -167,6 +169,8 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.GrAliasAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.AnnotationCollectorChecker" order="first"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.DelegatesToAnnotationChecker"/>
+
+    <convertToJava.customMethodInvocator implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">

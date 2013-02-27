@@ -153,22 +153,23 @@ public class GenerationUtil {
   }
 
   public static void invokeMethodByName(@Nullable GrExpression caller,
-                                        String methodName,
-                                        GrExpression[] exprs,
-                                        GrNamedArgument[] namedArgs,
-                                        GrClosableBlock[] closureArgs,
-                                        ExpressionGenerator expressionGenerator,
-                                        GroovyPsiElement psiContext) {
+                                        @NotNull String methodName,
+                                        @NotNull GrExpression[] exprs,
+                                        @NotNull GrNamedArgument[] namedArgs,
+                                        @NotNull GrClosableBlock[] closureArgs,
+                                        @NotNull ExpressionGenerator expressionGenerator,
+                                        @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
+  @NotNull
   public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
-                                                   String methodName,
-                                                   GrExpression[] exprs,
-                                                   GrNamedArgument[] namedArgs,
-                                                   GrClosableBlock[] closureArgs,
-                                                   GroovyPsiElement psiContext) {
+                                                   @NotNull String methodName,
+                                                   @NotNull GrExpression[] exprs,
+                                                   @NotNull GrNamedArgument[] namedArgs,
+                                                   @NotNull GrClosableBlock[] closureArgs,
+                                                   @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
 
     final PsiType type;
@@ -187,13 +188,13 @@ public class GenerationUtil {
   }
 
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
-                                                 GroovyResolveResult resolveResult,
-                                                 String methodName,
-                                                 GrExpression[] exprs,
-                                                 GrNamedArgument[] namedArgs,
-                                                 GrClosableBlock[] closureArgs,
-                                                 ExpressionGenerator expressionGenerator,
-                                                 GroovyPsiElement psiContext) {
+                                                 @NotNull GroovyResolveResult resolveResult,
+                                                 @NotNull String methodName,
+                                                 @NotNull GrExpression[] exprs,
+                                                 @NotNull GrNamedArgument[] namedArgs,
+                                                 @NotNull GrClosableBlock[] closureArgs,
+                                                 @NotNull ExpressionGenerator expressionGenerator,
+                                                 @NotNull GroovyPsiElement psiContext) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod) {
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -213,8 +214,8 @@ public class GenerationUtil {
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
   }
 
-  static void writeStatement(final StringBuilder codeBlockBuilder,
-                             StringBuilder statementBuilder,
+  static void writeStatement(@NotNull StringBuilder codeBlockBuilder,
+                             @NotNull StringBuilder statementBuilder,
                              @Nullable GrStatement statement,
                              @Nullable ExpressionContext context) {
     final PsiElement parent = statement == null ? null : statement.getParent();
