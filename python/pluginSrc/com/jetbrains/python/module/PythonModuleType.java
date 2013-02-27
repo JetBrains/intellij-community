@@ -18,10 +18,10 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> {
+public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBase> {
   @Override
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
-                                              final PythonModuleBuilder moduleBuilder,
+                                              final PythonModuleBuilderBase moduleBuilder,
                                               final ModulesProvider modulesProvider) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final Project project = getProject(wizardContext);
