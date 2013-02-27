@@ -21,10 +21,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -38,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -136,7 +134,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   @Override
-  public VirtualFile[] getIncludedFiles(VirtualFile file, boolean compileTimeOnly) {
+  public VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
     if (file instanceof VirtualFileWithId) {
       return myIncludedHolder.getAllFiles(file, compileTimeOnly);
     }
@@ -146,7 +144,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   @Override
-  public VirtualFile[] getIncludingFiles(VirtualFile file, boolean compileTimeOnly) {
+  public VirtualFile[] getIncludingFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
     return myIncludingHolder.getAllFiles(file, compileTimeOnly);
   }
 
@@ -204,13 +202,13 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
       RUNTIME_KEY = Key.create(runtimeKey);
     }
 
-    public VirtualFile[] getAllFiles(VirtualFile file, boolean compileTimeOnly) {
+    private VirtualFile[] getAllFiles(@NotNull VirtualFile file, boolean compileTimeOnly) {
       Set<VirtualFile> result = new HashSet<VirtualFile>();
       getFilesRecursively(file, compileTimeOnly, result);
-      return VfsUtil.toVirtualFileArray(result);
+      return VfsUtilCore.toVirtualFileArray(result);
     }
 
-    private void getFilesRecursively(VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
+    private void getFilesRecursively(@NotNull VirtualFile file, boolean compileTimeOnly, Set<VirtualFile> result) {
       if (result.contains(file)) return;
       PsiFile psiFile = myPsiManager.findFile(file);
       if (psiFile == null) return;
