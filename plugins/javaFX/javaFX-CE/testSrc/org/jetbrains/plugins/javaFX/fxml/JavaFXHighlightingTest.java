@@ -93,6 +93,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testNoParamsHandler() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doDoTest(false, false);
+  }
+
   private void doTestIdController() throws Exception {
     final String controllerClassName = getTestName(false) + "Controller";
     configureByFiles(null, getTestName(true) + ".fxml", controllerClassName + ".java");
