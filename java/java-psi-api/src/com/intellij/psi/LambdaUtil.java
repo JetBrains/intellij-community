@@ -636,22 +636,39 @@ public class LambdaUtil {
     return result;
   }
 
-  public static void checkMoreSpecificReturnType(List<CandidateInfo> conflicts, int functionalInterfaceIdx) {
+  public static void checkMoreSpecificReturnType(List<CandidateInfo> conflicts, PsiType[] actualParameterTypes) {
     final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
     for (int i = 1; i < newConflictsArray.length; i++) {
       final CandidateInfo method = newConflictsArray[i];
-      final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
       for (int j = 0; j < i; j++) {
         final CandidateInfo conflict = newConflictsArray[j];
         assert conflict != method;
-        final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
-        if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-          int moreSpecific = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
-          if (moreSpecific > 0) {
+        int moreSpecific = 0;
+        final PsiMethod methodElement = (PsiMethod)method.getElement();
+        final PsiMethod conflictElement = (PsiMethod)conflict.getElement();
+        if (methodElement.isVarArgs() == conflictElement.isVarArgs()) {
+          for (int functionalInterfaceIdx = 0; functionalInterfaceIdx < actualParameterTypes.length; functionalInterfaceIdx++) {
+            final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
+            final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
+            if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
+              if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
+                int moreSpecific1 = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
+                if (moreSpecific < 0 && moreSpecific1 > 0 || moreSpecific > 0 && moreSpecific1 < 0) {
+                  moreSpecific = 0;
+                  break;
+                }
+                moreSpecific = moreSpecific1;
+              }
+            } else if (interfaceReturnType != null && interfaceReturnType1 != null) {
+              moreSpecific = 0;
+              break;
+            }
+          }
+          if (moreSpecific > 0 && conflictElement.getParameterList().getParametersCount() <= actualParameterTypes.length) {
             conflicts.remove(method);
             break;
           }
-          else if (moreSpecific < 0) {
+          else if (moreSpecific < 0 && methodElement.getParameterList().getParametersCount() <= actualParameterTypes.length) {
             conflicts.remove(conflict);
           }
         }
@@ -665,7 +682,7 @@ public class LambdaUtil {
       if (!(returnType1 instanceof PsiPrimitiveType)) {
         return -1;
       } else {
-        return TypeConversionUtil.areTypesConvertible(returnType, returnType1) ? 1 : -1;
+        return TypeConversionUtil.isAssignable(returnType, returnType1) ? 1 : -1;
       }
     }
     if (returnType1 instanceof PsiPrimitiveType) {

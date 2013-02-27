@@ -126,12 +126,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             }
           }
         }
-        LambdaUtil.checkMoreSpecificReturnType(conflicts, i);
-      }
-      else if (parameterType instanceof PsiMethodReferenceType) {
-        LambdaUtil.checkMoreSpecificReturnType(conflicts, i);
       }
     }
+    LambdaUtil.checkMoreSpecificReturnType(conflicts, myActualParameterTypes);
   }
 
   public void checkSpecifics(List<CandidateInfo> conflicts, @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
