@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -724,7 +724,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
         }
         finally {
-          clearUncommitedDocuments();
+          clearUncommittedDocuments();
         }
       }
       commitAllDocuments();
@@ -803,7 +803,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   @TestOnly
-  public void clearUncommitedDocuments() {
+  public void clearUncommittedDocuments() {
     myUncommittedDocuments.clear();
     mySynchronizer.cleanupForNextTest();
     myDocumentCommitThread.clearQueue();
@@ -812,7 +812,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
   }
-
 
   @Override
   public void save() {
