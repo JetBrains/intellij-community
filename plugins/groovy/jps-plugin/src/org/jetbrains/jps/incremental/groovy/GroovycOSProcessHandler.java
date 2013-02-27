@@ -40,6 +40,7 @@ import java.util.*;
  */
 public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
+  public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();

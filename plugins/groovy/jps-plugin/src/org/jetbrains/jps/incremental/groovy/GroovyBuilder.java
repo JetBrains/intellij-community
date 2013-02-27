@@ -173,13 +173,21 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       programParams.add("--indy");
     }
 
+    List<String> vmParams = ContainerUtilRt.newArrayList();
+    vmParams.add("-Xmx" + settings.heapSize + "m");
+    vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
+    //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+
+    String grapeRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);
+    if (grapeRoot != null) {
+      vmParams.add("-D" + GroovycOSProcessHandler.GRAPE_ROOT + "=" + grapeRoot);
+    }
+
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(chunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
       Collections.<String>emptyList(), classpath,
-      Arrays.asList("-Xmx" + settings.heapSize + "m",
-                    "-Dfile.encoding=" + System.getProperty("file.encoding")/*,
-                    "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239"*/),
+      vmParams,
       programParams
     );
 
