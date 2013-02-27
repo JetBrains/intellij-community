@@ -112,6 +112,8 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
+      mySetAsProjectInterpreterCheckbox.setSelected(false);
+      mySetAsProjectInterpreterCheckbox.setVisible(false);
     }
     else if (isNewProject) {
       mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
