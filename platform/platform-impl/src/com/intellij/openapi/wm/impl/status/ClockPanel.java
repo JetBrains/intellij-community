@@ -38,6 +38,13 @@ import static java.util.Calendar.*;
  */
 public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   @NonNls public static final String WIDGET_ID = "Clock";
+  private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
+  private static final int TOP_RIGHT = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int MIDDLE = 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
+  private static final int BOTTOM_LEFT = 1 << 0 | 1 << 2 | 1 << 6 | 1 << 8;
+  private static final int BOTTOM_RIGHT = 1 << 0 | 1 << 1 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
+  private static final int BOTTOM = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
   //              top
   //              ---
   //    top-left |   | top-right
@@ -47,15 +54,6 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   //             |   |
   //              ---
   //            bottom
-  private static final int[] MASK = new int[]{
-    1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9,//top
-    1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9,//top-left
-    1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9,//top-right
-    1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9,//middle
-    1 << 0 | 1 << 2 | 1 << 6 | 1 << 8,//bottom-left
-    1 << 0 | 1 << 1 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9,//bottom-right
-    1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9//bottom
-  };//1005, 881, 927, 892, 325, 1019, 877 (geek mode)
 
   protected final Calendar myCalendar;
   private final Timer myTimer;
@@ -172,12 +170,12 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     float t54 = t * 5 / 4;
     float t34 = t * 3 / 4;
     float t2 = t / 2;
-    if ((digit & MASK[0]) != 0) g.draw(new Line2D.Float(x + t54, y + t2, x + width - t54, y + t2));
-    if ((digit & MASK[1]) != 0) g.draw(new Line2D.Float(x + t2, y + t54, x + t2, y + h2 - t34));
-    if ((digit & MASK[2]) != 0) g.draw(new Line2D.Float(x + width - t2, y + t54, x + width - t2, y + h2 - t34));
-    if ((digit & MASK[3]) != 0) g.draw(new Line2D.Float(x + t54, y + h2, x + width - t54, y + h2));
-    if ((digit & MASK[4]) != 0) g.draw(new Line2D.Float(x + t2, y + h2 + t34, x + t2, y + height - t54));
-    if ((digit & MASK[5]) != 0) g.draw(new Line2D.Float(x + width - t2, y + h2 + t34, x + width - t2, y + height - t54));
-    if ((digit & MASK[6]) != 0) g.draw(new Line2D.Float(x + t54, y + height - t2, x + width - t54, y + height - t2));
+    if ((digit & TOP) != 0) g.draw(new Line2D.Float(x + t54, y + t2, x + width - t54, y + t2));
+    if ((digit & TOP_LEFT) != 0) g.draw(new Line2D.Float(x + t2, y + t54, x + t2, y + h2 - t34));
+    if ((digit & TOP_RIGHT) != 0) g.draw(new Line2D.Float(x + width - t2, y + t54, x + width - t2, y + h2 - t34));
+    if ((digit & MIDDLE) != 0) g.draw(new Line2D.Float(x + t54, y + h2, x + width - t54, y + h2));
+    if ((digit & BOTTOM_LEFT) != 0) g.draw(new Line2D.Float(x + t2, y + h2 + t34, x + t2, y + height - t54));
+    if ((digit & BOTTOM_RIGHT) != 0) g.draw(new Line2D.Float(x + width - t2, y + h2 + t34, x + width - t2, y + height - t54));
+    if ((digit & BOTTOM) != 0) g.draw(new Line2D.Float(x + t54, y + height - t2, x + width - t54, y + height - t2));
   }
 }
