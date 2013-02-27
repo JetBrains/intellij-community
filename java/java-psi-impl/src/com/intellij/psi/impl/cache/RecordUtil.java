@@ -18,9 +18,10 @@ package com.intellij.psi.impl.cache;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.java.stubs.*;
-import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -110,12 +111,7 @@ public class RecordUtil {
       else if (parent instanceof PsiMethodStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
           packed |= ModifierFlags.PUBLIC_MASK;
-          if (parent instanceof PsiMethodStubImpl && ((PsiMethodStubImpl)parent).hasExtensionMethodMark()) {
-            packed |= ModifierFlags.DEFENDER_MASK;
-          }
-          else {
-            packed |= ModifierFlags.ABSTRACT_MASK;
-          }
+          packed |= ModifierFlags.ABSTRACT_MASK;
         }
       }
       else if (parent instanceof PsiFieldStub) {
