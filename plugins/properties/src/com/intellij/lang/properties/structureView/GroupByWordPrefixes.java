@@ -150,7 +150,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
                                       PropertiesBundle.message("structure.view.group.by.prefixes.action.description"),
-                                      AllIcons.Actions.FileStatus);
+                                      AllIcons.Actions.GroupByPrefix);
   }
 
   @NotNull
