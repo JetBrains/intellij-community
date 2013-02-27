@@ -1,6 +1,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,10 +10,12 @@ import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +41,9 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBLabel myPythonInterpreterJBLabel;
   private JBLabel myInterpreterOptionsJBLabel;
   private JBLabel myWorkingDirectoryJBLabel;
+  private JPanel myHideablePanel;
   private JComponent labelAnchor;
+  private final HideableDecorator myDecorator;
 
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
@@ -61,6 +66,26 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myUseModuleSdkRadioButton.addActionListener(listener);
 
     setAnchor(myEnvsComponent.getLabel());
+
+
+    myDecorator = new HideableDecorator(myHideablePanel, "Environment", false) {
+      @Override
+      protected void on() {
+        super.on();
+        storeState();
+      }
+
+      @Override
+      protected void off() {
+        super.off();
+        storeState();
+      }
+      private void storeState() {
+        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()));
+      }
+    };
+    myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
+    myDecorator.setContentComponent(myMainPanel);
   }
 
   private void updateControls() {
@@ -69,7 +94,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public JPanel getMainPanel() {
-    return myMainPanel;
+    return myHideablePanel;
   }
 
   @Override

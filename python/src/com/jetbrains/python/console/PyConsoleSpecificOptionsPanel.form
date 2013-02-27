@@ -39,7 +39,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Interpreter"/>
+        <border type="none"/>
         <children/>
       </grid>
     </children>

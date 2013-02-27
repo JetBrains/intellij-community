@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.testing.pytest.PyTestConfigurationEditor">
   <grid id="dbdd7" layout-manager="CardLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="20" y="214" width="495" height="206"/>
+      <xy x="20" y="214" width="495" height="212"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -101,7 +101,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="none" title="Interpreter"/>
+            <border type="none"/>
             <children/>
           </grid>
           <vspacer id="979d9">
