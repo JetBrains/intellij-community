@@ -130,6 +130,7 @@ public class PyPIPackageUtil {
         myXmlRpcClient.executeAsync("release_data", params, callback);
       }
       catch (Exception ignored) {
+        LOG.info(ignored);
       }
     }
     else
