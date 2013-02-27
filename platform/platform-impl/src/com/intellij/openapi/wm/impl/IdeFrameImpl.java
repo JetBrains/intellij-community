@@ -49,10 +49,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.status.EncodingPanel;
-import com.intellij.openapi.wm.impl.status.InsertOverwritePanel;
-import com.intellij.openapi.wm.impl.status.PositionPanel;
-import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
+import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -374,6 +371,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       statusBar.addWidget(readOnlyAttributePanel, "after Encoding");
     }
 
+    final ClockPanel clockPanel = new ClockPanel();
+    statusBar.addWidget(clockPanel, "after " + MemoryUsagePanel.WIDGET_ID);
+
     final InsertOverwritePanel finalInsertOverwritePanel = insertOverwritePanel;
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -381,6 +381,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(notificationArea.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
+        statusBar.removeWidget(clockPanel.ID());
         if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
 
         ((StatusBarEx)statusBar).removeCustomIndicationComponents();
