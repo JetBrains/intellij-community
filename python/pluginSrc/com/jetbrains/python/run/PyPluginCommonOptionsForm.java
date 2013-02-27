@@ -16,6 +16,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
@@ -125,6 +126,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     List<Sdk> sdkList = new ArrayList<Sdk>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
+    Collections.sort(allSdks, new PreferredSdkComparator());
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
       String homePath = sdk.getHomePath();
