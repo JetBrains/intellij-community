@@ -16,9 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +51,6 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   protected final Calendar myCalendar;
   private final Timer myTimer;
   private final boolean is24Hours;
-  private IdeFrameImpl myIdeFrame;
 
   public ClockPanel() {
     myCalendar = getInstance();
@@ -74,21 +71,14 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    IdeFrame frame = statusBar.getFrame();
-    myIdeFrame = frame instanceof IdeFrameImpl ? (IdeFrameImpl)frame : null;
     myTimer.start();
   }
 
   @Override
   public void dispose() {
     myTimer.stop();
-    myIdeFrame = null;
   }
 
-  @Override
-  public boolean isVisible() {
-    return myIdeFrame != null && myIdeFrame.isInFullScreen();
-  }
 
   @Override
   public JComponent getComponent() {

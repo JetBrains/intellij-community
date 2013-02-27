@@ -371,9 +371,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       statusBar.addWidget(readOnlyAttributePanel, "after Encoding");
     }
 
-    final ClockPanel clockPanel = new ClockPanel();
-    statusBar.addWidget(clockPanel, "after " + MemoryUsagePanel.WIDGET_ID);
-
     final InsertOverwritePanel finalInsertOverwritePanel = insertOverwritePanel;
     Disposer.register(project, new Disposable() {
       public void dispose() {
@@ -381,7 +378,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(notificationArea.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
-        statusBar.removeWidget(clockPanel.ID());
         if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
 
         ((StatusBarEx)statusBar).removeCustomIndicationComponents();
