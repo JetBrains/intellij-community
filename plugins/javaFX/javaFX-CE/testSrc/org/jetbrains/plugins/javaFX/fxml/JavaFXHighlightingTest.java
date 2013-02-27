@@ -127,6 +127,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testInjectedController() throws Exception {
+    doTestNavigation("MyController", "label",  "injected/" + getTestName(true) + ".fxml", "injected/FooVBox.java", "injected/MyController.java");
+  }
+
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
     doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
   }
