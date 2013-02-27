@@ -545,7 +545,16 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       Language language = tokenType.getLanguage();
       TokenSet comments = myComments.get(language);
       if (comments == null) {
-        myComments.put(language, comments = LanguageParserDefinitions.INSTANCE.forLanguage(language).getCommentTokens());
+        ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+        if (definition != null) {
+          comments = definition.getCommentTokens();
+        }
+        if (comments == null) {
+          return fallbackColumn;
+        }
+        else {
+          myComments.put(language, comments);
+        }
       }
       if (comments.contains(tokenType) && indentOffset == it.getStart()) {
         String prefix = COMMENT_PREFIXES.get(tokenType);
