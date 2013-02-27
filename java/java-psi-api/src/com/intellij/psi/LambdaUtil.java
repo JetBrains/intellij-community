@@ -652,7 +652,7 @@ public class LambdaUtil {
             final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
             if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
               if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-                int moreSpecific1 = isMoreSpecific(interfaceReturnType, interfaceReturnType1);
+                int moreSpecific1 = isMoreSpecific(interfaceReturnType, interfaceReturnType1, actualParameterTypes[functionalInterfaceIdx]);
                 if (moreSpecific < 0 && moreSpecific1 > 0 || moreSpecific > 0 && moreSpecific1 < 0) {
                   moreSpecific = 0;
                   break;
@@ -676,17 +676,33 @@ public class LambdaUtil {
     }
   }
 
-  private static int isMoreSpecific(PsiType returnType, PsiType returnType1) {
+  enum TypeKind {
+    PRIMITIVE, REFERENCE, NONE_DETERMINED
+  }
+  
+  private static int isMoreSpecific(PsiType returnType, PsiType returnType1, PsiType lambdaType) {
     if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
-    if (returnType instanceof PsiPrimitiveType) {
-      if (!(returnType1 instanceof PsiPrimitiveType)) {
-        return -1;
-      } else {
-        return TypeConversionUtil.isAssignable(returnType, returnType1) ? 1 : -1;
+    TypeKind typeKind = TypeKind.PRIMITIVE;
+    if (lambdaType instanceof PsiLambdaExpressionType) {
+      typeKind = areLambdaReturnExpressionsPrimitive((PsiLambdaExpressionType)lambdaType);
+    } else if (lambdaType instanceof PsiMethodReferenceType) {
+      final PsiElement referencedElement = ((PsiMethodReferenceType)lambdaType).getExpression().resolve();
+      if (referencedElement instanceof PsiMethod && !(((PsiMethod)referencedElement).getReturnType() instanceof PsiPrimitiveType)) {
+        typeKind = TypeKind.REFERENCE;
       }
     }
-    if (returnType1 instanceof PsiPrimitiveType) {
-      return 1;
+    if (typeKind != TypeKind.NONE_DETERMINED) {
+      if (returnType instanceof PsiPrimitiveType) {
+        final int moreSpecific = typeKind == TypeKind.PRIMITIVE ? 1 : -1;
+        if (!(returnType1 instanceof PsiPrimitiveType)) {
+          return -moreSpecific;
+        } else {
+          return TypeConversionUtil.isAssignable(returnType, returnType1) ? moreSpecific : -moreSpecific;
+        }
+      }
+      if (returnType1 instanceof PsiPrimitiveType) {
+        return typeKind == TypeKind.PRIMITIVE ? 1 : -1;
+      }
     }
 
     final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType));
@@ -726,6 +742,28 @@ public class LambdaUtil {
       }
     }
     return 0;
+  }
+
+  private static TypeKind areLambdaReturnExpressionsPrimitive(PsiLambdaExpressionType lambdaType) {
+    final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaType.getExpression());
+    TypeKind typeKind = TypeKind.NONE_DETERMINED;
+    for (PsiExpression expression : returnExpressions) {
+      final PsiType returnExprType = expression.getType();
+      if (returnExprType instanceof PsiPrimitiveType) {
+        if (typeKind == TypeKind.REFERENCE) {
+          typeKind = TypeKind.NONE_DETERMINED;
+          break;
+        }
+        typeKind = TypeKind.PRIMITIVE;
+      } else {
+        if (typeKind == TypeKind.PRIMITIVE) {
+          typeKind = TypeKind.NONE_DETERMINED;
+          break;
+        }
+        typeKind = TypeKind.REFERENCE;
+      }
+    }
+    return typeKind;
   }
 
   @Nullable
