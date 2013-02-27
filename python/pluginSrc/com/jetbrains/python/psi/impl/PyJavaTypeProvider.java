@@ -23,7 +23,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
   @Nullable
   public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PsiClass) {
-      return new PyJavaClassType((PsiClass) referenceTarget);
+      return new PyJavaClassType((PsiClass) referenceTarget, true);
     }
     if (referenceTarget instanceof PsiPackage) {
       return new PyJavaPackageType((PsiPackage) referenceTarget, anchor == null ? null : ModuleUtil.findModuleForPsiElement(anchor));
@@ -44,7 +44,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
       if (psiClass != null) {
-        return new PyJavaClassType(psiClass);
+        return new PyJavaClassType(psiClass, false);
       }
     }
     return null;
@@ -67,7 +67,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
             if (paramType instanceof PsiClassType) {
               final PsiClass psiClass = ((PsiClassType)paramType).resolve();
               if (psiClass != null) {
-                superMethodParameterTypes.add(new PyJavaClassType(psiClass));
+                superMethodParameterTypes.add(new PyJavaClassType(psiClass, false));
               }
             }
           }

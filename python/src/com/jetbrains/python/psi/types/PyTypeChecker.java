@@ -427,19 +427,6 @@ public class PyTypeChecker {
     if (type == null || type instanceof PyTypeReference) {
       return null;
     }
-    else if (type instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)type;
-      if (classType.isDefinition()) {
-        return true;
-      }
-      if (isMethodType(classType)) {
-        return true;
-      }
-      final PyClass cls = classType.getPyClass();
-      if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
-        return true;
-      }
-    }
     else if (type instanceof PyUnionType) {
       Boolean result = true;
       for (PyType member : ((PyUnionType)type).getMembers()) {
@@ -454,12 +441,12 @@ public class PyTypeChecker {
       return result;
     }
     else if (type instanceof PyCallableType) {
-      return true;
+      return ((PyCallableType) type).isCallable();
     }
     return false;
   }
 
-  private static boolean isMethodType(@NotNull PyClassType type) {
+  public static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
     return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
   }
