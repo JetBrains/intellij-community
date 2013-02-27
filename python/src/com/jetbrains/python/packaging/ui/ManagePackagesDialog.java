@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -49,6 +50,8 @@ import java.util.List;
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class ManagePackagesDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(ManagePackagesDialog.class);
+
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
                                                     "    <style type=\"text/css\">" +
                                                     "        p {" +
@@ -462,6 +465,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             }
             @Override
             public void handleError(Exception exception, URL url, String method) {
+              LOG.info("Error retrieving releases from PyPI", exception);
             }
           });
         }
@@ -481,6 +485,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
           @Override
           public void handleError(Exception exception, URL url, String method) {
+            LOG.info("Error retrieving package details from PyPI", exception);
           }
         });
       }

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.packaging.ui.PyPackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyPackagesPanel;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -26,8 +29,10 @@ public class PyManagePackagesDialog extends DialogWrapper {
     super(project, true);
     setTitle("Manage Python Packages");
 
-    final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(PythonSdkType.getAllSdks(), sdk));
-    sdkComboBox.setRenderer(new PySdkListCellRenderer(null));
+    List<Sdk> sdks = PythonSdkType.getAllSdks();
+    Collections.sort(sdks, new PreferredSdkComparator());
+    final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
+    sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PyPackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel(project);
     final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);

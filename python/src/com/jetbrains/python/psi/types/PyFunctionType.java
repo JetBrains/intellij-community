@@ -22,6 +22,11 @@ public class PyFunctionType implements PyCallableType {
     myCallable = callable;
   }
 
+  @Override
+  public boolean isCallable() {
+    return true;
+  }
+
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {

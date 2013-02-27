@@ -17,6 +17,11 @@ public class PreferredSdkComparator implements Comparator<Sdk> {
   public int compare(Sdk o1, Sdk o2) {
     final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
     final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
+    int remote1Weight = PySdkUtil.isRemote(o1) ? 0 : 1;
+    int remote2Weight = PySdkUtil.isRemote(o2) ? 0 : 1;
+    if (remote1Weight != remote2Weight) {
+      return remote2Weight - remote1Weight;
+    }
     int venv1weight = PythonSdkType.isVirtualEnv(o1) ? 0 : 1;
     int venv2weight = PythonSdkType.isVirtualEnv(o2) ? 0 : 1;
     if (venv1weight != venv2weight) {

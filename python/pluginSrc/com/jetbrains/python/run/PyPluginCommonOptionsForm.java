@@ -2,10 +2,14 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.execution.util.PathMappingsComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,6 +18,8 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +36,7 @@ import java.util.Map;
  * @author yole
  */
 public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
+  private final Project myProject;
   private TextFieldWithBrowseButton myWorkingDirectoryTextField;
   private EnvironmentVariablesComponent myEnvsComponent;
   private RawCommandLineEditor myInterpreterOptionsTextField;
@@ -42,11 +49,13 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBLabel myInterpreterOptionsJBLabel;
   private JBLabel myWorkingDirectoryJBLabel;
   private JPanel myHideablePanel;
+  private PathMappingsComponent myPathMappingsComponent;
   private JComponent labelAnchor;
   private final HideableDecorator myDecorator;
 
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules
+    myProject = data.getProject();
     final List<Module> validModules = data.getValidModules();
     Collections.sort(validModules, new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
@@ -64,6 +73,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     };
     myUseSpecifiedSdkRadioButton.addActionListener(listener);
     myUseModuleSdkRadioButton.addActionListener(listener);
+    myInterpreterComboBox.addActionListener(listener);
+    myModuleComboBox.addActionListener(listener);
 
     setAnchor(myEnvsComponent.getLabel());
 
@@ -86,11 +97,14 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     };
     myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     myDecorator.setContentComponent(myMainPanel);
+    myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());
+    updateControls();
   }
 
   private void updateControls() {
     myModuleComboBox.setEnabled(myUseModuleSdkRadioButton.isSelected());
     myInterpreterComboBox.setEnabled(myUseSpecifiedSdkRadioButton.isSelected());
+    myPathMappingsComponent.setVisible(PySdkUtil.isRemote(getSelectedSdk()));
   }
 
   public JPanel getMainPanel() {
@@ -137,6 +151,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     List<Sdk> sdkList = new ArrayList<Sdk>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
+    Collections.sort(allSdks, new PreferredSdkComparator());
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
       String homePath = sdk.getHomePath();
@@ -187,11 +202,24 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public PathMappingSettings getMappingSettings() {
-    return null;  //TODO: implement for plugin
+    return myPathMappingsComponent.getMappingSettings();
   }
 
   @Override
   public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
+    myPathMappingsComponent.setMappingSettings(mappingSettings);
+  }
+
+  private Sdk getSelectedSdk() {
+    if (isUseModuleSdk()) {
+      Module module = getModule();
+      return module == null ? null : ModuleRootManager.getInstance(module).getSdk();
+    }
+    Sdk sdk = (Sdk)myInterpreterComboBox.getSelectedItem();
+    if (sdk == null) {
+      return ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
+    return sdk;
   }
 
   @Override

@@ -112,6 +112,8 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
+      mySetAsProjectInterpreterCheckbox.setSelected(false);
+      mySetAsProjectInterpreterCheckbox.setVisible(false);
     }
     else if (isNewProject) {
       mySetAsProjectInterpreterCheckbox.setText("Set as project interpreter for the project being created");
@@ -220,7 +222,7 @@ public class CreateVirtualEnvDialog extends IdeaDialog {
   }
 
   private void updateSdkList(final List<Sdk> allSdks, @Nullable Sdk initialSelection) {
-    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
     List<Sdk> baseSdks = new ArrayList<Sdk>();
     for (Sdk s : allSdks) {
       if (!PythonSdkType.isInvalid(s) && !PythonSdkType.isVirtualEnv(s) && !RemoteSdkDataHolder.isRemoteSdk(s.getHomePath())) {

@@ -13,11 +13,11 @@ import javax.swing.*;
  */
 public class PythonSdkSelectStep extends ModuleWizardStep {
   protected final PythonSdkChooserPanel myPanel;
-  protected final PythonModuleBuilder mySettingsHolder;
+  protected final PythonModuleBuilderBase mySettingsHolder;
 
   private final String myHelp;
 
-  public PythonSdkSelectStep(@NotNull final PythonModuleBuilder settingsHolder,
+  public PythonSdkSelectStep(@NotNull final PythonModuleBuilderBase settingsHolder,
                            @Nullable final String helpId,
                            @Nullable final Project project) {
     super();

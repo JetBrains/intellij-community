@@ -13,9 +13,16 @@ import javax.swing.*;
 import java.util.Map;
 
 public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
+  private final String myNullText;
   private final Map<Sdk, SdkModificator> mySdkModifiers;
 
-  public PySdkListCellRenderer(@Nullable Map<Sdk, SdkModificator> sdkModifiers) {
+  public PySdkListCellRenderer() {
+    myNullText = "";
+    mySdkModifiers = null;
+  }
+
+  public PySdkListCellRenderer(String nullText, @Nullable Map<Sdk, SdkModificator> sdkModifiers) {
+    myNullText = nullText;
     mySdkModifiers = sdkModifiers;
   }
 
@@ -45,6 +52,9 @@ public class PySdkListCellRenderer extends ListCellRendererWrapper<Sdk> {
         setText(name);
         setIcon(icon);
       }
+    }
+    else {
+      setText(myNullText);
     }
   }
 

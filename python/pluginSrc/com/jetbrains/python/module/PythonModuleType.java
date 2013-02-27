@@ -6,7 +6,6 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -19,14 +18,10 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> {
-  public static PythonModuleType getInstance() {
-    return (PythonModuleType)ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
-  }
-
+public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBase> {
   @Override
   public ModuleWizardStep[] createWizardSteps(final WizardContext wizardContext,
-                                              final PythonModuleBuilder moduleBuilder,
+                                              final PythonModuleBuilderBase moduleBuilder,
                                               final ModulesProvider modulesProvider) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final Project project = getProject(wizardContext);

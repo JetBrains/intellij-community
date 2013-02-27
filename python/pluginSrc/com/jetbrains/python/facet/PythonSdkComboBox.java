@@ -4,9 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 import javax.swing.*;
@@ -21,7 +21,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
 
   public PythonSdkComboBox() {
-    getComboBox().setRenderer(new SdkListCellRenderer("<No Interpreter>"));
+    getComboBox().setRenderer(new PySdkListCellRenderer("<No Interpreter>", null));
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         Sdk selectedSdk = getSelectedSdk();

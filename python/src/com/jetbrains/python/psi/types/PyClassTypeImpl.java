@@ -220,6 +220,26 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
 
+  @Override
+  public boolean isCallable() {
+    if (isDefinition()) {
+      return true;
+    }
+    if (isMethodType(this)) {
+      return true;
+    }
+    final PyClass cls = getPyClass();
+    if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isMethodType(@NotNull PyClassType type) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
+    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
+  }
+
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {

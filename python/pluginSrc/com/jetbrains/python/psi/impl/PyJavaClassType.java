@@ -7,9 +7,11 @@ import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +22,13 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyJavaClassType implements PyType {
+public class PyJavaClassType implements PyCallableType {
   private final PsiClass myClass;
+  private final boolean myDefinition;
 
-  public PyJavaClassType(final PsiClass aClass) {
+  public PyJavaClassType(final PsiClass aClass, boolean definition) {
     myClass = aClass;
+    myDefinition = definition;
   }
 
   @Nullable
@@ -67,5 +71,19 @@ public class PyJavaClassType implements PyType {
 
   @Override
   public void assertValid(String message) {
+  }
+
+  @Override
+  public boolean isCallable() {
+    return myDefinition;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
+    if (myDefinition) {
+      return new PyJavaClassType(myClass, false);
+    }
+    return null;
   }
 }

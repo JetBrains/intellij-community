@@ -12,6 +12,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyCallableType extends PyType {
   /**
+   * Returns true if the type is callable.
+   */
+  boolean isCallable();
+
+  /**
    * Returns the type which is the result of calling an instance of this type.
    *
    * @return the call result type or null if invalid.
