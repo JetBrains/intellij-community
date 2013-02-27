@@ -689,9 +689,9 @@ public class LambdaUtil {
       return 1;
     }
 
-    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(returnType);
+    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType));
     final PsiClass rClass = r.getElement();
-    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(returnType1);
+    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType1));
     final PsiClass rClass1 = r1.getElement();
     if (rClass != null && rClass1 != null) {
       if (rClass == rClass1) {
