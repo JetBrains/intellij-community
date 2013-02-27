@@ -22,6 +22,9 @@ import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -29,7 +32,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
+public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
 
   @NonNls public static final String FEATURE_ID = "navigation.goto.super";
 
@@ -48,7 +51,12 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
 
     final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      codeInsightActionHandler.invoke(project, editor, file);
+      try {
+        codeInsightActionHandler.invoke(project, editor, file);
+      }
+      catch (IndexNotReadyException e) {
+        DumbService.getInstance(project).showDumbModeNotification("Goto Super action is not available during indexing");
+      }
     }
   }
 
