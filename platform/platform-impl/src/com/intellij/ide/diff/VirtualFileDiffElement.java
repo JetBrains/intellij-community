@@ -19,7 +19,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -278,12 +279,17 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       }
 
       if (!docsToSave.isEmpty()) {
-        ApplicationManagerEx.getApplicationEx().runEdtSafeAction(new Runnable() {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            for (Document document : docsToSave) {
-              manager.saveDocument(document);
-            }
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                for (Document document : docsToSave) {
+                  manager.saveDocument(document);
+                }
+              }
+            });
           }
         });
       }
