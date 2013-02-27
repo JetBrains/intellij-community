@@ -7,9 +7,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
-import org.apache.xmlrpc.AsyncCallback;
-import org.apache.xmlrpc.DefaultXmlRpcTransportFactory;
-import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -160,7 +160,7 @@ public class PyPIPackageUtil {
 
   private PyPIPackageUtil() {
     try {
-      DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(new URL(PYPI_URL));
+      DefaultXmlRpcTransportFactory factory = new PyPIXmlRpcTransportFactory(new URL(PYPI_URL));
       factory.setProperty("timeout", 1000);
       myXmlRpcClient = new XmlRpcClient(new URL(PYPI_URL), factory);
     }
@@ -218,11 +218,7 @@ public class PyPIPackageUtil {
     URL repositoryUrl = new URL(PYPI_LIST_URL);
 
     // Create a trust manager that does not validate certificate
-    TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
-      public X509Certificate[] getAcceptedIssuers(){return null;}
-      public void checkClientTrusted(X509Certificate[] certs, String authType){}
-      public void checkServerTrusted(X509Certificate[] certs, String authType){}
-    }};
+    TrustManager[] trustAllCerts = new TrustManager[]{new PyPITrustManager()};
 
     try {
       SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -294,5 +290,67 @@ public class PyPIPackageUtil {
     builder.setButtonsAlignment(SwingConstants.CENTER);
     builder.addOkAction();
     builder.show();
+  }
+
+  private static class PyPIXmlRpcTransport extends DefaultXmlRpcTransport {
+    public PyPIXmlRpcTransport(URL url) {
+      super(url);
+    }
+
+    @Override
+    public InputStream sendXmlRpc(byte[] request) throws IOException {
+      // Create a trust manager that does not validate certificate for this connection
+      TrustManager[] trustAllCerts = new TrustManager[]{new PyPITrustManager()};
+
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+
+        con = url.openConnection();
+        if (con instanceof HttpsURLConnection) {
+          ((HttpsURLConnection)con).setSSLSocketFactory(sslContext.getSocketFactory());
+        }
+        con.setDoInput(true);
+        con.setDoOutput(true);
+        con.setUseCaches(false);
+        con.setAllowUserInteraction(false);
+        con.setRequestProperty("Content-Length",
+                               Integer.toString(request.length));
+        con.setRequestProperty("Content-Type", "text/xml");
+        if (auth != null)
+        {
+          con.setRequestProperty("Authorization", "Basic " + auth);
+        }
+        OutputStream out = con.getOutputStream();
+        out.write(request);
+        out.flush();
+        out.close();
+        return con.getInputStream();
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.warn(e.getMessage());
+      }
+      catch (KeyManagementException e) {
+        LOG.warn(e.getMessage());
+      }
+      return super.sendXmlRpc(request);
+    }
+  }
+
+  private static class PyPIXmlRpcTransportFactory extends DefaultXmlRpcTransportFactory {
+    public PyPIXmlRpcTransportFactory(URL url) {
+      super(url);
+    }
+
+    @Override
+    public XmlRpcTransport createTransport() throws XmlRpcClientException {
+      return new PyPIXmlRpcTransport(url);
+    }
+  }
+
+  private static class PyPITrustManager implements X509TrustManager {
+    public X509Certificate[] getAcceptedIssuers(){return null;}
+    public void checkClientTrusted(X509Certificate[] certs, String authType){}
+    public void checkServerTrusted(X509Certificate[] certs, String authType){}
   }
 }
