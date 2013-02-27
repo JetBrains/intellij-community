@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +47,11 @@ public abstract class HgPlatformTest extends LightPlatformTestCase {
   protected Project myProject;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected HgPlatformTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   @Override
   protected void setUp() throws Exception {
