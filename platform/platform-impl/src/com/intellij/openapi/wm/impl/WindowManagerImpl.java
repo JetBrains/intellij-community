@@ -850,7 +850,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         finally {
           if (fullScreen) {
             frame.setBounds(device.getDefaultConfiguration().getBounds());
-            if (!Registry.is("ui.no.bangs.and.whistles", false)) {
+            if (!Registry.is("ui.no.bangs.and.whistles", false) && !SystemInfo.isMac) {
               frame.getStatusBar().addWidget(new ClockPanel(), "before " + MemoryUsagePanel.WIDGET_ID);
             }
           }
