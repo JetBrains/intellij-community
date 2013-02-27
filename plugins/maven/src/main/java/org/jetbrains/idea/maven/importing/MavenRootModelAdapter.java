@@ -325,13 +325,22 @@ public class MavenRootModelAdapter {
 
     String newPath = artifact.getPathForExtraArtifact(classifier, extension);
     String newUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR;
+
+    boolean urlExists = false;
+
     for (String url : library.getUrls(type)) {
-      if (newUrl.equals(url)) return;
+      if (newUrl.equals(url)) {
+        urlExists = true;
+        continue;
+      }
       if (clearAll || isRepositoryUrl(artifact, url)) {
         library.removeRoot(url, type);
       }
     }
-    library.addRoot(newUrl, type);
+
+    if (!urlExists) {
+      library.addRoot(newUrl, type);
+    }
   }
 
   private static boolean isRepositoryUrl(MavenArtifact artifact, String url) {
