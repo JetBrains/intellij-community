@@ -1,6 +1,8 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
+import com.intellij.html.impl.providers.MicrodataReferenceProvider;
+import com.intellij.html.impl.util.MicrodataUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
@@ -51,6 +53,13 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
         2
       )
     ), true, uriProvider);
+
+    XmlUtil.registerXmlAttributeValueReferenceProvider(
+      registrar,
+      new String[]{MicrodataUtil.ITEM_TYPE},
+      null,
+      new MicrodataReferenceProvider()
+    );
 
     final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
 

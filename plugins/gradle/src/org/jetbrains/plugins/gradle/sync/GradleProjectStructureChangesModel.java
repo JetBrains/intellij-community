@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
@@ -47,6 +48,7 @@ public class GradleProjectStructureChangesModel {
                                             @NotNull PlatformFacade platformFacade,
                                             @NotNull GradleLibraryPathTypeMapper mapper,
                                             @NotNull GradleDuplicateLibrariesPreProcessor duplicateLibrariesPreProcessor,
+                                            @NotNull GradleAutoImporter autoImporter,
                                             @NotNull GradleMovedJarsPostProcessor movedJarsPostProcessor,
                                             @NotNull GradleOutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor)
   {
@@ -55,6 +57,7 @@ public class GradleProjectStructureChangesModel {
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
     myPreProcessors.add(duplicateLibrariesPreProcessor);
+    myPostProcessors.add(autoImporter);
     myPostProcessors.add(movedJarsPostProcessor);
     myPostProcessors.add(changedLibraryVersionPostProcessor);
   }

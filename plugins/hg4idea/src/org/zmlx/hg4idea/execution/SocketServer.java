@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import org.zmlx.hg4idea.HgPlatformFacade;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -29,18 +29,16 @@ import java.net.SocketException;
 public class SocketServer {
   protected ServerSocket myServerSocket;
   private final Protocol myProtocol;
-  private HgPlatformFacade myPlatformFacade;
 
-  public SocketServer(Protocol protocol,HgPlatformFacade facade) {
+  public SocketServer(Protocol protocol) {
     myProtocol = protocol;
-    myPlatformFacade = facade;
   }
 
   public int start() throws IOException {
     myServerSocket = new ServerSocket(0);
     int port = myServerSocket.getLocalPort();
 
-    myPlatformFacade.executeOnPooledThread(new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {

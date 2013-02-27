@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.TestGradleJarManager
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 
 /**

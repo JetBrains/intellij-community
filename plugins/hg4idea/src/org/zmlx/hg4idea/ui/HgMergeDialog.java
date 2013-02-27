@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -25,6 +24,7 @@ import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -118,19 +118,18 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
+    assert branchesForRepos.get(root) != null;
     branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
-    new HgTagBranchCommand(project, root).listTags(new Consumer<List<HgTagBranch>>() {
+    HgCommandResult tagsResult = new HgTagBranchCommand(project, root).collectTags();
+    assert tagsResult != null;
+    final List<HgTagBranch> tags = HgTagBranchCommand.parseResult(tagsResult);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
-      public void consume(final List<HgTagBranch> tags) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
-          }
-        });
+      public void run() {
+        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
       }
     });
   }

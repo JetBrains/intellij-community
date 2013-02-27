@@ -171,7 +171,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       processHandler = result.getProcessHandler();
     }
     catch (Exception e) {
-      dropProcessInfo(key, ExceptionUtil.getUserStackTrace(e, LOG), processHandler);
+      dropProcessInfo(key, e instanceof ExecutionException? e.getMessage() : ExceptionUtil.getUserStackTrace(e, LOG), processHandler);
       return;
     }
     processHandler.addProcessListener(getProcessListener(key));

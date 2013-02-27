@@ -183,6 +183,31 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testFunctionalInterfaceMethodIsGeneric() throws Exception {
+    //accepted for method ref, though forbidden for lambda
+    doTest();
+  }
+
+  public void testStaticMethodOnTypedClassReference() throws Exception {
+    doTest();
+  }
+
+  public void testRefOnArrayDeclaration() throws Exception {
+    doTest();
+  }
+
+  public void testGetClassSpecifics() throws Exception {
+    doTest();
+  }
+
+  public void testAbstractMethod() throws Exception {
+    doTest();
+  }
+
+  public void testMethodRefAcceptance() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

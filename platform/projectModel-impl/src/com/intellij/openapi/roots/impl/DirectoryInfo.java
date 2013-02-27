@@ -61,6 +61,7 @@ public final class DirectoryInfo {
   public static DirectoryInfo createNew() {
     return new DirectoryInfo(null, null, null, null, (byte)0, null);
   }
+
   private DirectoryInfo(Module module,
                         VirtualFile contentRoot,
                         VirtualFile sourceRoot,

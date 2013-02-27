@@ -158,6 +158,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   public void rebuild() {
+    rebuild(false);
+  }
+  
+  public void rebuild(boolean onIdeProjectStructureChange) {
     myModuleDependencies.clear();
     myModules.clear();
 
@@ -224,7 +228,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
     GradleProject project = myChangesModel.getGradleProject();
     if (project != null) {
-      GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project, false);
+      GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project, onIdeProjectStructureChange);
       processChanges(Collections.<GradleProjectStructureChange>emptyList(), context.getCurrentChanges());
       filterNodes(root);
     }

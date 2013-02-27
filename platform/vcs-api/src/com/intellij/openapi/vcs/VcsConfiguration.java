@@ -93,6 +93,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public String UPDATE_FILTER_SCOPE_NAME;
   public boolean USE_COMMIT_MESSAGE_MARGIN = false;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
+  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

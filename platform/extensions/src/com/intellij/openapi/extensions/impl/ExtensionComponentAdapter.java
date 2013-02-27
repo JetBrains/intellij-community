@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.AssignabilityRegistrationException;
 import org.picocontainer.defaults.CachingComponentAdapter;
@@ -40,12 +41,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private ComponentAdapter myDelegate;
   private Class myImplementationClass;
 
-  public ExtensionComponentAdapter(
-    String implementationClass,
-    Element extensionElement,
-    PicoContainer container,
-    PluginDescriptor pluginDescriptor,
-    boolean deserializeInstance) {
+  public ExtensionComponentAdapter(@NotNull String implementationClass,
+                                   Element extensionElement,
+                                   PicoContainer container,
+                                   PluginDescriptor pluginDescriptor,
+                                   boolean deserializeInstance) {
     myImplementationClassName = implementationClass;
     myExtensionElement = extensionElement;
     myContainer = container;

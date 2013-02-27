@@ -322,7 +322,7 @@ public class GradleUtil {
           });
         }
         else {
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.text")) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.initial.text")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               task.execute(indicator);
@@ -581,7 +581,12 @@ public class GradleUtil {
     };
 
     if (synchronous) {
-      UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        wrappedTask.run();
+      }
+      else {
+        UIUtil.invokeAndWaitIfNeeded(wrappedTask);
+      }
     }
     else {
       UIUtil.invokeLaterIfNeeded(wrappedTask);

@@ -15,7 +15,6 @@
  */
 
 package org.jetbrains.plugins.groovy.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -23,6 +22,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
@@ -1669,5 +1670,50 @@ print new foo.Myclass()
 void foo() {
   <caret> = baz
 }""")
+  }
+
+  public void testAliasAnnotation() {
+    myFixture.addClass '''\
+package groovy.transform;
+
+@java.lang.annotation.Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+public @interface AnnotationCollector {
+    String processor() default "org.codehaus.groovy.transform.AnnotationCollectorTransform";
+    Class[] value() default {};
+}
+'''
+
+    doVariantableTest('''\
+import groovy.transform.AnnotationCollector
+
+@interface Bar {
+    int xxx()
+}
+
+@interface Foo {
+    int yyy()
+}
+
+@Foo @Bar
+@AnnotationCollector()
+@interface Alias1 {}
+
+@Alias1(<caret>)
+class Baz {}''', '', CompletionType.BASIC, CompletionResult.contain, 'xxx', 'yyy')
+  }
+
+  public void "test honor statistics"() {
+    ((StatisticsManagerImpl)StatisticsManager.instance).enableStatistics(testRootDisposable)
+
+    myFixture.addClass("class Foo { Object getMessage() {} }; class Bar extends Foo { Object getMessages(); }")
+    configure "b = new Bar();\nb.mes<caret>"
+    def items = myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, "messages", "message"
+    myFixture.lookup.currentItem = items[1]
+    myFixture.type('\n\nb.mes')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, "message", "messages"
   }
 }

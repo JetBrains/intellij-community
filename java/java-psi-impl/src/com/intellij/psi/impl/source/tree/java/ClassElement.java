@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public class ClassElement extends CompositeElement implements Constants {
         }
       }
     }
-    
+
     super.deleteChildInternal(child);
   }
 
@@ -364,7 +364,7 @@ public class ClassElement extends CompositeElement implements Constants {
     else if (i == JavaDocElementType.DOC_COMMENT) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
-    else if (i == C_STYLE_COMMENT || i == END_OF_LINE_COMMENT) {
+    else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(i)) {
       return ChildRoleBase.NONE;
     }
     else if (i == MODIFIER_LIST) {
@@ -376,7 +376,7 @@ public class ClassElement extends CompositeElement implements Constants {
     else if (i == IMPLEMENTS_LIST) {
       return ChildRole.IMPLEMENTS_LIST;
     }
-    else if (i == CLASS_KEYWORD || i == INTERFACE_KEYWORD || i == ENUM_KEYWORD) {
+    else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(i)) {
       return getChildRole(child, ChildRole.CLASS_OR_INTERFACE_KEYWORD);
     }
     else if (i == IDENTIFIER) {
@@ -403,5 +403,4 @@ public class ClassElement extends CompositeElement implements Constants {
   protected boolean isVisibilitySupported() {
     return true;
   }
-
 }

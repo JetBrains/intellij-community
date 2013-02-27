@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,79 +15,133 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.impl.ASTNodeBuilder;
+import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.SourceUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaLightStubBuilder extends LightStubBuilder {
+  @NotNull
   @Override
-  protected StubElement createStubForFile(final PsiFile file, final LighterAST tree) {
-    if (!(file instanceof PsiJavaFile)) return super.createStubForFile(file, tree);
-
-    String refText = "";
-
-    final LighterASTNode pkg = LightTreeUtil.firstChildOfType(tree, tree.getRoot(), JavaElementType.PACKAGE_STATEMENT);
-    if (pkg != null) {
-      final LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
-      if (ref != null) {
-        refText = SourceUtil.getTextSkipWhiteSpaceAndComments(tree, ref);
-      }
+  protected StubElement createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
+    if (!(file instanceof PsiJavaFile)) {
+      return super.createStubForFile(file, tree);
     }
 
+    String refText = "";
+    LighterASTNode pkg = LightTreeUtil.firstChildOfType(tree, tree.getRoot(), JavaElementType.PACKAGE_STATEMENT);
+    if (pkg != null) {
+      LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, pkg, JavaElementType.JAVA_CODE_REFERENCE);
+      if (ref != null) {
+        refText = SourceUtil.getReferenceText(tree, ref);
+      }
+    }
     return new PsiJavaFileStubImpl((PsiJavaFile)file, StringRef.fromString(refText), false);
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
-    return childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST ||
-           childType == JavaElementType.PARAMETER_LIST && nodeType == JavaElementType.LAMBDA_EXPRESSION;
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+    IElementType parentType = parent.getElementType();
+    IElementType nodeType = node.getElementType();
+
+    if (checkByTypes(parentType, nodeType)) return true;
+
+    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof TreeElement) {
+      CodeBlockVisitor visitor = new CodeBlockVisitor();
+      ((TreeElement)node).acceptTree(visitor);
+      return visitor.result;
+    }
+
+    return false;
   }
 
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(final LightStubBuilder builder,
-                                                      final LighterAST tree,
-                                                      final LighterASTNode parent,
-                                                      final LighterASTNode child) {
-    if (child.getTokenType() == JavaElementType.CODE_BLOCK) {
-      if (child instanceof ASTNodeBuilder.ASTUnparsedNodeMarker) {
-        ASTNodeBuilder.ASTUnparsedNodeMarker nodeMarker = (ASTNodeBuilder.ASTUnparsedNodeMarker)child;
-        final ASTNodeBuilder nodeBuilder = nodeMarker.getBuilder();
-        final int endLexemeIndex = nodeMarker.getEndLexemeIndex();
-        boolean seenNew = false;
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
+    IElementType parentType = parent.getTokenType();
+    IElementType nodeType = node.getTokenType();
 
-        for (int i = nodeMarker.getStartLexemeIndex(); i < endLexemeIndex; ++i) {
-          final IElementType type = nodeBuilder.getElementType(i);
-          if (type == JavaTokenType.NEW_KEYWORD) {
-            seenNew = true;
-          }
-          else if (seenNew && type == JavaTokenType.LBRACE) {
-            return false;
-          }
-          else if (seenNew && type == JavaTokenType.SEMICOLON) {
-            seenNew = false;
-          }
-          else if (type == JavaTokenType.AT || // local vars can be annotated and we have them in stubs!
-                   type == JavaTokenType.CLASS_KEYWORD || // local classes
-                   type == JavaTokenType.INTERFACE_KEYWORD ||
-                   type == JavaTokenType.ENUM_KEYWORD) {
-            return false;
-          }
-        }
+    if (checkByTypes(parentType, nodeType)) return true;
 
+    if (nodeType == JavaElementType.CODE_BLOCK && node instanceof LighterLazyParseableNode) {
+      CodeBlockVisitor visitor = new CodeBlockVisitor();
+      ((LighterLazyParseableNode)node).accept(visitor);
+      return visitor.result;
+    }
+
+    return false;
+  }
+
+  private static boolean checkByTypes(IElementType parentType, IElementType nodeType) {
+    if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(parentType)) {
+      return true;
+    }
+    if (nodeType == JavaElementType.PARAMETER && parentType != JavaElementType.PARAMETER_LIST) {
+      return true;
+    }
+    if (nodeType == JavaElementType.PARAMETER_LIST && parentType == JavaElementType.LAMBDA_EXPRESSION) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
+    private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
+      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS);
+
+    private boolean result = true;
+
+    @Override
+    protected void visitNode(TreeElement element) {
+      if (BLOCK_ELEMENTS.contains(element.getElementType())) {
+        result = false;
+        stopWalking();
+        return;
+      }
+      super.visitNode(element);
+    }
+
+    private IElementType last = null;
+    private boolean seenNew = false;
+
+    @Override
+    public boolean visit(IElementType type) {
+      if (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type)) {
         return true;
       }
+
+      // annotations
+      if (type == JavaTokenType.AT) {
+        return (result = false);
+      }
+      // anonymous classes
+      else if (type == JavaTokenType.NEW_KEYWORD) {
+        seenNew = true;
+      }
+      else if (seenNew && type == JavaTokenType.SEMICOLON) {
+        seenNew = false;
+      }
+      else if (seenNew && type == JavaTokenType.LBRACE && last != JavaTokenType.RBRACKET) {
+        return (result = false);
+      }
+      // local classes
+      else if (type == JavaTokenType.CLASS_KEYWORD && last != JavaTokenType.DOT) {
+        return (result = false);
+      }
+
+      last = type;
+      return true;
     }
-    return false;
   }
 }

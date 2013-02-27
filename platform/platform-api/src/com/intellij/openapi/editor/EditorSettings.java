@@ -28,6 +28,7 @@ public interface EditorSettings {
   void setRightMargin(int myRightMargin);
 
   boolean isWrapWhenTypingReachesRightMargin(Project project);
+  void setWrapWhenTypingReachesRightMargin(boolean val);
 
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
@@ -114,5 +115,5 @@ public interface EditorSettings {
   
   boolean isPreselectRename();
   void setPreselectRename(final boolean val);
-  
+
 }

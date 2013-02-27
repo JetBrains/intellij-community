@@ -472,7 +472,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, new Processor<ProcessOutput>() {
       @Override
       public boolean process(ProcessOutput output) {
-        final List<String> lines = output.getStderrLines();
+        final List<String> lines = output.getStdoutLines();
         for (String line : lines) {
           if (line.trim().startsWith("L")) {
             return true; // i.e. continue tries

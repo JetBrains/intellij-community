@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-  public VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
+  VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
     super(name, parent, id, attributes);
   }
 

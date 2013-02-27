@@ -23,7 +23,23 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.autoimport.*;
+import org.jetbrains.plugins.gradle.diff.AbstractGradleConflictingPropertyChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
@@ -42,6 +58,7 @@ public class GradleEntityManageHelper {
 
   @NotNull private final Project                      myProject;
   @NotNull private final GradleProjectStructureHelper myProjectStructureHelper;
+  @NotNull private final GradleProjectManager         myProjectManager;
   @NotNull private final GradleModuleManager          myModuleManager;
   @NotNull private final GradleLibraryManager         myLibraryManager;
   @NotNull private final GradleJarManager             myJarManager;
@@ -50,6 +67,7 @@ public class GradleEntityManageHelper {
 
   public GradleEntityManageHelper(@NotNull Project project,
                                   @NotNull GradleProjectStructureHelper helper,
+                                  @NotNull GradleProjectManager projectManager,
                                   @NotNull GradleModuleManager moduleManager,
                                   @NotNull GradleLibraryManager libraryManager,
                                   @NotNull GradleJarManager jarManager,
@@ -58,6 +76,7 @@ public class GradleEntityManageHelper {
   {
     myProject = project;
     myProjectStructureHelper = helper;
+    myProjectManager = projectManager;
     myModuleManager = moduleManager;
     myLibraryManager = libraryManager;
     myJarManager = jarManager;
@@ -72,20 +91,36 @@ public class GradleEntityManageHelper {
     final Set<GradleJar> jars = ContainerUtilRt.newHashSet();
     final Map<GradleModule, Collection<GradleDependency>> dependencies = ContainerUtilRt.newHashMap();
     GradleEntityVisitor visitor = new GradleEntityVisitor() {
-      @Override public void visit(@NotNull GradleProject project) { }
-      @Override public void visit(@NotNull GradleModule module) { modules.add(module); }
-      @Override public void visit(@NotNull GradleLibrary library) { libraries.add(library); }
-      @Override public void visit(@NotNull GradleJar jar) { jars.add(jar); }
-      @Override public void visit(@NotNull GradleModuleDependency dependency) { addDependency(dependency); }
-      @Override public void visit(@NotNull GradleLibraryDependency dependency) { addDependency(dependency); }
-      @Override public void visit(@NotNull GradleCompositeLibraryDependency dependency) { }
-      @Override public void visit(@NotNull GradleContentRoot contentRoot) {
+      @Override
+      public void visit(@NotNull GradleProject project) { }
+
+      @Override
+      public void visit(@NotNull GradleModule module) { modules.add(module); }
+
+      @Override
+      public void visit(@NotNull GradleLibrary library) { libraries.add(library); }
+
+      @Override
+      public void visit(@NotNull GradleJar jar) { jars.add(jar); }
+
+      @Override
+      public void visit(@NotNull GradleModuleDependency dependency) { addDependency(dependency); }
+
+      @Override
+      public void visit(@NotNull GradleLibraryDependency dependency) { addDependency(dependency); }
+
+      @Override
+      public void visit(@NotNull GradleCompositeLibraryDependency dependency) { }
+
+      @Override
+      public void visit(@NotNull GradleContentRoot contentRoot) {
         Collection<GradleContentRoot> roots = contentRoots.get(contentRoot.getOwnerModule());
         if (roots == null) {
           contentRoots.put(contentRoot.getOwnerModule(), roots = ContainerUtilRt.<GradleContentRoot>newHashSet());
         }
         roots.add(contentRoot);
       }
+
       private void addDependency(@NotNull GradleDependency dependency) {
         Collection<GradleDependency> d = dependencies.get(dependency.getOwnerModule());
         if (d == null) {
@@ -143,5 +178,270 @@ public class GradleEntityManageHelper {
     myContentRootManager.removeContentRoots(contentRoots, synchronous);
     myDependencyManager.removeDependencies(dependencies, synchronous);
     myModuleManager.removeModules(modules, synchronous);
+  }
+
+  /**
+   * Tries to eliminate all target changes (namely, all given except those which correspond 'changes to preserve') 
+   * 
+   * @param changesToEliminate  changes to eliminate
+   * @param changesToPreserve   changes to preserve
+   * @param synchronous         defines if the processing should be synchronous
+   * @return                    non-processed changes
+   */
+  public Set<GradleProjectStructureChange> eliminateChange(@NotNull Collection<GradleProjectStructureChange> changesToEliminate,
+                                                           @NotNull final Set<GradleUserProjectChange> changesToPreserve,
+                                                           boolean synchronous)
+  {
+    EliminateChangesContext context = new EliminateChangesContext(
+      myProjectStructureHelper, changesToPreserve, myProjectManager, myDependencyManager, synchronous
+    );
+    for (GradleProjectStructureChange change : changesToEliminate) {
+      change.invite(context.visitor);
+    }
+    
+    removeEntities(context.entitiesToRemove, synchronous);
+    importEntities(context.entitiesToImport, synchronous);
+    return context.nonProcessedChanges;
+  }
+
+  private static void processProjectRenameChange(@NotNull GradleProjectRenameChange change, @NotNull EliminateChangesContext context) {
+    context.projectManager.renameProject(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
+  }
+  
+  private static void processLanguageLevelChange(@NotNull GradleLanguageLevelChange change, @NotNull EliminateChangesContext context) {
+    context.projectManager.setLanguageLevel(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
+  }
+  
+  private static void processModulePresenceChange(@NotNull GradleModulePresenceChange change, @NotNull EliminateChangesContext context) {
+    GradleModuleId id = change.getGradleEntity();
+    if (id == null) {
+      // IDE-local change.
+      id = change.getIdeEntity();
+      assert id != null;
+      Module module = context.projectStructureHelper.findIdeModule(id.getModuleName());
+      if (module != null && !context.changesToPreserve.contains(new GradleAddModuleUserChange(id.getModuleName()))) {
+        context.entitiesToRemove.add(module);
+        return;
+      }
+    }
+    else {
+      GradleModule module = context.projectStructureHelper.findGradleModule(id.getModuleName());
+      if (module != null && !context.changesToPreserve.contains(new GradleRemoveModuleUserChange(id.getModuleName()))) {
+        context.entitiesToImport.add(module);
+        return;
+      }
+    }
+    context.nonProcessedChanges.add(change);
+  }
+
+  private static void processContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change,
+                                                       @NotNull EliminateChangesContext context)
+  {
+    GradleContentRootId id = change.getGradleEntity();
+    if (id == null) {
+      // IDE-local change.
+      id = change.getIdeEntity();
+      assert id != null;
+      ModuleAwareContentRoot root = context.projectStructureHelper.findIdeContentRoot(id);
+      if (root != null) {
+        context.entitiesToRemove.add(root);
+        return;
+      }
+    }
+    else {
+      GradleContentRoot root = context.projectStructureHelper.findGradleContentRoot(id);
+      if (root != null) {
+        context.entitiesToImport.add(root);
+        return;
+      }
+    }
+    context.nonProcessedChanges.add(change);
+  }
+  
+  private static void processLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change,
+                                                             @NotNull EliminateChangesContext context)
+  {
+    GradleLibraryDependencyId id = change.getGradleEntity();
+    if (id == null) {
+      // IDE-local change.
+      id = change.getIdeEntity();
+      assert id != null;
+      LibraryOrderEntry dependency = context.projectStructureHelper.findIdeLibraryDependency(id);
+      GradleAddLibraryDependencyUserChange c = new GradleAddLibraryDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
+      if (dependency != null && !context.changesToPreserve.contains(c)) {
+        context.entitiesToRemove.add(dependency);
+        return;
+      }
+    }
+    else {
+      GradleLibraryDependency dependency = context.projectStructureHelper.findGradleLibraryDependency(id);
+      GradleRemoveLibraryDependencyUserChange c
+        = new GradleRemoveLibraryDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
+      if (dependency != null && !context.changesToPreserve.contains(c)) {
+        context.entitiesToImport.add(dependency);
+        return;
+      }
+    }
+    context.nonProcessedChanges.add(change);
+  }
+  
+  private static void processJarPresenceChange(@NotNull GradleJarPresenceChange change, @NotNull EliminateChangesContext context) {
+    GradleJarId id = change.getGradleEntity();
+    if (id == null) {
+      // IDE-local change.
+      id = change.getIdeEntity();
+      assert id != null;
+      GradleJar jar = context.projectStructureHelper.findIdeJar(id);
+      if (jar != null) {
+        context.entitiesToRemove.add(jar);
+        return;
+      }
+    }
+    else {
+      GradleLibrary library = context.projectStructureHelper.findGradleLibrary(id.getLibraryId());
+      if (library != null) {
+        context.entitiesToImport.add(new GradleJar(id.getPath(), id.getLibraryPathType(), null, library));
+        return;
+      }
+    }
+    context.nonProcessedChanges.add(change);
+  }
+
+  private static void processModuleDependencyPresenceChange(@NotNull GradleModuleDependencyPresenceChange change,
+                                                            @NotNull EliminateChangesContext context)
+  {
+    GradleModuleDependencyId id = change.getGradleEntity();
+    if (id == null) {
+      // IDE-local change.
+      id = change.getIdeEntity();
+      assert id != null;
+      ModuleOrderEntry dependency = context.projectStructureHelper.findIdeModuleDependency(id);
+      GradleAddModuleDependencyUserChange c = new GradleAddModuleDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
+      if (dependency != null && !context.changesToPreserve.contains(c)) {
+        context.entitiesToRemove.add(dependency);
+        return;
+      }
+    }
+    else {
+      GradleModuleDependency dependency = context.projectStructureHelper.findGradleModuleDependency(id);
+      GradleRemoveModuleDependencyUserChange c
+        = new GradleRemoveModuleDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
+      if (dependency != null && !context.changesToPreserve.contains(c)) {
+        context.entitiesToImport.add(dependency);
+        return;
+      }
+    }
+    context.nonProcessedChanges.add(change);
+  }
+  
+  private static void processDependencyScopeChange(@NotNull GradleDependencyScopeChange change, @NotNull EliminateChangesContext context) {
+    ExportableOrderEntry dependency = findDependency(change, context);
+    if (dependency != null) {
+      context.dependencyManager.setScope(change.getGradleValue(), dependency, context.synchronous);
+    }
+  }
+
+  private static void processDependencyExportedStatusChange(@NotNull GradleDependencyExportedChange change,
+                                                            @NotNull EliminateChangesContext context)
+  {
+    ExportableOrderEntry dependency = findDependency(change, context);
+    if (dependency != null) {
+      context.dependencyManager.setExported(change.getGradleValue(), dependency, context.synchronous);
+    }
+  }
+
+  @Nullable
+  private static ExportableOrderEntry findDependency(@NotNull AbstractGradleConflictingPropertyChange<?> change,
+                                                     @NotNull EliminateChangesContext context)
+  {
+    GradleEntityId id = change.getEntityId();
+    ExportableOrderEntry dependency = null;
+    if (id instanceof GradleLibraryDependencyId) {
+      dependency = context.projectStructureHelper.findIdeLibraryDependency((GradleLibraryDependencyId)id);
+    }
+    else if (id instanceof GradleModuleDependencyId) {
+      dependency = context.projectStructureHelper.findIdeModuleDependency((GradleModuleDependencyId)id);
+    }
+    else {
+      context.nonProcessedChanges.add(change);
+    }
+    return dependency;
+  }
+  
+  private static class EliminateChangesContext {
+    @NotNull final Set<Object>                       entitiesToRemove    = ContainerUtilRt.newHashSet();
+    @NotNull final Set<GradleEntity>                 entitiesToImport    = ContainerUtilRt.newHashSet();
+    @NotNull final Set<GradleProjectStructureChange> nonProcessedChanges = ContainerUtilRt.newHashSet();
+    @NotNull final Set<GradleUserProjectChange>      changesToPreserve   = ContainerUtilRt.newHashSet();
+
+    @NotNull final GradleProjectManager    projectManager;
+    @NotNull final GradleDependencyManager dependencyManager;
+    final          boolean                 synchronous;
+
+    @NotNull GradleProjectStructureChangeVisitor visitor = new GradleProjectStructureChangeVisitor() {
+      @Override
+      public void visit(@NotNull GradleProjectRenameChange change) {
+        processProjectRenameChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleLanguageLevelChange change) {
+        processLanguageLevelChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleModulePresenceChange change) {
+        processModulePresenceChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleContentRootPresenceChange change) {
+        processContentRootPresenceChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
+        processLibraryDependencyPresenceChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleJarPresenceChange change) {
+        processJarPresenceChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleOutdatedLibraryVersionChange change) {
+      }
+
+      @Override
+      public void visit(@NotNull GradleModuleDependencyPresenceChange change) {
+        processModuleDependencyPresenceChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleDependencyScopeChange change) {
+        processDependencyScopeChange(change, EliminateChangesContext.this);
+      }
+
+      @Override
+      public void visit(@NotNull GradleDependencyExportedChange change) {
+        processDependencyExportedStatusChange(change, EliminateChangesContext.this);
+      }
+    };
+
+    @NotNull final GradleProjectStructureHelper projectStructureHelper;
+
+    EliminateChangesContext(@NotNull GradleProjectStructureHelper projectStructureHelper,
+                            @NotNull Set<GradleUserProjectChange> changesToPreserve,
+                            @NotNull GradleProjectManager projectManager,
+                            @NotNull GradleDependencyManager dependencyManager,
+                            boolean synchronous)
+    {
+      this.projectStructureHelper = projectStructureHelper;
+      this.changesToPreserve.addAll(changesToPreserve);
+      this.projectManager = projectManager;
+      this.dependencyManager = dependencyManager;
+      this.synchronous = synchronous;
+    }
   }
 }

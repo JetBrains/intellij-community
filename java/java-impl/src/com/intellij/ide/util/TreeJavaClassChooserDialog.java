@@ -60,7 +60,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
                                     @Nullable ClassFilter classFilter,
                                     PsiClass baseClass,
                                     @Nullable PsiClass initialClass, boolean isShowMembers) {
-    super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers);
+    super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers, true);
   }
 
   @Override

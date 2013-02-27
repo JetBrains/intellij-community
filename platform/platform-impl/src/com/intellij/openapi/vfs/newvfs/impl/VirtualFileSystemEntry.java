@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final int INT_FLAGS_MASK = 0xff00;
 
   private static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
+  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {
+    "$1.class", "$2.class", "Test.java", "List.java", "tion.java", ".class",
+    ".java", ".html", ".txt", ".xml", ".php", ".gif", ".svn", ".css", ".js"
+  };
   private static final byte[][] WELL_KNOWN_SUFFIXES_BYTES;
   private static final int[] WELL_KNOWN_SUFFIXES_LENGTH;
   private static final int SUFFIX_BITS = 4;

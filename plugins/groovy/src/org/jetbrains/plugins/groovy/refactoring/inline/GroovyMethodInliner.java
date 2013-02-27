@@ -352,7 +352,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       method = ((GrReflectedMethod)method).getBaseMethod();
     }
 
-    GrMethod newMethod = factory.createMethodFromText(method.getText());
+    GrMethod newMethod = factory.createMethodFromText(method.getText(), call);
     if (qualifier != null) {
       Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
       GroovyInlineMethodUtil.addQualifiersToInnerReferences(newMethod, infos, qualifier);

@@ -140,9 +140,9 @@ public class MavenArtifact implements Serializable {
     return getRelativePathForExtraArtifact(null, null);
   }
 
-  public String getFileNameWithBaseVersion() {
+  public String getFileNameWithBaseVersion(@Nullable String extraArtifactClassifier, @Nullable String customExtension) {
     StringBuilder res = new StringBuilder();
-    appendFileName(res, null, null);
+    appendFileName(res, extraArtifactClassifier, customExtension);
     return res.toString();
   }
 
@@ -166,7 +166,7 @@ public class MavenArtifact implements Serializable {
     result.append('/');
     result.append(myArtifactId);
     result.append('/');
-    result.append(myVersion);
+    result.append(myBaseVersion);
     result.append('/');
 
     appendFileName(result, extraArtifactClassifier, customExtension);

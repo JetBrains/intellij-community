@@ -16,8 +16,8 @@ class NonStaticInner {
   static void call12(I2 s) {}
 
   static {
-    I1 i1 = NonStaticInner.Inner :: new;
-    call11(NonStaticInner.Inner :: new);
+    <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I1'">I1 i1 = NonStaticInner.Inner :: new;</error>
+    call11<error descr="'call11(NonStaticInner.I1)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
 
     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I2'">I2 i2 = NonStaticInner.Inner :: new;</error>
     call12<error descr="'call12(NonStaticInner.I2)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
@@ -109,11 +109,11 @@ class NonStaticInner2 {
 
 
   static {
-     I1 i1 = NonStaticInner2.Inner :: new;
+     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
   }
 
   {
-     I1 i1 = NonStaticInner2.Inner :: new;
+     <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner2.I1'">I1 i1 = NonStaticInner2.Inner :: new;</error>
   }
 }
 
@@ -145,7 +145,7 @@ class NonStaticInner3 {
     }
 
     {
-        I3<Foo> b1 = Foo::new;
-        I4<Foo> b2 = Foo::new;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I3<NonStaticInner3.Foo>'">I3<Foo> b1 = Foo::new;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I4<NonStaticInner3.Foo>'">I4<Foo> b2 = Foo::new;</error>
     }
 }

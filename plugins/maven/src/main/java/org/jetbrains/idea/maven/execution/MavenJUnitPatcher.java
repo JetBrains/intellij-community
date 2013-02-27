@@ -67,5 +67,15 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         javaParameters.getVMParametersList().addProperty(propertyName, value);
       }
     }
+
+    Element environmentVariables = config.getChild("environmentVariables");
+    if (environmentVariables != null) {
+      for (Element element : (List<Element>)environmentVariables.getChildren()) {
+        String variableName = element.getName();
+        String value = element.getValue();
+
+        javaParameters.addEnv(variableName, value);
+      }
+    }
   }
 }

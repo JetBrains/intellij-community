@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
 
   @Override
-  public StubElement buildStubTree(final PsiFile file) {
+  public StubElement buildStubTree(@NotNull PsiFile file) {
     final FileType fileType = file.getFileType();
     if (!(fileType instanceof LanguageFileType)) {
       LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
@@ -73,12 +72,13 @@ public class LightStubBuilder implements StubBuilder {
     return rootStub;
   }
 
+  @NotNull
   @SuppressWarnings("unchecked")
-  protected StubElement createStubForFile(final PsiFile file, final LighterAST tree) {
+  protected StubElement createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
     return new PsiFileStubImpl(file);
   }
 
-  protected void buildStubTree(final LighterAST tree, final LighterASTNode root, final StubElement rootStub) {
+  protected void buildStubTree(@NotNull LighterAST tree, @NotNull LighterASTNode root, @NotNull StubElement rootStub) {
     final Stack<LighterASTNode> parents = new Stack<LighterASTNode>();
     final TIntStack childNumbers = new TIntStack();
     final Stack<List<LighterASTNode>> kinderGarden = new Stack<List<LighterASTNode>>();
@@ -94,7 +94,7 @@ public class LightStubBuilder implements StubBuilder {
     while (element != null) {
       final StubElement stub = createStub(tree, element, parentStub);
 
-      if (parent == null || !skipChildProcessingWhenBuildingStubs(this, tree, parent, element)) {
+      if (parent == null || !skipNode(tree, parent, element)) {
         final List<LighterASTNode> kids = tree.getChildren(element);
         if (!kids.isEmpty()) {
           if (parent != null) {
@@ -106,13 +106,13 @@ public class LightStubBuilder implements StubBuilder {
           parent = element;
           element = (children = kids).get(childNumber = 0);
           parentStub = stub;
-          if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+          if (!skipNode(tree, parent, element)) continue nextElement;
         }
       }
 
       while (children != null && ++childNumber < children.size()) {
         element = children.get(childNumber);
-        if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+        if (!skipNode(tree, parent, element)) continue nextElement;
       }
 
       element = null;
@@ -123,7 +123,7 @@ public class LightStubBuilder implements StubBuilder {
         parentStub = parentStubs.pop();
         while (++childNumber < children.size()) {
           element = children.get(childNumber);
-          if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+          if (!skipNode(tree, parent, element)) continue nextElement;
         }
         element = null;
       }
@@ -148,18 +148,41 @@ public class LightStubBuilder implements StubBuilder {
     return parentStub;
   }
 
+  private boolean skipNode(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
+    if (tree instanceof TreeBackedLighterAST) {
+      return skipChildProcessingWhenBuildingStubs(((TreeBackedLighterAST)tree).unwrap(parent), ((TreeBackedLighterAST)tree).unwrap(node));
+    }
+    else {
+      return skipChildProcessingWhenBuildingStubs(tree, parent, node);
+    }
+  }
+
+  /**
+   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(LighterAST, LighterASTNode, LighterASTNode)}.
+   * todo[r.sh] move to interface (IDEA 13)
+   */
+  @SuppressWarnings("deprecation")
+  public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+    return skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
+  }
+
+  /**
+   * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
+   */
+  @SuppressWarnings("deprecation")
+  protected boolean skipChildProcessingWhenBuildingStubs(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
+    return skipChildProcessingWhenBuildingStubs(parent.getTokenType(), node.getTokenType());
+  }
+
+  /** @deprecated override {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)} (to remove in IDEA 13) */
+  @SuppressWarnings("deprecation")
   @Override
   public final boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType) {
     return skipChildProcessingWhenBuildingStubs(parent != null ? parent.getElementType() : null, childType);
   }
 
-  public boolean skipChildProcessingWhenBuildingStubs(final LightStubBuilder builder,
-                                                      final LighterAST tree,
-                                                      final LighterASTNode parent,
-                                                      final LighterASTNode child) {
-    return false;
-  }
-
+  /** @deprecated override {@linkplain #skipChildProcessingWhenBuildingStubs(LighterAST, LighterASTNode, LighterASTNode)} (to remove in IDEA 13) */
+  @SuppressWarnings("unused")
   public boolean skipChildProcessingWhenBuildingStubs(final IElementType parent, final IElementType childType) {
     return false;
   }
@@ -235,6 +258,11 @@ public class LightStubBuilder implements StubBuilder {
         return new TokenNodeWrapper(node);
       }
       return new NodeWrapper(node);
+    }
+
+    @NotNull
+    public ASTNode unwrap(LighterASTNode node) {
+      return ((NodeWrapper)node).myNode;
     }
 
     private static class NodeWrapper implements LighterASTNode {

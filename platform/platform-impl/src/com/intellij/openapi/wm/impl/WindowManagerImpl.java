@@ -35,10 +35,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.status.ClockPanel;
+import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
@@ -847,12 +850,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         finally {
           if (fullScreen) {
             frame.setBounds(device.getDefaultConfiguration().getBounds());
+            if (!Registry.is("ui.no.bangs.and.whistles", false)) {
+              frame.getStatusBar().addWidget(new ClockPanel(), "before " + MemoryUsagePanel.WIDGET_ID);
+            }
           }
           else {
             Object o = frame.getRootPane().getClientProperty("oldBounds");
             if (o instanceof Rectangle) {
               frame.setBounds((Rectangle)o);
             }
+            frame.getStatusBar().removeWidget(ClockPanel.WIDGET_ID);
           }
           frame.setVisible(true);
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);

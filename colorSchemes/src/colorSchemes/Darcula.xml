@@ -4,7 +4,7 @@
   <option name="EDITOR_FONT_SIZE" value="12" />
   <option name="EDITOR_FONT_NAME" value="Menlo" />
   <colors>
-    <option name="ADDED_LINES_COLOR" value="d6822" />
+    <option name="ADDED_LINES_COLOR" value="3f6232" />
     <option name="ANNOTATIONS_COLOR" value="8b999f" />
     <option name="CARET_COLOR" value="bbbbbb" />
     <option name="CARET_ROW_COLOR" value="323232" />
@@ -26,19 +26,19 @@
     <option name="FILESTATUS_changelistConflict" value="d5756c" />
     <option name="FILESTATUS_modifiedOutside" value="6897bb" />
     <option name="GUTTER_BACKGROUND" value="313335" />
-    <option name="INDENT_GUIDE" value="4d4d4d" />
+    <option name="INDENT_GUIDE" value="373737" />
     <option name="LINE_NUMBERS_COLOR" value="888888" />
     <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
-    <option name="MODIFIED_LINES_COLOR" value="7180" />
+    <option name="MODIFIED_LINES_COLOR" value="3c4b4e" />
     <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
     <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
-    <option name="REMOTE_HOST_MAPPED_BACKGROUND_KEY" value="164716" />
     <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
-    <option name="SELECTED_TEARLINE_COLOR" value="ffffff" />
+    <option name="SELECTED_INDENT_GUIDE" value="505050" />
+    <option name="SELECTED_TEARLINE_COLOR" value="787878" />
     <option name="SELECTION_BACKGROUND" value="214283" />
     <option name="SELECTION_FOREGROUND" value="" />
-    <option name="TEARLINE_COLOR" value="909090" />
+    <option name="TEARLINE_COLOR" value="555555" />
     <option name="WHITESPACES" value="404040" />
   </colors>
   <attributes>
@@ -415,26 +415,26 @@
     </option>
     <option name="DIFF_CONFLICT">
       <value>
-        <option name="BACKGROUND" value="763c3d" />
-        <option name="ERROR_STRIPE_COLOR" value="763c3d" />
+        <option name="BACKGROUND" value="45302b" />
+        <option name="ERROR_STRIPE_COLOR" value="8f5247" />
       </value>
     </option>
     <option name="DIFF_DELETED">
       <value>
-        <option name="BACKGROUND" value="0" />
-        <option name="ERROR_STRIPE_COLOR" value="0" />
+        <option name="BACKGROUND" value="484a4a" />
+        <option name="ERROR_STRIPE_COLOR" value="656e76" />
       </value>
     </option>
     <option name="DIFF_INSERTED">
       <value>
-        <option name="BACKGROUND" value="365d40" />
-        <option name="ERROR_STRIPE_COLOR" value="365d40" />
+        <option name="BACKGROUND" value="294436" />
+        <option name="ERROR_STRIPE_COLOR" value="447152" />
       </value>
     </option>
     <option name="DIFF_MODIFIED">
       <value>
-        <option name="BACKGROUND" value="337184" />
-        <option name="ERROR_STRIPE_COLOR" value="326174" />
+        <option name="BACKGROUND" value="385570" />
+        <option name="ERROR_STRIPE_COLOR" value="43698d" />
       </value>
     </option>
     <option name="DOC_COMMENT_TAG_VALUE">
@@ -1143,192 +1143,6 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="RUBY_ATTR_ACCESSOR_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_ATTR_READER_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_ATTR_WRITER_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_BACK_REF">
-      <value>
-        <option name="FOREGROUND" value="0" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_BAD_CHARACTER">
-      <value>
-        <option name="EFFECT_COLOR" value="ff0000" />
-        <option name="EFFECT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="RUBY_COMMA">
-      <value />
-    </option>
-    <option name="RUBY_COMMENT">
-      <value>
-        <option name="FOREGROUND" value="bc9458" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="RUBY_CONSTANT">
-      <value>
-        <option name="FOREGROUND" value="da4939" />
-      </value>
-    </option>
-    <option name="RUBY_CONSTANT_DEF_ID">
-      <value>
-        <option name="FOREGROUND" value="9f0e9b" />
-        <option name="FONT_TYPE" value="3" />
-      </value>
-    </option>
-    <option name="RUBY_CVAR">
-      <value>
-        <option name="FOREGROUND" value="d0d0ff" />
-      </value>
-    </option>
-    <option name="RUBY_ESCAPE_SEQUENCE">
-      <value>
-        <option name="FOREGROUND" value="519f50" />
-      </value>
-    </option>
-    <option name="RUBY_EXPR_IN_STRING">
-      <value />
-    </option>
-    <option name="RUBY_GVAR">
-      <value>
-        <option name="FOREGROUND" value="d0d0ff" />
-      </value>
-    </option>
-    <option name="RUBY_HASH_ASSOC">
-      <value />
-    </option>
-    <option name="RUBY_HEREDOC_CONTENT">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
-      </value>
-    </option>
-    <option name="RUBY_HEREDOC_ID">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
-        <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_IMPORT_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_INTERPOLATED_STRING">
-      <value>
-        <option name="FOREGROUND" value="52a12e" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_INVALID_ESCAPE_SEQUENCE">
-      <value>
-        <option name="FOREGROUND" value="519f50" />
-        <option name="EFFECT_COLOR" value="ff0000" />
-        <option name="EFFECT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="RUBY_IVAR">
-      <value>
-        <option name="FOREGROUND" value="d0d0ff" />
-      </value>
-    </option>
-    <option name="RUBY_KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_LINE_CONTINUATION">
-      <value />
-    </option>
-    <option name="RUBY_LOCAL_VAR_ID">
-      <value>
-        <option name="FOREGROUND" value="78b4" />
-      </value>
-    </option>
-    <option name="RUBY_METHOD_NAME">
-      <value>
-        <option name="FOREGROUND" value="ffc66d" />
-      </value>
-    </option>
-    <option name="RUBY_NTH_REF">
-      <value>
-        <option name="FOREGROUND" value="d0d0ff" />
-      </value>
-    </option>
-    <option name="RUBY_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
-        <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_OPERATION_SIGN">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_PARAMETER_ID">
-      <value>
-        <option name="FOREGROUND" value="c37522" />
-        <option name="EFFECT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="RUBY_PRIVATE_CALL">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_PROTECTED_CALL">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="RUBY_PUBLIC_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-      </value>
-    </option>
-    <option name="RUBY_REGEXP">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
-      </value>
-    </option>
-    <option name="RUBY_REQUIRE_ARG_CALL">
-      <value>
-        <option name="FONT_TYPE" value="3" />
-      </value>
-    </option>
-    <option name="RUBY_REQUIRE_CALL">
-      <value>
-        <option name="FOREGROUND" value="cc7833" />
-        <option name="EFFECT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="RUBY_SEMICOLON">
-      <value />
-    </option>
-    <option name="RUBY_SPECIFIC_CALL">
-      <value>
-        <option name="FOREGROUND" value="da4939" />
-      </value>
-    </option>
-    <option name="RUBY_SYMBOL">
-      <value>
-        <option name="FOREGROUND" value="6e9cbe" />
-      </value>
-    </option>
     <option name="SASS_ATTRIBUTE">
       <value>
         <option name="FOREGROUND" value="6d9cbe" />
@@ -1704,7 +1518,7 @@
     </option>
     <option name="TODO_DEFAULT_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="bc9458" />
+        <option name="FOREGROUND" value="a8c023" />
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
@@ -1801,7 +1615,7 @@
     </option>
     <option name="XML_ATTRIBUTE_NAME">
       <value>
-        <option name="FOREGROUND" value="d0d0ff" />
+        <option name="FOREGROUND" value="bababa" />
       </value>
     </option>
     <option name="XML_ATTRIBUTE_VALUE">

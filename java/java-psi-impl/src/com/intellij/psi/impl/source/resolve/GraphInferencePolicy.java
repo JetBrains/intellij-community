@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -99,8 +100,8 @@ public class GraphInferencePolicy extends ProcessCandidateParameterTypeInference
   }
 
   public static void forget(PsiElement parent) {
-    if (parent instanceof PsiCallExpression) {
-      final PsiElement gParent = parent.getParent();
+    if (parent instanceof PsiExpression) {
+      PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (gParent instanceof PsiExpressionList) {
         final PsiElement ggParent = gParent.getParent();
         if (ggParent instanceof PsiCallExpression) {

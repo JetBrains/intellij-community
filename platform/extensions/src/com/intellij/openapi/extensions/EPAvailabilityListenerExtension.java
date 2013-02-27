@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.extensions;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author AKireyev
  */
@@ -28,24 +30,26 @@ public class EPAvailabilityListenerExtension implements PluginAware {
   public EPAvailabilityListenerExtension() {
   }
 
-  public EPAvailabilityListenerExtension(String extensionPointName, String listenerClass) {
+  public EPAvailabilityListenerExtension(@NotNull String extensionPointName, @NotNull String listenerClass) {
     myExtensionPointName = extensionPointName;
     myListenerClass = listenerClass;
   }
 
+  @NotNull
   public String getExtensionPointName() {
     return myExtensionPointName;
   }
 
-  public void setExtensionPointName(String extensionPointName) {
+  public void setExtensionPointName(@NotNull String extensionPointName) {
     myExtensionPointName = extensionPointName;
   }
 
+  @NotNull
   public String getListenerClass() {
     return myListenerClass;
   }
 
-  public void setListenerClass(String listenerClass) {
+  public void setListenerClass(@NotNull String listenerClass) {
     myListenerClass = listenerClass;
   }
 

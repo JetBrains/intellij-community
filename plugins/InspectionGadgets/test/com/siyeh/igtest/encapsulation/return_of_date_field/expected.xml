@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ReturnOfDateField.java</file>
+    <line>35</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Return of Date or Calendar field</problem_class>
+    <description>Return of 'java.util.Calendar' field &lt;code&gt;m_bar&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>ReturnOfDateField.java</file>
+    <line>23</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Return of Date or Calendar field</problem_class>
+    <description>Return of 'java.util.Date' field &lt;code&gt;m_foo&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

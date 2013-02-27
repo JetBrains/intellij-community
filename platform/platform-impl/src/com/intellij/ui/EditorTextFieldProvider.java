@@ -32,7 +32,7 @@ public interface EditorTextFieldProvider {
    *
    * @param language   target language used by document that will be displayed by returned editor
    * @param project    target project
-   * @return
+   * @return {@link EditorTextField} with specified customizations applied to its editor.
    */
   @NotNull
   EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull Iterable<EditorCustomization> features);

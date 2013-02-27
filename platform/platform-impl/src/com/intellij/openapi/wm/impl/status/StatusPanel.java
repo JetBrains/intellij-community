@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.JBMenuItem;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -48,6 +56,7 @@ class StatusPanel extends JPanel {
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
+  private final Action myCopyAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -101,6 +110,7 @@ class StatusPanel extends JPanel {
         return true;
       }
     }.installOn(myTextPanel);
+    myCopyAction = createCopyAction();
 
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -110,6 +120,15 @@ class StatusPanel extends JPanel {
         myAfterClick = false;
         if (!myLogMode) {
           myTextPanel.setCursor(Cursor.getDefaultCursor());
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (myCopyAction != null && e.isPopupTrigger()) {
+          JBPopupMenu menu = new JBPopupMenu();
+          menu.add(new JBMenuItem(myCopyAction));
+          menu.show(myTextPanel, e.getX(), e.getY());
         }
       }
     });
@@ -123,6 +142,26 @@ class StatusPanel extends JPanel {
     add(panel, BorderLayout.CENTER);
 
   }
+
+  private Action createCopyAction() {
+    ActionManager actionManager = ActionManager.getInstance();
+    if (actionManager == null) return null;
+    AnAction action = actionManager.getAction(IdeActions.ACTION_COPY);
+    if (action == null) return null;
+    return new AbstractAction(action.getTemplatePresentation().getText(), action.getTemplatePresentation().getIcon()) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        StringSelection content = new StringSelection(getText());
+        ClipboardSynchronizer.getInstance().setContent(content, content);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !getText().isEmpty();
+      }
+    };
+  }
+
 
   @Nullable
   private Project getActiveProject() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public void writeEnumConstant(StringBuilder builder, GrEnumConstant constant) {
-    writeDocComment(builder, constant, false);
+    GenerationUtil.writeDocComment(builder, constant, false);
     builder.append(constant.getName());
 
     final GrArgumentList argumentList = constant.getArgumentList();
@@ -105,7 +104,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   public void writeMethod(StringBuilder builder, PsiMethod method) {
     if (method == null) return;
 
-    writeDocComment(builder, method, true);
+    GenerationUtil.writeDocComment(builder, method, true);
 
     String name = method.getName();
 
@@ -303,7 +302,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     GrVariable[] variables = variableDeclaration.getVariables();
 
     if (variables.length > 0 && variables[0] instanceof PsiField) {
-      writeDocComment(mainBuilder, ((PsiField)variables[0]), true);
+      GenerationUtil.writeDocComment(mainBuilder, ((PsiField)variables[0]), true);
     }
 
     StringBuilder builder = new StringBuilder();
@@ -587,16 +586,5 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
 
     return false;
-  }
-
-  private static void writeDocComment(StringBuilder buffer, PsiMember member, boolean addLineFeed) {
-    if (member instanceof PsiDocCommentOwner) {
-      final PsiDocComment comment = ((PsiDocCommentOwner)member).getDocComment();
-      if (comment != null) {
-        final String text = comment.getText();
-        buffer.append(text);
-        if (addLineFeed) buffer.append('\n');
-      }
-    }
   }
 }

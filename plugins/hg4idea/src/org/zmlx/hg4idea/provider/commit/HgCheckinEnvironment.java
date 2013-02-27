@@ -38,8 +38,6 @@ import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
@@ -136,10 +134,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
     List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand(myProject);
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeUnknown(false).includeIgnored(false).build(myProject);
     statusCommand.setBaseRevision(parents.get(0));
-    statusCommand.setIncludeUnknown(false);
-    statusCommand.setIncludeIgnored(false);
     Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();

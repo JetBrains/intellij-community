@@ -56,14 +56,14 @@ public class ExtensionPointImplTest extends TestCase {
     final boolean[] flags = new boolean[2];
     Extension extension = new Extension() {
       @Override
-      public void extensionAdded(ExtensionPoint extensionPoint1) {
+      public void extensionAdded(@NotNull ExtensionPoint extensionPoint1) {
         assertSame(extensionPoint, extensionPoint1);
         assertSame(area, extensionPoint1.getArea());
         flags[0] = true;
       }
 
       @Override
-      public void extensionRemoved(ExtensionPoint extensionPoint1) {
+      public void extensionRemoved(@NotNull ExtensionPoint extensionPoint1) {
         assertSame(extensionPoint, extensionPoint1);
         assertSame(area, extensionPoint1.getArea());
         flags[1] = true;

@@ -216,11 +216,23 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAcceptRawSubstForLambda() throws Exception {
+    doTest();
+  }
+
   public void testCheckFunctionalInterfaceAccess() throws Exception {
     doTest();
   }
 
   public void testVoidCompatibility() throws Exception {
+    doTest();
+  }
+
+  public void testConditionalInferenceFromOppositePart() throws Exception {
+    doTest();
+  }
+
+  public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() throws Exception {
     doTest();
   }
 

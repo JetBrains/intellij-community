@@ -120,7 +120,7 @@ public class OpenFileDescriptor implements Navigatable {
 
     if (!myFile.isDirectory() && navigateInEditor(myProject, requestFocus)) return;
 
-    navigateInProjectView();
+    navigateInProjectView(requestFocus);
   }
 
   private boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
@@ -158,7 +158,7 @@ public class OpenFileDescriptor implements Navigatable {
     return !editors.isEmpty();
   }
 
-  private void navigateInProjectView() {
+  private void navigateInProjectView(boolean requestFocus) {
     SelectInContext context = new SelectInContext() {
       @Override
       @NotNull
@@ -187,7 +187,7 @@ public class OpenFileDescriptor implements Navigatable {
 
     for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
       if (target.canSelect(context)) {
-        target.selectIn(context, true);
+        target.selectIn(context, requestFocus);
         return;
       }
     }

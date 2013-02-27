@@ -48,13 +48,12 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-
     if (context.isProjectRebuild()) {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
       configuration.save();
     }
-    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty() || configuration.outputRootWasDeleted(context)) {
+    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       IncProjectBuilder.clearOutputFiles(context, target);
       pd.dataManager.cleanTargetStorages(target);

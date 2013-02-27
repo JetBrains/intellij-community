@@ -1040,7 +1040,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myRefCountHolder != null) {
       myRefCountHolder.registerReference(expression, result);
     }
-    if (result.getElement() != null && !result.isAccessible()) {
+    final PsiElement method = result.getElement();
+    if (method != null && !result.isAccessible()) {
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       myHolder.add(info);
@@ -1074,6 +1075,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
+    if (!myHolder.hasErrorResults()) {
+      if (method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final PsiElement qualifier = expression.getQualifier();
+        if (qualifier instanceof PsiSuperExpression) {
+          myHolder.add(HighlightInfo
+                         .newHighlightInfo(HighlightInfoType.ERROR)
+                         .range(expression.getReferenceNameElement())
+                         .descriptionAndTooltip("Abstract method '" + ((PsiMethod)method).getName() + "' cannot be accessed directly").create());
+        }
+      }
     }
   }
 

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.TemplateManager
@@ -1195,11 +1196,17 @@ class Foo extends Abcdefg <caret>'''
   }
 
   public void testAmbiguousClassQualifier() {
-    myFixture.addClass("package foo; public class Util { public static void foo() {} }")
+    myFixture.addClass("package foo; public class Util<T> { public static void foo() {}; public static final int CONSTANT = 2; }")
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'Util.'
-    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.foo']
+    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
+
+    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    assert p.itemText == 'Util.CONSTANT'
+    assert p.tailText == ' (foo)'
+    assert p.typeText == 'int'
+
     type 'fo\n'
     myFixture.checkResult '''import foo.Util;
 

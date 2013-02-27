@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -47,7 +48,7 @@ public class JarHandler extends JarHandlerBase {
 
   private final JarFileSystemImpl myFileSystem;
 
-  public JarHandler(final JarFileSystemImpl fileSystem, String path) {
+  public JarHandler(@NotNull JarFileSystemImpl fileSystem, @NotNull String path) {
     super(path);
     myFileSystem = fileSystem;
   }
@@ -71,7 +72,7 @@ public class JarHandler extends JarHandlerBase {
   }
 
   @Override
-  public File getMirrorFile(File originalFile) {
+  public File getMirrorFile(@NotNull File originalFile) {
     if (!myFileSystem.isMakeCopyOfJar(originalFile)) return originalFile;
 
     final FileAttributes originalAttributes = FileSystemUtil.getAttributes(originalFile);
@@ -95,12 +96,14 @@ public class JarHandler extends JarHandlerBase {
     return mirrorFile;
   }
 
+  @NotNull
   private static String getJarsDir() {
     String dir = System.getProperty("jars_dir");
     return dir == null ? PathManager.getSystemPath() + File.separatorChar + JARS_FOLDER : dir;
   }
 
-  private File copyToMirror(final File original, final File mirror) {
+  @NotNull
+  private File copyToMirror(@NotNull File original, @NotNull File mirror) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.pushState();

@@ -103,6 +103,11 @@ public class MavenProjectsTree {
         });
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
+      catch (IOException e) {
+        in.close();
+        file.delete();
+        throw e;
+      }
       catch (Throwable e) {
         throw new IOException(e);
       }

@@ -46,6 +46,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
     <!--Project structure management services-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleProjectManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleJarManager"/>
@@ -56,6 +57,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>

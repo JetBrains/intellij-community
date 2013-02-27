@@ -88,13 +88,12 @@ public class ToolsImpl implements Tools {
           return state.getTool();
         }
         else {
-          final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
           final NamedScope scope = state.getScope(project);
           if (scope != null) {
             final PackageSet packageSet = scope.getValue();
             if (packageSet != null) {
               final PsiFile containingFile = element.getContainingFile();
-              if (containingFile != null && packageSet.contains(containingFile, validationManager)) {
+              if (containingFile != null && packageSet.contains(containingFile, DependencyValidationManager.getInstance(project))) {
                 return state.getTool();
               }
             }

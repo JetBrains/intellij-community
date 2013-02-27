@@ -100,6 +100,10 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   public void testVarargs() {doTest();}
 
+  public void testTypeParameterDeclaredInFile() {
+    doTest()
+  }
+
   public void testInlineAll() {
     doTest(new GroovyInlineHandler() {
       @Override

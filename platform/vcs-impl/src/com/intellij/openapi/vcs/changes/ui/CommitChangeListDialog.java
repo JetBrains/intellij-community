@@ -904,7 +904,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     void clean() {
       if (myToClean) {
         final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-        clManager.editComment(myLastSelectedListName, "");
+        clManager.editComment(VcsBundle.message("changes.default.changlist.name"), "");
       }
     }
   }

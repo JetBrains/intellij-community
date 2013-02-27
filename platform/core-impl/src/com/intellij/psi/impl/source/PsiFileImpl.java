@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -278,38 +276,40 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
-      protected void visitNode(TreeElement tree) {
-        final IElementType type = tree.getElementType();
-        final CompositeElement treeParent = tree.getTreeParent();
-        if (treeParent != null && builder.skipChildProcessingWhenBuildingStubs(treeParent, type)) {
+      protected void visitNode(TreeElement node) {
+        CompositeElement parent = node.getTreeParent();
+        if (parent != null && TreeUtil.skipNode(builder, parent, node)) {
           return;
         }
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
+
+        IElementType type = node.getElementType();
+        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
           if (!stubs.hasNext()) {
             rebuildStub();
             LOG.error("Stub list in " + getName() + " has fewer elements than PSI. Last AST element: " +
-                      tree.getElementType() + " " + tree);
+                      node.getElementType() + " " + node);
             stopWalking();
             return;
           }
 
           final StubElement stub = stubs.next();
-          if (stub.getStubType() != tree.getElementType()) {
+          if (stub.getStubType() != node.getElementType()) {
             rebuildStub();
             LOG.error("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
-                      tree.getElementType() + "; " + tree);
+                      node.getElementType() + "; " + node);
             stopWalking();
             return;
           }
 
           PsiElement psi = stub.getPsi();
           assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
-          ((CompositeElement)tree).setPsi(psi);
+          ((CompositeElement)node).setPsi(psi);
           StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
-          base.setNode(tree);
+          base.setNode(node);
           base.setStub(null);
         }
-        super.visitNode(tree);
+
+        super.visitNode(node);
       }
     });
   }
@@ -672,7 +672,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       final FileViewProvider viewProvider = getViewProvider();
-      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() + 
+      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() +
                                "; IndexStamp="+ StubTreeLoader.getInstance().getStubTreeTimestamp(vFile)  +
                                "; Type: " + contentElementType + "; " +
                                "Psi roots: " + viewProvider.getAllFiles() + "; " +
@@ -721,7 +721,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     return myManager.isBatchFilesProcessingMode()
                  ? new PatchedWeakReference<ASTNode>(treeElement)
-                 : new PatchedSoftReference<ASTNode>(treeElement);
+                 : new SoftReference<ASTNode>(treeElement);
   }
 
   @Override
@@ -959,65 +959,36 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private static final Key<StubTree> STUB_TREE_IN_PARSED_TREE = new Key<StubTree>("STUB_TREE_IN_PARSED_TREE");
 
   public StubTree calcStubTree() {
-    final FileElement fileElement = calcTreeElement();
+    FileElement fileElement = calcTreeElement();
     synchronized (PsiLock.LOCK) {
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
+
       if (tree == null) {
         IElementType contentElementType = getContentElementType();
         if (!(contentElementType instanceof IStubFileElementType)) {
           VirtualFile vFile = getVirtualFile();
-          @NonNls String builder = "ContentElementType: " + contentElementType + "; file: " + this +
-          "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
-          "\n\t" + "getTreeElement() = " + getTreeElement() +
-          "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
-          "\n\t" + "StubUpdatingIndex.canHaveStub(vFile) = " + StubTreeLoader.getInstance().canHaveStub(vFile);
-          LOG.error(builder);
+          LOG.error("ContentElementType: " + contentElementType + "; file: " + this +
+                    "\n\t" + "Boolean.TRUE.equals(getUserData(BUILDING_STUB)) = " + Boolean.TRUE.equals(getUserData(BUILDING_STUB)) +
+                    "\n\t" + "getTreeElement() = " + getTreeElement() +
+                    "\n\t" + "vFile instanceof VirtualFileWithId = " + (vFile instanceof VirtualFileWithId) +
+                    "\n\t" + "StubUpdatingIndex.canHaveStub(vFile) = " + StubTreeLoader.getInstance().canHaveStub(vFile));
         }
-        final StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
+
+        StubElement currentStubTree = ((IStubFileElementType)contentElementType).getBuilder().buildStubTree(this);
         tree = new StubTree((PsiFileStub)currentStubTree);
-        bindFakeStubsToTree(tree);
+        try {
+          TreeUtil.bindStubsToTree(this, tree);
+        }
+        catch (TreeUtil.StubBindingException e) {
+          rebuildStub();
+          LOG.error("Stub and PSI element type mismatch in " + getName() + ": " + e.getMessage());
+        }
+
         fileElement.putUserData(STUB_TREE_IN_PARSED_TREE, tree);
       }
+
       return tree;
     }
-  }
-
-  private void bindFakeStubsToTree(final StubTree stubTree) {
-    final PsiFileImpl file = this;
-
-    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
-    stubs.next();  // skip file root stub
-    final FileElement fileRoot = file.getTreeElement();
-    assert fileRoot != null;
-
-    bindStubs(fileRoot, stubs, ((IStubFileElementType)getContentElementType()).getBuilder());
-  }
-
-  private void bindStubs(final ASTNode tree, final Iterator<StubElement<?>> stubs, final StubBuilder builder) {
-    ((TreeElement)tree).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement root) {
-        CompositeElement parent = root.getTreeParent();
-        IElementType parentType = parent == null ? null : parent.getElementType();
-        final IElementType type = root.getElementType();
-        if (parentType != null && builder.skipChildProcessingWhenBuildingStubs(parent, type)) {
-          return;
-        }
-
-        if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(root)) {
-          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
-          if (stub == null || stub.getStubType() != type) {
-            rebuildStub();
-            assert false : "Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + type;
-          }
-
-          //noinspection unchecked
-          ((StubBase)stub).setPsi(root.getPsi());
-        }
-
-        super.visitNode(root);
-      }
-    });
   }
 
   private void rebuildStub() {

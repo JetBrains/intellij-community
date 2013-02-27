@@ -118,24 +118,10 @@ public class TailTypes {
       return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
     }
   };
-  public static final TailType FINALLY_LBRACE = new BracesTailType() {
-    @Override
-    protected boolean isSpaceBeforeLBrace(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
-      return styleSettings.SPACE_BEFORE_FINALLY_LBRACE;
-    }
-  };
-  public static final TailType TRY_LBRACE = new BracesTailType() {
-    @Override
-    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
-      return styleSettings.SPACE_BEFORE_TRY_LBRACE;
-    }
-  };
-  public static final TailType DO_LBRACE = new BracesTailType() {
-    @Override
-    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
-      return styleSettings.SPACE_BEFORE_DO_LBRACE;
-    }
-  };
+  private static final TailType BRACES = new BracesTailType();
+  public static final TailType FINALLY_LBRACE = BRACES;
+  public static final TailType TRY_LBRACE = BRACES;
+  public static final TailType DO_LBRACE = BRACES;
 
 
 

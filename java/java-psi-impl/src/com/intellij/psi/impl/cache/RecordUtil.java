@@ -59,8 +59,8 @@ public class RecordUtil {
 
   public static boolean isDeprecatedByDocComment(@NotNull LighterAST tree, @NotNull LighterASTNode comment) {
     // todo[r.sh] parse doc comments, implement tree lookup
-    final String text = LightTreeUtil.toFilteredString(tree, comment, null);
-    return text != null && text.contains(DEPRECATED_TAG);
+    String text = LightTreeUtil.toFilteredString(tree, comment, null);
+    return text.contains(DEPRECATED_TAG);
   }
 
   public static int packModifierList(@NotNull LighterAST tree, @NotNull LighterASTNode modList, @NotNull StubElement parent) {

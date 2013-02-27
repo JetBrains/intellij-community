@@ -152,7 +152,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     presentation.setStrikeout(strikeout);
     presentation.setItemTextBold(bold);
 
-    String tailText = StringUtil.notNullize((String) item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
+    String tailText = getLocationString(item);
     PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
 
     if (item instanceof PsiTypeLookupItem) {
@@ -171,6 +171,10 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
       }, "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
     }
     presentation.setTailText(tailText, true);
+  }
+
+  public static String getLocationString(LookupItem item) {
+    return StringUtil.notNullize((String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
   }
 
   private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {

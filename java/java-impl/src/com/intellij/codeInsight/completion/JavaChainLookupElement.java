@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,8 +94,9 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
 
-    if (getQualifierObject() instanceof PsiClass) {
-      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + qualifierPresentation.getTailText());
+    if (myQualifier instanceof LookupItem && getQualifierObject() instanceof PsiClass) {
+      String locationString = JavaPsiClassReferenceElement.getLocationString((LookupItem)myQualifier);
+      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
     }
   }
 

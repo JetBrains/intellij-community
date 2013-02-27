@@ -105,7 +105,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   private final IdeView myIdeView = new MyIdeView();
   private final FavoritesManager myFavoritesManager;
-  //private final NodeRenderer myNodeRenderer;
 
   public FavoritesTreeViewPanel(Project project) {
     super(new BorderLayout());
@@ -148,37 +147,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
         return o1.getIndex() - o2.getIndex();
       }
     });
-    //myNodeRenderer = new NodeRenderer() {
-    //  public void customizeCellRenderer(JTree tree,
-    //                                    Object value,
-    //                                    boolean selected,
-    //                                    boolean expanded,
-    //                                    boolean leaf,
-    //                                    int row,
-    //                                    boolean hasFocus) {
-    //    super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
-    //    if (value instanceof DefaultMutableTreeNode) {
-    //      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-    //      //only favorites roots to explain
-    //      final Object userObject = node.getUserObject();
-    //      if (userObject instanceof FavoritesTreeNodeDescriptor) {
-    //        final FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
-    //        AbstractTreeNode treeNode = favoritesTreeNodeDescriptor.getElement();
-    //        final ItemPresentation presentation = treeNode.getPresentation();
-    //        String locationString = presentation.getLocationString();
-    //        if (locationString != null && locationString.length() > 0) {
-    //          append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-    //        }
-    //        else if (node.getParent() != null && node.getParent().getParent() != null && node.getParent().getParent().getParent() == null) {
-    //          final String location = favoritesTreeNodeDescriptor.getLocation();
-    //          if (location != null && location.length() > 0) {
-    //            append(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-    //          }
-    //        }
-    //      }
-    //    }
-    //  }
-    //};
     myTree.setCellRenderer(new NodeRenderer() {
       @Override
       public void customizeCellRenderer(JTree tree,
@@ -232,28 +200,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
     };
 
-    //final AnActionButtonRunnable addListOrNoteAction = new AnActionButtonRunnable() {
-    //  @Override
-    //  public void run(AnActionButton button) {
-    //    //final Set<FavoritesListNode> nodes = getSelectedListsNodes();
-    //    //if (nodes.size() == 1) {
-    //    //  FavoritesListProvider provider = nodes.iterator().next().getProvider();
-    //    //  final Operation customAdd = provider != null ? myFavoritesManager.getCustomOperation(provider, OperationType.ADD) : null;
-    //    //  if (customAdd != null && customAdd.willHandle(myProject, myBuilder.getSelectedElements())) {
-    //    //    customAdd.handle(myProject, myBuilder.getSelectedElements());
-    //    //    return;
-    //    //  }
-    //    //}
-    //    AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
-    //  }
-    //};
-
     AnActionButton addActionButton = AnActionButton.fromAction(ActionManager.getInstance().getAction("AddNewFavoritesList"));
     addActionButton.getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.ADD.getIcon());
     addActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
 
     AnActionButton editActionButton = AnActionButton.fromAction(new EditFavoritesAction());
-    editActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
+    editActionButton.setShortcut(CommonShortcuts.CTRL_ENTER);
 
     AnActionButton deleteActionButton = new DeleteFromFavoritesAction();
     deleteActionButton.setShortcut(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
@@ -263,7 +215,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
-      .setLineBorder(0, 0, 1, 0)
+      .initPosition()
       .disableAddAction().disableRemoveAction().disableDownAction().disableUpAction()
       .addExtraAction(addActionButton)
       .addExtraAction(editActionButton)
@@ -636,18 +588,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     window.setTitleActions(collapseAction);
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    if (!PlatformUtils.isAppCode()) {
-      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
-    }
-
     final ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(myProject);
 
     if (helper.supportsFlattenPackages()) {
       group.add(new FavoritesFlattenPackagesAction(myProject, myBuilder));
     }
-
     if (helper.supportsHideEmptyMiddlePackages()) {
       group.add(new FavoritesCompactEmptyMiddlePackagesAction(myProject, myBuilder));
+    }
+    if (helper.supportsFlattenPackages()) {
+      group.addAction(new FavoritesAbbreviatePackageNamesAction(myProject, myBuilder));
+    }
+    if (!PlatformUtils.isAppCode()) {
+      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 
     final FavoritesAutoscrollFromSourceHandler handler = new FavoritesAutoscrollFromSourceHandler(myProject, myBuilder);

@@ -4,6 +4,6 @@ class Test<T> {
 
 class Bar {
   void test() {
-    Runnable runnable = Test<String>:<caret>:foo;
+    Runnable runnable = Test:<caret>:foo;
   }
 }

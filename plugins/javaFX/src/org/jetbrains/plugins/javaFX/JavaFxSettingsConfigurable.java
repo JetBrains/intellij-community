@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -93,14 +94,20 @@ public class JavaFxSettingsConfigurable implements SearchableConfigurable, Confi
     return null;
   }
 
+  public static FileChooserDescriptor createSceneBuilderDescriptor() {
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    descriptor.setTitle("SceneBuilder Configuration");
+    descriptor.setDescription("Select path to SceneBuilder executable");
+    return descriptor;
+  }
 
   public static class JavaFxConfigurablePanel {
     private TextFieldWithBrowseButton myPathField;
     private JPanel myWholePanel;
 
     public JavaFxConfigurablePanel() {
-      myPathField.addBrowseFolderListener("SceneBuilder Configuration", "Select path to SceneBuilder executable", null,
-                                          FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+      final FileChooserDescriptor descriptor = createSceneBuilderDescriptor();
+      myPathField.addBrowseFolderListener(descriptor.getTitle(), descriptor.getDescription(), null, descriptor);
     }
 
     private void reset(JavaFxSettings settings) {
@@ -111,7 +118,7 @@ public class JavaFxSettingsConfigurable implements SearchableConfigurable, Confi
     }
 
     private void apply(JavaFxSettings settings) {
-      settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(myPathField.getText()));
+      settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(myPathField.getText().trim()));
     }
 
     private boolean isModified(JavaFxSettings settings) {

@@ -28,6 +28,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,27 +214,29 @@ public class PsiTypeLookupItem extends LookupItem {
       final PsiClass psiClass = classResolveResult.getElement();
 
       if (psiClass != null) {
-        final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+        String name = psiClass.getName();
+        if (name != null) {
+          final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
 
-        PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
+          PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(name, context);
 
-        Set<String> allStrings = new HashSet<String>();
-        String lookupString = psiClass.getName();
-        allStrings.add(lookupString);
-        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
-          // inner class name should be shown qualified if its not accessible by single name
-          PsiClass aClass = psiClass.getContainingClass();
-          while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
-            lookupString = aClass.getName() + '.' + lookupString;
-            allStrings.add(lookupString);
-            aClass = aClass.getContainingClass();
+          Set<String> allStrings = new HashSet<String>();
+          allStrings.add(name);
+          if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
+            // inner class name should be shown qualified if its not accessible by single name
+            PsiClass aClass = psiClass.getContainingClass();
+            while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
+              name = aClass.getName() + '.' + name;
+              allStrings.add(name);
+              aClass = aClass.getContainingClass();
+            }
           }
-        }
 
-        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond, bracketsCount, importFixer);
-        item.addLookupStrings(allStrings.toArray(new String[allStrings.size()]));
-        item.setAttribute(SUBSTITUTOR, substitutor);
-        return item;
+          PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, name, diamond, bracketsCount, importFixer);
+          item.addLookupStrings(ArrayUtil.toStringArray(allStrings));
+          item.setAttribute(SUBSTITUTOR, substitutor);
+          return item;
+        }
       }
 
     }

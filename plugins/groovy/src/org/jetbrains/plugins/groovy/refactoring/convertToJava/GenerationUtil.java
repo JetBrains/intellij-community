@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -682,5 +683,16 @@ public class GenerationUtil {
     }
 
     return null;
+  }
+
+  static void writeDocComment(StringBuilder buffer, PsiMember member, boolean addLineFeed) {
+    if (member instanceof PsiDocCommentOwner) {
+      final PsiDocComment comment = ((PsiDocCommentOwner)member).getDocComment();
+      if (comment != null) {
+        final String text = comment.getText();
+        buffer.append(text);
+        if (addLineFeed) buffer.append('\n');
+      }
+    }
   }
 }

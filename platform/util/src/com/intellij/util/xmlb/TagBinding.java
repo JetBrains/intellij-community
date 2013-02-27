@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +54,7 @@ class TagBinding implements Binding {
     return v;
   }
 
-  public Object deserialize(Object o, Object... nodes) {
+  public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes.length > 0;
     Object[] children;
     if (nodes.length == 1) {

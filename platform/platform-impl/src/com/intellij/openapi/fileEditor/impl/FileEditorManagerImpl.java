@@ -719,6 +719,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       providers = newSelectedComposite.getProviders();
     }
     else {
+      if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+        for (EditorWithProviderComposite composite : window.getEditors()) {
+          Disposer.dispose(composite);
+        }
+      }
+
       // File is not opened yet. In this case we have to create editors
       // and select the created EditorComposite.
       final FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();

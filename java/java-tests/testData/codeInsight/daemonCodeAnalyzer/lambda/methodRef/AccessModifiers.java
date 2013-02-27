@@ -30,7 +30,7 @@ class AlienTest {
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i3 = MyTest::bar;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IIntInt'">IIntInt i4 = MyTest::bar;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i5 = MyTest::baz;</error>
-        IInt i6 = <error descr="'foo(int)' is not public in 'MyTest.Foo'. Cannot be accessed from outside package">MyTest.foo::foo</error>;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i6 = MyTest.foo::foo;</error>
         IInt i7 = MyTest.<error descr="'MyTest.Foo' has private access in 'MyTest'">Foo</error>::foo;
     }
 }
@@ -69,7 +69,7 @@ class MyTest1 {
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I3'">I3 c3 = arr::clone;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I4'">I4 c5 = arr::clone;</error>
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I5'">I5 c4 = this::getClass;</error>
+        I5 c4 = this::getClass;
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I6'">I6 c6 = this::getClass;</error>
     }
 }

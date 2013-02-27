@@ -1331,5 +1331,15 @@ class XInternalError {}
     checkResult()
   }
 
+  public void testBraceOnNextLine() {
+    codeStyleSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    doTest()
+  }
+
+  public void testDoForceBraces() {
+    codeStyleSettings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    doTest('\n')
+  }
+
 
 }

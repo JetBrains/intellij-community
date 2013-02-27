@@ -249,19 +249,32 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       }
     }
     if (REMOVE_AFTER_HIT) {
-      debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
-        @Override
-        public void resumed(SuspendContext suspendContext) {
-          DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-            @Override
-            public void run() {
-              DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
-            }
-          });
-          debugProcess.removeDebugProcessListener(this);
-        }
-      });
+      handleTemporaryBreakpointHit(debugProcess);
     }
+  }
+
+  private void handleTemporaryBreakpointHit(final DebugProcessImpl debugProcess) {
+    debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+      @Override
+      public void resumed(SuspendContext suspendContext) {
+        removeBreakpoint();
+      }
+
+      @Override
+      public void processDetached(DebugProcess process, boolean closedByUser) {
+        removeBreakpoint();
+      }
+
+      private void removeBreakpoint() {
+        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+          @Override
+          public void run() {
+            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
+          }
+        });
+        debugProcess.removeDebugProcessListener(this);
+      }
+    });
   }
 
   public final void updateUI() {

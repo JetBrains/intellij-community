@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class ChooseTypeExpression extends Expression {
   protected final SmartTypePointer myTypePointer;
   private final LookupElement[] myItems;
   private final PsiManager myManager;
+  private final boolean myForGroovy;
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
     this(constraints, manager, true, resolveScope);
@@ -55,6 +56,7 @@ public class ChooseTypeExpression extends Expression {
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, boolean forGroovy, GlobalSearchScope resolveScope) {
     myManager = manager;
+    myForGroovy = forGroovy;
     myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints, resolveScope));
     myItems = createItems(constraints, forGroovy);
   }
@@ -108,7 +110,7 @@ public class ChooseTypeExpression extends Expression {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      if (myForGroovy && type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return new TextResult(GrModifier.DEF);
       }
 

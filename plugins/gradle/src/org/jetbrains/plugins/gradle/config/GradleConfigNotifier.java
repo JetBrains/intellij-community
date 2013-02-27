@@ -55,6 +55,8 @@ public interface GradleConfigNotifier {
    * @see GradleSettings#getServiceDirectoryPath() 
    */
   void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath);
+
+  void onUseAutoImportChange(boolean oldValue, boolean newValue);
   
   /**
    * Gradle settings changes might affect project structure, e.g. switching from one gradle version to another one or from

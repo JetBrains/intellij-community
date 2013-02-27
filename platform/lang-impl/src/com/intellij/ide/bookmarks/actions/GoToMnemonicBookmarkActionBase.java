@@ -49,7 +49,7 @@ public abstract class GoToMnemonicBookmarkActionBase extends AnAction implements
 
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic((char)('0' + myNumber));
     if (bookmark != null) {
-      bookmark.navigate();
+      bookmark.navigate(true);
     }
   }
 }

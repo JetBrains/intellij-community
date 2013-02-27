@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,67 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-
+import org.jetbrains.annotations.NotNull;
 
 public class SourceUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SourceUtil");
 
+  private static final TokenSet REF_FILTER = TokenSet.orSet(
+    ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.ANNOTATION));
+
   private SourceUtil() { }
 
-  public static String getTextSkipWhiteSpaceAndComments(final ASTNode element) {
+  @NotNull
+  public static String getReferenceText(@NotNull PsiJavaCodeReferenceElement ref) {
+    final StringBuilder buffer = new StringBuilder();
+
+    ((TreeElement)ref.getNode()).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        if (!REF_FILTER.contains(leaf.getElementType())) {
+          buffer.append(leaf.getText());
+        }
+      }
+
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        if (!REF_FILTER.contains(composite.getElementType())) {
+          super.visitComposite(composite);
+        }
+      }
+    });
+
+    return buffer.toString();
+  }
+
+  @NotNull
+  public static String getReferenceText(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+    return LightTreeUtil.toFilteredString(tree, node, REF_FILTER);
+  }
+
+  /** @deprecated use {@link AstBufferUtil#getTextSkippingWhitespaceComments(ASTNode)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
     return AstBufferUtil.getTextSkippingWhitespaceComments(element);
   }
 
-  public static String getTextSkipWhiteSpaceAndComments(final LighterAST tree, final LighterASTNode node) {
+  /** @deprecated use {@link LightTreeUtil#toFilteredString(LighterAST, LighterASTNode, TokenSet)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String getTextSkipWhiteSpaceAndComments(LighterAST tree, LighterASTNode node) {
     return LightTreeUtil.toFilteredString(tree, node, ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
   }
 
-  public static TreeElement addParenthToReplacedChild(final IElementType parenthType, TreeElement newChild, PsiManager manager) {
+  public static TreeElement addParenthToReplacedChild(@NotNull IElementType parenthType,
+                                                      @NotNull TreeElement newChild,
+                                                      @NotNull PsiManager manager) {
     CompositeElement parenthExpr = ASTFactory.composite(parenthType);
 
     TreeElement dummyExpr = (TreeElement)newChild.clone();
@@ -56,9 +93,8 @@ public class SourceUtil {
 
     try {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-      parenthExpr =
-      (CompositeElement)SourceTreeToPsiMap.psiElementToTree(
-        codeStyleManager.reformat(SourceTreeToPsiMap.treeElementToPsi(parenthExpr)));
+      PsiElement formatted = codeStyleManager.reformat(SourceTreeToPsiMap.treeToPsiNotNull(parenthExpr));
+      parenthExpr = (CompositeElement)SourceTreeToPsiMap.psiToTreeNotNull(formatted);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e); // should not happen
@@ -68,7 +104,7 @@ public class SourceUtil {
     dummyExpr.rawReplaceWithList(newChild);
 
     newChild = parenthExpr;
-    // TODO remove explicit caches drop since this should be ok if we will use ChangeUtil for the modification 
+    // TODO remove explicit caches drop since this should be ok if we will use ChangeUtil for the modification
     TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
     return newChild;
   }

@@ -179,7 +179,8 @@ public class BlockSupportImpl extends BlockSupport {
       FileViewProvider viewProvider = fileImpl.getViewProvider();
       viewProvider.getLanguages();
       FileType fileType = viewProvider.getVirtualFile().getFileType();
-      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
+      String fileName = fileImpl.getName();
+      final LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getViewProvider().getModificationStamp());
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
@@ -191,7 +192,7 @@ public class BlockSupportImpl extends BlockSupport {
 
       if (newFile == null) {
         throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language +
-                  "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
+                  "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType + "; file name=" + fileName);
       }
 
       newFile.setOriginalFile(fileImpl);

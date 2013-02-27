@@ -801,6 +801,22 @@ public class StringUtil extends StringUtilRt {
     return testee.startsWith(firstPrefix) && testee.regionMatches(l1, secondPrefix, 0, l2);
   }
 
+  /**
+   * Equivalent to testee.startsWith(firstPrefix + secondPrefix + thirdPrefix) but avoids creating an object for concatenation.
+   */
+  public static boolean startsWithConcatenationOf(@NotNull String testee,
+                                                  @NotNull String firstPrefix,
+                                                  @NotNull String secondPrefix,
+                                                  @NotNull String thirdPrefix) {
+    int l1 = firstPrefix.length();
+    int l2 = secondPrefix.length();
+    int l3 = thirdPrefix.length();
+    if (testee.length() < l1 + l2 + l3) return false;
+    return testee.startsWith(firstPrefix)
+           && testee.regionMatches(l1, secondPrefix, 0, l2)
+           && testee.regionMatches(l1 + l2, thirdPrefix, 0, l3);
+  }
+
   @NotNull
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {

@@ -34,9 +34,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.PersistentFSConstants;
-import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
@@ -469,6 +468,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     //  }
     //}
     myContent = content;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{myVirtualFile=" + myVirtualFile + '}';
   }
 
   private interface Content {

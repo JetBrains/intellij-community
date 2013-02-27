@@ -213,6 +213,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public List<String> getInvalidRootUrls(OrderRootType type) {
+    if (myDisposed) return Collections.emptyList();
+
     final List<VirtualFilePointer> pointers = myRoots.get(type).getList();
     List<String> invalidPaths = null;
     for (VirtualFilePointer pointer : pointers) {

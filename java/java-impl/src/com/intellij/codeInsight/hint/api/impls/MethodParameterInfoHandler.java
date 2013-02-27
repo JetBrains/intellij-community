@@ -431,7 +431,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
-      updateMethodPresentation((PsiMethod)info.getElement(), getCandidateInfoSubstitutor(info), context);
+      PsiMethod method = (PsiMethod)info.getElement();
+      if (!method.isValid()) {
+        context.setUIComponentEnabled(false);
+        return;
+      }
+
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(info), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);
