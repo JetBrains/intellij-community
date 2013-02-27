@@ -461,7 +461,7 @@ public class EditorsSplitters extends JBPanel {
       final int index = window.findEditorIndex(window.findFileComposite(file));
       LOG.assertTrue(index != -1);
       window.setForegroundAt(index, getManager().getFileColor(file));
-      window.setWaveColor(index, getManager().isProblem(file) ? Color.red : null);
+      window.setWaveColor(index, getManager().isProblem(file) ? JBColor.red : null);
     }
   }
 

@@ -224,4 +224,17 @@ public abstract class SdkType implements SdkTypeId {
    */
   public void showCustomCreateUI(SdkModel sdkModel, JComponent parentComponent, Consumer<Sdk> sdkCreatedCallback) {
   }
+
+  /**
+   * Checks if the home directory of the specified SDK is valid. By default, checks that the directory points to a valid local
+   * path. Can be overridden for remote SDKs.
+   *
+   * @param sdk the SDK to validate the path for.
+   * @return true if the home path is valid, false otherwise.
+   * @since 12.1
+   */
+  public boolean sdkHasValidPath(@NotNull Sdk sdk) {
+    VirtualFile homeDir = sdk.getHomeDirectory();
+    return homeDir != null && homeDir.isValid();
+  }
 }
