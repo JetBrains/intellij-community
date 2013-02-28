@@ -16,6 +16,9 @@
 
 package com.intellij.tasks.context;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +39,7 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -137,6 +141,27 @@ public class WorkingContextManager {
   }
 
   private JBZipFile getTasksArchive(String postfix) throws IOException {
+    File file = getArchiveFile(postfix);
+    try {
+      return new JBZipFile(file);
+    }
+    catch (IOException e) {
+      file.delete();
+      JBZipFile zipFile = null;
+      try {
+        zipFile = new JBZipFile(file);
+        Notifications.Bus.notify(new Notification("Tasks", "Context Data Corrupted",
+                                                  "Context information history for " + myProject.getName() + " was corrupted.\n" +
+                                                  "The history was replaced with empty one.", NotificationType.ERROR), myProject);
+      }
+      catch (IOException e1) {
+        LOG.error("Can't repair form context data corruption", e1);
+      }
+      return zipFile;
+    }
+  }
+
+  private File getArchiveFile(String postfix) {
     String configPath = PathManager.getConfigPath(true);
     File tasksFolder = new File(configPath, TASKS_FOLDER);
     if (!tasksFolder.exists()) {
@@ -144,7 +169,7 @@ public class WorkingContextManager {
       tasksFolder.mkdir();
     }
     String projectName = myProject.getName();
-    return new JBZipFile(new File(tasksFolder, projectName + postfix));
+    return new File(tasksFolder, projectName + postfix);
   }
 
   public void restoreContext(@NotNull Task task) {
@@ -237,6 +262,10 @@ public class WorkingContextManager {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
 
+  @TestOnly
+  public File getContextFile() throws IOException {
+    return getArchiveFile(CONTEXT_ZIP_POSTFIX);
   }
 }
