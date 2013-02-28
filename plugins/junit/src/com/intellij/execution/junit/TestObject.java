@@ -62,7 +62,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -303,7 +302,7 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
-        IJSwingUtilities.invoke(new Runnable() {
+        handler.getOut().addRequest(new Runnable() {
           @Override
           public void run() {
             try {
@@ -318,7 +317,7 @@ public abstract class TestObject implements JavaCommandLine {
               }
             }
           }
-        });
+        }, queue);
       }
 
       @Override
