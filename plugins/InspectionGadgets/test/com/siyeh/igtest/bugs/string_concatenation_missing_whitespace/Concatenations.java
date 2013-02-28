@@ -8,5 +8,6 @@ class Concatenations {
     System.out.println("no:" + i);
     System.out.println("i" + i);
     System.out.println("i" + ((String)"j"));
+    System.out.println('{' + "a" + '\'');
   }
 }
