@@ -180,6 +180,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     String text = "";
     if (element != null) {
      // if (element instanceof PsiPackage) return;
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null || !containingFile.getViewProvider().isPhysical()) return;
 
       impls = getSelfAndImplementations(editor, element, createImplementationsSearcher());
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
