@@ -29,6 +29,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
@@ -275,6 +276,14 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
     data.setPatterns(patterns);
+    final Module module = TestNGPatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    if (module == null) {
+      data.setScope(TestSearchScope.WHOLE_PROJECT);
+      setModule(null);
+    }
+    else {
+      setModule(module);
+    }
     setGeneratedName();
   }
 
