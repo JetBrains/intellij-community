@@ -177,22 +177,36 @@ public class WorkingContextManager {
   }
 
   private synchronized boolean loadContext(String zipPostfix, String entryName) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         byte[] bytes = entry.getData();
         Document document = JDOMUtil.loadDocument(new String(bytes));
         Element rootElement = document.getRootElement();
         loadContext(rootElement);
-        archive.close();
         return true;
       }
     }
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      closeArchive(archive);
+    }
     return false;
+  }
+
+  private static void closeArchive(JBZipFile archive) {
+    if (archive != null) {
+      try {
+        archive.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public List<ContextInfo> getContextHistory() {
@@ -200,8 +214,9 @@ public class WorkingContextManager {
   }
 
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, new NullableFunction<JBZipEntry, ContextInfo>() {
         public ContextInfo fun(JBZipEntry entry) {
@@ -212,6 +227,9 @@ public class WorkingContextManager {
     catch (IOException e) {
       LOG.error(e);
       return Collections.emptyList();
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
@@ -228,16 +246,19 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(postfix);
+      archive = getTasksArchive(postfix);
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
         archive.eraseEntry(entry);
       }
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
@@ -247,8 +268,9 @@ public class WorkingContextManager {
   }
 
   private synchronized void pack(int max, int delta, String zipPostfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
         JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
@@ -257,10 +279,12 @@ public class WorkingContextManager {
           archive.eraseEntry(array[i]);
         }
       }
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
