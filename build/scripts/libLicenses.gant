@@ -248,7 +248,7 @@ libraryLicense(name: "Cucumber-Groovy", libraryName: "cucumber-groovy", version:
 libraryLicense(name: "proxy-vole", libraryName: "proxy-vole", version: "20120920", license: "New BSD License", url: "http://code.google.com/p/proxy-vole/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
 libraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino-js-1_7R4", version: "1.7R4", license: "MPL 1.1", url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html")
 libraryLicense(name: "asm-4.0-all", libraryName: "asm-4.0-all", version: "4.0", attachedTo: "ByteCodeViewer", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
-ibraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/", licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt")
+libraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "BSD", url: "http://www.jcraft.com/jzlib/", licenseUrl: "http://www.jcraft.com/jzlib/LICENSE.txt")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
