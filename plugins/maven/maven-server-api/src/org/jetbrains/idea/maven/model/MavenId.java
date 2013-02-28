@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public class MavenId implements Serializable {
+public class MavenId implements Serializable, MavenCoordinate {
   public static final String UNKNOWN_VALUE = "Unknown";
 
   @Nullable private final String myGroupId;

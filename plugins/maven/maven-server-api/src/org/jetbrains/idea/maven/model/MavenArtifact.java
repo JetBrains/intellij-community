@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 
-public class MavenArtifact implements Serializable {
+public class MavenArtifact implements Serializable, MavenCoordinate {
 
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
