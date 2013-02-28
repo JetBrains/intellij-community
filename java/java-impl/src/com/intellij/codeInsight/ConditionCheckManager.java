@@ -30,7 +30,10 @@ import java.util.List;
  */
 @State(
   name = "ConditionCheckManager",
-  storages = {@Storage(id = "dir", file = StoragePathMacros.PROJECT_CONFIG_DIR + "/checker.xml", scheme = StorageScheme.DIRECTORY_BASED)}
+  storages = {
+    @Storage(id = "dir", file = StoragePathMacros.PROJECT_CONFIG_DIR + "/checker.xml", scheme = StorageScheme.DIRECTORY_BASED),
+    @Storage(file = StoragePathMacros.PROJECT_FILE)
+  }
 )
 public class ConditionCheckManager implements PersistentStateComponent<ConditionCheckManager.State> {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private State state;
