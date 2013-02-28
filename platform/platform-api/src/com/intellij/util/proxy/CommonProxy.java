@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,7 +45,7 @@ public class CommonProxy extends ProxySelector {
   private final static long ourErrorInterval = 10000;
   private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
-  private static final Map<String, String> ourProps = new HashMap<String, String>();
+  private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<Map<String, String>>();
   static {
     ProxySelector.setDefault(ourInstance);
   }
@@ -94,9 +95,9 @@ public class CommonProxy extends ProxySelector {
   private static void assertSystemPropertiesSet() {
     final Map<String, String> props = getOldStyleProperties();
 
-    if (Comparing.equal(ourProps, props) && ! itsTime()) return;
-    ourProps.clear();
-    ourProps.putAll(props);
+    final Map<String, String> was = ourProps.get();
+    if (Comparing.equal(was, props) && ! itsTime()) return;
+    ourProps.set(props);
 
     final String message = getMessageFromProps(props);
     if (message != null) {
