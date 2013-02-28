@@ -16,8 +16,10 @@
 
 package com.intellij.tasks.context;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tasks.TaskManagerTestCase;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -53,6 +55,15 @@ public class ContextTest extends TaskManagerTestCase {
     assertEquals(3, history.size());
     System.out.println(history.get(0).date);
     assertEquals("/context2", history.get(0).name);
+  }
+
+  public void testContextFileRepair() throws Exception {
+    WorkingContextManager manager = getContextManager();
+    manager.saveContext("foo", "bar");
+    File file = manager.getContextFile();
+    assertTrue(file.length() > 0);
+    FileUtil.writeToFile(file, "123");   // corrupt it
+    manager.saveContext("foo", "bar");
   }
 
   private WorkingContextManager getContextManager() {

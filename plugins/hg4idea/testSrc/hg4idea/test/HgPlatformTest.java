@@ -55,6 +55,9 @@ public abstract class HgPlatformTest extends LightPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    cd(FileUtil.getTempDirectory());
+    hg("version");
+
     super.setUp();
 
     myProject = getProject();
@@ -63,11 +66,6 @@ public abstract class HgPlatformTest extends LightPlatformTestCase {
     createRepository(myProjectRoot);
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
   private static void setUpHgrc(VirtualFile repository) {
