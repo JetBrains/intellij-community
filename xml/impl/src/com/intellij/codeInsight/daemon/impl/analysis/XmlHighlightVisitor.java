@@ -26,7 +26,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
@@ -321,10 +320,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
               tag, attrName, null);
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
           final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
-          final LocalInspectionToolWrapper toolWrapper =
-            (LocalInspectionToolWrapper)profile.getInspectionTool(RequiredAttributesInspection.SHORT_NAME, tag);
-          if (toolWrapper != null) {
-            RequiredAttributesInspection inspection = (RequiredAttributesInspection)toolWrapper.getTool();
+          RequiredAttributesInspection inspection =
+            (RequiredAttributesInspection)profile.getUnwrappedTool(RequiredAttributesInspection.SHORT_NAME, tag);
+          if (inspection != null) {
             reportOneTagProblem(
               tag,
               attrName,
