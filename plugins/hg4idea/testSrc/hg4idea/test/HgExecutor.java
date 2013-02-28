@@ -29,29 +29,13 @@ public class HgExecutor extends Executor {
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
   //private static final String TEAMCITY_HG_EXECUTABLE_ENV = "TEAMCITY_HG_PATH";   //todo var for server testing
 
-  private static boolean myVersionPrinted;
-  private static final String HG_EXECUTABLE = findHgExecutable();
-
-  private static String findHgExecutable() {
-    return findExecutable("hg", "hg", "hg.exe", Arrays.asList(HG_EXECUTABLE_ENV));
-  }
+  private static final String HG_EXECUTABLE = findExecutable("hg", "hg", "hg.exe", Arrays.asList(HG_EXECUTABLE_ENV));
 
   public static String hg(String command) {
-    printVersionTheFirstTime();
     List<String> split = StringUtil.split(command, " ");
     split.add(0, HG_EXECUTABLE);
     log("hg " + command);
-    for(int attempt = 0; attempt < 3; attempt++) {
-      return run(split);
-    }
-    throw new RuntimeException("fatal error during execution of Hg command: " + command);
+    return run(split);
   }
 
-  private static void printVersionTheFirstTime() {
-    if (!myVersionPrinted) {
-      myVersionPrinted = true;
-      hg("version");
-    }
-  }
 }
-
