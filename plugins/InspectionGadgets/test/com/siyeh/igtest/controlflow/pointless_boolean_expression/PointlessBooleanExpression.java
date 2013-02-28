@@ -29,3 +29,10 @@ class PointlessBooleanExpression {
     boolean z = b != true;
   }
 }
+class Presley {
+  void elvis(Object king) {
+    if (true && king != null && king.hashCode() > 1) {
+      // blah
+    }
+  }
+}
