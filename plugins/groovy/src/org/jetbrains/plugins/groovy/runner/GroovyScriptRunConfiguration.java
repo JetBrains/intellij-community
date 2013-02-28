@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.runner;
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
@@ -94,11 +91,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   public void setWorkDir(String dir) {
-    workDir = dir;
+    workDir = ExternalizablePath.urlValue(dir);
   }
 
   public String getWorkDir() {
-    return workDir;
+    return ExternalizablePath.localPathValue(workDir);
   }
 
   @Nullable
@@ -426,10 +423,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Nullable
   public String getScriptPath() {
-    return scriptPath;
+    return ExternalizablePath.localPathValue(scriptPath);
   }
 
   public void setScriptPath(@Nullable String scriptPath) {
-    this.scriptPath = scriptPath;
+    this.scriptPath = ExternalizablePath.urlValue(scriptPath);
   }
 }
