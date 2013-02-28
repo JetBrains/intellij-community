@@ -1750,6 +1750,16 @@ public class ContainerUtil extends ContainerUtilRt {
 
     return result;
   }
+  @NotNull
+  public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
+    List<E> result = new ArrayList<E>();
+    for (Iterable<E> list : collections) {
+      for (E e : list) {
+        result.add(e);
+      }
+    }
+    return result;
+  }
 
   @NotNull
   public static <K,V> V[] convert(@NotNull K[] from, @NotNull V[] to, @NotNull Function<K,V> fun) {
