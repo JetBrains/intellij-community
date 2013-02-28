@@ -141,7 +141,8 @@ public class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceRootDes
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(CompileContext context, PrintWriter out) {
+    final BuildDataPaths dataPaths = context.getProjectDescriptor().getTargetsState().getDataPaths();
     final MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {
       out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));

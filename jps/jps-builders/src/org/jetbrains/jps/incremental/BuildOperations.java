@@ -51,13 +51,13 @@ public class BuildOperations {
     if (context.isProjectRebuild()) {
       FSOperations.markDirtyFiles(context, target, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
-      configuration.save();
+      configuration.save(context);
     }
     else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       IncProjectBuilder.clearOutputFiles(context, target);
       pd.dataManager.cleanTargetStorages(target);
-      configuration.save();
+      configuration.save(context);
     }
     else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);

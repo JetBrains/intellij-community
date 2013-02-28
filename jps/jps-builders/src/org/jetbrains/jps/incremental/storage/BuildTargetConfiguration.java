@@ -65,7 +65,7 @@ public class BuildTargetConfiguration {
   }
 
   public boolean isTargetDirty(CompileContext context) {
-    final String currentState = getCurrentState();
+    final String currentState = getCurrentState(context);
     if (!currentState.equals(myConfiguration)) {
       LOG.debug(myTarget + " configuration was changed:");
       LOG.debug("Old:");
@@ -88,13 +88,13 @@ public class BuildTargetConfiguration {
     return false;
   }
 
-  public void save() {
+  public void save(CompileContext context) {
     try {
       File configFile = getConfigFile();
       FileUtil.createParentDirs(configFile);
       Writer out = new BufferedWriter(new FileWriter(configFile));
       try {
-        String current = getCurrentState();
+        String current = getCurrentState(context);
         out.write(current);
         myConfiguration = current;
       }
@@ -115,18 +115,18 @@ public class BuildTargetConfiguration {
     return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "nonexistent-outputs.dat");
   }
 
-  private String getCurrentState() {
+  private String getCurrentState(CompileContext context) {
     String state = myCurrentState;
     if (state == null) {
-      myCurrentState = state = saveToString();
+      myCurrentState = state = saveToString(context);
     }
     return state;
   }
 
-  private String saveToString() {
+  private String saveToString(CompileContext context) {
     StringWriter out = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getDataPaths(), myTargetsState.getBuildRootIndex());
+    myTarget.writeConfiguration(context, new PrintWriter(out));
     return out.toString();
   }
 

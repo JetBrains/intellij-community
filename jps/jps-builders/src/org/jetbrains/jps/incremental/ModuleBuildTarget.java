@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetRegistry;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -153,7 +156,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(CompileContext context, PrintWriter out) {
     final JpsModule module = getModule();
 
     int fingerprint = getDependenciesFingerprint();
@@ -167,6 +170,12 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
     if (bytecodeTarget != null) {
       fingerprint += bytecodeTarget.hashCode();
+    }
+
+    final CompilerEncodingConfiguration encodingConfig = context.getProjectDescriptor().getEncodingConfiguration();
+    final String encoding = encodingConfig.getPreferredModuleEncoding(module);
+    if (encoding != null) {
+      fingerprint += encoding.hashCode();
     }
 
     out.write(Integer.toHexString(fingerprint));

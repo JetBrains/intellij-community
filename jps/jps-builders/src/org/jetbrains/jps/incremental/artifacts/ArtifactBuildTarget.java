@@ -106,9 +106,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(CompileContext context, PrintWriter out) {
     out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
-    for (ArtifactRootDescriptor descriptor : buildRootIndex.getTargetRoots(this, null)) {
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+    for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out);
     }
   }
