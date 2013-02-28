@@ -144,6 +144,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testMutableNullableFieldsTreatment() { doTest(); }
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
+  public void testSuperCallMayChangeFields() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
