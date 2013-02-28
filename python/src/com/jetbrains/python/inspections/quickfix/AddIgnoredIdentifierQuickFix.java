@@ -44,12 +44,10 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(context);
-    profile.modifyProfile(new Consumer<ModifiableModel>() {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    profile.modifyToolSettings(PyUnresolvedReferencesInspection.SHORT_NAME_KEY, context,  new Consumer<PyUnresolvedReferencesInspection>() {
       @Override
-      public void consume(ModifiableModel model) {
-        PyUnresolvedReferencesInspection inspection =
-          (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
+      public void consume(PyUnresolvedReferencesInspection inspection) {
         String name = myIdentifier.toString();
         if (myIgnoreAllAttributes) {
           name += END_WILDCARD;

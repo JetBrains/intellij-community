@@ -4,9 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -101,9 +99,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (!profile.isToolEnabled(key)) {
       return null;
     }
-    final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)profile.getInspectionTool(
-      PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-    final List<String> ignoredErrors = ((PyPep8Inspection)profileEntry.getTool()).ignoredErrors;
+    final PyPep8Inspection inspection = profile.getUnwrappedTool(PyPep8Inspection.KEY, file);
+    final List<String> ignoredErrors = inspection.ignoredErrors;
     final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().RIGHT_MARGIN;
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
   }
@@ -236,10 +233,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(new Consumer<ModifiableModel>() {
+      InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      profile.modifyToolSettings(PyPep8Inspection.KEY, file, new Consumer<PyPep8Inspection>() {
         @Override
-        public void consume(ModifiableModel model) {
-          PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+        public void consume(PyPep8Inspection tool) {
           tool.ignoredErrors.add(myCode);
         }
       });

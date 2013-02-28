@@ -2,7 +2,6 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -65,14 +64,13 @@ import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuic
  */
 public class PyUnresolvedReferencesInspection extends PyInspection {
   private static Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
+  public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY = Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
 
   public JDOMExternalizableStringList ignoredIdentifiers = new JDOMExternalizableStringList();
 
   public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-    final LocalInspectionToolWrapper profileEntry =
-      (LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(PyUnresolvedReferencesInspection.class.getSimpleName(), element);
-    return (PyUnresolvedReferencesInspection)profileEntry.getTool();
+    return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY, element);
   }
 
   @Nls
