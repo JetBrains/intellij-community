@@ -15,16 +15,17 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 /**
@@ -34,18 +35,32 @@ public class JavaFxScopeEnlager extends UseScopeEnlarger {
   @Nullable
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
+    PsiClass containingClass = null;
     if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(field.getProject());
-        return new DelegatingGlobalSearchScope(projectScope){
-          @Override
-          public boolean contains(VirtualFile file) {
-            return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
-          }
-        };
+      containingClass = ((PsiField)element).getContainingClass();
+    }
+    else if (element instanceof PsiParameter) {
+      final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
+      if (declarationScope instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)declarationScope)) {
+        containingClass = ((PsiMethod)declarationScope).getContainingClass();
       }
     }
+
+    if (containingClass != null) {
+      if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.PRIVATE) || element instanceof PsiParameter) {
+        final Project project = element.getProject();
+        if (!JavaFxControllerClassIndex.findFxmlWithController(project, containingClass.getQualifiedName()).isEmpty()) {
+          final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+          return new DelegatingGlobalSearchScope(projectScope){
+            @Override
+            public boolean contains(VirtualFile file) {
+              return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
+            }
+          };
+        }
+      }
+    } 
+
     return null;
   }
 }
