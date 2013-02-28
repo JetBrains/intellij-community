@@ -302,7 +302,7 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
-        handler.getOut().addRequest(new Runnable() {
+        final Runnable runnable = new Runnable() {
           @Override
           public void run() {
             try {
@@ -317,7 +317,12 @@ public abstract class TestObject implements JavaCommandLine {
               }
             }
           }
-        }, queue);
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          handler.getOut().addRequest(runnable, queue);
+        }
       }
 
       @Override
