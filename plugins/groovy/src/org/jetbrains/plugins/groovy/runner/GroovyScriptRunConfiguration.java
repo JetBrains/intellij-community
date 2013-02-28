@@ -91,11 +91,11 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   public void setWorkDir(String dir) {
-    workDir = ExternalizablePath.urlValue(dir);
+    workDir = dir;
   }
 
   public String getWorkDir() {
-    return ExternalizablePath.localPathValue(workDir);
+    return workDir;
   }
 
   @Nullable
@@ -142,12 +142,12 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
     readModule(element);
-    scriptPath = JDOMExternalizer.readString(element, "path");
+    scriptPath = ExternalizablePath.localPathValue(JDOMExternalizer.readString(element, "path"));
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
     final String wrk = JDOMExternalizer.readString(element, "workDir");
     if (!".".equals(wrk)) {
-      workDir = wrk;
+      workDir = ExternalizablePath.localPathValue(wrk);
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     envs.clear();
@@ -157,10 +157,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     writeModule(element);
-    JDOMExternalizer.write(element, "path", scriptPath);
+    JDOMExternalizer.write(element, "path", ExternalizablePath.urlValue(scriptPath));
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "params", scriptParams);
-    JDOMExternalizer.write(element, "workDir", workDir);
+    JDOMExternalizer.write(element, "workDir", ExternalizablePath.urlValue(workDir));
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
     JDOMExternalizer.writeMap(element, envs, null, "env");
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
@@ -423,10 +423,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Nullable
   public String getScriptPath() {
-    return ExternalizablePath.localPathValue(scriptPath);
+    return scriptPath;
   }
 
   public void setScriptPath(@Nullable String scriptPath) {
-    this.scriptPath = ExternalizablePath.urlValue(scriptPath);
+    this.scriptPath = scriptPath;
   }
 }
