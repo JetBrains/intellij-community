@@ -340,6 +340,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @Override
+  public <T extends InspectionProfileEntry> T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element) {
+    //noinspection unchecked
+    return (T) getUnwrappedTool(shortNameKey.toString(), element);
+  }
+
+  @Override
   public void modifyProfile(Consumer<ModifiableModel> modelConsumer) {
     ModifiableModel model = getModifiableModel();
     modelConsumer.consume(model);
@@ -349,6 +355,20 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public <T extends InspectionProfileEntry> void modifyToolSettings(final Key<T> shortNameKey,
+                                                                    @NotNull final PsiElement psiElement,
+                                                                    final Consumer<T> toolConsumer) {
+    modifyProfile(new Consumer<ModifiableModel>() {
+      @Override
+      public void consume(ModifiableModel model) {
+        InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
+        //noinspection unchecked
+        toolConsumer.consume((T) tool);
+      }
+    });
   }
 
   @Override

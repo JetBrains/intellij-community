@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
@@ -34,7 +35,7 @@ public interface InspectionProfile extends Profile {
   HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element);
 
   /**
-   * If you need to modify tool's settings, please use {@link #modifyProfile(com.intellij.util.Consumer)}
+   * If you need to modify tool's settings, please use {@link #modifyToolSettings}
    */
   InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element);
 
@@ -44,7 +45,23 @@ public interface InspectionProfile extends Profile {
   /** Returns (unwrapped) inspection */
   InspectionProfileEntry getUnwrappedTool(@NotNull String shortName, @NotNull PsiElement element);
 
+  /** Returns (unwrapped) inspection */
+  <T extends InspectionProfileEntry>
+  T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
+
   void modifyProfile(Consumer<ModifiableModel> modelConsumer);
+
+  /**
+   * Allows a plugin to modify the settings of the inspection tool with the specified ID programmatically, without going through
+   * the settings dialog.
+   *
+   * @param shortNameKey the ID of the tool to change.
+   * @param psiElement the element for which the settings should be changed.
+   * @param toolConsumer the callback that receives the tool.
+   * @since 12.1
+   */
+  <T extends InspectionProfileEntry>
+  void modifyToolSettings(Key<T> shortNameKey, @NotNull PsiElement psiElement, Consumer<T> toolConsumer);
 
   /**
    * @param element context element
