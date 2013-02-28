@@ -244,7 +244,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
   @Override
   @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, final Set<PsiMember> membersToMove) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> afterFields = new ArrayList<PsiField>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
@@ -256,7 +256,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof PsiField) {
               final PsiField psiField = (PsiField)psiElement;
-              if (psiField.getContainingClass() == targetClass && !afterFields.contains(psiField)) {
+              if ((psiField.getContainingClass() == targetClass || membersToMove.contains(psiField))&& !afterFields.contains(psiField)) {
                 afterFields.add(psiField);
               }
             }
