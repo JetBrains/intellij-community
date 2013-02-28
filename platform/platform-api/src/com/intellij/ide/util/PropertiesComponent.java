@@ -84,8 +84,9 @@ public abstract class PropertiesComponent {
     try {
       for (Field field : object.getClass().getDeclaredFields()) {
         field.setAccessible(true);
-        if (field.isAnnotationPresent(PropertyName.class)) {
-          final String name = field.getAnnotation(PropertyName.class).value();
+        PropertyName annotation = field.getAnnotation(PropertyName.class);
+        if (annotation != null) {
+          final String name = annotation.value();
           setValue(name, String.valueOf(field.get(object)));
         }
       }
@@ -100,10 +101,10 @@ public abstract class PropertiesComponent {
     try {
       for (Field field : object.getClass().getDeclaredFields()) {
         field.setAccessible(true);
-        if (field.isAnnotationPresent(PropertyName.class)) {
+        final PropertyName annotation = field.getAnnotation(PropertyName.class);
+        if (annotation != null) {
           final Class<?> type = field.getType();
 
-          final PropertyName annotation = field.getAnnotation(PropertyName.class);
           String defaultValue = annotation.defaultValue();
           if (PropertyName.NOT_SET.equals(defaultValue)) {
             if (type.equals(boolean.class))     {defaultValue = String.valueOf(field.getBoolean(object));}
