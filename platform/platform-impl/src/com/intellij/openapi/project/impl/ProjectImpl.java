@@ -16,6 +16,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -351,6 +352,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             catch (IOException e) {
               LOG.info("Unable to store project name to: " + nameFile.getPath());
             }
+            RecentProjectsManagerBase.getInstance().clearNameCache();
           }
         }
       }
