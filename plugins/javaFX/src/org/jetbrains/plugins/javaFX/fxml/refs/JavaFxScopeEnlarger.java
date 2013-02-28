@@ -31,7 +31,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 /**
  * User: anna
  */
-public class JavaFxScopeEnlager extends UseScopeEnlarger {
+public class JavaFxScopeEnlarger extends UseScopeEnlarger {
   @Nullable
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
