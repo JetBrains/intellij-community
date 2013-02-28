@@ -90,7 +90,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  public String UPDATE_FILTER_SCOPE_NAME;
+  public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = false;
   public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
@@ -145,7 +145,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 
-  public String ACTIVE_VCS_NAME;
+  public String ACTIVE_VCS_NAME = null;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
