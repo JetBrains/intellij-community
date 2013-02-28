@@ -115,6 +115,11 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
         SAX_PARSER.parse(new InputSource(new StringReader(content)), new DefaultHandler() {
           public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             className[0] = attributes.getValue("", FxmlConstants.FX_CONTROLLER);
+            if (className[0] == null) {
+              if (FxmlConstants.FX_ROOT.equals(qName)) {
+                className[0] = attributes.getValue("", FxmlConstants.TYPE);
+              }
+            }
             throw new SAXException("controllers are accepted on top level only");
           }
         });
