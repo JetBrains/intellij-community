@@ -16,13 +16,14 @@
 package org.jetbrains.plugins.gradle.autoimport;
 
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
  * @since 2/18/13 8:29 PM
  */
-public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUserProjectChange> implements GradleUserProjectChange<T> {
+public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUserProjectChange<T>> implements GradleUserProjectChange<T> {
   
   @SuppressWarnings("unchecked")
   @Nullable
@@ -34,5 +35,10 @@ public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUs
   @Override
   public void loadState(T state) {
     XmlSerializerUtil.copyBean(state, this); 
+  }
+
+  @Override
+  public int compareTo(@NotNull GradleUserProjectChange<?> o) {
+    return getClass().getName().compareTo(o.getClass().getName());
   }
 }

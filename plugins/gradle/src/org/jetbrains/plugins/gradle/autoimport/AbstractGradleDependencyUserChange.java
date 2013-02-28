@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 2/19/13 8:54 AM
  */
-public abstract class AbstractGradleDependencyUserChange<T extends AbstractGradleDependencyUserChange>
-  extends AbstractGradleModuleAwareUserChange
+public abstract class AbstractGradleDependencyUserChange<T extends AbstractGradleDependencyUserChange<T>>
+  extends AbstractGradleModuleAwareUserChange<T>
 {
 
   @Nullable
@@ -66,11 +66,11 @@ public abstract class AbstractGradleDependencyUserChange<T extends AbstractGradl
     return true;
   }
 
-  @SuppressWarnings({"CovariantCompareTo", "unchecked"})
+  @SuppressWarnings({"unchecked"})
   @Override
-  public int compareTo(AbstractGradleModuleAwareUserChange o) {
+  public int compareTo(@NotNull GradleUserProjectChange<?> o) {
     int cmp = super.compareTo(o);
-    if (cmp != 0) {
+    if (cmp != 0 || (!(o instanceof AbstractGradleDependencyUserChange))) {
       return cmp;
     }
 

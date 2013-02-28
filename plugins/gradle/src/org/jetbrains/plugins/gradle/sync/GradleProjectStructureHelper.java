@@ -250,6 +250,7 @@ public class GradleProjectStructureHelper {
     return null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String libraryName,
                                                     @NotNull ModifiableRootModel model)
@@ -386,6 +387,7 @@ public class GradleProjectStructureHelper {
     return null;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public ModuleOrderEntry findIdeModuleDependency(@NotNull GradleModuleDependency dependency, @NotNull ModifiableRootModel model) {
     for (OrderEntry entry : model.getOrderEntries()) {

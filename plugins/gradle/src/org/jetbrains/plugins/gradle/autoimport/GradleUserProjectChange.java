@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 2/18/13 8:03 PM
  */
-public interface GradleUserProjectChange<T extends GradleUserProjectChange> extends PersistentStateComponent<T>, Comparable<T> {
+public interface GradleUserProjectChange<T extends GradleUserProjectChange>
+  extends PersistentStateComponent<T>, Comparable<GradleUserProjectChange<?>>
+{
 
   void invite(@NotNull GradleUserProjectChangeVisitor visitor);
 }
