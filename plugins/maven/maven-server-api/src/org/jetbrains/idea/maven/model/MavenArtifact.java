@@ -49,6 +49,8 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
 
   private transient volatile String myLibraryNameCache;
 
+  private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
+
   public MavenArtifact(String groupId,
                        String artifactId,
                        String version,
@@ -126,7 +128,19 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
   }
 
   public boolean isResolved() {
-    return myResolved && !myStubbed && myFile.exists();
+    if (myResolved && !myStubbed) {
+      long currentTime = System.currentTimeMillis();
+
+      if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
+        if (myFile.exists()) {
+          myLastFileCheckTimeStamp = currentTime;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   @NotNull
