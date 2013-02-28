@@ -40,7 +40,7 @@ import java.util.Map;
  *         Date: 11/7/11
  */
 public class XmlImportOptimizer implements ImportOptimizer {
-
+  
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
   private final Condition<ProblemDescriptor> myCondition = new Condition<ProblemDescriptor>() {
     @Override

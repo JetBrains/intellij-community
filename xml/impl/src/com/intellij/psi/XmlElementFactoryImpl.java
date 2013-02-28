@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,9 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
                                                    XmlFileType.INSTANCE);
     XmlTag tag = document.getRootTag();
     assert tag != null;
-    return tag.getAttributes()[0];
+    XmlAttribute[] attributes = tag.getAttributes();
+    LOG.assertTrue(attributes.length == 1, tag.getText());
+    return attributes[0];
   }
 
   @NotNull
@@ -96,4 +99,6 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     assert document != null;
     return document;
   }
+
+  private final static Logger LOG = Logger.getInstance(XmlElementFactoryImpl.class);
 }

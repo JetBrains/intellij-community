@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.diff;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -52,6 +53,6 @@ public enum DirDiffOperation {
       case EQUAL:
       case NONE:
     }
-    return Color.BLACK;
+    return JBColor.foreground;
   }
 }

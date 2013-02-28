@@ -32,6 +32,10 @@ public class CollectionComboBoxModel extends AbstractCollectionComboBoxModel {
     myItems = Collections.unmodifiableList(items);
   }
 
+  public CollectionComboBoxModel(List items) {
+    super(items.isEmpty() ? null : items.get(0));
+    myItems = items;
+  }
 
   @NotNull
   final protected List getItems() {

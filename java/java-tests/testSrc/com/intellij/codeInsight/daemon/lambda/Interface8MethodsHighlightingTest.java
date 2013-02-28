@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.codeInspection.deprecation.DeprecatedDefenderSyntaxInspection;
 import org.jetbrains.annotations.NonNls;
 
 public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -29,11 +28,7 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testExtensionMethods() { doTest(false, false); }
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
-
-  public void testExtensionMethodSyntax() {
-    enableInspectionTools(DeprecatedDefenderSyntaxInspection.class);
-    doTest(true, false);
-  }
+  public void testCyclicSubstitutor() { doTest(false, false); }
 
   private void doTest() {
     doTest(false, false);

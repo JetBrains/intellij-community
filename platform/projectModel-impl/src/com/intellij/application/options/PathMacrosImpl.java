@@ -46,6 +46,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
   private final Map<String, String> myMacros = new HashMap<String, String>();
+  private int myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -196,6 +197,16 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
+  public int getModificationStamp() {
+    myLock.readLock().lock();
+    try {
+      return myModificationStamp;
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
   public static Map<String, String> getGlobalSystemMacros() {
     final Map<String, String> map = new HashMap<String, String>();
     map.put(APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
@@ -236,6 +247,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.clear();
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -259,6 +271,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.put(name, value);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -271,6 +284,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.remove(name);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -283,6 +297,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       LOG.assertTrue(value != null);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -322,6 +337,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       }
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }

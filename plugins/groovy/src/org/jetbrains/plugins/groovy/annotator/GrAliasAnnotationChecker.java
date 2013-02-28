@@ -21,12 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -39,32 +36,20 @@ import java.util.Set;
  * @author Max Medvedev
  */
 public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
-  @Nullable
-  private static GrTypeDefinition resolveAlias(@NotNull GrAnnotation annotation) {
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    final PsiElement resolved = ref.resolve();
-    if (GrAnnotationCollector.findAnnotationCollector(resolved) != null) {
-      assert resolved instanceof GrTypeDefinition;
-      return ((GrTypeDefinition)(resolved));
-    }
-
-
-    return null;
-  }
 
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    final GrTypeDefinition alias = resolveAlias(annotation);
-    if (alias == null) {
+    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
+    if (annotationCollector == null) {
       return false;
     }
 
     final GrCodeReferenceElement ref = annotation.getClassReference();
 
-    final GrModifierList list = alias.getModifierList();
-    assert list != null;
-    for (GrAnnotation anno : list.getRawAnnotations()) {
+    final ArrayList<GrAnnotation> aliasedAnnotations = ContainerUtil.newArrayList();
+    GrAnnotationCollector.collectAnnotations(aliasedAnnotations, annotation, annotationCollector);
+
+    for (GrAnnotation anno : aliasedAnnotations) {
       if (GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(anno.getQualifiedName())) continue;
       final String description = CustomAnnotationChecker.isAnnotationApplicable(anno, annotation.getParent());
       if (description != null) {
@@ -77,14 +62,12 @@ public class GrAliasAnnotationChecker extends CustomAnnotationChecker {
 
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
-    final GrTypeDefinition alias = resolveAlias(annotation);
-    if (alias == null) {
+    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(annotation);
+    if (annotationCollector == null) {
       return false;
     }
 
     final ArrayList<GrAnnotation> annotations = ContainerUtil.newArrayList();
-    final GrAnnotation annotationCollector = GrAnnotationCollector.findAnnotationCollector(alias);
-    assert annotationCollector != null;
     final Set<String> usedAttributes = GrAnnotationCollector.collectAnnotations(annotations, annotation, annotationCollector);
 
     final GrCodeReferenceElement ref = annotation.getClassReference();

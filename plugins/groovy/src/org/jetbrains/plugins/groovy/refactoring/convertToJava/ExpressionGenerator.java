@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -455,14 +454,11 @@ public class ExpressionGenerator extends Generator {
           getRValue(expression)
         };
         GroovyResolveResult[] candidates = type != null
-                                           ? ResolveUtil
-                                             .getMethodCandidates(type, "setProperty", expression, args[0].getType(), args[1].getType())
+                                           ? ResolveUtil.getMethodCandidates(type, "setProperty", expression, args[0].getType(), args[1].getType())
                                            : GroovyResolveResult.EMPTY_ARRAY;
-        final PsiElement method = PsiImplUtil.extractUniqueElement(candidates);
-
-        if (method instanceof PsiMethod) {
-          writeAssignmentWithSetter(qualifier, (PsiMethod)method, args, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY,
-                                    expression);
+        final PsiMethod method = PsiImplUtil.extractUniqueElement(candidates);
+        if (method != null) {
+          writeAssignmentWithSetter(qualifier, method, args, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY, expression);
           return;
         }
       }
@@ -1017,10 +1013,9 @@ public class ExpressionGenerator extends Generator {
       }
       else {
         //unresolved reference
-        final String refName = referenceName;
-        if (refName != null) {
+        if (referenceName != null) {
           if (PsiUtil.isAccessedForWriting(referenceExpression)) {
-            builder.append(refName);
+            builder.append(referenceName);
           }
           else {
             PsiType stringType = PsiType.getJavaLangString(referenceExpression.getManager(), referenceExpression.getResolveScope());
@@ -1031,10 +1026,10 @@ public class ExpressionGenerator extends Generator {
                                                : GroovyResolveResult.EMPTY_ARRAY;
             final PsiElement method = PsiImplUtil.extractUniqueElement(candidates);
             if (method != null) {
-              builder.append("getProperty(\"").append(refName).append("\")");
+              builder.append("getProperty(\"").append(referenceName).append("\")");
             }
             else {
-              builder.append(refName);
+              builder.append(referenceName);
             }
           }
         }
@@ -1256,8 +1251,6 @@ public class ExpressionGenerator extends Generator {
       }
     }
     final PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
-    final PsiManager manager = expression.getManager();
-    final GlobalSearchScope resolveScope = expression.getResolveScope();
 
     final GrExpression[] exprArgs = argList.getExpressionArguments();
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();

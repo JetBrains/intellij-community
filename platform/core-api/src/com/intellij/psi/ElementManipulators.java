@@ -37,13 +37,19 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   }
 
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
+    //noinspection unchecked
     return INSTANCE.forClass(element.getClass());
   }
 
   public static int getOffsetInElement(final PsiElement element) {
-    final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    LOG.assertTrue(manipulator != null, element.getClass().getName());
+    final ElementManipulator<PsiElement> manipulator = getNotNullManipulator(element);
     return manipulator.getRangeInElement(element).getStartOffset();
+  }
+
+  private static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(T element) {
+    final ElementManipulator<T> manipulator = getManipulator(element);
+    LOG.assertTrue(manipulator != null, element.getClass().getName());
+    return manipulator;
   }
 
   public static TextRange getValueTextRange(final PsiElement element) {
@@ -61,5 +67,10 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     }
 
     return valueTextRange.substring(text);
+  }
+
+  public static <T extends PsiElement> T handleContentChange(T element, String text) {
+    final ElementManipulator<T> manipulator = getNotNullManipulator(element);
+    return manipulator.handleContentChange(element, text);
   }
 }

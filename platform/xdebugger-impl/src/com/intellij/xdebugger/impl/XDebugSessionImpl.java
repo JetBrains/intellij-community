@@ -588,20 +588,28 @@ public class XDebugSessionImpl implements XDebugSession {
     positionReached(suspendContext);
 
     if (breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint)breakpoint).isTemporary()) {
-      addSessionListener(new XDebugSessionAdapter() {
-        @Override
-        public void sessionResumed() {
-          DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-            @Override
-            public void run() {
-              XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
-            }
-          });
-          removeSessionListener(this);
-        }
-      });
+      handleTemporaryBreakpointHit(breakpoint);
     }
     return true;
+  }
+
+  private void handleTemporaryBreakpointHit(final XBreakpoint<?> breakpoint) {
+    addSessionListener(new XDebugSessionAdapter() {
+      private void removeBreakpoint() {
+        XDebuggerUtil.getInstance().removeBreakpoint(myProject, breakpoint);
+        removeSessionListener(this);
+      }
+
+      @Override
+      public void sessionResumed() {
+        removeBreakpoint();
+      }
+
+      @Override
+      public void sessionStopped() {
+        removeBreakpoint();
+      }
+    });
   }
 
   private void processDependencies(final XBreakpoint<?> breakpoint) {

@@ -22,8 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,13 +45,19 @@ public class HgUiUtil {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final VirtualFile repo : repos) {
-          new HgTagBranchCommand(project, repo).listBranches(new Consumer<List<HgTagBranch>>() {
-            @Override
-            public void consume(final List<HgTagBranch> branches) {
-              branchesForRepos.put(repo, branches);
-            }
-          });
+          HgCommandResult result = new HgTagBranchCommand(project, repo).collectBranches();
+          if (result == null) {
+            indicator.cancel();
+            return;
+          }
+          branchesForRepos.put(repo, HgTagBranchCommand.parseResult(result));
         }
+      }
+
+      @Override
+      public void onCancel() {
+        new HgCommandResultNotifier(project)
+          .notifyError(null, "Mercurial command failed", HgVcsMessages.message("hg4idea.branches.error.description"));
       }
 
       @Override

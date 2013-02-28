@@ -104,6 +104,7 @@ public abstract class PluginManagerMain implements Disposable {
   protected final MyPluginsFilter myFilter = new MyPluginsFilter();
   protected PluginManagerUISettings myUISettings;
   private boolean myDisposed = false;
+  private boolean myBusy = false;
 
   public PluginManagerMain(
     PluginManagerUISettings uiSettings) {
@@ -249,13 +250,12 @@ public abstract class PluginManagerMain implements Disposable {
       public void finished() {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
+            setDownloadStatus(false);
             if (list != null && errorMessages.isEmpty()) {
               modifyPluginsList(list);
               propagateUpdates(list);
-              setDownloadStatus(false);
             }
             else if (!errorMessages.isEmpty()) {
-              setDownloadStatus(false);
               if (0 == Messages.showOkCancelDialog(
                 IdeBundle.message("error.list.of.plugins.was.not.loaded", StringUtil.join(errorMessages, ", ")),
                 IdeBundle.message("title.plugins"),
@@ -273,6 +273,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void setDownloadStatus(boolean status) {
     pluginTable.setPaintBusy(status);
+    myBusy = status;
   }
 
   protected void loadAvailablePlugins() {
@@ -564,6 +565,11 @@ public abstract class PluginManagerMain implements Disposable {
     public void actionPerformed(AnActionEvent e) {
       loadAvailablePlugins();
       myFilter.setFilter("");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(!myBusy);
     }
   }
 }

@@ -342,7 +342,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         // mark the window as "last activated" windows and thus
         // some action like navigation up/down in stactrace wont
         // work correctly
-        window.activate(null, false, false, false);
+        window.activate(null, false, false);
       }
     });
   }
@@ -391,8 +391,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager,
-                                                                      final RunContentDescriptor descriptor,
+  private static RunContentDescriptor chooseReuseContentForDescriptor(@NotNull ContentManager contentManager,
+                                                                      @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName) {
     Content content = null;
@@ -403,20 +403,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid()) content = attachedContent;
+      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) content = attachedContent;
     }
     //Stage three: choose the content with name we prefer
-    if (content == null && preferredName != null) {
+    if (content == null) {
       content = getContentFromManager(contentManager, preferredName, executionId);
-    }
-    //Stage four: try to get current selected content
-    if (content == null) {
-      content = contentManager.getSelectedContent();
-      if (content != null && content.isPinned()) content = null;
-    }
-    //Stage five: content is still null and every "old good" content is acceptable
-    if (content == null) {
-      content = getContentFromManager(contentManager, null, executionId);
     }
     if (content == null || !isTerminated(content) || (content.getExecutionId() == executionId && executionId != 0)) {
       return null;
@@ -432,7 +423,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   private static Content getContentFromManager(ContentManager contentManager, @Nullable String preferredName, long executionId) {
-    Content[] contents = contentManager.getContents();
+    ArrayList<Content> contents = new ArrayList<Content>(Arrays.asList(contentManager.getContents()));
+    Content first = contentManager.getSelectedContent();
+    if (first != null && contents.remove(first)) {
+      contents.add(0, first);
+    }
     for (Content c : contents) {
       if (c == null || c.isPinned() || !isTerminated(c) || (c.getExecutionId() == executionId && executionId != 0))
         continue;
@@ -442,9 +437,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         return c;
       }
     }
-    return null;
+    return preferredName != null  && !contents.isEmpty() ? getContentFromManager(contentManager, null, executionId) : null;
   }
 
+  @NotNull
   private ContentManager getContentManagerForRunner(final Executor executor) {
     final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(executor.getToolWindowId());
     if (contentManager == null) {

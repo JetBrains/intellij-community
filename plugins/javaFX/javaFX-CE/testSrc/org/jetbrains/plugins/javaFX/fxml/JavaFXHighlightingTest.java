@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
@@ -95,6 +93,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testNoParamsHandler() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doDoTest(false, false);
+  }
+
   private void doTestIdController() throws Exception {
     final String controllerClassName = getTestName(false) + "Controller";
     configureByFiles(null, getTestName(true) + ".fxml", controllerClassName + ".java");
@@ -119,6 +122,15 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
   }
 
+  public void testCustomComponent_Fields() throws Exception {
+    configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/_CustomVBox.java");
+    doDoTest(false, false);
+  }
+
+  public void testInjectedController() throws Exception {
+    doTestNavigation("MyController", "label",  "injected/" + getTestName(true) + ".fxml", "injected/FooVBox.java", "injected/MyController.java");
+  }
+
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
     doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
   }
@@ -137,6 +149,18 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     final PsiField resultField = resultClass.findFieldByName(resultFieldName, false);
     assertNotNull(resultField);
     assertEquals(resultField, reference.resolve());
+  }
+
+  public void testNavigationFromMainToFxml() throws Exception {
+    configureByFiles(null, getTestName(false) + ".java", getTestName(true) + ".fxml");
+    final int offset = myEditor.getCaretModel().getOffset();
+    final PsiReference reference = myFile.findReferenceAt(offset);
+    assertNotNull(reference);
+    final PsiElement resolve = reference.resolve();
+    assertNotNull(resolve);
+    final PsiFile containingFile = resolve.getContainingFile();
+    assertNotNull(containingFile);
+    assertEquals(getTestName(true) + ".fxml", containingFile.getName());
   }
 
   public void testSourceAttrRecognition() throws Exception {

@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -290,17 +289,17 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testDirectoryOverlapping() throws Exception {
-    final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File fileInTopDir = new File(topDir, "file1.txt"); FileUtilRt.createIfNotExists(fileInTopDir);
-    final File subDir = new File(topDir, "sub");  FileUtil.createDirectory(subDir);
-    final File fileInSubDir = new File(subDir, "file2.txt"); FileUtilRt.createIfNotExists(fileInSubDir);
-    final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File fileInSideDir = new File(sideDir, "file3.txt"); FileUtilRt.createIfNotExists(fileInSideDir);
+    File topDir = IoTestUtil.createTestDir("top");
+    File fileInTopDir = IoTestUtil.createTestFile(topDir, "file1.txt");
+    File subDir = IoTestUtil.createTestDir(topDir, "sub");
+    File fileInSubDir = IoTestUtil.createTestFile(subDir, "file2.txt");
+    File sideDir = IoTestUtil.createTestDir("side");
+    File fileInSideDir = IoTestUtil.createTestFile(sideDir, "file3.txt");
     refresh(topDir);
     refresh(sideDir);
 
-    final LocalFileSystem.WatchRequest requestForSubDir = watch(subDir);
-    final LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
+    LocalFileSystem.WatchRequest requestForSubDir = watch(subDir);
+    LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
     try {
       myAccept = true;
       FileUtil.writeToFile(fileInTopDir, "new content");
@@ -308,7 +307,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       FileUtil.writeToFile(fileInSideDir, "new content");
       assertEvent(VFileContentChangeEvent.class, fileInSubDir.getAbsolutePath(), fileInSideDir.getAbsolutePath());
 
-      final LocalFileSystem.WatchRequest requestForTopDir = watch(topDir);
+      LocalFileSystem.WatchRequest requestForTopDir = watch(topDir);
       try {
         myAccept = true;
         FileUtil.writeToFile(fileInTopDir, "newer content");
@@ -577,14 +576,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
 
   @NotNull
-  private LocalFileSystem.WatchRequest watch(final File watchFile) {
+  private LocalFileSystem.WatchRequest watch(File watchFile) {
     return watch(watchFile, true);
   }
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) {
     final Ref<LocalFileSystem.WatchRequest> request = Ref.create();
-    getEvents("events to add watch "+watchFile, new Runnable() {
+    getEvents("events to add watch " + watchFile, new Runnable() {
       @Override
       public void run() {
         request.set(myFileSystem.addRootToWatch(watchFile.getAbsolutePath(), recursive));
@@ -604,8 +603,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     });
   }
 
-  private VirtualFile refresh(final File file) {
-    final VirtualFile vFile = myFileSystem.refreshAndFindFileByIoFile(file);
+  private VirtualFile refresh(File file) {
+    VirtualFile vFile = myFileSystem.refreshAndFindFileByIoFile(file);
     assertNotNull(file.toString(), vFile);
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
       @Override
@@ -617,10 +616,10 @@ public class FileWatcherTest extends PlatformLangTestCase {
     return vFile;
   }
 
-  private void delete(@NotNull final File file) throws IOException {
-    final VirtualFile vFile = myFileSystem.findFileByIoFile(file);
+  private void delete(File file) throws IOException {
+    VirtualFile vFile = myFileSystem.findFileByIoFile(file);
     if (vFile != null) {
-      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         vFile.delete(this);
       }
@@ -633,28 +632,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
-  private void assertEvent(final Class<? extends VFileEvent> type, final String... paths) {
-    final List<VFileEvent> events = getEvents(type+"",null);
-    assertEquals(events.toString(), paths.length, events.size());
-
-    final Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {
-      @Override
-      public String fun(final String path) {
-        return FileUtil.toSystemIndependentName(path);
-      }
-    });
-
-    for (final VFileEvent event : events) {
-      assertTrue(event.toString(), type.isInstance(event));
-
-      final VirtualFile eventFile = event.getFile();
-      assertNotNull(event.toString(), eventFile);
-
-      assertTrue(eventFile + " not in " + Arrays.toString(paths), pathSet.remove(eventFile.getPath()));
-    }
-  }
-
-  private List<VFileEvent> getEvents(String msg, @Nullable final Runnable action) {
+  private List<VFileEvent> getEvents(String msg, @Nullable Runnable action) {
     LOG.debug("** waiting for " + msg + "...");
     myAccept = true;
 
@@ -675,12 +653,32 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     LOG.debug("** waited for " + timeout);
     myFileSystem.refresh(false);
-    final ArrayList<VFileEvent> result;
+
+    ArrayList<VFileEvent> result;
     synchronized (myEvents) {
       result = new ArrayList<VFileEvent>(myEvents);
       myEvents.clear();
     }
     LOG.debug("** events: " + result.size());
     return result;
+  }
+
+  private void assertEvent(Class<? extends VFileEvent> type, String... paths) {
+    List<VFileEvent> events = getEvents(String.valueOf(type), null);
+    assertEquals(events.toString(), paths.length, events.size());
+
+    Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {
+      @Override
+      public String fun(final String path) {
+        return FileUtil.toSystemIndependentName(path);
+      }
+    });
+
+    for (VFileEvent event : events) {
+      assertTrue(event.toString(), type.isInstance(event));
+      VirtualFile eventFile = event.getFile();
+      assertNotNull(event.toString(), eventFile);
+      assertTrue(eventFile + " not in " + Arrays.toString(paths), pathSet.remove(eventFile.getPath()));
+    }
   }
 }

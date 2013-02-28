@@ -314,7 +314,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   @Nullable
-  private static String fetchOneFile(final ProgressIndicator indicator,
+  private String fetchOneFile(final ProgressIndicator indicator,
                                      final String resourceUrl,
                                      final Project project,
                                      String extResourcesPath,
@@ -330,18 +330,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     FetchResult result = fetchData(project, resourceUrl, indicator);
     if (result == null) return null;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() &&
-        result.contentType != null &&
-        result.contentType.contains(HTML_MIME) &&
-        new String(result.bytes).contains("<html")) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(project,
-                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                     XmlBundle.message("invalid.url.title"),
-                                     Messages.getErrorIcon());
-        }
-      }, indicator.getModalityState());
+    if(!resultIsValid(project, indicator, resourceUrl, result)) {
       return null;
     }
 
@@ -366,7 +355,9 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     if (lastDoPosInResourceUrl == -1 ||
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == FileTypes.UNKNOWN) {
       // remote url does not contain file with extension
-      resPath += "." + StdFileTypes.XML.getDefaultExtension();
+      final String extension =
+        result.contentType.contains(HTML_MIME) ? StdFileTypes.HTML.getDefaultExtension() : StdFileTypes.XML.getDefaultExtension();
+      resPath += "." + extension;
     }
 
     File res = new File(resPath);
@@ -379,6 +370,24 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       out.close();
     }
     return resPath;
+  }
+
+  protected boolean resultIsValid(final Project project, ProgressIndicator indicator, final String resourceUrl, FetchResult result) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+        result.contentType != null &&
+        result.contentType.contains(HTML_MIME) &&
+        new String(result.bytes).contains("<html")) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showMessageDialog(project,
+                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                     XmlBundle.message("invalid.url.title"),
+                                     Messages.getErrorIcon());
+        }
+      }, indicator.getModalityState());
+      return false;
+    }
+    return true;
   }
 
   private static List<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
@@ -474,7 +483,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     });
   }
 
-  static class FetchResult {
+  protected static class FetchResult {
     byte[] bytes;
     String contentType;
   }

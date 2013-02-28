@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final byte myFlags;
   private final StringRef myName;
   private StringRef myDefaultValueText;
-  // todo[r.sh] drop this after transition period finished
-  private boolean myHasExtMethodMark = false;
 
   private static final int CONSTRUCTOR = 0x01;
   private static final int VARARGS = 0x02;
@@ -72,14 +70,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
   public void setReturnType(TypeInfo returnType) {
     myReturnType = returnType;
-  }
-
-  public void setExtensionMethodMark(boolean hasExtMethodMark) {
-    myHasExtMethodMark = hasExtMethodMark;
-  }
-
-  public boolean hasExtensionMethodMark() {
-    return myHasExtMethodMark;
   }
 
   @Override

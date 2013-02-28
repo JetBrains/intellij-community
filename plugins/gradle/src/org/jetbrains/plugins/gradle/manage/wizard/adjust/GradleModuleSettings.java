@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
 
 /**
  * Manages settings of {@link GradleModule gradle module} component.
@@ -27,8 +26,6 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
 
   private final JComponent                myComponent;
   private final GradleModule              myModule;
-  private final JTextField                myNameControl;
-  private final TextFieldWithBrowseButton myModuleFileLocationField;
   private final JRadioButton              myInheritProjectCompileOutputPathButton;
   private final JRadioButton              myUseModuleCompileOutputPathButton;
   private final TextFieldWithBrowseButton myOutputLocationField;
@@ -37,8 +34,6 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
   public GradleModuleSettings(@NotNull GradleModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    myNameControl = GradleAdjustImportSettingsUtil.configureNameControl(builder, myModule);
-    myModuleFileLocationField = setupModuleFileLocation(builder);
     Pair<JRadioButton, JRadioButton> pair = setupCompileOutput(builder);
     myInheritProjectCompileOutputPathButton = pair.first;
     myUseModuleCompileOutputPathButton = pair.second;
@@ -71,15 +66,6 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
   }
   
   @NotNull
-  private static TextFieldWithBrowseButton setupModuleFileLocation(@NotNull GradleProjectSettingsBuilder builder) {
-    TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
-    String title = GradleBundle.message("gradle.import.structure.settings.title.module.config.location");
-    result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    builder.add("gradle.import.structure.settings.label.module.config.location", result);
-    return result;
-  }
-  
-  @NotNull
   private static Pair<TextFieldWithBrowseButton, TextFieldWithBrowseButton> setupOutputLocation(
     @NotNull GradleProjectSettingsBuilder builder)
   {
@@ -98,19 +84,6 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
 
   @Override
   public boolean validate() {
-    if (!GradleAdjustImportSettingsUtil.validate(myModule, myNameControl)) {
-      return false;
-    }
-    String moduleFileDir = myModuleFileLocationField.getText();
-    if (moduleFileDir == null || StringUtil.isEmpty(moduleFileDir.trim())) {
-      GradleUtil.showBalloon(
-        myModuleFileLocationField,
-        MessageType.ERROR,
-        GradleBundle.message("gradle.import.text.error.module.undefined.config.location")
-      );
-      return false;
-    }
-    myModule.setModuleFileDirectoryPath(moduleFileDir.trim());
     if (myUseModuleCompileOutputPathButton.isSelected()) {
       String outputLocation = myOutputLocationField.getText();
       if (outputLocation == null || StringUtil.isEmpty(outputLocation.trim())) {
@@ -139,8 +112,6 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
 
   @Override
   public void refresh() {
-    myNameControl.setText(myModule.getName());
-    myModuleFileLocationField.setText(new File(myModule.getModuleFilePath()).getParent());
     if (myModule.isInheritProjectCompileOutputPath()) {
       myInheritProjectCompileOutputPathButton.setSelected(true);
     }

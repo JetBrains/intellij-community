@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
 
   private final String myText;
-  private PatchedSoftReference<PsiAnnotation> myParsedFromRepository;
+  private SoftReference<PsiAnnotation> myParsedFromRepository;
 
   public PsiAnnotationStubImpl(final StubElement parent, final String text) {
     this(parent, text, null);
@@ -73,8 +73,7 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
     try {
       PsiJavaParserFacade facade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
       PsiAnnotation annotation = facade.createAnnotationFromText(text, getPsi());
-      myParsedFromRepository = new PatchedSoftReference<PsiAnnotation>(annotation);
-      assert annotation != null : text;
+      myParsedFromRepository = new SoftReference<PsiAnnotation>(annotation);
       return annotation;
     }
     catch (IncorrectOperationException e) {

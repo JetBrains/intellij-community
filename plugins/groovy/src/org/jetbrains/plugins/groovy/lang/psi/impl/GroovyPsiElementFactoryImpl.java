@@ -421,8 +421,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createModifierFromText(String name) {
-    final GroovyFileBase file = createGroovyFileChecked(name + "\"foo\"() {}");
-    return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
+    final GroovyFileBase file = createGroovyFileChecked(name + " foo() {}");
+    final GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
+    if (definitions.length != 1) throw new IncorrectOperationException(name);
+    return definitions[0].getFirstChild().getFirstChild();
   }
 
   public GrCodeBlock createMethodBodyFromText(String text) {

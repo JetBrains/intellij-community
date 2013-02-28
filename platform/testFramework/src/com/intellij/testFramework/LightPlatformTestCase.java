@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -589,18 +589,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     if (isLight(project)) {
       // mark temporarily as disposed so that rogue component trying to access it will fail
       ((ProjectImpl)project).setTemporarilyDisposed(true);
-      documentManager.clearUncommitedDocuments();
+      documentManager.clearUncommittedDocuments();
     }
   }
 
   public static PsiDocumentManagerImpl clearUncommittedDocuments(@NotNull Project project) {
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
-    documentManager.clearUncommitedDocuments();
+    documentManager.clearUncommittedDocuments();
 
     ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
     if (projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommitedDocuments();
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(defaultProject)).clearUncommittedDocuments();
     }
     return documentManager;
   }

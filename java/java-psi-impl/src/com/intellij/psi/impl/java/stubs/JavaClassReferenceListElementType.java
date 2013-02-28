@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
@@ -48,54 +49,29 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public PsiReferenceList createPsi(@NotNull final PsiClassReferenceListStub stub) {
+  public PsiReferenceList createPsi(@NotNull PsiClassReferenceListStub stub) {
     return getPsiFactory(stub).createClassReferenceList(stub);
   }
 
   @Override
-  public PsiReferenceList createPsi(@NotNull final ASTNode node) {
+  public PsiReferenceList createPsi(@NotNull ASTNode node) {
     if (node.getElementType() == JavaStubElementTypes.EXTENDS_BOUND_LIST) {
       return new PsiTypeParameterExtendsBoundsListImpl(node);
     }
-    
-    return new PsiReferenceListImpl(node);
+    else {
+      return new PsiReferenceListImpl(node);
+    }
   }
 
   @Override
-  public PsiClassReferenceListStub createStub(final LighterAST tree,
-                                              final LighterASTNode node,
-                                              final StubElement parentStub) {
-    final JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
+  public PsiClassReferenceListStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+    JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
     return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node), elementTypeToRole(type));
   }
 
-  private static JavaClassReferenceListElementType roleToElementType(final PsiReferenceList.Role role) {
-    switch (role) {
-      case EXTENDS_BOUNDS_LIST:
-        return JavaStubElementTypes.EXTENDS_BOUND_LIST;
-      case EXTENDS_LIST:
-        return JavaStubElementTypes.EXTENDS_LIST;
-      case IMPLEMENTS_LIST:
-        return JavaStubElementTypes.IMPLEMENTS_LIST;
-      case THROWS_LIST:
-        return JavaStubElementTypes.THROWS_LIST;
-    }
-
-    throw new RuntimeException("Unknown role: " + role);
-  }
-
-  private static PsiReferenceList.Role elementTypeToRole(final IElementType type) {
-    if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
-    else if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
-    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
-    else if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
-
-    throw new RuntimeException("Unknown element type: " + type);
-  }
-
-  private static String[] getTexts(final LighterAST tree, final LighterASTNode node) {
-    final List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
-    final String[] texts = ArrayUtil.newStringArray(refs.size());
+  private static String[] getTexts(LighterAST tree, LighterASTNode node) {
+    List<LighterASTNode> refs = LightTreeUtil.getChildrenOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
+    String[] texts = ArrayUtil.newStringArray(refs.size());
     for (int i = 0; i < refs.size(); i++) {
       texts[i] = LightTreeUtil.toFilteredString(tree, refs.get(i), null);
     }
@@ -103,9 +79,11 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public void serialize(final PsiClassReferenceListStub stub, final StubOutputStream dataStream) throws IOException {
-    dataStream.writeByte(encodeRole(stub.getRole()));
-    final String[] names = stub.getReferencedNames();
+  public void serialize(PsiClassReferenceListStub stub, StubOutputStream dataStream) throws IOException {
+    byte role = encodeRole(stub.getRole());
+    dataStream.writeByte(role);
+
+    String[] names = stub.getReferencedNames();
     dataStream.writeVarInt(names.length);
     for (String name : names) {
       dataStream.writeName(name);
@@ -113,49 +91,29 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public PsiClassReferenceListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiClassReferenceListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     byte role = dataStream.readByte();
+
     int len = dataStream.readVarInt();
     StringRef[] names = StringRef.createArray(len);
     for (int i = 0; i < names.length; i++) {
       names[i] = dataStream.readName();
     }
 
-    final PsiReferenceList.Role decodedRole = decodeRole(role);
+    PsiReferenceList.Role decodedRole = decodeRole(role);
     return new PsiClassReferenceListStubImpl(roleToElementType(decodedRole), parentStub, names, decodedRole);
   }
 
-  private static PsiReferenceList.Role decodeRole(int code) {
-    switch (code) {
-      case 0: return PsiReferenceList.Role.EXTENDS_LIST;
-      case 1: return PsiReferenceList.Role.IMPLEMENTS_LIST;
-      case 2: return PsiReferenceList.Role.THROWS_LIST;
-      case 3: return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
-
-      default:
-        throw new RuntimeException("Unknown role code: " + code);
-    }
-  }
-
-  private static byte encodeRole(PsiReferenceList.Role role) {
-    switch (role) {
-      case EXTENDS_LIST:         return 0;
-      case IMPLEMENTS_LIST:      return 1;
-      case THROWS_LIST:          return 2;
-      case EXTENDS_BOUNDS_LIST:  return 3;
-
-      default:
-        throw new RuntimeException("Unknown role code: " + role);
-    }
-  }
-
   @Override
-  public void indexStub(final PsiClassReferenceListStub stub, final IndexSink sink) {
-    final PsiReferenceList.Role role = stub.getRole();
+  public void indexStub(PsiClassReferenceListStub stub, IndexSink sink) {
+    PsiReferenceList.Role role = stub.getRole();
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
-      final String[] names = stub.getReferencedNames();
+      String[] names = stub.getReferencedNames();
       for (String name : names) {
-        sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, PsiNameHelper.getShortClassName(name));
+        String shortName = PsiNameHelper.getShortClassName(name);
+        if (!StringUtil.isEmptyOrSpaces(shortName)) {
+          sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, shortName);
+        }
       }
 
       if (role == PsiReferenceList.Role.EXTENDS_LIST) {
@@ -165,12 +123,49 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
           if (psiClassStub.isEnum()) {
             sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, "Enum");
           }
-
           if (psiClassStub.isAnnotationType()) {
             sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, "Annotation");
           }
         }
       }
     }
+  }
+
+  private static PsiReferenceList.Role elementTypeToRole(IElementType type) {
+    if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
+    else if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
+    else if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;
+    else if (type == JavaStubElementTypes.THROWS_LIST) return PsiReferenceList.Role.THROWS_LIST;
+    throw new RuntimeException("Unknown element type: " + type);
+  }
+
+  private static JavaClassReferenceListElementType roleToElementType(PsiReferenceList.Role role) {
+    switch (role) {
+      case EXTENDS_BOUNDS_LIST: return JavaStubElementTypes.EXTENDS_BOUND_LIST;
+      case EXTENDS_LIST:        return JavaStubElementTypes.EXTENDS_LIST;
+      case IMPLEMENTS_LIST:     return JavaStubElementTypes.IMPLEMENTS_LIST;
+      case THROWS_LIST:         return JavaStubElementTypes.THROWS_LIST;
+    }
+    throw new RuntimeException("Unknown role: " + role);
+  }
+
+  private static byte encodeRole(PsiReferenceList.Role role) {
+    switch (role) {
+      case EXTENDS_LIST:        return 0;
+      case IMPLEMENTS_LIST:     return 1;
+      case THROWS_LIST:         return 2;
+      case EXTENDS_BOUNDS_LIST: return 3;
+    }
+    throw new RuntimeException("Unknown role: " + role);
+  }
+
+  private static PsiReferenceList.Role decodeRole(byte code) {
+    switch (code) {
+      case 0: return PsiReferenceList.Role.EXTENDS_LIST;
+      case 1: return PsiReferenceList.Role.IMPLEMENTS_LIST;
+      case 2: return PsiReferenceList.Role.THROWS_LIST;
+      case 3: return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
+    }
+    throw new RuntimeException("Unknown role code: " + code);
   }
 }

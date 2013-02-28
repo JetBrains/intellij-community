@@ -1120,43 +1120,17 @@ print(<error descr="Collection literal contains named and expression arguments a
 ''')
   }
 
-  public void testAnnotationCollectorInterfaceWithAttrs() {
-    testHighlighting('''\
-@interface Foo {
-  int foo()
-}
-
-
-@groovy.transform.AnnotationCollector
-@Foo
-@interface <error descr="Annotation type annotated with @AnnotationCollector cannot have attributes">A</error> {
-  int bar()
-}
-
-@A(foo = 2)
-class X{}
-''')
-  }
-
-  public void testAnnotationCollectorClass() {
+  void testDelegatesToApplicability() {
     testHighlighting('''
-@interface Foo {
-  int foo()
-}
+      def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
+        arg.delegate = target
+        arg()
+      }
 
-@groovy.transform.AnnotationCollector
-@Foo
-class A {
-  int bar() {}
-}
-
-class B{}
-
-@A(foo = 2)
-@<error descr="'B' is not an annotation">B</error>
-class X {}
+      def with2(Object target, @<error descr="Missed attributes: value">DelegatesTo</error> Closure arg) {
+        arg.delegate = target
+        arg()
+      }
 ''')
-
-
   }
 }

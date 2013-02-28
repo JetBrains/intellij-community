@@ -92,17 +92,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
 
-      if (navElement instanceof Navigatable) {
-        if (((Navigatable)navElement).canNavigate()) {
-          ((Navigatable)navElement).navigate(true);
-        }
-      }
-      else if (navElement != null) {
-        int navOffset = navElement.getTextOffset();
-        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navElement);
-        if (virtualFile != null) {
-          new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
-        }
+      if (navElement != null) {
+        gotoTargetElement(navElement);
       }
     }
     catch (IndexNotReadyException e) {
@@ -114,10 +105,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
-        Navigatable navigatable = EditSourceUtil.getDescriptor(element);
-        if (navigatable != null && navigatable.canNavigate()) {
-          navigatable.navigate(true);
-        }
+        gotoTargetElement(element);
         return true;
       }
     };
@@ -125,6 +113,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), elements);
     if (!found) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
+    }
+  }
+
+  private static void gotoTargetElement(PsiElement element) {
+    Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
+    if (navigatable != null && navigatable.canNavigate()) {
+      navigatable.navigate(true);
     }
   }
 

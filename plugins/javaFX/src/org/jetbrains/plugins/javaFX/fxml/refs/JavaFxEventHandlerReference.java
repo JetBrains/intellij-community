@@ -79,6 +79,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
           return true;
         }
       }
+      return parameters.length == 0;
     }
     return false;
   }

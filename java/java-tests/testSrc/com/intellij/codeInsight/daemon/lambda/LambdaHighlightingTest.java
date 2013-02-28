@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,203 +32,66 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testStaticAccess() throws Exception {
-    doTest();
-  }
+  public void testStaticAccess() { doTest(); }
+  public void testEffectiveFinal() { doTest(); }
+  public void testReassignUsedVars() { doTest(); }
+  public void testLambdaContext() { doTest(); }
+  public void testReturnTypeCompatibility() { doTest(); }
+  public void testTypeArgsConsistency() { doTest(); }
+  public void testTypeArgsConsistencyMisc1() { doTest(); }
+  public void testTypeArgsConsistencyMisc2() { doTest(); }
+  public void testTypeArgsConsistencyWithoutParams() { doTest(); }
+  public void testIncompatibleReturnTypes() { doTest(); }
+  public void testWildcardBounds() { doTest(); }
+  public void testInferenceOnMethodCallSite() { doTest(); }
+  public void testInferFromTypeArgs() { doTest(); }
+  public void testAmbiguity1() { doTest(); }
+  //public void testAmbiguity2() { doTest(); }
+  public void testAmbiguityVarargs() { doTest(); }
+  public void testAmbiguityRawGenerics() { doTest(); }
+  public void testDefaultMethod() { doTest(); }
+  public void testLambdaOnVarargsPlace() { doTest(); }
+  public void testLambdaRawOrNot() { doTest(); }
+  public void testReturnTypeCompatibility1() { doTest(); }
+  public void testNoInferenceResult() { doTest(); }
+  public void testInferenceFromArgs() { doTest(); }
+  public void testInContexts() { doTest(); }
+  public void testCastInContexts() { doTest(); }
+  public void testUnhandledException() { doTest(); }
+  public void testConditionalExpr() { doTest(); }
+  public void testIncompleteSubst() { doTest(); }
+  public void testVariableInitialization() { doTest(); }
+  public void testUnreachableStatement() { doTest(); }
+  public void testUnhandledExceptions() { doTest(); }
+  public void testReturnValue() { doTest(); }
+  public void testAlreadyUsedParamName() { doTest(); }
+  public void testRecursiveAccess() { doTest(); }
+  public void testIncompatibleFormalParameterTypes() { doTest(); }
+  public void testNestedLambdas() { doTest(); }
+  public void testEnumConstants() { doTest(); }
+  public void testRawWhenNoParams() { doTest(); }
+  public void testUseIncompleteParentSubstitutor() { doTest(); }
+  public void testReturnTypeCompatibilityBeforeSpecificsCheck() { doTest(); }
+  public void testIntersectionTypeInCast() { doTest(); }
+  public void testAmbiguitySpecificReturn() { doTest(true); }
+  public void testFunctionalInterfaceAnnotation() { doTest(); }
+  public void testAmbiguityReturnValueResolution() { doTest(); }
+  public void testAmbiguityReturnValueResolution1() { doTest(); }
+  public void testAmbiguityReturnValueResolution2() { doTest(true); }
+  public void testAmbiguityReturnValueResolution3() { doTest(); }
+  public void testLambdaOnVarargsPlace1() { doTest(); }
+  public void testInferenceFromSecondLambda() { doTest(); }
+  public void testAcceptRawSubstForLambda() { doTest(); }
+  public void testCheckFunctionalInterfaceAccess() { doTest(); }
+  public void testVoidCompatibility() { doTest(); }
+  public void testConditionalInferenceFromOppositePart() { doTest(); }
+  public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
 
-  public void testEffectiveFinal() throws Exception {
-    doTest();
-  }
-
-  public void testReassignUsedVars() throws Exception {
-    doTest();
-  }
-
-  public void testLambdaContext() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeCompatibility() throws Exception {
-    doTest();
-  }
-
-  public void testTypeArgsConsistency() throws Exception {
-    doTest();
-  }
-
-  public void testTypeArgsConsistencyMisc1() throws Exception {
-    doTest();
-  }
-
-  public void testTypeArgsConsistencyMisc2() throws Exception {
-    doTest();
-  }
-
-  public void testTypeArgsConsistencyWithoutParams() throws Exception {
-    doTest();
-  }
-
-  public void testIncompatibleReturnTypes() throws Exception {
-    doTest();
-  }
-
-  public void testWildcardBounds() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceOnMethodCallSite() throws Exception {
-    doTest();
-  }
-
-  public void testInferFromTypeArgs() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguity1() throws Exception {
-    doTest();
-  }
-
-  public void _testAmbiguity2() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguityVarargs() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguityRawGenerics() throws Exception {
-    doTest();
-  }
-
-  public void testDefaultMethod() throws Exception {
-    doTest();
-  }
-
-  public void testLambdaOnVarargsPlace() throws Exception {
-    doTest();
-  }
-
-  public void testLambdaRawOrNot() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeCompatibility1() throws Exception {
-    doTest();
-  }
-
-  public void testNoInferenceResult() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromArgs() throws Exception {
-    doTest();
-  }
-
-  public void testInContexts() throws Exception {
-    doTest();
-  }
-
-  public void testCastInContexts() throws Exception {
-    doTest();
-  }
-
-  public void testUnhandledException() throws Exception {
-    doTest();
-  }
-
-  public void testConditionalExpr() throws Exception {
-    doTest();
-  }
-
-  public void testIncompleteSubst() throws Exception {
-    doTest();
-  }
-
-  public void testVariableInitialization() throws Exception {
-    doTest();
-  }
-
-  public void testUnreachableStatement() throws Exception {
-    doTest();
-  }
-
-  public void testUnhandledExceptions() throws Exception {
-    doTest();
-  }
-
-  public void testReturnValue() throws Exception {
-    doTest();
-  }
-
-  public void testAlreadyUsedParamName() throws Exception {
-    doTest();
-  }
-
-  public void testRecursiveAccess() throws Exception {
-    doTest();
-  }
-
-  public void testIncompatibleFormalParameterTypes() throws Exception {
-    doTest();
-  }
-
-  public void testNestedLambdas() throws Exception {
-    doTest();
-  }
-
-  public void testEnumConstants() throws Exception {
-    doTest();
-  }
-
-  public void testRawWhenNoParams() throws Exception {
-    doTest();
-  }
-
-  public void testUseIncompleteParentSubstitutor() throws Exception {
-    doTest();
-  }
-
-  public void testReturnTypeCompatibilityBeforeSpecificsCheck() throws Exception {
-    doTest();
-  }
-
-  public void testIntersectionTypeInCast() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguitySpecificReturn() throws Exception {
-    doTest(true);
-  }
-
-  public void testFunctionalInterfaceAnnotation() throws Exception {
-    doTest();
-  }
-
-  public void testAmbiguityReturnValueResolution() throws Exception {
-    doTest();
-  }
-
-  public void testLambdaOnVarargsPlace1() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromSecondLambda() throws Exception {
-    doTest();
-  }
-
-  public void testCheckFunctionalInterfaceAccess() throws Exception {
-    doTest();
-  }
-
-  public void testVoidCompatibility() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  private void doTest(final boolean checkWarnings) throws Exception {
+  private void doTest(final boolean checkWarnings) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,160 +34,56 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
       new UnusedSymbolLocalInspection(),
     };
   }
-  
-  public void testValidContext() throws Exception {
-    doTest();
-  }
 
-  public void testAssignability() throws Exception {
-    doTest();
-  }
-  
-  public void testAmbiguity() throws Exception {
-    doTest();
-  }
+  public void testValidContext() { doTest(); }
+  public void testAssignability() { doTest(); }
+  public void testAmbiguity() { doTest(); }
+  public void testMethodReferenceReceiver() { doTest(); }
+  public void testMethodRefMisc() { doTest(); }
+  public void testMethodTypeParamsInference() { doTest(); }
+  public void testMethodRefMisc1() { doTest(); }
+  public void testQualifierTypeArgs() { doTest(); }
+  public void testStaticProblems() { doTest(); }
+  public void testConstructorRefs() { doTest(); }
+  public void testConstructorRefsInnerClasses() { doTest(); }
+  public void testVarargs() { doTest(); }
+  public void testVarargs1() { doTest(); }
+  public void testConstructorRefInnerFromSuper() { doTest(); }
+  public void testReferenceParameters() { doTest(); }
+  public void testRawQualifier() { doTest(); }
+  public void testCyclicInference() { doTest(); }
+  public void testAccessModifiers() { doTest(); }
+  public void testDefaultConstructor() { doTest(); }
+  public void testWildcards() { doTest(); }
+  public void testVarargsInReceiverPosition() { doTest(); }
+  public void testInferenceFromMethodReference() { doTest(); }
+  public void testAssignability1() { doTest(); }
+  public void testTypeArgumentsOnMethodRefs() { doTest(); }
+  public void testConstructorAssignability() { doTest(); }
+  public void testConstructorWithoutParams() { doTest(); }
+  public void testSOE() { doTest(); }
+  public void testInferenceFromReturnType() { doTest(true); }
+  public void testReturnTypeSpecific() { doTest(true); }
+  public void testResolveConflicts() { doTest(true); }
+  public void testIntersectionTypeInCast() { doTest(false); }
+  public void testUnhandledExceptions() { doTest(); }
+  public void testCapturedWildcards() { doTest(); }
+  public void testConstructorNonAbstractAbstractExpected() { doTest(); }
+  public void test100441() { doTest(); }
+  public void testSuperClassSubst() { doTest(); }
+  public void testNonParameterizedReceiver() { doTest(); }
+  public void testFunctionalInterfaceMethodIsGeneric() { doTest(); /*accepted for method ref, though forbidden for lambda*/ }
+  public void testStaticMethodOnTypedClassReference() { doTest(); }
+  public void testRefOnArrayDeclaration() { doTest(); }
+  public void testGetClassSpecifics() { doTest(); }
+  public void testAbstractMethod() { doTest(); }
+  public void testMethodRefAcceptance() { doTest(); }
 
-  public void testMethodReferenceReceiver() throws Exception {
-    doTest();
-  }
-  
-  public void testMethodRefMisc() throws Exception {
-    doTest();
-  }
-
-  public void testMethodTypeParamsInference() throws Exception {
-    doTest();
-  }
-
-  public void testMethodRefMisc1() throws Exception {
-    doTest();
-  }
-
-  public void testQualifierTypeArgs() throws Exception {
-    doTest();
-  }
-
-  public void testStaticProblems() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorRefs() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorRefsInnerClasses() throws Exception {
-    doTest();
-  }
-  
-  public void testVarargs() throws Exception {
-    doTest();
-  }
-
-  public void testVarargs1() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorRefInnerFromSuper() throws Exception {
-    doTest();
-  }
-
-  public void testReferenceParameters() throws Exception {
-    doTest();
-  }
-
-  public void testRawQualifier() throws Exception {
-    doTest();
-  }
-
-  public void testCyclicInference() throws Exception {
-    doTest();
-  }
-
-  public void testAccessModifiers() throws Exception {
-    doTest();
-  }
-  
-  public void testDefaultConstructor() throws Exception {
-    doTest();
-  }
-
-  public void testWildcards() throws Exception {
-    doTest();
-  }
-
-  public void testVarargsInReceiverPosition() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromMethodReference() throws Exception {
-    doTest();
-  }
-
-  public void testAssignability1() throws Exception {
-    doTest();
-  }
-
-  public void testTypeArgumentsOnMethodRefs() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorAssignability() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorWithoutParams() throws Exception {
-    doTest();
-  }
-
-  public void testSOE() throws Exception {
-    doTest();
-  }
-
-  public void testInferenceFromReturnType() throws Exception {
-    doTest(true);
-  }
-
-  public void testReturnTypeSpecific() throws Exception {
-    doTest(true);
-  }
-
-  public void testResolveConflicts() throws Exception {
-    doTest(true);
-  }
-
-  public void testIntersectionTypeInCast() throws Exception {
+  private void doTest() {
     doTest(false);
   }
 
-  public void testUnhandledExceptions() throws Exception {
-    doTest();
-  }
-
-  public void testCapturedWildcards() throws Exception {
-    doTest();
-  }
-
-  public void testConstructorNonAbstractAbstractExpected() throws Exception {
-    doTest();
-  }
-
-  public void test100441() throws Exception {
-    doTest();
-  }
-
-  public void testSuperClassSubst() throws Exception {
-    doTest();
-  }
-
-  public void testNonParameterizedReceiver() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
-    doTest(false);
-  }
-
-  private void doTest(final boolean warnings) throws Exception {
+  private void doTest(boolean warnings) {
     ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_8, getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }

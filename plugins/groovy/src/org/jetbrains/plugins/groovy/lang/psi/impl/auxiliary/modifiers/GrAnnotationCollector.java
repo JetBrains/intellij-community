@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -42,8 +43,7 @@ public class GrAnnotationCollector {
 
     List<GrAnnotation> result = ContainerUtil.newArrayList();
     for (GrAnnotation annotation : rawAnnotations) {
-      final PsiElement resolved = annotation.getClassReference().resolve();
-      final GrAnnotation annotationCollector = findAnnotationCollector(resolved);
+      final GrAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
         collectAnnotations(result, annotation, annotationCollector);
       }
@@ -58,8 +58,7 @@ public class GrAnnotationCollector {
 
   private static boolean hasAliases(GrAnnotation[] rawAnnotations) {
     for (GrAnnotation annotation : rawAnnotations) {
-      final PsiElement resolved = annotation.getClassReference().resolve();
-      final GrAnnotation annotationCollector = findAnnotationCollector(resolved);
+      final GrAnnotation annotationCollector = findAnnotationCollector(annotation);
       if (annotationCollector != null) {
         return true;
       }
@@ -164,7 +163,7 @@ public class GrAnnotationCollector {
   }
 
   @Nullable
-  public static GrAnnotation findAnnotationCollector(PsiElement clazz) {
+  public static GrAnnotation findAnnotationCollector(PsiClass clazz) {
     if (clazz instanceof GrTypeDefinition) {
       final GrModifierList modifierList = ((GrTypeDefinition)clazz).getModifierList();
       if (modifierList != null) {
@@ -177,5 +176,19 @@ public class GrAnnotationCollector {
     }
 
     return null;
+  }
+
+
+  @Nullable
+  public static GrAnnotation findAnnotationCollector(@NotNull GrAnnotation annotation) {
+    final GrCodeReferenceElement ref = annotation.getClassReference();
+
+    final PsiElement resolved = ref.resolve();
+    if (resolved instanceof PsiClass) {
+      return findAnnotationCollector((PsiClass)resolved);
+    }
+    else {
+      return null;
+    }
   }
 }

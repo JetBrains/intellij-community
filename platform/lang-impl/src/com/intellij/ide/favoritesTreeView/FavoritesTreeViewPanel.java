@@ -215,7 +215,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     exportActionButton.setShortcut(exportToTextFileAction.getShortcutSet());
 
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
-      .setLineBorder(0, 0, 1, 0)
+      .initPosition()
       .disableAddAction().disableRemoveAction().disableDownAction().disableUpAction()
       .addExtraAction(addActionButton)
       .addExtraAction(editActionButton)
@@ -588,18 +588,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     window.setTitleActions(collapseAction);
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    if (!PlatformUtils.isAppCode()) {
-      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
-    }
-
     final ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(myProject);
 
     if (helper.supportsFlattenPackages()) {
       group.add(new FavoritesFlattenPackagesAction(myProject, myBuilder));
     }
-
     if (helper.supportsHideEmptyMiddlePackages()) {
       group.add(new FavoritesCompactEmptyMiddlePackagesAction(myProject, myBuilder));
+    }
+    if (helper.supportsFlattenPackages()) {
+      group.addAction(new FavoritesAbbreviatePackageNamesAction(myProject, myBuilder));
+    }
+    if (!PlatformUtils.isAppCode()) {
+      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
     }
 
     final FavoritesAutoscrollFromSourceHandler handler = new FavoritesAutoscrollFromSourceHandler(myProject, myBuilder);

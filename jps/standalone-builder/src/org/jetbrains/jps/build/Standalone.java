@@ -49,6 +49,9 @@ public class Standalone {
   @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options")
   public String initializationScriptPath;
 
+  @Argument(value = "cache-dir", prefix = "--", description = "Path to directory to store build caches")
+  public String cacheDirPath;
+
   @Argument(value = "modules", prefix = "--", delimiter = ",", description = "Comma-separated list of modules to compile")
   public String[] modules = ArrayUtil.EMPTY_STRING_ARRAY;
 
@@ -117,7 +120,13 @@ public class Standalone {
     BuildType buildType = incremental ? BuildType.MAKE : BuildType.PROJECT_REBUILD;
     Set<String> modulesSet = new HashSet<String>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);
-    File dataStorageRoot = Utils.getDataStorageRoot(projectPath);
+    File dataStorageRoot;
+    if (cacheDirPath != null) {
+      dataStorageRoot = new File(cacheDirPath);
+    }
+    else {
+      dataStorageRoot = Utils.getDataStorageRoot(projectPath);
+    }
     if (dataStorageRoot == null) {
       System.err.println("Error: Cannot determine build data storage root for project " + projectPath);
       return;

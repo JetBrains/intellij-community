@@ -133,7 +133,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param file path to the file, relative to the testdata path.
    * @return the PSI file for the copied and opened file.
    */
-  PsiFile configureByFile(@TestDataFile @NonNls String file);
+  PsiFile configureByFile(@TestDataFile @NonNls String filePath);
 
   /**
    * Copies multiple files from the testdata directory to the same relative paths in the test project directory
@@ -142,7 +142,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param files path to the files, relative to the testdata path.
    * @return the PSI files for the copied files.
    */
-  PsiFile[] configureByFiles(@TestDataFile @NonNls String... files);
+  PsiFile[] configureByFiles(@TestDataFile @NonNls String... filePaths);
 
   /**
    * Loads the specified text, treated as the contents of a file with the specified file type, into the in-memory

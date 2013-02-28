@@ -17,6 +17,6 @@ PsiJavaFile:Complex.java
       PsiNameValuePair
         PsiIdentifier:second('second')
         PsiJavaToken:EQ('=')
-        PsiLiteralExpression:"Wampirchik"
-          PsiJavaToken:STRING_LITERAL('"Wampirchik"')
+        PsiLiteralExpression:"Another Eugene"
+          PsiJavaToken:STRING_LITERAL('"Another Eugene"')
       PsiJavaToken:RPARENTH(')')

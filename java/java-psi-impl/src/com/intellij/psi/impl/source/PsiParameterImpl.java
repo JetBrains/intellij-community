@@ -32,9 +32,9 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ import java.util.Arrays;
 public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
 
-  private volatile PatchedSoftReference<PsiType> myCachedType = null;
+  private volatile SoftReference<PsiType> myCachedType = null;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     this(stub, JavaStubElementTypes.PARAMETER);
@@ -116,7 +116,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
-      PatchedSoftReference<PsiType> cachedType = myCachedType;
+      SoftReference<PsiType> cachedType = myCachedType;
       if (cachedType != null) {
         PsiType type = cachedType.get();
         if (type != null) return type;
@@ -126,7 +126,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       assert typeText != null : stub;
       try {
         PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new PatchedSoftReference<PsiType>(type);
+        myCachedType = new SoftReference<PsiType>(type);
         return type;
       }
       catch (IncorrectOperationException e) {

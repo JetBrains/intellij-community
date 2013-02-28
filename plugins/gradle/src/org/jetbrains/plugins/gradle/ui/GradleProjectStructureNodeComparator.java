@@ -77,6 +77,9 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
     if (id.getType() == GradleEntityType.SYNTHETIC) {
       return SYNTHETIC_WEIGHT;
     }
+    else if (id.getType() == GradleEntityType.JAR) {
+      return JAR_WEIGHT;
+    }
     Object entity = id.mapToEntity(myContext);
     if (entity instanceof AbstractGradleCompositeEntity) {
       entity = ((AbstractGradleCompositeEntity)entity).getIdeEntity();

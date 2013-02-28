@@ -42,6 +42,7 @@ class JarLoader extends Loader {
   private static final Logger LOG = Logger.getInstance(JarLoader.class);
 
   private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
+    @Override
     @NotNull
     protected ZipFile calc() {
       try {
@@ -123,6 +124,7 @@ class JarLoader extends Loader {
     return null;
   }
 
+  @Override
   void buildCache(final ClasspathCache cache) throws IOException {
     ZipFile zipFile = null;
     try {
@@ -142,6 +144,7 @@ class JarLoader extends Loader {
     }
   }
 
+  @Override
   @Nullable
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
@@ -197,18 +200,22 @@ class JarLoader extends Loader {
       myUrl = url;
     }
 
+    @Override
     public String getName() {
       return myEntry.getName();
     }
 
+    @Override
     public URL getURL() {
       return myUrl;
     }
 
+    @Override
     public URL getCodeSourceURL() {
       return myURL;
     }
 
+    @Override
     @Nullable
     public InputStream getInputStream() throws IOException {
       final boolean[] wasReleased = {false};
@@ -229,6 +236,7 @@ class JarLoader extends Loader {
         final ZipFile finalFile = file;
         return new FilterInputStream(inputStream) {
           private boolean myClosed = false;
+          @Override
           public void close() throws IOException {
             super.close();
             if (!myClosed) {
@@ -247,6 +255,7 @@ class JarLoader extends Loader {
       }
     }
 
+    @Override
     public int getContentLength() {
       return (int)myEntry.getSize();
     }

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
@@ -67,7 +67,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   @Nullable
   private static ZenCodingNode parse(@NotNull String text,
                                      @NotNull CustomTemplateCallback callback,
-                                     @NotNull ZenCodingGenerator generator) {
+                                     @NotNull ZenCodingGenerator generator, @Nullable String surroundedText) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
@@ -75,7 +75,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     if (!validate(tokens, generator)) {
       return null;
     }
-    EmmetParser parser = generator.createParser(tokens, callback, generator);
+    EmmetParser parser = generator.createParser(tokens, callback, generator, surroundedText != null);
     ZenCodingNode node = parser.parse();
     if (parser.getIndex() != tokens.size() || node instanceof TextNode) {
       return null;
@@ -93,7 +93,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public static boolean checkTemplateKey(@NotNull String key, CustomTemplateCallback callback, @NotNull ZenCodingGenerator generator) {
-    return parse(key, callback, generator) != null;
+    return parse(key, callback, generator, null) != null;
   }
 
   public void expand(String key, @NotNull CustomTemplateCallback callback) {
@@ -158,7 +158,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
                              @NotNull CustomTemplateCallback callback,
                              String surroundedText,
                              @NotNull ZenCodingGenerator defaultGenerator) {
-    ZenCodingNode node = parse(key, callback, defaultGenerator);
+    ZenCodingNode node = parse(key, callback, defaultGenerator, surroundedText);
     assert node != null;
     if (surroundedText == null) {
       if (node instanceof TemplateNode) {
@@ -276,8 +276,8 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
-    if (!webEditorOptions.isZenCodingEnabled()) {
+    EmmetOptions emmetOptions = EmmetOptions.getInstance();
+    if (!emmetOptions.isEmmetEnabled()) {
       return false;
     }
     if (file == null) {
@@ -298,7 +298,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
         CommandProcessor.getInstance().executeCommand(callback.getProject(), new Runnable() {
           public void run() {
             callback.fixInitialState(true);
-            ZenCodingNode node = parse(abbreviation, callback, defaultGenerator);
+            ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selection);
             assert node != null;
             PsiElement context = callback.getContext();
             ZenCodingGenerator generator = findApplicableGenerator(node, context, true);
@@ -320,7 +320,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public char getShortcut() {
-    return (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    return (char)EmmetOptions.getInstance().getEmmetExpandShortcut();
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {

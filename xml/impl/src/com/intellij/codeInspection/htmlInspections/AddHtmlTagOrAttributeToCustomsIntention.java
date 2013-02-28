@@ -16,21 +16,18 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.CommonBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author Maxim.Mossienko
@@ -38,10 +35,10 @@ import java.io.IOException;
 public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction {
   private final String myName;
   private final int myType;
-  private final String myInspectionName;
+  private final Key<InspectionProfileEntry> myInspectionKey;
 
-  public AddHtmlTagOrAttributeToCustomsIntention(String shortName, String name, int type) {
-    myInspectionName = shortName;
+  public AddHtmlTagOrAttributeToCustomsIntention(Key<InspectionProfileEntry> inspectionKey, String name, int type) {
+    myInspectionKey = inspectionKey;
     myName = name;
     myType = type;
   }
@@ -72,19 +69,15 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     return true;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
-    final ModifiableModel model = inspectionProfile.getModifiableModel();
-    final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, file);
-    final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
-    xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
-    try {
-      model.commit();
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
-    }
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    profile.modifyToolSettings(myInspectionKey, file, new Consumer<InspectionProfileEntry>() {
+      @Override
+      public void consume(InspectionProfileEntry entry) {
+        XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection) entry;
+        xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
+      }
+    });
   }
 
   public boolean startInWriteAction() {

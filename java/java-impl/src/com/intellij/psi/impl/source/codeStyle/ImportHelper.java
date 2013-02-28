@@ -78,63 +78,10 @@ public class ImportHelper{
       }
     });
 
-    int[] entryForName = ArrayUtil.newIntArray(names.size());
-    PackageEntry[] entries = mySettings.IMPORT_LAYOUT_TABLE.getEntries();
-    for(int i = 0; i < names.size(); i++){
-      Pair<String, Boolean> pair = names.get(i);
-      String packageName = pair.getFirst();
-      Boolean isStatic = pair.getSecond();
-      entryForName[i] = findEntryIndex(packageName, isStatic, entries);
-    }
-
-    List<Pair<String, Boolean>> resultList = new ArrayList<Pair<String, Boolean>>(names.size());
-    for(int i = 0; i < entries.length; i++){
-      for(int j = 0; j < names.size(); j++){
-        if (entryForName[j] == i){
-          resultList.add(names.get(j));
-          names.set(j, null);
-        }
-      }
-    }
-    for (Pair<String, Boolean> name : names) {
-      if (name != null) resultList.add(name);
-    }
-
-    TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<String>();
-    TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<String>();
-    for (Pair<String, Boolean> pair : resultList) {
-      String name = pair.getFirst();
-      Boolean isStatic = pair.getSecond();
-      String packageOrClassName = getPackageOrClassName(name);
-      if (packageOrClassName.length() == 0) continue;
-      if (isStatic) {
-        int count = classToCountMap.get(packageOrClassName);
-        classToCountMap.put(packageOrClassName, count + 1);
-      }
-      else {
-        int count = packageToCountMap.get(packageOrClassName);
-        packageToCountMap.put(packageOrClassName, count + 1);
-      }
-    }
+    List<Pair<String, Boolean>> resultList = sortItemsAccordingToSettings(names, mySettings);
 
     final Set<String> classesOrPackagesToImportOnDemand = new THashSet<String>();
-    class MyVisitorProcedure implements TObjectIntProcedure<String> {
-      private final boolean myIsVisitingPackages;
-
-      MyVisitorProcedure(boolean isVisitingPackages) {
-        myIsVisitingPackages = isVisitingPackages;
-      }
-
-      @Override
-      public boolean execute(final String packageOrClassName, final int count) {
-        if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages)){
-          classesOrPackagesToImportOnDemand.add(packageOrClassName);
-        }
-        return true;
-      }
-    }
-    classToCountMap.forEachEntry(new MyVisitorProcedure(false));
-    packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
+    collectOnDemandImports(resultList, classesOrPackagesToImportOnDemand, ImportHelper.this.mySettings);
 
     Set<String> classesToUseSingle = findSingleImports(file, resultList, classesOrPackagesToImportOnDemand);
     Set<String> toReimport = new THashSet<String>();
@@ -174,6 +121,71 @@ public class ImportHelper{
       LOG.error(e);
       return null;
     }
+  }
+
+  public static void collectOnDemandImports(List<Pair<String, Boolean>> resultList,
+                                            final Set<String> classesOrPackagesToImportOnDemand, 
+                                            final CodeStyleSettings settings) {
+    TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<String>();
+    TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<String>();
+    for (Pair<String, Boolean> pair : resultList) {
+      String name = pair.getFirst();
+      Boolean isStatic = pair.getSecond();
+      String packageOrClassName = getPackageOrClassName(name);
+      if (packageOrClassName.length() == 0) continue;
+      if (isStatic) {
+        int count = classToCountMap.get(packageOrClassName);
+        classToCountMap.put(packageOrClassName, count + 1);
+      }
+      else {
+        int count = packageToCountMap.get(packageOrClassName);
+        packageToCountMap.put(packageOrClassName, count + 1);
+      }
+    }
+
+
+    class MyVisitorProcedure implements TObjectIntProcedure<String> {
+      private final boolean myIsVisitingPackages;
+
+      MyVisitorProcedure(boolean isVisitingPackages) {
+        myIsVisitingPackages = isVisitingPackages;
+      }
+
+      @Override
+      public boolean execute(final String packageOrClassName, final int count) {
+        if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages, settings)){
+          classesOrPackagesToImportOnDemand.add(packageOrClassName);
+        }
+        return true;
+      }
+    }
+    classToCountMap.forEachEntry(new MyVisitorProcedure(false));
+    packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
+  }
+
+  public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<Pair<String, Boolean>> names, final CodeStyleSettings settings) {
+    int[] entryForName = ArrayUtil.newIntArray(names.size());
+    PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
+    for(int i = 0; i < names.size(); i++){
+      Pair<String, Boolean> pair = names.get(i);
+      String packageName = pair.getFirst();
+      Boolean isStatic = pair.getSecond();
+      entryForName[i] = findEntryIndex(packageName, isStatic, entries);
+    }
+
+    List<Pair<String, Boolean>> resultList = new ArrayList<Pair<String, Boolean>>(names.size());
+    for(int i = 0; i < entries.length; i++){
+      for(int j = 0; j < names.size(); j++){
+        if (entryForName[j] == i){
+          resultList.add(names.get(j));
+          names.set(j, null);
+        }
+      }
+    }
+    for (Pair<String, Boolean> name : names) {
+      if (name != null) resultList.add(name);
+    }
+    return resultList;
   }
 
   @NotNull
@@ -620,13 +632,16 @@ public class ImportHelper{
     return maxSpace;
   }
 
-  private boolean isToUseImportOnDemand(@NotNull String packageName, int classCount, boolean isStaticImportNeeded){
-    if (!mySettings.USE_SINGLE_CLASS_IMPORTS) return true;
-    int limitCount = isStaticImportNeeded ? mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
-                     mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  private static boolean isToUseImportOnDemand(@NotNull String packageName,
+                                               int classCount,
+                                               boolean isStaticImportNeeded,
+                                               final CodeStyleSettings settings){
+    if (!settings.USE_SINGLE_CLASS_IMPORTS) return true;
+    int limitCount = isStaticImportNeeded ? settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
+                     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     if (classCount >= limitCount) return true;
     if (packageName.length() == 0) return false;
-    PackageEntryTable table = mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
+    PackageEntryTable table = settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
     return table != null && table.contains(packageName);
   }
 

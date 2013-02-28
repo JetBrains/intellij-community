@@ -110,7 +110,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Nullable
-  private VirtualFile markDirty(final String path) {
+  private VirtualFile markDirty(@NotNull String path) {
     final JarHandler handler;
     synchronized (LOCK) {
       handler = myHandlers.remove(path);
@@ -162,20 +162,20 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public JarFile getJarFile(VirtualFile entryVFile) throws IOException {
+  public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
     JarHandler handler = getHandler(entryVFile);
 
     return handler.getJar();
   }
 
   @Nullable
-  public File getMirroredFile(VirtualFile vFile) {
+  public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile jar = getJarRootForLocalFile(vFile);
     final JarHandler handler = jar != null ? getHandler(jar) : null;
     return handler != null ? handler.getMirrorFile(new File(vFile.getPath())) : null;
   }
 
-  private JarHandler getHandler(final VirtualFile entryVFile) {
+  private JarHandler getHandler(@NotNull VirtualFile entryVFile) {
     final String jarRootPath = extractRootPath(entryVFile.getPath());
 
     JarHandler handler;
@@ -260,7 +260,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     throw new IOException("Read-only: "+file.getPresentableUrl());
   }
 
-  public boolean isMakeCopyOfJar(File originalJar) {
+  public boolean isMakeCopyOfJar(@NotNull File originalJar) {
     if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(originalJar.getPath())) return false;
     if (myNoCopyJarDir != null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
     return true;

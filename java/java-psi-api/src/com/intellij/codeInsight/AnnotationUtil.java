@@ -293,9 +293,13 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotatingApplicable(@NotNull PsiElement elt) {
+    return isAnnotatingApplicable(elt, NullableNotNullManager.getInstance(elt.getProject()).getDefaultNullable());
+  }
+
+  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, final String annotationFQN) {
     final Project project = elt.getProject();
     return PsiUtil.isLanguageLevel5OrHigher(elt) &&
-           JavaPsiFacade.getInstance(project).findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), elt.getResolveScope()) != null;
+           JavaPsiFacade.getInstance(project).findClass(annotationFQN, elt.getResolveScope()) != null;
   }
 
   public static boolean isJetbrainsAnnotation(@NonNls final String simpleName) {

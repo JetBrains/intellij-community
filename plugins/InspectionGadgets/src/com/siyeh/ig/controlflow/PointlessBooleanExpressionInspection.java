@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,17 +183,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
       buildSimplifiedExpression(expressions, "==", negate, out);
     }
+    else {
+      out.append(expression.getText());
+    }
   }
 
   private void buildSimplifiedExpression(List<PsiExpression> expressions, String token, boolean negate, StringBuilder out) {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
-      final String expressionText = expression.getText();
       if (isBoxedTypeComparison(token, expression)) {
-        out.append(expressionText).append(" != null && ");
+        out.append(expression.getText()).append(" != null && ");
       }
       if (!negate) {
-        out.append(expressionText);
+        out.append(expression.getText());
         return;
       }
       if (ComparisonUtils.isComparison(expression)) {
@@ -206,10 +208,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
       else {
         if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(expressionText).append(')');
+          out.append("!(").append(expression.getText()).append(')');
         }
         else {
-          out.append('!').append(expressionText);
+          out.append('!').append(expression.getText());
         }
       }
     }
@@ -221,11 +223,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       for (PsiExpression expression : expressions) {
         if (useToken) {
           out.append(token);
+          final PsiElement previousSibling = expression.getPrevSibling();
+          if (previousSibling instanceof PsiWhiteSpace) {
+            out.append(previousSibling.getText());
+          }
         }
         else {
           useToken = true;
         }
         buildSimplifiedExpression(expression, out);
+        final PsiElement nextSibling = expression.getNextSibling();
+        if (nextSibling instanceof PsiWhiteSpace) {
+          out.append(nextSibling.getText());
+        }
       }
       if (negate) {
         out.append(')');

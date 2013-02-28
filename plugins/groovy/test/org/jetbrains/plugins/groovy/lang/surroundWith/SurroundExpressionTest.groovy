@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ public class SurroundExpressionTest extends SurroundTestCase {
   public void testCommandArgList2() { doTest(new TypeCastSurrounder()) }
   public void testCommandArgList3() { doTest(new TypeCastSurrounder()) }
   public void testCommandArgList4() { doTest(new TypeCastSurrounder()) }
+  public void testNotAndParenthesesSurrounder() { doTest(new NotAndParenthesesSurrounder()) }
+  public void testNotAndParenthesesOnCommandExpr() { doTest(new NotAndParenthesesSurrounder()) }
 
   final String basePath = TestUtils.testDataPath + "groovy/surround/expr/"
 }

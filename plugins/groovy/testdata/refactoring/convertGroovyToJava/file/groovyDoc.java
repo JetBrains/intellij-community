@@ -1,3 +1,6 @@
+/**
+ * class comment
+ */
 public class Foo {
 /**
    * method comment

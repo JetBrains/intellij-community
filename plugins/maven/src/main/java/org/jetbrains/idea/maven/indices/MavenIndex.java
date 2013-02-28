@@ -500,14 +500,20 @@ public class MavenIndex {
   }
 
   public synchronized boolean hasGroupId(String groupId) {
+    if (isBroken) return false;
+
     return hasValue(myData.groupToArtifactMap, myData.hasGroupCache, groupId);
   }
 
   public synchronized boolean hasArtifactId(String groupId, String artifactId) {
+    if (isBroken) return false;
+
     return hasValue(myData.groupWithArtifactToVersionMap, myData.hasArtifactCache, groupId + ":" + artifactId);
   }
 
   public synchronized boolean hasVersion(String groupId, String artifactId, final String version) {
+    if (isBroken) return false;
+
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
 
     Boolean res = myData.hasVersionCache.get(groupWithArtifactWithVersion);

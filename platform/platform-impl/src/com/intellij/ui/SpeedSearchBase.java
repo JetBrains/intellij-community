@@ -373,6 +373,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       add(searchLabel, BorderLayout.WEST);
       add(mySearchField, BorderLayout.EAST);
       Object element = findElement(mySearchField.getText());
+      onSearchFieldUpdated(initialString);
       updateSelection(element);
     }
 
@@ -436,7 +437,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  protected void onSearchFieldUpdated(String s) {}
+  protected void onSearchFieldUpdated(String pattern) {
+  }
 
   private class SearchField extends JTextField {
     SearchField() {

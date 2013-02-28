@@ -1,6 +1,6 @@
 import java.util.*;
 
-class MyTest2{
+class MyTest2 {
     {
         Comparator<? super String> comparator = String::compareToIgnoreCase;
     }
@@ -16,5 +16,5 @@ interface Foo2<T> {
     void bar(T i, T j);
 }
 interface Bar2 {
-    public void xxx(Bar2 p) default {}
+    default void xxx(Bar2 p) { }
 }

@@ -210,7 +210,7 @@ public class PackageUtil {
     }
 
     if (psiDirectory == null) {
-      if (!checkSourceRootsConfigured(module)) return null;
+      if (!checkSourceRootsConfigured(module, askUserToCreate)) return null;
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       List<PsiDirectory> directoryList = new ArrayList<PsiDirectory>();
       for (VirtualFile sourceRoot : sourceRoots) {
@@ -355,15 +355,22 @@ public class PackageUtil {
   }
 
   public static boolean checkSourceRootsConfigured(final Module module) {
+    return checkSourceRootsConfigured(module, true);
+  }
+
+  public static boolean checkSourceRootsConfigured(final Module module, final boolean askUserToSetupSourceRoots) {
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (sourceRoots.length == 0) {
-      Messages.showErrorDialog(
-          module.getProject(),
-          ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
-          ProjectBundle.message("module.source.roots.not.configured.title")
-        );
+      if (!askUserToSetupSourceRoots) {
+        return false;
+      }
 
-      ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME);
+      Project project = module.getProject();
+      Messages.showErrorDialog(project,
+                               ProjectBundle.message("module.source.roots.not.configured.error", module.getName()),
+                               ProjectBundle.message("module.source.roots.not.configured.title"));
+
+      ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME);
 
       sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       if (sourceRoots.length == 0) {

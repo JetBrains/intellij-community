@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -375,5 +380,56 @@ public class TreeUtil {
     public ASTNode nextLeafBranchStart = null;
     public CompositeElement strongWhiteSpaceHolder = null;
     public boolean isStrongElementOnRisingSlope = true;
+  }
+
+  public static class StubBindingException extends RuntimeException {
+    public StubBindingException(String message) {
+      super(message);
+    }
+  }
+
+  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree) throws StubBindingException {
+    final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
+    stubs.next();  // skip file root stub
+
+    FileElement tree = file.getTreeElement();
+    assert tree != null : file;
+
+    final StubBuilder builder = ((IStubFileElementType)file.getContentElementType()).getBuilder();
+    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement node) {
+        CompositeElement parent = node.getTreeParent();
+        if (parent != null && skipNode(builder, parent, node)) {
+          return;
+        }
+
+        IElementType type = node.getElementType();
+        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
+          if (stub == null || stub.getStubType() != type) {
+            throw new StubBindingException("stub:" + stub + ", AST:" + type);
+          }
+
+          //noinspection unchecked
+          ((StubBase)stub).setPsi(node.getPsi());
+        }
+
+        super.visitNode(node);
+      }
+    });
+  }
+
+  @SuppressWarnings("deprecation")
+  public static boolean skipNode(@NotNull StubBuilder builder, @NotNull ASTNode parent, @NotNull ASTNode node) {
+    if (builder instanceof DefaultStubBuilder) {
+      return ((DefaultStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
+    }
+    else if (builder instanceof LightStubBuilder) {
+      return ((LightStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
+    }
+    else {
+      return builder.skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
+    }
   }
 }

@@ -43,8 +43,8 @@ class Test {
   |  //test();
   |  if (true) {
   |  |  int i = 1;
-  |  |  |
-//|  |  |  comment;
+  |  |  
+//|  |    int k;
   |  |  int j = 1;
   |  }
   }
@@ -141,8 +141,12 @@ class Test {
     myFixture.configureByText("${getTestName(false)}.java", testData.documentText)
     CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.file, myFixture.editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
     IndentsModelImpl model = myFixture.editor.indentsModel as IndentsModelImpl
-    assertEquals("expected to find ${testData.guides.size()} indent guide but got ${model.indents.size()}",
-                 testData.guides.size(), model.indents.size())
+    assertEquals(
+      "expected to find ${testData.guides.size()} indent guides (" +
+      "${testData.guides.collect { startLine, endLine, level -> "$level ($startLine-$endLine)"}}) " +
+      "but got ${model.indents.size()} (${model.indents})",
+      testData.guides.size(), model.indents.size()
+    )
 
     testData.guides.each {
       def descriptor = model.getDescriptor(it[0], it[1])

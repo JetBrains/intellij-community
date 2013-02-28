@@ -15,13 +15,14 @@
  */
 package com.intellij.util.xmlb;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 interface Binding {
   Object serialize(Object o, @Nullable Object context, SerializationFilter filter);
 
   @Nullable
-  Object deserialize(Object context, Object... nodes);
+  Object deserialize(Object context, @NotNull Object... nodes);
 
   boolean isBoundTo(Object node);
 

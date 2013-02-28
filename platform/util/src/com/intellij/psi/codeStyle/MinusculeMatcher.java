@@ -19,7 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +31,11 @@ import java.util.Iterator;
 * @author peter
 */
 public class MinusculeMatcher implements Matcher {
+  /**
+   * Lowercase humps don't work for parts separated by these characters
+   * Need either an explicit uppercase letter or the same separator character in prefix
+   */
+  private static final String HARD_SEPARATORS = " ()";
   private ThreadLocal<MatchingState> myMatchingState = new ThreadLocal<MatchingState>() {
     @Override
     protected MatchingState initialValue() {
@@ -109,59 +113,44 @@ public class MinusculeMatcher implements Matcher {
   }
 
   public int matchingDegree(@NotNull String name) {
-    Iterable<TextRange> iterable = matchingFragments(name);
+    FList<TextRange> iterable = matchingFragments(name);
     if (iterable == null) return Integer.MIN_VALUE;
+    if (iterable.isEmpty()) return 0;
 
-    int fragmentCount = 0;
+    final TextRange first = iterable.getHead();
+
     int matchingCase = 0;
     int p = -1;
-    TextRange first = null;
 
     int integral = 0; // sum of matching-character-count * hump-index over all matched humps; favors longer fragments matching earlier words
-    int humpIndex = 0;
-    int nextHumpStart = name.isEmpty() ? 0: NameUtil.nextWord(name, 0);
+    int humpIndex = 1;
+    int nextHumpStart = 0;
     for (TextRange range : iterable) {
-      if (first == null) {
-        first = range;
-      }
-
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-        while (nextHumpStart < i) {
+        while (nextHumpStart <= i) {
           nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
-          humpIndex++;
+          if (first != range) {
+            humpIndex++;
+          }
         }
         integral += humpIndex;
 
         char c = name.charAt(i);
-        p = CharArrayUtil.indexOf(myPattern, c, p + 1, myPattern.length);
+        p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
         if (p < 0) {
           break;
         }
-        if (isUpperCase[p] || i == range.getStartOffset()) {
-          matchingCase += c == myPattern[p] ? 1 : 0;
+        if (c == myPattern[p]) {
+          matchingCase += isUpperCase[p] ? 50 : i == range.getStartOffset() || Character.isUpperCase(c) ? 1 : 0;
         }
       }
-      fragmentCount++;
-    }
-
-    if (first == null) {
-      return 0;
-    }
-
-
-    int skipCount = CharArrayUtil.shiftForward(myPattern, 0, " *");
-    int commonStart = 0;
-    while (commonStart < name.length() &&
-           commonStart + skipCount < myPattern.length &&
-           name.charAt(commonStart) == myPattern[commonStart + skipCount]) {
-      commonStart++;
     }
 
     int startIndex = first.getStartOffset();
-    boolean prefixMatching = isStartMatch(name, startIndex);
-    boolean middleWordStart = !prefixMatching && startIndex > 0 && NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
+    boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
+    boolean wordStart = startIndex == 0 || NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
 
-    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 1000 - integral;
+    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 1);
   }
 
   public boolean isStartMatch(@NotNull String name) {
@@ -261,7 +250,7 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-      if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex, nextOccurrence)) {
+      if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, HARD_SEPARATORS, nameIndex, nextOccurrence)) {
         return null;
       }
       // if the user has typed a dot, don't skip other dots between humps
@@ -314,10 +303,10 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
 
-    // middle matches have to be at least of length 2, to prevent too many irrelevant matches
+    // middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
                       Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
-                      ? 2 : 1;
+                      ? 3 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() &&

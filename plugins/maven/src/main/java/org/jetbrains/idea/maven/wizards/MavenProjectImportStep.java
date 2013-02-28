@@ -102,7 +102,7 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
 
   public boolean validate() throws ConfigurationException {
     updateDataModel(); // needed to make 'exhaustive search' take an effect.
-    return getBuilder().setRootDirectory(myRootPathComponent.getPath());
+    return getBuilder().setRootDirectory(getWizardContext().getProject(), myRootPathComponent.getPath());
   }
 
   public void updateStep() {

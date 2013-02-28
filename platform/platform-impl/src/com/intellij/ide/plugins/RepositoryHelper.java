@@ -38,8 +38,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
 
@@ -127,7 +125,7 @@ public class RepositoryHelper {
     return temp;
   }
 
-  private static void readPluginsStream(InputStream is, RepositoryContentHandler handler, ProgressIndicator indicator, final String file)
+  private synchronized static void readPluginsStream(InputStream is, RepositoryContentHandler handler, ProgressIndicator indicator, final String file)
     throws SAXException, IOException, ParserConfigurationException, ProcessCanceledException {
     File temp = createLocalPluginsDescriptions(file);
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();

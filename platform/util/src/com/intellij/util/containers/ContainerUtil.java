@@ -770,7 +770,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> List<T> findAll(@NotNull T[] collection, @NotNull Condition<? super T> condition) {
-    return findAll(Arrays.asList(collection), condition);
+    final List<T> result = new SmartList<T>();
+    for (T t : collection) {
+      if (condition.value(t)) {
+        result.add(t);
+      }
+    }
+    return result;
   }
 
   @NotNull

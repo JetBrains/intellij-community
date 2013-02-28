@@ -292,15 +292,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             if (containingClass.getConstructors().length == 0 &&
                 !containingClass.isEnum() &&
                 !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              boolean hasReceiver = false;
-              final PsiType[] parameterTypes = signature.getParameterTypes();
-              
-              if (parameterTypes.length == 1 && PsiMethodReferenceUtil.isReceiverType(parameterTypes[0], containingClass, substitutor)) {
-                hasReceiver = true;
-              }
-              final boolean innerClassOuterClassReference = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
               ClassCandidateInfo candidateInfo = null;
-              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && parameterTypes.length == 0 || hasReceiver && innerClassOuterClassReference) {
+              if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
+                  PsiMethodReferenceUtil.onArrayType(containingClass, signature)) {
                 candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
               }
               return candidateInfo == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{candidateInfo};
@@ -427,7 +421,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final boolean staticOrValidConstructorRef = psiMethod.hasModifierProperty(PsiModifier.STATIC) || validConstructorRef;
 
           if ((parameterTypes.length == signatureParameterTypes2.length || varArgs) && 
-              (!myBeginsWithReferenceType || staticOrValidConstructorRef || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
+              (!(myBeginsWithReferenceType ^ staticOrValidConstructorRef) || (psiMethod.isConstructor() && conflict.isStaticsScopeCorrect()))) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));

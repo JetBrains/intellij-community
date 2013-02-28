@@ -26,8 +26,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -248,8 +246,8 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       List<Object> list = new ArrayList<Object>();
 
       InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-      final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(DependsOnGroupsInspection.SHORT_NAME, myElement);
-      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile.getUnwrappedTool(
+        DependsOnGroupsInspection.SHORT_NAME, myElement);
 
       for (String groupName : inspection.groups) {
         list.add(LookupValueFactory.createLookupValue(groupName, null));

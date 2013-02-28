@@ -59,50 +59,60 @@ public class GradleJarManager {
     if (jars.isEmpty()) {
       return;
     }
+    final Map<GradleLibraryId, List<GradleJar>> jarsByLibraries = ContainerUtilRt.newHashMap();
+    for (GradleJar jar : jars) {
+      List<GradleJar> list = jarsByLibraries.get(jar.getLibraryId());
+      if (list == null) {
+        jarsByLibraries.put(jar.getLibraryId(), list = ContainerUtilRt.newArrayList());
+      }
+      list.add(jar);
+    }
     GradleUtil.executeProjectChangeAction(project, jars, synchronous, new Runnable() {
       @Override
       public void run() {
-        LibraryTable table = myPlatformFacade.getProjectLibraryTable(project);
-        Library library = table.getLibraryByName(jars.iterator().next().getLibraryId().getLibraryName());
-        if (library == null) {
-          return;
-        }
-        Library.ModifiableModel model = library.getModifiableModel();
-        try {
-          LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-          for (GradleJar jar : jars) {
-            OrderRootType ideJarType = myLibraryPathTypeMapper.map(jar.getPathType());
-            for (VirtualFile file : model.getFiles(ideJarType)) {
-              if (jar.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
-                return;
+        for (Map.Entry<GradleLibraryId, List<GradleJar>> entry : jarsByLibraries.entrySet()) {
+          LibraryTable table = myPlatformFacade.getProjectLibraryTable(project);
+          Library library = table.getLibraryByName(entry.getKey().getLibraryName());
+          if (library == null) {
+            return;
+          }
+          Library.ModifiableModel model = library.getModifiableModel();
+          try {
+            LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+            for (GradleJar jar : entry.getValue()) {
+              OrderRootType ideJarType = myLibraryPathTypeMapper.map(jar.getPathType());
+              for (VirtualFile file : model.getFiles(ideJarType)) {
+                if (jar.getPath().equals(GradleUtil.getLocalFileSystemPath(file))) {
+                  return;
+                }
               }
-            }
 
-            File jarFile = new File(jar.getPath());
-            VirtualFile virtualFile = fileSystem.refreshAndFindFileByIoFile(jarFile);
-            if (virtualFile == null) {
-              GradleLog.LOG.warn(
-                String.format("Can't find a jar of the library '%s' at path '%s'", jar.getLibraryId().getLibraryName(), jar.getPath())
-              );
-              return;
-            }
-            if (virtualFile.isDirectory()) {
-              model.addRoot(virtualFile, ideJarType);
-            }
-            else {
-              VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
-              if (jarRoot == null) {
-                GradleLog.LOG.warn(String.format(
-                  "Can't parse contents of the jar file at path '%s' for the library '%s''", jar.getPath(), library.getName()
-                ));
+              File jarFile = new File(jar.getPath());
+              VirtualFile virtualFile = fileSystem.refreshAndFindFileByIoFile(jarFile);
+              if (virtualFile == null) {
+                GradleLog.LOG.warn(
+                  String.format("Can't find a jar of the library '%s' at path '%s'", jar.getLibraryId().getLibraryName(), jar.getPath())
+                );
                 return;
               }
-              model.addRoot(jarRoot, ideJarType);
+              if (virtualFile.isDirectory()) {
+                model.addRoot(virtualFile, ideJarType);
+              }
+              else {
+                VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
+                if (jarRoot == null) {
+                  GradleLog.LOG.warn(String.format(
+                    "Can't parse contents of the jar file at path '%s' for the library '%s''", jar.getPath(), library.getName()
+                  ));
+                  return;
+                }
+                model.addRoot(jarRoot, ideJarType);
+              }
             }
           }
-        }
-        finally {
-          model.commit();
+          finally {
+            model.commit();
+          }
         }
       }
     });

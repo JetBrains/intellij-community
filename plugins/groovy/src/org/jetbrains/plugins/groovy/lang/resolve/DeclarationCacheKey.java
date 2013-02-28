@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
@@ -53,11 +53,13 @@ class DeclarationCacheKey {
   @Nullable private final String name;
   @NotNull private final EnumSet<ClassHint.ResolveKind> kinds;
   private final boolean nonCode;
+  @NotNull private final PsiElement place;
 
-  DeclarationCacheKey(@Nullable String name, ClassHint hint, boolean nonCode) {
+  DeclarationCacheKey(@Nullable String name, ClassHint hint, boolean nonCode, @NotNull PsiElement place) {
     this.name = name;
     this.kinds = getResolveKinds(hint);
     this.nonCode = nonCode;
+    this.place = place;
   }
 
   private static EnumSet<ClassHint.ResolveKind> getResolveKinds(ClassHint hint) {
@@ -92,6 +94,8 @@ class DeclarationCacheKey {
       return false;
     }
 
+    if (place != key.place) return false;
+
     return true;
   }
 
@@ -100,6 +104,7 @@ class DeclarationCacheKey {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + kinds.hashCode();
     result = 31 * result + (nonCode ? 1 : 0);
+    result = 31* result + place.hashCode();
     return result;
   }
 
@@ -109,39 +114,42 @@ class DeclarationCacheKey {
            "name='" + name + '\'' +
            ", kinds=" + kinds +
            ", nonCode=" + nonCode +
+           ", place=" + place.toString() +
            '}';
   }
 
-  private List<DeclarationHolder> collectDeclarations(final GroovyPsiElement place) {
+  private List<DeclarationHolder> collectDeclarations(final PsiElement place) {
     final ArrayList<DeclarationHolder> result = new ArrayList<DeclarationHolder>();
     PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
-        result.add(collectScopeDeclarations(scope, lastParent, place));
+        result.add(collectScopeDeclarations(scope, lastParent));
+        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
         return true;
       }
     });
     return result;
   }
 
-  private DeclarationHolder collectScopeDeclarations(PsiElement scope, PsiElement lastParent, GroovyPsiElement place) {
+  private DeclarationHolder collectScopeDeclarations(PsiElement scope, PsiElement lastParent) {
     MyCollectProcessor plainCollector = new MyCollectProcessor(scope);
     MyCollectProcessor nonCodeCollector = new MyCollectProcessor(scope);
-    ResolveUtil.doProcessDeclarations(place, lastParent, scope, plainCollector, nonCode ? nonCodeCollector : null);
+    ResolveUtil.doProcessDeclarations(place, lastParent, scope, plainCollector, nonCode ? nonCodeCollector : null, ResolveState.initial());
     return new DeclarationHolder(scope, plainCollector.declarations, nonCodeCollector.declarations);
   }
 
-  private List<DeclarationHolder> getAllDeclarations(GroovyPsiElement place) {
+  private List<DeclarationHolder> getAllDeclarations(PsiElement place) {
     ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache =
       CachedValuesManager.getManager(place.getProject()).getCachedValue(place, VALUE_PROVIDER);
     List<DeclarationHolder> declarations = cache.get(this);
     if (declarations == null) {
-      cache.putIfAbsent(this, declarations = collectDeclarations(place));
+      declarations = collectDeclarations(place);
+      cache.putIfAbsent(this, declarations);
     }
     return declarations;
   }
 
-  boolean processCachedDeclarations(GroovyPsiElement place, PsiScopeProcessor processor) {
+  boolean processCachedDeclarations(PsiElement place, PsiScopeProcessor processor) {
     for (DeclarationHolder holder : getAllDeclarations(place)) {
       if (!holder.processCachedDeclarations(processor)) {
         return false;
@@ -180,6 +188,10 @@ class DeclarationCacheKey {
       return true;
     }
 
+    @Override
+    public String toString() {
+      return "[scope=" + scope.toString() + ", plain=" + plainDeclarations.size() + ", nonCode=" + nonCodeDeclarations.size();
+    }
   }
 
   private class MyCollectProcessor extends ResolverProcessor {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.ConditionCheckManager;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -1218,7 +1219,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(NOT_FOUND, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myFactory.getTypeFactory().create(ref), null));
+        addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(ref), null));
         addThrowCode(ref);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }
@@ -1305,7 +1306,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             return true;
           }
         }
-        else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) || "org.testng.Assert".equals(className)) {
+        else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
+                 "junit.framework.TestCase".equals(className) || "org.testng.Assert".equals(className)) {
           boolean testng = "org.testng.Assert".equals(className);
           if ("fail".equals(methodName)) {
             pushParameters(params, false, !testng);
@@ -1339,6 +1341,82 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
             return true;
           }
           return false;
+        }
+      }
+
+      if (ConditionCheckManager.isCheck(resolved)) {
+        if (ConditionCheckManager.isAssertIsNullCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isAssertIsNullCheckMethod(resolved, paramIndex++)) {
+              addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+              addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
+              conditionalExit(exitPoint, false);  // Exit if Equal NULL is True
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
+        } else if (ConditionCheckManager.isAssertIsNotNullCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isAssertIsNotNullCheckMethod(resolved, paramIndex++)) {
+              addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+              addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
+              conditionalExit(exitPoint, true); // Exit if NotEqual NULL is True
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
+        } else if (ConditionCheckManager.isNullCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isNullCheckMethod(resolved, paramIndex++)) {
+              addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+              addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
+        } else if (ConditionCheckManager.isNotNullCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isNotNullCheckMethod(resolved, paramIndex++)) {
+              addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+              addInstruction(new BinopInstruction(JavaTokenType.NE, null, expression.getProject()));
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
+        } else if (ConditionCheckManager.isAssertTrueCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isAssertTrueCheckMethod(resolved, paramIndex++)) {
+              conditionalExit(exitPoint, false);
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
+        } else if (ConditionCheckManager.isAssertFalseCheckMethod(resolved)) {
+          int paramIndex = 0;
+          for (PsiExpression param : params) {
+            param.accept(this);
+            if (ConditionCheckManager.isAssertFalseCheckMethod(resolved, paramIndex++)) {
+              conditionalExit(exitPoint, true);
+            } else {
+              addInstruction(new PopInstruction());
+            }
+          }
+          return true;
         }
       }
 

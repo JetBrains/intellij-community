@@ -94,12 +94,12 @@ public class CharsetToolkit {
   public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_BOM = new THashMap<Charset, byte[]>(2);
+  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<Charset, byte[]>(2);
   static {
-    CHARSET_TO_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
-    CHARSET_TO_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
-    CHARSET_TO_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
-    CHARSET_TO_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
   }
 
   /**
@@ -503,12 +503,13 @@ public class CharsetToolkit {
 
   @Nullable
   public static byte[] getBom(@NotNull Charset charset) {
-    return CHARSET_TO_BOM.get(charset);
+    return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
-    return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM) || Arrays.equals(getBom(charset), bom);
+    return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM)
+           || Arrays.equals(getBom(charset), bom);
   }
 
   @Nullable

@@ -43,12 +43,6 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean isStartMatch(LookupElement element) {
-    if (super.isStartMatch(element)) {
-      return true;
-    }
-    if (element.isCaseSensitive()) {
-      return false;
-    }
     return ContainerUtil.or(element.getAllLookupStrings(), new Condition<String>() {
       @Override
       public boolean value(String s) {

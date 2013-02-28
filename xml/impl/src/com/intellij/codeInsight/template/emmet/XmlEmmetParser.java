@@ -22,9 +22,11 @@ import com.intellij.codeInsight.template.emmet.nodes.*;
 import com.intellij.codeInsight.template.emmet.tokens.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,10 +76,13 @@ public class XmlEmmetParser extends EmmetParser {
 
   public XmlEmmetParser(List<ZenCodingToken> tokens,
                         CustomTemplateCallback callback,
-                        ZenCodingGenerator generator) {
+                        ZenCodingGenerator generator, boolean surroundWithTemplate) {
     super(tokens, callback, generator);
     PsiElement context = callback.getContext();
     XmlTag parentTag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
+    if (surroundWithTemplate && parentTag != null && context.getNode().getElementType() == XmlTokenType.XML_START_TAG_START) {
+      parentTag = PsiTreeUtil.getParentOfType(parentTag, XmlTag.class);
+    }
     if (parentTag != null) {
       hasTagContext = true;
       tagLevel.push(parentTag.getName());
@@ -126,7 +131,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
 
     TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
-    if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey)) {
+    if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey) && !StringUtil.containsChar(templateKey, '$')) {
       return null;
     }
 
@@ -139,7 +144,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (!setTemplate(templateToken, template)) {
       return null;
     }
-    return new TemplateNode(templateToken);
+    return new TemplateNode(templateToken, myGenerator);
   }
 
   @Override

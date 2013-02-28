@@ -17,7 +17,6 @@ package com.intellij.xml.util;
 
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SoftFactoryMap;
-import com.intellij.util.containers.WeakFactoryMap;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +43,6 @@ public class ColorIconCache {
     return INSTANCE;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   public Icon getIcon(@NotNull final Color color, final int size) {
     Icon icon = ourCache.get(color).get(size);
     if (icon == null) {

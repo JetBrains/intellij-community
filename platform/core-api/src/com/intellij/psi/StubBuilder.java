@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,17 @@ package com.intellij.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public interface StubBuilder {
-  StubElement buildStubTree(PsiFile file);
+  StubElement buildStubTree(@NotNull PsiFile file);
+
+  /**
+   * @deprecated use/implement {@linkplain com.intellij.psi.stubs.DefaultStubBuilder#skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}
+   * (to remove in IDEA 13) */
   boolean skipChildProcessingWhenBuildingStubs(@Nullable ASTNode parent, IElementType childType);
 }

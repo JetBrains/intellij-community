@@ -730,7 +730,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private String getCachedTextSkipWhiteSpaceAndComments() {
     String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
     if (whiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
   }

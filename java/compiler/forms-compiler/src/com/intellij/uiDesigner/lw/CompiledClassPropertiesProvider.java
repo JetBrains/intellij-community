@@ -73,13 +73,14 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
 
       final Method readMethod = descriptor.getReadMethod();
       final Method writeMethod = descriptor.getWriteMethod();
-      if (writeMethod == null || readMethod == null) {
+      final Class propertyType = descriptor.getPropertyType();
+      if (writeMethod == null || readMethod == null || propertyType == null) {
         continue;
       }
 
       final String name = descriptor.getName();
 
-      final LwIntrospectedProperty property = propertyFromClass(descriptor.getPropertyType(), name);
+      final LwIntrospectedProperty property = propertyFromClass(propertyType, name);
 
       if (property != null) {
         property.setDeclaringClassName(descriptor.getReadMethod().getDeclaringClass().getName());

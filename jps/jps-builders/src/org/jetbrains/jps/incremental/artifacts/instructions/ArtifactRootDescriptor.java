@@ -50,10 +50,6 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
     myDestinationInfo = destinationInfo;
   }
 
-  public final String getArtifactName() {
-    return myTarget.getId();
-  }
-
   @Override
   public String toString() {
     return getFullPath();
@@ -75,8 +71,8 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   public FileFilter createFileFilter() {
     return new FileFilter() {
       @Override
-      public boolean accept(File pathname) {
-        return myFilter.accept(pathname.getAbsolutePath());
+      public boolean accept(File file) {
+        return myFilter.accept(file.getAbsolutePath());
       }
     };
   }

@@ -61,7 +61,7 @@ class XmlSerializerImpl {
     if (type instanceof Class) {
       return _getClassBinding((Class<?>)type, type, accessor);
     }
-    else if (type instanceof ParameterizedType) {
+    if (type instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType)type;
       Type rawType = parameterizedType.getRawType();
       assert rawType instanceof Class;
@@ -154,7 +154,7 @@ class XmlSerializerImpl {
   }
 
   public static boolean isIgnoredNode(final Object child) {
-    if (child instanceof Text && ((Text)child).getValue().trim().length() == 0) {
+    if (child instanceof Text && ((Text)child).getValue().trim().isEmpty()) {
       return true;
     }
     if (child instanceof Comment) {
@@ -163,7 +163,7 @@ class XmlSerializerImpl {
     if (child instanceof Attribute) {
       Attribute attr = (Attribute)child;
       final String namespaceURI = attr.getNamespaceURI();
-      if (namespaceURI != null && namespaceURI.length() > 0) return true;
+      if (namespaceURI != null && !namespaceURI.isEmpty()) return true;
     }
 
     return false;

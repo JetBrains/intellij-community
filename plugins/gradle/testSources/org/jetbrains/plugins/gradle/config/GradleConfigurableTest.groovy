@@ -29,7 +29,7 @@ public class GradleConfigurableTest {
   void setUp() {
     helper = [
       getSettings : { settings[it] },
-      applySettings: {linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, serviceDirectoryPath, project -> },
+      applySettings: {linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, autoImport, serviceDirectoryPath, project -> },
       applyPreferLocalInstallationToWrapper: { preferLocalInstallationToWrapper, project -> },
       getGradleHome: { new File(VALID_GRADLE_HOME) },
       getDefaultProject: { defaultProject },

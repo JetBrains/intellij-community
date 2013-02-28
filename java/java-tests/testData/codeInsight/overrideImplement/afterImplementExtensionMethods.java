@@ -1,5 +1,5 @@
 interface A<T> {
-    void m(T t) default { }
+    default void m(T t) { }
 }
 
 class MyClass<T> implements A<T> {

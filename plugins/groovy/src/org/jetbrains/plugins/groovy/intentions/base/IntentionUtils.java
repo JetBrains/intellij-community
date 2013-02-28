@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
@@ -134,7 +135,14 @@ public class IntentionUtils {
             }
             if (method != null) {
               try {
+                final boolean hasNoReturnType = method.getReturnTypeElement() == null && method instanceof GrMethod;
+                if (hasNoReturnType) {
+                  ((GrMethod)method).setReturnType(PsiType.VOID);
+                }
                 CreateFromUsageUtils.setupMethodBody(method);
+                if (hasNoReturnType) {
+                  ((GrMethod)method).setReturnType(null);
+                }
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);

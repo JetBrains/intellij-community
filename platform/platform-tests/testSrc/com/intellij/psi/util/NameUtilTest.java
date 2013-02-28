@@ -256,8 +256,16 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*f", "reformat");
     assertMatches("*f", "reformatCode");
     assertDoesntMatch("*fc", "reformatCode");
+    assertDoesntMatch("*foc", "reformatCode");
+    assertMatches("*forc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
     assertDoesntMatch("*Icon", "LEADING_CONSTRUCTOR");
+    assertMatches("*I", "LEADING_CONSTRUCTOR");
+    assertMatches("*i", "LEADING_CONSTRUCTOR");
+    assertMatches("*in", "LEADING_CONSTRUCTOR");
+    assertMatches("*ing", "LEADING_CONSTRUCTOR");
+    assertDoesntMatch("*inc", "LEADING_CONSTRUCTOR");
+    assertDoesntMatch("*ico", "drawLinePickedOut");
   }
 
   public void testMiddleMatchingUnderscore() {
@@ -459,23 +467,35 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void testPreferStartMatchToMiddleMatch() {
+  public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
     assertPreference("*fo", "barfoo", "barFoo");
     assertPreference("*fo", "barfoo", "foo");
     assertPreference("*fo", "asdfo", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
-    assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
-    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
+    assertPreference(" sto", "StackOverflowError", "ArrayStoreException", NameUtil.MatchingCaseSensitivity.NONE);
+    assertNoPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("ob", "oci_bind_array_by_name", "obj");
+    assertNoPreference("en", "ENABLED", "Enum", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferWordBoundaryMatch() {
     assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE);
-    assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+    assertPreference("*les", "configureByFiles", "getLookupElementStrings");
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE);
+
+    assertPreference("*Icon", "isControlKeyDown", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*icon", "isControlKeyDown", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
+
+    assertPreference("*Icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testPreferBeforeSeparators() {
+    assertPreference("*point", "getLocation(): Point", "getPoint(): Point", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferNoWordSkipping() {
@@ -483,12 +503,11 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testWordLengthDoesNotMatter() {
-    MinusculeMatcher matcher = new MinusculeMatcher("PropComp", NameUtil.MatchingCaseSensitivity.NONE);
-    assertEquals(matcher.matchingDegree("PropertyComponent"), matcher.matchingDegree("PropertiesComponent"));
+    assertNoPreference("PropComp", "PropertyComponent", "PropertiesComponent", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  public void testPreferEarlyMatching() {
-    assertPreference(" path", "getAbsolutePath", "findPath");
+  public void testMatchStartDoesntMatterForDegree() {
+    assertNoPreference(" path", "getAbsolutePath", "findPath", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
 
   public void testMeaningfulMatchingDegree() {
@@ -509,6 +528,14 @@ public class NameUtilTest extends UsefulTestCase {
     int iLess = matcher.matchingDegree(less);
     int iMore = matcher.matchingDegree(more);
     assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
+  }
+
+  private static void assertNoPreference(@NonNls String pattern,
+                                       @NonNls String name1,
+                                       @NonNls String name2,
+                                       NameUtil.MatchingCaseSensitivity sensitivity) {
+    MinusculeMatcher matcher = new MinusculeMatcher(pattern, sensitivity);
+    assertEquals(matcher.matchingDegree(name1), matcher.matchingDegree(name2));
   }
 
  public void testSpeedSearchComparator() {

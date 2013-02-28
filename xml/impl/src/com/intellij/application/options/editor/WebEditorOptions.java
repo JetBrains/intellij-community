@@ -109,28 +109,28 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     myAutomaticallyInsertRequiredAttributes = automaticallyInsertRequiredAttributes;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.application.options.emmet.EmmetOptions#getEmmetExpandShortcut()}
+   */
+  @Deprecated
   public int getZenCodingExpandShortcut() {
     return myZenCodingExpandShortcut;
-  }
-
-  public void setZenCodingExpandShortcut(int zenCodingExpandShortcut) {
-    myZenCodingExpandShortcut = zenCodingExpandShortcut;
   }
 
   public boolean isAutomaticallyStartAttribute() {
     return myAutomaticallyStartAttribute;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.application.options.emmet.EmmetOptions#isEmmetEnabled()}
+   */
+  @Deprecated
   public boolean isZenCodingEnabled() {
     return myZenCodingEnabled;
   }
 
   public void setAutomaticallyStartAttribute(final boolean automaticallyStartAttribute) {
     myAutomaticallyStartAttribute = automaticallyStartAttribute;
-  }
-
-  public void setZenCodingEnabled(boolean zenCodingEnabled) {
-    myZenCodingEnabled = zenCodingEnabled;
   }
 
   public boolean isAutomaticallyInsertRequiredSubTags() {

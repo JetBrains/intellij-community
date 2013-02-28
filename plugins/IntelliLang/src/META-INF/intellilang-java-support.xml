@@ -26,6 +26,8 @@
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
 
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+
+    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">

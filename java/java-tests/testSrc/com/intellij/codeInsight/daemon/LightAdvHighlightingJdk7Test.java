@@ -166,4 +166,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testWrongArgsAndUnknownTypeParams() throws Exception { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA97983() throws Exception { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA100314() throws Exception { doTest(false, false); }
+  public void testInstanceMemberNotAccessibleInStaticContext() throws Exception { doTest(false, false); }
 }

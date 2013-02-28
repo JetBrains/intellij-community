@@ -55,6 +55,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JTextField myVMOptionsField;
   private JLabel myHeapSizeLabel;
   private JLabel myVMOptionsLabel;
+  private JCheckBox myCbRebuildOnDependencyChange;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -84,6 +85,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbUseExternalBuild.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
+    myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     myHeapSizeField.setText(String.valueOf(workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE));
     final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     myVMOptionsField.setText(options == null? "" : options.trim());
@@ -115,6 +117,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseExternalBuild.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbEnableAutomake.isSelected();
     workspaceConfiguration.PARALLEL_COMPILATION = myCbParallelCompilation.isSelected();
+    workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE = myCbRebuildOnDependencyChange.isSelected();
     try {
       workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE = Integer.parseInt(myHeapSizeField.getText().trim());
     }
@@ -173,6 +176,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.USE_COMPILE_SERVER);
     isModified |= ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= ComparingUtils.isModified(myCbParallelCompilation, workspaceConfiguration.PARALLEL_COMPILATION);
+    isModified |= ComparingUtils.isModified(myCbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     isModified |= ComparingUtils.isModified(myHeapSizeField, workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE);
     isModified |= ComparingUtils.isModified(myVMOptionsField, workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS);
 
@@ -211,6 +215,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private void updateExternalMakeOptionControls(boolean enabled) {
     myCbEnableAutomake.setEnabled(enabled);
     myCbParallelCompilation.setEnabled(enabled);
+    myCbRebuildOnDependencyChange.setEnabled(enabled);
     myHeapSizeField.setEnabled(enabled);
     myVMOptionsField.setEnabled(enabled);
     myHeapSizeLabel.setEnabled(enabled);
