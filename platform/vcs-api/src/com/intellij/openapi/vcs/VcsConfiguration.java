@@ -246,13 +246,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
     myLastCommitMessages.add(comment);
   }
 
-  /**
-   * @deprecated Use {@link #getLastNonEmptyCommitMessage()} instead.
-   */
-  public String getLastCommitMessage() {
-    return getLastNonEmptyCommitMessage();
-  }
-
   public String getLastNonEmptyCommitMessage() {
     if (myLastCommitMessages.isEmpty()) {
       return null;
