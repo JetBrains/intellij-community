@@ -1146,4 +1146,12 @@ def foo() {
 }
 ''')
   }
+
+  void testIllegalLiteralName() {
+    testHighlighting('''
+def <error descr="Illegal escape character in string literal">'a\\obc'</error>() {
+
+}
+''')
+  }
 }
