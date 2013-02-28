@@ -100,7 +100,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (!profile.isToolEnabled(key)) {
       return null;
     }
-    final PyPep8Inspection inspection = profile.getUnwrappedTool(PyPep8Inspection.KEY, file);
+    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
     final List<String> ignoredErrors = inspection.ignoredErrors;
     final int margin = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().RIGHT_MARGIN;
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file), ignoredErrors, margin);
