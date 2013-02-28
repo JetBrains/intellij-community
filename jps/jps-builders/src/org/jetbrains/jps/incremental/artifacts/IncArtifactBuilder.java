@@ -16,14 +16,15 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.builders.artifacts.impl.ArtifactOutToSourceStorageProvider;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -33,7 +34,6 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
 import org.jetbrains.jps.incremental.artifacts.impl.JarsBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -247,43 +247,6 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     if (logger.isEnabled()) {
       logger.logDeletedFiles(deletedPaths);
     }
-  }
-
-  @Override
-  public void buildStarted(final CompileContext context) {
-    //todo[nik] move to common place
-    context.addBuildListener(new BuildListener() {
-      @Override
-      public void filesGenerated(Collection<Pair<String, String>> paths) {
-        BuildFSState fsState = context.getProjectDescriptor().fsState;
-        BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-        for (Pair<String, String> pair : paths) {
-          String relativePath = pair.getSecond();
-          File file = relativePath.equals(".") ? new File(pair.getFirst()) : new File(pair.getFirst(), relativePath);
-          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
-          for (BuildRootDescriptor descriptor : descriptors) {
-            try {
-              fsState.markDirty(context, file, descriptor, context.getProjectDescriptor().timestamps.getStorage(), false);
-            }
-            catch (IOException ignored) {
-            }
-          }
-        }
-      }
-
-      @Override
-      public void filesDeleted(Collection<String> paths) {
-        BuildFSState state = context.getProjectDescriptor().fsState;
-        BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
-        for (String path : paths) {
-          File file = new File(FileUtil.toSystemDependentName(path));
-          Collection<BuildRootDescriptor> descriptors = rootsIndex.findAllParentDescriptors(file, null, context);
-          for (BuildRootDescriptor descriptor : descriptors) {
-            state.registerDeleted(descriptor.getTarget(), file);
-          }
-        }
-      }
-    });
   }
 
   @NotNull

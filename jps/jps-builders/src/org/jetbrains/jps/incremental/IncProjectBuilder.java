@@ -281,7 +281,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
+  private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
     LOG.info("Building project; isRebuild:" +
@@ -290,6 +290,8 @@ public class IncProjectBuilder {
              context.isMake() +
              " parallel compilation:" +
              BuildRunner.PARALLEL_BUILD_ENABLED);
+
+    context.addBuildListener(new ChainedTargetsBuildListener(context));
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
