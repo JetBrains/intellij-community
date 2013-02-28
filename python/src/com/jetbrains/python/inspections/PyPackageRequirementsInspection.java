@@ -2,14 +2,12 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -67,15 +65,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   public static PyPackageRequirementsInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
-    final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(toolName, element);
-    if (inspectionTool instanceof LocalInspectionToolWrapper) {
-      final LocalInspectionToolWrapper profileEntry = (LocalInspectionToolWrapper)inspectionTool;
-      final LocalInspectionTool tool = profileEntry.getTool();
-      if (tool instanceof PyPackageRequirementsInspection) {
-        return (PyPackageRequirementsInspection)tool;
-      }
-    }
-    return null;
+    return (PyPackageRequirementsInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
   private static class Visitor extends PyInspectionVisitor {
@@ -88,7 +78,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      final Module module = ModuleUtil.findModuleForPsiElement(node);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(node);
       if (module != null) {
         if (isRunningPackagingTasks(module)) {
           return;
@@ -350,7 +340,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
-        final PyPackageRequirementsInspection inspection = PyPackageRequirementsInspection.getInstance(element);
+        final PyPackageRequirementsInspection inspection = getInstance(element);
         if (inspection != null) {
           final JDOMExternalizableStringList ignoredPackages = inspection.ignoredPackages;
           boolean changed = false;
