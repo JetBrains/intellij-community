@@ -1609,7 +1609,10 @@ public class HighlightUtil extends HighlightUtilBase {
     if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) return null;
     if (resolved instanceof PsiVariable) return null;
     String description = JavaErrorMessages.message("expression.expected");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    final HighlightInfo info =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+    UnresolvedReferenceQuickFixProvider.registerReferenceFixes(expression, new QuickFixActionRegistrarImpl(info));
+    return info;
   }
 
 

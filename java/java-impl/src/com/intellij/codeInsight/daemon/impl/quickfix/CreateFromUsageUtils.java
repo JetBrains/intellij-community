@@ -85,6 +85,7 @@ public class CreateFromUsageUtils {
     if (!unresolvedOnly) {
       for (JavaResolveResult result : results) {
         if (!result.isValidResult()) return false;
+        if (result.getElement() instanceof PsiPackage) return false;
       }
     }
     return true;
