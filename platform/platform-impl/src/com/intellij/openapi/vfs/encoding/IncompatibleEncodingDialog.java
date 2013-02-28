@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -30,24 +29,17 @@ import java.awt.event.ActionEvent;
 import java.nio.charset.Charset;
 
 public class IncompatibleEncodingDialog extends DialogWrapper {
-
-  @NotNull private final Document document;
   @NotNull private final VirtualFile virtualFile;
-  @NotNull private final byte[] bytes;
   @NotNull private final Charset charset;
   @NotNull private final EncodingUtil.Magic8 safeToReload;
   @NotNull private final EncodingUtil.Magic8 safeToConvert;
 
-  public IncompatibleEncodingDialog(@NotNull Document document,
-                                    @NotNull VirtualFile virtualFile,
-                                    @NotNull byte[] bytes,
+  public IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
                                     @NotNull final Charset charset,
                                     @NotNull EncodingUtil.Magic8 safeToReload,
                                     @NotNull EncodingUtil.Magic8 safeToConvert) {
     super(false);
-    this.document = document;
     this.virtualFile = virtualFile;
-    this.bytes = bytes;
     this.charset = charset;
     this.safeToReload = safeToReload;
     this.safeToConvert = safeToConvert;
