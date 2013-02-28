@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -167,8 +166,8 @@ public class GroovyPsiManager {
   private static boolean checkForPass(@NotNull PsiAnnotation annotation) {
     PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
     return value == null ||
-           value instanceof GrReferenceExpression &&
-           ResolveUtil.isEnumConstant((GrReferenceExpression)value, "PASS", GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
+           value instanceof PsiReference &&
+           ResolveUtil.isEnumConstant((PsiReference)value, "PASS", GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
   }
 
   @Nullable
