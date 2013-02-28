@@ -482,7 +482,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createUseCommitMessageRightMargin() {
-    myCommitMessageMarginConfigurable =  new VcsCommitMessageMarginConfigurable(myProject);
+    myCommitMessageMarginConfigurable = new VcsCommitMessageMarginConfigurable(myProject, myVcsConfiguration);
     return myCommitMessageMarginConfigurable.createComponent();
   }
 
