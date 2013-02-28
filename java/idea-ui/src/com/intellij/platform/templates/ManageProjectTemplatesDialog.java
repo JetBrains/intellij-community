@@ -21,17 +21,22 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 
 /**
@@ -49,7 +54,21 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     setTitle("Manage Project Templates");
     final ProjectTemplate[] templates =
       new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, new WizardContext(null));
-    final CollectionListModel<ProjectTemplate> model = new CollectionListModel<ProjectTemplate>(Arrays.asList(templates));
+    final CollectionListModel<ProjectTemplate> model = new CollectionListModel<ProjectTemplate>(Arrays.asList(templates)) {
+      @Override
+      public void remove(int index) {
+        ProjectTemplate template = getElementAt(index);
+        super.remove(index);
+        if (template instanceof LocalArchivedTemplate) {
+          URL path = ((LocalArchivedTemplate)template).getArchivePath();
+          try {
+            new File(path.toURI()).delete();
+          }
+          catch (URISyntaxException ignore) {
+          }
+        }
+      }
+    };
     myTemplatesList = new JBList(model);
     myTemplatesList.setEmptyText("No user-defined project templates");
     myTemplatesList.setPreferredSize(new Dimension(300, 100));
@@ -64,12 +83,6 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
       public void valueChanged(ListSelectionEvent e) {
         ProjectTemplate template = getSelectedTemplate();
         myDescriptionPane.setText(template == null ? null : template.getDescription());
-      }
-    });
-    model.addListDataListener(new ListDataAdapter() {
-      @Override
-      public void intervalRemoved(ListDataEvent e) {
-        ArchivedTemplatesFactory.getTemplateFile(templates[e.getIndex0()].getName()).delete();
       }
     });
 
