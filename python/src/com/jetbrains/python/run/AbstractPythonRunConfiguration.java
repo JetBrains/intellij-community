@@ -183,6 +183,15 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     return sdkHome;
   }
 
+  public Sdk getSdk() {
+    if (myUseModuleSdk) {
+      return PythonSdkType.findPythonSdk(getModule());
+    }
+    else {
+      return PythonSdkType.findSdkByPath(getSdkHome());
+    }
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myInterpreterOptions = JDOMExternalizerUtil.readField(element, "INTERPRETER_OPTIONS");
@@ -275,13 +284,13 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    * @param commandLine what to patch
    */
   public void patchCommandLine(GeneralCommandLine commandLine) {
-    final String sdk_home = getSdkHome();
-    Sdk sdk = PythonSdkType.findPythonSdk(getModule());
-    if (sdk != null && sdk_home != null) {
-      patchCommandLineFirst(commandLine, sdk_home);
-      patchCommandLineForVirtualenv(commandLine, sdk_home);
-      patchCommandLineForBuildout(commandLine, sdk_home);
-      patchCommandLineLast(commandLine, sdk_home);
+    final String interpreterPath = getInterpreterPath();
+    Sdk sdk = getSdk();
+    if (sdk != null && interpreterPath != null) {
+      patchCommandLineFirst(commandLine, interpreterPath);
+      patchCommandLineForVirtualenv(commandLine, interpreterPath);
+      patchCommandLineForBuildout(commandLine, interpreterPath);
+      patchCommandLineLast(commandLine, interpreterPath);
     }
   }
 

@@ -89,7 +89,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @Nullable
   public PythonSdkFlavor getSdkFlavor() {
-    return PythonSdkFlavor.getFlavor(myConfig.getSdkHome());
+    return PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
   }
 
   @Override
@@ -150,7 +150,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonRunConfigurationExtensionsManager.getInstance()
       .patchCommandLine(myConfig, runnerSettings, commandLine, getConfigurationSettings().getRunnerId());
 
-    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
+    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
 
 
     final ProcessHandler processHandler;
