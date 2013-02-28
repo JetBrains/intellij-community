@@ -75,8 +75,8 @@ public class MavenId implements Serializable, MavenCoordinate {
   }
 
   public boolean equals(@Nullable String groupId, @Nullable String artifactId) {
-    if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
+    if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
     return true;
   }
 
