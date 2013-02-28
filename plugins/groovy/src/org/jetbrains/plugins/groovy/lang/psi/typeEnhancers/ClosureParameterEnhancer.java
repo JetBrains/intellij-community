@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
@@ -109,6 +111,11 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   @Override
   @Nullable
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
+    final PsiMember containingMember = PsiTreeUtil.getParentOfType(closure, PsiMember.class);
+    if (containingMember != null && GroovyPsiManager.getInstance(closure.getProject()).isCompileStatic(containingMember)) {
+      return null;
+    }
+
     PsiElement parent = closure.getParent();
     if (parent instanceof GrStringInjection && index == 0) {
       return TypesUtil.createTypeByFQClassName("java.io.StringWriter", closure);
