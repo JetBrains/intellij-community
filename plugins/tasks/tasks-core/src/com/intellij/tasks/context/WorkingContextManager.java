@@ -116,7 +116,7 @@ public class WorkingContextManager {
     saveContext(entryName, CONTEXT_ZIP_POSTFIX, comment);
   }
 
-  private void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+  private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
       if (entryName == null) {
@@ -176,7 +176,7 @@ public class WorkingContextManager {
     loadContext(TASKS_ZIP_POSTFIX, task.getId() + TASK_XML_POSTFIX);
   }
 
-  private boolean loadContext(String zipPostfix, String entryName) {
+  private synchronized boolean loadContext(String zipPostfix, String entryName) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
@@ -199,7 +199,7 @@ public class WorkingContextManager {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }
 
-  private List<ContextInfo> getContextHistory(String zipPostfix) {
+  private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
@@ -246,7 +246,7 @@ public class WorkingContextManager {
     pack(max, delta, TASKS_ZIP_POSTFIX);
   }
 
-  private void pack(int max, int delta, String zipPostfix) {
+  private synchronized void pack(int max, int delta, String zipPostfix) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
