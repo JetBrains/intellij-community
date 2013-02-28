@@ -27,12 +27,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1114,15 +1114,33 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public List<MavenProject> getDependentProjects(MavenProject project) {
-    List<MavenProject> result = new SmartList<MavenProject>();
-    for (MavenProject eachProject : getProjects()) {
-      if (eachProject == project) continue;
-      if (!eachProject.findDependencies(project).isEmpty()) {
-        result.add(eachProject);
+  public List<MavenProject> getDependentProjects(Collection<MavenProject> projects) {
+    readLock();
+    try {
+      List<MavenProject> result = null;
+
+      Set<MavenCoordinate> projectIds = new THashSet<MavenCoordinate>(new MavenCoordinateHashCodeStrategy());
+
+      for (MavenProject project : projects) {
+        projectIds.add(project.getMavenId());
       }
+
+      for (MavenProject project : myVirtualFileToProjectMapping.values()) {
+        for (MavenArtifact dep : project.getDependencies()) {
+          if (projectIds.contains(dep)) {
+            if (result == null) result = new ArrayList<MavenProject>();
+
+            result.add(project);
+            break;
+          }
+        }
+      }
+
+      return result == null ? Collections.<MavenProject>emptyList() : result;
     }
-    return result;
+    finally {
+      readUnlock();
+    }
   }
 
   public void resolve(@NotNull Project project,
@@ -1520,6 +1538,22 @@ public class MavenProjectsTree {
     }
 
     public void artifactsDownloaded(MavenProject project) {
+    }
+  }
+
+  private static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
+
+    @Override
+    public int computeHashCode(MavenCoordinate object) {
+      String artifactId = object.getArtifactId();
+      return artifactId == null ? 0 : artifactId.hashCode();
+    }
+
+    @Override
+    public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
+      return Comparing.equal(o1.getArtifactId(), o2.getArtifactId())
+        && Comparing.equal(o1.getVersion(), o2.getVersion())
+        && Comparing.equal(o1.getGroupId(), o2.getGroupId());
     }
   }
 }

@@ -334,17 +334,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
         // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
         List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<Pair<MavenProject, MavenProjectChanges>>(updated);
-        for (MavenProject each : updatedProjects) {
-          for (MavenProject eachDependent : myProjectsTree.getDependentProjects(each)) {
-            toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
-          }
+
+        for (MavenProject eachDependent : myProjectsTree.getDependentProjects(updatedProjects)) {
+          toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
         }
 
         // resolve updated, theirs dependents, and dependents of deleted
         Set<MavenProject> toResolve = new THashSet<MavenProject>(updatedProjects);
-        for (MavenProject each : ContainerUtil.concat(updatedProjects, deleted)) {
-          toResolve.addAll(myProjectsTree.getDependentProjects(each));
-        }
+        toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
 
         // do not try to resolve projects with syntactic errors
         Iterator<MavenProject> it = toResolve.iterator();
