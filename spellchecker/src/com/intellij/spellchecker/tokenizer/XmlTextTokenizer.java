@@ -15,27 +15,32 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Override
   public void tokenize(@NotNull XmlText element, TokenConsumer consumer) {
-    List<Pair<PsiElement,TextRange>> list = InjectedLanguageManager.getInstance(element.getProject()).getInjectedPsiFiles(element);
-    if (list != null && list.size() > 0) return;
+    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
+    processChildren(element, consumer);
+  }
+
+  private static void processChildren(PsiElement element, TokenConsumer consumer) {
     final PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
-      if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      IElementType elementType = child.getNode().getElementType();
+      if (elementType == XmlTokenType.XML_DATA_CHARACTERS) {
         consumer.consumeToken(child, PlainTextSplitter.getInstance());
+      }
+      else if (elementType == XmlElementType.XML_CDATA) {
+        processChildren(child, consumer);
       }
     }
   }
