@@ -117,8 +117,9 @@ public class WorkingContextManager {
   }
 
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       if (entryName == null) {
         int i = archive.getEntries().size();
         do {
@@ -133,10 +134,12 @@ public class WorkingContextManager {
       saveContext(element);
       String s = new XMLOutputter().outputString(element);
       entry.setData(s.getBytes("UTF-8"));
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
