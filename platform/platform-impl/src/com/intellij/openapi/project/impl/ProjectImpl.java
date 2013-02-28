@@ -75,6 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
+  public static final String NAME_FILE = ".name";
 
   private ProjectManagerImpl myManager;
 
@@ -342,7 +343,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         if (baseDir != null && baseDir.isValid()) {
           final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
           if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-            final File nameFile = new File(ideaDir.getPath(), ".name");
+            final File nameFile = new File(ideaDir.getPath(), NAME_FILE);
             try {
               FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
               myOldName = null;
