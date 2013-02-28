@@ -27,6 +27,8 @@ import java.io.Serializable;
 
 public class MavenArtifact implements Serializable, MavenCoordinate {
 
+  static long serialVersionUID = 6389627095309274357L;
+
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
   private final String myGroupId;
