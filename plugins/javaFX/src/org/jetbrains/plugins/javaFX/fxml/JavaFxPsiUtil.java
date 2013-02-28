@@ -20,9 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -206,6 +204,7 @@ public class JavaFxPsiUtil {
   }
   
   private static final Key<CachedValue<PsiClass>> INJECTED_CONTROLLER = Key.create("javafx.injected.controller");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("javafx.controller");
   public static PsiClass getControllerClass(final PsiFile containingFile) {
     if (containingFile instanceof XmlFile) {
       final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
@@ -220,8 +219,13 @@ public class JavaFxPsiUtil {
         }
       }
       final CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
-      final PsiClass injectedControllerClass = manager.getCachedValue(containingFile, INJECTED_CONTROLLER, 
-                                                                      new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true);
+      final PsiClass injectedControllerClass = ourGuard.doPreventingRecursion(containingFile, true, new Computable<PsiClass>() {
+        @Override
+        public PsiClass compute() {
+          return manager.getCachedValue(containingFile, INJECTED_CONTROLLER, 
+                                        new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true);
+        }
+      });
       if (injectedControllerClass != null) {
         return injectedControllerClass;
       }
