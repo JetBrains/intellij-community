@@ -132,7 +132,7 @@ public class WorkingContextManager {
       Element element = new Element("context");
       saveContext(element);
       String s = new XMLOutputter().outputString(element);
-      entry.setData(s.getBytes());
+      entry.setData(s.getBytes("UTF-8"));
       archive.close();
     }
     catch (IOException e) {
