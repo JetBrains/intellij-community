@@ -1147,11 +1147,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     });
 
-    PsiField[] fields = typeDefinition.getAllFields();
-    for (PsiField field : fields) {
-      vars.remove(field.getName());
-    }
-
     for (String var : vars) {
       addNodeAndCheckPending(new ReadWriteVariableInstruction(var, typeDefinition, READ));
     }
