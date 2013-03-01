@@ -256,7 +256,7 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
     E303: def a():\n\n\n\n    pass
     E304: @decorator\n\ndef a():\n    pass
     """
-    if line_number == 1:
+    if line_number < 3 and not previous_logical:
         return  # Don't expect blank lines before the first line
     if previous_logical.startswith('@'):
         if blank_lines:
