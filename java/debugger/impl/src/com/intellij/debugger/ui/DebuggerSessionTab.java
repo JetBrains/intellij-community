@@ -64,6 +64,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,10 +88,14 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
   private final Icon myIcon;
 
-  public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
+  public DebuggerSessionTab(final Project project,
+                            final String sessionName,
+                            @NotNull final DebugUIEnvironment environment,
+                            DebuggerSession debuggerSession) throws ExecutionException {
     super(project, "JavaDebugger", sessionName);
-
-    myIcon = icon;
+    myIcon = environment.getIcon();
+    myDebuggerSession = debuggerSession;
+    myDebugUIEnvironment = environment;
 
     final DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction("Debugger.FocusOnBreakpoint"));
@@ -179,6 +184,28 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         updateStatus(event.getContent());
       }
     }, this);
+
+    debuggerSession.getContextManager().addListener(new DebuggerContextListener() {
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        if (!myUi.isDisposed()) {
+          attractFramesOnPause(event);
+          myStateManager.fireStateChanged(newContext, event);
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myUi.isDisposed()) {
+                myUi.updateActionsNow();
+              }
+            }
+          });
+        }
+      }
+    });
+
+    ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
+    myConsole = executionResult.getExecutionConsole();
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(), myIcon);
+    initUI(executionResult);
   }
 
   private static void updateStatus(final Content content) {
@@ -205,13 +232,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     return myRunContentDescriptor;
   }
 
-  private RunContentDescriptor initUI(ExecutionResult executionResult) {
-
-    myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(), myIcon);
-
+  private void initUI(ExecutionResult executionResult) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myRunContentDescriptor;
+      return;
     }
 
 
@@ -314,8 +337,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myDebugUIEnvironment.initActions(myRunContentDescriptor, leftToolbar);
 
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
-
-    return myRunContentDescriptor;
   }
 
   private static void addAction(DefaultActionGroup group, String actionId) {
@@ -409,30 +430,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   @Override
   protected RunProfile getRunProfile() {
     return myDebugUIEnvironment != null ? myDebugUIEnvironment.getRunProfile() : null;
-  }
-
-  public RunContentDescriptor attachToSession(final DebuggerSession session, DebugUIEnvironment environment) throws ExecutionException {
-    disposeSession();
-    myDebuggerSession = session;
-    myDebugUIEnvironment = environment;
-
-    session.getContextManager().addListener(new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        if (!myUi.isDisposed()) {
-          attractFramesOnPause(event);
-          myStateManager.fireStateChanged(newContext, event);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myUi.isDisposed()) {
-                myUi.updateActionsNow();
-              }
-            }
-          });
-        }
-      }
-    });
-    return initUI(session.getProcess().getExecutionResult());
   }
 
   private void attractFramesOnPause(final int event) {

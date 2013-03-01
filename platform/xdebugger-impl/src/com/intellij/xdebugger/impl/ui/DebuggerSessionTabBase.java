@@ -33,6 +33,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
@@ -57,6 +58,7 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
 
   public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
     super(project);
+    Disposer.register(project, this);
     myManager = new LogFilesManager(project, this, this);
 
     mySessionName = sessionName;

@@ -129,9 +129,8 @@ public class DebuggerPanelsManager implements ProjectComponent {
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
-    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, modelEnvironment.getSessionName(), environment.getIcon());
-    Disposer.register(myProject, sessionTab);
-    RunContentDescriptor runContentDescriptor = sessionTab.attachToSession(debuggerSession, environment);
+    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, modelEnvironment.getSessionName(), environment, debuggerSession);
+    RunContentDescriptor runContentDescriptor = sessionTab.getRunContentDescriptor();
     RunContentDescriptor reuseContent = environment.getReuseContent();
     if (reuseContent != null) {
       final ProcessHandler prevHandler = reuseContent.getProcessHandler();
