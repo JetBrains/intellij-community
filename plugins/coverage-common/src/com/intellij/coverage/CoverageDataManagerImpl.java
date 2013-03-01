@@ -45,6 +45,7 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -70,7 +71,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private static final String ADD_TO_ACTIVE_SUITES = "&Add to active suites";
   private static final String DO_NOT_APPLY_COLLECTED_COVERAGE = "Do not apply &collected coverage";
 
-  private final List<CoverageSuiteListener> myListeners = new ArrayList<CoverageSuiteListener>();
+  private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance("#" + CoverageDataManagerImpl.class.getName());
   @NonNls
   private static final String SUITE = "SUITE";
