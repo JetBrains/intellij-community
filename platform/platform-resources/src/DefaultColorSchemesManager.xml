@@ -189,78 +189,6 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
-      <option name="JAVA_STRING">
-        <value>
-          <option name="FOREGROUND" value="008000"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-      <option name="JAVA_INVALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="008000"/>
-          <option name="BACKGROUND" value="ffcccc"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_VALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="000080"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-      <option name="JAVA_OPERATION_SIGN">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_PARENTH">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_BRACKETS">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_BRACES">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_COMMA">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_DOT">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-      <option name="JAVA_SEMICOLON">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
 
       <option name="FOLDED_TEXT_ATTRIBUTES">
         <value>
@@ -278,14 +206,6 @@
           <option name="BACKGROUND" value="f0f0f0"/>
           <option name="EFFECT_COLOR"/>
           <option name="EFFECT_TYPE" value="1"/>
-        </value>
-      </option>
-
-      <option name="JAVA_DOC_MARKUP">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="e2ffe2"/>
-          <option name="EFFECT_COLOR"/>
         </value>
       </option>
 
@@ -473,16 +393,6 @@
         </value>
       </option>
 
-      <option name="JAVA_DOC_TAG">
-        <value>
-          <option name="FOREGROUND"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR" value="808080"/>
-          <option name="EFFECT_TYPE" value="1"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-
       <option name="DOC_COMMENT_TAG_VALUE">
         <value>
           <option name="FOREGROUND" value="3d3d3d"/>
@@ -649,33 +559,6 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
-
-      <option name="JAVA_NUMBER">
-        <value>
-          <option name="FOREGROUND" value="ff"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-        </value>
-      </option>
-
-      <option name="JAVA_LINE_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-
-      <option name="JAVA_BLOCK_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-
       <option name="INSTANCE_FIELD_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a"/>
@@ -684,16 +567,6 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
-
-      <option name="JAVA_DOC_COMMENT">
-        <value>
-          <option name="FOREGROUND" value="808080"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="2"/>
-        </value>
-      </option>
-
       <option name="DIFF_ABSENT">
         <value>
           <option name="FOREGROUND"/>
@@ -771,16 +644,6 @@
           <option name="EFFECT_TYPE" value="0"/>
         </value>
       </option>
-
-      <option name="JAVA_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="80"/>
-          <option name="BACKGROUND"/>
-          <option name="EFFECT_COLOR"/>
-          <option name="FONT_TYPE" value="1"/>
-        </value>
-      </option>
-
       <option name="ANNOTATION_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="808000" />
