@@ -159,34 +159,42 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                              DataContext dataContext,
                                              int offset,
                                              Document doc) {
+    boolean autoWrapInProgress = DataManager.getInstance().loadFromDataContext(dataContext,
+                                                                               AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) != null;
+    if (needInsertBackslash(file, offset, autoWrapInProgress)) {
+      doc.insertString(offset, "\\");
+      caretOffset.set(caretOffset.get() + 1);
+    }
+    return Result.Continue;
+  }
+
+  public static boolean needInsertBackslash(PsiFile file, int offset, boolean autoWrapInProgress) {
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset - 1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') >= 0) {
         // we've got a backslash at EOL already, don't need another one
-        return Result.Continue;
+        return false;
       }
     }
     PsiElement statementBefore = findStatementBeforeCaret(file, offset);
     PsiElement statementAfter = findStatementAfterCaret(file, offset);
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
-      return Result.Continue;
+      return false;
     }
     if (statementBefore == null) {  // empty file
-      return Result.Continue;
+      return false;
     }
 
     if (PsiTreeUtil.hasErrorElements(statementBefore)) {
-      final Boolean autoWrapping =
-        DataManager.getInstance().loadFromDataContext(dataContext, AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY);
-      if (autoWrapping == null) {
+      if (!autoWrapInProgress) {
         // code is already bad, don't mess it up even further
-        return Result.Continue;
+        return false;
       }
       // if we're in middle of typing, it's expected that we will have error elements
     }
 
     if (inFromImportParentheses(statementBefore, offset)) {
-      return Result.Continue;
+      return false;
     }
 
     PsiElement wrappableBefore = findWrappable(file, offset, true);
@@ -210,13 +218,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
-      return Result.Continue;
+      return false;
     }
-    if (wrappableAfter == null || wrappableBefore != wrappableAfter) {
-      doc.insertString(offset, "\\");
-      caretOffset.set(caretOffset.get() + 1);
-    }
-    return Result.Continue;
+    return wrappableAfter == null || wrappableBefore != wrappableAfter;
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element) {

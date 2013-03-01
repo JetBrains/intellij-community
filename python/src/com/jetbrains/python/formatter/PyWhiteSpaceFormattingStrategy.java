@@ -1,7 +1,10 @@
 package com.jetbrains.python.formatter;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy;
+import com.jetbrains.python.editor.PythonEnterHandler;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +18,21 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
 
   public PyWhiteSpaceFormattingStrategy() {
     super('\\');
+  }
+
+  @Override
+  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                  @NotNull PsiElement startElement,
+                                                  int startOffset,
+                                                  int endOffset,
+                                                  CodeStyleSettings codeStyleSettings) {
+    CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
+    if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !StringUtil.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
+        PythonEnterHandler.needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
+      PyCodeStyleSettings settings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
+      return (settings.SPACE_BEFORE_BACKSLASH ? " \\" : "\\") + whiteSpace.toString();
+    }
+    return whiteSpace;
   }
 
   /**

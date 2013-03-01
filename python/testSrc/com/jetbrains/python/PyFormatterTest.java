@@ -312,6 +312,11 @@ public class PyFormatterTest extends PyTestCase {
     doTestPy3();
   }
 
+  public void testWrapInBinaryExpression() {  // PY-9032
+    settings().RIGHT_MARGIN = 80;
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
