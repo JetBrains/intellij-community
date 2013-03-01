@@ -317,6 +317,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testSpaceWithinDeclarationParentheses() {  // PY-8818
+    settings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

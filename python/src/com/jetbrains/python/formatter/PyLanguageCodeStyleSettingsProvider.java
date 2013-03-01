@@ -46,6 +46,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
                                    "SPACE_AROUND_SHIFT_OPERATORS",
                                    "SPACE_WITHIN_METHOD_CALL_PARENTHESES",
+                                   "SPACE_WITHIN_METHOD_PARENTHESES",
                                    "SPACE_WITHIN_BRACKETS",
                                    "SPACE_AFTER_COMMA",
                                    "SPACE_BEFORE_COMMA",
