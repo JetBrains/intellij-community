@@ -31,6 +31,10 @@ public class PySelectWordTest extends PyTestCase {
     doTest();
   }
 
+  public void testEscapeSequence() {  // PY-9014
+    doTest();
+  }
+
   private void doTest() {
     @NonNls final String path = "selectWord/" + getTestName(true);
     myFixture.copyDirectoryToProject(path, path);
