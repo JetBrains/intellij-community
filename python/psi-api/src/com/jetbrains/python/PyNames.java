@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,7 +188,7 @@ public class PyNames {
   private static final BuiltinDescription _self_item_descr = new BuiltinDescription("(self, item)");
   private static final BuiltinDescription _self_key_descr = new BuiltinDescription("(self, key)");
 
-  public static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
+  private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
     .put("__abs__", _only_self_descr)
     .put("__add__", _self_other_descr)
     .put("__and__", _self_other_descr)
@@ -260,7 +261,6 @@ public class PyNames {
     .put("__ne__", _self_other_descr)
     .put("__neg__", _only_self_descr)
     .put(NEW, new BuiltinDescription("(cls, *args, **kwargs)"))
-    .put("__nonzero__", _only_self_descr)
     .put("__oct__", _only_self_descr)
     .put("__or__", _self_other_descr)
     //_BuiltinMethods.put("__path__", _only_self_descr);
@@ -296,6 +296,20 @@ public class PyNames {
     //_BuiltinMethods.put("__version__", _only_self_descr);
     .put("__xor__", _self_other_descr)
     .build();
+
+  public static ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(BuiltinMethods)
+    .put("__nonzero__", _only_self_descr)
+    .build();
+
+  public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(BuiltinMethods)
+    .put("__bool__", _only_self_descr)
+    .build();
+
+  public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
+    return level.isPy3K() ? PY3_BUILTIN_METHODS : PY2_BUILTIN_METHODS;
+  }
 
   // canonical names, not forced by interpreter
   public static final String CANONICAL_SELF = "self";

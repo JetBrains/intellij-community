@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                for (PyFunction function : containingClass.getMethods()) {
                  seenNames.add(function.getName());
                }
-               seenNames.addAll(PyNames.BuiltinMethods.keySet());
+               LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
+               seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
                for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
