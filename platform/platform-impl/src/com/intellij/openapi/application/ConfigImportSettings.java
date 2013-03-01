@@ -30,6 +30,14 @@ import java.util.List;
  */
 public class ConfigImportSettings {
 
+  public String getExecutableName() {
+    return getProductName(ThreeState.NO);
+  }
+
+  public String getMainJarName() {
+    return getProductName(ThreeState.NO);
+  }
+
   protected String getProductName(ThreeState full) {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     if (full == ThreeState.YES) {
