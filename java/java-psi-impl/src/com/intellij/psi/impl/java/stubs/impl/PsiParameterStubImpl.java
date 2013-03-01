@@ -60,7 +60,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
-    return doResolve ? PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myType) : myType;
+    return doResolve ? myType.applyAnnotations(this) : myType;
   }
 
   @Override
