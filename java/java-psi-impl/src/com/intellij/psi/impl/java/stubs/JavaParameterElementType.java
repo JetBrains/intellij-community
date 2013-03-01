@@ -76,7 +76,7 @@ public abstract class JavaParameterElementType extends JavaStubElementType<PsiPa
   @Override
   public PsiParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
-    TypeInfo type = TypeInfo.readTYPE(dataStream, parentStub);
+    TypeInfo type = TypeInfo.readTYPE(dataStream);
     boolean isEllipsis = dataStream.readBoolean();
     return new PsiParameterStubImpl(parentStub, name, type, isEllipsis);
   }
