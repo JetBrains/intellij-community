@@ -57,7 +57,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   private State myState = new State();
 
-  private final Map<String, String> myNameCache = new HashMap<String, String>();
+  private final Map<String, String> myNameCache = Collections.synchronizedMap(new HashMap<String, String>());
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -266,23 +266,17 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   @NotNull
   private String getProjectName(String path) {
-    synchronized (myNameCache) {
-      String cached = myNameCache.get(path);
-      if (cached != null) {
-        return cached;
-      }
+    String cached = myNameCache.get(path);
+    if (cached != null) {
+      return cached;
     }
     String result = readProjectName(path);
-    synchronized (myNameCache) {
-      myNameCache.put(path, result);
-    }
+    myNameCache.put(path, result);
     return result;
   }
 
   public void clearNameCache() {
-    synchronized (myNameCache) {
-      myNameCache.clear();
-    }
+    myNameCache.clear();
   }
 
   private static String readProjectName(String path) {
