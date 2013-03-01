@@ -184,6 +184,7 @@ public class ResolveUtil {
       if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
 
       if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
+      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
