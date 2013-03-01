@@ -1324,7 +1324,7 @@ class XInternalError {}
 
     def p = LookupElementPresentation.renderElement(item)
     assert p.itemText == 'public void run'
-    assert p.tailText == '(s, myInt) {...}'
+    assert p.tailText == '(t, myInt) {...}'
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item

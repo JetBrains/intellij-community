@@ -27,9 +27,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.Consumer;
+import com.intellij.util.VisibilityUtil;
 
 import java.util.List;
 
@@ -62,17 +61,9 @@ public class JavaOverrideCompletionContributor {
   private static void addSuperSignatureElements(final PsiClass parent, boolean implemented, CompletionResultSet result) {
     for (CandidateInfo candidate : OverrideImplementExploreUtil.getMethodsToOverrideImplement(parent, implemented)) {
       PsiMethod baseMethod = (PsiMethod)candidate.getElement();
-      if (!baseMethod.isConstructor()) {
-        PsiClass baseClass = baseMethod.getContainingClass();
-        List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, candidate.getSubstitutor(), new Consumer<PsiMethod>() {
-          @Override
-          public void consume(PsiMethod method) {
-            OverrideImplementUtil.deleteDocComment(method);
-          }
-        });
-        if (!prototypes.isEmpty() && baseClass != null) {
-          result.addElement(createOverridingLookupElement(parent, implemented, baseMethod, baseClass, prototypes.get(0)));
-        }
+      PsiClass baseClass = baseMethod.getContainingClass();
+      if (!baseMethod.isConstructor() && baseClass != null) {
+        result.addElement(createOverridingLookupElement(parent, implemented, baseMethod, baseClass, candidate.getSubstitutor()));
       }
     }
   }
@@ -80,18 +71,16 @@ public class JavaOverrideCompletionContributor {
   private static LookupElementBuilder createOverridingLookupElement(final PsiClass parent,
                                                                     boolean implemented,
                                                                     final PsiMethod baseMethod,
-                                                                    PsiClass baseClass, final PsiMethod prototype) {
-    PsiIdentifier nameIdentifier = prototype.getNameIdentifier();
-    assert nameIdentifier != null;
+                                                                    PsiClass baseClass, PsiSubstitutor substitutor) {
+    String methodName = baseMethod.getName();
 
-    String signature = prototype.getModifierList().getText();
-    if (!signature.isEmpty()) {
-      signature += " ";
-    }
-    PsiType returnType = prototype.getReturnType();
-    signature += TypeConversionUtil.erasure(returnType).getPresentableText() + " " + prototype.getName();
+    String visibility = VisibilityUtil.getVisibilityModifier(baseMethod.getModifierList());
+    String modifiers = (visibility == PsiModifier.PACKAGE_LOCAL ? "" : visibility + " ");
 
-    String parameters = PsiFormatUtil.formatMethod(prototype, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME);
+    PsiType type = substitutor.substitute(baseMethod.getReturnType());
+    String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + methodName;
+
+    String parameters = PsiFormatUtil.formatMethod(baseMethod, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME);
 
     InsertHandler<LookupElement> insertHandler = new InsertHandler<LookupElement>() {
       @Override
@@ -112,7 +101,7 @@ public class JavaOverrideCompletionContributor {
     icon.setIcon(baseMethod.getIcon(0), 0);
     icon.setIcon(implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod, 1);
 
-    LookupElementBuilder element = LookupElementBuilder.create(baseMethod, signature).withLookupString(prototype.getName()).
+    LookupElementBuilder element = LookupElementBuilder.create(baseMethod, signature).withLookupString(methodName).
       withLookupString(signature).withInsertHandler(insertHandler).
       appendTailText(parameters, false).appendTailText(" {...}", true).withTypeText(baseClass.getName()).withIcon(icon);
     element.putUserData(OVERRIDE_ELEMENT, true);
