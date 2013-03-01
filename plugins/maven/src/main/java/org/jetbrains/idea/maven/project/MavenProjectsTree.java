@@ -519,9 +519,11 @@ public class MavenProjectsTree {
     process.setText2("");
 
     List<MavenProject> prevModules = getModules(mavenProject);
-    Set<MavenProject> prevInheritors = isNew
-                                       ? new THashSet<MavenProject>()
-                                       : findInheritors(mavenProject);
+
+    Set<MavenProject> prevInheritors = new HashSet<MavenProject>();
+    if (!isNew) {
+      prevInheritors.addAll(findInheritors(mavenProject));
+    }
 
     MavenProjectTimestamp timestamp = calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
     boolean isChanged = force || !timestamp.equals(myTimestamps.get(mavenProject));
@@ -627,9 +629,9 @@ public class MavenProjectsTree {
       }
     }
 
-    Set<MavenProject> allInheritors = findInheritors(mavenProject);
-    allInheritors.addAll(prevInheritors);
-    for (MavenProject each : allInheritors) {
+    prevInheritors.addAll(findInheritors(mavenProject));
+
+    for (MavenProject each : prevInheritors) {
       doUpdate(each,
                findAggregator(each),
                false,
@@ -1102,15 +1104,25 @@ public class MavenProjectsTree {
     return findProject(project.getParentId());
   }
 
-  public Set<MavenProject> findInheritors(MavenProject project) {
-    Set<MavenProject> result = new THashSet<MavenProject>();
-    MavenId id = project.getMavenId();
+  public Collection<MavenProject> findInheritors(MavenProject project) {
+    readLock();
+    try {
+      List<MavenProject> result = null;
+      MavenId id = project.getMavenId();
 
-    for (MavenProject each : getProjects()) {
-      if (each == project) continue;
-      if (id.equals(each.getParentId())) result.add(each);
+      for (MavenProject each : myVirtualFileToProjectMapping.values()) {
+        if (each == project) continue;
+        if (id.equals(each.getParentId())) {
+          if (result == null) result = new ArrayList<MavenProject>();
+          result.add(each);
+        }
+      }
+
+      return result == null ? Collections.<MavenProject>emptyList() : result;
     }
-    return result;
+    finally {
+      readUnlock();
+    }
   }
 
   public List<MavenProject> getDependentProjects(Collection<MavenProject> projects) {

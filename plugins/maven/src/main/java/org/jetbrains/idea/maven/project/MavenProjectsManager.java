@@ -584,8 +584,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @NotNull
-  public Set<MavenProject> findInheritors(@Nullable MavenProject parent) {
-    if (parent == null || !isInitialized()) return Collections.emptySet();
+  public Collection<MavenProject> findInheritors(@Nullable MavenProject parent) {
+    if (parent == null || !isInitialized()) return Collections.emptyList();
     return myProjectsTree.findInheritors(parent);
   }
 
