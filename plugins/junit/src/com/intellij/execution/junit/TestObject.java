@@ -321,7 +321,8 @@ public abstract class TestObject implements JavaCommandLine {
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
-        } else {
+        } 
+        else {
           handler.getOut().addRequest(runnable, queue);
         }
       }
