@@ -40,6 +40,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -313,15 +314,13 @@ public abstract class TestObject implements JavaCommandLine {
             }
             finally {
               if (ApplicationManager.getApplication().isUnitTestMode()) {
-                LOG.info("console is asked to dispose");
                 Disposer.dispose(consoleView);
               }
             }
           }
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.info("process terminated received");
-          runnable.run();
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
         } else {
           handler.getOut().addRequest(runnable, queue);
         }
