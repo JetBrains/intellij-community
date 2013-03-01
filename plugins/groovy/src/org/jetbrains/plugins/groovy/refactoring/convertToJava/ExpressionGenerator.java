@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock.EMPTY_ARRAY;
@@ -568,36 +569,59 @@ public class ExpressionGenerator extends Generator {
   private void writeAssignmentWithSetter(GrExpression qualifier, PsiMethod setter, GrAssignmentExpression assignment) {
     GrExpression rValue = getRValue(assignment);
     LOG.assertTrue(rValue != null);
-    writeAssignmentWithSetter(qualifier, setter, new GrExpression[]{rValue}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY,
-                              assignment);
+    writeAssignmentWithSetter(qualifier, setter, new GrExpression[]{rValue}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, PsiSubstitutor.EMPTY, assignment);
   }
 
   private void writeAssignmentWithSetter(@Nullable GrExpression qualifier,
-                                         PsiMethod method,
-                                         GrExpression[] exprs,
-                                         GrNamedArgument[] namedArgs,
-                                         GrClosableBlock[] closures,
-                                         PsiSubstitutor substitutor,
-                                         GrAssignmentExpression assignment) {
+                                         @NotNull PsiMethod method,
+                                         @NotNull GrExpression[] exprs,
+                                         @NotNull GrNamedArgument[] namedArgs,
+                                         @NotNull GrClosableBlock[] closures,
+                                         @NotNull PsiSubstitutor substitutor,
+                                         @NotNull GrAssignmentExpression assignment) {
     if (PsiUtil.isExpressionUsed(assignment)) {
-      String setterName = context.getSetterName(method, assignment);
-      GrExpression[] args;
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        args = exprs;
+      final GrExpression rValue = assignment.getRValue();
+
+      //inline setter method invocation in case of tail statement and simple right value
+      if (PsiUtil.isExpressionStatement(assignment) && PsiUtil.isReturnStatement(assignment) && rValue != null && isVarAccess(rValue)) {
+
+        final StringBuilder assignmentBuffer = new StringBuilder();
+        new ExpressionGenerator(assignmentBuffer, context).invokeMethodOn(method, qualifier, exprs, namedArgs, closures, substitutor, assignment);
+        assignmentBuffer.append(';');
+        context.myStatements.add(assignmentBuffer.toString());
+
+        rValue.accept(this);
       }
       else {
-        args = new GrExpression[exprs.length + 1];
-        if (qualifier == null) {
-          qualifier = factory.createExpressionFromText("this", assignment);
+        String setterName = context.getSetterName(method, assignment);
+        GrExpression[] args;
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          args = exprs;
         }
-        args[0] = qualifier;
-        System.arraycopy(exprs, 0, args, 1, exprs.length);
+        else {
+          args = new GrExpression[exprs.length + 1];
+          if (qualifier == null) {
+            qualifier = factory.createExpressionFromText("this", assignment);
+          }
+          args[0] = qualifier;
+          System.arraycopy(exprs, 0, args, 1, exprs.length);
+        }
+        invokeMethodByName(null, setterName, args, namedArgs, closures, this, assignment);
       }
-      invokeMethodByName(null, setterName, args, namedArgs, closures, this, assignment);
     }
     else {
       invokeMethodOn(method, qualifier, exprs, namedArgs, closures, substitutor, assignment);
     }
+  }
+
+  private static boolean isVarAccess(@Nullable GrExpression expr) {
+    if (expr instanceof GrReferenceExpression) {
+      final PsiElement resolved = ((GrReferenceExpression)expr).resolve();
+      if (resolved instanceof PsiVariable) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -1291,14 +1315,15 @@ public class ExpressionGenerator extends Generator {
     builder.append(']');
   }
 
-  public void invokeMethodOn(PsiMethod method,
+  public void invokeMethodOn(@NotNull PsiMethod method,
                              @Nullable GrExpression caller,
-                             GrExpression[] exprs,
-                             GrNamedArgument[] namedArgs,
-                             GrClosableBlock[] closures,
-                             PsiSubstitutor substitutor,
-                             GroovyPsiElement context) {
+                             @NotNull GrExpression[] exprs,
+                             @NotNull GrNamedArgument[] namedArgs,
+                             @NotNull GrClosableBlock[] closures,
+                             @NotNull PsiSubstitutor substitutor,
+                             @NotNull GroovyPsiElement context) {
     if (method instanceof GrGdkMethod) {
+      if (CustomMethodInvocator.invokeMethodOn(this, (GrGdkMethod)method, caller, exprs, namedArgs, closures, substitutor, context)) return;
 
       GrExpression[] newArgs = new GrExpression[exprs.length + 1];
       System.arraycopy(exprs, 0, newArgs, 1, exprs.length);

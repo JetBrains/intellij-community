@@ -225,7 +225,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
 
   @Override
   @Nullable
-  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass, Set<PsiMember> membersToMove) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<PsiField>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();

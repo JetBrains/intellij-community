@@ -53,6 +53,7 @@ public class MavenImportingSettings implements Cloneable {
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public enum GeneratedSourcesFolder {
+    IGNORE("Don't detect"),
     AUTODETECT("Detect automatically"),
     GENERATED_SOURCE_FOLDER("target/generated-sources"),
     SUBFOLDER("subdirectories of \"target/generated-sources\"");

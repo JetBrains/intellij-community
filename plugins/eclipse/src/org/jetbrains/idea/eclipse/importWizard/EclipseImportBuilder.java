@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -54,6 +55,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import icons.EclipseIcons;
 import org.jdom.Element;
@@ -181,7 +183,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
               final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
               EclipseClasspathReader.collectVariables(variables, classpathElement, path);
             }
-            EclipseProjectFinder.collectUnknownNatures(path, naturesNames);
+            collectUnknownNatures(path, naturesNames);
           }
         }
         catch (IOException e) {
@@ -224,6 +226,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     final Collection<String> unknownJdks = new TreeSet<String>();
     final Set<String> refsToModules = new HashSet<String>();
     final List<Module> result = new ArrayList<Module>();
+    final Map<Module, Set<String>> module2NatureNames = new HashMap<Module, Set<String>>();
 
     try {
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
@@ -296,6 +299,8 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT,
                                                     StdModuleTypes.JAVA.getId());
         result.add(module);
+        module2NatureNames.put(module, collectNatures(path));
+
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
 
@@ -330,7 +335,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     catch (Exception e) {
       LOG.error(e);
     }
-
+    scheduleNaturesImporting(project, module2NatureNames);
     createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
     StringBuffer message = new StringBuffer();
@@ -400,6 +405,37 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     return result;
   }
 
+  private static void scheduleNaturesImporting(@NotNull final Project project,
+                                               @NotNull final Map<Module, Set<String>> module2NatureNames) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          @Override
+          public void run() {
+            for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
+              final String importerNatureName = importer.getNatureName();
+              final List<Module> modulesToImport = new ArrayList<Module>();
+
+              for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
+                final Module module = entry.getKey();
+                final Set<String> natureNames = entry.getValue();
+
+                if (natureNames.contains(importerNatureName)) {
+                  modulesToImport.add(module);
+                }
+              }
+
+              if (modulesToImport.size() > 0) {
+                importer.doImport(project, modulesToImport);
+              }
+            }
+          }
+        });
+      }
+    });
+  }
+
   private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
     if (libraries.contains(libraryName)) {
       final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -451,5 +487,35 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     }
     return parameters;
+  }
+
+  public static void collectUnknownNatures(String path, Set<String> naturesNames) {
+    naturesNames.addAll(collectNatures(path));
+    naturesNames.remove("org.eclipse.jdt.core.javanature");
+
+    for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
+      naturesNames.remove(importer.getNatureName());
+    }
+  }
+
+  @NotNull
+  public static Set<String> collectNatures(@NotNull String path) {
+    final Set<String> naturesNames = new HashSet<String>();
+    final File projectfile = new File(path, EclipseXml.DOT_PROJECT_EXT);
+    try {
+      final Element natures = JDOMUtil.loadDocument(projectfile).getRootElement().getChild("natures");
+      if (natures != null) {
+        final List naturesList = natures.getChildren("nature");
+        for (Object nature : naturesList) {
+          final String natureName = ((Element)nature).getText();
+          if (!StringUtil.isEmptyOrSpaces(natureName)) {
+            naturesNames.add(natureName);
+          }
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+    return naturesNames;
   }
 }

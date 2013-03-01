@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public class SoftWrapsStorage {
 
   private final List<SoftWrapImpl>        myWraps     = new ArrayList<SoftWrapImpl>();
   private final List<SoftWrapImpl>        myWrapsView = Collections.unmodifiableList(myWraps);
-  private final List<SoftWrapChangeListener> myListeners = new ArrayList<SoftWrapChangeListener>();
+  private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
@@ -141,7 +142,8 @@ public class SoftWrapsStorage {
     if (notifyListeners) {
       // Use explicit loop as profiling shows that iterator-based processing is quite slow.
       for (int j = 0; j < myListeners.size(); j++) {
-        myListeners.get(j).softWrapAdded(softWrap);
+        SoftWrapChangeListener listener = myListeners.get(j);
+        listener.softWrapAdded(softWrap);
       }
     }
     return null;

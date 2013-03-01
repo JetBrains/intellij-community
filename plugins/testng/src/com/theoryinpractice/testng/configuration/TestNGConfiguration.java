@@ -29,6 +29,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.PathMacroManager;
@@ -39,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -47,7 +47,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
-import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -275,6 +274,14 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + suffix);
     }
     data.setPatterns(patterns);
+    final Module module = TestNGPatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    if (module == null) {
+      data.setScope(TestSearchScope.WHOLE_PROJECT);
+      setModule(null);
+    }
+    else {
+      setModule(module);
+    }
     setGeneratedName();
   }
 
@@ -334,17 +341,6 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       final Set<String> patterns = data.getPatterns();
       if (patterns.isEmpty()) {
         throw new RuntimeConfigurationWarning("No pattern selected");
-      }
-      final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
-      for (String pattern : patterns) {
-        final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;
-        final PsiClass psiClass = JavaExecutionUtil.findMainClass(getProject(), className, searchScope);
-        if (psiClass == null) {
-          throw new RuntimeConfigurationWarning("Class " + className + " not found");
-        }
-        if (!TestNGUtil.hasTest(psiClass)) {
-          throw new RuntimeConfigurationWarning("Class " + className + " not a test");
-        }
       }
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);

@@ -122,6 +122,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
   }
 
+  public void testCustomComponentFieldsWithSameProperties() throws Exception {
+    configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/" + getTestName(false)+ ".java");
+    doDoTest(false, false);
+  }
+
   public void testCustomComponent_Fields() throws Exception {
     configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/_CustomVBox.java");
     doDoTest(false, false);
@@ -246,6 +251,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBooleanPropertyWithoutField() throws Exception {
+    doTest();
+  }
+
+  public void testLineChartInstantiation() throws Exception {
     doTest();
   }
 

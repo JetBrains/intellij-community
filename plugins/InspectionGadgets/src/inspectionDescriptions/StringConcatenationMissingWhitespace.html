@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports string concatenations where the left literal does not
-end with whitespace and the right literal does not start with whitespace. For example:
+Reports string concatenations where the left-hand side does not
+end with whitespace or a symbol and the right-hand side does not start with whitespace or a symbol. For example:
 <pre><code>
   String sql = "SELECT column" +
                "FROM table";
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to have this inspection only report when both the left and right side of the concatenation are string literals.
+Use the checkbox below to have this inspection only report when both the left and right side of the concatenation are literals.
 <p>
 <small>New in 12, Powered by InspectionGadgets</small>
 </body>

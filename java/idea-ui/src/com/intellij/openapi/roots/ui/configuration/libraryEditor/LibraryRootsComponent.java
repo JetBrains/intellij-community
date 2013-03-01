@@ -76,7 +76,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
 
-  private final Collection<Runnable> myListeners = new ArrayList<Runnable>();
+  private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @Nullable private final Project myProject;
 
   private final Computable<LibraryEditor> myLibraryEditorComputable;
@@ -460,8 +460,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private void fireLibrariesChanged() {
-    Runnable[] listeners = myListeners.toArray(new Runnable[myListeners.size()]);
-    for (Runnable listener : listeners) {
+    for (Runnable listener : myListeners) {
       listener.run();
     }
   }

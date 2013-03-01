@@ -26,7 +26,10 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -35,9 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternalizable, Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
@@ -283,13 +284,12 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       return myRootContainer.getRootFiles(rootType);
     }
 
-    private final Set<RootSetChangedListener> myListeners = new HashSet<RootSetChangedListener>();
+    private final List<RootSetChangedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
     @Override
     public void addRootSetChangedListener(@NotNull RootSetChangedListener listener) {
-      synchronized (this) {
-        myListeners.add(listener);
-      }
+      assert !myListeners.contains(listener);
+      myListeners.add(listener);
       super.addRootSetChangedListener(listener);
     }
 
@@ -307,17 +307,13 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     @Override
     public void removeRootSetChangedListener(@NotNull RootSetChangedListener listener) {
       super.removeRootSetChangedListener(listener);
-      synchronized (this) {
-        myListeners.remove(listener);
-      }
+      myListeners.remove(listener);
     }
 
     @Override
     public void rootsChanged() {
-      synchronized (this) {
-        if (myListeners.isEmpty()) {
-          return;
-        }
+      if (myListeners.isEmpty()) {
+        return;
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override

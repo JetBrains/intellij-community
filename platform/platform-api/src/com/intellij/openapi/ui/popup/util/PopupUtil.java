@@ -154,22 +154,24 @@ public class PopupUtil {
 
   public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
                                              final boolean atTop, @Nullable final Disposable disposable) {
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
-      balloonBuilder.setDisposable(disposable == null ? ApplicationManager.getApplication() : disposable);
-      Balloon balloon = balloonBuilder.createBalloon();
-      Dimension size = component.getSize();
-      Balloon.Position position;
-      int x;
-      int y;
-      if (size == null) {
-        x = y = 0;
-        position = Balloon.Position.above;
-      }
-      else {
-        x = Math.min(10, size.width / 2);
-        y = size.height;
-        position = Balloon.Position.below;
-      }
-      balloon.show(new RelativePoint(component, new Point(x, y)), position);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    if (popupFactory == null) return;
+    BalloonBuilder balloonBuilder = popupFactory.createHtmlTextBalloonBuilder(message, type, null);
+    balloonBuilder.setDisposable(disposable == null ? ApplicationManager.getApplication() : disposable);
+    Balloon balloon = balloonBuilder.createBalloon();
+    Dimension size = component.getSize();
+    Balloon.Position position;
+    int x;
+    int y;
+    if (size == null) {
+      x = y = 0;
+      position = Balloon.Position.above;
+    }
+    else {
+      x = Math.min(10, size.width / 2);
+      y = size.height;
+      position = Balloon.Position.below;
+    }
+    balloon.show(new RelativePoint(component, new Point(x, y)), position);
   }
 }

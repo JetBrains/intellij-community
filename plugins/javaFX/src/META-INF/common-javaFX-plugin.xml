@@ -13,7 +13,7 @@
     <multiHostInjector implementation="org.jetbrains.plugins.javaFX.fxml.ScriptLanguageInjector"/>
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
-    <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlager"/>
+    <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
 
     <localInspection language="XML" shortName="JavaFxDefaultTag" displayName="Unnecessary default tag" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>

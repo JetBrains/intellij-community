@@ -299,7 +299,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
       final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       if (ideaDir != null && ideaDir.isValid()) {
-        final VirtualFile nameFile = ideaDir.findChild(".name");
+        final VirtualFile nameFile = ideaDir.findChild(ProjectImpl.NAME_FILE);
         if (nameFile != null && nameFile.isValid()) {
           try {
             BufferedReader in = new BufferedReader(new InputStreamReader(nameFile.getInputStream(), "UTF-8"));
@@ -549,7 +549,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
             final VirtualFile baseDir = getProjectBaseDir();
             if (baseDir != null && baseDir.isValid()) {
               filesToSave.add(FileSystem.FILE_SYSTEM
-                                .createFile(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ".name").getPath()));
+                                .createFile(new File(new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE).getPath()));
             }
           }
 

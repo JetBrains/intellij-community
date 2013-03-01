@@ -18,11 +18,14 @@ package com.intellij.navigation;
 
 
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
+import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+
+import java.util.Calendar;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
@@ -47,6 +50,31 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
     assertEquals(2, impls.length);
+  }
+
+  @Bombed(user = "maxim.medvedev", year = 2013, month = Calendar.MARCH, day = 5)
+  public void testShowSelfNonAbstract() throws Throwable {
+    //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
+    PsiFile file = myFixture.addFileToProject("Foo.java", "public class Hello {\n" +
+                                                          "    void foo(){}\n" +
+                                                          "\n" +
+                                                          "    class A {\n" +
+                                                          "        {\n" +
+                                                          "            fo<caret>o();\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "    class Hello2 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}\n" +
+                                                          "\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    assertEquals(3, impls.length);
   }
 
   public void testMultipleImplsFromStaticCall() throws Throwable {

@@ -36,6 +36,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater myUpdater;
-  private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
+  private List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
   private String myStatus = null;
   public static final String EMPTY_STRING = "                                                  ";

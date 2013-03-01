@@ -69,6 +69,7 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
         return;
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
       return;
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap();
@@ -90,6 +91,7 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
           final AccessToken token = WriteAction.start();
           try {
             modifierList.setModifierProperty(PsiModifier.FINAL, true);
+            modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
           }
           finally {
             token.finish();
@@ -103,6 +105,7 @@ public class MakeClassFinalFix extends InspectionGadgetsFix {
     }
     if (conflictsDialogOK) {
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
     }
   }
 }

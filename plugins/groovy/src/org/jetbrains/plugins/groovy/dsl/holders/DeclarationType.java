@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
-
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
+package org.jetbrains.plugins.groovy.dsl.holders;
 
 /**
- * @author Dmitry Avdeev
- *         Date: 11/14/12
+ * @author Max Medvedev
  */
-public class ListDataAdapter implements ListDataListener {
-  @Override
-  public void intervalAdded(ListDataEvent e) {
-    dataChanged(e);
-  }
-
-  @Override
-  public void intervalRemoved(ListDataEvent e) {
-    dataChanged(e);
-  }
-
-  @Override
-  public void contentsChanged(ListDataEvent e) {
-    dataChanged(e);
-  }
-
-  protected void dataChanged(ListDataEvent e) {
-  }
+public enum DeclarationType {
+  METHOD, CLOSURE, VARIABLE
 }

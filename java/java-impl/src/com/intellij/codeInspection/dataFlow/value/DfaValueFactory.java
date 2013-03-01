@@ -159,8 +159,8 @@ public class DfaValueFactory {
     if (qualifier == null) {
       return true;
     }
-    if (qualifier instanceof PsiThisExpression){
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)qualifier).getQualifier();
+    if (qualifier instanceof PsiQualifiedExpression) { //this or super
+      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
       if (thisQualifier == null) return true;
       final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
       if (innerMostClass == thisQualifier.resolve()) {

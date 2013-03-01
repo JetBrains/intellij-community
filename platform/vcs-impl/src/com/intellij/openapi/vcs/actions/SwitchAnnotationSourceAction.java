@@ -22,8 +22,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,13 +34,12 @@ class SwitchAnnotationSourceAction extends AnAction {
   private final static String ourHideMerged = VcsBundle.message("annotation.switch.to.original.text");
   private final AnnotationSourceSwitcher mySwitcher;
   private final EditorGutterComponentEx myGutter;
-  private final List<Consumer<AnnotationSource>> myListeners;
+  private final List<Consumer<AnnotationSource>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myShowMerged;
 
   SwitchAnnotationSourceAction(final AnnotationSourceSwitcher switcher, final EditorGutterComponentEx gutter) {
     mySwitcher = switcher;
     myGutter = gutter;
-    myListeners = new ArrayList<Consumer<AnnotationSource>>();
     myShowMerged = mySwitcher.getDefaultSource().showMerged();
   }
 

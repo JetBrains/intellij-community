@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ public abstract class PropertiesComponent {
   public abstract String getValue(@NonNls String name);
 
   public abstract void setValue(@NonNls String name, String value);
+
+  public abstract String[] getValues(@NonNls String name);
+
+  public abstract void setValues(@NonNls String name, String[] values);
 
   public static PropertiesComponent getInstance(Project project) {
     return ServiceManager.getService(project, PropertiesComponent.class);
@@ -84,8 +88,9 @@ public abstract class PropertiesComponent {
     try {
       for (Field field : object.getClass().getDeclaredFields()) {
         field.setAccessible(true);
-        if (field.isAnnotationPresent(PropertyName.class)) {
-          final String name = field.getAnnotation(PropertyName.class).value();
+        PropertyName annotation = field.getAnnotation(PropertyName.class);
+        if (annotation != null) {
+          final String name = annotation.value();
           setValue(name, String.valueOf(field.get(object)));
         }
       }
@@ -100,10 +105,10 @@ public abstract class PropertiesComponent {
     try {
       for (Field field : object.getClass().getDeclaredFields()) {
         field.setAccessible(true);
-        if (field.isAnnotationPresent(PropertyName.class)) {
+        final PropertyName annotation = field.getAnnotation(PropertyName.class);
+        if (annotation != null) {
           final Class<?> type = field.getType();
 
-          final PropertyName annotation = field.getAnnotation(PropertyName.class);
           String defaultValue = annotation.defaultValue();
           if (PropertyName.NOT_SET.equals(defaultValue)) {
             if (type.equals(boolean.class))     {defaultValue = String.valueOf(field.getBoolean(object));}

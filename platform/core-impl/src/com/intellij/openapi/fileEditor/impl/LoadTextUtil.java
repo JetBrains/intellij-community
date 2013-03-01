@@ -161,7 +161,7 @@ public final class LoadTextUtil {
         Charset charset = toolkit.guessFromBOM();
         if (charset != null) {
           detectedFromBytes = AUTO_DETECTED_FROM_BOM;
-          byte[] bom = CharsetToolkit.getBom(charset);
+          byte[] bom = CharsetToolkit.getMandatoryBom(charset);
           if (bom == null) bom = CharsetToolkit.UTF8_BOM;
           return Trinity.create(charset, null, bom);
         }
@@ -187,7 +187,7 @@ public final class LoadTextUtil {
     try {
       Charset fromBOM = CharsetToolkit.guessFromBOM(content);
       if (fromBOM != null) {
-        return Pair.create(fromBOM, CharsetToolkit.getBom(fromBOM));
+        return Pair.create(fromBOM, CharsetToolkit.getMandatoryBom(fromBOM));
       }
     }
     catch (UnsupportedCharsetException ignore) {

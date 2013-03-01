@@ -111,6 +111,9 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return (InspectionProfile)getProjectProfileImpl();
   }
 
+  /**
+   * @deprecated  use {@link #getInspectionProfile()} instead
+   */
   @SuppressWarnings({"UnusedDeclaration"})
   @NotNull
   public InspectionProfile getInspectionProfile(PsiElement element){

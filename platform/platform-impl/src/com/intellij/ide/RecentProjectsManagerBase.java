@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -55,6 +56,8 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   private State myState = new State();
+
+  private final Map<String, String> myNameCache = new HashMap<String, String>();
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
@@ -139,7 +142,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     return "";
   }
 
-  private static Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
+  private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
     Set<String> names = ContainerUtil.newHashSet();
     Set<String> duplicates = ContainerUtil.newHashSet();
     for (String path : openedPaths) {
@@ -262,10 +265,30 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
   }
 
   @NotNull
-  private static String getProjectName(String path) {
+  private String getProjectName(String path) {
+    synchronized (myNameCache) {
+      String cached = myNameCache.get(path);
+      if (cached != null) {
+        return cached;
+      }
+    }
+    String result = readProjectName(path);
+    synchronized (myNameCache) {
+      myNameCache.put(path, result);
+    }
+    return result;
+  }
+
+  public void clearNameCache() {
+    synchronized (myNameCache) {
+      myNameCache.clear();
+    }
+  }
+
+  private static String readProjectName(String path) {
     final File file = new File(path);
     if (file.isDirectory()) {
-      final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
+      final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
       if (nameFile.exists()) {
         try {
           final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));

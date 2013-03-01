@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.holders.DeclarationType;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -52,14 +53,14 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final String THROWS = "throws";
-  private final Set<Map> myMethods = new HashSet<Map>();
+  private final Set<Map> myDeclarations = new HashSet<Map>();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
   @Nullable private final Map<String, List> myBindings;
   private final PsiClass myPsiClass;
 
-  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type, @Nullable Map<String, List> bindings) {
+  public CustomMembersGenerator(@NotNull GroovyClassDescriptor descriptor, @Nullable PsiType type, @Nullable Map<String, List> bindings) {
     myDescriptor = descriptor;
     myBindings = bindings;
     myProject = descriptor.getProject();
@@ -96,11 +97,11 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   @Nullable
   public CustomMembersHolder getMembersHolder() {
-    if (!myMethods.isEmpty()) {
+    if (!myDeclarations.isEmpty()) {
       addMemberHolder(new CustomMembersHolder() {
         @Override
         public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-          return NonCodeMembersHolder.generateMembers(myMethods, descriptor.justGetPlaceFile()).processMembers(descriptor, processor, state);
+          return NonCodeMembersHolder.generateMembers(myDeclarations, descriptor.justGetPlaceFile()).processMembers(descriptor, processor, state);
         }
       });
     }
@@ -164,7 +165,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   public void method(Map<Object, Object> args) {
     parseMethod(args);
-    myMethods.add(args);
+    args.put("declarationType", DeclarationType.METHOD);
+    myDeclarations.add(args);
   }
 
   public void methodCall(Closure<Map<Object, Object>> generator) {
@@ -206,7 +208,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @SuppressWarnings("unchecked")
-  private void parseMethod(Map args) {
+  private static void parseMethod(Map args) {
     String type = stringifyType(args.get("type"));
     args.put("type", type);
 
@@ -245,20 +247,28 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       args.put(THROWS, Collections.singletonList(stringifyType(toThrow)));
     }
 
-    /*PsiClass aClass = getPsiClass();
-    if (aClass != null && aClass.getQualifiedName() != null) {
-      args.put("containingClass", aClass.getQualifiedName());
-    }*/
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public void closureInMethod(Map<Object, Object> args) {
     parseMethod(args);
     final Object method = args.get("method");
     if (method instanceof Map) {
       parseMethod((Map)method);
     }
-    args.put("closure", true);
-    myMethods.add(args);
+    args.put("declarationType", DeclarationType.CLOSURE);
+    myDeclarations.add(args);
+  }
+
+  public void variable(Map<Object, Object> args) {
+    parseVariable(args);
+    myDeclarations.add(args);
+  }
+
+  private void parseVariable(Map<Object, Object> args) {
+    String type = stringifyType(args.get("type"));
+    args.put("type", type);
+    args.put("declarationType", DeclarationType.VARIABLE);
   }
 
   private static String stringifyType(Object type) {

@@ -184,6 +184,7 @@ public class ResolveUtil {
       if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
 
       if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
+      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -787,7 +788,7 @@ public class ResolveUtil {
     return null;
   }
 
-  public static boolean isEnumConstant(GrReferenceExpression ref, String name, String qName) {
+  public static boolean isEnumConstant(PsiReference ref, String name, String qName) {
     PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiEnumConstant)) return false;
     if (!name.equals(((PsiEnumConstant)resolved).getName())) return false;

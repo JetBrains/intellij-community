@@ -137,10 +137,7 @@ public class GradleUserProjectChangesCalculator {
   public void filterOutdatedChanges() {
     Set<GradleUserProjectChange> changes = ContainerUtilRt.newHashSet(mySettings.getUserProjectChanges());
     for (GradleUserProjectChange change : mySettings.getUserProjectChanges()) {
-      if (isUpToDate(change)) {
-        change.setTimestamp(System.currentTimeMillis());
-      }
-      else {
+      if (!isUpToDate(change)) {
         changes.remove(change);
       }
     }

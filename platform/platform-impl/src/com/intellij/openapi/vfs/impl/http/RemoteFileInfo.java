@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   private RemoteFileState myState = RemoteFileState.DOWNLOADING_NOT_STARTED;
   private String myErrorMessage;
   private final AtomicBoolean myCancelled = new AtomicBoolean();
-  private final List<FileDownloadingListener> myListeners = new SmartList<FileDownloadingListener>();
+  private final List<FileDownloadingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManagerImpl manager) {
     myUrl = url;
@@ -56,15 +56,11 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   }
 
   public void addDownloadingListener(@NotNull FileDownloadingListener listener) {
-    synchronized (myLock) {
-      myListeners.add(listener);
-    }
+    myListeners.add(listener);
   }
 
   public void removeDownloadingListener(final @NotNull FileDownloadingListener listener) {
-    synchronized (myLock) {
-      myListeners.remove(listener);
-    }
+    myListeners.remove(listener);
   }
 
   public String getUrl() {
@@ -86,7 +82,6 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     LOG.debug("Downloading requested");
 
     File localFile;
-    FileDownloadingListener[] listeners;
     synchronized (myLock) {
       if (myState != RemoteFileState.DOWNLOADING_NOT_STARTED) {
         LOG.debug("File already downloaded: file = " + myLocalVirtualFile + ", state = " + myState);
@@ -105,9 +100,8 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
       }
       myCancelled.set(false);
       localFile = myLocalFile;
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       listener.downloadingStarted();
     }
 
@@ -154,15 +148,13 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }.execute().getResultObject();
     LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
     LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
-    FileDownloadingListener[] listeners;
     synchronized (myLock) {
       myLocalVirtualFile = localFile;
       myPrevLocalFile = null;
       myState = RemoteFileState.DOWNLOADED;
       myErrorMessage = null;
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       listener.fileDownloaded(localFile);
     }
   }
@@ -181,15 +173,13 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   @Override
   public void errorOccurred(@NotNull final String errorMessage, boolean cancelled) {
     LOG.debug("Error: " + errorMessage);
-    FileDownloadingListener[] listeners;
     synchronized (myLock) {
       myLocalVirtualFile = null;
       myPrevLocalFile = null;
       myState = RemoteFileState.ERROR_OCCURRED;
       myErrorMessage = errorMessage;
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       if (!cancelled) {
         listener.errorOccurred(errorMessage);
       }
@@ -198,22 +188,14 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
 
   @Override
   public void setProgressFraction(final double fraction) {
-    FileDownloadingListener[] listeners;
-    synchronized (myLock) {
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
-    }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       listener.progressFractionChanged(fraction);
     }
   }
 
   @Override
   public void setProgressText(@NotNull final String text, final boolean indeterminate) {
-    FileDownloadingListener[] listeners;
-    synchronized (myLock) {
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
-    }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       listener.progressMessageChanged(indeterminate, text);
     }
   }
@@ -240,7 +222,6 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   }
 
   public void cancelDownloading() {
-    FileDownloadingListener[] listeners;
     synchronized (myLock) {
       myCancelled.set(true);
       if (myPrevLocalFile != null) {
@@ -252,9 +233,8 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
       else {
         myState = RemoteFileState.ERROR_OCCURRED;
       }
-      listeners = myListeners.toArray(new FileDownloadingListener[myListeners.size()]);
     }
-    for (FileDownloadingListener listener : listeners) {
+    for (FileDownloadingListener listener : myListeners) {
       listener.downloadingCancelled();
     }
   }

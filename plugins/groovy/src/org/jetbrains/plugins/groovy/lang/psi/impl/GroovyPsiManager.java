@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -132,7 +131,7 @@ public class GroovyPsiManager {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
-  public PsiClassType createTypeByFQClassName(String fqName, GlobalSearchScope resolveScope) {
+  public PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     if (ourPopularClasses.contains(fqName)) {
       PsiClass result = findClassWithCache(fqName, resolveScope);
       if (result != null) {
@@ -143,7 +142,7 @@ public class GroovyPsiManager {
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
   }
 
-  public boolean isCompileStatic(PsiMember member) {
+  public boolean isCompileStatic(@NotNull PsiMember member) {
     Boolean aBoolean = myCompileStatic.get(member);
     if (aBoolean == null) {
       aBoolean = ConcurrencyUtil.cacheOrGet(myCompileStatic, member, isCompileStaticInner(member));
@@ -151,7 +150,7 @@ public class GroovyPsiManager {
     return aBoolean;
   }
 
-  private boolean isCompileStaticInner(PsiMember member) {
+  private boolean isCompileStaticInner(@NotNull PsiMember member) {
     PsiModifierList list = member.getModifierList();
     if (list != null) {
       PsiAnnotation compileStatic = list.findAnnotation(GROOVY_TRANSFORM_COMPILE_STATIC);
@@ -164,15 +163,15 @@ public class GroovyPsiManager {
     return false;
   }
 
-  private static boolean checkForPass(PsiAnnotation annotation) {
+  private static boolean checkForPass(@NotNull PsiAnnotation annotation) {
     PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
     return value == null ||
-           value instanceof GrReferenceExpression &&
-           ResolveUtil.isEnumConstant((GrReferenceExpression)value, "PASS", GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
+           value instanceof PsiReference &&
+           ResolveUtil.isEnumConstant((PsiReference)value, "PASS", GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
   }
 
   @Nullable
-  public PsiClass findClassWithCache(String fqName, GlobalSearchScope resolveScope) {
+  public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
     SoftReference<Map<GlobalSearchScope, PsiClass>> reference = myClassCache.get(fqName);
     Map<GlobalSearchScope, PsiClass> map = reference == null ? null : reference.get();
     if (map == null) {
@@ -192,7 +191,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
-  public <T extends GroovyPsiElement> PsiType getType(T element, Function<T, PsiType> calculator) {
+  public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);
     if (type == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
@@ -215,7 +214,8 @@ public class GroovyPsiManager {
     return PsiType.NULL.equals(type) ? null : type;
   }
 
-  public GrTypeDefinition getArrayClass(PsiType type) {
+  @Nullable
+  public GrTypeDefinition getArrayClass(@NotNull PsiType type) {
     final String typeText = type.getCanonicalText();
     GrTypeDefinition definition = myArrayClass.get(typeText);
     if (definition == null) {
@@ -233,7 +233,7 @@ public class GroovyPsiManager {
   }
 
   @Nullable
-  public static PsiType inferType(@NotNull PsiElement element, Computable<PsiType> computable) {
+  public static PsiType inferType(@NotNull PsiElement element, @NotNull Computable<PsiType> computable) {
     List<Object> stack = ourGuard.currentStack();
     if (stack.size() > 7) { //don't end up walking the whole project PSI
       ourGuard.prohibitResultCaching(stack.get(0));

@@ -207,10 +207,14 @@ public class GradleEntityManageHelper {
   private static void processProjectRenameChange(@NotNull GradleProjectRenameChange change, @NotNull EliminateChangesContext context) {
     context.projectManager.renameProject(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
   }
+
+  // Don't auto-apply language level change because we can't correctly process language level change manually made
+  // by a user - there is crazy processing related to project reloading after language level change and there is just
+  // no normal way to inject there.
   
-  private static void processLanguageLevelChange(@NotNull GradleLanguageLevelChange change, @NotNull EliminateChangesContext context) {
-    context.projectManager.setLanguageLevel(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
-  }
+//  private static void processLanguageLevelChange(@NotNull GradleLanguageLevelChange change, @NotNull EliminateChangesContext context) {
+//    context.projectManager.setLanguageLevel(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
+//  }
   
   private static void processModulePresenceChange(@NotNull GradleModulePresenceChange change, @NotNull EliminateChangesContext context) {
     GradleModuleId id = change.getGradleEntity();
@@ -386,7 +390,7 @@ public class GradleEntityManageHelper {
 
       @Override
       public void visit(@NotNull GradleLanguageLevelChange change) {
-        processLanguageLevelChange(change, EliminateChangesContext.this);
+//        processLanguageLevelChange(change, EliminateChangesContext.this);
       }
 
       @Override

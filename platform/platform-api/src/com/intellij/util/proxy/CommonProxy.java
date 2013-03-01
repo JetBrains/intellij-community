@@ -16,6 +16,7 @@
 package com.intellij.util.proxy;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,10 +43,11 @@ public class CommonProxy extends ProxySelector {
   private final CommonAuthenticator myAuthenticator;
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
-  private final static long ourErrorInterval = 10000;
+  private final static long ourErrorInterval = 3 * 60 * 1000;
+  private static volatile int ourNotificationCount;
   private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
-  private static final Map<String, String> ourProps = new HashMap<String, String>();
+  private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<Map<String, String>>();
   static {
     ProxySelector.setDefault(ourInstance);
   }
@@ -88,19 +91,25 @@ public class CommonProxy extends ProxySelector {
   }
 
   private static boolean itsTime() {
-    return System.currentTimeMillis() - ourErrorTime > ourErrorInterval;
+    final boolean b = System.currentTimeMillis() - ourErrorTime > ourErrorInterval && ourNotificationCount < 5;
+    if (b) {
+      ++ ourNotificationCount;
+    }
+    return b;
   }
 
   private static void assertSystemPropertiesSet() {
     final Map<String, String> props = getOldStyleProperties();
 
-    if (Comparing.equal(ourProps, props) && ! itsTime()) return;
-    ourProps.clear();
-    ourProps.putAll(props);
+    final Map<String, String> was = ourProps.get();
+    if (Comparing.equal(was, props) && ! itsTime()) return;
+    ourProps.set(props);
 
     final String message = getMessageFromProps(props);
     if (message != null) {
-      PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+      if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
+      }
       LOG.info(message);
     }
   }

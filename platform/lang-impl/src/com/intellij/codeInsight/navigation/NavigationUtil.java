@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,13 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
-    final JList list = new JBList(elements);
+    final JList list = new JBListWithHintProvider(elements) {
+      @Nullable
+      @Override
+      protected PsiElement getPsiElementForHint(Object selectedValue) {
+        return (PsiElement)selectedValue;
+      }
+    };
     list.setCellRenderer(renderer);
     if (selection != null) {
       list.setSelectedValue(selection, true);

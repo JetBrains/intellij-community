@@ -40,6 +40,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -62,7 +63,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -303,7 +303,7 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
-        IJSwingUtilities.invoke(new Runnable() {
+        final Runnable runnable = new Runnable() {
           @Override
           public void run() {
             try {
@@ -318,7 +318,13 @@ public abstract class TestObject implements JavaCommandLine {
               }
             }
           }
-        });
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+        } 
+        else {
+          handler.getOut().addRequest(runnable, queue);
+        }
       }
 
       @Override

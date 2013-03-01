@@ -18,6 +18,7 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,27 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
   private final Charset myCharset;
   private long myOldLength = 0;
 
-  public LogConsoleImpl(Project project, @NotNull File file, @NotNull Charset charset, long skippedContents, String title, final boolean buildInActions) {
-    super(project, getReader(file, charset, skippedContents),title, buildInActions, new DefaultLogFilterModel(project));
+  /**
+   * @deprecated use {@link #LogConsoleImpl(com.intellij.openapi.project.Project, java.io.File, java.nio.charset.Charset, long, String, boolean, com.intellij.psi.search.GlobalSearchScope)}
+   */
+  public LogConsoleImpl(Project project,
+                        @NotNull File file,
+                        @NotNull Charset charset,
+                        long skippedContents,
+                        String title,
+                        final boolean buildInActions) {
+    this(project, file, charset, skippedContents, title, buildInActions, GlobalSearchScope.allScope(project));
+  }
+
+  public LogConsoleImpl(Project project,
+                        @NotNull File file,
+                        @NotNull Charset charset,
+                        long skippedContents,
+                        String title,
+                        final boolean buildInActions,
+                        final GlobalSearchScope searchScope) {
+    super(project, getReader(file, charset, skippedContents), title, buildInActions, new DefaultLogFilterModel(project),
+          searchScope);
     myPath = file.getAbsolutePath();
     myFile = file;
     myCharset = charset;

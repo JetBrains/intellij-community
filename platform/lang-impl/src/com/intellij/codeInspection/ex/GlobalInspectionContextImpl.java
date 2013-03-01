@@ -66,6 +66,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,6 +116,8 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   private AnalysisUIOptions myUIOptions;
   @NonNls static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
+
+  private boolean myUseProgressIndicatorInTests = false;
 
   public GlobalInspectionContextImpl(Project project, NotNullLazyValue<ContentManager> contentManager) {
     myProject = project;
@@ -499,7 +502,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    myProgressIndicator = ApplicationManager.getApplication().isUnitTestMode() ? new EmptyProgressIndicator() : ProgressManager.getInstance().getProgressIndicator();
+    myProgressIndicator = getProgressIndicator();
     //init manager in read action
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     try {
@@ -532,6 +535,16 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       refManager.inspectionReadActionFinished();
       psiManager.finishBatchFilesProcessingMode();
     }
+  }
+
+  private ProgressIndicator getProgressIndicator() {
+    return ApplicationManager.getApplication().isUnitTestMode() && !myUseProgressIndicatorInTests
+           ? new EmptyProgressIndicator() : ProgressManager.getInstance().getProgressIndicator();
+  }
+
+  @TestOnly
+  public void setUseProgressIndicatorInTests(boolean useProgressIndicatorInTests) {
+    myUseProgressIndicatorInTests = useProgressIndicatorInTests;
   }
 
   private void runTools(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {

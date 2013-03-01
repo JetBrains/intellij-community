@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<VcsDirectoryMapping> myDirectoryMappingTable;
   private final ComboboxWithBrowseButton myVcsComboBox = new ComboboxWithBrowseButton();
-  private final List<ModuleVcsListener> myListeners = new ArrayList<ModuleVcsListener>();
+  private final List<ModuleVcsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping> DIRECTORY;
@@ -482,7 +483,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createUseCommitMessageRightMargin() {
-    myCommitMessageMarginConfigurable =  new VcsCommitMessageMarginConfigurable(myProject);
+    myCommitMessageMarginConfigurable = new VcsCommitMessageMarginConfigurable(myProject, myVcsConfiguration);
     return myCommitMessageMarginConfigurable.createComponent();
   }
 

@@ -281,7 +281,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
+  private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
     LOG.info("Building project; isRebuild:" +
@@ -290,6 +290,8 @@ public class IncProjectBuilder {
              context.isMake() +
              " parallel compilation:" +
              BuildRunner.PARALLEL_BUILD_ENABLED);
+
+    context.addBuildListener(new ChainedTargetsBuildListener(context));
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
@@ -311,22 +313,6 @@ public class IncProjectBuilder {
 
       context.processMessage(new ProgressMessage("Running 'after' tasks"));
       runTasks(context, myBuilderRegistry.getAfterTasks());
-
-      // cleanup output roots layout, commented for efficiency
-      //final ModuleOutputRootsLayout outputRootsLayout = context.getDataManager().getOutputRootsLayout();
-      //try {
-      //  final Iterator<String> keysIterator = outputRootsLayout.getKeysIterator();
-      //  final Map<String, JpsModule> modules = myProjectDescriptor.project.getModules();
-      //  while (keysIterator.hasNext()) {
-      //    final String moduleName = keysIterator.next();
-      //    if (modules.containsKey(moduleName)) {
-      //      outputRootsLayout.remove(moduleName);
-      //    }
-      //  }
-      //}
-      //catch (IOException e) {
-      //  throw new ProjectBuildException(e);
-      //}
     }
     finally {
       for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {

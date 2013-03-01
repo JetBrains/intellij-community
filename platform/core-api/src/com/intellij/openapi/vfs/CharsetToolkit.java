@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -94,12 +97,12 @@ public class CharsetToolkit {
   public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_BOM = new THashMap<Charset, byte[]>(2);
+  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<Charset, byte[]>(2);
   static {
-    CHARSET_TO_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
-    CHARSET_TO_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
-    CHARSET_TO_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
-    CHARSET_TO_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_32BE_CHARSET, UTF32BE_BOM);
+    CHARSET_TO_MANDATORY_BOM.put(UTF_32LE_CHARSET, UTF32LE_BOM);
   }
 
   /**
@@ -501,14 +504,28 @@ public class CharsetToolkit {
     return 0;
   }
 
+  /**
+   * @deprecated use {@link CharsetToolkit#getMandatoryBom(java.nio.charset.Charset)}
+   */
   @Nullable
   public static byte[] getBom(@NotNull Charset charset) {
-    return CHARSET_TO_BOM.get(charset);
+    return getMandatoryBom(charset);
+  }
+
+  /**
+   * @return BOM which is associated with this charset and the charset must have this BOM, or null otherwise.
+   *         Currently these are UTF-16xx and UTF-32xx families.
+   *         UTF-8, on the other hand, might have BOM {@link #UTF8_BOM} which is optional, thus it will not returned in this method
+   */
+  @Nullable
+  public static byte[] getMandatoryBom(@NotNull Charset charset) {
+    return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
-    return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM) || Arrays.equals(getBom(charset), bom);
+    return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM)
+           || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
   @Nullable

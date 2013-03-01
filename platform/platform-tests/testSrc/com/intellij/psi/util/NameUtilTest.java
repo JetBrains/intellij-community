@@ -232,6 +232,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("hint", "height: int");
     assertMatches("Hint", "Height:int");
     assertDoesntMatch("Hint", "Height: int");
+    assertMatches("hI", "Height: int");
 
     assertMatches("getColor", "getBackground(): Color");
     assertMatches("get color", "getBackground(): Color");

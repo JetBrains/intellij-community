@@ -22,6 +22,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
@@ -106,9 +107,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
-    for (ArtifactRootDescriptor descriptor : buildRootIndex.getTargetRoots(this, null)) {
+    final BuildRootIndex rootIndex = pd.getBuildRootIndex();
+    for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out);
     }
   }

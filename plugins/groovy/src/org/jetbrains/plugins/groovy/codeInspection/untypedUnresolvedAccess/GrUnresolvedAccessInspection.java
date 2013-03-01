@@ -224,7 +224,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     if (cannotBeDynamic || shouldHighlightAsUnresolved(ref)) {
       HighlightInfo info = createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
-      LOG.assertTrue(info != null);
+      if (info == null) return null;
 
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
       if (ref.getParent() instanceof GrMethodCall) {

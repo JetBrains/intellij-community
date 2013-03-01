@@ -55,7 +55,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UpdateHighlightersUtil {
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = new Comparator<HighlightInfo>() {
@@ -448,7 +447,7 @@ public class UpdateHighlightersUtil {
             RangeMarker marker = getOrCreate(document, ranges2markersCache, textRange);
             list.add(Pair.create(pair.first, marker));
           }
-          info.quickFixActionMarkers = new CopyOnWriteArrayList<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>>(list);
+          info.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
         }
         if (finalInfoRange.equalsToRange(info.fixStartOffset, info.fixEndOffset)) {
           info.fixMarker = null; // null means it the same as highlighter'

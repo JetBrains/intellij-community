@@ -28,17 +28,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 2/18/13 8:03 PM
  */
-public interface GradleUserProjectChange<T extends GradleUserProjectChange> extends PersistentStateComponent<T>, Comparable<T> {
+public interface GradleUserProjectChange<T extends GradleUserProjectChange>
+  extends PersistentStateComponent<T>, Comparable<GradleUserProjectChange<?>>
+{
 
   void invite(@NotNull GradleUserProjectChangeVisitor visitor);
-
-  /**
-   * @return    timestamp of the last known point when current change was not outdated. This information is useful
-   *            if we want to return a change if it was inactive for a while (e.g. a user temporarily added a module and after
-   *            that project files are re-written on update from VCS. We don't want to keep the change forever then)
-   */
-  long getTimestamp();
-  
-  @SuppressWarnings("UnusedDeclaration") // Used by IJ serialization
-  void setTimestamp(long timestamp);
 }

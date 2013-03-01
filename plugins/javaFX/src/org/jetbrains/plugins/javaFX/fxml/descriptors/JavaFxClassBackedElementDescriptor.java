@@ -149,9 +149,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
 
-    final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
-    if (myPsiClass != null && elementDescriptor.getDeclaration() != null) {
-      return elementDescriptor;
+    final String parentTagName = contextTag.getName();
+    if (!FxmlConstants.FX_ROOT.equals(parentTagName) && !FxmlConstants.FX_DEFINE.equals(parentTagName)) {
+      final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
+      if (myPsiClass != null && elementDescriptor.getDeclaration() != null) {
+        return elementDescriptor;
+      }
     }
     return new JavaFxClassBackedElementDescriptor(name, childTag);
   }

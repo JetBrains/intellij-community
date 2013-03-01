@@ -148,6 +148,35 @@ public class Executor {
   }
 
   protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> pathEnvs) {
+    String exec = findInPathEnvs(programName, pathEnvs);
+    if (exec != null) {
+      return exec;
+    }
+    exec = findInPath(programName, unixExec, winExec);
+    if (exec != null) {
+      return exec;
+    }
+    throw new IllegalStateException(programName + " executable not found. " +
+                                    "Please define a valid environment variable " + pathEnvs.iterator().next() +
+                                    " pointing to the " + programName + " executable.");
+  }
+
+  protected static String findInPath(String programName, String unixExec, String winExec) {
+    String path = System.getenv(SystemInfo.isWindows ? "Path" : "PATH");
+    if (path != null) {
+      String name = SystemInfo.isWindows ? winExec : unixExec;
+      for (String dir : path.split(File.pathSeparator)) {
+        File file = new File(dir, name);
+        if (file.canExecute()) {
+          log("Using " + programName + " from PATH: " + file.getPath());
+          return file.getPath();
+        }
+      }
+    }
+    return null;
+  }
+
+  protected static String findInPathEnvs(String programName, Collection<String> pathEnvs) {
     for (String pathEnv : pathEnvs) {
       String exec = System.getenv(pathEnv);
       if (exec != null && new File(exec).canExecute()) {
@@ -155,22 +184,7 @@ public class Executor {
         return exec;
       }
     }
-
-    String path = System.getenv(SystemInfo.isWindows ? "Path" : "PATH");
-    if (path != null) {
-      String name = SystemInfo.isWindows ? winExec : unixExec;
-      for (String dir : path.split(File.pathSeparator)) {
-        File file = new File(dir, name);
-        if (file.canExecute()) {
-          log("Using " + programName + " from PATH");
-          return file.getPath();
-        }
-      }
-    }
-
-    throw new IllegalStateException(programName + " executable not found. " +
-                                    "Please define a valid environment variable " + pathEnvs.iterator().next() +
-                                    " pointing to the " + programName + " executable.");
+    return null;
   }
 
   protected static void log(String msg) {

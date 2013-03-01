@@ -48,6 +48,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -315,15 +316,17 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
     if (!changed.isEmpty()) {
       final Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor();
-      startReloadWithProgress(new Runnable() {
+      tryStartReloadWithProgress(new Runnable() {
         @Override
         public void run() {
+          Set<VirtualFile> processed = new THashSet<VirtualFile>();
+          next:
           for (VirtualFile changedFile : changed) {
-            final Charset newCharset = newMap.get(changedFile);
-            Charset oldCharset = oldMap.get(changedFile);
-            if (!Comparing.equal(newCharset, oldCharset)) {
-              processSubFiles(changedFile, reloadProcessor);
+            for (VirtualFile processedFile : processed) {
+              if (VfsUtilCore.isAncestor(processedFile, changedFile, false)) continue next;
             }
+            processSubFiles(changedFile, reloadProcessor);
+            processed.add(changedFile);
           }
         }
       });
@@ -400,9 +403,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   }
 
-  private boolean startReloadWithProgress(@NotNull final Runnable reloadAction) {
+  private boolean tryStartReloadWithProgress(@NotNull final Runnable reloadAction) {
     Boolean suppress = SUPPRESS_RELOAD.get();
-    if (suppress != null && suppress) return false;
+    if (suppress == Boolean.TRUE) return false;
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
@@ -413,7 +416,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   }
 
   private void reloadAllFilesUnder(final VirtualFile root) {
-    startReloadWithProgress(new Runnable() {
+    tryStartReloadWithProgress(new Runnable() {
       @Override
       public void run() {
         processSubFiles(root, new Processor<VirtualFile>() {
@@ -430,7 +433,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
                 }
               });
             }
-            else if (file.isCharsetSet()) {
+            // for not loaded files deep under project, reset encoding to give them chance re-detect the right one later
+            else if (file.isCharsetSet() && !file.equals(root)) {
               file.setCharset(null);
             }
             return true;

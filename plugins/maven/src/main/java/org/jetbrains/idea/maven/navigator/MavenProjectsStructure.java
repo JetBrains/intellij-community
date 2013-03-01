@@ -28,6 +28,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -509,7 +510,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
       super(parent);
-      setUniformIcon(icons.MavenIcons.ModulesClosed);
+      setUniformIcon(MavenIcons.ModulesClosed);
     }
 
     @Override
@@ -570,7 +571,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
-      setUniformIcon(icons.MavenIcons.ProfilesClosed);
+      setUniformIcon(MavenIcons.ProfilesClosed);
     }
 
     protected List<? extends MavenSimpleNode> doGetChildren() {
@@ -656,7 +657,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myDependenciesNode = new DependenciesNode(this, mavenProject);
       myModulesNode = new ModulesNode(this);
 
-      setUniformIcon(icons.MavenIcons.MavenProject);
+      setUniformIcon(MavenIcons.MavenProject);
       updateProject();
     }
 
@@ -809,7 +810,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class ModulesNode extends ProjectsGroupNode {
     public ModulesNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(icons.MavenIcons.ModulesClosed);
+      setUniformIcon(MavenIcons.ModulesClosed);
     }
 
     @Override
@@ -840,7 +841,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(icons.MavenIcons.Phase);
+      setUniformIcon(MavenIcons.Phase);
     }
 
     public String getProjectPath() {
@@ -904,7 +905,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setUniformIcon(icons.MavenIcons.PhasesClosed);
+      setUniformIcon(MavenIcons.PhasesClosed);
     }
 
     @Override
@@ -934,7 +935,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(icons.MavenIcons.PhasesClosed);
+      setUniformIcon(MavenIcons.PhasesClosed);
     }
 
     @Override
@@ -949,7 +950,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
 
-      for (PluginNode each : new ArrayList<PluginNode>(myPluginNodes)) {
+      for (PluginNode each : myPluginNodes.toArray(new PluginNode[myPluginNodes.size()])) {
         if (plugins.contains(each.getPlugin())) {
           each.updatePlugin();
         }
@@ -984,7 +985,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       super(parent);
       myPlugin = plugin;
 
-      setUniformIcon(icons.MavenIcons.MavenPlugin);
+      setUniformIcon(MavenIcons.MavenPlugin);
       updatePlugin();
     }
 
@@ -1035,7 +1036,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class PluginGoalNode extends GoalNode {
     public PluginGoalNode(PluginNode parent, String goal, String displayName) {
       super(parent, goal, displayName);
-      setUniformIcon(icons.MavenIcons.PluginGoal);
+      setUniformIcon(MavenIcons.PluginGoal);
     }
   }
 
@@ -1058,22 +1059,55 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
-      List<DependencyNode> newNodes = new ArrayList<DependencyNode>(children.size());
+      List<DependencyNode> newNodes = null;
+      int validChildCount = 0;
+
       for (MavenArtifactNode each : children) {
         if (each.getState() != MavenArtifactState.ADDED) continue;
 
-        DependencyNode newNode = findOrCreateNodeFor(each, mavenProject);
+        if (newNodes == null) {
+          if (validChildCount < myChildren.size()) {
+            DependencyNode currentValidNode = myChildren.get(validChildCount);
+
+            if (currentValidNode.myArtifact.equals(each.getArtifact())) {
+              currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              currentValidNode.updateDependency();
+
+              validChildCount++;
+              continue;
+            }
+          }
+
+          newNodes = new ArrayList<DependencyNode>(children.size());
+          newNodes.addAll(myChildren.subList(0, validChildCount));
+        }
+
+        DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
         newNodes.add(newNode);
         newNode.updateChildren(each.getDependencies(), mavenProject);
         newNode.updateDependency();
       }
+
+      if (newNodes == null) {
+        if (validChildCount == myChildren.size()) {
+          return; // All nodes are valid, child did not changed.
+        }
+
+        assert validChildCount < myChildren.size();
+
+        newNodes = new ArrayList<DependencyNode>(myChildren.subList(0, validChildCount));
+      }
+
       myChildren = newNodes;
       childrenChanged();
     }
 
-    private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject) {
-      for (DependencyNode each : myChildren) {
-        if (each.myArtifact.equals(artifact.getArtifact())) return each;
+    private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
+      for (int i = from; i < myChildren.size(); i++) {
+        DependencyNode node = myChildren.get(i);
+        if (node.myArtifact.equals(artifact.getArtifact())) {
+          return node;
+        }
       }
       return new DependencyNode(this, artifact, mavenProject);
     }

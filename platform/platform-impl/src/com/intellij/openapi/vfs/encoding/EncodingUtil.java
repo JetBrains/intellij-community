@@ -58,7 +58,7 @@ public class EncodingUtil {
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
-    byte[] mandatoryBom = CharsetToolkit.getBom(charset);
+    byte[] mandatoryBom = CharsetToolkit.getMandatoryBom(charset);
     if (mandatoryBom != null && !ArrayUtil.startsWith(bytes, mandatoryBom)) return Magic8.NO_WAY;
 
     String loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, charset).toString();
@@ -103,18 +103,6 @@ public class EncodingUtil {
     }
   }
 
-  static boolean isSafeToChangeSilentlyTo(@NotNull VirtualFile virtualFile, @NotNull String text, @NotNull byte[] bytes, @NotNull Charset charset) {
-    String loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, charset).toString();
-    boolean canReloadSilently = loaded.equals(text);
-
-    Pair<Charset, byte[]> chosen = LoadTextUtil.chooseMostlyHarmlessCharset(virtualFile.getCharset(), charset, text);
-    byte[] saved = chosen.second;
-    boolean canSaveSilently = Arrays.equals(saved, bytes);
-
-    return canReloadSilently && canSaveSilently;
-  }
-
-
   public static void saveIn(@NotNull final Document document, final Editor editor, @NotNull final VirtualFile virtualFile, @NotNull final Charset charset) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     documentManager.saveDocument(document);
@@ -125,6 +113,7 @@ public class EncodingUtil {
       return;
     }
 
+    // first, save the file in the new charset and then mark the file as having the correct encoding
     virtualFile.setCharset(charset);
     try {
       LoadTextUtil.write(project, virtualFile, virtualFile, document.getText(), document.getModificationStamp());
