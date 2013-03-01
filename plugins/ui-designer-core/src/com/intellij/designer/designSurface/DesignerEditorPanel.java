@@ -223,7 +223,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myToolProvider = new ToolProvider() {
       @Override
       public void loadDefaultTool() {
-        setActiveTool(new SelectionTool());
+        setActiveTool(createDefaultTool());
       }
 
       @Override
@@ -748,6 +748,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected abstract void execute(List<EditOperation> operations);
 
   public abstract List<PaletteGroup> getPaletteGroups();
+
+  protected InputTool createDefaultTool() {
+    return new SelectionTool();
+  }
 
   @NotNull
   protected abstract ComponentCreationFactory createCreationFactory(PaletteItem paletteItem);

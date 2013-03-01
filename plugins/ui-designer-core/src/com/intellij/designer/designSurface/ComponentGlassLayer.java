@@ -13,35 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.componentTree;
+package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ToolProvider;
 
+import javax.swing.*;
 import java.awt.event.*;
 
 /**
  * @author Alexander Lobas
  */
-public final class TreeGlassLayer implements KeyListener, MouseListener, MouseMotionListener {
-  private final ComponentTree myTree;
+public final class ComponentGlassLayer implements KeyListener, MouseListener, MouseMotionListener {
+  private final JComponent myComponent;
   private final ToolProvider myToolProvider;
   private final EditableArea myArea;
 
-  public TreeGlassLayer(ComponentTree tree, ToolProvider provider, EditableArea area) {
-    myTree = tree;
+  public ComponentGlassLayer(JComponent component, ToolProvider provider, EditableArea area) {
+    myComponent = component;
     myToolProvider = provider;
     myArea = area;
 
-    myTree.addKeyListener(this);
-    myTree.addMouseListener(this);
-    myTree.addMouseMotionListener(this);
+    myComponent.addKeyListener(this);
+    myComponent.addMouseListener(this);
+    myComponent.addMouseMotionListener(this);
   }
 
   public void dispose() {
-    myTree.removeKeyListener(this);
-    myTree.removeMouseListener(this);
-    myTree.removeMouseMotionListener(this);
+    myComponent.removeKeyListener(this);
+    myComponent.removeMouseListener(this);
+    myComponent.removeMouseMotionListener(this);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
