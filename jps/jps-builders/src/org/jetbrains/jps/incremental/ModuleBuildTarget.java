@@ -31,6 +31,7 @@ import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -156,7 +157,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   }
 
   @Override
-  public void writeConfiguration(CompileContext context, PrintWriter out) {
+  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     final JpsModule module = getModule();
 
     int fingerprint = getDependenciesFingerprint();
@@ -172,7 +173,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       fingerprint += bytecodeTarget.hashCode();
     }
 
-    final CompilerEncodingConfiguration encodingConfig = context.getProjectDescriptor().getEncodingConfiguration();
+    final CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
     final String encoding = encodingConfig.getPreferredModuleEncoding(module);
     if (encoding != null) {
       fingerprint += encoding.hashCode();

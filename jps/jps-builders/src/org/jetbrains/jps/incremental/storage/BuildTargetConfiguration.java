@@ -126,7 +126,7 @@ public class BuildTargetConfiguration {
   private String saveToString(CompileContext context) {
     StringWriter out = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(context, new PrintWriter(out));
+    myTarget.writeConfiguration(context.getProjectDescriptor(), new PrintWriter(out));
     return out.toString();
   }
 

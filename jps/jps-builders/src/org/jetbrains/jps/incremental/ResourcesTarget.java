@@ -27,6 +27,7 @@ import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -116,9 +117,9 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   }
 
   @Override
-  public void writeConfiguration(CompileContext context, PrintWriter out) {
+  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     int fingerprint = 0;
-    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+    final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     final List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
       fingerprint += FileUtil.fileHashCode(root.getRootFile());
