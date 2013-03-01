@@ -30,7 +30,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -64,17 +63,17 @@ public class MavenProjectsTree {
   private volatile List<String> myIgnoredFilesPatterns = new ArrayList<String>();
   private volatile Pattern myIgnoredFilesPatternsCache;
 
-  private Set<String> myExplicitProfiles = new THashSet<String>();
-  private final Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
+  private Set<String> myExplicitProfiles = new HashSet<String>();
+  private final Set<String> myTemporarilyRemovedExplicitProfiles = new HashSet<String>();
 
   private final List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
-  private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
+  private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new HashMap<MavenProject, MavenProjectTimestamp>();
   private final MavenWorkspaceMap myWorkspaceMap = new MavenWorkspaceMap();
-  private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
-  private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
-  private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
-  private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
+  private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new HashMap<MavenId, MavenProject>();
+  private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new HashMap<VirtualFile, MavenProject>();
+  private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new HashMap<MavenProject, List<MavenProject>>();
+  private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<MavenProject, MavenProject>();
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
