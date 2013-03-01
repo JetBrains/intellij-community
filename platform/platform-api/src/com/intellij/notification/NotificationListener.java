@@ -35,7 +35,15 @@ public interface NotificationListener {
     protected abstract void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e);
   }
 
-  NotificationListener URL_OPENING_LISTENER = new Adapter() {
+  NotificationListener URL_OPENING_LISTENER = new UrlOpeningListener(false);
+
+  class UrlOpeningListener extends Adapter {
+    private final boolean myExpireNotification;
+
+    public UrlOpeningListener(boolean expireNotification) {
+      myExpireNotification = expireNotification;
+    }
+
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       URL url = event.getURL();
@@ -45,6 +53,9 @@ public interface NotificationListener {
       else {
         BrowserUtil.browse(url);
       }
+      if (myExpireNotification) {
+        notification.expire();
+      }
     }
-  };
+  }
 }
