@@ -49,7 +49,8 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     if (containingClass != null) {
       if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.PRIVATE) || element instanceof PsiParameter) {
         final Project project = element.getProject();
-        if (!JavaFxControllerClassIndex.findFxmlWithController(project, containingClass.getQualifiedName()).isEmpty()) {
+        final String qualifiedName = containingClass.getQualifiedName();
+        if (qualifiedName != null && !JavaFxControllerClassIndex.findFxmlWithController(project, qualifiedName).isEmpty()) {
           final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
           return new DelegatingGlobalSearchScope(projectScope){
             @Override
