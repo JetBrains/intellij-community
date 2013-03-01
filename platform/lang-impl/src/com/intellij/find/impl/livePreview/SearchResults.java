@@ -34,6 +34,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
@@ -65,16 +66,16 @@ public class SearchResults implements DocumentListener {
   public enum Direction {UP, DOWN}
 
 
-  private List<SearchResultsListener> myListeners = new ArrayList<SearchResultsListener>();
+  private final List<SearchResultsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private @Nullable LiveOccurrence myCursor;
 
   private List<LiveOccurrence> myOccurrences = new ArrayList<LiveOccurrence>();
 
-  private Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
+  private final Set<RangeMarker> myExcluded = new HashSet<RangeMarker>();
 
   private Editor myEditor;
-  private Project myProject;
+  private final Project myProject;
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
@@ -87,7 +88,7 @@ public class SearchResults implements DocumentListener {
 
   private int myLastUpdatedStamp = -1;
 
-  private Stack<Pair<FindModel, LiveOccurrence>> myCursorPositions = new Stack<Pair<FindModel, LiveOccurrence>>();
+  private final Stack<Pair<FindModel, LiveOccurrence>> myCursorPositions = new Stack<Pair<FindModel, LiveOccurrence>>();
 
   public SearchResults(Editor editor, Project project) {
     myEditor = editor;

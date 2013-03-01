@@ -73,7 +73,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final ArrayList<Runnable> myOkActions = new ArrayList<Runnable>(2);
   private final FileChooserDescriptor myDescriptor;
 
-  private final List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
   private Map<VirtualFile, VirtualFile> myEverExpanded = new WeakHashMap<VirtualFile, VirtualFile>();

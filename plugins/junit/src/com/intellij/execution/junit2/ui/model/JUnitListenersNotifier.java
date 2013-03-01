@@ -16,9 +16,9 @@
 
 package com.intellij.execution.junit2.ui.model;
 
+import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.events.TestEventsConsumer;
-import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DispatchListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

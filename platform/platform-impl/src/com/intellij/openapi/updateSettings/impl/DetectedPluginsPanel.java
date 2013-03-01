@@ -24,20 +24,22 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author anna
  * Date: 04-Dec-2007
  */
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
-  private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private static JEditorPane myDescriptionPanel = new JEditorPane();
 

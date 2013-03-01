@@ -20,6 +20,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,7 +47,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   private static final Logger LOG = Logger.getInstance(HyperlinkLabel.class.getName());
 
   private HighlightedText myHighlightedText;
-  private final List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myUseIconAsLink;
   private final TextAttributes myAnchorAttributes;
   private HyperlinkListener myHyperlinkListener = null;
@@ -168,8 +168,7 @@ public class HyperlinkLabel extends HighlightableComponent {
 
   protected void fireHyperlinkEvent() {
     HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
-    HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
-    for (HyperlinkListener listener : listeners) {
+    for (HyperlinkListener listener : myListeners) {
       listener.hyperlinkUpdate(e);
     }
   }

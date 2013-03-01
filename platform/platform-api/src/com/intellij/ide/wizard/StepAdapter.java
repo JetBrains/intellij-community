@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.wizard;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class StepAdapter implements Step {
 
-  private final List<StepListener> myListeners = new ArrayList<StepListener>();
+  private final List<StepListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void _init() {}
 

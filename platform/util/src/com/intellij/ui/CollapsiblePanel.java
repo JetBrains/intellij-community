@@ -15,23 +15,22 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Collection;
-
-import org.jetbrains.annotations.NonNls;
 
 public class CollapsiblePanel extends JPanel {
   private final JButton myToggleCollapseButton;
   private final JComponent myContent;
   private boolean myIsCollapsed;
-  private final Collection<CollapsingListener> myListeners = new ArrayList<CollapsingListener>();
+  private final Collection<CollapsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsInitialized = false;
   private final Icon myExpandIcon;
   private final Icon myCollapseIcon;
@@ -175,8 +174,7 @@ public class CollapsiblePanel extends JPanel {
   }
 
   private void notifyListners() {
-    CollapsingListener[] listeners = myListeners.toArray(new CollapsingListener[myListeners.size()]);
-    for (CollapsingListener listener : listeners) {
+    for (CollapsingListener listener : myListeners) {
       listener.onCollapsingChanged(this, isCollapsed());
     }
   }

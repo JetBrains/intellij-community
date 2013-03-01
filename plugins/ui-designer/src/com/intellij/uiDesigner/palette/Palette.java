@@ -38,6 +38,7 @@ import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -72,12 +73,12 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.Palette");
 
   private final MyLafManagerListener myLafManagerListener;
-  private final HashMap<Class, IntrospectedProperty[]> myClass2Properties;
-  private final HashMap<String, ComponentItem> myClassName2Item;
+  private final Map<Class, IntrospectedProperty[]> myClass2Properties;
+  private final Map<String, ComponentItem> myClassName2Item;
   /*All groups in the palette*/
   private final ArrayList<GroupItem> myGroups;
   /*Listeners, etc*/
-  private final ArrayList<Listener> myListeners;
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
   private final GroupItem mySpecialGroup = new GroupItem(true);
 
@@ -122,7 +123,6 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
     myClass2Properties = new HashMap<Class, IntrospectedProperty[]>();
     myClassName2Item = new HashMap<String, ComponentItem>();
     myGroups = new ArrayList<GroupItem>();
-    myListeners = new ArrayList<Listener>();
 
     if (project != null) {
       mySpecialGroup.setReadOnly(true);
@@ -154,8 +154,7 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
   }
 
   void fireGroupsChanged() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for(Listener listener : listeners) {
+    for(Listener listener : myListeners) {
       listener.groupsChanged(this);
     }
   }

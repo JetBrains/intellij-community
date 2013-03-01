@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +57,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   @NonNls private static final String OPTION = "option";
   @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
 
-  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>(2);
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EnvironmentVariablesComponent() {
     super();

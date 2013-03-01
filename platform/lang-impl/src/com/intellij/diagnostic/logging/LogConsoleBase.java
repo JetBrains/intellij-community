@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
 
-  private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
+  private final List<LogConsoleListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<? extends LogFilter> myFilters;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {

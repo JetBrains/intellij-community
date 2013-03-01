@@ -483,7 +483,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     = new HashMap<LibraryTable, LibraryTableMultilistener>();
 
   private class LibraryTableMultilistener implements LibraryTable.Listener {
-    final Set<LibraryTable.Listener> myListeners = new HashSet<LibraryTable.Listener>();
+    final List<LibraryTable.Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LibraryTable myLibraryTable;
 
     private LibraryTableMultilistener(LibraryTable libraryTable) {
@@ -561,7 +561,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private class JdkTableMultiListener implements ProjectJdkTable.Listener {
     final EventDispatcher<ProjectJdkTable.Listener> myDispatcher = EventDispatcher.create(ProjectJdkTable.Listener.class);
-    final Set<ProjectJdkTable.Listener> myListeners = new HashSet<ProjectJdkTable.Listener>();
     private MessageBusConnection listenerConnection;
 
     private JdkTableMultiListener(Project project) {
@@ -571,12 +570,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     private void addListener(ProjectJdkTable.Listener listener) {
       myDispatcher.addListener(listener);
-      myListeners.add(listener);
     }
 
     private void removeListener(ProjectJdkTable.Listener listener) {
       myDispatcher.removeListener(listener);
-      myListeners.remove(listener);
       uninstallListener(true);
     }
 
