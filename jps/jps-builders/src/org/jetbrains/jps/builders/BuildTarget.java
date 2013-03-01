@@ -18,6 +18,7 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
@@ -46,7 +47,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
 
   public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex);
 
-  public void writeConfiguration(PrintWriter out, BuildDataPaths dataPaths, BuildRootIndex buildRootIndex) {
+  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
   }
 
   @NotNull
