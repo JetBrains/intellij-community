@@ -469,8 +469,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private String getMavenizedModuleOptionName() {
-    return getComponentName() + ".isMavenModule";
+  private static String getMavenizedModuleOptionName() {
+    return "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
   }
 
   @TestOnly
