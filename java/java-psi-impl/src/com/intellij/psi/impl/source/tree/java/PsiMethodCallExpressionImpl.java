@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -194,7 +195,13 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       if (is15OrHigher) {
         final PsiSubstitutor substitutor = result.getSubstitutor();
         PsiType substitutedReturnType = substitutor.substitute(ret);
-        if (PsiUtil.isRawSubstitutor(method, substitutor) && ret.equals(substitutedReturnType)) return TypeConversionUtil.erasure(ret);
+        if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
+        if (PsiUtil.isRawSubstitutor(method, substitutor)) {
+          final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
+          if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {
+            return returnTypeErasure;
+          }
+        }
         PsiType lowerBound = PsiType.NULL;
         if (substitutedReturnType instanceof PsiCapturedWildcardType) {
           lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();
