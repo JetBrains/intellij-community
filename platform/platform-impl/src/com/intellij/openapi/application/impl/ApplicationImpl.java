@@ -312,7 +312,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    final Ref<Boolean> canClose = new Ref<Boolean>(true);
+    final boolean[] canClose = {true};
     for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
       try {
         commandProcessor.executeCommand(project, new Runnable() {
@@ -320,7 +320,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           public void run() {
             final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
             if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
-              canClose.set(false);
+              canClose[0] = false;
             }
           }
         }, ApplicationBundle.message("command.exit"), null);
@@ -328,11 +328,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       catch (Throwable e) {
         LOG.error(e);
       }
-      if (!canClose.get()) {
+      if (!canClose[0]) {
         return false;
       }
     }
-    Disposer.dispose(this);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        Disposer.dispose(ApplicationImpl.this);
+      }
+    });
 
     Disposer.assertIsEmpty();
     return true;
