@@ -235,6 +235,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
+    JavaOverrideCompletionContributor.fillCompletionVariants(parameters, result);
+
     addAllClasses(parameters, result, inheritors);
 
     final PsiElement parent = position.getParent();

@@ -301,8 +301,6 @@
                             order="before javaLegacy, before default"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor" id="javaMemberName"
                             order="before javaOverride"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaOverrideCompletionContributor" id="javaOverride"
-                            order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
 

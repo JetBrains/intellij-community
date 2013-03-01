@@ -38,11 +38,10 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author peter
  */
-public class JavaOverrideCompletionContributor extends CompletionContributor {
+public class JavaOverrideCompletionContributor {
   static final Key<Boolean> OVERRIDE_ELEMENT = Key.create("OVERRIDE_ELEMENT");
 
-  @Override
-  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet _result) {
+  public static void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
       return;
     }
@@ -53,7 +52,6 @@ public class JavaOverrideCompletionContributor extends CompletionContributor {
       andNot(psiElement().afterLeaf(psiElement().inside(PsiModifierList.class))).accepts(position)) {
       final PsiClass parent = CompletionUtil.getOriginalElement((PsiClass)position.getParent().getParent().getParent());
       if (parent != null) {
-        CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
         addSuperSignatureElements(parent, true, result);
         addSuperSignatureElements(parent, false, result);
       }
