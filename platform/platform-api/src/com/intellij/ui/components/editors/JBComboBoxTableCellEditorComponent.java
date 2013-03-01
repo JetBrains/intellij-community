@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -31,7 +32,8 @@ import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * Solves rendering problems in JTable components when JComboBox objects are used as cell
@@ -57,7 +59,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object[] myOptions = {};
   private Object myValue;
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
-  private ArrayList<ActionListener> myListeners = new ArrayList<ActionListener>();
+  private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {

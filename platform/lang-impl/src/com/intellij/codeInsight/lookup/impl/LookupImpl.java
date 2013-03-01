@@ -122,7 +122,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
-  private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
+  private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private long myStampShown = 0;
   private boolean myShown = false;
@@ -985,8 +985,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
-      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for (LookupListener listener : listeners) {
+      for (LookupListener listener : myListeners) {
         try {
           listener.itemSelected(event);
         }
@@ -1000,8 +999,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void fireLookupCanceled(final boolean explicitly) {
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, explicitly);
-      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for (LookupListener listener : listeners) {
+      for (LookupListener listener : myListeners) {
         try {
           listener.lookupCanceled(event);
         }
@@ -1015,8 +1013,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void fireCurrentItemChanged(LookupElement item){
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, (char)0);
-      LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for (LookupListener listener : listeners) {
+      for (LookupListener listener : myListeners) {
         listener.currentItemChanged(event);
       }
     }

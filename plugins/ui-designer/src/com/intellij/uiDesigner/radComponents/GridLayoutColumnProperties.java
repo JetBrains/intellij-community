@@ -21,13 +21,13 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,7 +40,7 @@ public class GridLayoutColumnProperties implements CustomPropertiesPanel {
   private RadContainer myContainer;
   private boolean myRow;
   private int mySelectedIndex;
-  private final List<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public GridLayoutColumnProperties() {
     myWantGrowCheckBox.addActionListener(new ActionListener() {

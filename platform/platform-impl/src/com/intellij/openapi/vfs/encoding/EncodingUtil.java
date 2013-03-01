@@ -58,7 +58,7 @@ public class EncodingUtil {
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
 
     // the charset has mandatory BOM (e.g. UTF-xx) but the file hasn't or has wrong
-    byte[] mandatoryBom = CharsetToolkit.getBom(charset);
+    byte[] mandatoryBom = CharsetToolkit.getMandatoryBom(charset);
     if (mandatoryBom != null && !ArrayUtil.startsWith(bytes, mandatoryBom)) return Magic8.NO_WAY;
 
     String loaded = LoadTextUtil.getTextByBinaryPresentation(bytes, charset).toString();

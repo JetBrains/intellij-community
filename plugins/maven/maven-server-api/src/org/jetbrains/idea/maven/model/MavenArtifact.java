@@ -132,9 +132,11 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
       long currentTime = System.currentTimeMillis();
 
       if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
-        if (myFile.exists()) {
-          myLastFileCheckTimeStamp = currentTime;
+        if (!myFile.exists()) {
+          return false; // Don't cache result if file is not exist.
         }
+
+        myLastFileCheckTimeStamp = currentTime;
       }
 
       return true;

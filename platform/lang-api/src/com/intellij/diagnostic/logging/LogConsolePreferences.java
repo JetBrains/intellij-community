@@ -29,6 +29,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
-  private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
+  private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
 
   public static LogConsolePreferences getInstance(Project project) {

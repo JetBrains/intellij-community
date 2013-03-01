@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.InvocationHandler;
@@ -33,10 +34,8 @@ public class PendingEventDispatcher <T extends EventListener> {
 
   private final T myMulticaster;
 
-  private final List<T> myListeners = new ArrayList<T>();
+  private final List<T> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<T, Boolean> myListenersState = new HashMap<T, Boolean>();
-
-  private List<T> myCachedListeners = null;
 
   private final Stack<T> myDispatchingListeners = new Stack<T>();
 
@@ -108,7 +107,6 @@ public class PendingEventDispatcher <T extends EventListener> {
 
     myListeners.add(listener);
     myListenersState.put(listener, Boolean.TRUE);
-    myCachedListeners = null;
   }
 
   public synchronized void addListener(final T listener, Disposable parentDisposable) {
@@ -125,7 +123,6 @@ public class PendingEventDispatcher <T extends EventListener> {
 
     myListeners.remove(listener);
     myListenersState.remove(listener);
-    myCachedListeners = null;
   }
 
   public void dispatchPendingEvent(final T listener) {
@@ -182,12 +179,12 @@ public class PendingEventDispatcher <T extends EventListener> {
 
     try {
       List<T> listeners = getListeners();
-      for (int i = 0; i < listeners.size(); i++) {
-        myListenersState.put(listeners.get(i), Boolean.FALSE);
+      for (T listener : listeners) {
+        myListenersState.put(listener, Boolean.FALSE);
       }
 
-      for (int i = 0; i < listeners.size(); i++) {
-        invoke(listeners.get(i));
+      for (T listener : listeners) {
+        invoke(listener);
       }
     }
     finally {
@@ -222,14 +219,8 @@ public class PendingEventDispatcher <T extends EventListener> {
     }
   }
 
-  private void updateCachedListeners() {
-    if (myCachedListeners == null) {
-      myCachedListeners = new ArrayList<T>(myListeners);
-    }
-  }
 
   public List<T> getListeners() {
-    updateCachedListeners();
-    return myCachedListeners;
+    return myListeners;
   }
 }

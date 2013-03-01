@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class HtmlLanguageLevelForm {
   private JPanel myContentPanel;
   private JPanel myOtherDoctypeWrapper;
   private final TextFieldWithAutoCompletion myDoctypeTextField;
-  private final List<MyListener> myListeners = new ArrayList<MyListener>();
+  private final List<MyListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public HtmlLanguageLevelForm(Project project) {
     final String[] urls = ExternalResourceManager.getInstance().getResourceUrls(null, true);

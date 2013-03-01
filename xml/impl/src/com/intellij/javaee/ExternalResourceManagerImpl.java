@@ -94,7 +94,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return registrar.getResources();
   }
 
-  private final List<ExternalResourceListener> myListeners = new ArrayList<ExternalResourceListener>();
+  private final List<ExternalResourceListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private long myModificationCount = 0;
   private final PathMacrosImpl myPathMacros;
   @NonNls private static final String RESOURCE_ELEMENT = "resource";
@@ -437,7 +437,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   private void fireExternalResourceChanged() {
-    for (ExternalResourceListener listener : myListeners.toArray(new ExternalResourceListener[myListeners.size()])) {
+    for (ExternalResourceListener listener : myListeners) {
       listener.externalResourceChanged();
     }
   }

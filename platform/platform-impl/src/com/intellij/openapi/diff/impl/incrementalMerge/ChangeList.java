@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 
@@ -37,7 +38,7 @@ public class ChangeList {
 
   private final Project myProject;
   private final Document[] myDocuments = new Document[2];
-  private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private ArrayList<Change> myChanges;
   private ArrayList<Change> myAppliedChanges;
 
@@ -212,15 +213,13 @@ public class ChangeList {
   }
 
   private void fireOnChangeRemoved() {
-    Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.onChangeRemoved(this);
     }
   }
 
   void fireOnChangeApplied() {
-    Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.onChangeApplied(this);
     }
   }

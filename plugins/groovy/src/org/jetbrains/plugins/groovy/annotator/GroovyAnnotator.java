@@ -488,25 +488,30 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkInnerMethod(myHolder, method);
     checkOptionalParametersInAbstractMethod(myHolder, method);
 
+    final PsiElement nameIdentifier = method.getNameIdentifierGroovy();
+    if (nameIdentifier.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
+      checkStringLiteral(nameIdentifier, nameIdentifier.getText());
+    }
+
     GrOpenBlock block = method.getBlock();
     if (block != null && TypeInferenceHelper.isTooComplexTooAnalyze(block)) {
-      myHolder.createWeakWarningAnnotation(method.getNameIdentifierGroovy(),
+      myHolder.createWeakWarningAnnotation(nameIdentifier,
                                            GroovyBundle.message("method.0.is.too.complex.too.analyze", method.getName()));
     }
 
     final PsiClass containingClass = method.getContainingClass();
     if (method.isConstructor()) {
       if (containingClass instanceof GrAnonymousClassDefinition) {
-        myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
+        myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
       }
       else if (containingClass != null && containingClass.isInterface()) {
-        myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.interface"));
+        myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("constructors.are.not.allowed.in.interface"));
       }
     }
 
     if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null && !method.hasModifierProperty(NATIVE)) {
       final Annotation annotation =
-        myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
+        myHolder.createErrorAnnotation(nameIdentifier, GroovyBundle.message("not.abstract.method.should.have.body"));
       annotation.registerFix(new AddMethodBodyFix(method));
     }
 
