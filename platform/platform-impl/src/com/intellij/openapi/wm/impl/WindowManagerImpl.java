@@ -623,8 +623,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setFileTitle(null, null);
 
     myProject2Frame.remove(project);
-    Disposer.dispose(frame.getStatusBar());
-    frame.dispose();
+    if (myProject2Frame.isEmpty()) {
+      myProject2Frame.put(null, frame);
+    }
+    else {
+      Disposer.dispose(frame.getStatusBar());
+      frame.dispose();
+    }
   }
 
   public final void disposeRootFrame() {

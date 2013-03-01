@@ -86,14 +86,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-  private final Icon myIcon;
 
-  public DebuggerSessionTab(final Project project,
-                            final String sessionName,
-                            @NotNull final DebugUIEnvironment environment,
-                            DebuggerSession debuggerSession) throws ExecutionException {
-    super(project, "JavaDebugger", sessionName);
-    myIcon = environment.getIcon();
+  public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
+                            @NotNull DebuggerSession debuggerSession) throws ExecutionException {
+    super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
     myDebuggerSession = debuggerSession;
     myDebugUIEnvironment = environment;
 
@@ -204,7 +200,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
     myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(), myIcon);
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
+                                                      environment.getIcon());
     initUI(executionResult);
   }
 
@@ -516,8 +513,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   private class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
-    private static final String myAutoModeText = "Auto-Variables Mode";
-    private static final String myDefaultModeText = "All-Variables Mode";
 
     public AutoVarsSwitchAction() {
       super("", "", AllIcons.Debugger.AutoVariablesMode);
@@ -528,7 +523,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(autoModeEnabled ? myDefaultModeText : myAutoModeText);
+      presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
     public boolean isSelected(AnActionEvent e) {

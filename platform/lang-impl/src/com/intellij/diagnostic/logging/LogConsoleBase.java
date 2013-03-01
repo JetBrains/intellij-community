@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +55,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -98,7 +98,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private JComboBox myLogFilterCombo;
   private JPanel myTextFilterWrapper;
 
-  public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
+  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
+    this(project, reader, title, buildInActions, model, GlobalSearchScope.allScope(project));
+  }
+
+  public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model,
+                        @NotNull GlobalSearchScope scope) {
     super(new BorderLayout());
     myProject = project;
     myTitle = title;
@@ -106,7 +111,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myFilters = myModel.getLogFilters();
     myReaderThread = new ReaderThread(reader);
     myBuildInActions = buildInActions;
-    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project, scope);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     myDisposed = false;

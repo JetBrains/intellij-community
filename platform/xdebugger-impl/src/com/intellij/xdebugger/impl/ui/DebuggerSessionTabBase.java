@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -56,8 +57,9 @@ public abstract class DebuggerSessionTabBase extends LogConsoleManagerBase imple
   protected ExecutionConsole myConsole;
   protected RunContentDescriptor myRunContentDescriptor;
 
-  public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
-    super(project);
+  public DebuggerSessionTabBase(@NotNull Project project, @NotNull String runnerId, @NotNull final String sessionName,
+                                @NotNull GlobalSearchScope searchScope) {
+    super(project, searchScope);
     Disposer.register(project, this);
     myManager = new LogFilesManager(project, this, this);
 

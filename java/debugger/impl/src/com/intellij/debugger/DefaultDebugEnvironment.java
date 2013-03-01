@@ -23,10 +23,9 @@ import com.intellij.execution.filters.ExceptionFilters;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.module.Module;
+import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -58,26 +57,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     myRemoteConnection = remoteConnection;
     myPollConnection = pollConnection;
 
-    mySearchScope = createSearchScope(project, runProfile);
-  }
-
-  @NotNull
-  public static GlobalSearchScope createSearchScope(Project project, RunProfile runProfile) {
-    Module[] modules = null;
-    if (runProfile instanceof ModuleRunProfile) {
-      modules = ((ModuleRunProfile)runProfile).getModules();
-    }
-    if (modules == null || modules.length == 0) {
-      return GlobalSearchScope.allScope(project);
-    }
-    else {
-      GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);
-      for (int idx = 1; idx < modules.length; idx++) {
-        Module module = modules[idx];
-        scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(module, true));
-      }
-      return scope;
-    }
+    mySearchScope = RunContentBuilder.createSearchScope(project, runProfile);
   }
 
   @Override

@@ -35,7 +35,7 @@
                     interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
     <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
-    <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
+    <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor"
                     interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
     <extensionPoint name="classSubstitutor" interface="org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor"/>
@@ -145,8 +145,9 @@
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
 
 
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.GrContainerTypeConverter"/>
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.impl.types.GrStringTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrBooleanTypeConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
