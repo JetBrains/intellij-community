@@ -403,16 +403,21 @@ public class JavaFxPsiUtil {
                                                                                      GlobalSearchScope.allScope(project));
           if (builderClass != null) {
             //todo cache this info
-            final PsiTypeParameter typeParameter = builderClass.getTypeParameters()[0];
-            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass aClass) {
-                final PsiType initType =
-                  TypeConversionUtil.getSuperClassSubstitutor(builderClass, aClass, PsiSubstitutor.EMPTY).substitute(typeParameter);
-                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(initType));
+            final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
+            if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+              if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+                @Override
+                public boolean process(PsiClass aClass) {
+                  PsiType returnType = null;
+                  final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+                  if (method != null) {
+                    returnType = method.getReturnType();
+                  }
+                  return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+                }
+              })) {
+                return "Unable to instantiate";
               }
-            })) {
-              return "Unable to instantiate";
             }
           }
         }

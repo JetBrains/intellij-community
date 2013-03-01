@@ -254,6 +254,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testLineChartInstantiation() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false, false, getTestName(true) + ".fxml");
   }
