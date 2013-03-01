@@ -17,6 +17,8 @@
     <lang.formatter language="ReST" implementationClass="com.jetbrains.rest.formatter.RestFormattingModelBuilder"/>
     <codeInsight.fillParagraph language="ReST" implementationClass="com.jetbrains.rest.actions.RestFillParagraphHandler"/>
 
+    <additionalTextAttributes scheme="Default" file="colorSchemes/RestDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/RestDarcula.xml"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">

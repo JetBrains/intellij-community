@@ -3,9 +3,7 @@ package com.jetbrains.python.highlighting;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
@@ -16,11 +14,10 @@ import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.SyntaxHighlighterColors.*;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
 
 /**
  * Colors and lexer(s) needed for highlighting.
@@ -56,72 +53,50 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     return new PythonHighlightingLexer(myLanguageLevel);
   }
 
-  private static TextAttributesKey _copy(String name, TextAttributesKey src) {
-    return TextAttributesKey.createTextAttributesKey(name, src.getDefaultAttributes().clone());
-  }
+  public static final TextAttributesKey PY_KEYWORD = TextAttributesKey.createTextAttributesKey("PY.KEYWORD", KEYWORD);
 
-  public static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
+  public static final TextAttributesKey PY_BYTE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.B", STRING);
+  public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.U", STRING);
+  public static final TextAttributesKey PY_NUMBER = TextAttributesKey.createTextAttributesKey("PY.NUMBER", NUMBER);
 
-  public static final TextAttributesKey PY_BYTE_STRING = _copy("PY.STRING.B", STRING);
-  public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey(
-    "PY.STRING.U",
-    new TextAttributes(new Color(0, 128, 128), null, null, null, STRING.getDefaultAttributes().getFontType())
-  );
-  public static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
+  static final TextAttributesKey PY_LINE_COMMENT = TextAttributesKey.createTextAttributesKey("PY.LINE_COMMENT", LINE_COMMENT);
 
-  static final TextAttributesKey PY_LINE_COMMENT = _copy("PY.LINE_COMMENT", LINE_COMMENT);
+  static final TextAttributesKey PY_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey("PY.OPERATION_SIGN", OPERATION_SIGN);
 
-  static final TextAttributesKey PY_OPERATION_SIGN = _copy("PY.OPERATION_SIGN", OPERATION_SIGN);
+  static final TextAttributesKey PY_PARENTHS = TextAttributesKey.createTextAttributesKey("PY.PARENTHS", PARENTHESES);
 
-  static final TextAttributesKey PY_PARENTHS = _copy("PY.PARENTHS", PARENTHS);
+  static final TextAttributesKey PY_BRACKETS = TextAttributesKey.createTextAttributesKey("PY.BRACKETS", BRACKETS);
 
-  static final TextAttributesKey PY_BRACKETS = _copy("PY.BRACKETS", BRACKETS);
+  static final TextAttributesKey PY_BRACES = TextAttributesKey.createTextAttributesKey("PY.BRACES", BRACES);
 
-  static final TextAttributesKey PY_BRACES = _copy("PY.BRACES", BRACES);
+  static final TextAttributesKey PY_COMMA = TextAttributesKey.createTextAttributesKey("PY.COMMA", COMMA);
 
-  static final TextAttributesKey PY_COMMA = _copy("PY.COMMA", COMMA);
+  static final TextAttributesKey PY_DOT = TextAttributesKey.createTextAttributesKey("PY.DOT", DOT);
 
-  static final TextAttributesKey PY_DOT = _copy("PY.DOT", DOT);
+  public static final TextAttributesKey PY_DOC_COMMENT = TextAttributesKey.createTextAttributesKey("PY.DOC_COMMENT", DOC_COMMENT);
 
-  public static final TextAttributesKey PY_DOC_COMMENT = _copy("PY.DOC_COMMENT", DOC_COMMENT);
+  public static final TextAttributesKey PY_DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey("PY.DOC_COMMENT_TAG", DOC_COMMENT_TAG);
 
-  public static final TextAttributesKey PY_DOC_COMMENT_TAG = _copy("PY.DOC_COMMENT_TAG", DOC_COMMENT_TAG);
+  public static final TextAttributesKey PY_DECORATOR = TextAttributesKey.createTextAttributesKey("PY.DECORATOR", IDENTIFIER);
 
-  public static final TextAttributesKey PY_DECORATOR = TextAttributesKey.createTextAttributesKey(
-    "PY.DECORATOR", new TextAttributes(Color.blue.darker(), null, null, null, Font.PLAIN)
-  );
+  public static final TextAttributesKey PY_CLASS_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.CLASS_DEFINITION", CLASS_NAME);
 
-  public static final TextAttributesKey PY_CLASS_DEFINITION = TextAttributesKey.createTextAttributesKey(
-    "PY.CLASS_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
-  );
+  public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.FUNC_DEFINITION", FUNCTION_DECLARATION);
 
-  public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey(
-    "PY.FUNC_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
-  );
+  public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.PREDEFINED_DEFINITION", PREDEFINED_SYMBOL);
 
-  public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKey.createTextAttributesKey(
-    "PY.PREDEFINED_DEFINITION", new TextAttributes(Color.magenta.darker(), null, null, null, Font.BOLD)
-  );
+  public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKey.createTextAttributesKey("PY.PREDEFINED_USAGE", PREDEFINED_SYMBOL);
 
-  public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKey.createTextAttributesKey(
-    "PY.PREDEFINED_USAGE", new TextAttributes(Color.magenta.darker(), null, null, null, Font.PLAIN)
-  );
+  public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKey.createTextAttributesKey("PY.BUILTIN_NAME", PREDEFINED_SYMBOL);
 
-  public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKey.createTextAttributesKey(
-    "PY.BUILTIN_NAME",
-    new TextAttributes(KEYWORD.getDefaultAttributes().getForegroundColor(), null, null, null, Font.PLAIN)
-  );
+  public static final TextAttributesKey PY_PARAMETER = TextAttributesKey.createTextAttributesKey("PY.PARAMETER", PARAMETER);
+  public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKey.createTextAttributesKey( "PY.SELF_PARAMETER", PARAMETER);
 
-  public static final TextAttributesKey PY_PARAMETER =_copy("PY.PARAMETER", CodeInsightColors.PARAMETER_ATTRIBUTES);
-  public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKey.createTextAttributesKey(
-    "PY.SELF_PARAMETER", new TextAttributes(new Color(148, 85, 141), null, null, null, Font.PLAIN));
+  public static final TextAttributesKey PY_KEYWORD_ARGUMENT = TextAttributesKey.createTextAttributesKey("PY.KEYWORD_ARGUMENT", PARAMETER);
 
-  public static final TextAttributesKey PY_KEYWORD_ARGUMENT = TextAttributesKey.createTextAttributesKey(
-    "PY.KEYWORD_ARGUMENT", new TextAttributes(new Color(102, 0, 153), null, null, null, Font.PLAIN));
+  public static final TextAttributesKey PY_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
 
-  public static final TextAttributesKey PY_VALID_STRING_ESCAPE = _copy("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
-
-  public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
+  public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
   
   /**
    * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
