@@ -949,7 +949,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
 
-      for (PluginNode each : new ArrayList<PluginNode>(myPluginNodes)) {
+      for (PluginNode each : myPluginNodes.toArray(new PluginNode[myPluginNodes.size()])) {
         if (plugins.contains(each.getPlugin())) {
           each.updatePlugin();
         }
@@ -1058,22 +1058,55 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
-      List<DependencyNode> newNodes = new ArrayList<DependencyNode>(children.size());
+      List<DependencyNode> newNodes = null;
+      int validChildCount = 0;
+
       for (MavenArtifactNode each : children) {
         if (each.getState() != MavenArtifactState.ADDED) continue;
 
-        DependencyNode newNode = findOrCreateNodeFor(each, mavenProject);
+        if (newNodes == null) {
+          if (validChildCount < myChildren.size()) {
+            DependencyNode currentValidNode = myChildren.get(validChildCount);
+
+            if (currentValidNode.myArtifact.equals(each.getArtifact())) {
+              currentValidNode.updateChildren(each.getDependencies(), mavenProject);
+              currentValidNode.updateDependency();
+
+              validChildCount++;
+              continue;
+            }
+          }
+
+          newNodes = new ArrayList<DependencyNode>(children.size());
+          newNodes.addAll(myChildren.subList(0, validChildCount));
+        }
+
+        DependencyNode newNode = findOrCreateNodeFor(each, mavenProject, validChildCount);
         newNodes.add(newNode);
         newNode.updateChildren(each.getDependencies(), mavenProject);
         newNode.updateDependency();
       }
+
+      if (newNodes == null) {
+        if (validChildCount == myChildren.size()) {
+          return; // All nodes are valid, child did not changed.
+        }
+
+        assert validChildCount < myChildren.size();
+
+        newNodes = new ArrayList<DependencyNode>(myChildren.subList(0, validChildCount));
+      }
+
       myChildren = newNodes;
       childrenChanged();
     }
 
-    private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject) {
-      for (DependencyNode each : myChildren) {
-        if (each.myArtifact.equals(artifact.getArtifact())) return each;
+    private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
+      for (int i = from; i < myChildren.size(); i++) {
+        DependencyNode node = myChildren.get(i);
+        if (node.myArtifact.equals(artifact.getArtifact())) {
+          return node;
+        }
       }
       return new DependencyNode(this, artifact, mavenProject);
     }
