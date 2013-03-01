@@ -313,12 +313,14 @@ public abstract class TestObject implements JavaCommandLine {
             }
             finally {
               if (ApplicationManager.getApplication().isUnitTestMode()) {
+                LOG.info("console is asked to dispose");
                 Disposer.dispose(consoleView);
               }
             }
           }
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("process terminated received");
           runnable.run();
         } else {
           handler.getOut().addRequest(runnable, queue);
