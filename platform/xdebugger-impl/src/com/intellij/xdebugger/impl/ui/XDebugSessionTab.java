@@ -33,6 +33,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.xdebugger.XDebugProcess;
@@ -61,7 +62,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final XDebugSessionImpl session, final @Nullable Icon icon,
                           ExecutionEnvironment environment, ProgramRunner runner) {
-    super(project, "Debug", session.getSessionName());
+    super(project, "Debug", session.getSessionName(), GlobalSearchScope.allScope(project));
     if (environment != null) {
       setEnvironment(environment);
     }

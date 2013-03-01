@@ -87,11 +87,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
 
-  public DebuggerSessionTab(final Project project,
-                            final String sessionName,
-                            @NotNull final DebugUIEnvironment environment,
+  public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
                             @NotNull DebuggerSession debuggerSession) throws ExecutionException {
-    super(project, "JavaDebugger", sessionName);
+    super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
     myDebuggerSession = debuggerSession;
     myDebugUIEnvironment = environment;
 
