@@ -139,7 +139,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  public static List<PsiFile> findFxmlWithController(final Project project, String className) {
+  public static List<PsiFile> findFxmlWithController(final Project project, @NotNull String className) {
     return findFxmlWithController(project, className, new Function<VirtualFile, PsiFile>() {
       @Override
       public PsiFile fun(VirtualFile file) {
