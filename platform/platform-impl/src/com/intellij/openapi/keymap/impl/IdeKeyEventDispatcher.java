@@ -833,7 +833,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
             new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                               ActionManager.getInstance(), 0);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-            action.actionPerformed(event);
+            ActionUtil.performActionDumbAware(action, event);
           }
         }
       });

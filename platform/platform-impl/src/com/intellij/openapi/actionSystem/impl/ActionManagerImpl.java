@@ -1338,7 +1338,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           }
         }, AWTEvent.WINDOW_EVENT_MASK, result);
 
-        action.actionPerformed(event);
+        ActionUtil.performActionDumbAware(action, event);
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       }
