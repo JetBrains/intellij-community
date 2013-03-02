@@ -25,10 +25,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -60,8 +63,10 @@ import org.jetbrains.plugins.groovy.refactoring.extract.ExtractUtil;
 import org.jetbrains.plugins.groovy.refactoring.extract.GroovyExtractChooser;
 import org.jetbrains.plugins.groovy.refactoring.extract.InitialInfo;
 import org.jetbrains.plugins.groovy.refactoring.extract.ParameterInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -70,17 +75,49 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    // select editor text fragment
     final SelectionModel model = editor.getSelectionModel();
-    if (!model.hasSelection()) {
-      model.selectLineAtCaret();
+    if (model.hasSelection()) {
+      invokeImpl(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
+    }
+    else {
+      final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, editor.getCaretModel().getOffset(), true);
+      final Pass<GrExpression> callback = new Callback(project, editor, file);
+      if (expressions.size() == 1) {
+        callback.pass(expressions.get(0));
+      }
+      else if (expressions.isEmpty()) {
+        model.selectLineAtCaret();
+        invokeImpl(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
+      }
+      else {
+        IntroduceTargetChooser.showChooser(editor, expressions, callback, GrIntroduceHandlerBase.GR_EXPRESSION_RENDERER);
+      }
+    }
+  }
+
+  private class Callback extends Pass<GrExpression> {
+    private final Project project;
+    private final Editor editor;
+    private final PsiFile file;
+
+
+    private Callback(Project project, Editor editor, PsiFile file) {
+      this.project = project;
+      this.editor = editor;
+      this.file = file;
     }
 
+    public void pass(@NotNull final GrExpression selectedValue) {
+      final TextRange range = selectedValue.getTextRange();
+      invokeImpl(project, editor, file, range.getStartOffset(), range.getEndOffset());
+    }
+  }
+
+  private void invokeImpl(Project project, Editor editor, PsiFile file, final int startOffset, final int endOffset) {
     try {
-      final InitialInfo initialInfo =
-        GroovyExtractChooser.invoke(project, editor, file, model.getSelectionStart(), model.getSelectionEnd(), true);
+      final InitialInfo initialInfo = GroovyExtractChooser.invoke(project, editor, file, startOffset, endOffset, true);
 
       if (findConflicts(initialInfo)) return;
 
@@ -147,7 +184,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     return !dialog.isOK();
   }
 
-  private void performRefactoring(@NotNull final InitialInfo initialInfo, final Editor editor) {
+  private void performRefactoring(@NotNull final InitialInfo initialInfo, @Nullable final Editor editor) {
     final PsiClass owner = PsiUtil.getContextClass(initialInfo.getStatements()[0]);
     LOG.assertTrue(owner!=null);
 
