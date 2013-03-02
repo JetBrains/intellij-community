@@ -386,7 +386,7 @@ public class GithubUtil {
   }
 
   public static boolean isGithubUrl(@NotNull String url) {
-    return url.contains(GithubApiUtil.getGitHost());
+    return url.contains(GithubApiUtil.removeProtocolPrefix(GithubSettings.getInstance().getHost()));
   }
 
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
