@@ -34,8 +34,8 @@ public class ConfigImportSettings {
     return getProductName(ThreeState.NO);
   }
 
-  public String getMainJarName() {
-    return getProductName(ThreeState.NO);
+  public String[] getMainJarNames() {
+    return new String[]{getProductName(ThreeState.NO)};
   }
 
   protected String getProductName(ThreeState full) {
