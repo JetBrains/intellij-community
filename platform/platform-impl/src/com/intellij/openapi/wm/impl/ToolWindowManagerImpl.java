@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -2165,16 +2166,27 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
       else { // docked and sliding windows
+        float size =
+          ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor() ? source.getWidth() : source.getHeight();
+        if (source.getParent() instanceof Splitter) {
+          Splitter splitter = (Splitter)source.getParent();
+          if (splitter.getSecondComponent() == source) {
+            size += splitter.getDividerWidth();
+          }
+        }
+
         if (ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor()) {
           info.setWeight((float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight());
-          float newSideWeight = (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+
+
+          float newSideWeight = size / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
           if (newSideWeight < 1.0f) {
             info.setSideWeight(newSideWeight);
           }
         }
         else {
           info.setWeight((float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth());
-          float newSideWeight = (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight();
+          float newSideWeight = size / (float)myToolWindowsPane.getMyLayeredPane().getHeight();
           if (newSideWeight < 1.0f) {
             info.setSideWeight(newSideWeight);
           }
