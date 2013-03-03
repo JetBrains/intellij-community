@@ -21,9 +21,12 @@ import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -262,9 +265,16 @@ public class Tool implements SchemeElement {
   }
 
   public void execute(AnActionEvent event, DataContext dataContext, long executionId) {
+    execute(event, dataContext, executionId, null);
+  }
+
+  /**
+   * @return <code>true</code> if task has been started successfully
+   */
+  public boolean execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      return;
+      return false;
     }
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
@@ -275,21 +285,34 @@ public class Tool implements SchemeElement {
 
         ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder().setRunProfile(profile).setProject(project).build();
         executionEnvironment.setExecutionId(executionId);
-        runner.execute(new DefaultRunExecutor(), executionEnvironment);
+        runner.execute(new DefaultRunExecutor(), executionEnvironment, new ProgramRunner.Callback() {
+          @Override
+          public void processStarted(RunContentDescriptor descriptor) {
+            ProcessHandler processHandler = descriptor.getProcessHandler();
+            if (processHandler != null && processListener != null) {
+              processHandler.addProcessListener(processListener);
+            }
+          }
+        });
+        return true;
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);
         if (commandLine == null) {
-          return;
+          return false;
         }
         OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
+        if (processListener != null)
+          handler.addProcessListener(processListener);
         handler.startNotify();
+        return true;
       }
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
     }
+    return false;
   }
 
   @Nullable
