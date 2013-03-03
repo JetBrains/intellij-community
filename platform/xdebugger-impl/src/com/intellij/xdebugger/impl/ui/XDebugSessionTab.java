@@ -150,7 +150,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     if (runner != null && env != null) {
       RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(),
-                                                      RestartAction.RERUN_DEBUGGER_ICON, myRunContentDescriptor, env);
+                                                      myRunContentDescriptor, env);
       leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
     }
