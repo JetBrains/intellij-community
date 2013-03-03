@@ -52,7 +52,7 @@ public class DataPackImpl implements DataPack {
             @NotNull
             @Override
             public Boolean get(@NotNull Node key) {
-                if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isTrackedCommitHash(key.getCommitHash())) {
+                if (key.getDownEdges().isEmpty() || key.getUpEdges().isEmpty() || refsModel.isBranchRef(key.getCommitHash())) {
                     return true;
                 } else {
                     return false;

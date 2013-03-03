@@ -26,6 +26,16 @@ public class RefsModel {
     public boolean isTrackedCommitHash(@NotNull Hash commitHash) {
         return trackedCommitHashes.contains(commitHash);
     }
+
+    public boolean isBranchRef(@NotNull Hash commitHash) {
+        for (Ref ref : refsToCommit(commitHash)) {
+            if (ref.getType() == Ref.Type.LOCAL_BRANCH || ref.getType() == Ref.Type.REMOTE_BRANCH) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @NotNull
     public List<Ref> refsToCommit(@NotNull Hash hash) {
         List<Ref> refs = new ArrayList<Ref>();
