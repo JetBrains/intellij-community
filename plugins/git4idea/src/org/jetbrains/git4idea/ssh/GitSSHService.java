@@ -15,6 +15,9 @@
  */
 package org.jetbrains.git4idea.ssh;
 
+import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.trilead.ssh2.KnownHosts;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -22,7 +25,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.ide.WebServerManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +35,7 @@ import java.util.Vector;
 /**
  * The provider of SSH scripts for the Git
  */
-public abstract class GitSSHService {
+public class GitSSHService {
 
   /**
    * random number generator to use
@@ -47,10 +50,17 @@ public abstract class GitSSHService {
    */
   private final THashMap<Integer, Handler> handlers = new THashMap<Integer, Handler>();
 
+  @NotNull
+  public static GitSSHService getInstance() {
+    return ServiceManager.getService(GitSSHService.class);
+  }
+
   /**
    * @return the port number for XML RCP
    */
-  public abstract int getXmlRcpPort();
+  public int getXmlRcpPort() {
+    return WebServerManager.getInstance().waitForStart().getPort();
+  }
 
   /**
    * Get file to the script service
@@ -78,8 +88,6 @@ public abstract class GitSSHService {
     return null;
   }
 
-  protected abstract void addInternalHandler();
-
   /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
    *
@@ -87,7 +95,10 @@ public abstract class GitSSHService {
    * @return an identifier to pass to the environment variable
    */
   public synchronized int registerHandler(@NotNull Handler handler) {
-    addInternalHandler();
+    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+    if (!xmlRpcServer.hasHandler(GitSSHHandler.HANDLER_NAME)) {
+      xmlRpcServer.addHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
+    }
 
     while (true) {
       int candidate = RANDOM.nextInt();

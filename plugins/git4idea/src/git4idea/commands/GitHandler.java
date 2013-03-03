@@ -418,7 +418,7 @@ public abstract class GitHandler {
 
       // setup environment
       if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
-        GitSSHService ssh = GitSSHIdeaService.getInstance();
+        GitSSHService ssh = GitSSHService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
         myEnvironmentCleanedUp = false;
@@ -490,7 +490,7 @@ public abstract class GitHandler {
    */
   protected synchronized void cleanupEnv() {
     if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
-      GitSSHService ssh = GitSSHIdeaService.getInstance();
+      GitSSHService ssh = GitSSHService.getInstance();
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }
