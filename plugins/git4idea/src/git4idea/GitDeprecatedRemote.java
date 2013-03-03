@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -160,7 +159,6 @@ public final class GitDeprecatedRemote {
    */
   public static List<GitDeprecatedRemote> list(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-v");
     String output = handler.run();

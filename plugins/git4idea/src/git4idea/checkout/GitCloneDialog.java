@@ -26,10 +26,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandlerPasswordRequestAware;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResult;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NonNls;
@@ -167,6 +164,7 @@ public class GitCloneDialog extends DialogWrapper {
    */
   private boolean test(String url) {
     final GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(myProject, new File("."), GitCommand.LS_REMOTE);
+    handler.setRemoteProtocol(GitRemoteProtocol.SSH);
     handler.addParameters(url, "master");
     GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", url));
     GitTaskResult result = task.executeModal();

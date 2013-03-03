@@ -192,8 +192,8 @@ public class GitSimpleHandler extends GitTextHandler {
    * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
-    if (!isNoSSH()) {
-      throw new IllegalStateException("Commands that require SSH could not be run using this method");
+    if (isRemote()) {
+      throw new IllegalStateException("Commands that require remote access could not be run using this method");
     }
     final VcsException[] ex = new VcsException[1];
     final String[] result = new String[1];

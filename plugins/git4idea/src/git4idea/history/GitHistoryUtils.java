@@ -88,7 +88,6 @@ public class GitHistoryUtils {
   public static long getHeadTs(final Project project, FilePath filePath) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, SHORT_HASH, COMMIT_TIME);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     h.addParameters("HEAD");
@@ -111,7 +110,6 @@ public class GitHistoryUtils {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = shortHash ? new GitLogParser(project, SHORT_HASH, COMMIT_TIME) : new GitLogParser(project, HASH, COMMIT_TIME);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
@@ -134,7 +132,6 @@ public class GitHistoryUtils {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     if (branch != null && !branch.isEmpty()) {
@@ -179,7 +176,6 @@ public class GitHistoryUtils {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, SHORT_PARENTS);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty(), "--name-status", t.getFullName());
     h.endOptions();
@@ -202,7 +198,6 @@ public class GitHistoryUtils {
     if (! GitUtil.isGitRoot(new File(root.getPath()))) throw new VcsException("Path " + root.getPath() + " is not git repository root");
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--branches", "--remotes", "--tags", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
                     "--sparse");
@@ -447,7 +442,6 @@ public class GitHistoryUtils {
 
   private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit, String... parameters) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
     if (parameters != null && parameters.length > 0) {
@@ -469,7 +463,6 @@ public class GitHistoryUtils {
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, SHORT_PARENTS);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
     h.endOptions();
@@ -578,7 +571,6 @@ public class GitHistoryUtils {
     path = getLastCommitName(project, path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
@@ -626,7 +618,6 @@ public class GitHistoryUtils {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL,
                                                  COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
@@ -763,7 +754,6 @@ public class GitHistoryUtils {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     GitLogParser parser = new GitLogParser(project, SHORT_HASH, SHORT_PARENTS);
     h.setSilent(true);
-    h.setNoSSH(true);
     h.addParameters("list");
     h.addParameters("-n1");
     h.addParameters(parser.getPretty());
@@ -778,7 +768,6 @@ public class GitHistoryUtils {
       GitSimpleHandler h1 = new GitSimpleHandler(project, root, GitCommand.LOG);
       GitLogParser parser1 = new GitLogParser(project, SHORT_HASH, SHORT_PARENTS, SUBJECT);
       h1.setSilent(true);
-      h1.setNoSSH(true);
       h1.addParameters("-n1");
       h1.addParameters(parser1.getPretty());
       //h1.endOptions();
@@ -813,7 +802,6 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SHORT_REF_LOG_SELECTOR, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
-    h.setNoSSH(true);
     h.addParameters("list");
     h.addParameters(parameters);
     h.addParameters(parser.getPretty());
@@ -840,7 +828,6 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                            SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
@@ -860,7 +847,6 @@ public class GitHistoryUtils {
     final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(commitsId);
@@ -878,7 +864,6 @@ public class GitHistoryUtils {
     final VirtualFile root = GitUtil.getGitRoot(path);
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NAME,  SHORT_HASH, COMMIT_TIME, SHORT_PARENTS, AUTHOR_NAME);
-    h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8", "--full-history");
@@ -953,7 +938,6 @@ public class GitHistoryUtils {
                                                @NotNull final String second)
     throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(first, second);
     String output = h.run().trim();

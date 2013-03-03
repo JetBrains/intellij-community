@@ -134,7 +134,6 @@ class GitOldChangesCollector extends GitChangesCollector {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
     handler.addParameters("--refresh", "--ignore-missing");
     handler.setSilent(true);
-    handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
     handler.ignoreErrorCode(1);
     handler.run();
@@ -161,7 +160,6 @@ class GitOldChangesCollector extends GitChangesCollector {
       }
       GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("--cached");
-      handler.setNoSSH(true);
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       // During init diff does not works because HEAD
@@ -193,7 +191,6 @@ class GitOldChangesCollector extends GitChangesCollector {
     GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--unmerged");
     handler.setSilent(true);
-    handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
     // run handler and collect changes
     parseFiles(handler.run());
@@ -201,7 +198,6 @@ class GitOldChangesCollector extends GitChangesCollector {
     handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--others", "--exclude-standard");
     handler.setSilent(true);
-    handler.setNoSSH(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
@@ -209,7 +205,6 @@ class GitOldChangesCollector extends GitChangesCollector {
       handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("-v", "--others", "--exclude-standard");
       handler.setSilent(true);
-      handler.setNoSSH(true);
       handler.setStdoutSuppressed(true);
       handler.endOptions();
     }

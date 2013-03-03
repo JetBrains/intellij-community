@@ -118,7 +118,6 @@ public class GitResetDialog extends DialogWrapper {
    */
   public GitLineHandler handler() {
     GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.RESET);
-    handler.setNoSSH(true);
     String type = (String)myResetTypeComboBox.getSelectedItem();
     if (SOFT.equals(type)) {
       handler.addParameters("--soft");

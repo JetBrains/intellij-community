@@ -288,7 +288,6 @@ public class GitMergeProvider implements MergeProvider2 {
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
           GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
-          h.setNoSSH(true);
           h.setStdoutSuppressed(true);
           h.setSilent(true);
           h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");

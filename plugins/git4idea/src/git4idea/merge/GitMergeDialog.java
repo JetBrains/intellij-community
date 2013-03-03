@@ -156,7 +156,6 @@ public class GitMergeDialog extends DialogWrapper {
   public void updateBranches() throws VcsException {
     VirtualFile root = getSelectedRoot();
     GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.BRANCH);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("--no-color", "-a", "--no-merged");
     String output = handler.run();
@@ -178,7 +177,6 @@ public class GitMergeDialog extends DialogWrapper {
     GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MERGE);
     // ignore merge failure
     h.ignoreErrorCode(1);
-    h.setNoSSH(true);
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
     }

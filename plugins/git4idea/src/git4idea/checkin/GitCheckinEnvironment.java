@@ -248,7 +248,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     HashSet<FilePath> realRemoved = new HashSet<FilePath>();
     // perform diff
     GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
-    diff.setNoSSH(true);
     diff.setSilent(true);
     diff.setStdoutSuppressed(true);
     diff.addParameters("--diff-filter=ADMRUX", "--name-status", "HEAD");
@@ -323,7 +322,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // perform merge commit
     try {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-      handler.setNoSSH(true);
       handler.addParameters("-F", messageFile.getAbsolutePath());
       if (author != null) {
         handler.addParameters("--author=" + author);
@@ -469,7 +467,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean amend = nextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-      handler.setNoSSH(true);
       if (amend) {
         handler.addParameters("--amend");
       }

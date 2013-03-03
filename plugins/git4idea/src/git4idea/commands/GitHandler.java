@@ -82,9 +82,6 @@ public abstract class GitHandler {
   @NonNls
   private Charset myCharset = Charset.forName("UTF-8"); // Character set to use for IO
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private boolean myNoSSHFlag = false;
-
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
@@ -100,6 +97,7 @@ public abstract class GitHandler {
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private ModalityState myState;
+  @Nullable private GitRemoteProtocol myRemoteProtocol;
 
 
   /**
@@ -219,23 +217,12 @@ public abstract class GitHandler {
     return file;
   }
 
-  /**
-   * Set SSH flag. This flag should be set to true for commands that never interact with remote repositories.
-   *
-   * @param value if value is true, the custom ssh is not used for the command.
-   */
-  @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-  public void setNoSSH(boolean value) {
-    checkNotStarted();
-    myNoSSHFlag = value;
+  public void setRemoteProtocol(@NotNull GitRemoteProtocol remoteProtocol) {
+    myRemoteProtocol = remoteProtocol;
   }
 
-  /**
-   * @return true if SSH is not invoked by this command.
-   */
-  @SuppressWarnings({"WeakerAccess"})
-  public boolean isNoSSH() {
-    return myNoSSHFlag;
+  protected boolean isRemote() {
+    return myRemoteProtocol != null;
   }
 
   /**
@@ -430,7 +417,7 @@ public abstract class GitHandler {
       }
 
       // setup environment
-      if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
+      if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
@@ -502,7 +489,7 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   protected synchronized void cleanupEnv() {
-    if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
+    if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
       GitSSHService ssh = GitSSHIdeaService.getInstance();
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
