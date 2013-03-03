@@ -318,21 +318,18 @@ public final class GitPusher {
     }
 
     GitRemote remote = pushSpec.getRemote();
-    String httpUrl = null;
-    for (String pushUrl : remote.getPushUrls()) {
-      if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
-        httpUrl = pushUrl;
-        break;            // TODO support http and ssh urls in one origin
-      }
+    Collection<String> pushUrls = remote.getPushUrls();
+    if (pushUrls.isEmpty()) {
+      LOG.error("No urls or pushUrls are defined for " + remote);
+      return GitSimplePushResult.error("There are no URLs defined for remote " + remote.getName());
     }
-
+    String url = pushUrls.iterator().next();
     GitSimplePushResult pushResult;
-    boolean pushOverHttp = httpUrl != null;
-    if (pushOverHttp) {
-      pushResult = GitHttpAdapter.push(repository, remote.getName(), httpUrl, formPushSpec(pushSpec, remote));
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      pushResult = GitHttpAdapter.push(repository, remote.getName(), url, formPushSpec(pushSpec, remote));
     }
     else {
-      pushResult = pushNatively(repository, pushSpec);
+      pushResult = pushNatively(repository, pushSpec, url);
     }
     
     if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
@@ -396,10 +393,10 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec, @NotNull String url) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector, progressListener);
+    GitCommandResult res = myGit.push(repository, pushSpec, url, rejectedDetector, progressListener);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);

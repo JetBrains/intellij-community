@@ -217,8 +217,8 @@ public abstract class GitHandler {
     return file;
   }
 
-  public void setRemoteProtocol(@NotNull GitRemoteProtocol remoteProtocol) {
-    myRemoteProtocol = remoteProtocol;
+  public void setRemoteProtocol(@NotNull String url) {
+    myRemoteProtocol = GitRemoteProtocol.fromUrl(url);
   }
 
   protected boolean isRemote() {

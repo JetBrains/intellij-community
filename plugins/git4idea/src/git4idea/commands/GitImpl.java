@@ -132,7 +132,7 @@ public class GitImpl implements Git {
   public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
                                 @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
-    handler.setRemoteProtocol(GitRemoteProtocol.SSH);
+    handler.setRemoteProtocol(url);
     handler.addParameters("--progress");
     handler.addParameters(url);
     handler.addParameters(clonedDirectoryName);
@@ -356,11 +356,11 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec,
-                                      @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
-    h.setRemoteProtocol(GitRemoteProtocol.SSH);
+    h.setRemoteProtocol(url);
     h.setSilent(false);
     addListeners(h, listeners);
     h.addProgressParameter();
@@ -371,12 +371,12 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
-                                      @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull String url,
+                               @NotNull GitLineHandlerListener... listeners) {
     GitRemote remote = pushSpec.getRemote();
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-    return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
+    return push(repository, remote.getName(), url, pushSpec.getSource().getName() + ":" + destination, listeners);
   }
 
   @NotNull

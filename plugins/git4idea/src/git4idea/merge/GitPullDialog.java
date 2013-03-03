@@ -27,7 +27,6 @@ import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitRemoteProtocol;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -154,12 +153,13 @@ public class GitPullDialog extends DialogWrapper {
   /**
    * @return a pull handler configured according to dialog options
    */
-  public GitLineHandler pullOrMergeHandler(boolean pull) {
+  public GitLineHandler pullOrMergeHandler(@Nullable String url) {
+    boolean pull = url != null;
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), pull ? GitCommand.PULL : GitCommand.MERGE);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
     if (pull) {
-      h.setRemoteProtocol(GitRemoteProtocol.SSH);
+      h.setRemoteProtocol(url);
       h.addProgressParameter();
     }
     h.addParameters("--no-stat");

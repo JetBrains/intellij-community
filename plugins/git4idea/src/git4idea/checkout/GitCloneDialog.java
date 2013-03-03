@@ -164,7 +164,7 @@ public class GitCloneDialog extends DialogWrapper {
    */
   private boolean test(String url) {
     final GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(myProject, new File("."), GitCommand.LS_REMOTE);
-    handler.setRemoteProtocol(GitRemoteProtocol.SSH);
+    handler.setRemoteProtocol(url);
     handler.addParameters(url, "master");
     GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", url));
     GitTaskResult result = task.executeModal();

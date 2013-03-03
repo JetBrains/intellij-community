@@ -92,9 +92,9 @@ public class GitPull extends GitRepositoryAction {
           if (!fetchSuccessful) {
             return; 
           }
-          handlerReference.set(dialog.pullOrMergeHandler(false)); 
+          handlerReference.set(dialog.pullOrMergeHandler(null));
         } else {
-          handlerReference.set(dialog.pullOrMergeHandler(true));
+          handlerReference.set(dialog.pullOrMergeHandler(url));
         }
         
         

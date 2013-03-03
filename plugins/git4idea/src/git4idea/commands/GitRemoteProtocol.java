@@ -15,11 +15,26 @@
  */
 package git4idea.commands;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
 * @author Kirill Likhodedov
 */
 public enum GitRemoteProtocol {
   GIT,
   SSH,
-  HTTP
+  HTTP;
+
+  @NotNull
+  public static GitRemoteProtocol fromUrl(@NotNull String url) {
+    url = url.toLowerCase();
+    if (url.startsWith("http")) {
+      return HTTP;
+    }
+    if (url.startsWith("git://")) { // "://" are there not to mix with scp-like syntax used for SSH: git@host.com/path/to.git
+      return GIT;
+    }
+    return SSH;
+  }
+
 }
