@@ -69,29 +69,25 @@ public class GraphBranchShowFixer {
     }
 
     @NotNull
-    private Edge getHideEdge(@NotNull Node node) {
+    private Edge getExternalHideEdge(@NotNull Node node) {
         while (!fragmentGraphDecorator.isVisibleNode(node)) {
-            Node downNode = null;
-            for (Edge edge : ((MutableNode) node).getInnerDownEdges()) {
-                downNode = edge.getDownNode();
+            MutableNode thisNode = (MutableNode) node;
+            if (thisNode.getInnerDownEdges().size() == 0) {
+                throw new IllegalStateException("not found down visible node of hide node");
             }
-            if (downNode == null) {
-                throw new IllegalStateException("not found up visible node of hide node");
-            }
-            node = downNode;
+            node = thisNode.getInnerDownEdges().get(0).getDownNode();
         }
         return fragmentGraphDecorator.getHideFragmentUpEdge(node);
     }
 
     private void showNodes(Set<Node> nodes) {
-        Set<Edge> hideEdges = new HashSet<Edge>();
         for (Node node : nodes) {
-            hideEdges.add(getHideEdge(node));
-        }
-        for (Edge edge : hideEdges) {
-            GraphFragment fragment = fragmentManager.relateFragment(edge);
-            assert fragment != null : "bad hide edge" + edge;
-            fragmentManager.show(fragment);
+            while (!fragmentGraphDecorator.isVisibleNode(node)) {
+                Edge hideEdge = getExternalHideEdge(node);
+                GraphFragment fragment = fragmentManager.relateFragment(hideEdge);
+                assert fragment != null : "bad hide edge" + hideEdge;
+                fragmentManager.show(fragment);
+            }
         }
     }
 

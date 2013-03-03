@@ -8,6 +8,10 @@ import java.util.Collection;
 
 /**
  * @author erokhins
+ *
+ * Conventions:
+ *  if IntermediateNodes.isEmpty() then this fragment is hde freagment and
+ *  upNode and downNode connected with HIDE_FRAGMENT_EDGE
  */
 public class SimpleGraphFragment implements GraphFragment {
     private final Node upNode;
