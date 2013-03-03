@@ -19,7 +19,7 @@ public class ShortFragmentGenerator {
     private final static int MAX_FRAGMENT_SIZE = 100;
 
     private final Graph graph;
-    private Function<Node, Boolean> unhiddenNodes = new Function<Node, Boolean>() {
+    private Function<Node, Boolean> isUnconcealedNodes = new Function<Node, Boolean>() {
         @NotNull
         @Override
         public Boolean get(@NotNull Node key) {
@@ -31,8 +31,8 @@ public class ShortFragmentGenerator {
         this.graph = graph;
     }
 
-    public void setUnhiddenNodes(Function<Node, Boolean> unhiddenNodes) {
-        this.unhiddenNodes = unhiddenNodes;
+    public void setUnconcealedNodeFunction(Function<Node, Boolean> isUnconcealedNodes) {
+        this.isUnconcealedNodes = isUnconcealedNodes;
     }
 
     private void addDownNodeToSet(@NotNull Set<Node> nodes, @NotNull Node node) {
@@ -84,7 +84,7 @@ public class ShortFragmentGenerator {
                         isEnd = true;
                         break;
                     } else {
-                        if (!allUpNodeHere(upNodes, node) || unhiddenNodes.get(node)) {
+                        if (!allUpNodeHere(upNodes, node) || isUnconcealedNodes.get(node)) {
                             isEnd = true;
                         }
                         upNodes.add(node);
@@ -145,7 +145,7 @@ public class ShortFragmentGenerator {
                         isEnd = true;
                         break;
                     } else {
-                        if (!allDownNodeHere(downNodes, node) || unhiddenNodes.get(node)) {
+                        if (!allDownNodeHere(downNodes, node) || isUnconcealedNodes.get(node)) {
                             isEnd = true;
                         }
                         downNodes.add(node);

@@ -18,7 +18,7 @@ public class FragmentGenerator {
     private static final int SEARCH_LIMIT = 20; // 20 nodes
 
     private final ShortFragmentGenerator shortFragmentGenerator;
-    private Function<Node, Boolean> unhiddenNodes = new Function<Node, Boolean>() {
+    private Function<Node, Boolean> isUnhiddenNodes = new Function<Node, Boolean>() {
         @NotNull
         @Override
         public Boolean get(@NotNull Node key) {
@@ -30,9 +30,9 @@ public class FragmentGenerator {
         shortFragmentGenerator = new ShortFragmentGenerator(graph);
     }
 
-    public void setUnhiddenNodes(Function<Node, Boolean> unhiddenNodes) {
-        shortFragmentGenerator.setUnhiddenNodes(unhiddenNodes);
-        this.unhiddenNodes = unhiddenNodes;
+    public void setUnconcealedNodeFunction(Function<Node, Boolean> isUnconcealedNode) {
+        shortFragmentGenerator.setUnconcealedNodeFunction(isUnconcealedNode);
+        this.isUnhiddenNodes = isUnconcealedNode;
     }
 
     public GraphFragment getFragment(@NotNull Node node) {
@@ -72,7 +72,7 @@ public class FragmentGenerator {
         Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
         Node endNode = fragment.getDownNode();
         while ((fragment = shortFragmentGenerator.getDownShortFragment(endNode)) != null
-                && !unhiddenNodes.get(endNode)) {
+                && !isUnhiddenNodes.get(endNode)) {
             intermediateNodes.addAll(fragment.getIntermediateNodes());
             intermediateNodes.add(endNode);
             endNode = fragment.getDownNode();
@@ -94,7 +94,7 @@ public class FragmentGenerator {
         Set<Node> intermediateNodes = new HashSet<Node>(fragment.getIntermediateNodes());
         Node endNode = fragment.getDownNode();
         while ((fragment = shortFragmentGenerator.getUpShortFragment(endNode)) != null
-                && !unhiddenNodes.get(endNode)) {
+                && !isUnhiddenNodes.get(endNode)) {
             intermediateNodes.addAll(fragment.getIntermediateNodes());
             intermediateNodes.add(endNode);
             endNode = fragment.getUpNode();

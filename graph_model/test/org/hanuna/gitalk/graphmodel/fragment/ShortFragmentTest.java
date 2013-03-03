@@ -20,7 +20,7 @@ public class ShortFragmentTest {
     public void runTest(@NotNull String inputGraph, int rowIndex, String fragmentStr, final String unhiddenNodeRows, boolean down) {
         MutableGraph graph = GraphTestUtils.getNewMutableGraph(inputGraph);
         ShortFragmentGenerator shortFragmentGenerator = new ShortFragmentGenerator(graph);
-        shortFragmentGenerator.setUnhiddenNodes(parseUnhiddenNodes(graph, unhiddenNodeRows));
+        shortFragmentGenerator.setUnconcealedNodeFunction(parseUnhiddenNodes(graph, unhiddenNodeRows));
 
         Node commitNode = getCommitNode(graph, rowIndex);
         GraphFragment fragment;

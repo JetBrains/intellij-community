@@ -39,8 +39,8 @@ public class FragmentManagerImpl implements FragmentManager {
     }
 
     @Override
-    public void setUnconcealedNodeFunction(@NotNull Function<Node, Boolean> unhiddenNodes) {
-        fragmentGenerator.setUnhiddenNodes(unhiddenNodes);
+    public void setUnconcealedNodeFunction(@NotNull Function<Node, Boolean> isUnconcealedNode) {
+        fragmentGenerator.setUnconcealedNodeFunction(isUnconcealedNode);
     }
 
     @NotNull
