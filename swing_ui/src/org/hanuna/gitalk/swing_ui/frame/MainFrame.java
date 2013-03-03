@@ -67,6 +67,15 @@ public class MainFrame extends JFrame {
         });
         leftPanel.add(hideButton);
 
+        JButton showButton = new JButton("S");
+        showButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                ui_controller.showAll();
+            }
+        });
+        leftPanel.add(showButton);
+
 
         final JCheckBox visibleLongEdges = new JCheckBox("", false);
         visibleLongEdges.addMouseListener(new MouseAdapter() {

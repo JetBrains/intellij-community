@@ -24,6 +24,8 @@ public interface FragmentManager {
 
     void hideAll();
 
+    void showAll();
+
     @NotNull
     public GraphDecorator getGraphDecorator();
 }

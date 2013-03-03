@@ -197,6 +197,12 @@ public class UI_ControllerImpl implements UI_Controller {
 
     }
 
+    @Override
+    public void showAll() {
+        dataPack.getGraphModel().getFragmentManager().showAll();
+        events.runUpdateUI();
+        events.runJumpToRow(0);
+    }
 
     @Override
     public void hideAll() {

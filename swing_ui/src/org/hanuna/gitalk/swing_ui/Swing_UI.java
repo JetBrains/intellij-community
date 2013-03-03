@@ -53,13 +53,23 @@ public class Swing_UI {
     private class SwingControllerListener implements ControllerListener {
 
         @Override
-        public void jumpToRow(int rowIndex) {
-            mainFrame.getGraphTable().jumpToRow(rowIndex);
+        public void jumpToRow(final int rowIndex) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    mainFrame.getGraphTable().jumpToRow(rowIndex);
+                }
+            });
         }
 
         @Override
         public void updateUI() {
-            mainFrame.getGraphTable().updateUI();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    mainFrame.getGraphTable().updateUI();
+                }
+            });
         }
 
         @Override
@@ -73,13 +83,23 @@ public class Swing_UI {
         }
 
         @Override
-        public void setErrorMessage(@NotNull String errorMessage) {
-            errorFrame.setMessage(errorMessage);
+        public void setErrorMessage(@NotNull final String errorMessage) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    errorFrame.setMessage(errorMessage);
+                }
+            });
         }
 
         @Override
-        public void setUpdateProgressMessage(@NotNull String progressMessage) {
-            progressFrame.setMessage(progressMessage);
+        public void setUpdateProgressMessage(@NotNull final String progressMessage) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progressFrame.setMessage(progressMessage);
+                }
+            });
         }
     }
 }

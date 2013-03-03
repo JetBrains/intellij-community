@@ -27,4 +27,6 @@ public interface UI_Controller {
     public void updateVisibleBranches();
 
     public void readNextPart();
+
+    public void showAll();
 }

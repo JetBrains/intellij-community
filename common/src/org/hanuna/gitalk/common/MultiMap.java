@@ -37,4 +37,8 @@ public class MultiMap<K, V> {
         }
     }
 
+    public void clear() {
+        keyToListValues.clear();
+    }
+
 }

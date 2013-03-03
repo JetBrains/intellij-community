@@ -159,4 +159,9 @@ public class FragmentManagerImpl implements FragmentManager {
         callBackFunction.fullUpdate();
     }
 
+    @Override
+    public void showAll() {
+        graphDecorator.showAll();
+        callBackFunction.fullUpdate();
+    }
 }

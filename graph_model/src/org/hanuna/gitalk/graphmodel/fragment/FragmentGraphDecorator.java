@@ -78,4 +78,11 @@ public class FragmentGraphDecorator implements GraphDecorator {
         hideFragments.put(edge, fragment);
     }
 
+    public void showAll() {
+        hideNodes.clear();
+        hideFragments.clear();
+        upNodeEdges.clear();
+        downNodeEdges.clear();
+    }
+
 }
