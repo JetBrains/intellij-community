@@ -419,8 +419,8 @@ public class PyCallExpressionHelper {
             return new PyClassTypeImpl(cls, false);
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
-          if (providedType != null) {
-            return providedType;
+          if (providedType instanceof PyCallableType) {
+            return ((PyCallableType) providedType).getCallType(context, (PyReferenceExpression)callee);
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
