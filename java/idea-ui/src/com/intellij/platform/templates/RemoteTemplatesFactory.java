@@ -182,7 +182,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {
     //noinspection unchecked
-    return ContainerUtil.map(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
+    return ContainerUtil.mapNotNull(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
       @Override
       public WizardInputField fun(Element element) {
         ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
