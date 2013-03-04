@@ -70,8 +70,21 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected abstract String getTitle(PsiElement element);
   protected abstract String getToolwindowId();
   
-  
-  
+  public Content recreateToolWindow(PsiElement element, PsiElement originalElement) {
+    if (myToolWindow == null) {
+      createToolWindow(element, originalElement);
+      return null;
+    }
+
+    final Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content == null || !myToolWindow.isVisible()) {
+      restorePopupBehavior();
+      createToolWindow(element, originalElement);
+      return null;
+    }
+    return content;
+  }
+
   public void createToolWindow(final PsiElement element, PsiElement originalElement) {
     assert myToolWindow == null;
 
