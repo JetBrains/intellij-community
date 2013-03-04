@@ -267,6 +267,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         final PsiElement element = getReferenceNameElement();
         final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
         if (element instanceof PsiIdentifier || isConstructor) {
+          if (isConstructor && (containingClass.isEnum() || containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+            return JavaResolveResult.EMPTY_ARRAY;
+          }
           PsiType functionalInterfaceType = null;
           final Map<PsiMethodReferenceExpression,PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
           if (map != null) {
@@ -289,9 +292,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, interfaceMethodReturnType, substitutor, languageLevel,
                                                          PsiMethodReferenceExpressionImpl.this.getProject());
 
-            if (containingClass.getConstructors().length == 0 &&
-                !containingClass.isEnum() &&
-                !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            if (containingClass.getConstructors().length == 0) {
               ClassCandidateInfo candidateInfo = null;
               if ((containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
                   PsiMethodReferenceUtil.onArrayType(containingClass, signature)) {
