@@ -51,6 +51,16 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text)
   }
 
+  public void "test no constants in reference code fragment"() throws Throwable {
+    myFixture.addClass("package foo; public interface FooIntf { int constant = 2 }")
+
+    def text = "FooInt.con<caret>"
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, false);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    assert !myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.checkResult(text)
+  }
+
   public void testNoPackagesInExpressionCodeFragment() throws Throwable {
     final String text = "jav<caret>";
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, true);

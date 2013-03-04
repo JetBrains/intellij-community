@@ -110,7 +110,12 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       return;
     }
 
-    String fullPrefix = position.getContainingFile().getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
+    PsiFile file = position.getContainingFile();
+    if (file instanceof PsiJavaCodeReferenceCodeFragment) {
+      return;
+    }
+
+    String fullPrefix = file.getText().substring(parent.getTextRange().getStartOffset(), parameters.getOffset());
     CompletionResultSet qualifiedCollector = result.withPrefixMatcher(fullPrefix);
     ElementFilter filter = JavaCompletionContributor.getReferenceFilter(position);
     for (LookupElement base : suggestQualifierItems(parameters, (PsiJavaCodeReferenceElement)qualifier, filter)) {
