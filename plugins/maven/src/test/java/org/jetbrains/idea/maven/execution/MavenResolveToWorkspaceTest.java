@@ -16,13 +16,18 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -74,6 +79,14 @@ public class MavenResolveToWorkspaceTest extends MavenImportingTestCase {
     MavenProjectsManager.getInstance(myProject).setIgnoredFilesPaths(Collections.singletonList(moduleIgnored.getPath()));
 
     //assertModules("project", "moduleA", "moduleB");
+
+    AccessToken accessToken = WriteAction.start();
+    try {
+      ProjectRootManager.getInstance(myProject).setProjectSdk(createJdk("Java 1.5"));
+    }
+    finally {
+      accessToken.finish();
+    }
 
     MavenRunnerParameters runnerParameters = new MavenRunnerParameters(moduleB.getParent().getPath(), false, Collections.singletonList("jetty:run"), Collections.<String, Boolean>emptyMap());
     runnerParameters.setResolveToWorkspace(true);
