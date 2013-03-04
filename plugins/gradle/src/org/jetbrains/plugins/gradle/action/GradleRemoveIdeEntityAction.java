@@ -6,14 +6,10 @@ import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * Allows to remove IDE entity (module, dependency, content root etc). Convenient to use when project structure tree is configured
@@ -31,17 +27,7 @@ public class GradleRemoveIdeEntityAction extends AbstractGradleSyncTreeNodeActio
 
   @Override
   protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    for (Iterator<GradleProjectStructureNode<?>> iterator = nodes.iterator(); iterator.hasNext(); ) {
-      GradleProjectStructureNode<?> node = iterator.next();
-      GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
-      if (descriptor.getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE
-          || descriptor.getAttributes() == GradleTextAttributes.OUTDATED_ENTITY
-          || descriptor.getElement().getType() == GradleEntityType.SYNTHETIC
-          || node.getParent() == null /* is root, i.e. is a project*/)
-      {
-        iterator.remove();
-      }
-    }
+    filterNodesByAttributes(nodes, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE);
   }
   
   @Override
