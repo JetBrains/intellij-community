@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -32,15 +30,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class LookupDocumentSavingVetoer implements FileDocumentSynchronizationVetoer {
+public class LookupDocumentSavingVetoer extends FileDocumentSynchronizationVetoer {
   @Override
-  public boolean maySaveDocument(@NotNull Document document) {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return true;
-    }
-
-    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (settings == null || EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(settings.getStripTrailingSpaces())) {
+  public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
+    if (ApplicationManager.getApplication().isDisposed() || isSaveExplicit) {
       return true;
     }
 
@@ -49,34 +42,14 @@ public class LookupDocumentSavingVetoer implements FileDocumentSynchronizationVe
         continue;
       }
       LookupEx lookup = LookupManager.getInstance(project).getActiveLookup();
-      if (lookup != null && isInTrailingSpace(lookup, document)) {
-        return false;
+      if (lookup != null) {
+        Editor editor = InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor());
+        if (editor.getDocument() == document) {
+          return false;
+        }
       }
     }
     return true;
   }
 
-  private static boolean isInTrailingSpace(Lookup lookup, Document document) {
-    Editor editor = InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor());
-    if (editor.getDocument() != document) {
-      return false;
-    }
-
-    int caret = editor.getCaretModel().getOffset();
-    if (caret <= 0 || caret >= document.getTextLength()) {
-      return false;
-    }
-
-    CharSequence seq = document.getCharsSequence();
-    if (seq.charAt(caret) == '\n' && Character.isWhitespace(seq.charAt(caret - 1))) {
-      return true;
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document) {
-    return true;
-  }
 }

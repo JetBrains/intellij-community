@@ -24,9 +24,13 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public interface FileDocumentSynchronizationVetoer {
-  ExtensionPointName<FileDocumentSynchronizationVetoer> EP_NAME = ExtensionPointName.create("com.intellij.fileDocumentSynchronizationVetoer");
+public abstract class FileDocumentSynchronizationVetoer {
+  public static final ExtensionPointName<FileDocumentSynchronizationVetoer> EP_NAME = ExtensionPointName.create("com.intellij.fileDocumentSynchronizationVetoer");
 
-  boolean maySaveDocument(@NotNull Document document);
-  boolean mayReloadFileContent(VirtualFile file, @NotNull Document document);
+  public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
+    return true;
+  }
+  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document) {
+    return true;
+  }
 }
