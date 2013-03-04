@@ -40,7 +40,10 @@ public class RemoteDebugger implements ProcessDebugger {
   private static final int CONNECTION_TIMEOUT = 60000;
 
   private final IPyDebugProcess myDebugProcess;
+
+  @NotNull
   private final ServerSocket myServerSocket;
+
   private final int myTimeout;
   private final Object mySocketObject = new Object(); // for synchronization on socket
   private Socket mySocket;
@@ -75,8 +78,10 @@ public class RemoteDebugger implements ProcessDebugger {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
       myServerSocket.setSoTimeout(CONNECTION_TIMEOUT);
-      mySocket = myServerSocket.accept();
-      myConnected = true;
+      synchronized (mySocketObject) {
+        mySocket = myServerSocket.accept();
+        myConnected = true;
+      }
     }
     finally {
       //it is closed in close() method on process termination

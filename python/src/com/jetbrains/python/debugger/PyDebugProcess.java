@@ -127,7 +127,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
     MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
-    debugger.setOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
+    debugger.addOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
       public void threadsClosed(Set<String> threadIds) {
         for (PyThreadInfo t : mySuspendedThreads) {

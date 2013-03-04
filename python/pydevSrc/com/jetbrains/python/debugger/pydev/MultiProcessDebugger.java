@@ -34,12 +34,12 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private final List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
   private ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
-  private DebuggerProcessListener myOtherDebuggerCloseListener;
+  private List<DebuggerProcessListener> myOtherDebuggerCloseListener = Lists.newArrayList();
 
   private ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
-  public MultiProcessDebugger(final IPyDebugProcess debugProcess,
-                              final ServerSocket serverSocket,
+  public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
+                              @NotNull final ServerSocket serverSocket,
                               final int timeoutInMillis) {
     myDebugProcess = debugProcess;
 
@@ -357,7 +357,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   private static class DebuggerProcessAcceptor implements Runnable {
     private volatile boolean myShouldAccept = true;
-    private MultiProcessDebugger myMultiProcessDebugger;
+    private final MultiProcessDebugger myMultiProcessDebugger;
     private ServerSocket myServerSocket;
 
     public DebuggerProcessAcceptor(@NotNull MultiProcessDebugger multiProcessDebugger, @NotNull ServerSocket serverSocket) {
@@ -406,7 +406,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       }
     }
 
-    private void addCloseListener(final RemoteDebugger debugger) {
+    private void addCloseListener(@NotNull final RemoteDebugger debugger) {
       debugger.addCloseListener(new RemoteDebuggerCloseListener() {
         @Override
         public void closed() {
@@ -426,7 +426,9 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     private void notifyThreadsClosed(RemoteDebugger debugger) {
-      myMultiProcessDebugger.myOtherDebuggerCloseListener.threadsClosed(collectThreads(debugger));
+      for (DebuggerProcessListener l : myMultiProcessDebugger.myOtherDebuggerCloseListener) {
+        l.threadsClosed(collectThreads(debugger));
+      }
     }
 
     private Set<String> collectThreads(RemoteDebugger debugger) {
@@ -449,7 +451,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
         }
         myServerSocket = null;
       }
-      myMultiProcessDebugger = null;
     }
   }
 
@@ -486,8 +487,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
     myMainDebugger.removeCloseListener(listener);
   }
 
-  public void setOtherDebuggerCloseListener(DebuggerProcessListener otherDebuggerCloseListener) {
-    this.myOtherDebuggerCloseListener = otherDebuggerCloseListener;
+  public void addOtherDebuggerCloseListener(DebuggerProcessListener otherDebuggerCloseListener) {
+    myOtherDebuggerCloseListener.add(otherDebuggerCloseListener);
   }
 
   public interface DebuggerProcessListener {
