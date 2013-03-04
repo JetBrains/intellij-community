@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
@@ -42,7 +43,14 @@ public class LightMethod extends LightElement implements PsiMethod {
   private final PsiClass myContainingClass;
 
   public LightMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass containingClass) {
-    super(manager, JavaLanguage.INSTANCE);
+    this(manager, method, containingClass, JavaLanguage.INSTANCE);
+  }
+
+  public LightMethod(@NotNull PsiManager manager,
+                     @NotNull PsiMethod method,
+                     @NotNull PsiClass containingClass,
+                     @NotNull Language language) {
+    super(manager, language);
     myMethod = method;
     myContainingClass = containingClass;
   }

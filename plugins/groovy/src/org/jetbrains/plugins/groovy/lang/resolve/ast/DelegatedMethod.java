@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Max Medvedev
  */
 public class DelegatedMethod extends LightMethod implements PsiMethod, PsiMirrorElement, OriginInfoAwareElement {
-  private PsiMethod myPrototype;
+  private final PsiMethod myPrototype;
 
   public DelegatedMethod(@NotNull PsiMethod delegate, @NotNull PsiMethod prototype) {
-    super(prototype.getManager(), delegate, delegate.getContainingClass());
+    super(prototype.getManager(), delegate, delegate.getContainingClass(), delegate.getLanguage());
     myPrototype = prototype;
+    setNavigationElement(myPrototype);
   }
 
   @NotNull
@@ -44,7 +45,7 @@ public class DelegatedMethod extends LightMethod implements PsiMethod, PsiMirror
   @Override
   public String getOriginInfo() {
     PsiClass aClass = myPrototype.getContainingClass();
-    if (aClass != null & aClass.getName() != null) {
+    if (aClass != null && aClass.getName() != null) {
       return "delegates to " + aClass.getName();
     }
     return null;
