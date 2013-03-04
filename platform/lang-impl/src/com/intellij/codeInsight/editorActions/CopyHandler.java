@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -36,9 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
-  
-  private static final String SKIP_COPY_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.for.empty.selection";
-  
+
   private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
@@ -67,7 +66,7 @@ public class CopyHandler extends EditorActionHandler {
 
     final SelectionModel selectionModel = editor.getSelectionModel();
     if(!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      if (Registry.is(SKIP_COPY_FOR_EMPTY_SELECTION_KEY)) {
+      if (Registry.is(CopyAction.SKIP_COPY_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
       selectionModel.selectLineAtCaret();
