@@ -25,7 +25,7 @@ def adjust_django_sys_path():
   sys.path.insert(0, script_path)
 
 def import_system_module(name):
-  lib_path = os.path.dirname(sys.modules['sitecustomize'].__file__)
+  lib_path = os.path.dirname(sys.modules['os'].__file__)
 
   module_path = os.path.join(lib_path, name + '.py')
   if not os.path.exists(module_path):
