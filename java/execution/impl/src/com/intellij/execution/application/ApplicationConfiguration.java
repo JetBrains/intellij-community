@@ -81,7 +81,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLineState state = new JavaApplicationCommandLineState(this, env);
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
+    JavaRunConfigurationModule module = getConfigurationModule();
+    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
     return state;
   }
 

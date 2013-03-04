@@ -505,6 +505,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.setIcon(icon);
     }
 
+    WindowInfoImpl info = getInfo(bean.id);
+    if (!info.isSplit() && bean.secondary && !info.wasRead()) {
+      toolWindow.setSplitMode(bean.secondary, null);
+    }
+
     final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
 
     final DumbAwareRunnable runnable = new DumbAwareRunnable() {

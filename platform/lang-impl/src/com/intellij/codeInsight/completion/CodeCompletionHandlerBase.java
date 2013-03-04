@@ -613,21 +613,27 @@ public class CodeCompletionHandlerBase {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = editor.getCaretModel().getOffset();
-    final int idDelta = indicator.getIdentifierEndOffset() - caretOffset;
+    final int idEndOffset = indicator.getIdentifierEndOffset();
 
     WatchingInsertionContext context = null;
     if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {
       List<RangeMarker> insertionPoints = new ArrayList<RangeMarker>();
-      for (int endOffset : editor.getSelectionModel().getBlockSelectionEnds()) {
-        insertionPoints.add(editor.getDocument().createRangeMarker(endOffset, endOffset));
+      int idDelta = 0;
+      Document document = editor.getDocument();
+      for (int point : editor.getSelectionModel().getBlockSelectionEnds()) {
+        insertionPoints.add(document.createRangeMarker(point, point));
+        if (document.getLineNumber(point) == document.getLineNumber(idEndOffset)) {
+          idDelta = idEndOffset - point;
+        }
       }
 
       List<RangeMarker> caretsAfter = new ArrayList<RangeMarker>();
-      for (RangeMarker insertionPoint : insertionPoints) {
-        if (insertionPoint.isValid()) {
-          context = insertItem(indicator, item, completionChar, items, update, editor, insertionPoint.getStartOffset(), idDelta);
+      for (RangeMarker marker : insertionPoints) {
+        if (marker.isValid()) {
+          int insertionPoint = marker.getStartOffset();
+          context = insertItem(indicator, item, completionChar, items, update, editor, insertionPoint, idDelta + insertionPoint);
           int offset = editor.getCaretModel().getOffset();
-          caretsAfter.add(editor.getDocument().createRangeMarker(offset, offset));
+          caretsAfter.add(document.createRangeMarker(offset, offset));
         }
       }
       assert context != null;
@@ -642,7 +648,7 @@ public class CodeCompletionHandlerBase {
       }
       
     } else {
-      context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idDelta);
+      context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idEndOffset);
     }
     CompletionLookupArranger.trackStatistics(context, update);
 
@@ -693,12 +699,11 @@ public class CodeCompletionHandlerBase {
                                                      final char completionChar,
                                                      List<LookupElement> items,
                                                      final CompletionLookupArranger.StatisticsUpdate update,
-                                                     final Editor editor, final int caretOffset, final int idDelta) {
+                                                     final Editor editor, final int caretOffset, final int idEndOffset) {
     editor.getCaretModel().moveToOffset(caretOffset);
     final int initialStartOffset = caretOffset - item.getLookupString().length();
     assert initialStartOffset >= 0 : "negative startOffset: " + caretOffset + "; " + item.getLookupString();
-    final int idEndOffset = caretOffset + Math.max(idDelta, 0);
-    
+
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
