@@ -89,7 +89,9 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
     elementTypes = {
       GradleAddModuleUserChange.class, GradleRemoveModuleUserChange.class,
       GradleAddModuleDependencyUserChange.class, GradleRemoveModuleDependencyUserChange.class,
-      GradleAddLibraryDependencyUserChange.class, GradleRemoveLibraryDependencyUserChange.class
+      GradleAddLibraryDependencyUserChange.class, GradleRemoveLibraryDependencyUserChange.class,
+      GradleModuleDependencyExportedChange.class, GradleModuleDependencyScopeUserChange.class,
+      GradleLibraryDependencyExportedChange.class, GradleLibraryDependencyScopeUserChange.class
     }
   )
   @NotNull

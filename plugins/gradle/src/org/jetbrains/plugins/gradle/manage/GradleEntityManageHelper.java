@@ -340,7 +340,18 @@ public class GradleEntityManageHelper {
   
   private static void processDependencyScopeChange(@NotNull GradleDependencyScopeChange change, @NotNull EliminateChangesContext context) {
     ExportableOrderEntry dependency = findDependency(change, context);
-    if (dependency != null) {
+    if (dependency == null) {
+      return;
+    }
+    AbstractGradleDependencyId id = change.getEntityId();
+    GradleUserProjectChange<?> userChange;
+    if (dependency instanceof LibraryOrderEntry) {
+      userChange = new GradleLibraryDependencyScopeUserChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
+    }
+    else {
+      userChange = new GradleModuleDependencyScopeUserChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
+    }
+    if (!context.changesToPreserve.contains(userChange)) {
       context.dependencyManager.setScope(change.getGradleValue(), dependency, context.synchronous);
     }
   }
@@ -349,7 +360,18 @@ public class GradleEntityManageHelper {
                                                             @NotNull EliminateChangesContext context)
   {
     ExportableOrderEntry dependency = findDependency(change, context);
-    if (dependency != null) {
+    if (dependency == null) {
+      return;
+    }
+    AbstractGradleDependencyId id = change.getEntityId();
+    GradleUserProjectChange<?> userChange;
+    if (dependency instanceof LibraryOrderEntry) {
+      userChange = new GradleLibraryDependencyExportedChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
+    }
+    else {
+      userChange = new GradleModuleDependencyExportedChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
+    }
+    if (!context.changesToPreserve.contains(userChange)) {
       context.dependencyManager.setExported(change.getGradleValue(), dependency, context.synchronous);
     }
   }

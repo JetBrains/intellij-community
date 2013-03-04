@@ -68,8 +68,9 @@ public abstract class AbstractGradleModuleAwareUserChange<T extends AbstractGrad
   @SuppressWarnings("unchecked")
   @Override
   public int compareTo(@NotNull GradleUserProjectChange<?> o) {
-    if (!(o instanceof AbstractGradleModuleAwareUserChange<?>)) {
-      return super.compareTo(o);
+    int cmp = super.compareTo(o);
+    if (cmp != 0 || !(o instanceof AbstractGradleModuleAwareUserChange<?>)) {
+      return cmp;
     }
     AbstractGradleModuleAwareUserChange<T> that = (AbstractGradleModuleAwareUserChange<T>)o;
     if (myModuleName == null) {

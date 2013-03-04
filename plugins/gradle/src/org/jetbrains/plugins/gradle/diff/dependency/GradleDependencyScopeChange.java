@@ -4,7 +4,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.AbstractGradleConflictingPropertyChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
+import org.jetbrains.plugins.gradle.model.id.AbstractGradleDependencyId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
@@ -13,11 +13,17 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  */
 public class GradleDependencyScopeChange extends AbstractGradleConflictingPropertyChange<DependencyScope> {
   
-  public GradleDependencyScopeChange(@NotNull GradleEntityId id,
+  public GradleDependencyScopeChange(@NotNull AbstractGradleDependencyId id,
                                      @NotNull DependencyScope gradleValue,
                                      @NotNull DependencyScope intellijValue)
   {
     super(id, GradleBundle.message("gradle.sync.change.dependency.scope", id), gradleValue, intellijValue);
+  }
+
+  @NotNull
+  @Override
+  public AbstractGradleDependencyId getEntityId() {
+    return (AbstractGradleDependencyId)super.getEntityId();
   }
 
   @Override

@@ -19,6 +19,12 @@ public class GradleDependencyExportedChange extends AbstractGradleConflictingPro
     super(id, GradleBundle.message("gradle.sync.change.dependency.exported", id), gradleValue, intellijValue);
   }
 
+  @NotNull
+  @Override
+  public AbstractGradleDependencyId getEntityId() {
+    return (AbstractGradleDependencyId)super.getEntityId();
+  }
+
   @Override
   public void invite(@NotNull GradleProjectStructureChangeVisitor visitor) {
     visitor.visit(this);

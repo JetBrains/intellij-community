@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -145,27 +146,27 @@ public class GradleUserProjectChangesCalculator {
   }
 
   private static void buildModulePresenceChanges(@NotNull final Context context) {
-    buildChanges(context.oldModules.keySet(), context.currentModules.keySet(), MODULE_ADDED, MODULE_REMOVED, context);
+    buildPresenceChanges(context.oldModules.keySet(), context.currentModules.keySet(), MODULE_ADDED, MODULE_REMOVED, context);
   }
 
   private static void buildDependencyPresenceChanges(@NotNull Context context) {
     Set<String> commonModuleNames = ContainerUtilRt.newHashSet(context.currentModules.keySet());
     commonModuleNames.retainAll(context.oldModules.keySet());
     for (final String moduleName : commonModuleNames) {
-      final Set<String> currentModuleDependencies = ContainerUtilRt.newHashSet();
-      final Set<String> oldModuleDependencies = ContainerUtilRt.newHashSet();
-      final Set<String> currentLibraryDependencies = ContainerUtilRt.newHashSet();
-      final Set<String> oldLibraryDependencies = ContainerUtilRt.newHashSet();
+      final Map<String, GradleModuleDependency> currentModuleDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, GradleModuleDependency> oldModuleDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, GradleLibraryDependency> currentLibraryDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, GradleLibraryDependency> oldLibraryDependencies = ContainerUtilRt.newHashMap();
 
       GradleEntityVisitor oldStateVisitor = new GradleEntityVisitorAdapter() {
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          oldModuleDependencies.add(dependency.getTarget().getName());
+          oldModuleDependencies.put(dependency.getTarget().getName(), dependency);
         }
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
-          oldLibraryDependencies.add(dependency.getTarget().getName());
+          oldLibraryDependencies.put(dependency.getTarget().getName(), dependency);
         }
       };
       for (GradleDependency dependency : context.oldModules.get(moduleName).getDependencies()) {
@@ -175,12 +176,12 @@ public class GradleUserProjectChangesCalculator {
       GradleEntityVisitor currentStateVisitor = new GradleEntityVisitorAdapter() {
         @Override
         public void visit(@NotNull GradleModuleDependency dependency) {
-          currentModuleDependencies.add(dependency.getTarget().getName());
+          currentModuleDependencies.put(dependency.getTarget().getName(), dependency);
         }
 
         @Override
         public void visit(@NotNull GradleLibraryDependency dependency) {
-          currentLibraryDependencies.add(dependency.getTarget().getName());
+          currentLibraryDependencies.put(dependency.getTarget().getName(), dependency);
         }
       };
       for (GradleDependency dependency : context.currentModules.get(moduleName).getDependencies()) {
@@ -212,16 +213,68 @@ public class GradleUserProjectChangesCalculator {
         }
       };
       
-      buildChanges(oldModuleDependencies, currentModuleDependencies, addedModuleDependency, removedModuleDependency, context);
-      buildChanges(oldLibraryDependencies, currentLibraryDependencies, addedLibraryDependency, removedLibraryDependency, context);
+      buildPresenceChanges(oldModuleDependencies.keySet(), currentModuleDependencies.keySet(),
+                           addedModuleDependency, removedModuleDependency, context);
+      buildPresenceChanges(oldLibraryDependencies.keySet(), currentLibraryDependencies.keySet(),
+                           addedLibraryDependency, removedLibraryDependency, context);
+
+      NullableFunction<Pair<GradleModuleDependency, GradleModuleDependency>, GradleUserProjectChange<?>> exportedModuleDependencyBuilder
+        = new NullableFunction<Pair<GradleModuleDependency, GradleModuleDependency>, GradleUserProjectChange<?>>() {
+        @Nullable
+        @Override
+        public GradleUserProjectChange<?> fun(Pair<GradleModuleDependency, GradleModuleDependency> pair) {
+          if (pair.first.isExported() != pair.second.isExported()) {
+            return new GradleModuleDependencyExportedChange(moduleName, pair.second.getName(), pair.second.isExported());
+          }
+          return null;
+        }
+      };
+      NullableFunction<Pair<GradleModuleDependency, GradleModuleDependency>, GradleUserProjectChange<?>> scopeModuleDependencyBuilder
+        = new NullableFunction<Pair<GradleModuleDependency, GradleModuleDependency>, GradleUserProjectChange<?>>() {
+        @Nullable
+        @Override
+        public GradleUserProjectChange<?> fun(Pair<GradleModuleDependency, GradleModuleDependency> pair) {
+          if (pair.first.getScope() != pair.second.getScope()) {
+            return new GradleModuleDependencyScopeUserChange(moduleName, pair.second.getName(), pair.second.getScope());
+          }
+          return null;
+        }
+      };
+      NullableFunction<Pair<GradleLibraryDependency, GradleLibraryDependency>, GradleUserProjectChange<?>> exportedLibDependencyBuilder
+        = new NullableFunction<Pair<GradleLibraryDependency, GradleLibraryDependency>, GradleUserProjectChange<?>>() {
+        @Nullable
+        @Override
+        public GradleUserProjectChange<?> fun(Pair<GradleLibraryDependency, GradleLibraryDependency> pair) {
+          if (pair.first.isExported() != pair.second.isExported()) {
+            return new GradleLibraryDependencyExportedChange(moduleName, pair.second.getName(), pair.second.isExported());
+          }
+          return null;
+        }
+      };
+      NullableFunction<Pair<GradleLibraryDependency, GradleLibraryDependency>, GradleUserProjectChange<?>> scopeLibDependencyBuilder
+        = new NullableFunction<Pair<GradleLibraryDependency, GradleLibraryDependency>, GradleUserProjectChange<?>>() {
+        @Nullable
+        @Override
+        public GradleUserProjectChange<?> fun(Pair<GradleLibraryDependency, GradleLibraryDependency> pair) {
+          if (pair.first.getScope() != pair.second.getScope()) {
+            return new GradleLibraryDependencyScopeUserChange(moduleName, pair.second.getName(), pair.second.getScope());
+          }
+          return null;
+        }
+      };
+      
+      buildSettingsChanges(oldModuleDependencies, currentModuleDependencies, exportedModuleDependencyBuilder, context);
+      buildSettingsChanges(oldModuleDependencies, currentModuleDependencies, scopeModuleDependencyBuilder, context);
+      buildSettingsChanges(oldLibraryDependencies, currentLibraryDependencies, exportedLibDependencyBuilder, context);
+      buildSettingsChanges(oldLibraryDependencies, currentLibraryDependencies, scopeLibDependencyBuilder, context);
     }
   }
   
-  private static <T> void buildChanges(@NotNull Set<T> oldData,
-                                       @NotNull Set<T> currentData,
-                                       @NotNull Function<T,GradleUserProjectChange<?>> addChangeBuilder,
-                                       @NotNull Function<T,GradleUserProjectChange<?>> removeChangeBuilder,
-                                       @NotNull Context context)
+  private static <T> void buildPresenceChanges(@NotNull Set<T> oldData,
+                                               @NotNull Set<T> currentData,
+                                               @NotNull Function<T, GradleUserProjectChange<?>> addChangeBuilder,
+                                               @NotNull Function<T, GradleUserProjectChange<?>> removeChangeBuilder,
+                                               @NotNull Context context)
   {
     Set<T> removed = ContainerUtilRt.newHashSet(oldData);
     removed.removeAll(currentData);
@@ -236,6 +289,21 @@ public class GradleUserProjectChangesCalculator {
     if (!added.isEmpty()) {
       for (final T a : added) {
         context.currentChanges.add(addChangeBuilder.fun(a));
+      }
+    }
+  }
+  
+  private static <T> void buildSettingsChanges(@NotNull Map<String, T> oldData,
+                                               @NotNull Map<String, T> currentData,
+                                               @NotNull NullableFunction<Pair<T, T>, GradleUserProjectChange<?>> builder,
+                                               @NotNull Context context)
+  {
+    Set<String> keys = ContainerUtilRt.newHashSet(oldData.keySet());
+    keys.retainAll(currentData.keySet());
+    for (String key : keys) {
+      GradleUserProjectChange<?> change = builder.fun(Pair.create(oldData.get(key), currentData.get(key)));
+      if (change != null) {
+        context.currentChanges.add(change);
       }
     }
   }
@@ -270,7 +338,10 @@ public class GradleUserProjectChangesCalculator {
         public Void visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Void value) {
           Library library = libraryOrderEntry.getLibrary();
           if (library != null) {
-            module.addDependency(new GradleLibraryDependency(module, new GradleLibrary(GradleUtil.getLibraryName(library))));
+            GradleLibraryDependency dependency = new GradleLibraryDependency(module, new GradleLibrary(GradleUtil.getLibraryName(library)));
+            dependency.setScope(libraryOrderEntry.getScope());
+            dependency.setExported(libraryOrderEntry.isExported());
+            module.addDependency(dependency);
           }
           return value;
         }
@@ -279,7 +350,10 @@ public class GradleUserProjectChangesCalculator {
         public Void visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Void value) {
           GradleModule dependencyModule = modules.get(moduleOrderEntry.getModuleName());
           if (dependencyModule != null) {
-            module.addDependency(new GradleModuleDependency(module, dependencyModule));
+            GradleModuleDependency dependency = new GradleModuleDependency(module, dependencyModule);
+            dependency.setScope(moduleOrderEntry.getScope());
+            dependency.setExported(moduleOrderEntry.isExported());
+            module.addDependency(dependency);
           }
           return value;
         }
@@ -351,6 +425,46 @@ public class GradleUserProjectChangesCalculator {
         String dependencyName = change.getDependencyName();
         assert dependencyName != null;
         result.set(myProjectStructureHelper.findIdeLibraryDependency(moduleName, dependencyName) == null); 
+      }
+
+      @Override
+      public void visit(@NotNull GradleLibraryDependencyScopeUserChange change) {
+        String moduleName = change.getModuleName();
+        assert moduleName != null;
+        String dependencyName = change.getDependencyName();
+        assert dependencyName != null;
+        ExportableOrderEntry dependency = myProjectStructureHelper.findIdeLibraryDependency(moduleName, dependencyName);
+        result.set(dependency != null && dependency.getScope() == change.getScope());
+      }
+
+      @Override
+      public void visit(@NotNull GradleModuleDependencyScopeUserChange change) {
+        String moduleName = change.getModuleName();
+        assert moduleName != null;
+        String dependencyName = change.getDependencyName();
+        assert dependencyName != null;
+        ExportableOrderEntry dependency = myProjectStructureHelper.findIdeModuleDependency(moduleName, dependencyName);
+        result.set(dependency != null && dependency.getScope() == change.getScope()); 
+      }
+
+      @Override
+      public void visit(@NotNull GradleLibraryDependencyExportedChange change) {
+        String moduleName = change.getModuleName();
+        assert moduleName != null;
+        String dependencyName = change.getDependencyName();
+        assert dependencyName != null;
+        ExportableOrderEntry dependency = myProjectStructureHelper.findIdeLibraryDependency(moduleName, dependencyName);
+        result.set(dependency != null && dependency.isExported() == change.isExported()); 
+      }
+
+      @Override
+      public void visit(@NotNull GradleModuleDependencyExportedChange change) {
+        String moduleName = change.getModuleName();
+        assert moduleName != null;
+        String dependencyName = change.getDependencyName();
+        assert dependencyName != null;
+        ExportableOrderEntry dependency = myProjectStructureHelper.findIdeModuleDependency(moduleName, dependencyName);
+        result.set(dependency != null && dependency.isExported() == change.isExported()); 
       }
     });
     return result.get();
