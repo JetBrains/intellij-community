@@ -39,8 +39,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -306,25 +304,13 @@ public abstract class TestObject implements JavaCommandLine {
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            try {
-              unboundOutputRoot.flush();
-              packetsReceiver.checkTerminated();
-              final JUnitRunningModel model = packetsReceiver.getModel();
-              notifyByBalloon(model, myStarted, consoleProperties);
-            }
-            finally {
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                Disposer.dispose(consoleView);
-              }
-            }
+            unboundOutputRoot.flush();
+            packetsReceiver.checkTerminated();
+            final JUnitRunningModel model = packetsReceiver.getModel();
+            notifyByBalloon(model, myStarted, consoleProperties);
           }
         };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
-        } 
-        else {
-          handler.getOut().addRequest(runnable, queue);
-        }
+        handler.getOut().addRequest(runnable, queue);
       }
 
       @Override
@@ -348,10 +334,6 @@ public abstract class TestObject implements JavaCommandLine {
         extractor.getEventsDispatcher().processOutput(printable);
       }
     });
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new DefaultExecutionResult(null, handler);
-    }
 
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.init(consoleProperties, myEnvironment);
