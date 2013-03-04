@@ -298,7 +298,7 @@ public class SvnUtil {
   }
 
   public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
-    return splitIntoWc(vcs, changes, new Convertor<Change, File>() {
+    return splitIntoRepositories(vcs, changes, new Convertor<Change, File>() {
       @Override
       public File convert(Change o) {
         return ChangesUtil.getFilePath(o).getIOFile();
@@ -306,16 +306,30 @@ public class SvnUtil {
     });
   }
 
-  public static Collection<List<File>> splitFilesIntoWc(final SvnVcs vcs, final List<File> committables) {
-    return splitIntoWc(vcs, committables, Convertor.SELF);
+  public static Collection<List<File>> splitFilesIntoRepositories(final SvnVcs vcs, final List<File> committables) {
+    return splitIntoRepositories(vcs, committables, Convertor.SELF);
   }
 
-  public static <T> Collection<List<T>> splitIntoWc(final SvnVcs vcs, final List<T> committables,
-                                                    Convertor<T, File> convertor) {
+  public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
+                                                              Convertor<T, File> convertor) {
     if (committables.size() == 1) {
       return Collections.singletonList(committables);
     }
 
+    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = splitIntoRepositoriesMap(vcs, committables, convertor);
+
+    if (result.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+    final Collection<List<T>> result2 = new ArrayList<List<T>>();
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
+      result2.add((List<T>)entry.getValue());
+    }
+    return result2;
+  }
+
+  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
+    List<T> committables, Convertor<T, File> convertor) {
     final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, T>() {
       @Override
       protected Collection<T> createCollection() {
@@ -330,15 +344,7 @@ public class SvnUtil {
         result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
       }
     }
-
-    if (result.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-    final Collection<List<T>> result2 = new ArrayList<List<T>>();
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
-      result2.add((List<T>)entry.getValue());
-    }
-    return result2;
+    return result;
   }
 
   private static class LocationsCrawler implements SvnWCRootCrawler {
@@ -576,6 +582,12 @@ public class SvnUtil {
       }
     }
     return false;
+  }
+
+  public static SVNURL getCommittedURL(final SvnVcs vcs, final File file) {
+    final File root = getWorkingCopyRoot(file);
+    if (root == null) return null;
+    return getUrl(vcs, root);
   }
 
   @Nullable

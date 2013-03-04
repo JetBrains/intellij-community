@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -39,9 +37,8 @@ import java.util.List;
  * Time: 12:58 PM
  */
 public abstract class SvnCommand {
-  private static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
+  static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
 
-  protected final Project myProject;
   private boolean myIsDestroyed;
   private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
@@ -56,14 +53,20 @@ public abstract class SvnCommand {
   /*c:\Program Files (x86)\CollabNet\Subversion Client17>svn --version --quiet
   1.7.2*/
 
-  public SvnCommand(Project project, File workingDirectory, @NotNull SvnCommandName commandName) {
+  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
+    this(workingDirectory, commandName, exePath, null);
+  }
+
+  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
+                    @Nullable File configDir) {
     myLock = new Object();
-    myProject = project;
     myCommandLine = new GeneralCommandLine();
     myWorkingDirectory = workingDirectory;
-    final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
-    myCommandLine.setExePath(applicationSettings17.getCommandLinePath());
+    myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(workingDirectory);
+    if (configDir != null) {
+      myCommandLine.addParameters("--config-dir", configDir.getPath());
+    }
     myCommandLine.addParameter(commandName.getName());
   }
 
@@ -73,10 +76,12 @@ public abstract class SvnCommand {
 
       try {
         myProcess = myCommandLine.createProcess();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(myCommandLine.toString());
+        }
         myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
         startHandlingStreams();
       } catch (Throwable t) {
-        SvnVcs.getInstance(myProject).checkCommandLineVersion();
         myListeners.getMulticaster().startFailed(t);
       }
     }
@@ -92,7 +97,6 @@ public abstract class SvnCommand {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          //cleanupEnv();   todo
           SvnCommand.this.processTerminated(exitCode);
         } finally {
           listeners().processTerminated(exitCode);
@@ -209,5 +213,9 @@ public abstract class SvnCommand {
     synchronized (myLock) {
       return myExitCode;
     }
+  }
+
+  protected File getWorkingDirectory() {
+    return myWorkingDirectory;
   }
 }

@@ -85,7 +85,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
       public void run(File configDir) throws SVNException {
         File base = myCommonAncestor == null ? paths[0] : new File(myCommonAncestor.getPath());
         base = base.isDirectory() ? base : base.getParentFile();
-        final SvnLineCommand command = new SvnLineCommand(myProject, base, SvnCommandName.up);
+        final SvnLineCommand command = SvnCommandFactory.createLineCommand(myProject, base, SvnCommandName.up);
         if (revision != null && ! SVNRevision.UNDEFINED.equals(revision) && ! SVNRevision.WORKING.equals(revision)) {
           command.addParameters("-r", revision.toString());
         }
