@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +73,7 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
 
   public boolean execute(final DataContext context, final long executionId) {
     final Semaphore targetDone = new Semaphore();
-    final boolean[] result = new boolean[1];
+    final Ref<Boolean> result = new Ref<Boolean>(false);
 
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -82,12 +83,12 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
           boolean runToolResult = ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
             @Override
             public void processTerminated(ProcessEvent event) {
-              result[0] = event.getExitCode() == 0;
+              result.set(event.getExitCode() == 0);
               targetDone.up();
             }
           });
           if (!runToolResult) {
-            result[0] = false;
+            result.set(false);
             targetDone.up();
           }
         }
@@ -98,7 +99,7 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
       return false;
     }
     targetDone.waitFor();
-    return result[0];
+    return result.get();
   }
 
   @Nullable
