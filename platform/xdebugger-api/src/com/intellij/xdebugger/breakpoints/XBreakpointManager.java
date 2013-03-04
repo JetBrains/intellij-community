@@ -40,7 +40,13 @@ public interface XBreakpointManager {
                                        int line,
                                        @Nullable T properties,
                                        boolean temporary);
-  
+
+  @NotNull <T extends XBreakpointProperties>
+  XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type,
+                                       @NotNull String fileUrl,
+                                       int line,
+                                       @Nullable T properties);
+
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
 
