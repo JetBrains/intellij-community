@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -1341,6 +1342,25 @@ class XInternalError {}
     codeStyleSettings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
     doTest('\n')
   }
+
+  public void "test block selection from bottom to top with single-item insertion"() {
+    myFixture.configureByText "a.java", """
+class Foo {{
+  ret;
+  ret<caret>;
+}}"""
+    edt {
+      def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+      myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line - 1, caret.column))
+    }
+    myFixture.completeBasic()
+    myFixture.checkResult '''
+class Foo {{
+  return;
+  return<caret>;
+}}'''
+  }
+
 
 
 }
