@@ -190,6 +190,8 @@ public class GroovyPsiManager {
     return result;
   }
 
+
+  private static final PsiType UNKNOWN_TYPE = new PsiPrimitiveType("unknown type", PsiAnnotation.EMPTY_ARRAY);
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);
@@ -197,7 +199,7 @@ public class GroovyPsiManager {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
       type = calculator.fun(element);
       if (type == null) {
-        type = PsiType.NULL;
+        type = UNKNOWN_TYPE;
       }
       if (stamp.mayCacheNow()) {
         type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
@@ -211,7 +213,7 @@ public class GroovyPsiManager {
     if (!type.isValid()) {
       LOG.error("Type is invalid: " + type + "; element: " + element + " of class " + element.getClass());
     }
-    return PsiType.NULL.equals(type) ? null : type;
+    return UNKNOWN_TYPE == type ? null : type;
   }
 
   @Nullable
