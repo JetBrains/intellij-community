@@ -38,6 +38,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.xml.XmlName;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,11 +66,10 @@ public class CustomAntElementsRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.CustomAntElementsRegistry");
   private static final Key<CustomAntElementsRegistry> REGISTRY_KEY = Key.create("_custom_element_registry_");
 
-  private final Map<XmlName, Class> myCustomElements = new HashMap<XmlName, Class>();
-  private final Map<XmlName, String> myErrors = new HashMap<XmlName, String>();
-  private final Map<AntDomNamedElement, String> myTypeDefErrors = new HashMap<AntDomNamedElement, String>();
-  private final Map<XmlName, AntDomNamedElement> myDeclarations = new HashMap<XmlName, AntDomNamedElement>();
-  private final Map<String, ClassLoader> myNamedLoaders = new HashMap<String, ClassLoader>();
+  private final Map<XmlName, ClassProvider> myCustomElements = new THashMap<XmlName, ClassProvider>();
+  private final Map<AntDomNamedElement, String> myTypeDefErrors = new THashMap<AntDomNamedElement, String>();
+  private final Map<XmlName, AntDomNamedElement> myDeclarations = new THashMap<XmlName, AntDomNamedElement>();
+  private final Map<String, ClassLoader> myNamedLoaders = new THashMap<String, ClassLoader>();
 
   private CustomAntElementsRegistry(final AntDomProject antProject) {
     antProject.accept(new CustomTagDefinitionFinder(antProject));
@@ -122,7 +122,7 @@ public class CustomAntElementsRegistry {
         }
         if (declaringElement instanceof AntDomTypeDef) {
           final AntDomTypeDef typedef = (AntDomTypeDef)declaringElement;
-          final Class clazz = myCustomElements.get(xmlName);
+          final Class clazz = lookupClass(xmlName);
           if (clazz != null && typedef.isTask(clazz)) {
             continue;                                                           
           }
@@ -183,12 +183,14 @@ public class CustomAntElementsRegistry {
   
   @Nullable
   public Class lookupClass(XmlName xmlName) {
-    return myCustomElements.get(xmlName);
+    final ClassProvider provider = myCustomElements.get(xmlName);
+    return provider == null ? null : provider.lookupClass();
   }
 
   @Nullable
   public String lookupError(XmlName xmlName) {
-    return myErrors.get(xmlName);
+    final ClassProvider provider = myCustomElements.get(xmlName);
+    return provider == null ? null : provider.getError();
   }
 
   public boolean hasTypeLoadingErrors(AntDomTypeDef typedef) {
@@ -198,7 +200,7 @@ public class CustomAntElementsRegistry {
     }
     for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
       if (typedef.equals(entry.getValue())) {
-        if (myErrors.containsKey(entry.getKey()))  {
+        if (lookupError(entry.getKey()) != null)  {
           return true;
         }
       }
@@ -214,15 +216,12 @@ public class CustomAntElementsRegistry {
     List<String> errors = null;
     for (Map.Entry<XmlName, AntDomNamedElement> entry : myDeclarations.entrySet()) {
       if (typedef.equals(entry.getValue())) {
-        final XmlName xmlName = entry.getKey();
-        if (myErrors.containsKey(xmlName))  {
-          final String err = myErrors.get(xmlName);
-          if (err != null) {
-            if (errors == null) {
-              errors = new ArrayList<String>();
-            }
-            errors.add(err);
+        final String err = lookupError(entry.getKey());
+        if (err != null)  {
+          if (errors == null) {
+            errors = new ArrayList<String>();
           }
+          errors.add(err);
         }
       }
     }
@@ -238,11 +237,14 @@ public class CustomAntElementsRegistry {
     }
   }
 
-  @Nullable
+  @NotNull
   private ClassLoader getClassLoader(AntDomCustomClasspathComponent customComponent, AntDomProject antProject) {
     final String loaderRef = customComponent.getLoaderRef().getStringValue();
-    if (loaderRef != null && myNamedLoaders.containsKey(loaderRef)) {
-      return myNamedLoaders.get(loaderRef);
+    if (loaderRef != null) {
+      final ClassLoader loader = myNamedLoaders.get(loaderRef);
+      if (loader != null) {
+        return loader;
+      }
     }
     return createClassLoader(collectUrls(customComponent), antProject);
   }
@@ -277,42 +279,9 @@ public class CustomAntElementsRegistry {
     return factory.createFileFromText("_ant_dummy__." + fileType.getDefaultExtension(), fileType, builder, LocalTimeCounter.currentTime(), false, false);
   }
 
-  private void registerElement(AntDomNamedElement declaringElement, String customTagName, String nsUri, String classname, ClassLoader loader) {
-    Class clazz = null;
-    String error = null;
-    try {
-      clazz = loader.loadClass(classname);
-    }
-    catch (ClassNotFoundException e) {
-      error = "Class not found " + e.getMessage();
-      if (error == null) {
-        error = "";
-      }
-      clazz = null;
-    }
-    catch (NoClassDefFoundError e) {
-      error = "Class definition not found " + e.getMessage();
-      if (error == null) {
-        error = "";
-      }
-      clazz = null;
-    }
-    catch (UnsupportedClassVersionError e) {
-      error = "Unsupported class version " + e.getMessage();
-      if (error == null) {
-        error = "";
-      }
-      clazz = null;
-    }
-    addCustomDefinition(declaringElement, customTagName, nsUri, clazz, error);
-  }
-
-  private void addCustomDefinition(@NotNull AntDomNamedElement declaringTag, String customTagName, String nsUri, Class clazz, String error) {
+  private void addCustomDefinition(@NotNull AntDomNamedElement declaringTag, String customTagName, String nsUri, ClassProvider classProvider) {
     final XmlName xmlName = new XmlName(customTagName, nsUri == null? "" : nsUri);
-    if (error != null) {
-      myErrors.put(xmlName, error);
-    }
-    myCustomElements.put(xmlName, clazz);
+    myCustomElements.put(xmlName, classProvider);
     myDeclarations.put(xmlName, declaringTag);
   }
 
@@ -328,7 +297,7 @@ public class CustomAntElementsRegistry {
     return StringUtil.endsWithIgnoreCase(resourceOrFileName, ".xml");
   }
 
-  @Nullable
+  @NotNull
   public static ClassLoader createClassLoader(final List<URL> urls, final AntDomProject antProject) {
     final ClassLoader parentLoader = antProject.getClassLoader();
     if (urls.size() == 0) {
@@ -461,11 +430,11 @@ public class CustomAntElementsRegistry {
       final String customTagName = macrodef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = macrodef.getUri().getStringValue();
-        addCustomDefinition(macrodef, customTagName, nsUri, null, null);
+        addCustomDefinition(macrodef, customTagName, nsUri, ClassProvider.EMPTY);
         for (AntDomMacrodefElement element : macrodef.getMacroElements()) {
           final String customSubTagName = element.getName().getStringValue();
           if (customSubTagName != null) {
-            addCustomDefinition(element, customSubTagName, nsUri, null, null);
+            addCustomDefinition(element, customSubTagName, nsUri, ClassProvider.EMPTY);
           }
         }
       }
@@ -477,7 +446,7 @@ public class CustomAntElementsRegistry {
         final String nsUri = scriptdef.getUri().getStringValue();
         final ClassLoader classLoader = getClassLoader(scriptdef, myAntProject);
         // register the scriptdef
-        addCustomDefinition(scriptdef, customTagName, nsUri, null, null);
+        addCustomDefinition(scriptdef, customTagName, nsUri, ClassProvider.EMPTY);
         // registering nested elements
         ReflectedProject reflectedProject = null;
         for (AntDomScriptdefElement element : scriptdef.getScriptdefElements()) {
@@ -485,13 +454,13 @@ public class CustomAntElementsRegistry {
           if (customSubTagName != null) {
             final String classname = element.getClassname().getStringValue();
             if (classname != null) {
-              registerElement(element, customTagName, nsUri, classname, classLoader);
+              addCustomDefinition(element, customTagName, nsUri, ClassProvider.create(classname, classLoader));
             }
             else {
               Class clazz = null;
               final String typeName = element.getElementType().getStringValue();
               if (typeName != null) {
-                clazz = myCustomElements.get(new XmlName(typeName));
+                clazz = lookupClass(new XmlName(typeName));
                 if (clazz == null) {
                   if (reflectedProject == null) { // lazy init
                     reflectedProject = ReflectedProject.getProject(myAntProject.getClassLoader());
@@ -508,7 +477,7 @@ public class CustomAntElementsRegistry {
                   }
                 }
               }
-              addCustomDefinition(element, customSubTagName, nsUri, clazz, null);
+              addCustomDefinition(element, customSubTagName, nsUri, ClassProvider.create(clazz));
             }
           }
         }
@@ -519,7 +488,7 @@ public class CustomAntElementsRegistry {
       final String customTagName = presetdef.getName().getStringValue();
       if (customTagName != null) {
         final String nsUri = presetdef.getUri().getStringValue();
-        addCustomDefinition(presetdef, customTagName, nsUri, null, null);
+        addCustomDefinition(presetdef, customTagName, nsUri, ClassProvider.EMPTY);
       }
     }
 
@@ -553,7 +522,7 @@ public class CustomAntElementsRegistry {
       final String classname = typedef.getClassName().getStringValue();
 
       if (classname != null && customTagName != null) {
-        registerElement(typedef, customTagName, uri, classname, getClassLoader(typedef, antProject));
+        addCustomDefinition(typedef, customTagName, uri, ClassProvider.create(classname, getClassLoader(typedef, antProject)));
       }
       else {
         defineCustomElementsFromResources(typedef, uri, antProject, null);
@@ -574,24 +543,22 @@ public class CustomAntElementsRegistry {
         if (loader == null) {
           loader = getClassLoader(typedef, antProject);
         }
-        if (loader != null) {
-          final InputStream stream = loader.getResourceAsStream(resource);
-          if (stream != null) {
-            try {
-              if (isXmlFormat(typedef, resource)) {
-                xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
-              }
-              else {
-                propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
-              }
+        final InputStream stream = loader.getResourceAsStream(resource);
+        if (stream != null) {
+          try {
+            if (isXmlFormat(typedef, resource)) {
+              xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
             }
-            catch (IOException e) {
-              LOG.info(e);
+            else {
+              propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
             }
           }
-          else {
-            myTypeDefErrors.put(typedef, "Resource \"" + resource + "\" not found in the classpath");
+          catch (IOException e) {
+            LOG.info(e);
           }
+        }
+        else {
+          myTypeDefErrors.put(typedef, "Resource \"" + resource + "\" not found in the classpath");
         }
       }
       else {
@@ -611,7 +578,7 @@ public class CustomAntElementsRegistry {
           loader = getClassLoader(typedef, antProject);
         }
         for (final IProperty property : propFile.getProperties()) {
-          registerElement(typedef, property.getUnescapedKey(), uri, property.getValue(), loader);
+          addCustomDefinition(typedef, property.getUnescapedKey(), uri, ClassProvider.create(property.getValue(), loader));
         }
       }
 
@@ -634,7 +601,8 @@ public class CustomAntElementsRegistry {
             final String tagName = def.getName().getStringValue();
             final String className = def.getClassName().getStringValue();
             if (tagName != null && className != null) {
-              registerElement(typedef != null? typedef : def, tagName, uri, className, loader);
+              AntDomNamedElement declaringElement = typedef != null? typedef : def;
+              addCustomDefinition(declaringElement, tagName, uri, ClassProvider.create(className, loader));
             }
             else {
               defineCustomElementsFromResources(def, uri, antProject, loader);

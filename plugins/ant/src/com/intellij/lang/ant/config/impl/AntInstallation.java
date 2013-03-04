@@ -24,6 +24,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -125,6 +126,7 @@ public class AntInstallation {
     return myProperties;
   }
 
+  @NotNull
   public ClassLoader getClassLoader() {
     return myClassLoaderHolder.getClassloader();
   }
