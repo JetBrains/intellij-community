@@ -144,7 +144,7 @@ public class AntTasksProvider {
     private final Future<Map<String, Class>> myFuture;
 
     public AntClassLoader(ArrayList<URL> urls) {
-      super(urls, null, false, false, true);
+      super(urls, null, false, false, true, false);
       myFuture = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Map<String, Class>>() {
         @Override
         public Map<String, Class> call() throws Exception {
