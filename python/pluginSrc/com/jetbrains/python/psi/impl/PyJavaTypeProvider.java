@@ -30,7 +30,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     }
     if (referenceTarget instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) referenceTarget;
-      return asPyType(method.getReturnType());
+      return new PyJavaMethodType(method);
     }
     if (referenceTarget instanceof PsiField) {
       return asPyType(((PsiField)referenceTarget).getType());
@@ -39,7 +39,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType asPyType(PsiType type) {
+  public static PyType asPyType(PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();

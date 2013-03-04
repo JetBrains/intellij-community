@@ -25,16 +25,20 @@ import java.util.List;
  */
 public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
   private final String myName;
-  private final boolean myDefinition;
+
+  // 2 - namedtuple call itself
+  // 1 - return type of namedtuple call, aka namedtuple class
+  // 0 - namedtuple instance
+  private final int myDefinitionLevel;
   private final PsiElement myDeclaration;
   private final List<String> myFields;
 
-  public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, boolean isDefinition) {
-    super(tupleClass, isDefinition);
+  public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, int definitionLevel) {
+    super(tupleClass, definitionLevel > 0);
     myDeclaration = declaration;
     myFields = fields;
     myName = name;
-    myDefinition = isDefinition;
+    myDefinitionLevel = definitionLevel;
   }
 
   @Override
@@ -75,15 +79,15 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
-    if (myDefinition) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, false);
+    if (myDefinitionLevel > 0) {
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel-1);
     }
     return null;
   }
 
   @Override
   public PyClassType toInstance() {
-    return myIsDefinition ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, false) : this;
+    return myDefinitionLevel == 1 ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 0) : this;
   }
 
   @Override
@@ -92,7 +96,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @Nullable
-  public static PyType fromCall(PyCallExpression call) {
+  public static PyType fromCall(PyCallExpression call, int level) {
     final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
     final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
     if (name == null || fieldNamesExpression == null) {
@@ -111,7 +115,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     if (fieldNames != null) {
       PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.FAKE_NAMEDTUPLE);
       if (tuple != null) {
-        return new PyNamedTupleType(tuple, call, name, fieldNames, true);
+        return new PyNamedTupleType(tuple, call, name, fieldNames, level);
       }
     }
     return null;
