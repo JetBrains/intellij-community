@@ -123,6 +123,26 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     myPatternTextField.setText(pattern);
   }
 
+  @Override
+  public boolean addContentRoots() {
+    return myCommonOptionsForm.addContentRoots();
+  }
+
+  @Override
+  public boolean addSourceRoots() {
+    return myCommonOptionsForm.addSourceRoots();
+  }
+
+  @Override
+  public void addContentRoots(boolean addContentRoots) {
+    myCommonOptionsForm.addContentRoots(addContentRoots);
+  }
+
+  @Override
+  public void addSourceRoots(boolean addSourceRoots) {
+    myCommonOptionsForm.addSourceRoots(addSourceRoots);
+  }
+
   public String getFolderName() {
     return toSystemIndependentName(myTestFolderTextField.getText().trim());
   }

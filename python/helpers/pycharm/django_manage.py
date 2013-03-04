@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import sys
-base_path = sys.argv.pop()
-sys.path.insert(0, base_path)
-from fix_getpass import fixGetpass
 import os
-from django.core.management import execute_manager
+
+from pycharm_run_utils import adjust_django_sys_path
+from fix_getpass import fixGetpass
+
+adjust_django_sys_path()
+base_path = sys.argv.pop()
 
 try:
   from runpy import run_module
@@ -17,6 +19,6 @@ if not manage_file:
 
 
 if __name__ == "__main__":
-    fixGetpass()
-    run_module(manage_file, None, '__main__', True)
+  fixGetpass()
+  run_module(manage_file, None, '__main__', True)
 

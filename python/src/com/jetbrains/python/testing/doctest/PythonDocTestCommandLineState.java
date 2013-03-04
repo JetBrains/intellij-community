@@ -3,9 +3,7 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -23,19 +21,6 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
   @Override
   protected String getRunner() {
     return UTRUNNER_PY;
-  }
-
-  @Override
-  protected Collection<String> collectPythonPath() {
-    List<String> pythonPath = new ArrayList<String>(super.collectPythonPath());
-    // the first entry is the helpers path; add script directory as second entry
-    if (myConfig.getTestType() == PythonDocTestRunConfiguration.TestType.TEST_FOLDER) {
-      pythonPath.add(1, myConfig.getFolderName());
-    }
-    else {
-      pythonPath.add(1, new File(myConfig.getScriptName()).getParent());
-    }
-    return pythonPath;
   }
 
   protected List<String> getTestSpecs() {

@@ -1,11 +1,19 @@
 #!/usr/bin/env python
-from django.core.management import ManagementUtility
-import inspect
-import os
-import sys
 
+import os, sys
+
+from django.core.management import ManagementUtility
+
+from pycharm_run_utils import import_system_module
+
+inspect = import_system_module("inspect")
+
+import django_test_runner
 project_directory = sys.argv.pop()
-sys.path.insert(0, project_directory)
+
+from django.core import management
+from django.core.management.commands.test import Command
+from django.conf import settings
 
 try:
   # setup environment
@@ -13,12 +21,11 @@ try:
   sys.path.append(os.path.join(project_directory, os.pardir))
   project_name = os.path.basename(project_directory)
   __import__(project_name)
-  sys.path.pop()
 except ImportError:
   # project has custom structure (project directory is not importable)
   pass
-
-os.chdir(project_directory)
+finally:
+  sys.path.pop()
 
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
@@ -33,9 +40,6 @@ settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
   settings_file = 'settings'
 
-from django.core import management
-from django.core.management.commands.test import Command
-from django.conf import settings
 
 class PycharmTestCommand(Command):
   def get_runner(self):
@@ -110,4 +114,5 @@ if __name__ == "__main__":
     utility = PycharmTestManagementUtility(sys.argv)
   else:
     utility = ManagementUtility()
+
   utility.execute()

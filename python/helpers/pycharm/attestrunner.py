@@ -1,8 +1,17 @@
-import sys, os, imp, re, inspect
-from utrunner import debug
-from nose_helper.util import func_lineno
-import traceback
+import sys, os
+import imp
+
 from tcunittest import TeamcityTestResult
+
+from pycharm_run_utils import import_system_module
+from pycharm_run_utils import adjust_sys_path
+from pycharm_run_utils import debug, getModuleName
+
+adjust_sys_path()
+
+re = import_system_module("re")
+inspect = import_system_module("inspect")
+
 try:
   from attest.reporters import AbstractReporter
   from attest.collectors import Tests
@@ -11,113 +20,113 @@ except:
   raise NameError("Please, install attests")
 
 class TeamCityReporter(AbstractReporter, TeamcityTestResult):
-    """Teamcity reporter for attests."""
+  """Teamcity reporter for attests."""
 
-    def __init__(self, prefix):
-      TeamcityTestResult.__init__(self)
-      self.prefix = prefix
-      
-    def begin(self, tests):
-      """initialize suite stack and count tests"""
-      self.total = len(tests)
-      self.suite_stack = []
-      self.messages.testCount(self.total)
+  def __init__(self, prefix):
+    TeamcityTestResult.__init__(self)
+    self.prefix = prefix
 
-    def success(self, result):
-      """called when test finished successfully"""
-      suite = self.get_suite_name(result.test)
-      self.start_suite(suite)
-      name = self.get_test_name(result)
-      self.start_test(result, name)
-      self.messages.testFinished(name)
+  def begin(self, tests):
+    """initialize suite stack and count tests"""
+    self.total = len(tests)
+    self.suite_stack = []
+    self.messages.testCount(self.total)
 
-    def failure(self, result):
-      """called when test failed"""
-      suite = self.get_suite_name(result.test)
-      self.start_suite(suite)
-      name = self.get_test_name(result)
-      self.start_test(result, name)
-      exctype, value, tb = result.exc_info
-      error_value = self.find_error_value(tb)
-      if (error_value.startswith("'") or error_value.startswith('"')) and \
-                            (error_value.endswith("'") or error_value.endswith('"')):
-          first = self._unescape(self.find_first(error_value))
-          second = self._unescape(self.find_second(error_value))
-      else:
-        first = second = ""
+  def success(self, result):
+    """called when test finished successfully"""
+    suite = self.get_suite_name(result.test)
+    self.start_suite(suite)
+    name = self.get_test_name(result)
+    self.start_test(result, name)
+    self.messages.testFinished(name)
 
-      err = self.formatErr(result.exc_info)
-      if isinstance(result.error, AssertionError):
-        self.messages.testFailed(name, message='Failure',
-                            details=err,
-                            expected=first, actual=second)
-      else:
-        self.messages.testError(name, message='Error',
-                           details=err)
+  def failure(self, result):
+    """called when test failed"""
+    suite = self.get_suite_name(result.test)
+    self.start_suite(suite)
+    name = self.get_test_name(result)
+    self.start_test(result, name)
+    exctype, value, tb = result.exc_info
+    error_value = self.find_error_value(tb)
+    if (error_value.startswith("'") or error_value.startswith('"')) and\
+       (error_value.endswith("'") or error_value.endswith('"')):
+      first = self._unescape(self.find_first(error_value))
+      second = self._unescape(self.find_second(error_value))
+    else:
+      first = second = ""
 
-    def finished(self):
-      """called when all tests finished"""
-      self.end_last_suite()
-      for suite in self.suite_stack[::-1]:
-        self.messages.testSuiteFinished(suite)
+    err = self.formatErr(result.exc_info)
+    if isinstance(result.error, AssertionError):
+      self.messages.testFailed(name, message='Failure',
+        details=err,
+        expected=first, actual=second)
+    else:
+      self.messages.testError(name, message='Error',
+        details=err)
 
-    def get_test_name(self, result):
-      name = result.test_name
-      ind = name.find("%")    #remove unique module prefix
-      if ind != -1:
-        name = name[:ind]+name[name.find(".", ind):]
-      return name
-    
-    def end_last_suite(self):
+  def finished(self):
+    """called when all tests finished"""
+    self.end_last_suite()
+    for suite in self.suite_stack[::-1]:
+      self.messages.testSuiteFinished(suite)
+
+  def get_test_name(self, result):
+    name = result.test_name
+    ind = name.find("%")    #remove unique module prefix
+    if ind != -1:
+      name = name[:ind]+name[name.find(".", ind):]
+    return name
+
+  def end_last_suite(self):
+    if self.current_suite:
+      self.messages.testSuiteFinished(self.current_suite)
+      self.current_suite = None
+
+  def get_suite_name(self, test):
+    module = inspect.getmodule(test)
+    klass = getattr(test, "im_class", None)
+    file = module.__file__
+    if file.endswith("pyc"):
+      file = file[:-1]
+
+    suite = module.__name__
+    if self.prefix:
+      tmp = file[:-3]
+      ind = tmp.split(self.prefix)[1]
+      suite = ind.replace("/", ".")
+    if klass:
+      suite += "." + klass.__name__
+      lineno = inspect.getsourcelines(klass)
+    else:
+      lineno = ("", 1)
+
+    return (suite, file+":"+str(lineno[1]))
+
+  def start_suite(self, suite_info):
+    """finish previous suite and put current suite
+        to stack"""
+    suite, file = suite_info
+    if suite != self.current_suite:
       if self.current_suite:
-        self.messages.testSuiteFinished(self.current_suite)
-        self.current_suite = None
+        if suite.startswith(self.current_suite+"."):
+          self.suite_stack.append(self.current_suite)
+        else:
+          self.messages.testSuiteFinished(self.current_suite)
+          for s in self.suite_stack:
+            if not suite.startswith(s+"."):
+              self.current_suite = s
+              self.messages.testSuiteFinished(self.current_suite)
+            else:
+              break
+      self.current_suite = suite
+      self.messages.testSuiteStarted(self.current_suite, location="file://" + file)
 
-    def get_suite_name(self, test):
-      module = inspect.getmodule(test)
-      klass = getattr(test, "im_class", None)
-      file = module.__file__
-      if file.endswith("pyc"):
-        file = file[:-1]
-
-      suite = module.__name__
-      if self.prefix:
-        tmp = file[:-3]
-        ind = tmp.split(self.prefix)[1]
-        suite = ind.replace("/", ".")
-      if klass:
-        suite += "." + klass.__name__
-        lineno = inspect.getsourcelines(klass)
-      else:
-        lineno = ("", 1)
-
-      return (suite, file+":"+str(lineno[1]))
-
-    def start_suite(self, suite_info):
-      """finish previous suite and put current suite
-          to stack"""
-      suite, file = suite_info
-      if suite != self.current_suite:
-        if self.current_suite:
-          if suite.startswith(self.current_suite+"."):
-            self.suite_stack.append(self.current_suite)
-          else:
-            self.messages.testSuiteFinished(self.current_suite)
-            for s in self.suite_stack:
-              if not suite.startswith(s+"."):
-                self.current_suite = s
-                self.messages.testSuiteFinished(self.current_suite)
-              else:
-                break
-        self.current_suite = suite
-        self.messages.testSuiteStarted(self.current_suite, location="file://" + file)
-
-    def start_test(self, result, name):
-      """trying to find test location """
-      real_func = result.test.func_closure[0].cell_contents
-      lineno = inspect.getsourcelines(real_func)
-      file = inspect.getsourcefile(real_func)
-      self.messages.testStarted(name, "file://"+file+":"+str(lineno[1]))
+  def start_test(self, result, name):
+    """trying to find test location """
+    real_func = result.test.func_closure[0].cell_contents
+    lineno = inspect.getsourcelines(real_func)
+    file = inspect.getsourcefile(real_func)
+    self.messages.testStarted(name, "file://"+file+":"+str(lineno[1]))
 
 def get_subclasses(module, base_class=TestBase):
   test_classes = []
@@ -238,13 +247,13 @@ def process_args():
     # From method in class or from function
     module = get_module(argument_list[0])
     if argument_list[1] == "":
-        debug("/ from function " + argument_list[2] + " in " + argument_list[0])
-        # test function, not method
-        test = getattr(module, argument_list[2])
+      debug("/ from function " + argument_list[2] + " in " + argument_list[0])
+      # test function, not method
+      test = getattr(module, argument_list[2])
     else:
-        debug("/ from method " + argument_list[2] + " in class " +  argument_list[1] + " in " + argument_list[0])
-        klass = getattr(module, argument_list[1])
-        test = getattr(klass(), argument_list[2])
+      debug("/ from method " + argument_list[2] + " in class " +  argument_list[1] + " in " + argument_list[0])
+      klass = getattr(module, argument_list[1])
+      test = getattr(klass(), argument_list[2])
     tests.register([test])
 
   tests.run(reporter=TeamCityReporter(prefix))

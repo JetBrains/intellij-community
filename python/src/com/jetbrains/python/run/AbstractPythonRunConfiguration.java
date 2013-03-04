@@ -39,6 +39,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
   private boolean myUseModuleSdk;
+  private boolean myAddContentRoots;
+  private boolean myAddSourceRoots;
   protected PathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
@@ -190,6 +192,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
+    myAddContentRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS"));
+    myAddSourceRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS"));
     getConfigurationModule().readExternal(element);
 
     setMappingSettings(PathMappingSettings.readExternal(element));
@@ -212,6 +216,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
+    JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
+    JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
     getConfigurationModule().writeExternal(element);
 
     // extension settings:
@@ -257,6 +263,26 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myUseModuleSdk = useModuleSdk;
   }
 
+  @Override
+  public boolean addContentRoots() {
+    return myAddContentRoots;
+  }
+
+  @Override
+  public boolean addSourceRoots() {
+    return myAddSourceRoots;
+  }
+
+  @Override
+  public void addSourceRoots(boolean add) {
+    myAddSourceRoots = add;
+  }
+
+  @Override
+  public void addContentRoots(boolean add) {
+    myAddContentRoots = add;
+  }
+
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
     target.setEnvs(new HashMap<String, String>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
@@ -266,6 +292,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());
     target.setMappingSettings(source.getMappingSettings());
+    target.addContentRoots(source.addContentRoots());
+    target.addSourceRoots(source.addSourceRoots());
   }
 
   /**

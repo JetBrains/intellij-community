@@ -65,11 +65,11 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     String[] setup_fragment;
 
-    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module);
+    PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
+                                                                             settingsProvider.addSourceRoots());
 
     String self_path_append = constructPythonPathCommand(pythonPath);
-
-    PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
 
     String customStartScript = settingsProvider.getCustomStartScript();
 
