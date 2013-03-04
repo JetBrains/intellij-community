@@ -16,11 +16,8 @@
 package com.intellij.util.proxy;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,9 +104,9 @@ public class CommonProxy extends ProxySelector {
 
     final String message = getMessageFromProps(props);
     if (message != null) {
-      if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      /*if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
         PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
-      }
+      }*/
       LOG.info(message);
     }
   }
