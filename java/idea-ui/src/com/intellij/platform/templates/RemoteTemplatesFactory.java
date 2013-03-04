@@ -16,6 +16,7 @@
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -184,7 +185,8 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     return ContainerUtil.map(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
       @Override
       public WizardInputField fun(Element element) {
-        return WizardInputField.getFieldById(element.getText(), element.getAttributeValue(INPUT_DEFAULT));
+        ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
+        return factory == null ? null : factory.createField(element.getAttributeValue(INPUT_DEFAULT));
       }
     });
   }

@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
@@ -169,13 +170,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return module;
   }
 
-  private static void fixModuleName(Module module) {
+  private void fixModuleName(Module module) {
     RunConfiguration[] configurations = RunManager.getInstance(module.getProject()).getAllConfigurations();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
       }
     }
+    ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    for (WizardInputField field : myAdditionalFields) {
+      ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
+      factory.applyResult(field.getValue(), model);
+    }
+    model.commit();
   }
 
   private WizardInputField getBasePackageField() {
