@@ -92,8 +92,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
       final boolean onArrayRef =
         JavaPsiFacade.getElementFactory(element.getProject()).getArrayClass(PsiUtil.getLanguageLevel(element)) == containingClass;
-      boolean isReceiver = onArrayRef && resolveElement instanceof PsiMethod ||
-                           PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, resolveElement instanceof PsiMethod ? (PsiMethod)resolveElement : null);
+      boolean isReceiver = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, resolveElement instanceof PsiMethod ? (PsiMethod)resolveElement : null);
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
       if (isReceiver){
