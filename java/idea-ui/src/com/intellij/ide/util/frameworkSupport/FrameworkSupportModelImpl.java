@@ -27,7 +27,8 @@ public class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
   private final String myContentRootPath;
 
   public FrameworkSupportModelImpl(@NotNull final Project project,
-                                   @NotNull String baseDirectoryForLibrariesPath, LibrariesContainer librariesContainer) {
+                                   @NotNull String baseDirectoryForLibrariesPath,
+                                   @NotNull LibrariesContainer librariesContainer) {
     super(project, null, librariesContainer);
     myContentRootPath = baseDirectoryForLibrariesPath;
   }
