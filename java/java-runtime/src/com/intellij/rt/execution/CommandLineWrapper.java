@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.rt.execution;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -33,8 +31,7 @@ import java.util.List;
 public class CommandLineWrapper {
   private static final String PREFIX = "-D";
 
-  public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-                                                IllegalAccessException, IOException, InstantiationException {
+  public static void main(String[] args) throws Exception {
     final List urls = new ArrayList();
     final File file = new File(args[0]);
     final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -67,7 +64,7 @@ public class CommandLineWrapper {
           final int eqIdx = vmParam.indexOf("=");
           String vmParamName;
           String vmParamValue;
-          
+
           if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
             vmParamName = vmParam.substring(0, eqIdx);
             vmParamValue = vmParam.substring(eqIdx + 1);
