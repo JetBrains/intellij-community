@@ -18,6 +18,7 @@ package com.jetbrains.python.buildout.config;
 
 import com.google.common.collect.Maps;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
@@ -41,34 +42,34 @@ public class BuildoutCfgSyntaxHighlighter extends SyntaxHighlighterBase implemen
 
 
   public static final TextAttributesKey BUILDOUT_SECTION_NAME =
-    TextAttributesKey.createTextAttributesKey("BUILDOUT.SECTION_NAME", SyntaxHighlighterColors.NUMBER.getDefaultAttributes().clone());
+    TextAttributesKey.createTextAttributesKey("BUILDOUT.SECTION_NAME", SyntaxHighlighterColors.NUMBER);
 
   public static final TextAttributesKey BUILDOUT_KEY = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.KEY",
-    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.KEYWORD
   );
 
   public static final TextAttributesKey BUILDOUT_VALUE = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.VALUE",
-    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.STRING
   );
 
   public static final TextAttributesKey BUILDOUT_COMMENT = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.LINE_COMMENT",
-    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.LINE_COMMENT
   );
 
   public static final TextAttributesKey BUILDOUT_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.KEY_VALUE_SEPARATOR",
-    SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.OPERATION_SIGN
   );
   public static final TextAttributesKey BUILDOUT_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.VALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE
   );
   public static final TextAttributesKey BUILDOUT_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
     "BUILDOUT.INVALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE
   );
 
 

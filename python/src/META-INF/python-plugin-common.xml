@@ -462,6 +462,9 @@
     <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
     <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
 
+    <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>

@@ -18,15 +18,13 @@ package com.jetbrains.rest;
 
 import com.google.common.collect.Maps;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.rest.lexer.RestFlexLexer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Map;
 
 /**
@@ -35,49 +33,49 @@ import java.util.Map;
 public class RestSyntaxHighlighter extends SyntaxHighlighterBase implements RestTokenTypes {
   public static final TextAttributesKey REST_COMMENT = TextAttributesKey.createTextAttributesKey(
     "REST.LINE_COMMENT",
-    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.LINE_COMMENT
   );
 
   public static final TextAttributesKey REST_SECTION_HEADER = TextAttributesKey.createTextAttributesKey(
     "REST.SECTION.HEADER",
-    SyntaxHighlighterColors.NUMBER.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.NUMBER
   );
 
   public static final TextAttributesKey REST_BOLD = TextAttributesKey.createTextAttributesKey(
     "REST.BOLD",
-    new TextAttributes(Color.black, null, null, null, Font.BOLD)
+    DefaultLanguageHighlighterColors.IDENTIFIER
   );
   public static final TextAttributesKey REST_ITALIC = TextAttributesKey.createTextAttributesKey(
     "REST.ITALIC",
-    new TextAttributes(Color.black, null, null, null, Font.ITALIC)
+    DefaultLanguageHighlighterColors.IDENTIFIER
   );
   public static final TextAttributesKey REST_FIXED = TextAttributesKey.createTextAttributesKey(
     "REST.FIXED",
-    new TextAttributes(Color.black, new Color(217, 217, 240), null, null, Font.PLAIN)
+    DefaultLanguageHighlighterColors.IDENTIFIER
   );
 
   public static final TextAttributesKey REST_INTERPRETED = TextAttributesKey.createTextAttributesKey(
     "REST.INTERPRETED",
-    new TextAttributes(Color.black, new Color(202, 218, 186), null, null, Font.PLAIN)
+    DefaultLanguageHighlighterColors.IDENTIFIER
   );
 
   public static final TextAttributesKey REST_REF_NAME = TextAttributesKey.createTextAttributesKey(
     "REST.REF.NAME",
-    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.STRING
   );
 
   public static final TextAttributesKey REST_EXPLICIT= TextAttributesKey.createTextAttributesKey(
     "REST.EXPLICIT",
-    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.KEYWORD
   );
   public static final TextAttributesKey REST_FIELD = TextAttributesKey.createTextAttributesKey(
     "REST.FIELD",
-    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    DefaultLanguageHighlighterColors.KEYWORD
   );
 
   public static final TextAttributesKey REST_INLINE = TextAttributesKey.createTextAttributesKey(
     "REST.INLINE",
-    new TextAttributes(null, new Color(237, 252, 237), null, null, Font.PLAIN)
+    DefaultLanguageHighlighterColors.IDENTIFIER
   );
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = Maps.newHashMap();
 

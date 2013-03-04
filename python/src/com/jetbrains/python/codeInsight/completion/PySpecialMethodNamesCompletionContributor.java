@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import icons.PythonIcons;
@@ -45,9 +46,9 @@ public class PySpecialMethodNamesCompletionContributor extends CompletionContrib
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          for (Map.Entry<String, PyNames.BuiltinDescription> entry: PyNames.BuiltinMethods.entrySet()) {
-            LookupElementBuilder item;
-            item = LookupElementBuilder
+          LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
+          for (Map.Entry<String, PyNames.BuiltinDescription> entry: PyNames.getBuiltinMethods(languageLevel).entrySet()) {
+            LookupElementBuilder item = LookupElementBuilder
               .create(entry.getKey() + entry.getValue().getSignature())
               .bold()
               .withTypeText("predefined")

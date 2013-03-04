@@ -70,7 +70,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   public static PyUnresolvedReferencesInspection getInstance(PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile();
-    return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY, element);
+    return (PyUnresolvedReferencesInspection)inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element);
   }
 
   @Nls

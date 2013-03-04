@@ -6,10 +6,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyDecoratorList;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 
 /**
  * Highlights class definitions, functrion definitions, and decorators.
@@ -33,7 +30,8 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
     if (name_node != null) {
       Annotation ann = getHolder().createInfoAnnotation(name_node, null);
       final String name = node.getName();
-      if (PyNames.UnderscoredAttributes.contains(name) || PyNames.BuiltinMethods.containsKey(name)) {
+      LanguageLevel languageLevel = LanguageLevel.forElement(node);
+      if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
         PyClass cls = node.getContainingClass();
         if (PyNames.NEW.equals(name)) {
           boolean new_style_class = false;
