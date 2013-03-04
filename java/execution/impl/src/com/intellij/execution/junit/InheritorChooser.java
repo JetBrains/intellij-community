@@ -32,6 +32,7 @@ import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -83,10 +84,7 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
-      //suggest to run all inherited tests 
-      classes.add(0, null);
-      final JBList list = new JBList(classes);
-      list.setCellRenderer(new PsiClassListCellRenderer() {
+      final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer() {
         @Override
         protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
                                                              JList list,
@@ -100,7 +98,13 @@ public class InheritorChooser {
           }
           return super.customizeNonPsiElementLeftRenderer(renderer, list, value, index, selected, hasFocus);
         }
-      });
+      };
+      Collections.sort(classes, renderer.getComparator());
+
+      //suggest to run all inherited tests 
+      classes.add(0, null);
+      final JBList list = new JBList(classes);
+      list.setCellRenderer(renderer);
       JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
         .setMovable(false)
