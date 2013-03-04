@@ -30,13 +30,15 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
@@ -55,9 +57,9 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
 
   private Document myDocument;
-  private Project myProject;
+  private final Project myProject;
   private EditorTextField myEditorField = null;
-  private final ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled = false;
   private boolean myInheritSwingFont = true;
   private final FileType myFileType;
@@ -153,14 +155,14 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
   }
 
   private void installDocumentListener() {
-    if (myDocument != null && myDocumentListeners.size() > 0 && !myIsListenerInstalled) {
+    if (myDocument != null && !myDocumentListeners.isEmpty() && !myIsListenerInstalled) {
       myIsListenerInstalled = true;
       myDocument.addDocumentListener(this);
     }
   }
 
   private void uninstallDocumentListener(boolean force) {
-    if (myDocument != null && myIsListenerInstalled && (force || myDocumentListeners.size() == 0)) {
+    if (myDocument != null && myIsListenerInstalled && (force || myDocumentListeners.isEmpty())) {
       myIsListenerInstalled = false;
       myDocument.removeDocumentListener(this);
     }

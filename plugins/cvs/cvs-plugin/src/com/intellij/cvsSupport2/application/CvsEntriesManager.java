@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -57,7 +57,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   private static final String CVS_ADMIN_DIRECTORY_NAME = CvsUtil.CVS;
 
-  private final Collection<CvsEntriesListener> myEntriesListeners = new ArrayList<CvsEntriesListener>();
+  private final Collection<CvsEntriesListener> myEntriesListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myIsActive = 0;
   private final Collection<String> myFilesToRefresh = new HashSet<String>();
 

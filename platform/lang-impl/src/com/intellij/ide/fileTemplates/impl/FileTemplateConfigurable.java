@@ -56,6 +56,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.List;
 
 /*
  * @author: MYakovlev
@@ -96,7 +97,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private URL myDefaultDescriptionUrl;
   private final Project myProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
-  private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();;
   private Splitter mySplitter;
 
   public FileTemplate getTemplate() {

@@ -18,6 +18,7 @@
 
 package org.intellij.images.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
@@ -28,8 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Image component is draw image box with effects.
@@ -195,7 +195,7 @@ public class ImageComponent extends JComponent {
     }
 
     private static final class ImageDocumentImpl implements ImageDocument {
-        private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(0);
+        private final List<ChangeListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
         private BufferedImage image;
         private String format;
         private Image renderer;

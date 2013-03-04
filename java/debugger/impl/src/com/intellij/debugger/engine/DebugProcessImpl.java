@@ -74,6 +74,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -105,7 +106,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
   protected EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
-  private final List<ProcessListener> myProcessListeners = new ArrayList<ProcessListener>();
+  private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   protected static final int STATE_INITIAL   = 0;
   protected static final int STATE_ATTACHED  = 1;

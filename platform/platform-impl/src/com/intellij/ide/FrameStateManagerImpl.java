@@ -107,11 +107,11 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
   }
 
-  public synchronized void addListener(@NotNull FrameStateListener listener) {
+  public void addListener(@NotNull FrameStateListener listener) {
     addListener(listener, null);
   }
 
-  public synchronized void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
+  public void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
     myListeners.add(listener);
     if (disposable != null) {
       Disposer.register(disposable, new Disposable() {
@@ -123,7 +123,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
   }
 
-  public synchronized void removeListener(@NotNull FrameStateListener listener) {
+  public void removeListener(@NotNull FrameStateListener listener) {
     myListeners.remove(listener);
   }
 }

@@ -44,6 +44,7 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,11 +304,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
-    private final List<ChangeListener> myList;
+    private final List<ChangeListener> myList = ContainerUtil.createLockFreeCopyOnWriteList();
 
     public MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
-      myList = new ArrayList<ChangeListener>();
     }
 
     @Override
