@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
+@Deprecated
 public class ModuleBuilder {
   private static Map<ArtifactBuilderTestCase, Pair<AtomicInteger, AtomicInteger>> testCaseToNameCounter = new THashMap<ArtifactBuilderTestCase, Pair<AtomicInteger, AtomicInteger>>();
 
