@@ -30,6 +30,7 @@
     </intentionAction>
     <lang.importOptimizer language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer" order="before XML"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxReferencesContributor"/>
+    <getterSetterProvider implementation="org.jetbrains.plugins.javaFX.codeInsight.JavaFxGetterSetterPrototypeProvider"/>
   </extensions>
 
   <actions>
