@@ -245,7 +245,7 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc2')
-    assert generateDoc().contains('setFoo')
+    assert generateDoc().contains('getFoo')
   }
 
   public void testVariableInAnnotationClosureContext() {
