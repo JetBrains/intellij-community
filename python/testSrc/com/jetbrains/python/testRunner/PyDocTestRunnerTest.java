@@ -25,7 +25,9 @@ public class PyDocTestRunnerTest extends LightPlatformTestCase {
   }
 
   public void testEmptySuite() throws ExecutionException {
-    String[] result = runUTRunner(PathManager.getHomePath());
+    final File testDir = getTestDataDir();
+    File testFile = new File(testDir, "test_empty.py");
+    String[] result = runUTRunner(testDir.getPath(), testFile.getPath());
     assertEquals("##teamcity[enteredTheMatrix]", result [0]);
     assertEquals("##teamcity[testCount count='0']", result [1]);
   }
