@@ -41,10 +41,7 @@ public class PathEnvironmentVariableUtil {
       fixedPathValue = calcFixedMacPathEnvVarValue();
     }
     catch (Throwable t) {
-      try {
-        LOG.error("Can't initialize class " + PathEnvironmentVariableUtil.class.getName(), t);
-      } catch (Throwable ignore) {
-      }
+      LOG.error("Can't initialize class " + PathEnvironmentVariableUtil.class.getName(), t);
     }
     FIXED_MAC_PATH_VALUE = fixedPathValue;
   }
