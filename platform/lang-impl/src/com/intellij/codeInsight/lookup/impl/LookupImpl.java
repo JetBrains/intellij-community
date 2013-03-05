@@ -656,6 +656,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       int minColumn = Math.min(blockStart.column, blockEnd.column);
       int maxColumn = Math.max(blockStart.column, blockEnd.column);
 
+      int caretLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+
       for (int line = minLine; line <= maxLine; line++) {
         int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, minColumn));
         int start = bs - prefix;
@@ -670,7 +672,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       LogicalPosition start = new LogicalPosition(minLine, minColumn - prefix);
       LogicalPosition end = new LogicalPosition(maxLine, start.column + lookupString.length());
       myEditor.getSelectionModel().setBlockSelection(start, end);
-      myEditor.getCaretModel().moveToLogicalPosition(end);
+      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine, end.column));
     } else {
       EditorModificationUtil.deleteSelectedText(myEditor);
       final int caretOffset = myEditor.getCaretModel().getOffset();

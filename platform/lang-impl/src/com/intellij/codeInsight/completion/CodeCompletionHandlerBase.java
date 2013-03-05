@@ -620,6 +620,8 @@ public class CodeCompletionHandlerBase {
       List<RangeMarker> insertionPoints = new ArrayList<RangeMarker>();
       int idDelta = 0;
       Document document = editor.getDocument();
+      int caretLine = document.getLineNumber(editor.getCaretModel().getOffset());
+
       for (int point : editor.getSelectionModel().getBlockSelectionEnds()) {
         insertionPoints.add(document.createRangeMarker(point, point));
         if (document.getLineNumber(point) == document.getLineNumber(idEndOffset)) {
@@ -638,7 +640,7 @@ public class CodeCompletionHandlerBase {
       }
       assert context != null;
 
-      restoreBlockSelection(editor, caretsAfter);
+      restoreBlockSelection(editor, caretsAfter, caretLine);
 
       for (RangeMarker insertionPoint : insertionPoints) {
         insertionPoint.dispose();
@@ -675,7 +677,7 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private static void restoreBlockSelection(Editor editor, List<RangeMarker> caretsAfter) {
+  private static void restoreBlockSelection(Editor editor, List<RangeMarker> caretsAfter, int caretLine) {
     int column = -1;
     int minLine = Integer.MAX_VALUE;
     int maxLine = -1;
@@ -689,6 +691,10 @@ public class CodeCompletionHandlerBase {
         }
         minLine = Math.min(minLine, lp.line);
         maxLine = Math.max(maxLine, lp.line);
+
+        if (lp.line == caretLine) {
+          editor.getCaretModel().moveToLogicalPosition(lp);
+        }
       }
     }
     editor.getSelectionModel().setBlockSelection(new LogicalPosition(minLine, column), new LogicalPosition(maxLine, column));
