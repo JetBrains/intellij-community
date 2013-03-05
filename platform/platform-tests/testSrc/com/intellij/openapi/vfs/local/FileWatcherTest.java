@@ -522,6 +522,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileEvent.class, rootDir.getPath(), rootDir2.getPath());
 
       myAccept = true;
+      assertTrue(FileUtil.delete(rootDir));
+      assertEvent(VFileDeleteEvent.class, rootDir.getPath());
+
+      myAccept = true;
+      assertTrue(rootDir.mkdirs());
+      assertEvent(VFileCreateEvent.class, rootDir.getPath());
+
+      myAccept = true;
       assertTrue(FileUtil.delete(topDir));
       assertEvent(VFileDeleteEvent.class, topDir.getPath());
 
