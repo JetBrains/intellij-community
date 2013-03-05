@@ -45,11 +45,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -265,6 +267,30 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     myConfig.removeBuildFile(buildFile);
   }
 
+  public void removeSelectedBuildFiles() {
+    final List<AntBuildFileNodeDescriptor> selectedFiles = TreeUtil.collectSelectedObjectsOfType(myTree, AntBuildFileNodeDescriptor.class);
+    if(selectedFiles.isEmpty()){
+      return;
+    }
+
+    final String fileNames = StringUtil.join(selectedFiles, new Function<AntBuildFileNodeDescriptor, String>() {
+      @Override
+      public String fun(AntBuildFileNodeDescriptor descriptor) {
+        return descriptor.getBuildFile().getPresentableName();
+      }
+    }, ", ");
+
+    final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.references.to.file.confirmation.text", fileNames),
+                                                AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
+    if (result != 0) {
+      return;
+    }
+
+    for (AntBuildFileNodeDescriptor selectedFile : selectedFiles) {
+      myConfig.removeBuildFile(selectedFile.getBuildFile());
+    }
+  }
+
   public void setBuildFileProperties() {
     final AntBuildFileBase buildFile = getCurrentBuildFile();
     if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile, myProject)) {
@@ -305,7 +331,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       if (userObject instanceof AntTargetNodeDescriptor) {
         buildFileNodeDescriptor = (AntBuildFileNodeDescriptor)((DefaultMutableTreeNode)node.getParent()).getUserObject();
       }
-      else if (userObject instanceof AntBuildFileNodeDescriptor){
+      else if (userObject instanceof AntBuildFileNodeDescriptor) {
         buildFileNodeDescriptor = (AntBuildFileNodeDescriptor)userObject;
       }
       else {
@@ -351,7 +377,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   public boolean isBuildFileSelected() {
-    if( myProject == null) return false;
+    if (myProject == null) return false;
     final AntBuildFileBase file = getCurrentBuildFile();
     return file != null && file.exists();
   }
@@ -453,7 +479,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return HelpID.ANT;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myProject != null? myTreeExpander : null;
+      return myProject != null ? myTreeExpander : null;
     }
     else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
@@ -488,7 +514,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   public static FileChooserDescriptor createXmlDescriptor() {
-    return new FileChooserDescriptor(true, false, false, false, false, true){
+    return new FileChooserDescriptor(true, false, false, false, false, true) {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         boolean b = super.isFileVisible(file, showHiddenFiles);
         if (!file.isDirectory()) {
@@ -535,7 +561,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     public void actionPerformed(AnActionEvent e) {
-      removeBuildFile();
+      removeSelectedBuildFiles();
     }
 
     public void update(AnActionEvent event) {
@@ -587,7 +613,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public boolean isSelected(AnActionEvent event) {
       final Project project = myProject;
-      return project != null? AntConfigurationBase.getInstance(project).isFilterTargets() : false;
+      return project != null ? AntConfigurationBase.getInstance(project).isFilterTargets() : false;
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
@@ -857,7 +883,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       List<VirtualFile> virtualFileList = new ArrayList<VirtualFile>();
       final List<File> fileList = FileCopyPasteUtil.getFileList(support.getTransferable());
       if (fileList != null) {
-        for (File file : fileList ) {
+        for (File file : fileList) {
           ContainerUtil.addIfNotNull(virtualFileList, VfsUtil.findFileByIoFile(file, true));
         }
       }
