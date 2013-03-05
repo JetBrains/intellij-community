@@ -52,6 +52,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
@@ -143,6 +144,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListRemoved(ChangeList list) {
+        LocalTask task = getAssociatedTask((LocalChangeList)list);
+        if (task != null) {
+          for (ChangeListInfo info : task.getChangeLists()) {
+            if (Comparing.equal(info.id, ((LocalChangeList)list).getId())) {
+              info.id = "";
+            }
+          }
+        }
       }
 
       @Override
@@ -756,7 +765,16 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public boolean isLocallyClosed(final LocalTask localTask) {
-    return isVcsEnabled() && localTask.getChangeLists().isEmpty();
+    if (isVcsEnabled()) {
+      List<ChangeListInfo> lists = localTask.getChangeLists();
+      if (lists.isEmpty()) return true;
+      for (ChangeListInfo list : lists) {
+        if (StringUtil.isEmpty(list.id)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -830,11 +848,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task.getSummary();
   }
 
+  @TestOnly
   public ChangeListAdapter getChangeListListener() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myChangeListListener;
-    }
-    throw new UnsupportedOperationException();
+    return myChangeListListener;
   }
 
   public static class Config {

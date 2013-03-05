@@ -15,12 +15,10 @@
  */
 package com.intellij.tasks;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -350,15 +348,22 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testRestoreChangelist() throws Exception {
-    LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
+    final LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
     myTaskManager.activateTask(task, true, true);
     myTaskManager.activateTask(new LocalTaskImpl("next", ""), true, true);
 
-    String changelistName = myTaskManager.getChangelistName(task);
+    final String changelistName = myTaskManager.getChangelistName(task);
     myChangeListManager.removeChangeList(changelistName);
 
-    myTaskManager.activateTask(task, true, true);
-    assertNotNull(myChangeListManager.findChangeList(changelistName));
+    myChangeListManager.invokeAfterUpdate(new Runnable() {
+      @Override
+      public void run() {
+        assertTrue(myTaskManager.isLocallyClosed(task));
+        myTaskManager.activateTask(task, true, true);
+        assertNotNull(myChangeListManager.findChangeList(changelistName));
+      }
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "foo", ModalityState.NON_MODAL);
+
   }
 
   private TestRepository myRepository;
@@ -375,8 +380,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myTaskManager.projectOpened();
-
-    myChangeListManager.removeChangeListListener(myTaskManager.getChangeListListener());
 
     ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
     ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
