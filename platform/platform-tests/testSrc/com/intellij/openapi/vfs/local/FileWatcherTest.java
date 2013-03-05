@@ -147,12 +147,9 @@ public class FileWatcherTest extends PlatformLangTestCase {
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, file.getAbsolutePath());
 
-      if (!SystemInfo.isLinux) {
-        // todo[r.sh] fix Linux watcher
-        myAccept = true;
-        FileUtil.writeToFile(file, "re-creation");
-        assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
-      }
+      myAccept = true;
+      FileUtil.writeToFile(file, "re-creation");
+      assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
       unwatch(request);
@@ -274,12 +271,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testDirectoryNonExisting() throws Exception {
-    if (SystemInfo.isLinux) {
-      // todo[r.sh]: fix Linux watcher
-      System.err.println("Ignored: to be fixed on Linux");
-      return;
-    }
-
     File topDir = createTestDir("top");
     File subDir = new File(topDir, "subDir");
     File file = new File(subDir, "file.txt");
@@ -493,12 +484,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testWatchRootRecreation() throws Exception {
-    if (SystemInfo.isLinux) {
-      // todo[r.sh]: fix Linux watcher
-      System.err.println("Ignored: to be fixed on Linux");
-      return;
-    }
-
     File rootDir = createTestDir("root");
     File file1 = createTestFile(rootDir, "file1.txt", "abc");
     File file2 = createTestFile(rootDir, "file2.txt", "123");
@@ -509,6 +494,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myAccept = true;
       assertTrue(FileUtil.delete(rootDir));
       assertTrue(rootDir.mkdir());
+      if (SystemInfo.isLinux) TimeoutUtil.sleep(1100);  // implementation specific
       assertTrue(file1.createNewFile());
       assertTrue(file2.createNewFile());
       assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
@@ -520,12 +506,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testWatchRootRenameRemove() throws Exception {
-    if (SystemInfo.isLinux) {
-      // todo[r.sh]: fix Linux watcher
-      System.err.println("Ignored: to be fixed on Linux");
-      return;
-    }
-
     File topDir = createTestDir("top");
     File rootDir = createTestDir(topDir, "root");
     File rootDir2 = new File(topDir, "_" + rootDir.getName());
