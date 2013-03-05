@@ -40,7 +40,7 @@ import javax.swing.*;
 import java.util.*;
 
 
-public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent, ProjectTemplateComponent {
+public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
   private final Project myProject;
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<String, ConfigurationType>();
@@ -1140,10 +1140,5 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       myBeforeStepsMap.put(id, provider);
       myProviderKeysMap.put(id.toString(), id);
     }
-  }
-
-  @Override
-  public String getStorageFile() {
-    return "workspace.xml";
   }
 }

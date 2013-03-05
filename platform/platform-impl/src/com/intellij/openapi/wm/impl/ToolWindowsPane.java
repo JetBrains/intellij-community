@@ -59,6 +59,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   private final HashMap<String,InternalDecorator> myId2Decorator;
   private final HashMap<StripeButton, WindowInfoImpl> myButton2Info;
   private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info;
+  private final HashMap<String, Float> myId2SplitProportion;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
@@ -96,6 +97,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     myButton2Info=new HashMap<StripeButton, WindowInfoImpl>();
     myDecorator2Info=new HashMap<InternalDecorator, WindowInfoImpl>();
     myUISettingsListener=new MyUISettingsListenerImpl();
+    myId2SplitProportion = new HashMap<String, Float>();
 
     // Splitters
 
@@ -201,7 +203,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
    */
   final FinalizableCommand createAddButtonCmd(final StripeButton button,final WindowInfoImpl info,final Comparator<StripeButton> comparator,final Runnable finishCallBack){
     final WindowInfoImpl copiedInfo=info.copy();
-    myId2Button.put(copiedInfo.getId(),button);
+    myId2Button.put(copiedInfo.getId(), button);
     myButton2Info.put(button,copiedInfo);
     return new AddToolStripeButtonCmd(button,copiedInfo,comparator,finishCallBack);
   }
@@ -358,6 +360,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       LOG.error("unknown anchor: " + anchor);
       return null;
     }
+  }
+
+  private float getPreferredSplitProportion(String id, float defaultValue) {
+    Float f = myId2SplitProportion.get(id);
+    return (f == null ? defaultValue : f);
   }
 
   private WindowInfoImpl getDockedInfoAt(ToolWindowAnchor anchor, boolean side) {
@@ -621,12 +628,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
     public final void run(){
       try{
-        float newWeight = myInfo.getWeight()<=.0f? WindowInfoImpl.DEFAULT_WEIGHT:myInfo.getWeight();
-        if(newWeight>=1.0f){
-          newWeight=1- WindowInfoImpl.DEFAULT_WEIGHT;
-        }
-        final ToolWindowAnchor anchor=myInfo.getAnchor();
-        setComponent(myComponent, anchor, newWeight);
+        final ToolWindowAnchor anchor = myInfo.getAnchor();
+        setComponent(myComponent, anchor, normalizeWeigh(myInfo.getWeight()));
         if(!myDirtyMode){
           myLayeredPane.validate();
           myLayeredPane.repaint();
@@ -659,7 +662,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
         if (myInfo.isSplit()) {
           splitter.setFirstComponent(oldComponent);
           splitter.setSecondComponent(myNewComponent);
-          splitter.setProportion(normalizeWeigh(oldComponent.getWindowInfo().getSideWeight()));
+          float proportion = getPreferredSplitProportion(oldComponent.getWindowInfo().getId(),
+                                                         normalizeWeigh(oldComponent.getWindowInfo().getSideWeight() /
+                                                                        (oldComponent.getWindowInfo().getSideWeight() +
+                                                                         myInfo.getSideWeight())));
+          splitter.setProportion(proportion);
           newWeight = normalizeWeigh(oldComponent.getWindowInfo().getWeight());
         }
         else {
@@ -679,13 +686,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       }
     }
 
-    private float normalizeWeigh(final float weight) {
-      float newWeight= weight <= .0f ? WindowInfoImpl.DEFAULT_WEIGHT : weight;
-      if (newWeight >= 1.0f) {
-        newWeight= 1- WindowInfoImpl.DEFAULT_WEIGHT;
-      }
-      return newWeight;
-    }
   }
 
   private final class AddSlidingComponentCmd extends FinalizableCommand{
@@ -862,6 +862,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
         if (myInfo.isSplit()) {
           InternalDecorator component = (InternalDecorator)splitter.getFirstComponent();
+          myId2SplitProportion.put(component.getWindowInfo().getId(), splitter.getProportion());
           setComponent(component, myInfo.getAnchor(), component.getWindowInfo().getWeight());
         }
         else {
@@ -1137,5 +1138,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
   @Override
    public void dispose() {
+  }
+
+  private static float normalizeWeigh(final float weight) {
+    if (weight <= 0) return WindowInfoImpl.DEFAULT_WEIGHT;
+    if (weight >= 1 ) return 1 - WindowInfoImpl.DEFAULT_WEIGHT;
+    return weight;
   }
 }

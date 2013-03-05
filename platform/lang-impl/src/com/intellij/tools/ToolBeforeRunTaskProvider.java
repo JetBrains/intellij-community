@@ -101,7 +101,6 @@ public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeR
     if (!task.isExecutable()) {
       return false;
     }
-    task.execute(context, env.getExecutionId());
-    return true;
+    return task.execute(context, env.getExecutionId());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ public interface GrArgumentList extends GroovyPsiElement, GrNamedArgumentsOwner,
 
   GrArgumentList replaceWithArgumentList(GrArgumentList newArgList) throws IncorrectOperationException;
 
-  boolean isIndexPropertiesList();
-
   @Nullable
   PsiElement getLeftParen();
 
@@ -45,9 +43,6 @@ public interface GrArgumentList extends GroovyPsiElement, GrNamedArgumentsOwner,
   PsiElement getRightParen();
 
   int getExpressionArgumentIndex(GrExpression arg);
-
-  @Nullable
-  GrExpression removeArgument(int argNumber);
 
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument);
 }

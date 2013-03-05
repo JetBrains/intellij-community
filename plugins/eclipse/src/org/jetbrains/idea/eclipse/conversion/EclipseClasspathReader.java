@@ -41,6 +41,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
+import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.IOException;
@@ -125,6 +126,11 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   @Override
   protected String expandEclipsePath2Url(ModifiableRootModel rootModel, String path) {
     return EPathUtil.expandEclipsePath2Url(path, rootModel, myCurrentRoots);
+  }
+
+  @Override
+  protected Set<String> getDefinedCons() {
+    return EclipseNatureImporter.getAllDefinedCons();
   }
 
   @Override

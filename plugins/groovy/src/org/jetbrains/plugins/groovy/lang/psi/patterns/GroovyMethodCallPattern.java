@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
@@ -70,7 +69,7 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
 
         GrReferenceExpression refExpression = (GrReferenceExpression)expression;
 
-        return methodName.accepts(refExpression.getName(), context);
+        return methodName.accepts(refExpression.getReferenceName(), context);
       }
     });
   }

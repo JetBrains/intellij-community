@@ -273,7 +273,7 @@ public class ConfigImportHelper {
 
     
     // other binary scripts
-    final String executableName = StringUtil.toLowerCase(settings.getProductName(ThreeState.NO));
+    final String executableName = StringUtil.toLowerCase(settings.getExecutableName());
     // * defaults:
     addLaunchExecutableScriptsCandidates(files, executableName, bin);
     // * customized files:
@@ -414,10 +414,21 @@ public class ConfigImportHelper {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
     if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
-    String mainJarName = StringUtil.toLowerCase(settings.getProductName(ThreeState.NO)) + ".jar";
-    //noinspection HardCodedStringLiteral
-    boolean quickTest = new File(new File(installationHome, "lib"), mainJarName).exists() &&
-                        new File(installationHome, BIN_FOLDER).exists();
+    if (!new File(installationHome, BIN_FOLDER).exists()) {
+      return false;
+    }
+
+    File libFolder = new File(installationHome, "lib");
+    boolean quickTest = false;
+    String[] mainJarNames = settings.getMainJarNames();
+    for (String name : mainJarNames) {
+      String mainJarName = StringUtil.toLowerCase(name) + ".jar";
+      //noinspection HardCodedStringLiteral
+      if (new File(libFolder, mainJarName).exists()) {
+        quickTest = true;
+        break;
+      }
+    }
     if (!quickTest) return false;
 
     File[] files = getLaunchFilesCandidates(new File(installationHome), settings);

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 2/19/13 8:48 AM
  */
-public abstract class AbstractGradleModuleAwareUserChange<T extends AbstractGradleModuleAwareUserChange>
+public abstract class AbstractGradleModuleAwareUserChange<T extends AbstractGradleModuleAwareUserChange<T>>
   extends AbstractGradleUserProjectChange<T>
 {
 
@@ -67,7 +67,11 @@ public abstract class AbstractGradleModuleAwareUserChange<T extends AbstractGrad
 
   @SuppressWarnings("unchecked")
   @Override
-  public int compareTo(T o) {
+  public int compareTo(@NotNull GradleUserProjectChange<?> o) {
+    int cmp = super.compareTo(o);
+    if (cmp != 0 || !(o instanceof AbstractGradleModuleAwareUserChange<?>)) {
+      return cmp;
+    }
     AbstractGradleModuleAwareUserChange<T> that = (AbstractGradleModuleAwareUserChange<T>)o;
     if (myModuleName == null) {
       return that.myModuleName == null ? 0 : 1;

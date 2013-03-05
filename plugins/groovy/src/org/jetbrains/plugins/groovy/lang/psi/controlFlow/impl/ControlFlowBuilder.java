@@ -1114,6 +1114,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitTypeDefinition(final GrTypeDefinition typeDefinition) {
     if (!(typeDefinition instanceof GrAnonymousClassDefinition)) return;
 
+    final Set<String> vars = collectUsedVariableWithoutInitialization(typeDefinition);
+
+    for (String var : vars) {
+      addNodeAndCheckPending(new ReadWriteVariableInstruction(var, typeDefinition, READ));
+    }
+    addNodeAndCheckPending(new InstructionImpl(typeDefinition));
+  }
+
+  private static Set<String> collectUsedVariableWithoutInitialization(GrTypeDefinition typeDefinition) {
     final Set<String> vars = new HashSet<String>();
     typeDefinition.acceptChildren(new GroovyRecursiveElementVisitor() {
       private void collectVars(Instruction[] flow) {
@@ -1146,16 +1155,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         collectVars(block.getControlFlow());
       }
     });
-
-    PsiField[] fields = typeDefinition.getAllFields();
-    for (PsiField field : fields) {
-      vars.remove(field.getName());
-    }
-
-    for (String var : vars) {
-      addNodeAndCheckPending(new ReadWriteVariableInstruction(var, typeDefinition, READ));
-    }
-    addNodeAndCheckPending(new InstructionImpl(typeDefinition));
+    return vars;
   }
 
   public void visitVariable(GrVariable variable) {

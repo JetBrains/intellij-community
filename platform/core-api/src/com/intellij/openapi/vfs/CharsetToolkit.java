@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -501,15 +504,28 @@ public class CharsetToolkit {
     return 0;
   }
 
+  /**
+   * @deprecated use {@link CharsetToolkit#getMandatoryBom(java.nio.charset.Charset)}
+   */
   @Nullable
   public static byte[] getBom(@NotNull Charset charset) {
+    return getMandatoryBom(charset);
+  }
+
+  /**
+   * @return BOM which is associated with this charset and the charset must have this BOM, or null otherwise.
+   *         Currently these are UTF-16xx and UTF-32xx families.
+   *         UTF-8, on the other hand, might have BOM {@link #UTF8_BOM} which is optional, thus it will not returned in this method
+   */
+  @Nullable
+  public static byte[] getMandatoryBom(@NotNull Charset charset) {
     return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
     return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM)
-           || Arrays.equals(getBom(charset), bom);
+           || Arrays.equals(getMandatoryBom(charset), bom);
   }
 
   @Nullable

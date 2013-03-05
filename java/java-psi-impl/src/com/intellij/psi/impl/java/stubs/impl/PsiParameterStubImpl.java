@@ -97,6 +97,6 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
 
   @Override
   public String toString() {
-    return "PsiParameterStub[" + myName + ':' + TypeInfo.createTypeText(getType(false)) + ']';
+    return "PsiParameterStub[" + myName + ':' + myType + ']';
   }
 }

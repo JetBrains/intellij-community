@@ -169,6 +169,8 @@
     <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
+    
+    <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
 
@@ -301,8 +303,6 @@
                             order="before javaLegacy, before default"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor" id="javaMemberName"
                             order="before javaOverride"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaOverrideCompletionContributor" id="javaOverride"
-                            order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,10 +31,12 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
@@ -58,6 +61,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
+  private boolean shouldFocusEditor = false;
 
   static void subscribeTo(NavBarPanel panel) {
     if (panel.getClientProperty(LISTENER) != null) {
@@ -137,6 +141,11 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   public void focusGained(final FocusEvent e) {
+    if (e.getOppositeComponent() == null && shouldFocusEditor) {
+      shouldFocusEditor = false;
+      ToolWindowManager.getInstance(myPanel.getProject()).activateEditorComponent();
+      return;
+    }
     myPanel.updateItems();
     final List<NavBarItem> items = myPanel.getItems();
     if (!myPanel.isInFloatingMode() && items.size() > 0) {
@@ -151,6 +160,18 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       myPanel.setContextComponent(null);
       myPanel.hideHint();
       return;
+    }
+    final DialogWrapper dialog = DialogWrapper.findInstance(e.getOppositeComponent());
+    shouldFocusEditor =  dialog != null;
+    if (dialog != null) {
+      Disposer.register(dialog.getDisposable(), new Disposable() {
+        @Override
+        public void dispose() {
+          if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
+            shouldFocusEditor = false;
+          }
+        }
+      });
     }
 
     // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet

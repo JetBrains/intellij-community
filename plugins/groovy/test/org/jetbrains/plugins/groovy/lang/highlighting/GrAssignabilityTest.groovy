@@ -503,4 +503,13 @@ Money d = [amount: 100, currency:'USA']
 ''')
   }
 
+  void testBooleanIsAssignableToAny() {
+    testHighlighting('''\
+      boolean b1 = new Object()
+      boolean b2 = <warning descr="Cannot assign 'null' to 'boolean'">null</warning>
+      Boolean b3 = new Object()
+      Boolean b4 = null
+''')
+  }
+
 }

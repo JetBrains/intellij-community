@@ -72,7 +72,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int i = 0;
     while (isWildcard(i)) i++;
-    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i + 1, isLowerCase);
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
     myHasDots = hasDots(i);
     myHasWildCards = hasWildCards();
   }

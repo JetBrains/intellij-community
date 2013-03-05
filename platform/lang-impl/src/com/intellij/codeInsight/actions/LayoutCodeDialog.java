@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -248,7 +249,12 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   public boolean isDoNotAskMe() {
-    return myDoNotAskMeCheckBox.isEnabled() && myDoNotAskMeCheckBox.isSelected();
+    if (myDoNotAskMeCheckBox.isEnabled()) {
+      return myDoNotAskMeCheckBox.isSelected();
+    }
+    else {
+      return !EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
+    }
   }
 
   @Override

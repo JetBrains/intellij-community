@@ -191,6 +191,7 @@ public class PsiMethodReferenceUtil {
   }
 
   public static boolean isReceiverType(PsiType receiverType, @Nullable PsiClass containingClass, PsiSubstitutor psiSubstitutor) {
+    boolean arrayType = receiverType instanceof PsiArrayType;
     if (containingClass != null) {
       receiverType = getExpandedType(receiverType, containingClass);
     }
@@ -198,7 +199,8 @@ public class PsiMethodReferenceUtil {
     final PsiClass receiverClass = resolveResult.getElement();
     if (receiverClass != null && isReceiverType(receiverClass, containingClass)) {
       LOG.assertTrue(containingClass != null);
-      return resolveResult.getSubstitutor().equals(psiSubstitutor) ||
+      return arrayType ||
+             resolveResult.getSubstitutor().equals(psiSubstitutor) ||
              emptyOrRaw(containingClass, psiSubstitutor) ||
              emptyOrRaw(receiverClass, resolveResult.getSubstitutor());
     } 

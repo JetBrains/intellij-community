@@ -25,12 +25,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class WizardContext {
@@ -46,7 +46,7 @@ public class WizardContext {
   private String myCompilerOutputDirectory;
   private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
-  private final List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private StorageScheme myProjectStorageFormat = StorageScheme.DIRECTORY_BASED;
 
   private final NotNullLazyValue<ModuleBuilder[]> myAllBuilders = new NotNullLazyValue<ModuleBuilder[]>() {
@@ -137,15 +137,13 @@ public class WizardContext {
   }
 
   public void requestWizardButtonsUpdate() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.buttonsUpdateRequested();
     }
   }
 
   public void requestNextStep() {
-    final Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.nextStepRequested();
     }
   }

@@ -115,6 +115,11 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
         SAX_PARSER.parse(new InputSource(new StringReader(content)), new DefaultHandler() {
           public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             className[0] = attributes.getValue("", FxmlConstants.FX_CONTROLLER);
+            if (className[0] == null) {
+              if (FxmlConstants.FX_ROOT.equals(qName)) {
+                className[0] = attributes.getValue("", FxmlConstants.TYPE);
+              }
+            }
             throw new SAXException("controllers are accepted on top level only");
           }
         });
@@ -134,7 +139,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  public static List<PsiFile> findFxmlWithController(final Project project, String className) {
+  public static List<PsiFile> findFxmlWithController(final Project project, @NotNull String className) {
     return findFxmlWithController(project, className, new Function<VirtualFile, PsiFile>() {
       @Override
       public PsiFile fun(VirtualFile file) {
@@ -148,7 +153,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   }
 
   public static <T> List<T> findFxmlWithController(final Project project,
-                                                     final String className,
+                                                     @NotNull final String className,
                                                      final Function<VirtualFile, T> f,
                                                      final GlobalSearchScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,19 +185,6 @@ class X {
 
   public void testLowerCaseClassName() {
     doTest()
-  }
-
-  public void testInnerClassIsNotResolvedInAnonymous() {
-    myFixture.addFileToProject "/p/Super.groovy", """
-package p
-
-interface Super {
-  class Inner {
-  }
-
-  def foo(Inner i);
-}"""
-    assertNull resolve("A.groovy");
   }
 
   public void testInnerClassIsResolvedInAnonymous() {

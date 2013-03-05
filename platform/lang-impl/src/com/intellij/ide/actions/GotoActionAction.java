@@ -81,7 +81,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                       .createActionGroupPopup(presentation.getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
                       .showInBestPositionFor(context);
                   } else {
-                    action.actionPerformed(event);
+                    ActionUtil.performActionDumbAware(action, event);
                   }
                 }
               }

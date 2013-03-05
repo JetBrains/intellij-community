@@ -27,6 +27,8 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -231,18 +233,24 @@ public class MavenExternalParameters {
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
-    for (MavenProject mavenProject : manager.getProjects()) {
-      res.setProperty(mavenProject.getMavenId().getGroupId()
-                      + ':' + mavenProject.getMavenId().getArtifactId()
-                      + ":pom"
-                      + ':' + mavenProject.getMavenId().getVersion(),
-                      mavenProject.getFile().getPath());
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (manager.isMavenizedModule(module)) {
+        MavenProject mavenProject = manager.findProject(module);
+        if (mavenProject != null && !manager.isIgnored(mavenProject)) {
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ":pom"
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getFile().getPath());
 
-      res.setProperty(mavenProject.getMavenId().getGroupId()
-                      + ':' + mavenProject.getMavenId().getArtifactId()
-                      + ':' + mavenProject.getPackaging()
-                      + ':' + mavenProject.getMavenId().getVersion(),
-                      mavenProject.getOutputDirectory());
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ':' + mavenProject.getPackaging()
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                           mavenProject.getOutputDirectory());
+
+        }
+      }
     }
 
     File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");

@@ -16,20 +16,15 @@
 package org.jetbrains.plugins.gradle.autoimport;
 
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
  * @since 2/18/13 8:29 PM
  */
-public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUserProjectChange> implements GradleUserProjectChange<T> {
+public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUserProjectChange<T>> implements GradleUserProjectChange<T> {
   
-  private long myTimestamp;
-
-  protected AbstractGradleUserProjectChange() {
-    myTimestamp = System.currentTimeMillis();
-  }
-
   @SuppressWarnings("unchecked")
   @Nullable
   @Override
@@ -43,12 +38,7 @@ public abstract class AbstractGradleUserProjectChange<T extends AbstractGradleUs
   }
 
   @Override
-  public long getTimestamp() {
-    return myTimestamp;
-  }
-
-  @Override
-  public void setTimestamp(long timestamp) {
-    myTimestamp = timestamp;
+  public int compareTo(@NotNull GradleUserProjectChange<?> o) {
+    return getClass().getName().compareTo(o.getClass().getName());
   }
 }

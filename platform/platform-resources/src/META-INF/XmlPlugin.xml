@@ -351,9 +351,14 @@
     <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
                      groupName="XML" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection"/>
-    <localInspection language="XML" shortName="XmlDuplicatedId" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
+
+    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
+    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
+                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
+                     implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
+
     <localInspection language="XML" shortName="RequiredAttributes" bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupName="HTML" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection" unfair="true"/>

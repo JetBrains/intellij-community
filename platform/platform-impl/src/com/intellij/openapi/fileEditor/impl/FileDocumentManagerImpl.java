@@ -292,6 +292,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @Override
   public void saveAllDocuments() {
+    saveAllDocuments(true);
+  }
+
+  /**
+   * @param isExplicit caused by user directly (Save action) or indirectly (e.g. Compile)
+   */
+  public void saveAllDocuments(boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myMultiCaster.beforeAllDocumentsSaving();
@@ -306,7 +313,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
         try {
-          doSaveDocument(document);
+          doSaveDocument(document, isExplicit);
         }
         catch (IOException e) {
           //noinspection ThrowableResultOfMethodCallIgnored
@@ -332,7 +339,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {
-      doSaveDocument(document);
+      doSaveDocument(document, true);
     }
     catch (IOException e) {
       handleErrorsOnSave(Collections.singletonMap(document, e));
@@ -360,7 +367,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private static class SaveVetoException extends Exception {}
 
-  private void doSaveDocument(@NotNull final Document document) throws IOException, SaveVetoException {
+  private void doSaveDocument(@NotNull final Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
 
     if (file == null || file instanceof LightVirtualFile || file.isValid() && !isFileModified(file)) {
@@ -374,7 +381,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
-      if (!vetoer.maySaveDocument(document)) {
+      if (!vetoer.maySaveDocument(document, isExplicit)) {
         throw new SaveVetoException();
       }
     }

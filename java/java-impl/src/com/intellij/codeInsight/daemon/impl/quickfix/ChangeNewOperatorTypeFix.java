@@ -122,10 +122,11 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       }
 
       if (anonymousClass != null) {
-        final PsiAnonymousClass newAnonymousClass = (PsiAnonymousClass)newExpression.getAnonymousClass().replace(anonymousClass);
-        final PsiClass aClass = PsiUtil.resolveClassInType(toType);
-        assert aClass != null;
-        newAnonymousClass.getBaseClassReference().replace(factory.createClassReferenceElement(aClass));
+        PsiAnonymousClass newAnonymousClass = newExpression.getAnonymousClass();
+        final PsiElement childInside = anonymousClass.getLBrace().getNextSibling();
+        if (childInside != null) {
+          newAnonymousClass.addRange(childInside, anonymousClass.getRBrace().getPrevSibling());
+        }
       }
       selection = null;
       caretOffset = -1;
@@ -151,7 +152,10 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     PsiType newType = lType;
     if (rType instanceof PsiClassType && newType instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult rResolveResult = ((PsiClassType)rType).resolveGenerics();
-      final PsiClass rClass = rResolveResult.getElement();
+      PsiClass rClass = rResolveResult.getElement();
+      if (rClass instanceof PsiAnonymousClass) {
+        rClass = ((PsiAnonymousClass)rClass).getBaseClassType().resolve();
+      }
       if (rClass != null) {
         final PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)newType).resolveGenerics();
         final PsiClass lClass = lResolveResult.getElement();

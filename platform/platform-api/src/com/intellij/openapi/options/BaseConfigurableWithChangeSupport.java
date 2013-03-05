@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.ArrayList;
+import java.util.List;
 
 public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable {
-  private final ArrayList<ChangeListener> myListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void setModified(final boolean modified) {
     fireStateChanged();
@@ -33,9 +35,7 @@ public abstract class BaseConfigurableWithChangeSupport extends BaseConfigurable
 
   public void fireStateChanged() {
     final ChangeEvent event = new ChangeEvent(this);
-    final ChangeListener[] listeners = myListeners.toArray(new ChangeListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      final ChangeListener listener = listeners[i];
+    for (final ChangeListener listener : myListeners) {
       listener.stateChanged(event);
     }
   }

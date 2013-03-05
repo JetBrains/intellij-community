@@ -39,7 +39,6 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   private final boolean myTemporary;
 
   public XToggleLineBreakpointActionHandler(boolean temporary) {
-    //To change body of created methods use File | Settings | File Templates.
     myTemporary = temporary;
   }
 

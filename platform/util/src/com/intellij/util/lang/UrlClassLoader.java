@@ -29,7 +29,10 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class UrlClassLoader extends ClassLoader {
   private final ClassPath myClassPath;
@@ -51,10 +54,10 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache) {
-    this(urls, parent, canLockJars, canUseCache, false);
+    this(urls, parent, canLockJars, canUseCache, false, true);
   }
 
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, final boolean preloadJarContents) {
     super(parent);
 
     List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
@@ -63,7 +66,7 @@ public class UrlClassLoader extends ClassLoader {
         return internFileProtocol(url);
       }
     });
-    myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls);
+    myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls, preloadJarContents);
     myURLs = list;
   }
 

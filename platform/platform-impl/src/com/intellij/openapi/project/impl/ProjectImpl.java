@@ -16,6 +16,7 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -75,6 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
+  public static final String NAME_FILE = ".name";
 
   private ProjectManagerImpl myManager;
 
@@ -342,7 +344,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         if (baseDir != null && baseDir.isValid()) {
           final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
           if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-            final File nameFile = new File(ideaDir.getPath(), ".name");
+            final File nameFile = new File(ideaDir.getPath(), NAME_FILE);
             try {
               FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
               myOldName = null;
@@ -350,6 +352,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             catch (IOException e) {
               LOG.info("Unable to store project name to: " + nameFile.getPath());
             }
+            RecentProjectsManagerBase.getInstance().clearNameCache();
           }
         }
       }

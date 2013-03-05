@@ -145,19 +145,21 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
 
   @NotNull
   public final ClassLoader getClassLoader() {
-    if (myClassLoader == null) {
+    ClassLoader loader = myClassLoader;
+    if (loader == null) {
       final XmlTag tag = getXmlTag();
       final PsiFile containingFile = tag.getContainingFile();
       final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
       if (buildFile != null) {
-        myClassLoader = buildFile.getClassLoader();
+        loader = buildFile.getClassLoader();
       }
       else {
         AntInstallation antInstallation = getAntInstallation();
-        myClassLoader = antInstallation.getClassLoader();
+        loader = antInstallation.getClassLoader();
       }
+      myClassLoader = loader;
     }
-    return myClassLoader;
+    return loader;
   }
 
   public AntInstallation getAntInstallation() {

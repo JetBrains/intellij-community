@@ -16,11 +16,13 @@
 
 package com.intellij.tools;
 
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    runTool(myActionId, e.getDataContext(), e, 0L);
+    runTool(myActionId, e.getDataContext(), e, 0L, null);
   }
 
   @Override
@@ -62,18 +64,18 @@ public class ToolAction extends AnAction implements DumbAware {
     return ToolsProvider.getAllTools();
   }
 
-  static void runTool(String actionId, DataContext context, long executionId) {
-    runTool(actionId, context, null, executionId);
-  }
-
   static void runTool(String actionId, DataContext context) {
-    runTool(actionId, context, null, 0L);
+    runTool(actionId, context, null, 0L, null);
   }
 
-  static void runTool(String actionId, DataContext context, AnActionEvent e, long executionId) {
+  /**
+   * @return <code>true</code> if task has been started successfully
+   */
+  static boolean runTool(String actionId, DataContext context, @Nullable AnActionEvent e, long executionId, @Nullable ProcessListener processListener) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      tool.execute(e, new HackyDataContext(context, e), executionId);
+      return tool.execute(e, new HackyDataContext(context, e), executionId, processListener);
     }
+    return false;
   }
 }

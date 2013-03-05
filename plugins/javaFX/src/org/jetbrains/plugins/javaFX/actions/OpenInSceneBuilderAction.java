@@ -18,12 +18,16 @@ package org.jetbrains.plugins.javaFX.actions;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,6 +36,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
 import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+
+import java.io.File;
 
 /**
  * User: anna
@@ -54,6 +60,41 @@ public class OpenInSceneBuilderAction extends AnAction {
 
       pathToSceneBuilder = sceneBuilderFile.getPath();
       settings.setPathToSceneBuilder(FileUtil.toSystemIndependentName(pathToSceneBuilder));
+    }
+
+    final Project project = getEventProject(e);
+    if (project != null) {
+      final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+      if (module != null) {
+        try {
+          final JavaParameters javaParameters = new JavaParameters();
+          javaParameters.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+
+          final File sceneBuilderLibsFile;
+          if (SystemInfo.isMac) {
+            sceneBuilderLibsFile = new File(new File(pathToSceneBuilder, "Contents"), "Java");
+          }
+          else {
+            File sceneBuilderRoot = new File(pathToSceneBuilder);
+            sceneBuilderRoot = sceneBuilderRoot.getParentFile().getParentFile();
+            sceneBuilderLibsFile = new File(sceneBuilderRoot, "lib");
+          }
+          final File[] sceneBuilderLibs = sceneBuilderLibsFile.listFiles();
+          if (sceneBuilderLibs != null) {
+            for (File jarFile : sceneBuilderLibs) {
+              javaParameters.getClassPath().add(jarFile.getPath());
+            }
+          }
+
+          javaParameters.setMainClass("com.oracle.javafx.authoring.Main");
+          javaParameters.getProgramParametersList().add(path);
+
+          javaParameters.createOSProcessHandler().startNotify();
+          return;
+        }
+        catch (Exception ignore) {
+        }
+      }
     }
 
     if (SystemInfo.isMac) {

@@ -68,6 +68,8 @@ public abstract class AbstractEclipseClasspathReader<T> {
                                            String srcUrl, ExpandMacroToPathMap macroMap);
   protected abstract String expandEclipsePath2Url(T rootModel, String path);
 
+  protected abstract Set<String> getDefinedCons();
+
   protected abstract int rearrange(T rootModel);
 
   protected void readClasspathEntry(T rootModel,
@@ -197,18 +199,15 @@ public abstract class AbstractEclipseClasspathReader<T> {
       else if (path.startsWith(EclipseXml.JUNIT_CONTAINER)) {
         final String junitName = IdeaXml.JUNIT + getPresentableName(path);
         addJUnitDefaultLib(rootModel, junitName, macroMap);
-      }
-      else if (path.equals(EclipseXml.GROOVY_DSL_CONTAINER)) {
-        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_DSL_CONTAINER);
-        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_DSL_CONTAINER, idx);
-      }
-      else if (path.equals(EclipseXml.GROOVY_SUPPORT)) {
-        eclipseModuleManager.addGroovySupport(EclipseXml.GROOVY_SUPPORT);
-        eclipseModuleManager.registerSrcPlace(EclipseXml.GROOVY_SUPPORT, idx);
-      }
-      else {
-        eclipseModuleManager.registerUnknownCons(path);
-        addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, true);
+      } else {
+        final Set<String> registeredCons = getDefinedCons();
+        if (registeredCons.contains(path)) {
+          eclipseModuleManager.registerCon(path);
+          eclipseModuleManager.registerSrcPlace(path, idx);
+        } else {
+          eclipseModuleManager.registerUnknownCons(path);
+          addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, true);
+        }
       }
     }
     else {

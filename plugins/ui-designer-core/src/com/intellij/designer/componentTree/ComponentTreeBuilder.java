@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.componentTree;
 
+import com.intellij.designer.designSurface.ComponentGlassLayer;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
@@ -28,7 +29,7 @@ import javax.swing.tree.DefaultTreeModel;
 public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener {
   private final EditableArea mySurfaceArea;
   private final TreeEditableArea myTreeArea;
-  private final TreeGlassLayer myGlassLayer;
+  private final ComponentGlassLayer myGlassLayer;
   private final ExpandStateHandler myExpandStateHandler;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
@@ -41,7 +42,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
     mySurfaceArea = designer.getSurfaceArea();
     myTreeArea = new TreeEditableArea(tree, this, designer.getActionPanel());
-    myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
+    myGlassLayer = new ComponentGlassLayer(tree, designer.getToolProvider(), myTreeArea);
     myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
 
     tree.setArea(myTreeArea);

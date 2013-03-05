@@ -285,6 +285,7 @@ public final class DesktopLayout implements JDOMExternalizable {
   }
 
   public final void readExternal(final Element layoutElement) {
+    myUnregisteredInfos = null;
     for (Object o : layoutElement.getChildren()) {
       final Element e = (Element)o;
       if (WindowInfoImpl.TAG.equals(e.getName())) {

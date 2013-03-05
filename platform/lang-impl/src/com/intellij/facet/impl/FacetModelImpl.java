@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   private final List<Facet> myFacets = new ArrayList<Facet>();
   private final Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
   private final FacetManagerImpl myManager;
-  private final Set<Listener> myListeners = new HashSet<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public FacetModelImpl(final FacetManagerImpl manager) {
     myManager = manager;
@@ -114,8 +115,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   protected void facetsChanged() {
     super.facetsChanged();
-    final Listener[] all = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener each : all) {
+    for (Listener each : myListeners) {
       each.onChanged();
     }
   }

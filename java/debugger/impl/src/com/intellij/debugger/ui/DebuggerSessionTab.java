@@ -64,6 +64,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,12 +86,12 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-  private final Icon myIcon;
 
-  public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
-    super(project, "JavaDebugger", sessionName);
-
-    myIcon = icon;
+  public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
+                            @NotNull DebuggerSession debuggerSession) throws ExecutionException {
+    super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
+    myDebuggerSession = debuggerSession;
+    myDebugUIEnvironment = environment;
 
     final DefaultActionGroup focus = new DefaultActionGroup();
     focus.add(ActionManager.getInstance().getAction("Debugger.FocusOnBreakpoint"));
@@ -179,6 +180,29 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         updateStatus(event.getContent());
       }
     }, this);
+
+    debuggerSession.getContextManager().addListener(new DebuggerContextListener() {
+      public void changeEvent(DebuggerContextImpl newContext, int event) {
+        if (!myUi.isDisposed()) {
+          attractFramesOnPause(event);
+          myStateManager.fireStateChanged(newContext, event);
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!myUi.isDisposed()) {
+                myUi.updateActionsNow();
+              }
+            }
+          });
+        }
+      }
+    });
+
+    ExecutionResult executionResult = debuggerSession.getProcess().getExecutionResult();
+    myConsole = executionResult.getExecutionConsole();
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(),
+                                                      environment.getIcon());
+    initUI(executionResult);
   }
 
   private static void updateStatus(final Content content) {
@@ -205,13 +229,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     return myRunContentDescriptor;
   }
 
-  private RunContentDescriptor initUI(ExecutionResult executionResult) {
-
-    myConsole = executionResult.getExecutionConsole();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName(), myIcon);
-
+  private void initUI(ExecutionResult executionResult) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myRunContentDescriptor;
+      return;
     }
 
 
@@ -314,8 +334,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myDebugUIEnvironment.initActions(myRunContentDescriptor, leftToolbar);
 
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
-
-    return myRunContentDescriptor;
   }
 
   private static void addAction(DefaultActionGroup group, String actionId) {
@@ -411,30 +429,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     return myDebugUIEnvironment != null ? myDebugUIEnvironment.getRunProfile() : null;
   }
 
-  public RunContentDescriptor attachToSession(final DebuggerSession session, DebugUIEnvironment environment) throws ExecutionException {
-    disposeSession();
-    myDebuggerSession = session;
-    myDebugUIEnvironment = environment;
-
-    session.getContextManager().addListener(new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        if (!myUi.isDisposed()) {
-          attractFramesOnPause(event);
-          myStateManager.fireStateChanged(newContext, event);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myUi.isDisposed()) {
-                myUi.updateActionsNow();
-              }
-            }
-          });
-        }
-      }
-    });
-    return initUI(session.getProcess().getExecutionResult());
-  }
-
   private void attractFramesOnPause(final int event) {
     if (DebuggerSession.EVENT_PAUSE == event) {
       myUi.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
@@ -519,8 +513,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   private class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
-    private static final String myAutoModeText = "Auto-Variables Mode";
-    private static final String myDefaultModeText = "All-Variables Mode";
 
     public AutoVarsSwitchAction() {
       super("", "", AllIcons.Debugger.AutoVariablesMode);
@@ -531,7 +523,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(autoModeEnabled ? myDefaultModeText : myAutoModeText);
+      presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
     public boolean isSelected(AnActionEvent e) {

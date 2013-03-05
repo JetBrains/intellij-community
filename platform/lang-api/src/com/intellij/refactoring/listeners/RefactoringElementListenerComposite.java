@@ -17,12 +17,13 @@
 package com.intellij.refactoring.listeners;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class RefactoringElementListenerComposite implements RefactoringElementListener, UndoRefactoringElementListener {
-  private final ArrayList<RefactoringElementListener> myListeners = new ArrayList<RefactoringElementListener>();
+  private final List<RefactoringElementListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void addListener(final RefactoringElementListener listener){
     myListeners.add(listener);

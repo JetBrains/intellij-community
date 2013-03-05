@@ -16,8 +16,12 @@
 package hg4idea.test;
 
 import com.intellij.dvcs.test.Executor;
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,9 +31,38 @@ import java.util.List;
 public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
-  //private static final String TEAMCITY_HG_EXECUTABLE_ENV = "TEAMCITY_HG_PATH";   //todo var for server testing
 
-  private static final String HG_EXECUTABLE = findExecutable("hg", "hg", "hg.exe", Arrays.asList(HG_EXECUTABLE_ENV));
+  private static final String HG_EXECUTABLE = doFindExecutable();
+
+  private static String doFindExecutable() {
+    final String programName = "hg";
+    final String unixExec = "hg";
+    final String winExec = "hg.exe";
+    String exec = findInPathEnvs(programName, Arrays.asList(HG_EXECUTABLE_ENV));
+    if (exec != null) {
+      return exec;
+    }
+    exec = findInPath(programName, unixExec, winExec);
+    if (exec != null) {
+      return exec;
+    }
+    exec = findInSources(programName, unixExec, winExec);
+    if (exec != null) {
+      return exec;
+    }
+    throw new IllegalStateException(programName + " executable not found.");
+  }
+
+  private static String findInSources(String programName, String unixExec, String winExec) {
+    File pluginRoot = new File(PluginPathManager.getPluginHomePath("hg4idea"));
+    File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
+    File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
+    if (exec.exists() && exec.canExecute()) {
+      log("Using " + programName + " from test data");
+      return exec.getPath();
+    }
+    return null;
+  }
 
   public static String hg(String command) {
     List<String> split = StringUtil.split(command, " ");

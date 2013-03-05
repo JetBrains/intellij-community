@@ -367,22 +367,11 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
    * Sets window weight and adjust it to [0..1] range if necessary.
    */
   void setWeight(float weight){
-    if(weight< 0.0f){
-      weight= 0.0f;
-    }else if(weight>1.0f){
-      weight=1.0f;
-    }
-    myWeight=weight;
+    myWeight = Math.max(0, Math.min(1, weight));
   }
 
   void setSideWeight(float weight){
-    if(weight < 0.0f){
-      weight = 0.0f;
-    }
-    else if (weight > 1.0f){
-      weight = 1.0f;
-    }
-    mySideWeight = weight;
+    mySideWeight = Math.max(0, Math.min(1, weight));
   }
 
   @Override

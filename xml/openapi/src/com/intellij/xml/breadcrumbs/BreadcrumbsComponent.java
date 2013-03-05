@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsComponent");
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
 
-  private List<BreadcrumbsItemListener<T>> myListeners = new ArrayList<BreadcrumbsItemListener<T>>();
+  private List<BreadcrumbsItemListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Crumb myHovered;
   private PagedImage myBuffer;
   private List<Crumb> myCrumbs = new ArrayList<Crumb>();
@@ -212,9 +213,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void fireItemSelected(@Nullable final T item, final int modifiers) {
     if (item != null) {
-      final BreadcrumbsItemListener[] listeners = myListeners.toArray(new BreadcrumbsItemListener[myListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].itemSelected(item, modifiers);
+      for (BreadcrumbsItemListener listener : myListeners) {
+        listener.itemSelected(item, modifiers);
       }
     }
   }

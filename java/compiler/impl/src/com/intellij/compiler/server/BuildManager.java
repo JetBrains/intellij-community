@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -184,7 +185,7 @@ public class BuildManager implements ApplicationComponent{
       @Override
       public void run() {
         try {
-          FileDocumentManager.getInstance().saveAllDocuments();
+          ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false);
         }
         finally {
           mySemaphore.up();

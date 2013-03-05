@@ -107,7 +107,7 @@ public class InlineMethodConflictSolver {
         GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
         if (lValue instanceof GrReferenceExpression) {
           GrReferenceExpression expr = (GrReferenceExpression) lValue;
-          if (expr.getQualifierExpression() == null && name.equals(expr.getName())) {
+          if (expr.getQualifierExpression() == null && name.equals(expr.getReferenceName())) {
             return false;
           }
         }

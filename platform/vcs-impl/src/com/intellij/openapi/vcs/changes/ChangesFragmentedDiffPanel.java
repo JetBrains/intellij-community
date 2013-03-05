@@ -149,7 +149,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final JPanel oneMore = new JPanel(new BorderLayout());
     oneMore.add(wrapperDiffs, BorderLayout.NORTH);
 
-    myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
+    myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORIZONTALLY;
     myHorizontal = createPanel(true);
     myVertical = createPanel(false);
 
@@ -618,29 +618,29 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       myUsual = new AnAction("Top | Bottom", "", AllIcons.General.Mdot_empty) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
-          myConfiguration.SHORT_DIFF_HORISONTALLY = false;
+          boolean was = myConfiguration.SHORT_DIFF_HORIZONTALLY;
+          myConfiguration.SHORT_DIFF_HORIZONTALLY = false;
           ensurePresentation();
         }
 
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? AllIcons.General.Mdot_empty : AllIcons.General.Mdot);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORIZONTALLY ? AllIcons.General.Mdot_empty : AllIcons.General.Mdot);
         }
       };
       myNumbered = new AnAction("Left | Right", "", AllIcons.General.Mdot_empty) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
-          myConfiguration.SHORT_DIFF_HORISONTALLY = true;
+          boolean was = myConfiguration.SHORT_DIFF_HORIZONTALLY;
+          myConfiguration.SHORT_DIFF_HORIZONTALLY = true;
           ensurePresentation();
         }
 
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? AllIcons.General.Mdot : AllIcons.General.Mdot_empty);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORIZONTALLY ? AllIcons.General.Mdot : AllIcons.General.Mdot_empty);
         }
       };
       mySoftWrapsAction = new MyUseSoftWrapsAction(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
@@ -685,7 +685,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }*/
 
   private void ensurePresentation() {
-    if (myCurrentHorizontal != myConfiguration.SHORT_DIFF_HORISONTALLY) {
+    if (myCurrentHorizontal != myConfiguration.SHORT_DIFF_HORIZONTALLY) {
       final DiffPanel panel = getCurrentPanel();
 
       myPanel.removeAll();
@@ -694,13 +694,13 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       myPanel.revalidate();
       myPanel.repaint();
 
-      myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
+      myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORIZONTALLY;
     }
   }
 
   private DiffPanel getCurrentPanel() {
     DiffPanel panel;
-    if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
+    if (myConfiguration.SHORT_DIFF_HORIZONTALLY) {
       panel = myHorizontal;
     } else {
       panel = myVertical;

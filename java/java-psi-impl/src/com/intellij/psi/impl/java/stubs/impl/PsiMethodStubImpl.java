@@ -99,8 +99,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   @NotNull
   public TypeInfo getReturnTypeText(boolean doResolve) {
-    if (!doResolve) return myReturnType;
-    return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType);
+    return doResolve ? PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType) : myReturnType;
   }
 
   @Override
@@ -162,6 +161,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiMethodStub[");
+
     if (isConstructor()) {
       builder.append("cons ");
     }
@@ -175,9 +175,9 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
       builder.append("deprecated ");
     }
 
-    builder.append(getName()).append(":").append(TypeInfo.createTypeText(getReturnTypeText(false)));
+    builder.append(myName).append(":").append(myReturnType);
 
-    final String defaultValue = getDefaultValueText();
+    String defaultValue = getDefaultValueText();
     if (defaultValue != null) {
       builder.append(" default=").append(defaultValue);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,6 +245,37 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".fo<caret>o'
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc2')
-    assert generateDoc().contains('setFoo')
+    assert generateDoc().contains('getFoo')
+  }
+
+  public void testVariableInAnnotationClosureContext() {
+    addGdsl '''
+      contributor(scope: closureScope(annotationName:'Ensures')) {
+        variable(name: 'result', type:'java.lang.Object')
+      }
+    '''
+
+    myFixture.configureByText('a.groovy', '''\
+      @interface Ensures {}
+
+      @Ensures({re<caret>sult == 2})
+      def foo() {}
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  public void testVariableInMethodCallClosureContext() {
+    addGdsl '''
+      contributor(scope: closureScope(methodName:'ensures')) {
+        variable(name: 'result', type:'java.lang.Object')
+      }
+    '''
+
+    myFixture.configureByText('a.groovy', '''\
+      ensures{re<caret>sult == 2}
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
   }
 }

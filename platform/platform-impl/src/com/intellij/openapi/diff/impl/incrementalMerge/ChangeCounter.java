@@ -17,15 +17,16 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class ChangeCounter implements ChangeList.Listener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter");
   private static final Key<ChangeCounter> ourKey = Key.create("ChangeCounter");
   private final MergeList myMergeList;
-  private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myChangeCounter = 0;
   private int myConflictCounter = 0;
 
@@ -64,8 +65,7 @@ public class ChangeCounter implements ChangeList.Listener {
   }
 
   private void fireCountersChanged() {
-    Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (Listener listener : listeners) {
+    for (Listener listener : myListeners) {
       listener.onCountersChanged(this);
     }
   }

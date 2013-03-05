@@ -118,7 +118,6 @@ public class DefaultDebugUIEnvironment implements DebugUIEnvironment {
     RestartAction restartAction = new RestartAction(myExecutor,
                                                     myRunner,
                                                     processHandler,
-                                                    RestartAction.RERUN_DEBUGGER_ICON,
                                                     content,
                                                     myExecutionEnvironment);
     actionGroup.add(restartAction, Constraints.FIRST);

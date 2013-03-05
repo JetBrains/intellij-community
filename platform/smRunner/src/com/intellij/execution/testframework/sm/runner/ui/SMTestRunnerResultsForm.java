@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,6 @@ import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,7 +72,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private SMTRunnerTreeBuilder myTreeBuilder;
   private final TestConsoleProperties myConsoleProperties;
 
-  private final List<EventsListener> myEventListeners = new ArrayList<EventsListener>();
+  private final List<EventsListener> myEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private PropagateSelectionHandler myShowStatisticForProxyHandler;
 

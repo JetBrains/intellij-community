@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
   private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private final Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
-  private final Collection<PomModelListener> myListeners = new ArrayList<PomModelListener>();
+  private final Collection<PomModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public PomModelImpl(Project project) {
     myProject = project;
@@ -99,10 +100,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   public void addModelListener(PomModelListener listener) {
-    synchronized(myListeners){
-      myListeners.add(listener);
-      myListenersArray = null;
-    }
+    myListeners.add(listener);
   }
 
   public void addModelListener(final PomModelListener listener, Disposable parentDisposable) {
@@ -115,10 +113,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   public void removeModelListener(PomModelListener listener) {
-    synchronized(myListeners){
-      myListeners.remove(listener);
-      myListenersArray = null;
-    }
+    myListeners.remove(listener);
   }
 
   private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
@@ -162,8 +157,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
             }
           }
         }
-        final PomModelListener[] listeners = getListeners();
-        for (final PomModelListener listener : listeners) {
+        for (final PomModelListener listener : myListeners) {
           final Set<PomModelAspect> changedAspects = event.getChangedAspects();
           for (PomModelAspect modelAspect : changedAspects) {
             if (listener.isAspectChangeInteresting(modelAspect)) {
@@ -259,11 +253,5 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       psiFile = (PsiFile)fileElement.getPsi();
     }
     return psiFile.getNode() != null ? psiFile : null;
-  }
-
-  private PomModelListener[] myListenersArray = null;
-  private PomModelListener[] getListeners(){
-    if(myListenersArray != null) return myListenersArray;
-    return myListenersArray = myListeners.toArray(new PomModelListener[myListeners.size()]);
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.componentTree.ComponentTreeBuilder;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import icons.UIDesignerIcons;
@@ -51,7 +52,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,7 +67,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private ToolWindow myToolWindow;
   private boolean myToolWindowReady = false;
   private boolean myToolWindowDisposed = false;
-  private List<TreeSelectionListener> myPendingListeners = new ArrayList<TreeSelectionListener>();
+  private final List<TreeSelectionListener> myPendingListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
     myProject = project;

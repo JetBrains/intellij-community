@@ -16,8 +16,14 @@
 package com.intellij.tools;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.concurrency.Semaphore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
+  private static final Logger LOG = Logger.getInstance(ToolBeforeRunTask.class);
   @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
   private String myToolActionId;
 
@@ -64,14 +71,35 @@ public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
     return (ToolBeforeRunTask)super.clone();
   }
 
-  public void execute(final DataContext context, final long executionId) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+  public boolean execute(final DataContext context, final long executionId) {
+    final Semaphore targetDone = new Semaphore();
+    final Ref<Boolean> result = new Ref<Boolean>(false);
 
-      @Override
-      public void run() {
-        ToolAction.runTool(myToolActionId, context, executionId);
-      }
-    });
+    try {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          targetDone.down();
+          boolean runToolResult = ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
+            @Override
+            public void processTerminated(ProcessEvent event) {
+              result.set(event.getExitCode() == 0);
+              targetDone.up();
+            }
+          });
+          if (!runToolResult) {
+            result.set(false);
+            targetDone.up();
+          }
+        }
+      }, ModalityState.NON_MODAL);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return false;
+    }
+    targetDone.waitFor();
+    return result.get();
   }
 
   @Nullable

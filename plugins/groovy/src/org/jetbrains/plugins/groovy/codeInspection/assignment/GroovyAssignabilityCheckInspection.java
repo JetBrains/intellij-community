@@ -403,7 +403,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                                                           e);
     }
 
-    private static PsiElement getElementToHighlight(PsiElement refElement, GrArgumentList argList) {
+    @NotNull
+    private static PsiElement getElementToHighlight(@NotNull PsiElement refElement, @Nullable GrArgumentList argList) {
       PsiElement elementToHighlight = argList;
       if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = refElement;
       return elementToHighlight;
@@ -520,12 +521,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       checkMethodCall(expression, expression.getInvokedExpression());
     }
 
-    private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
-      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return true;
-
-      registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
-                    GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
-      return false;
+    private boolean checkCannotInferArgumentTypes(PsiElement place) {
+      if (PsiUtil.getArgumentTypes(place, true) != null) {
+        return true;
+      }
+      else {
+        highlightUnknownArgs(place);
+        return false;
+      }
     }
 
     @Override
@@ -851,9 +854,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return null;
     }
 
-    private void highlightUnknownArgs(GroovyPsiElement place) {
-      registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), GroovyBundle.message("cannot.infer.argument.types"),
-                    LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
+    private void highlightUnknownArgs(@NotNull PsiElement place) {
+      final PsiElement toHighlight = getElementToHighlight(place, PsiUtil.getArgumentsList(place));
+      registerError(toHighlight, GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
     }
   }
 
@@ -893,40 +896,42 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     @Override
     protected void registerError(@NotNull final PsiElement location,
                                  @NotNull final String description,
-                                 @NotNull final LocalQuickFix[] fixes,
+                                 @Nullable final LocalQuickFix[] fixes,
                                  final ProblemHighlightType highlightType) {
       Annotation annotation = myHolder.createErrorAnnotation(location, description);
-      for (final LocalQuickFix fix : fixes) {
-        annotation.registerFix(new IntentionAction() {
-          @NotNull
-          @Override
-          public String getText() {
-            return fix.getName();
-          }
+      if (fixes != null) {
+        for (final LocalQuickFix fix : fixes) {
+          annotation.registerFix(new IntentionAction() {
+            @NotNull
+            @Override
+            public String getText() {
+              return fix.getName();
+            }
 
-          @NotNull
-          @Override
-          public String getFamilyName() {
-            return fix.getFamilyName();
-          }
+            @NotNull
+            @Override
+            public String getFamilyName() {
+              return fix.getFamilyName();
+            }
 
-          @Override
-          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return true;
-          }
+            @Override
+            public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+              return true;
+            }
 
-          @Override
-          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            InspectionManager manager = InspectionManager.getInstance(project);
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
-            fix.applyFix(project, descriptor);
-          }
+            @Override
+            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+              InspectionManager manager = InspectionManager.getInstance(project);
+              ProblemDescriptor descriptor = manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
+              fix.applyFix(project, descriptor);
+            }
 
-          @Override
-          public boolean startInWriteAction() {
-            return true;
-          }
-        });
+            @Override
+            public boolean startInWriteAction() {
+              return true;
+            }
+          });
+        }
       }
     }
 

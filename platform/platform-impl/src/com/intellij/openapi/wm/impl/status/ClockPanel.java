@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.text.SimpleDateFormat;
@@ -37,6 +40,7 @@ import static java.util.Calendar.*;
  * User: Vassiliy.Kudryashov
  */
 public class ClockPanel extends JComponent implements CustomStatusBarWidget {
+  @NonNls private static final String CLOCK_BLINKING = "Clock.blinking";
   @NonNls public static final String WIDGET_ID = "Clock";
   private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
   private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
@@ -58,16 +62,29 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   protected final Calendar myCalendar;
   private final Timer myTimer;
   private final boolean is24Hours;
+  private boolean myBlinking;
+  private final ClickListener myClickListener;
 
   public ClockPanel() {
     myCalendar = getInstance();
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
+    myBlinking = PropertiesComponent.getInstance().getBoolean(CLOCK_BLINKING, false);
     myTimer = new Timer(50, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         repaint();
       }
     });
+    myClickListener = new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent event, int clickCount) {
+        if (clickCount != 1) return false;
+        myBlinking = !myBlinking;
+        PropertiesComponent.getInstance().setValue(CLOCK_BLINKING, String.valueOf(myBlinking));
+        return true;
+      }
+    };
+    myClickListener.installOn(this);
   }
 
   @NotNull
@@ -83,6 +100,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
 
   @Override
   public void dispose() {
+    myClickListener.uninstall(this);
     myTimer.stop();
   }
 
@@ -108,7 +126,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     else {
       height = super.getPreferredSize().height;
     }
-    return new Dimension((int)(height * 2.75), height);
+    return new Dimension(height * 2, height);
   }
 
   @Override
@@ -122,7 +140,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     try {
       g.setRenderingHint(KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      int h = getHeight() - 4;
+      int h = (int)(getHeight() *.6);
       int w = h / 2;
       float thickness = h * .1F;
       AffineTransform transform = g.getTransform();
@@ -139,7 +157,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       int hours = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR);
       int minutes = myCalendar.get(MINUTE);
       int x = 0;
-      int y = 2;
+      int y = (getHeight() - h) / 2;
       boolean eveningDot = !is24Hours && myCalendar.get(HOUR_OF_DAY) > 11;
       if (eveningDot) {
         g.setStroke(new BasicStroke(thickness * 2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -150,7 +168,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, hours % 10);
       x += w + thickness * 2;
-      if (myCalendar.get(MILLISECOND) <= 500) {
+      if (!myBlinking || myCalendar.get(MILLISECOND) <= 500) {
         g.draw(new Line2D.Float(x, y + h / 2 - thickness * 2, x, y + h / 2 - thickness * 2 + thickness / 20));
         g.draw(new Line2D.Float(x, y + h / 2 + thickness * 2, x, y + h / 2 + thickness * 2 + thickness / 20));
       }

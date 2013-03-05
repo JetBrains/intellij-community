@@ -1133,4 +1133,40 @@ print(<error descr="Collection literal contains named and expression arguments a
       }
 ''')
   }
+
+  void testClosureParameterInferenceDoesNotWorkIfComplieStatic() {
+    addCompileStatic()
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    testHighlighting('''
+@groovy.transform.CompileStatic
+def foo() {
+    final collector = [1, 2].find {a ->
+        a.<error descr="Cannot resolve symbol 'intValue'">intValue</error>()
+    }
+}
+''')
+  }
+
+  void testIllegalLiteralName() {
+    testHighlighting('''
+def <error descr="Illegal escape character in string literal">'a\\obc'</error>() {
+
+}
+''')
+  }
+
+  void testExceptionParameterAlreadyDeclared() {
+    testHighlighting('''
+      int missing() {
+        InputStream i = null
+
+        try {
+          return 1
+        }
+        catch(Exception <error descr="Variable 'i' already defined">i</error>) {
+          return 2
+        }
+      }
+    ''')
+  }
 }

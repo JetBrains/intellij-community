@@ -89,4 +89,16 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
   public void testNewDefaultConstructor() throws Exception {
     doTest();
   }
+
+  public void testArrayConstructorRef() throws Exception {
+    doTest();
+  }
+
+  public void testArrayConstructorRef2Dim() throws Exception {
+    doTest();
+  }
+
+  public void testArrayMethodRef() throws Exception {
+    doTest();
+  }
 }

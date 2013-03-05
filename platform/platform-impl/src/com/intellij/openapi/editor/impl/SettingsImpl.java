@@ -155,12 +155,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setWrapWhenTypingReachesRightMargin(boolean val) {
-    Boolean newValue = Boolean.valueOf(val);
-    if (newValue.equals(myWrapWhenTypingReachesRightMargin)) {
-      return;
-    }
-    myWrapWhenTypingReachesRightMargin = newValue;
-    fireEditorRefresh();
+    myWrapWhenTypingReachesRightMargin = val;
   }
 
   @Override

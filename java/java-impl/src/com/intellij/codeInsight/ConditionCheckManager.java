@@ -30,7 +30,10 @@ import java.util.List;
  */
 @State(
   name = "ConditionCheckManager",
-  storages = {@Storage(id = "dir", file = StoragePathMacros.PROJECT_CONFIG_DIR + "/checker.xml", scheme = StorageScheme.DIRECTORY_BASED)}
+  storages = {
+    @Storage(id = "dir", file = StoragePathMacros.PROJECT_CONFIG_DIR + "/checker.xml", scheme = StorageScheme.DIRECTORY_BASED),
+    @Storage(file = StoragePathMacros.PROJECT_FILE)
+  }
 )
 public class ConditionCheckManager implements PersistentStateComponent<ConditionCheckManager.State> {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private State state;
@@ -163,16 +166,6 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     return false;
   }
 
-  public static boolean isCheck(PsiMethod psiMethod) {
-    ConditionCheckManager manager = getInstance(psiMethod.getProject());
-    return isMethod(psiMethod, manager.getIsNullCheckMethods()) ||
-           isMethod(psiMethod, manager.getIsNotNullCheckMethods()) ||
-           isMethod(psiMethod, manager.getAssertIsNullMethods()) ||
-           isMethod(psiMethod, manager.getAssertIsNotNullMethods()) ||
-           isAssertTrueCheckMethod(psiMethod) ||
-           isAssertFalseCheckMethod(psiMethod);
-  }
-
   public static boolean isNullCheckMethod(PsiMethod psiMethod) {
     return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getIsNullCheckMethods());
   }
@@ -198,27 +191,21 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
   }
 
   public static boolean isNullCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getIsNullCheckMethods());
+    ConditionCheckManager instance = getInstance(psiMethod.getProject());
+    return methodMatches(psiMethod, paramIndex, instance.getIsNullCheckMethods()) ||
+           methodMatches(psiMethod, paramIndex, instance.getIsNotNullCheckMethods());
   }
 
-  public static boolean isNotNullCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getIsNotNullCheckMethods());
+  public static boolean isNullabilityAssertionMethod(PsiMethod psiMethod, int paramIndex) {
+    ConditionCheckManager instance = getInstance(psiMethod.getProject());
+    return methodMatches(psiMethod, paramIndex, instance.getAssertIsNullMethods()) ||
+           methodMatches(psiMethod, paramIndex, instance.getAssertIsNotNullMethods());
   }
 
-  public static boolean isAssertIsNullCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getAssertIsNullMethods());
-  }
-
-  public static boolean isAssertIsNotNullCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getAssertIsNotNullMethods());
-  }
-
-  public static boolean isAssertTrueCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getAssertTrueMethods());
-  }
-
-  public static boolean isAssertFalseCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    return methodMatches(psiMethod, paramIndex, getInstance(psiMethod.getProject()).getAssertFalseMethods());
+  public static boolean isBooleanAssertMethod(PsiMethod psiMethod, int paramIndex) {
+    ConditionCheckManager instance = getInstance(psiMethod.getProject());
+    return methodMatches(psiMethod, paramIndex, instance.getAssertTrueMethods()) ||
+           methodMatches(psiMethod, paramIndex, instance.getAssertFalseMethods());
   }
 
   public static boolean methodMatches(PsiMethod psiMethod, List<ConditionChecker> checkers) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -45,7 +46,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
 
   private final TestSuiteStack mySuitesStack = new TestSuiteStack();
-  private final List<SMTRunnerEventsListener> myEventsListeners = new ArrayList<SMTRunnerEventsListener>();
+  private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private final String myTestFrameworkName;
   private boolean myIsTestingFinished;

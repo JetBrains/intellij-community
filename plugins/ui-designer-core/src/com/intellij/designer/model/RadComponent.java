@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
 
@@ -138,7 +139,7 @@ public abstract class RadComponent extends PropertiesContainer {
     return null;
   }
 
-  public InputTool getDragTracker(Point location, boolean isTree) {
+  public InputTool getDragTracker(Point location, InputEvent event, boolean isTree) {
     return new DragTracker(this);
   }
 

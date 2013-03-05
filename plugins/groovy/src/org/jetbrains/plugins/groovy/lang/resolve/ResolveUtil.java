@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -62,6 +63,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -92,7 +95,7 @@ public class ResolveUtil {
    * @param processNonCodeMethods - this parameter tells us if we need non code members
    * @return
    */
-  public static boolean treeWalkUp(@NotNull final GroovyPsiElement place,
+  public static boolean treeWalkUp(@NotNull final PsiElement place,
                                    @NotNull final PsiScopeProcessor processor,
                                    boolean processNonCodeMethods) {
     return treeWalkUp(place, place, processor, processNonCodeMethods, ResolveState.initial());
@@ -184,6 +187,7 @@ public class ResolveUtil {
       if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
 
       if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
+      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -222,7 +226,7 @@ public class ResolveUtil {
     return nameHint.getName(ResolveState.initial());
   }
 
-  public static boolean processElement(PsiScopeProcessor processor, PsiNamedElement namedElement, ResolveState state) {
+  public static boolean processElement(@NotNull PsiScopeProcessor processor, @NotNull PsiNamedElement namedElement, @NotNull ResolveState state) {
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint == null ? null : nameHint.getName(state);
     if (name == null || name.equals(namedElement.getName())) {
@@ -354,7 +358,7 @@ public class ResolveUtil {
   }
 
   @Nullable
-  public static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
+  public static <T> T resolveExistingElement(PsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor, true);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
@@ -787,7 +791,7 @@ public class ResolveUtil {
     return null;
   }
 
-  public static boolean isEnumConstant(GrReferenceExpression ref, String name, String qName) {
+  public static boolean isEnumConstant(PsiReference ref, String name, String qName) {
     PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiEnumConstant)) return false;
     if (!name.equals(((PsiEnumConstant)resolved).getName())) return false;
@@ -828,5 +832,73 @@ public class ResolveUtil {
       }
     }
     return "";
+  }
+
+  public static PsiNamedElement findDuplicate(@NotNull GrVariable variable) {
+    if (isScriptField(variable)) {
+      final String name = variable.getName();
+
+      int count = 0;
+      final GroovyScriptClass script = (GroovyScriptClass)((GroovyFile)variable.getContainingFile()).getScriptClass();
+      assert script != null;
+      for (GrScriptField field : GrScriptField.getScriptFields(script)) {
+        if (name.equals(field.getName())) count++;
+      }
+
+      return count > 1 ? GrScriptField.getScriptField(variable) : null;
+    }
+    else {
+      PsiNamedElement duplicate = resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class);
+      final PsiElement context1 = variable.getContext();
+      if (duplicate == null && variable instanceof GrParameter && context1 != null) {
+        final PsiElement context = context1.getContext();
+        if (context instanceof GrClosableBlock ||
+            context instanceof GrMethod && !(context.getParent() instanceof GroovyFile) ||
+            context instanceof GrTryCatchStatement) {
+          duplicate = resolveExistingElement(context.getParent(), new DuplicateVariablesProcessor(variable), GrVariable.class);
+        }
+      }
+      if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
+        return null;
+      }
+      else {
+        return duplicate;
+      }
+    }
+  }
+
+  private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
+    private boolean myBorderPassed;
+    private final boolean myHasVisibilityModifier;
+
+    public DuplicateVariablesProcessor(GrVariable variable) {
+      super(variable.getName(), variable);
+      myBorderPassed = false;
+      myHasVisibilityModifier = hasExplicitVisibilityModifiers(variable);
+    }
+
+    private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
+      final GrModifierList modifierList = variable.getModifierList();
+      return modifierList != null && modifierList.hasExplicitVisibilityModifiers();
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      if (myBorderPassed) {
+        return false;
+      }
+      if (element instanceof GrVariable && hasExplicitVisibilityModifiers((GrVariable)element) != myHasVisibilityModifier) {
+        return true;
+      }
+      return super.execute(element, state);
+    }
+
+    @Override
+    public void handleEvent(Event event, Object associated) {
+      if (event == DECLARATION_SCOPE_PASSED) {
+        myBorderPassed = true;
+      }
+      super.handleEvent(event, associated);
+    }
   }
 }

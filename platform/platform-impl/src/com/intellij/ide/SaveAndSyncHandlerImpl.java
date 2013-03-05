@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -69,7 +70,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
       @Override
       public void run() {
         if (generalSettings.isAutoSaveIfInactive() && canSyncOrSave()) {
-          fileDocumentManager.saveAllDocuments();
+          ((FileDocumentManagerImpl)fileDocumentManager).saveAllDocuments(false);
         }
       }
     };

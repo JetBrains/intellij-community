@@ -24,6 +24,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class FacetErrorPanel {
   private final JLabel myWarningLabel;
   private final FacetValidatorsManagerImpl myValidatorsManager;
   private boolean myNoErrors = true;
-  private final List<Runnable> myListeners = new ArrayList<Runnable>();
+  private final List<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public FacetErrorPanel() {
     myValidatorsManager = new FacetValidatorsManagerImpl();

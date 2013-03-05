@@ -58,6 +58,7 @@ public class ClassPath {
   private static final String HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
 
   private final boolean myAcceptUnescapedUrls;
+  private final boolean myPreloadJarContents;
 
   private static synchronized void printOrder(Loader loader, String url, Resource resource) {
     if (!ourOrderedUrls.add(url)) return;
@@ -96,13 +97,14 @@ public class ClassPath {
   }
 
   public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache) {
-    this(urls, canLockJars, canUseCache, false);
+    this(urls, canLockJars, canUseCache, false, true);
   }
 
-  public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
+  public ClassPath(URL[] urls, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls, boolean preloadJarContents) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
+    myPreloadJarContents = preloadJarContents;
     push(urls);
   }
 
@@ -209,7 +211,9 @@ public class ClassPath {
     }
     else {
       JarLoader jarLoader = new JarLoader(url, myCanLockJars, index);
-      jarLoader.preLoadClasses();
+      if (myPreloadJarContents) {
+        jarLoader.preLoadClasses();
+      }
       loader = jarLoader;
     }
 

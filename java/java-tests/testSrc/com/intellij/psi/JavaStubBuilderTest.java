@@ -369,11 +369,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   public void testTypeAnnotations() {
     doTest("import j.u.@A C;\n" +
-           "import @A j.u.C;\n" +
+           "import @A j.u.D;\n" +
            "\n" +
            "class C<@A T extends @A C> implements @A I<@A T> {\n" +
-           "  T<@A T1, @A ? extends @A T2> f;\n" +
-           "  void m(/*@A C this,*/ int p) throws @A E {\n" +
+           "  @TA T<@A T1, @A ? extends @A T2> f;\n" +
+           "  @TA T m(/*@A C this,*/ @TA int p) throws @A E {\n" +
            "    o.<@A1 C>m();\n" +
            "    new <T> @A2 C();\n" +
            "    C.@A3 B v = (@A4 C)v.new @A5 C();\n" +
@@ -385,7 +385,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
            "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.C]\n" +
-           "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.C]\n" +
+           "    IMPORT_STATEMENT:PsiImportStatementStub[j.u.D]\n" +
            "  CLASS:PsiClassStub[name=C fqn=C]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
@@ -403,18 +403,24 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    FIELD:PsiFieldStub[f:T<@A T1, @A ? extends @A T2>]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
+           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "    METHOD:PsiMethodStub[m:void]\n" +
+           "    METHOD:PsiMethodStub[m:T]\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "        ANNOTATION:PsiAnnotationStub[@TA]\n" +
+           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "        PARAMETER:PsiParameterStub[p:int]\n" +
            "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "            ANNOTATION:PsiAnnotationStub[@TA]\n" +
+           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:@A E]\n" +
            "        ANNOTATION:PsiAnnotationStub[@A]\n" +
            "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +

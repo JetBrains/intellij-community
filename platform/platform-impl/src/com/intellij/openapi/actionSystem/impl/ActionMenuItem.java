@@ -253,7 +253,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
               }
             }, Registry.intValue("actionSystem.typeAheadTimeAfterPopupAction"));
 
-            action.actionPerformed(event);
+            ActionUtil.performActionDumbAware(action, event);
             actionManager.queueActionPerformedEvent(action, myContext, event);
           } else {
             typeahead.setDone();

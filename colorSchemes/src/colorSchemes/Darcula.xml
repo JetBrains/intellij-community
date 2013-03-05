@@ -33,7 +33,7 @@
     <option name="NOTIFICATION_BACKGROUND" value="5c5c42" />
     <option name="READONLY_FRAGMENT_BACKGROUND" value="" />
     <option name="RECURSIVE_CALL_ATTRIBUTES" value="574300" />
-    <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
+    <option name="RIGHT_MARGIN_COLOR" value="323232" />
     <option name="SELECTED_INDENT_GUIDE" value="505050" />
     <option name="SELECTED_TEARLINE_COLOR" value="787878" />
     <option name="SELECTION_BACKGROUND" value="214283" />
@@ -894,17 +894,6 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
-    <option name="MAKO.SUBSTITUTION">
-      <value>
-        <option name="BACKGROUND" value="232364" />
-        <option name="EFFECT_TYPE" value="-1" />
-      </value>
-    </option>
-    <option name="MAKO.TAG">
-      <value>
-        <option name="EFFECT_TYPE" value="-1" />
-      </value>
-    </option>
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="ffffff" />
@@ -996,40 +985,6 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
-    <option name="PY.CLASS_DEFINITION">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="PY.DECORATOR">
-      <value>
-        <option name="FOREGROUND" value="bbb529" />
-        <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="PY.FUNC_DEFINITION">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="PY.KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="cc7832" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="PY.KEYWORD_ARGUMENT">
-      <value>
-        <option name="FOREGROUND" value="aa4926" />
-      </value>
-    </option>
-    <option name="PY.STRING.B">
-      <value>
-        <option name="FOREGROUND" value="a5c261" />
-      </value>
-    </option>
     <option name="REGEXP.BRACES">
       <value>
         <option name="FOREGROUND" value="e8bf6a" />
@@ -1088,31 +1043,6 @@
     <option name="REQUIRE_GEM_CALL">
       <value>
         <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="REST.BOLD">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="REST.FIXED">
-      <value>
-        <option name="BACKGROUND" value="a3a08" />
-      </value>
-    </option>
-    <option name="REST.INLINE">
-      <value>
-        <option name="BACKGROUND" value="236423" />
-      </value>
-    </option>
-    <option name="REST.INTERPRETED">
-      <value>
-        <option name="BACKGROUND" value="15463c" />
-      </value>
-    </option>
-    <option name="REST.ITALIC">
-      <value>
-        <option name="FONT_TYPE" value="2" />
       </value>
     </option>
     <option name="RHTML_COMMENT_ID">

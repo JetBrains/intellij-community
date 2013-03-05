@@ -33,6 +33,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,6 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class StatisticsPanel implements DataProvider {
   private JPanel myContentPane;
 
   private final StatisticsTableModel myTableModel;
-  private final List<PropagateSelectionHandler> myPropagateSelectionHandlers = new ArrayList<PropagateSelectionHandler>();
+  private final List<PropagateSelectionHandler> myPropagateSelectionHandlers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
   private final TestFrameworkRunningModel myFrameworkRunningModel;
 

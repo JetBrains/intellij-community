@@ -31,6 +31,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -70,7 +71,7 @@ public class PopupChooserBuilder {
   private Component[] myFocusOwners = new Component[0];
   private boolean myCancelKeyEnabled = true;
 
-  ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
+  private final List<JBPopupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private String myAd;
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
