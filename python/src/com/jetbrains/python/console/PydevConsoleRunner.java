@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.ProcessRunner;
@@ -82,7 +83,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   private PydevConsoleExecuteActionHandler myConsoleExecuteActionHandler;
-  private List<ConsoleListener> myConsoleListeners = Lists.newArrayList();
+  private List<ConsoleListener> myConsoleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final PyConsoleType myConsoleType;
   private Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
