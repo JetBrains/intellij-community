@@ -38,10 +38,9 @@ public final class ModifierFlags {
   public static final int STRICTFP_MASK = 0x0800;
   public static final int PACKAGE_LOCAL_MASK = 0x1000;
 
-  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP;
-  public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP;
+  public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  public static final TObjectIntHashMap<IElementType> KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<IElementType>();
   static {
-    NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PUBLIC, PUBLIC_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PRIVATE, PRIVATE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PROTECTED, PROTECTED_MASK);
@@ -56,7 +55,6 @@ public final class ModifierFlags {
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.STRICTFP, STRICTFP_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_LOCAL_MASK);
 
-    KEYWORD_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<IElementType>();
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PUBLIC_KEYWORD, PUBLIC_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PRIVATE_KEYWORD, PRIVATE_MASK);
     KEYWORD_TO_MODIFIER_FLAG_MAP.put(JavaTokenType.PROTECTED_KEYWORD, PROTECTED_MASK);

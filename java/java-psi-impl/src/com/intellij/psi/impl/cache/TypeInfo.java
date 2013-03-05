@@ -33,7 +33,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,31 +50,33 @@ import static com.intellij.util.BitUtil.isSet;
 public class TypeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.TypeInfo");
 
-  private static final TIntObjectHashMap<String> ourIndexFrequentType = new TIntObjectHashMap<String>();
+  private static final String[] ourIndexFrequentType = new String[16];
   private static final TObjectIntHashMap<String> ourFrequentTypeIndex = new TObjectIntHashMap<String>();
 
-  private static void registerFrequentType(String typeText) {
-    int index = ourFrequentTypeIndex.size() + 1;
-    assert index > 0 && index < 15 : "reserved: " + index + " (" + typeText + ")";
-    ourFrequentTypeIndex.put(typeText, index);
-    ourIndexFrequentType.put(index, typeText);
+  private static void registerFrequentType(@NotNull String... typeText) {
+    for (int i = 0; i < typeText.length; i++) {
+      String type = typeText[i];
+      ourIndexFrequentType[i] = type;
+      ourFrequentTypeIndex.put(type, i);
+    }
   }
 
   static {
-    registerFrequentType("boolean");
-    registerFrequentType("byte");
-    registerFrequentType("char");
-    registerFrequentType("double");
-    registerFrequentType("float");
-    registerFrequentType("int");
-    registerFrequentType("long");
-    registerFrequentType("null");
-    registerFrequentType("short");
-    registerFrequentType("void");
-    registerFrequentType("Object");
-    registerFrequentType(CommonClassNames.JAVA_LANG_OBJECT);
-    registerFrequentType("String");
-    registerFrequentType(CommonClassNames.JAVA_LANG_STRING);
+    registerFrequentType(""
+    ,"boolean"
+    ,"byte"
+    ,"char"
+    ,"double"
+    ,"float"
+    ,"int"
+    ,"long"
+    ,"null"
+    ,"short"
+    ,"void"
+    ,"Object"
+    ,CommonClassNames.JAVA_LANG_OBJECT
+    ,"String"
+    ,CommonClassNames.JAVA_LANG_STRING);
   }
 
   private static final int NULL_FLAGS = 0x0F;
@@ -166,7 +167,7 @@ public class TypeInfo {
 
       assert typeElement != null : element + " in " + parentStub;
 
-      isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
+      isEllipsis = LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null;
 
       while (true) {
         LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
@@ -221,7 +222,7 @@ public class TypeInfo {
     byte arrayCount = isSet(flags, HAS_ARRAY_COUNT) ? record.readByte() : 0;
     boolean hasEllipsis = isSet(flags, HAS_ELLIPSIS);
 
-    StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType.get(frequentIndex));
+    StringRef text = frequentIndex == 0 ? record.readName() : StringRef.fromString(ourIndexFrequentType[frequentIndex]);
 
     List<PsiAnnotationStub> annotationStubs;
     if (hasAnnotations) {
