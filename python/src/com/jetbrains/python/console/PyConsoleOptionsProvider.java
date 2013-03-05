@@ -96,6 +96,9 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     public String myModuleName = null;
     public Map<String, String> myEnvs = Maps.newHashMap();
     public String myWorkingDirectory = "";
+    public boolean myAddContentRoots = true;
+    public boolean myAddSourceRoots;
+
     @Transient
     private Project myProject;
 
@@ -114,13 +117,18 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
       myUseModuleSdk = form.isUseModuleSdk();
       myModuleName = form.getModule() == null ? null : form.getModule().getName();
       myWorkingDirectory = form.getWorkingDirectory();
+
+      myAddContentRoots = form.addContentRoots();
+      myAddSourceRoots = form.addSourceRoots();
     }
 
     public boolean isModified(AbstractPyCommonOptionsForm form) {
       return !ComparatorUtil.equalsNullable(mySdkHome, form.getSdkHome()) ||
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
-             myUseModuleSdk != form.isUseModuleSdk()
+             myUseModuleSdk != form.isUseModuleSdk() ||
+             myAddContentRoots != form.addContentRoots() ||
+             myAddSourceRoots != form.addSourceRoots()
              || !ComparatorUtil.equalsNullable(myModuleName, form.getModule() == null ? null : form.getModule().getName())
              || !myWorkingDirectory.equals(form.getWorkingDirectory());
     }
@@ -130,6 +138,8 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
       form.setUseModuleSdk(myUseModuleSdk);
+      form.addContentRoots(myAddContentRoots);
+      form.addSourceRoots(myAddSourceRoots);
       boolean moduleWasAutoselected = false;
       if (form.isUseModuleSdk() != myUseModuleSdk) {
         myUseModuleSdk = form.isUseModuleSdk();
@@ -162,6 +172,15 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     public Map<String, String> getEnvs() {
       return myEnvs;
     }
+
+    public boolean addContentRoots() {
+      return myAddContentRoots;
+    }
+
+    public boolean addSourceRoots() {
+      return myAddSourceRoots;
+    }
+
   }
 }
 

@@ -12,19 +12,19 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author yole
  */
 public class PythonModuleBuilderBase extends ModuleBuilder {
-  private final List<Runnable> mySdkChangedListeners = new ArrayList<Runnable>();
+  private final List<Runnable> mySdkChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final DirectoryProjectGenerator myGenerator;
   private Sdk mySdk;
 

@@ -148,14 +148,12 @@ public class PythonTask {
   }
 
   protected List<String> setupPythonPath() {
-    return setupPythonPath(true);
+    return setupPythonPath(true, true);
   }
 
-  protected List<String> setupPythonPath(final boolean addProjectRoot) {
+  protected List<String> setupPythonPath(final boolean addContent, final boolean addSource) {
     final List<String> pythonPath = Lists.newArrayList(PythonCommandLineState.getAddedPaths(mySdk));
-    if (addProjectRoot) {
-      pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule));
-    }
+    pythonPath.addAll(PythonCommandLineState.collectPythonPath(myModule, addContent, addSource));
     return pythonPath;
   }
 

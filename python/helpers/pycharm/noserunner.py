@@ -1,6 +1,13 @@
-import sys, shlex
-from utrunner import debug
+import sys
+
 from nose_utils import TeamcityPlugin
+
+from pycharm_run_utils import debug, import_system_module
+from pycharm_run_utils import adjust_sys_path
+
+adjust_sys_path(False)
+
+shlex = import_system_module("shlex")
 
 try:
   from nose.core import TestProgram

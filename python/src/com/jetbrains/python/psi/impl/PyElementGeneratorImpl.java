@@ -254,7 +254,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
                                           @NotNull LanguageLevel languageLevel) {
     String parameterText = name;
     if (annotation != null)
-      parameterText += " : " + annotation;
+      parameterText += ": " + annotation;
     if (defaultValue != null)
       parameterText += " = " + defaultValue;
 

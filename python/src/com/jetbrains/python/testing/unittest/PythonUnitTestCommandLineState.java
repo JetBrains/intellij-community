@@ -7,12 +7,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-
-import static com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER;
 
 /**
  * @author Leonid Shalupov
@@ -30,19 +26,6 @@ public class PythonUnitTestCommandLineState extends
   @Override
   protected String getRunner() {
     return UTRUNNER_PY;
-  }
-
-  @Override
-  protected Collection<String> collectPythonPath() {
-    List<String> pythonPath = new ArrayList<String>(super.collectPythonPath());
-    // the first entry is the helpers path; add script directory as second entry
-    if (myConfig.getTestType() == TEST_FOLDER) {
-      pythonPath.add(1, myConfig.getFolderName());
-    }
-    else {
-      pythonPath.add(1, new File(myConfig.getScriptName()).getParent());
-    }
-    return pythonPath;
   }
 
   protected List<String> getTestSpecs() {

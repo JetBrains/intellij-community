@@ -1,12 +1,11 @@
 package com.jetbrains.python.console.pydev;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.Vector;
 
 /**
  * @author traff
@@ -23,7 +22,7 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
    */
   public volatile boolean waitingForInput;
 
-  private List<ConsoleCommunicationListener> communicationListeners = Lists.newArrayList();
+  private final List<ConsoleCommunicationListener> communicationListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
 
   public AbstractConsoleCommunication(Project project) {

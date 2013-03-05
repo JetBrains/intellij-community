@@ -71,16 +71,17 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     parameter = (PyParameter)parameter.replace(namedParameter);
     parameter = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(parameter);
     editor.getCaretModel().moveToOffset(parameter.getTextOffset());
-    PyAnnotation annotation = namedParameter.getAnnotation();
-    assert annotation != null;
-    PyExpression annotationValue = annotation.getValue();
+    PyAnnotation annotation = parameter instanceof PyNamedParameter? ((PyNamedParameter)parameter).getAnnotation() : null;
+    if (annotation != null) {
+      PyExpression annotationValue = annotation.getValue();
 
-    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
-    int replacementStart = annotation.getStartOffsetInParent() + annotationValue.getStartOffsetInParent();
-    builder.replaceRange(TextRange.create(replacementStart,
-                                          replacementStart + annotationValue.getTextLength()), PyNames.OBJECT);
-    Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-    TemplateManager.getInstance(project).startTemplate(editor, template);
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parameter);
+      int replacementStart = annotation.getStartOffsetInParent() + annotationValue.getStartOffsetInParent();
+      builder.replaceRange(TextRange.create(replacementStart,
+                                            replacementStart + annotationValue.getTextLength()), PyNames.OBJECT);
+      Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+      TemplateManager.getInstance(project).startTemplate(editor, template);
+    }
   }
 
   private void annotateReturnType(Project project, PsiElement resolved) {

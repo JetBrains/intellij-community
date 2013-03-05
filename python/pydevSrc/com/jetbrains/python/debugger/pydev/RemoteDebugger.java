@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
@@ -54,7 +55,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
 
-  private final List<RemoteDebuggerCloseListener> myCloseListeners = Lists.newArrayList();
+  private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DebuggerReader myDebuggerReader;
 
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {

@@ -49,6 +49,9 @@ public class PyNegateComparisonIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
 
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);

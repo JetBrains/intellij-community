@@ -1,6 +1,9 @@
 from tcmessages import TeamcityServiceMessages
 import os
-import sys
+
+from pycharm_run_utils import adjust_sys_path
+
+adjust_sys_path(False)
 
 messages = TeamcityServiceMessages(prepend_linebreak=True)
 messages.testMatrixEntered()
@@ -15,7 +18,7 @@ def get_name(nodeid):
   return nodeid.split("::")[-1]
 
 def fspath_to_url(fspath):
-    return "file:///" + str(fspath).replace("\\", "/")
+  return "file:///" + str(fspath).replace("\\", "/")
 
 if PYVERSION > [1, 4, 0]:
   items = {}
@@ -74,7 +77,7 @@ if PYVERSION > [1, 4, 0]:
     elif report.failed:
       messages.testFailed(name, details=report.longrepr)
     elif report.when == "call":
-        messages.testFinished(name)
+      messages.testFinished(name)
 
   def pytest_sessionfinish(session, exitstatus):
     if current_suite:
@@ -113,7 +116,7 @@ else:
       fspath, lineno, msg = item.reportinfo()
       url = fspath_to_url(fspath)
       if lineno: url += ":" + str(lineno)
-  #    messages.testStarted(item.name, location=url)
+    #    messages.testStarted(item.name, location=url)
 
   def pytest_runtest_logreport(report):
     if report.item._args:

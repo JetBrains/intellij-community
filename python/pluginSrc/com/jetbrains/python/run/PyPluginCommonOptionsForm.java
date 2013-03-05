@@ -1,8 +1,8 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -16,12 +16,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -50,6 +50,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBLabel myWorkingDirectoryJBLabel;
   private JPanel myHideablePanel;
   private PathMappingsComponent myPathMappingsComponent;
+  private JBCheckBox myAddContentRootsCheckbox;
+  private JBCheckBox myAddSourceRootsCheckbox;
   private JComponent labelAnchor;
   private final HideableDecorator myDecorator;
 
@@ -235,4 +237,25 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myWorkingDirectoryJBLabel.setAnchor(anchor);
     myEnvsComponent.setAnchor(anchor);
   }
+
+  @Override
+  public boolean addContentRoots() {
+    return myAddContentRootsCheckbox.isSelected();
+  }
+
+  @Override
+  public boolean addSourceRoots() {
+    return myAddSourceRootsCheckbox.isSelected();
+  }
+
+  @Override
+  public void addContentRoots(boolean add) {
+    myAddContentRootsCheckbox.setSelected(add);
+  }
+
+  @Override
+  public void addSourceRoots(boolean add) {
+    myAddSourceRootsCheckbox.setSelected(add);
+  }
+
 }

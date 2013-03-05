@@ -13,6 +13,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -42,6 +43,10 @@ public class PyFlipComparisonIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
     while (binaryExpression != null) {

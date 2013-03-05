@@ -37,7 +37,10 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -331,7 +334,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected Collection<String> collectPythonPath() {
     final Module module = myConfig.getModule();
-    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module));
+    Set<String> pythonPath = Sets.newHashSet(collectPythonPath(module, myConfig.addContentRoots(), myConfig.addSourceRoots()));
 
     if (isDebug() && getSdkFlavor() instanceof JythonSdkFlavor) { //that fixes Jython problem changing sys.argv on execfile, see PY-8164
       pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));
@@ -343,18 +346,34 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   public static Collection<String> collectPythonPath(@Nullable Module module) {
-    return collectPythonPath(module, true);
+    return collectPythonPath(module, true, true);
   }
 
   @NotNull
-  public static Collection<String> collectPythonPath(@Nullable Module module, final boolean addProjectRoots) {
+  public static Collection<String> collectPythonPath(@Nullable Module module, boolean addContentRoots,
+                                                     boolean addSourceRoots) {
     Collection<String> pythonPathList = Sets.newLinkedHashSet();
-    if (module != null && addProjectRoots) {
-      addLibrariesFromModule(module, pythonPathList);
+    if (module != null) {
       Set<Module> dependencies = new HashSet<Module>();
       ModuleUtil.getDependencies(module, dependencies);
+
+      if (addContentRoots) {
+        addRoots(pythonPathList, ModuleRootManager.getInstance(module).getContentRoots());
+        for (Module dependency : dependencies) {
+          addRoots(pythonPathList, ModuleRootManager.getInstance(dependency).getContentRoots());
+        }
+      }
+      if (addSourceRoots) {
+        addRoots(pythonPathList, ModuleRootManager.getInstance(module).getSourceRoots());
+        for (Module dependency : dependencies) {
+          addRoots(pythonPathList, ModuleRootManager.getInstance(dependency).getSourceRoots());
+        }
+      }
+
+      addLibrariesFromModule(module, pythonPathList);
+      addRootsFromModule(module, pythonPathList);
       for (Module dependency : dependencies) {
-        addLibrariesFromModule(module, pythonPathList);
+        addLibrariesFromModule(dependency, pythonPathList);
         addRootsFromModule(dependency, pythonPathList);
       }
     }
@@ -378,10 +397,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void addRootsFromModule(Module module, Collection<String> pythonPathList) {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    addRoots(pythonPathList, moduleRootManager.getContentRoots());
-    addRoots(pythonPathList, moduleRootManager.getSourceRoots());
 
+    // for Jython
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (extension != null) {
       final VirtualFile path = extension.getCompilerOutputPath();
@@ -394,6 +411,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
     }
 
+    //additional paths from facets (f.e. buildout)
     final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
     for (Facet facet : facets) {
       if (facet instanceof PythonPathContributingFacet) {

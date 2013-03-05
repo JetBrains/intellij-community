@@ -1,10 +1,19 @@
-from tcunittest import TeamcityTestRunner
-from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
-import unittest
-from django.test.testcases import TestCase
-from tcmessages import TeamcityServiceMessages
-import django
 import sys
+
+from tcunittest import TeamcityTestRunner
+from tcmessages import TeamcityServiceMessages
+
+from pycharm_run_utils import adjust_django_sys_path
+from pycharm_run_utils import import_system_module
+
+adjust_django_sys_path()
+unittest = import_system_module("unittest")
+
+from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
+from django.test.testcases import TestCase
+from django.utils import unittest
+from django import VERSION
+
 
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
@@ -83,9 +92,9 @@ class DjangoTeamcityTestRunner(BaseRunner):
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
     if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_RUNNER:
       return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
-                   extra_tests)
+        extra_tests)
     return super(DjangoTeamcityTestRunner, self).run_tests(test_labels,
-                extra_tests, **kwargs)
+      extra_tests, **kwargs)
 
 
 def partition_suite(suite, classes, bins):
@@ -148,7 +157,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[],
   Returns the number of tests that failed.
   """
   TeamcityServiceMessages(sys.stdout).testMatrixEntered()
-  if django.VERSION[1] > 1:
+  if VERSION[1] > 1:
     return DjangoTeamcityTestRunner().run_tests(test_labels,
       extra_tests=extra_tests, **kwargs)
 

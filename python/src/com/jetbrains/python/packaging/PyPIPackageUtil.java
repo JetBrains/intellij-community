@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.net.HttpConfigurable;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +24,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLDecoder;
+import java.net.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -216,7 +214,6 @@ public class PyPIPackageUtil {
           }
         };
 
-    URL repositoryUrl = new URL(PYPI_LIST_URL);
 
     // Create a trust manager that does not validate certificate
     TrustManager[] trustAllCerts = new TrustManager[]{new PyPITrustManager()};
@@ -225,7 +222,9 @@ public class PyPIPackageUtil {
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, trustAllCerts, new SecureRandom());
 
-      final URLConnection connection = repositoryUrl.openConnection();
+      final HttpConfigurable settings = HttpConfigurable.getInstance();
+      final URLConnection connection = settings.openConnection(PYPI_LIST_URL);
+
       if (connection instanceof HttpsURLConnection) {
         ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
       }
@@ -307,7 +306,8 @@ public class PyPIPackageUtil {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
 
-        con = url.openConnection();
+        final HttpConfigurable settings = HttpConfigurable.getInstance();
+        con = settings.openConnection(PYPI_LIST_URL);
         if (con instanceof HttpsURLConnection) {
           ((HttpsURLConnection)con).setSSLSocketFactory(sslContext.getSocketFactory());
         }

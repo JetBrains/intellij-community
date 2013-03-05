@@ -1,27 +1,17 @@
-import os
-import imp
 import sys
-import types
-import re
-from tcmessages import TeamcityServiceMessages
+import imp
 from tcunittest import TeamcityTestRunner
-
 from nose_helper import TestLoader, ContextSuite
+from pycharm_run_utils import import_system_module
+from pycharm_run_utils import adjust_sys_path
+from pycharm_run_utils import debug, getModuleName, PYTHON_VERSION_MAJOR
 
-PYTHON_VERSION_MAJOR = sys.version_info[0]
-PYTHON_VERSION_MINOR = sys.version_info[1]
+adjust_sys_path()
 
-ENABLE_DEBUG_LOGGING = False
-if os.getenv("UTRUNNER_ENABLE_DEBUG_LOGGING"):
-  ENABLE_DEBUG_LOGGING = True
-
-def debug(what):
-  if ENABLE_DEBUG_LOGGING:
-    sys.stdout.writelines(str(what) + '\n')
+os = import_system_module("os")
+re = import_system_module("re")
 
 modules = {}
-def getModuleName(prefix, cnt):
-  return prefix + "%" + str(cnt)
 
 def loadSource(fileName):
   baseName = os.path.basename(fileName)
@@ -30,7 +20,7 @@ def loadSource(fileName):
   # for users wanted to run unittests under django
   #because of django took advantage of module name
   settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
-  if settings_file and moduleName=="models":
+  if settings_file and moduleName == "models":
     baseName = os.path.realpath(fileName)
     moduleName = ".".join((baseName.split(os.sep)[-2], "models"))
 
@@ -54,7 +44,7 @@ def walkModules(modulesAndPattern, dirname, names):
       if name.endswith(".py") and prog.match(name):
         modules.append(loadSource(os.path.join(dirname, name)))
 
-def loadModulesFromFolderRec(folder, pattern="test.*"):
+def loadModulesFromFolderRec(folder, pattern = "test.*"):
   modules = []
   if PYTHON_VERSION_MAJOR == 3:
     prog_list = [re.compile(pat.strip()) for pat in pattern.split(',')]
@@ -77,6 +67,7 @@ def setLoader(module):
   try:
     module.__getattribute__('unittest2')
     import unittest2
+
     testLoader = unittest2.TestLoader()
     all = unittest2.TestSuite()
   except:
@@ -86,6 +77,7 @@ if __name__ == "__main__":
   arg = sys.argv[-1]
   if arg == "true":
     import unittest
+
     testLoader = unittest.TestLoader()
     all = unittest.TestSuite()
     pure_unittest = True
@@ -129,24 +121,25 @@ if __name__ == "__main__":
       if pure_unittest:
         all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
       else:
-        all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])), getattr(module, a[1]))
+        all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])),
+          getattr(module, a[1]))
     else:
       # From method in class or from function
-      debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
+      debug("/ from method " + a[2] + " in testcase " + a[1] + " in " + a[0])
       module = loadSource(a[0])
       setLoader(module)
 
       if a[1] == "":
-          # test function, not method
-          all.addTest(testLoader.makeTest(getattr(module, a[2])))
+        # test function, not method
+        all.addTest(testLoader.makeTest(getattr(module, a[2])))
       else:
-          testCaseClass = getattr(module, a[1])
-          try:
-              all.addTest(testCaseClass(a[2]))
-          except:
-              # class is not a testcase inheritor
-              all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2]), testCaseClass))
-
+        testCaseClass = getattr(module, a[1])
+        try:
+          all.addTest(testCaseClass(a[2]))
+        except:
+          # class is not a testcase inheritor
+          all.addTest(
+            testLoader.makeTest(getattr(testCaseClass, a[2]), testCaseClass))
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")
   TeamcityTestRunner().run(all, **options)

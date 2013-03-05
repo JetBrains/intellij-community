@@ -128,6 +128,10 @@ public class ImportFromToImportIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
     info.myModuleReference = null;
     final PsiElement position = file.findElementAt(editor.getCaretModel().getOffset());

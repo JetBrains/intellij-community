@@ -13,6 +13,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -52,7 +53,7 @@ public class PyPackagesPanel extends JPanel {
   private final PyPackagesNotificationPanel myNotificationArea;
   private boolean myHasDistribute;
   private boolean myHasPip = true;
-  private final List<Consumer<Sdk>> myPathChangedListeners = new ArrayList<Consumer<Sdk>>();
+  private final List<Consumer<Sdk>> myPathChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Set<String> currentlyInstalling = new HashSet<String>();
 
   public PyPackagesPanel(Project project, PyPackagesNotificationPanel area) {
