@@ -1773,6 +1773,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
+    if (typeDefinition.isAnnotationType() && typeDefinition.getContainingClass() != null) {
+      holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("annotation.type.cannot.be.inner"));
+    }
+
     checkDuplicateClass(typeDefinition, holder);
 
     checkCyclicInheritance(holder, typeDefinition);
