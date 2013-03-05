@@ -549,14 +549,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
-    PsiIdentifier identifier = variable.getNameIdentifier();
-    assert identifier != null : variable;
-    String name = variable.getName();
     boolean isIncorrect = false;
+    PsiElement declarationScope;
     if (variable instanceof PsiLocalVariable ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement ||
-        variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+        variable instanceof PsiParameter &&
+        ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
+          declarationScope instanceof PsiForeachStatement ||
+          declarationScope instanceof PsiLambdaExpression)) {
       @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
@@ -565,6 +564,8 @@ public class HighlightUtil extends HighlightUtilBase {
           return (var instanceof PsiLocalVariable || var instanceof PsiParameter) && super.check(var, state);
         }
       };
+      PsiIdentifier identifier = variable.getNameIdentifier();
+      assert identifier != null : variable;
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (scope instanceof PsiResourceList && proc.size() == 0) {
         scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
@@ -578,7 +579,7 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiField field = (PsiField)variable;
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
-      PsiField fieldByName = aClass.findFieldByName(name, false);
+      PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
       if (fieldByName != null && fieldByName != field) {
         isIncorrect = true;
       }
@@ -589,7 +590,7 @@ public class HighlightUtil extends HighlightUtilBase {
       for (PsiElement child : children) {
         if (child instanceof PsiVariable) {
           if (child.equals(variable)) continue;
-          if (name.equals(((PsiVariable)child).getName())) {
+          if (variable.getName().equals(((PsiVariable)child).getName())) {
             isIncorrect = true;
             break;
           }
@@ -598,7 +599,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     if (isIncorrect) {
-      String description = JavaErrorMessages.message("variable.already.defined", name);
+      String description = JavaErrorMessages.message("variable.already.defined", variable.getName());
+      PsiIdentifier identifier = variable.getNameIdentifier();
+      assert identifier != null : variable;
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
       if (variable instanceof PsiLocalVariable) {
@@ -1255,8 +1258,8 @@ public class HighlightUtil extends HighlightUtilBase {
   public static HighlightInfo checkSwitchSelectorType(@NotNull PsiSwitchStatement statement) {
     final PsiExpression expression = statement.getExpression();
     HighlightInfo errorResult = null;
-    if (expression != null && expression.getType() != null) {
-      PsiType type = expression.getType();
+    PsiType type = expression == null ? null : expression.getType();
+    if (type != null) {
       if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
         String message =
           JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), formatType(type));
@@ -1392,9 +1395,8 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  private static HighlightInfo thisNotFoundInInterfaceInfo(PsiExpression expr) {
-    return HighlightInfo
-      .newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip("Cannot find symbol variable this").create();
+  private static HighlightInfo thisNotFoundInInterfaceInfo(@NotNull PsiExpression expr) {
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip("Cannot find symbol variable this").create();
   }
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,
@@ -2268,7 +2270,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (thenType == null || elseType == null) return null;
     if (conditionalExpression.getType() == null) {
       // cannot derive type of conditional expression
-      // elsetype will never be castable to thentype, so no quick fix here
+      // elseType will never be castable to thenType, so no quick fix here
       return createIncompatibleTypeHighlightInfo(thenType, elseType, expression.getTextRange(), 0);
     }
     return null;
