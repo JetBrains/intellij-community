@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -198,6 +199,22 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     type 'Abcde '
     myFixture.checkResult 'import foo.Abcdefg\n\nAbcdefg <caret>'
   }
+
+  public void "test two non-imported classes when space does not select first autopopup item"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+
+    myFixture.addClass("package foo; public class Abcdefg {}")
+    myFixture.addClass("package bar; public class Abcdefg {}")
+    myFixture.configureByText 'a.groovy', 'class Foo extends <caret>'
+    type 'Abcde'
+    assert lookup.items.size() == 2
+    edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
+    type ' '
+    myFixture.checkResult '''import bar.Abcdefg
+
+class Foo extends Abcdefg <caret>'''
+  }
+
 
   public void testTwoNonImportedClasses() {
     myFixture.addClass("package foo; public class Abcdefg {}")
