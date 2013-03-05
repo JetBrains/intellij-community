@@ -253,20 +253,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     });
   }
 
-  public void removeBuildFile() {
-    final AntBuildFile buildFile = getCurrentBuildFile();
-    if (buildFile == null) {
-      return;
-    }
-    final String fileName = buildFile.getPresentableUrl();
-    final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
-                                                AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
-    if (result != 0) {
-      return;
-    }
-    myConfig.removeBuildFile(buildFile);
-  }
-
   public void removeSelectedBuildFiles() {
     final List<AntBuildFileNodeDescriptor> selectedFiles = TreeUtil.collectSelectedObjectsOfType(myTree, AntBuildFileNodeDescriptor.class);
     if(selectedFiles.isEmpty()){
@@ -737,7 +723,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
           if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
             final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
             if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
-              removeBuildFile();
+              removeSelectedBuildFiles();
               return;
             }
           }
