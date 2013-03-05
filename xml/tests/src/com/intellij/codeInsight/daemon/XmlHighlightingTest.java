@@ -953,6 +953,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{
       new RequiredAttributesInspection(),
       new XmlDuplicatedIdInspection(),
+      new XmlInvalidIdInspection(),
       new CheckDtdReferencesInspection(),
       new XmlUnboundNsPrefixInspection(),
       new XmlPathReferenceInspection()
