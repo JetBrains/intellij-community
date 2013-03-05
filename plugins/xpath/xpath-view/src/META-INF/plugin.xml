@@ -213,11 +213,6 @@
       <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" keymap="$default" />
     </action>
 
-    <!-- Toolbar -->
-    <reference id="XPathView.Actions.Evaluate">
-      <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
-    </reference>
-
     <group id="XPathView.MainMenu.Search">
       <separator />
       <reference id="XPathView.Actions.Evaluate" />
