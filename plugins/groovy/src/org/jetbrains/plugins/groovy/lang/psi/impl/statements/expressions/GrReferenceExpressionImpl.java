@@ -38,7 +38,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -742,22 +741,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
-  }
-
-  public String getName() {
-    return getReferenceName();
-  }
-
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    PsiElement nameElement = getReferenceNameElement();
-    if (nameElement == null) throw new IncorrectOperationException("ref has no name element");
-
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(name).getNode();
-    LOG.assertTrue(newNameNode != null && node != null);
-    node.getTreeParent().replaceChild(node, newNameNode);
-
-    return this;
   }
 
   @NotNull

@@ -972,7 +972,7 @@ public class ExpressionGenerator extends Generator {
         PsiUtil.getContextClass(referenceExpression) instanceof GroovyScriptClass) {
       final GrExpression thisExpr = factory.createExpressionFromText("this", referenceExpression);
       thisExpr.accept(this);
-      builder.append(".getBinding().getProperty(\"").append(referenceExpression.getName()).append("\")");
+      builder.append(".getBinding().getProperty(\"").append(referenceExpression.getReferenceName()).append("\")");
       return;
     }
 

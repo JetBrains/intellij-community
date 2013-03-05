@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
-    if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getName() != null) {
+    if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getReferenceName() != null) {
       if (PsiUtil.isThisReference(expr)) {
         possibleNames.add(validator.validateName("thisInstance", true));
       }
@@ -101,7 +101,7 @@ public class GroovyNameSuggestionUtil {
         possibleNames.add(validator.validateName("superInstance", true));
       }
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
-      String name = refExpr.getName();
+      String name = refExpr.getReferenceName();
       if (name != null && name.toUpperCase().equals(name)) {
         possibleNames.add(validator.validateName(name.toLowerCase(), true));
       } else {

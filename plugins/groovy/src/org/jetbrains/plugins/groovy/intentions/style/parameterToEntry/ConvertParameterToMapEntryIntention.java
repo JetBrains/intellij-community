@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                 if (resolved instanceof PsiMethod &&
                     GroovyPropertyUtils.isSimplePropertyGetter(((PsiMethod)resolved)) &&
                     //check for explicit getter call
-                    ((PsiMethod)resolved).getName().equals(refExpr.getName())) {
+                    ((PsiMethod)resolved).getName().equals(refExpr.getReferenceName())) {
                   isExplicitGetterCall = true;
                 }
               }
@@ -239,7 +239,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               PsiElement parent = refExpr.getParent();
               LOG.assertTrue(parent instanceof GrCall);
               parent = parent.getParent();
-              if (parent instanceof GrReferenceExpression && "call".equals(((GrReferenceExpression)parent).getName())) {
+              if (parent instanceof GrReferenceExpression && "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
                 parent = parent.getParent();
               }
               if (parent instanceof GrCall) {

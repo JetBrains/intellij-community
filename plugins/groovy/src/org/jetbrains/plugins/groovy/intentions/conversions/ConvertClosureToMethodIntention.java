@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class ConvertClosureToMethodIntention extends Intention {
             StringBuilder newRefText = new StringBuilder();
             if (parent instanceof GrReferenceExpression &&
                 usage == ((GrReferenceExpression)parent).getQualifier() &&
-                "call".equals(((GrReferenceExpression)parent).getName())) {
+                "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
               newRefText.append(usage.getText());
               usage = parent;
             }
