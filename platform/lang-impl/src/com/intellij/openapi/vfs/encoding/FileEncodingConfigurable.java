@@ -45,7 +45,6 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 public class FileEncodingConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
-  private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
   private final Project myProject;
   private EncodingFileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -98,7 +97,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
       public void update(final AnActionEvent e) {
         getTemplatePresentation().setEnabled(true);
         Charset charset = selected.get();
-        getTemplatePresentation().setText(charset == null ? SYSTEM_DEFAULT : charset.displayName());
+        getTemplatePresentation().setText(charset == null ? IdeBundle.message("encoding.name.system.default") : charset.displayName());
       }
 
       @Override
@@ -170,7 +169,12 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     Charset projectCharset = mySelectedProjectCharset.get();
 
     Map<VirtualFile,Charset> result = myTreeView.getValues();
-    result.put(null, projectCharset);
+    if (projectCharset == null) {
+      result.remove(null);
+    }
+    else {
+      result.put(null, projectCharset);
+    }
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
     encodingManager.setMapping(result);
     encodingManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles.get());
