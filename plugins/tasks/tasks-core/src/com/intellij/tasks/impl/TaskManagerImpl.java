@@ -363,9 +363,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         info.id = changeList.getId();
       }
       myChangeListManager.setDefaultChangeList(changeList);
-      return;
     }
-    if (createChangelist) {
+    else if (createChangelist) {
       String name = getChangelistName(origin);
       String comment = TaskUtil.getChangeListComment(origin);
       createChangeList(task, name, comment);
