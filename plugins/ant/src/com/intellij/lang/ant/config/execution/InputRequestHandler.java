@@ -53,14 +53,17 @@ class InputRequestHandler {
 
   private static String askUser(SegmentReader reader, Project project) {
     String prompt = reader.readLimitedString();
+    String defaultValue = reader.readLimitedString();
     String[] choices = reader.readStringArray();
     MessagesEx.BaseInputInfo question;
     if (choices.length == 0) {
-      question = new MessagesEx.InputInfo(project);
+      MessagesEx.InputInfo inputInfo = new MessagesEx.InputInfo(project);
+      inputInfo.setDefaultValue(defaultValue);
+      question = inputInfo;
     }
     else {
       MessagesEx.ChoiceInfo choiceInfo = new MessagesEx.ChoiceInfo(project);
-      choiceInfo.setChoices(choices, 0);
+      choiceInfo.setChoices(choices, defaultValue);
       question = choiceInfo;
     }
     question.setIcon(Messages.getQuestionIcon());

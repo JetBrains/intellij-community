@@ -127,7 +127,11 @@ public class MinusculeMatcher implements Matcher {
     int nextHumpStart = 0;
     for (TextRange range : iterable) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+        boolean isHumpStart = false;
         while (nextHumpStart <= i) {
+          if (nextHumpStart == i) {
+            isHumpStart = true;
+          }
           nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
           if (first != range) {
             humpIndex++;
@@ -141,7 +145,9 @@ public class MinusculeMatcher implements Matcher {
           break;
         }
         if (c == myPattern[p]) {
-          matchingCase += isUpperCase[p] ? 50 : i == range.getStartOffset() || Character.isUpperCase(c) ? 1 : 0;
+          matchingCase += isUpperCase[p] ? 50 : isHumpStart ? 1 : 0;
+        } else if (isHumpStart) {
+          matchingCase -= 20;
         }
       }
     }

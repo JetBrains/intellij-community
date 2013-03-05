@@ -366,7 +366,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       String name = namedElement.getName();
       if (name != null) {
         String newName = qualifier instanceof GrReferenceExpression ?
-                         InlineMethodConflictSolver.suggestNewName(name, method, call, ((GrReferenceExpression)qualifier).getName()) :
+                         InlineMethodConflictSolver.suggestNewName(name, method, call, ((GrReferenceExpression)qualifier).getReferenceName()) :
                          InlineMethodConflictSolver.suggestNewName(name, method, call);
         if (!newName.equals(namedElement.getName())) {
           final Collection<PsiReference> refs = ReferencesSearch.search(namedElement, GlobalSearchScope.projectScope(namedElement.getProject()), false).findAll();

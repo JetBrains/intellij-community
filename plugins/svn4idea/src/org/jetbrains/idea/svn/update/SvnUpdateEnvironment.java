@@ -106,7 +106,11 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final SvnUpdateClientI updateClient;
       // do not do from command line for switch now
       if (! isSwitch && SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
-          Svn17Detector.is17(myVcs.getProject(), root) && SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol())) {
+          Svn17Detector.is17(myVcs.getProject(), root) && (
+          SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) ||
+          SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol())
+          )) {
+          //|| sourceUrl.getProtocol().contains("svn+"))) {
         updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
       } else {
         updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());

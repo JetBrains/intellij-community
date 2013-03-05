@@ -651,10 +651,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       LogicalPosition blockEnd = myEditor.getSelectionModel().getBlockEnd();
       assert blockStart != null && blockEnd != null;
 
-      for (int line = blockStart.line; line <= blockEnd.line; line++) {
-        int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
+      int minLine = Math.min(blockStart.line, blockEnd.line);
+      int maxLine = Math.max(blockStart.line, blockEnd.line);
+      int minColumn = Math.min(blockStart.column, blockEnd.column);
+      int maxColumn = Math.max(blockStart.column, blockEnd.column);
+
+      int caretLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+
+      for (int line = minLine; line <= maxLine; line++) {
+        int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, minColumn));
         int start = bs - prefix;
-        int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
+        int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, maxColumn));
         if (start > end) {
           LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
                     "; blockStart=" + blockStart + "; blockEnd=" + blockEnd + "; line=" + line + "; len=" +
@@ -662,10 +669,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         document.replaceString(start, end, lookupString);
       }
-      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix);
-      LogicalPosition end = new LogicalPosition(blockEnd.line, start.column + lookupString.length());
+      LogicalPosition start = new LogicalPosition(minLine, minColumn - prefix);
+      LogicalPosition end = new LogicalPosition(maxLine, start.column + lookupString.length());
       myEditor.getSelectionModel().setBlockSelection(start, end);
-      myEditor.getCaretModel().moveToLogicalPosition(end);
+      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine, end.column));
     } else {
       EditorModificationUtil.deleteSelectedText(myEditor);
       final int caretOffset = myEditor.getCaretModel().getOffset();

@@ -15,17 +15,23 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
  */
-public class PsiFieldMember extends PsiElementClassMember<PsiField> implements EncapsulatableClassMember {
+public class PsiFieldMember extends PsiElementClassMember<PsiField> implements PropertyClassMember {
   private static final int FIELD_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
 
   public PsiFieldMember(final PsiField field) {
@@ -36,12 +42,46 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
     super(psiMember, substitutor, PsiFormatUtil.formatVariable(psiMember, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
+  @Nullable
+  @Override
+  public GenerationInfo generateGetter() throws IncorrectOperationException {
+    final GenerationInfo[] infos = generateGetters();
+    return infos != null && infos.length > 0 ? infos[0] : null;
+  }
+
+  @Nullable
+  @Override
+  public GenerationInfo[] generateGetters() throws IncorrectOperationException {
+    final PsiField field = getElement();
+    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
+  }
+
+  @Nullable
+  @Override
+  public GenerationInfo generateSetter() throws IncorrectOperationException {
+    final GenerationInfo[] infos = generateSetters();
+    return infos != null && infos.length > 0 ? infos[0] : null;
+  }
+
   @Override
   @Nullable
-  public PsiGenerationInfo generateGetter() {
-    PsiField field = getElement();
-    final PsiMethod method = createMethodIfNotExists(field, PropertyUtil.generateGetterPrototype(field));
-    return method != null ? new PsiGenerationInfo(method) : null;
+  public GenerationInfo[] generateSetters() {
+    final PsiField field = getElement();
+    if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
+      return null;
+    }
+    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+  }
+
+  private static GenerationInfo[] createGenerateInfos(PsiField field, PsiMethod[] prototypes) {
+    final List<GenerationInfo> methods = new ArrayList<GenerationInfo>();
+    for (PsiMethod prototype : prototypes) {
+      final PsiMethod method = createMethodIfNotExists(field, prototype);
+      if (method != null) {
+        methods.add(new PsiGenerationInfo(method));
+      }
+    }
+    return methods.isEmpty() ? null : methods.toArray(new GenerationInfo[methods.size()]);
   }
 
   @Nullable
@@ -60,16 +100,5 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements E
     else {
       return null;
     }
-  }
-
-  @Override
-  @Nullable
-  public PsiGenerationInfo generateSetter() {
-    PsiField field = getElement();
-    if (field.hasModifierProperty(PsiModifier.FINAL)) {
-      return null;
-    }
-    final PsiMethod method = createMethodIfNotExists(field, PropertyUtil.generateSetterPrototype(field));
-    return method == null ? null : new PsiGenerationInfo(method);
   }
 }

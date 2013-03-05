@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.proxy.CommonProxy;
+import com.intellij.util.proxy.JavaProxyProperty;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,7 +111,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     proxyTypeGroup.add(mySocks);
     myHTTP.setSelected(true);
 
-    final Boolean property = Boolean.getBoolean("java.net.useSystemProxies");
+    final Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
     if (Boolean.TRUE.equals(property)) {
       mySystemProxyDefined.setIcon(Messages.getWarningIcon());

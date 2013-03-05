@@ -1,6 +1,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
@@ -21,7 +22,7 @@ import java.util.Map;
 public class PathEnvironmentVariableUtil {
 
   public static final String PATH_ENV_VAR_NAME = "PATH";
-
+  private static final Logger LOG = Logger.getInstance(PathEnvironmentVariableUtil.class);
   private static final Map<String, String> ENVIRONMENT_VARIABLES;
   private static final String FIXED_MAC_PATH_VALUE;
 
@@ -35,7 +36,14 @@ public class PathEnvironmentVariableUtil {
     else {
       ENVIRONMENT_VARIABLES = envVars;
     }
-    FIXED_MAC_PATH_VALUE = calcFixedMacPathEnvVarValue();
+    String fixedPathValue = null;
+    try {
+      fixedPathValue = calcFixedMacPathEnvVarValue();
+    }
+    catch (Throwable t) {
+      LOG.error("Can't initialize class " + PathEnvironmentVariableUtil.class.getName(), t);
+    }
+    FIXED_MAC_PATH_VALUE = fixedPathValue;
   }
 
   private PathEnvironmentVariableUtil() {
@@ -50,6 +58,7 @@ public class PathEnvironmentVariableUtil {
     return FIXED_MAC_PATH_VALUE;
   }
 
+  @Nullable
   private static String calcFixedMacPathEnvVarValue() {
     if (SystemInfo.isMac) {
       final String originalPath = getOriginalPathEnvVarValue();

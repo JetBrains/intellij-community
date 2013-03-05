@@ -42,7 +42,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
   private final Set<Node> myRunningNodes = ContainerUtil.newHashSet();
-  private final List<SMTRunnerEventsListener> myEventsListeners = new ArrayList<SMTRunnerEventsListener>();
+  private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
   private final String myTestFrameworkName;

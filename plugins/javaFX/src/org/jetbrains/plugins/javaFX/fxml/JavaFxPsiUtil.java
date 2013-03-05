@@ -140,6 +140,10 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClassType getPropertyClassType(PsiElement field) {
+    return getPropertyClassType(field, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY);
+  }
+
+  public static PsiClassType getPropertyClassType(PsiElement field, final String superTypeFQN) {
     if (field instanceof PsiField) {
       final PsiType type = ((PsiField)field).getType();
       if (type instanceof PsiClassType) {
@@ -147,7 +151,7 @@ public class JavaFxPsiUtil {
         final PsiClass attributeClass = resolveResult.getElement();
         if (attributeClass != null) {
           final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
-            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
+            .findClass(superTypeFQN, attributeClass.getResolveScope());
           if (objectProperty != null) {
             final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
               .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());

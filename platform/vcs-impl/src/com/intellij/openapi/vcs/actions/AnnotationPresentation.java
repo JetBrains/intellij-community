@@ -22,12 +22,12 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -39,7 +39,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
   private final AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions;
   private SwitchAnnotationSourceAction mySwitchAction;
-  private final List<LineNumberListener> myPopupLineNumberListeners;
+  private final List<LineNumberListener> myPopupLineNumberListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   AnnotationPresentation(@NotNull final HighlightAnnotationsActions highlighting, @Nullable final AnnotationSourceSwitcher switcher,
                                 final EditorGutterComponentEx gutter,
@@ -47,7 +47,6 @@ class AnnotationPresentation implements TextAnnotationPresentation {
                                 final AnAction... actions) {
     myHighlighting = highlighting;
     mySwitcher = switcher;
-    myPopupLineNumberListeners = new LinkedList<LineNumberListener>();
 
     myActions = new ArrayList<AnAction>();
     myActions.add(Separator.getInstance());

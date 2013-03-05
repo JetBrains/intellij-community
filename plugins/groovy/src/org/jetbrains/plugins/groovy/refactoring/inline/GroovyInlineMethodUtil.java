@@ -86,13 +86,6 @@ public class GroovyInlineMethodUtil {
 
       PsiElement element = reference.getElement();
 
-      if (element.getContainingFile() instanceof GroovyFile) {
-        if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
-//        showErrorMessage("Other class support will be implemented soon", myProject);
-//        return null;
-        }
-      }
-
       if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
         String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
         showErrorMessage(message, project, editor);
@@ -110,19 +103,23 @@ public class GroovyInlineMethodUtil {
 
       GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
       if (hasBadReturns(method) && !isTailMethodCall(call)) {
-        String message = GroovyRefactoringBundle
-          .message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
+        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
         showErrorMessage(message, project, editor);
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
     }
-    if (method.getBlock() == null) {
-      String message;
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME);
-      } else {
-        message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
+    else {
+      if (hasBadReturns(method)) {
+        String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
+        showErrorMessage(message, project, editor);
+        return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
+    }
+
+    if (method.getBlock() == null) {
+      String message = method.hasModifierProperty(PsiModifier.ABSTRACT)
+                       ? GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME)
+                       : GroovyRefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
       showErrorMessage(message, project, editor);
       return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }

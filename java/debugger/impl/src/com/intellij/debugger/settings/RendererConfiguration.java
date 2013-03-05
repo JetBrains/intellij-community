@@ -22,17 +22,19 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.InternalIterator;
 import org.jdom.Element;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RendererConfiguration implements Cloneable, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
 
   private static final int VERSION = 8;
 
-  private List<NodeRenderer> myRepresentationNodes = new ArrayList<NodeRenderer>();
+  private List<NodeRenderer> myRepresentationNodes = new CopyOnWriteArrayList<NodeRenderer>();
   private final NodeRendererSettings myRendererSettings;
 
   protected RendererConfiguration(NodeRendererSettings rendererSettings) {
@@ -47,10 +49,13 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
-    result.myRepresentationNodes = new ArrayList<NodeRenderer>();
-    for (Iterator<NodeRenderer> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      result.addRenderer((NodeRenderer)iterator.next().clone());
+    result.myRepresentationNodes = new CopyOnWriteArrayList<NodeRenderer>();
+
+    final ArrayList<NodeRenderer> cloned = new ArrayList<NodeRenderer>();
+    for (NodeRenderer renderer : myRepresentationNodes) {
+      cloned.add((NodeRenderer)renderer.clone());
     }
+    result.setRenderers(cloned);
 
     return result;
   }
@@ -63,8 +68,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
-    for (Iterator<NodeRenderer> iterator = myRepresentationNodes.iterator(); iterator.hasNext();) {
-      NodeRenderer renderer = iterator.next();
+    for (NodeRenderer renderer : myRepresentationNodes) {
       element.addContent(myRendererSettings.writeRenderer(renderer));
     }
     element.setAttribute("VERSION", String.valueOf(VERSION));
@@ -86,34 +90,36 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
       return;
     }
 
-    List<Element> children = root.getChildren(NodeRendererSettings.RENDERER_TAG);
-
-    myRepresentationNodes.clear();
+    final List<Element> children = root.getChildren(NodeRendererSettings.RENDERER_TAG);
+    final List<NodeRenderer> renderers = new ArrayList<NodeRenderer>(children.size());
     for (Element nodeElement : children) {
       try {
-        addRenderer((NodeRenderer)myRendererSettings.readRenderer(nodeElement));
+        renderers.add((NodeRenderer)myRendererSettings.readRenderer(nodeElement));
       }
       catch (Exception e) {
         LOG.debug(e);
       }
     }
+    setRenderers(renderers);
   }
 
+  @TestOnly
   public void addRenderer(NodeRenderer renderer) {
     myRepresentationNodes.add(renderer);
   }
 
+  @TestOnly
   public void removeRenderer(NodeRenderer renderer) {
     myRepresentationNodes.remove(renderer);
   }
 
-  public void removeAllRenderers() {
+  public void setRenderers(Collection<NodeRenderer> renderers) {
     myRepresentationNodes.clear();
+    myRepresentationNodes.addAll(renderers);
   }
 
   public void iterateRenderers(InternalIterator<NodeRenderer> iterator) {
-    for (Iterator<NodeRenderer> it = myRepresentationNodes.iterator(); it.hasNext();) {
-      final NodeRenderer renderer = it.next();
+    for (final NodeRenderer renderer : myRepresentationNodes) {
       final boolean shouldContinue = iterator.visit(renderer);
       if (!shouldContinue) {
         break;

@@ -38,8 +38,8 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     String result = null;
     PsiElement element = findExpression(elementAtCaret);
     if (element == null) return null;
-    if (element instanceof PsiField) {
-      result = qualifyEnumConstant(element, ((PsiField)element).getName());
+    if (element instanceof PsiVariable) {
+      result = qualifyEnumConstant(element, ((PsiVariable)element).getName());
     }
     else if (element instanceof PsiMethod) {
       result = ((PsiMethod)element).getName() + "()";

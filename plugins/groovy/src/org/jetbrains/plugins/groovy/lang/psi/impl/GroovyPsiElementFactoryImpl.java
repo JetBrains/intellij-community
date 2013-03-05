@@ -218,7 +218,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          String... identifiers) {
     StringBuilder text = writeModifiers(modifiers);
 
-    if (type != null) {
+    if (type != null && type != PsiType.NULL) {
       final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(unboxed);
       text.append(typeText).append(" ");
@@ -303,9 +303,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static String getTypeText(PsiType type) {
     if (!(type instanceof PsiArrayType)) {
       final String canonical = type.getCanonicalText();
-      return canonical != null ? canonical : type.getPresentableText();
-    } else {
-      return getTypeText(((PsiArrayType) type).getComponentType()) + "[]";
+      final String text = canonical != null ? canonical : type.getPresentableText();
+      if ("null".equals(text)) {
+        return "";
+      }
+      else {
+        return text;
+      }
+    }
+    else {
+      return getTypeText(((PsiArrayType)type).getComponentType()) + "[]";
     }
   }
 

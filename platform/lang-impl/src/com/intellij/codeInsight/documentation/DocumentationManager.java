@@ -190,21 +190,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
-    if (myToolWindow == null) {
-      createToolWindow(element, original);
-      return;
-    }
-
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content == null || !myToolWindow.isVisible()) {
-      restorePopupBehavior();
-      createToolWindow(element, original);
-      return;
-    }
+    final Content content = recreateToolWindow(element, original);
+    if (content == null) return;
 
     fetchDocInfo(getDefaultCollector(element, original), (DocumentationComponent)content.getComponent(), true);
   }
-  
+
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
     showJavaDocInfo(element, original, false, null);
   }

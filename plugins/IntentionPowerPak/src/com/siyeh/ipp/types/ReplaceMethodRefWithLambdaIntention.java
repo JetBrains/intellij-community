@@ -82,14 +82,17 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
         buf.append("{");
       }
       final PsiElement qualifier = referenceExpression.getQualifier();
-      boolean isReceiver = false;
+      PsiClass containingClass = null;
       if (resolveElement instanceof PsiMethod) {
-        final PsiClass containingClass = ((PsiMember)resolveElement).getContainingClass();
+        containingClass = ((PsiMember)resolveElement).getContainingClass();
         LOG.assertTrue(containingClass != null);
-        isReceiver = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, (PsiMethod)resolveElement);
       } else if (resolveElement instanceof PsiClass) {
-        isReceiver = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, (PsiClass)resolveElement, (PsiMethod)null);
+        containingClass = (PsiClass)resolveElement;
       }
+
+      final boolean onArrayRef =
+        JavaPsiFacade.getElementFactory(element.getProject()).getArrayClass(PsiUtil.getLanguageLevel(element)) == containingClass;
+      boolean isReceiver = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, resolveElement instanceof PsiMethod ? (PsiMethod)resolveElement : null);
 
       final PsiElement referenceNameElement = referenceExpression.getReferenceNameElement();
       if (isReceiver){
@@ -113,43 +116,52 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
       if (referenceNameElement instanceof PsiKeyword) {
         //class name
         buf.append(" ");
-        buf.append(((PsiMember)resolveElement).getName());
-
-        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-
-        PsiClass containingClass;
-        if (resolveElement instanceof PsiClass) {
-          containingClass = (PsiClass)resolveElement;
-        } else {
-          containingClass = ((PsiMember)resolveElement).getContainingClass();
-        }
-
-        LOG.assertTrue(containingClass != null);
-        if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
-          buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
-            @Override
-            public String fun(PsiTypeParameter parameter) {
-              final PsiType psiType = substitutor.substitute(parameter);
-              LOG.assertTrue(psiType != null);
-              return psiType.getCanonicalText();
+        if (onArrayRef) {
+          if (qualifier instanceof PsiTypeElement) {
+            final PsiType type = ((PsiTypeElement)qualifier).getType();
+            int dim = type.getArrayDimensions();
+            buf.append(type.getDeepComponentType().getCanonicalText());
+            buf.append("[");
+            buf.append(parameters[0].getName());
+            buf.append("]");
+            while (--dim > 0) {
+              buf.append("[]");
             }
-          }, ", ")).append(">");
+          }
+        } else {
+          buf.append(((PsiMember)resolveElement).getName());
+
+          final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+
+          LOG.assertTrue(containingClass != null);
+          if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
+            buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
+              @Override
+              public String fun(PsiTypeParameter parameter) {
+                final PsiType psiType = substitutor.substitute(parameter);
+                LOG.assertTrue(psiType != null);
+                return psiType.getCanonicalText();
+              }
+            }, ", ")).append(">");
+          }
         }
       }
 
-      //param list
-      buf.append("(");
-      boolean first = true;
-      for (int i = isReceiver ? 1 : 0; i < parameters.length; i++) {
-        PsiParameter parameter = parameters[i];
-        if (!first) {
-          buf.append(", ");
-        } else {
-          first = false;
+      if (!onArrayRef || isReceiver) {
+        //param list
+        buf.append("(");
+        boolean first = true;
+        for (int i = isReceiver ? 1 : 0; i < parameters.length; i++) {
+          PsiParameter parameter = parameters[i];
+          if (!first) {
+            buf.append(", ");
+          } else {
+            first = false;
+          }
+          buf.append(map.get(parameter));
         }
-        buf.append(map.get(parameter));
+        buf.append(")");
       }
-      buf.append(")");
 
       if (needBraces) {
         buf.append(";}");

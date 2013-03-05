@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   }
 
   private static boolean isDeclarationAssignment(@NotNull GrReferenceExpression lRefExpr, @Nullable String nameHint) {
-    if (nameHint == null || nameHint.equals(lRefExpr.getName())) {
+    if (nameHint == null || nameHint.equals(lRefExpr.getReferenceName())) {
       final PsiElement target = lRefExpr.resolve(); //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
       if (!(target instanceof PsiVariable || target instanceof GrAccessorMethod)) {
         return true;

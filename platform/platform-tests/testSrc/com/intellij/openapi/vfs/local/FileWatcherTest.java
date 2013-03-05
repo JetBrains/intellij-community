@@ -484,12 +484,6 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testWatchRootRecreation() throws Exception {
-    if (SystemInfo.isLinux) {
-      // todo[r.sh]: fix Linux watcher
-      System.err.println("Ignored: to be fixed on Linux");
-      return;
-    }
-
     File rootDir = createTestDir("root");
     File file1 = createTestFile(rootDir, "file1.txt", "abc");
     File file2 = createTestFile(rootDir, "file2.txt", "123");
@@ -500,6 +494,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myAccept = true;
       assertTrue(FileUtil.delete(rootDir));
       assertTrue(rootDir.mkdir());
+      if (SystemInfo.isLinux) TimeoutUtil.sleep(1100);  // implementation specific
       assertTrue(file1.createNewFile());
       assertTrue(file2.createNewFile());
       assertEvent(VFileContentChangeEvent.class, file1.getPath(), file2.getPath());
@@ -507,6 +502,37 @@ public class FileWatcherTest extends PlatformLangTestCase {
     finally {
       unwatch(request);
       delete(rootDir);
+    }
+  }
+
+  public void testWatchRootRenameRemove() throws Exception {
+    File topDir = createTestDir("top");
+    File rootDir = createTestDir(topDir, "root");
+    File rootDir2 = new File(topDir, "_" + rootDir.getName());
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(rootDir);
+    try {
+      myAccept = true;
+      assertTrue(rootDir.renameTo(rootDir2));
+      assertEvent(VFileEvent.class, rootDir.getPath(), rootDir2.getPath());
+
+      myAccept = true;
+      assertTrue(rootDir2.renameTo(rootDir));
+      assertEvent(VFileEvent.class, rootDir.getPath(), rootDir2.getPath());
+
+      myAccept = true;
+      assertTrue(FileUtil.delete(topDir));
+      assertEvent(VFileDeleteEvent.class, topDir.getPath());
+
+      // todo[r.sh] current VFS implementation loses watch root once it's removed; this probably should be fixed
+      myAccept = true;
+      assertTrue(rootDir.mkdirs());
+      assertEvent(VFileCreateEvent.class);
+    }
+    finally {
+      unwatch(request);
+      delete(topDir);
     }
   }
 
@@ -638,7 +664,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   private List<VFileEvent> getEvents(String msg, @Nullable Runnable action) {
-    LOG.debug("** waiting for " + msg + "...");
+    LOG.debug("** waiting for " + msg);
     myAccept = true;
 
     if (action != null) {
@@ -669,7 +695,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   private void assertEvent(Class<? extends VFileEvent> type, String... paths) {
-    List<VFileEvent> events = getEvents(String.valueOf(type), null);
+    List<VFileEvent> events = getEvents(type.getSimpleName(), null);
     assertEquals(events.toString(), paths.length, events.size());
 
     Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {

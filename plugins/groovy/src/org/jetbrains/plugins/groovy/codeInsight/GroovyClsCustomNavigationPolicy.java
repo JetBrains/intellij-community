@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.codeInsight;
 
-import com.intellij.codeInsight.TargetElementEvaluator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicyEx;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Max Medvedev
  */
-public class JavaClsMethodElementEvaluator implements TargetElementEvaluator {
+public class GroovyClsCustomNavigationPolicy extends ClsCustomNavigationPolicyEx {
   @Override
-  public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
-    return false;
-  }
-
-  /**
-   * used to resolve generated methods with source code
-   */
   @Nullable
-  @Override
-  public PsiElement getElementByReference(PsiReference ref, int flags) {
-    if (ref instanceof PsiReferenceExpression) {
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof ClsMethodImpl) {
-        PsiMethod source = ((ClsMethodImpl)resolved).getSourceMirrorMethod();
-        if (source != null) {
-          return source.getNavigationElement();
-        }
-      }
+  public PsiElement getNavigationElement(@NotNull ClsMethodImpl clsMethod) {
+    PsiMethod source = clsMethod.getSourceMirrorMethod();
+    if (source instanceof LightElement && source.getLanguage() == GroovyFileType.GROOVY_LANGUAGE) {
+      return source.getNavigationElement();
     }
+
     return null;
   }
 }

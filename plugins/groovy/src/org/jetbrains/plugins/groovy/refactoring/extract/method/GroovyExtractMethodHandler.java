@@ -279,7 +279,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
               super.visitElement(element);
               if (element instanceof GrReferenceExpression) {
                 GrReferenceExpression expr = (GrReferenceExpression) element;
-                if (!expr.isQualified() && oldName.equals(expr.getName())) {
+                if (!expr.isQualified() && oldName.equals(expr.getReferenceName())) {
                   result.add(expr);
                 }
               }

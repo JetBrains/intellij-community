@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-    if (myFirstArgumentName.equals(referenceExpression.getName()) && !referenceExpression.isQualified()) {
+    if (myFirstArgumentName.equals(referenceExpression.getReferenceName()) && !referenceExpression.isQualified()) {
       PsiElement parent = referenceExpression.getParent();
 
       if (parent instanceof GrReferenceExpression) {
@@ -82,12 +82,12 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
         PsiElement parentParent = parentRef.getParent();
 
         if (parentParent instanceof GrMethodCallExpression) {
-          if (METHOD_NAMES.contains(parentRef.getName())) {
+          if (METHOD_NAMES.contains(parentRef.getReferenceName())) {
             extractArguments(((GrMethodCallExpression)parentParent).getArgumentList());
           }
         }
         else {
-          add(parentRef.getName());
+          add(parentRef.getReferenceName());
         }
       }
       else if (parent instanceof GrIndexProperty) {

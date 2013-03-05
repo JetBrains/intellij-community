@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ class IndexingMethodConversionPredicate implements PsiElementPredicate {
     if (!GroovyTokenTypes.mDOT.equals(referenceType)) {
       return false;
     }
-    final String methodName = referenceExpression.getName();
+    final String methodName = referenceExpression.getReferenceName();
     if ("getAt".equals(methodName)) {
       return arguments.length == 1;
     }

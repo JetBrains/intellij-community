@@ -256,8 +256,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters.getPosition()) && parameters.getInvocationCount() <= 1 ||
-        !mayStartClassName(result)) {
+    if (!isClassNamePossible(parameters) || !mayStartClassName(result)) {
       return;
     }
 
@@ -380,10 +379,12 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static boolean isClassNamePossible(final PsiElement position) {
-    final PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
-    if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return false;
+  static boolean isClassNamePossible(CompletionParameters parameters) {
+    boolean isSecondCompletion = parameters.getInvocationCount() >= 2;
+
+    final PsiElement parent = parameters.getPosition().getParent();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) return isSecondCompletion;
+    if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return isSecondCompletion;
 
     if (parent instanceof PsiJavaCodeReferenceElementImpl &&
         ((PsiJavaCodeReferenceElementImpl)parent).getKind() == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
@@ -396,7 +397,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
-      return false;
+      return isSecondCompletion;
     }
 
     if (grand instanceof PsiAnonymousClass) {
@@ -406,7 +407,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    if (JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
+    if (JavaCompletionData.isAfterPrimitiveOrArrayType(parameters.getPosition())) {
       return false;
     }
     

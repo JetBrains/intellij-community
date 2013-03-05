@@ -1154,4 +1154,19 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
 }
 ''')
   }
+
+  void testExceptionParameterAlreadyDeclared() {
+    testHighlighting('''
+      int missing() {
+        InputStream i = null
+
+        try {
+          return 1
+        }
+        catch(Exception <error descr="Variable 'i' already defined">i</error>) {
+          return 2
+        }
+      }
+    ''')
+  }
 }

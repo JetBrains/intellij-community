@@ -15,13 +15,13 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsMessages;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class CvsCompositeListener implements CvsListenersCollection, CvsMessagesListener {
-  private final Collection<CvsMessagesListener> myListeners = new ArrayList<CvsMessagesListener>();
+  private final Collection<CvsMessagesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void addCvsListener(CvsMessagesListener listener) {
     myListeners.add(listener);

@@ -186,6 +186,11 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
           if (usedInQualifier.get()) return null;
         }
         return methodCall;
+      } else if (methodCall instanceof PsiNewExpression) {
+        final PsiExpression[] dimensions = ((PsiNewExpression)methodCall).getArrayDimensions();
+        if (dimensions.length > 0) {
+          return methodCall;
+        }
       }
     }
     return null;
@@ -205,7 +210,15 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       final String methodReferenceName = methodExpression.getReferenceName();
       if (qualifierExpression != null) {
         boolean isReceiverType = PsiMethodReferenceUtil.isReceiverType(functionalInterfaceType, containingClass, psiMethod);
-        methodRefText = (isReceiverType ? getClassReferenceName(containingClass) : qualifierExpression.getText()) + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
+        final String qualifier;
+        if (isReceiverType) {
+          final PsiType qualifierExpressionType = qualifierExpression.getType();
+          qualifier = qualifierExpressionType != null ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(containingClass);
+        }
+        else {
+          qualifier = qualifierExpression.getText();
+        }
+        methodRefText = qualifier + "::" + ((PsiMethodCallExpression)element).getTypeArgumentList().getText() + methodReferenceName;
       }
       else {
         methodRefText =
@@ -230,7 +243,15 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
         }
       }
       if (containingClass != null) {
-        methodRefText = getClassReferenceName(containingClass) + "::new";
+        methodRefText = getClassReferenceName(containingClass);
+        final PsiType newExprType = ((PsiNewExpression)element).getType();
+        if (newExprType != null) {
+          int dim = newExprType.getArrayDimensions();
+          while (dim-- > 0) {
+            methodRefText += "[]";
+          }
+        }
+        methodRefText += "::new";
       }
     }
     return methodRefText;

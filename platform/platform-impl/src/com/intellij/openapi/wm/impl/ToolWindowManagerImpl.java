@@ -505,6 +505,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.setIcon(icon);
     }
 
+    WindowInfoImpl info = getInfo(bean.id);
+    if (!info.isSplit() && bean.secondary && !info.wasRead()) {
+      toolWindow.setSplitMode(bean.secondary, null);
+    }
+
     final ActionCallback activation = toolWindow.setActivation(new ActionCallback());
 
     final DumbAwareRunnable runnable = new DumbAwareRunnable() {
@@ -1426,75 +1431,79 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     });
     Disposer.register(getProject(), balloon);
 
-    final StripeButton button = stripe.getButtonFor(toolWindowId);
-    LOG.assertTrue(button != null, "Button was not found, popup won't be shown. Toolwindow id: " +
-                                   toolWindowId +
-                                   ", message: " +
-                                   text +
-                                   ", message type: " +
-                                   type);
-    if (button == null) return;
-
-    final Runnable show = new Runnable() {
+    execute(new ArrayList<FinalizableCommand>(Arrays.<FinalizableCommand>asList(new FinalizableCommand(null) {
       @Override
       public void run() {
-        if (button.isShowing()) {
-          PositionTracker<Balloon> tracker = new PositionTracker<Balloon>(button) {
-            @Override
-            @Nullable
-            public RelativePoint recalculateLocation(Balloon object) {
-              Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
-              StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
+        final StripeButton button = stripe.getButtonFor(toolWindowId);
+        LOG.assertTrue(button != null, "Button was not found, popup won't be shown. Toolwindow id: " +
+                                       toolWindowId +
+                                       ", message: " +
+                                       text +
+                                       ", message type: " +
+                                       type);
+        if (button == null) return;
 
-              if (twButton == null) return null;
+        final Runnable show = new Runnable() {
+          @Override
+          public void run() {
+            if (button.isShowing()) {
+              PositionTracker<Balloon> tracker = new PositionTracker<Balloon>(button) {
+                @Override
+                @Nullable
+                public RelativePoint recalculateLocation(Balloon object) {
+                  Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
+                  StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
 
-              if (getToolWindow(toolWindowId).getAnchor() != anchor) {
-                object.hide();
-                return null;
+                  if (twButton == null) return null;
+
+                  if (getToolWindow(toolWindowId).getAnchor() != anchor) {
+                    object.hide();
+                    return null;
+                  }
+
+                  final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
+                  return new RelativePoint(twButton, point);
+                }
+              };
+              if (!balloon.isDisposed()) {
+                balloon.show(tracker, position.get());
               }
-
-              final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
-              return new RelativePoint(twButton, point);
             }
-          };
-          if (!balloon.isDisposed()) {
-            balloon.show(tracker, position.get());
+            else {
+              final Rectangle bounds = myToolWindowsPane.getBounds();
+              final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+              if (ToolWindowAnchor.TOP == anchor) {
+                target.y = 0;
+              }
+              else if (ToolWindowAnchor.BOTTOM == anchor) {
+                target.y = bounds.height - 3;
+              }
+              else if (ToolWindowAnchor.LEFT == anchor) {
+                target.x = 0;
+              }
+              else if (ToolWindowAnchor.RIGHT == anchor) {
+                target.x = bounds.width;
+              }
+              if (!balloon.isDisposed()) {
+                balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
+              }
+            }
           }
+        };
+
+        if (!button.isValid()) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              show.run();
+            }
+          });
         }
         else {
-          final Rectangle bounds = myToolWindowsPane.getBounds();
-          final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
-          if (ToolWindowAnchor.TOP == anchor) {
-            target.y = 0;
-          }
-          else if (ToolWindowAnchor.BOTTOM == anchor) {
-            target.y = bounds.height - 3;
-          }
-          else if (ToolWindowAnchor.LEFT == anchor) {
-            target.x = 0;
-          }
-          else if (ToolWindowAnchor.RIGHT == anchor) {
-            target.x = bounds.width;
-          }
-          if (!balloon.isDisposed()) {
-            balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
-          }
-        }
-      }
-    };
-
-    if (!button.isValid()) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
           show.run();
         }
-      });
-    }
-    else {
-      show.run();
-    }
-
+      }
+    })));
   }
 
   @Override

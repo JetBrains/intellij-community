@@ -27,14 +27,14 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizationVetoer {
+public class SaveCommittingDocumentsVetoer extends FileDocumentSynchronizationVetoer {
   private final VetoSavingCommittingDocumentsAdapter myAdapter;
 
   public SaveCommittingDocumentsVetoer(VetoSavingCommittingDocumentsAdapter adapter) {
     myAdapter = adapter;
   }
 
-  public boolean maySaveDocument(@NotNull Document document) {
+  public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
     final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
     if (beingCommitted == VetoSavingCommittingDocumentsAdapter.SAVE_DENIED) {
       return false;
@@ -48,7 +48,4 @@ public class SaveCommittingDocumentsVetoer implements FileDocumentSynchronizatio
     return true;
   }
 
-  public boolean mayReloadFileContent(VirtualFile file, @NotNull Document document)  {
-    return true;
-  }
 }

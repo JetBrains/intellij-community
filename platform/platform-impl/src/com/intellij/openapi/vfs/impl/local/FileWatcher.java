@@ -173,7 +173,7 @@ public class FileWatcher {
   private static boolean isUpToDate(File executable) {
     long length = SystemInfo.isWindows ? 70216 :
                   SystemInfo.isMac ? 13924 :
-                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29227 : 22734 :
+                  SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29269 : 22768 :
                   -1;
     return length < 0 || length == executable.length();
   }
@@ -348,14 +348,14 @@ public class FileWatcher {
   public boolean isWatched(@NotNull final VirtualFile file) {
     if (isOperational()) {
       synchronized (myLock) {
-        return !checkWatchable(file.getPresentableUrl(), true).isEmpty();
+        return !checkWatchable(file.getPresentableUrl(), true, false).isEmpty();
       }
     }
     return false;
   }
 
   @NotNull
-  private Collection<String> checkWatchable(final String reportedPath, final boolean checkParent) {
+  private Collection<String> checkWatchable(String reportedPath, boolean isExact, boolean checkRootParents) {
     if (reportedPath == null) return Collections.emptyList();
 
     myAllPaths.clear();
@@ -377,19 +377,21 @@ public class FileWatcher {
           myWatchedPaths.add(path);
           continue ext;
         }
+        if (checkRootParents && FileUtil.startsWith(root, path)) {
+          myWatchedPaths.add(root);
+          continue ext;
+        }
       }
 
+      String checkPath = isExact ? new File(path).getParent() : path;
       for (String root : myFlatWatchRoots) {
-        if (FileUtil.pathsEqual(path, root)) {
+        if (FileUtil.pathsEqual(checkPath, root)) {
           myWatchedPaths.add(path);
           continue ext;
         }
-        if (checkParent) {
-          final File parentFile = new File(path).getParentFile();
-          if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
-            myWatchedPaths.add(path);
-            continue ext;
-          }
+        if (checkRootParents && FileUtil.startsWith(root, checkPath)) {
+          myWatchedPaths.add(root);
+          continue ext;
         }
       }
     }
@@ -523,9 +525,9 @@ public class FileWatcher {
       notifyOnEvent();
     }
 
-    private void processChange(final String path, final WatcherOp op) {
+    private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0))) {
-        final VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
         if (root instanceof NewVirtualFile) {
           ((NewVirtualFile)root).markDirtyRecursively();
         }
@@ -535,8 +537,8 @@ public class FileWatcher {
       }
 
       synchronized (myLock) {
-        final boolean checkParent = !(op == WatcherOp.DIRTY || op == WatcherOp.RECDIRTY);
-        final Collection<String> paths = checkWatchable(path, checkParent);
+        boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;
+        Collection<String> paths = checkWatchable(path, exactPath, true);
 
         if (paths.isEmpty()) {
           if (LOG.isDebugEnabled()) {
@@ -554,8 +556,8 @@ public class FileWatcher {
           case CREATE:
           case DELETE:
             for (String p : paths) {
-              final File parent = new File(p).getParentFile();
-              myDirtyPaths.add(parent != null ? parent.getPath() : p);
+              String parent = new File(p).getParent();
+              myDirtyPaths.add(parent != null ? parent : p);
             }
             break;
 

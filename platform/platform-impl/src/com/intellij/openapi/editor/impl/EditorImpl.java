@@ -233,7 +233,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
-  private final ArrayList<FocusChangeListener> myFocusListeners = new ArrayList<FocusChangeListener>();
+  private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
@@ -933,20 +933,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void fireFocusLost() {
-    FocusChangeListener[] listeners = getFocusListeners();
-    for (FocusChangeListener listener : listeners) {
+    for (FocusChangeListener listener : myFocusListeners) {
       listener.focusLost(this);
     }
   }
 
-  @NotNull
-  private FocusChangeListener[] getFocusListeners() {
-    return myFocusListeners.toArray(new FocusChangeListener[myFocusListeners.size()]);
-  }
-
   private void fireFocusGained() {
-    FocusChangeListener[] listeners = getFocusListeners();
-    for (FocusChangeListener listener : listeners) {
+    for (FocusChangeListener listener : myFocusListeners) {
       listener.focusGained(this);
     }
   }

@@ -55,6 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -70,9 +71,9 @@ public class IdeEventQueue extends EventQueue {
    */
   private final Object myLock = new Object();
 
-  private final ArrayList<Runnable> myIdleListeners = new ArrayList<Runnable>(2);
+  private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final ArrayList<Runnable> myActivityListeners = new ArrayList<Runnable>(2);
+  private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Alarm myIdleRequestsAlarm = new Alarm();
 

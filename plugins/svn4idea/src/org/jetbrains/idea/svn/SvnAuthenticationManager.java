@@ -71,6 +71,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
   private boolean myArtificialSaving;
+  private ISVNAuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
@@ -104,6 +105,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
       }
     });
+  }
+
+  @Override
+  public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
+    myProvider = provider;
+    super.setAuthenticationProvider(provider);
+  }
+
+  public ISVNAuthenticationProvider getProvider() {
+    return myProvider;
+  }
+
+  @Override
+  public ISVNAuthenticationStorage getRuntimeAuthStorage() {
+    return super.getRuntimeAuthStorage();
   }
 
   // since set to null during dispose and we have background processes
@@ -368,10 +384,21 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         String kind,
                                         String realm,
                                         SVNErrorMessage errorMessage,
+                                        SVNAuthentication authentication) throws SVNException {
+    acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication, null);
+  }
+
+  @Override
+  public void acknowledgeAuthentication(boolean accepted,
+                                        String kind,
+                                        String realm,
+                                        SVNErrorMessage errorMessage,
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
     SSLExceptionsHelper.removeInfo();
-    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    if (url != null) {
+      CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    }
     boolean successSaving = false;
     myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
     try {

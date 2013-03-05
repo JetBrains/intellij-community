@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class QuickfixUtil {
     if (!(qualifierExpression instanceof GrReferenceExpression)) return false;
 
     GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifierExpression;
-    GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getName());
+    GroovyPsiElement resolvedElement = ResolveUtil.resolveProperty(referenceExpression, referenceExpression.getReferenceName());
 
     if (resolvedElement == null) return false;
     if (resolvedElement instanceof PsiClass) return true;
@@ -190,7 +190,7 @@ public class QuickfixUtil {
     }
 
     settings.setContainingClassName(className);
-    settings.setName(referenceExpression.getName());
+    settings.setName(referenceExpression.getReferenceName());
 
     if (isCall(referenceExpression)) {
       List<PsiType> unboxedTypes = new ArrayList<PsiType>();

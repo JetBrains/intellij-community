@@ -351,7 +351,10 @@ public class GradleEntityManageHelper {
     else {
       userChange = new GradleModuleDependencyScopeUserChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
     }
-    if (!context.changesToPreserve.contains(userChange)) {
+    if (context.changesToPreserve.contains(userChange)) {
+      context.nonProcessedChanges.add(change);
+    }
+    else {
       context.dependencyManager.setScope(change.getGradleValue(), dependency, context.synchronous);
     }
   }
@@ -371,7 +374,10 @@ public class GradleEntityManageHelper {
     else {
       userChange = new GradleModuleDependencyExportedChange(id.getOwnerModuleName(), id.getDependencyName(), change.getIdeValue());
     }
-    if (!context.changesToPreserve.contains(userChange)) {
+    if (context.changesToPreserve.contains(userChange)) {
+      context.nonProcessedChanges.add(change);
+    }
+    else {
       context.dependencyManager.setExported(change.getGradleValue(), dependency, context.synchronous);
     }
   }

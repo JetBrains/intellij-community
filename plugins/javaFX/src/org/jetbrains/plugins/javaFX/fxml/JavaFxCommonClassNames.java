@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: anna
@@ -35,4 +39,24 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_BEANS_OBSERVABLE = "javafx.beans.Observable";
   @NonNls public static final String VALUE_OF = "valueOf";
   @NonNls public static final String JAVAFX_FXML_FXMLLOADER = "javafx.fxml.FXMLLoader";
+  @NonNls public static final String JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE = "javafx.beans.value.ObservableValue";
+  @NonNls public static final String JAVAFX_BEANS_VALUE_WRITABLE_VALUE = "javafx.beans.value.WritableValue";
+
+  public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
+  static {
+    ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiType.BOOLEAN);
+    ourWritableMap.put("javafx.beans.value.WritableIntegerValue", PsiType.INT);
+    ourWritableMap.put("javafx.beans.value.WritableFloatValue", PsiType.FLOAT);
+    ourWritableMap.put("javafx.beans.value.WritableLongValue", PsiType.LONG);
+    ourWritableMap.put("javafx.beans.value.WritableDoubleValue", PsiType.DOUBLE);
+  }
+
+  public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<String, PsiType>();
+  static {
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyBooleanProperty", PsiType.BOOLEAN);
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyIntegerProperty", PsiType.INT);
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyFloatProperty", PsiType.FLOAT);
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyLongProperty", PsiType.LONG);
+    ourReadOnlyMap.put("javafx.beans.property.ReadOnlyDoubleProperty", PsiType.DOUBLE);
+  }
 }

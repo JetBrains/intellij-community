@@ -264,10 +264,6 @@ public class Tool implements SchemeElement {
     return name.toString();
   }
 
-  public void execute(AnActionEvent event, DataContext dataContext, long executionId) {
-    execute(event, dataContext, executionId, null);
-  }
-
   /**
    * @return <code>true</code> if task has been started successfully
    */
@@ -303,8 +299,9 @@ public class Tool implements SchemeElement {
         }
         OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
-        if (processListener != null)
+        if (processListener != null) {
           handler.addProcessListener(processListener);
+        }
         handler.startNotify();
         return true;
       }

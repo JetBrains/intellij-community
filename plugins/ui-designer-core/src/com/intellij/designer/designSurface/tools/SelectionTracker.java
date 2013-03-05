@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public class SelectionTracker extends TargetingTool {
-  private final RadComponent myComponent;
+  protected final RadComponent myComponent;
   private boolean mySelected;
 
   public SelectionTracker(RadComponent component) {

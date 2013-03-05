@@ -1037,4 +1037,23 @@ print Fie<caret>ld1
     assertNotNull(ref.resolve())
 
   }
+
+  void testLocalVarVsClassFieldInAnonymous() {
+    final ref = configureByText('a.groovy', '''\
+      class A {
+        public foo
+      }
+
+      def foo = 4
+
+      new A() {
+        def foo() {
+          print fo<caret>o
+        }
+      }
+''')
+
+    assertFalse( ref.resolve() instanceof PsiField)
+    assertTrue( ref.resolve() instanceof GrVariable)
+  }
 }

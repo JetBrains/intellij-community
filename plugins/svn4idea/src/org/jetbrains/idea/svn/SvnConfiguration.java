@@ -17,6 +17,8 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -281,17 +283,31 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public static SvnAuthenticationManager createForTmpDir(final Project project, final File dir) {
+    return createForTmpDir(project, dir, null);
+  }
+
+  public static SvnAuthenticationManager createForTmpDir(final Project project, final File dir,
+                                                         @Nullable final SvnInteractiveAuthenticationProvider provider) {
     final SvnVcs vcs = SvnVcs.getInstance(project);
-    //final SvnAuthenticationManager manager = new SvnAuthenticationManager(project, dir);
 
     final SvnAuthenticationManager interactive = new SvnAuthenticationManager(project, dir);
     interactive.setRuntimeStorage(RUNTIME_AUTH_CACHE);
-    final SvnInteractiveAuthenticationProvider interactiveProvider = new SvnInteractiveAuthenticationProvider(vcs, interactive);
+    final SvnInteractiveAuthenticationProvider interactiveProvider = provider == null ?
+                                                                     new SvnInteractiveAuthenticationProvider(vcs, interactive) : provider;
     interactive.setAuthenticationProvider(interactiveProvider);
 
-    //manager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, interactiveProvider, RUNTIME_AUTH_CACHE));
-    //manager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
     return interactive;
+  }
+
+  public SvnAuthenticationManager getManager(final AuthManagerType type, final SvnVcs vcs) {
+    if (AuthManagerType.active.equals(type)) {
+      return getInteractiveManager(vcs);
+    } else if (AuthManagerType.passive.equals(type)) {
+      return getPassiveAuthenticationManager(vcs.getProject());
+    } else if (AuthManagerType.usual.equals(type)) {
+      return getAuthenticationManager(vcs);
+    }
+    throw new IllegalArgumentException();
   }
 
   public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
@@ -565,7 +581,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public void clearAuthenticationDirectory(@Nullable Project project) {
     final File authDir = new File(getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      final Runnable process = new Runnable() {
         public void run() {
           final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
           if (ind != null) {
@@ -585,7 +601,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
             FileUtil.delete(dir);
           }
         }
-      }, "button.text.clear.authentication.cache", false, project);
+      };
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode() || ! application.isDispatchThread()) {
+        process.run();
+      } else {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "button.text.clear.authentication.cache", false, project);
+      }
     }
   }
   
@@ -600,6 +622,11 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public void clearCredentials(final String kind, final String realm) {
     RUNTIME_AUTH_CACHE.putData(kind, realm, null);
   }
+
+  public void clearRuntimeStorage() {
+    RUNTIME_AUTH_CACHE.clear();
+  }
+
 
   public int getMaxAnnotateRevisions() {
     return myMaxAnnotateRevisions;

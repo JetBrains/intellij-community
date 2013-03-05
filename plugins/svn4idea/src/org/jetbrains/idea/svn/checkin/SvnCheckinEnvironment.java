@@ -25,10 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -39,20 +38,19 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
+import org.tigris.subversion.javahl.ClientException;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -140,18 +138,18 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
 
     if (progress != null) {
-      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
+      doCommit(committables, committer, comment, force, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator p = ProgressManager.getInstance().getProgressIndicator();
-          doCommit(committables, p, committer, comment, force, recursive, exception, feedback);
+          doCommit(committables, committer, comment, force, exception, feedback);
         }
       }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
     }
     else {
-      doCommit(committables, progress, committer, comment, force, recursive, exception, feedback);
+      doCommit(committables, committer, comment, force, exception, feedback);
     }
 
     for(VirtualFile f : deletedFiles) {
@@ -161,28 +159,39 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private void doCommit(List<File> committables,
-                        ProgressIndicator progress,
                         SVNCommitClient committer,
                         String comment,
                         boolean force,
-                        boolean recursive,
                         List<VcsException> exception, final Set<String> feedback) {
-    final Collection<List<File>> collections = SvnUtil.splitFilesIntoWc(mySvnVcs, committables);
-    for (List<File> collection : collections) {
-      doCommitOneWc(collection, progress, committer, comment, force, recursive, exception, feedback);
+    final MultiMap<Pair<SVNURL,WorkingCopyFormat>,File> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : map.entrySet()) {
+      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond(), entry.getKey().getFirst());
     }
   }
 
-  private void doCommitOneWc(Collection<File> committables,
-                          ProgressIndicator progress,
-                          SVNCommitClient committer,
-                          String comment,
-                          boolean force,
-                          boolean recursive,
-                          List<VcsException> exception, final Set<String> feedback) {
+  private void doCommitOneRepo(Collection<File> committables,
+                               SVNCommitClient committer,
+                               String comment,
+                               boolean force,
+                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format, SVNURL url) {
     if (committables.isEmpty()) {
       return;
     }
+    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
+        SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
+        (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
+      doWithCommandLine(committables, comment, exception, feedback);
+      return;
+    }
+
+    doWithSvnkit(committables, committer, comment, force, exception, feedback);
+  }
+
+  private void doWithSvnkit(Collection<File> committables,
+                            SVNCommitClient committer,
+                            String comment,
+                            boolean force,
+                            List<VcsException> exception, Set<String> feedback) {
     File[] pathsToCommit = committables.toArray(new File[committables.size()]);
     boolean keepLocks = SvnConfiguration.getInstance(mySvnVcs.getProject()).isKeepLocks();
     SVNCommitPacket[] commitPackets = null;
@@ -224,22 +233,98 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (committedRevisions.length() > 0) {
-      final Project project = mySvnVcs.getProject();
-      final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
-      if (feedback == null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                                          public void run() {
-                                                            new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
-                                                          }
-                                                        }, new Condition<Object>() {
-          @Override
-          public boolean value(Object o) {
-            return (! project.isOpen()) || project.isDisposed();
-          }
-        });
-      } else {
-        feedback.add("Subversion: " + message);
+      reportCommittedRevisions(feedback, committedRevisions.toString());
+    }
+  }
+
+  private void doWithCommandLine(Collection<File> committables, String comment, List<VcsException> exception, Set<String> feedback) {
+    // if directory renames were used, IDEA reports all files under them as moved, but for svn we can not pass some of them
+    // to commit command - since not all paths are registered as changes -> so we need to filter these cases, but only if
+    // there at least some child-parent relationships in passed paths
+    try {
+      committables = filterCommittables(committables);
+    } catch (SVNException e) {
+      exception.add(new VcsException(e));
+      return;
+    }
+
+    final List<String> paths = ObjectsConvertor.convert(committables, new Convertor<File, String>() {
+      @Override
+      public String convert(File o) {
+        return o.getPath();
       }
+    });
+    final IdeaSvnkitBasedAuthenticationCallback authenticationCallback = new IdeaSvnkitBasedAuthenticationCallback(mySvnVcs);
+    try {
+      final SvnBindClient client = new SvnBindClient(SvnApplicationSettings.getInstance().getCommandLinePath());
+      client.setAuthenticationCallback(authenticationCallback);
+      client.setHandler(new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator()));
+      final long revision = client.commit(ArrayUtil.toStringArray(paths), comment, false, false);
+      reportCommittedRevisions(feedback, String.valueOf(revision));
+    }
+    catch (ClientException e) {
+      exception.add(new VcsException(e));
+    } finally {
+      authenticationCallback.reset();
+    }
+  }
+
+  private Collection<File> filterCommittables(Collection<File> committables) throws SVNException {
+    final Set<File> childrenOfSomebody = new HashSet<File>();
+    new AbstractFilterChildren<File>() {
+      @Override
+      protected void sortAscending(List<File> list) {
+        Collections.sort(list);
+      }
+
+      @Override
+      protected boolean isAncestor(File parent, File child) {
+        final boolean isAncestor = FileUtil.isAncestor(parent, child, false);
+        if (isAncestor) {
+          childrenOfSomebody.add(child);
+        }
+        return isAncestor;
+      }
+    }.doFilter(new ArrayList<File>(committables));
+    if (! childrenOfSomebody.isEmpty()) {
+      final HashSet<File> result = new HashSet<File>(committables);
+      result.removeAll(childrenOfSomebody);
+      final SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs.getProject());
+      for (File file : childrenOfSomebody) {
+        try {
+          final SVNStatus status = statusClient.doStatus(file, false);
+          if (status != null && ! SVNStatusType.STATUS_NONE.equals(status.getContentsStatus()) &&
+              ! SVNStatusType.STATUS_UNVERSIONED.equals(status.getContentsStatus())) {
+            result.add(file);
+          }
+        }
+        catch (SVNException e) {
+          // not versioned
+          LOG.info(e);
+          throw e;
+        }
+      }
+      return result;
+    }
+    return committables;
+  }
+
+  private void reportCommittedRevisions(Set<String> feedback, String committedRevisions) {
+    final Project project = mySvnVcs.getProject();
+    final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
+    if (feedback == null) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                                        public void run() {
+                                                          new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
+                                                        }
+                                                      }, new Condition<Object>() {
+        @Override
+        public boolean value(Object o) {
+          return (! project.isOpen()) || project.isDisposed();
+        }
+      });
+    } else {
+      feedback.add("Subversion: " + message);
     }
   }
 

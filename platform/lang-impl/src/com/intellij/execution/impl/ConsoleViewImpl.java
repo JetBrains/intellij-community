@@ -310,8 +310,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myInputMessageFilter = compositeInputFilter;
       for (ConsoleInputFilterProvider eachProvider : inputFilters) {
         InputFilter[] filters = eachProvider.getDefaultFilters(project);
-        for (InputFilter filter : filters) {
-          compositeInputFilter.addFilter(filter);
+        for (final InputFilter filter : filters) {
+          compositeInputFilter.addFilter(new InputFilter() {
+            boolean isBroken;
+
+            @Nullable
+            @Override
+            public List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType) {
+              if (!isBroken) {
+                try {
+                  return filter.applyFilter(text, contentType);
+                }
+                catch (Throwable e) {
+                  isBroken = true;
+                  LOG.error(e);
+                }
+              }
+              return null;
+            }
+          });
         }
       }
     }
@@ -713,7 +730,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     }
     else if (oldLineCount < newLineCount) {
-      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
+      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
     }
 
     if (isAtEndOfDocument) {

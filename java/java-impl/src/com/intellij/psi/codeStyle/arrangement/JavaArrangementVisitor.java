@@ -104,17 +104,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   public void visitField(PsiField field) {
     // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
     // the first one then.
-    for (PsiElement e = field.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      if (e instanceof PsiWhiteSpace) {
-        continue;
-      }
-      if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.COMMA) {
-        return;
-      }
-      else {
-        break;
-      }
-    }
+    PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
+    if (fieldPrev instanceof PsiJavaToken && ((PsiJavaToken)fieldPrev).getTokenType() == JavaTokenType.COMMA) {
+      return;
+    } 
     
     // There is a possible case that fields which share the same type declaration are located on different document lines, e.g.:
     //    int i1,
@@ -122,16 +115,21 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     // We want to consider only the first declaration then but need to expand its range to all affected lines (up to semicolon).
     TextRange range = field.getTextRange();
     PsiElement child = field.getLastChild();
-    boolean needProcessing;
-    if (child instanceof PsiJavaToken) {
-      needProcessing = ((PsiJavaToken)child).getTokenType() != JavaTokenType.SEMICOLON;
+    boolean needSpecialProcessing = true;
+    if (isSemicolon(child)) {
+      needSpecialProcessing = false;
     }
-    else {
-      needProcessing = true;
+    else if (child instanceof PsiComment) {
+      // There is a possible field definition like below:
+      //   int f; // my comment.
+      // The comment goes into field PSI here, that's why we need to handle it properly.
+      PsiElement prev = getPreviousNonWsComment(child, range.getStartOffset());
+      needSpecialProcessing = prev != null && !isSemicolon(prev);
     }
-    if (needProcessing) {
+    
+    if (needSpecialProcessing) {
       for (PsiElement e = field.getNextSibling(); e != null; e = e.getNextSibling()) {
-        if (e instanceof PsiWhiteSpace) { // Skip white space
+        if (e instanceof PsiWhiteSpace || e instanceof PsiComment) { // Skip white space and comment
           continue;
         }
         else if (e instanceof PsiJavaToken) {
@@ -144,7 +142,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         }
         else if (e instanceof PsiField) {
           PsiElement c = e.getLastChild();
-          // Stop is field with semicolon has been found.
+          if (c != null) {
+            c = getPreviousNonWsComment(c, range.getStartOffset());
+          }
+          // Stop if current field ends by a semicolon.
           if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
               || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
           {
@@ -159,6 +160,24 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     JavaElementArrangementEntry entry = createNewEntry(field, range, ArrangementEntryType.FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
+  }
+
+  @Nullable
+  private static PsiElement getPreviousNonWsComment(@Nullable PsiElement element, int minOffset) {
+    if (element == null) {
+      return null;
+    }
+    for (PsiElement e = element; e != null && e.getTextRange().getStartOffset() >= minOffset; e = e.getPrevSibling()) {
+      if (e instanceof PsiWhiteSpace || e instanceof PsiComment) {
+        continue;
+      }
+      return e;
+    }
+    return null;
+  }
+  
+  private static boolean isSemicolon(@Nullable PsiElement e) {
+    return e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.SEMICOLON;
   }
 
   @Override

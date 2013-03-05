@@ -43,6 +43,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private EditorEx myEditor = null;
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
-  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myIsSupplementary;

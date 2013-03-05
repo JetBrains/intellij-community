@@ -75,14 +75,13 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
 
     PsiLocalVariable localVariable = null;
-    if (expr instanceof PsiReferenceExpression) {
+    if (anchorElement instanceof PsiLocalVariable) {
+      localVariable = (PsiLocalVariable)anchorElement;
+    } else if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression)expr).resolve();
       if (ref instanceof PsiLocalVariable) {
         localVariable = (PsiLocalVariable)ref;
       }
-    }
-    else if (anchorElement instanceof PsiLocalVariable) {
-      localVariable = (PsiLocalVariable)anchorElement;
     }
 
     String enteredName = null;

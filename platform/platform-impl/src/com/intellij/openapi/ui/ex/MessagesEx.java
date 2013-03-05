@@ -154,7 +154,6 @@ public class MessagesEx extends Messages {
   public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtil.EMPTY_STRING_ARRAY;
     private String myDefaultChoice = null;
-    private final boolean myEditable = false;
 
     public ChoiceInfo(Project project) {
       super(project);
@@ -164,11 +163,6 @@ public class MessagesEx extends Messages {
 
     public ChoiceInfo getThis() {
       return this;
-    }
-
-    public ChoiceInfo setChoices(String[] choices, int defaultChoiceIndex) {
-      setChoices(choices, defaultChoiceIndex >= 0 ? choices[defaultChoiceIndex] : null);
-      return getThis();
     }
 
     public ChoiceInfo setChoices(String[] choices, String defaultChoice) {
@@ -181,9 +175,7 @@ public class MessagesEx extends Messages {
       ChooseDialog dialog = new ChooseDialog(getProject(), getMessage(), getTitle(), getIcon(), myChoises, myDefaultChoice, getOptions(), getDefaultOption());
       dialog.setValidator(null);
       JComboBox comboBox = dialog.getComboBox();
-      comboBox.setEditable(myEditable);
-      if (myEditable)
-        comboBox.getEditor().setItem(myDefaultChoice);
+      comboBox.setEditable(false);
       comboBox.setSelectedItem(myDefaultChoice);
       dialog.show();
       Object selectedItem = comboBox.getSelectedItem();
@@ -210,13 +202,15 @@ public class MessagesEx extends Messages {
   }
 
   public static class InputInfo extends BaseInputInfo<InputInfo> {
+    private String myDefaultValue;
+
     public InputInfo(Project project) {
       super(project);
       setOptions(new String[]{CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText()}, 0);
     }
 
     public UserInput askUser() {
-      InputDialog dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), null, null, getOptions(), getDefaultOption());
+      InputDialog dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
       dialog.show();
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }
@@ -224,9 +218,15 @@ public class MessagesEx extends Messages {
     public InputInfo getThis() {
       return this;
     }
+
+    public void setDefaultValue(String defaultValue) {
+      myDefaultValue = defaultValue;
+    }
   }
 
   public static abstract class BaseInputInfo<ThisClass extends BaseInputInfo> extends BaseDialogInfo<ThisClass> {
+
+
     public BaseInputInfo(Project project) {
       super(project);
     }
