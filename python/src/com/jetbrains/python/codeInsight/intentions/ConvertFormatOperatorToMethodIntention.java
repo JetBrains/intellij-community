@@ -202,6 +202,10 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     PyBinaryExpression binaryExpression  =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
     if (binaryExpression == null) {

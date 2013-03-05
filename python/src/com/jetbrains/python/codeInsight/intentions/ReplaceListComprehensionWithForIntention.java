@@ -29,6 +29,10 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     PyListCompExpression expression =
       PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
     if (expression == null) {

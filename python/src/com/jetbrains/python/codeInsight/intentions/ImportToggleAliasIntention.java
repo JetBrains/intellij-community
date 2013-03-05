@@ -103,6 +103,10 @@ public class ImportToggleAliasIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     IntentionState state = IntentionState.fromContext(editor, file);
     myLastText = state.getText();
     return state.isAvailable();

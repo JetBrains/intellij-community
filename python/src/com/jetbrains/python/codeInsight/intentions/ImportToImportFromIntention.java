@@ -214,6 +214,10 @@ public class ImportToImportFromIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     IntentionState state = new IntentionState(editor, file);
     if (state.isAvailable()) {
       myText = state.getText();

@@ -30,6 +30,10 @@ public class PyDemorganIntention extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
+
     PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
     if (expression != null) {
       PyElementType op = expression.getOperator();

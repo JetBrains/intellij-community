@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class TypeIntention implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file instanceof PyDocstringFile) return false;
+    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
     updateText(false);
 
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());

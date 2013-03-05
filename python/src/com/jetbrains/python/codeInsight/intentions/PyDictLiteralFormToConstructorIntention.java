@@ -33,6 +33,9 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
 
     PyDictLiteralExpression dictExpression =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyDictLiteralExpression.class);
