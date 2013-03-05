@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
@@ -306,5 +307,41 @@ class Test {
                  a2
 }'''
     )    
+  }
+
+  void "test fields with comments"() {
+    doTest(
+      initial: '''\
+class Test {
+  int h1, /** h1 */
+      h2;
+  int f1, // f1
+      f2; // f2
+  int g1, /* g1 */
+      g2;
+  int e1, e2; // ee
+  int d; /* c-style
+            multi-line comment */
+  int b; /* c-style single line comment */
+  int c; // comment
+  int a;
+}''',
+      rules: [rule(ArrangementEntryOrderType.BY_NAME, FIELD)],
+      expected: '''\
+class Test {
+  int a;
+  int b; /* c-style single line comment */
+  int c; // comment
+  int d; /* c-style
+            multi-line comment */
+  int e1, e2; // ee
+  int f1, // f1
+      f2; // f2
+  int g1, /* g1 */
+      g2;
+  int h1, /** h1 */
+      h2;
+}'''
+    )
   }
 }
