@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -89,7 +90,10 @@ public class OpenInSceneBuilderAction extends AnAction {
           javaParameters.setMainClass("com.oracle.javafx.authoring.Main");
           javaParameters.getProgramParametersList().add(path);
 
-          javaParameters.createOSProcessHandler().startNotify();
+          final OSProcessHandler processHandler = javaParameters.createOSProcessHandler();
+          final String commandLine = processHandler.getCommandLine();
+          LOG.info("scene builder command line: " + commandLine);
+          processHandler.startNotify();
           return;
         }
         catch (Exception ignore) {
