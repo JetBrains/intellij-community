@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -100,9 +101,9 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   public void testVarargs() {doTest();}
 
-  public void testTypeParameterDeclaredInFile() {
-    doTest()
-  }
+  public void testTypeParameterDeclaredInFile() { doTest() }
+
+  public void testBadReturns() { doTest() }
 
   public void testInlineAll() {
     doTest(new GroovyInlineHandler() {
@@ -145,9 +146,16 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
     PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
-    if (identifier != null){
-      Assert.assertTrue("Selected area doesn't point to method", identifier.parent instanceof GrVariable);
-      selectedArea = (GroovyPsiElement)identifier.parent;
+    if (identifier != null) {
+      if (identifier.parent instanceof GrVariable) {
+        selectedArea = (GroovyPsiElement)identifier.parent;
+      }
+      else if (identifier instanceof GrMethod) {
+        selectedArea = identifier
+      }
+      else {
+        this.assertTrue("Selected area doesn't point to method or variable", false)
+      }
     }
   }
     Assert.assertNotNull("Selected area reference points to nothing", selectedArea);

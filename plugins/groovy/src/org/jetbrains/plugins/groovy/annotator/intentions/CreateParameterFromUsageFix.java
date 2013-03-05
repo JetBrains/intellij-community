@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class CreateParameterFromUsageFix extends Intention implements IntentionA
       public void run() {
         if (project.isDisposed()) return;
 
-        final String name = ref.getName();
+        final String name = ref.getReferenceName();
         final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(ref);
 
         PsiType unboxed = types.isEmpty() ? null : TypesUtil.unboxPrimitiveTypeWrapper(types.iterator().next());

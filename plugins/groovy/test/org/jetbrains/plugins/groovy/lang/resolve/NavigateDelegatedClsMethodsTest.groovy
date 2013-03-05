@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class A extends Page {
 }
 ''')
       def instance = TargetElementUtilBase.getInstance()
-      def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset)
+      def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset).navigationElement
       assertInstanceOf resolved, PsiMethod
       assertEquals ('NavigableSupport', (resolved as PsiMethod).containingClass.name)
     }

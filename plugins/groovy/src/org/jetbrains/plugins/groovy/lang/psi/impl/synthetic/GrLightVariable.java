@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Collections;
@@ -139,6 +140,9 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
         if (!(rightQuote instanceof XmlToken) || rightQuote.getNextSibling() != null) continue;
 
         ((LeafElement)textToken).replaceWithText(name);
+      }
+      else if (declaration instanceof GrReferenceExpression) {
+        ((GrReferenceExpression)declaration).handleElementRenameSimple(name);
       }
     }
 

@@ -61,6 +61,11 @@ public class SelectLocationDialog extends DialogWrapper {
     try {
       SVNURL.parseURIEncoded(url);
       final SVNURL svnurl = initRoot(project, url);
+      if (svnurl == null) {
+        Messages.showErrorDialog(project, "Can not detect repository root for URL: " + url,
+                                 SvnBundle.message("dialog.title.select.repository.location"));
+        return null;
+      }
       SelectLocationDialog dialog = new SelectLocationDialog(project, svnurl, null, null, true);
       dialog.show();
       if (!dialog.isOK()) return null;

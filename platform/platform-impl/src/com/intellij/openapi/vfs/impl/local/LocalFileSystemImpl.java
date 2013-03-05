@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -57,21 +56,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private String myFSRootPath;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) throws FileNotFoundException {
-      final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+    public WatchRequestImpl(String rootPath, boolean toWatchRecursively) throws FileNotFoundException {
+      int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
-
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
-      if (index > 0 || !rootFile.isDirectory()) {
-        final File parentFile = rootFile.getParentFile();
-        if (parentFile == null) {
-          throw new FileNotFoundException(rootPath);
-        }
-        if (!parentFile.getPath().equals(PathManager.getSystemPath()) || !rootFile.mkdir()) {
-          rootFile = parentFile;
-        }
-      }
-
       myFSRootPath = rootFile.getAbsolutePath();
       myRootPath = FileUtil.toSystemIndependentName(myFSRootPath);
       myToWatchRecursively = toWatchRecursively;
@@ -374,7 +362,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       while (true) {
         final Application application = ApplicationManager.getApplication();
         if (application == null || application.isDisposed()) break;
-        
+
         storeRefreshStatusToFiles();
         TimeoutUtil.sleep(PERIOD);
       }

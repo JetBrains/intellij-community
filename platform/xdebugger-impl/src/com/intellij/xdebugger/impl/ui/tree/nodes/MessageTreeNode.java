@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -137,7 +139,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
       if (matcher.start() != prev) {
         objects.add(message.substring(prev, matcher.start()));
       }
-      objects.add(new XDebuggerTreeNodeHyperlink.HyperlinkListenerDelegator(matcher.group(2), matcher.group(1), hyperlinkListener));
+      objects.add(new HyperlinkListenerDelegator(matcher.group(2), matcher.group(1), hyperlinkListener));
       prev = matcher.end();
     }
     while (matcher.find());
@@ -169,6 +171,23 @@ public class MessageTreeNode extends XDebuggerTreeNode {
           component.append(hyperlink.getLinkText(), SimpleTextAttributes.LINK_ATTRIBUTES, hyperlink);
         }
       }
+    }
+  }
+
+  public static final class HyperlinkListenerDelegator extends XDebuggerTreeNodeHyperlink {
+    private final HyperlinkListener hyperlinkListener;
+    private final String href;
+
+    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
+      super(linkText);
+
+      this.hyperlinkListener = hyperlinkListener;
+      this.href = href;
+    }
+
+    @Override
+    public void onClick(MouseEvent event) {
+      hyperlinkListener.hyperlinkUpdate(IJSwingUtilities.createHyperlinkEvent(href, getLinkText()));
     }
   }
 }

@@ -186,11 +186,12 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
   }
 
   private void flushTo(final RendererConfiguration rendererConfiguration) {
-    rendererConfiguration.removeAllRenderers();
     final int count = myRendererChooser.getElementCount();
+    final List<NodeRenderer> renderers = new ArrayList<NodeRenderer>(count);
     for (int idx = 0; idx < count; idx++) {
-      rendererConfiguration.addRenderer(myRendererChooser.getElementAt(idx));
+      renderers.add(myRendererChooser.getElementAt(idx));
     }
+    rendererConfiguration.setRenderers(renderers);
   }
 
   public boolean isModified() {

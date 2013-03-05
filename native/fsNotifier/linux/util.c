@@ -108,12 +108,19 @@ void array_delete(array* a) {
 
 void array_delete_vs_data(array* a) {
   if (a != NULL) {
+    array_delete_data(a);
+    array_delete(a);
+  }
+}
+
+void array_delete_data(array* a) {
+  if (a != NULL) {
     for (int i=0; i<a->size; i++) {
       if (a->data[i] != NULL) {
         free(a->data[i]);
       }
     }
-    array_delete(a);
+    a->size = 0;
   }
 }
 

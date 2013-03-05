@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -33,7 +34,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SvnRevisionPanel extends JPanel {
   private JRadioButton mySpecified;
@@ -42,7 +43,7 @@ public class SvnRevisionPanel extends JPanel {
   private TextFieldWithBrowseButton myRevisionField;
   private Project myProject;
   private UrlProvider myUrlProvider;
-  private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
+  private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private VirtualFile myRoot;
 
   public SvnRevisionPanel() {

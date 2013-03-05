@@ -110,12 +110,12 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  public synchronized void addFavoritesListener(FavoritesListener listener) {
+  public void addFavoritesListener(FavoritesListener listener) {
     myListeners.add(listener);
     listener.rootsChanged();
   }
 
-  public synchronized void removeFavoritesListener(FavoritesListener listener) {
+  public void removeFavoritesListener(FavoritesListener listener) {
     myListeners.remove(listener);
   }
 

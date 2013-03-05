@@ -28,6 +28,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -160,7 +161,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     }
   }
 
-  private final List<CvsTabbedWindow.DeactivateListener> myListeners = new ArrayList<CvsTabbedWindow.DeactivateListener>();
+  private final List<CvsTabbedWindow.DeactivateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void addListener(final CvsTabbedWindow.DeactivateListener listener) {
     synchronized (myListeners) {

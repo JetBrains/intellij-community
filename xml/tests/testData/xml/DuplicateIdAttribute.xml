@@ -4,7 +4,7 @@
 <!ATTLIST b
     id ID #REQUIRED>
 ]><a>
- <b id=<error>"1"</error>/>
- <b id=<error>"1"</error>/>
+ <b id="<error descr="Duplicate id reference">1</error>"/>
+ <b id="<error descr="Duplicate id reference">1</error>"/>
  <b id="2"/>
 </a>

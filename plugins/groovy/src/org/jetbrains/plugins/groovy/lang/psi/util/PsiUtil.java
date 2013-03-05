@@ -1172,7 +1172,7 @@ public class PsiUtil {
 
     GrReferenceExpression ref = (GrReferenceExpression)element;
 
-    return !ref.isQualified() && name.equals(ref.getName());
+    return !ref.isQualified() && name.equals(ref.getReferenceName());
   }
 
   @Nullable

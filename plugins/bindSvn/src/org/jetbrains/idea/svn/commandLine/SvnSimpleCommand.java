@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -36,8 +36,8 @@ public class SvnSimpleCommand extends SvnCommand {
   private VcsException myException;
   private final Object myDataLock;
 
-  public SvnSimpleCommand(Project project, File workingDirectory, @NotNull SvnCommandName commandName) {
-    super(project, workingDirectory, commandName);
+  public SvnSimpleCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
+    super(workingDirectory, commandName, exePath);
 
     myDataLock = new Object();
     myStderr = new StringBuilder();

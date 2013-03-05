@@ -302,6 +302,9 @@ public def layoutCommunityPlugins(String home) {
     layoutPlugin("svn4idea") {
       fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
     }
+    layoutPlugin("bindSvn") {
+      fileset(dir: "$home/plugins/svn4idea/lib", includes: "**/javahl.jar")
+    }
 
     layoutPlugin("junit", "junit", "idea-junit") {
       jar("junit-rt.jar") {

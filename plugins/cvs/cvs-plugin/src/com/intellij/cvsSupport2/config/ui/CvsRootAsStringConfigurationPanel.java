@@ -22,12 +22,12 @@ import com.intellij.cvsSupport2.ui.CvsRootChangeListener;
 import com.intellij.cvsSupport2.ui.FormUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -38,7 +38,7 @@ public class CvsRootAsStringConfigurationPanel {
   private JTextField myCvsRoot;
   private JButton myEditFieldByFieldButton;
   private final Ref<Boolean> myIsUpdating;
-  private final Collection<CvsRootChangeListener> myCvsRootListeners = new ArrayList<CvsRootChangeListener>();
+  private final Collection<CvsRootChangeListener> myCvsRootListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private JPanel myPanel;
 
   public CvsRootAsStringConfigurationPanel(boolean readOnly, Ref<Boolean> isUpdating) {

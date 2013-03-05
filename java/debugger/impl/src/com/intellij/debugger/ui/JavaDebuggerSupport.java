@@ -192,7 +192,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   }
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
-    private List<MyBreakpointManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final List<MyBreakpointManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
     @Override
     public AnAction[] getAddBreakpointActions(@NotNull Project project) {

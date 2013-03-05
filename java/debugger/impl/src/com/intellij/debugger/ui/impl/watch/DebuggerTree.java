@@ -540,16 +540,24 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     public void threadAction() {
-      ValueDescriptorImpl descriptor = (ValueDescriptorImpl)getNode().getDescriptor();
+      final DebuggerTreeNodeImpl node = getNode();
+      ValueDescriptorImpl descriptor = (ValueDescriptorImpl)node.getDescriptor();
       try {
         final NodeRenderer renderer = descriptor.getRenderer(getSuspendContext().getDebugProcess());
         renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
       }
       catch (ObjectCollectedException e) {
-        getNode().removeAllChildren();
-        getNode().add(getNodeFactory().createMessageNode(
-          new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", e.getMessage()))));
-        getNode().childrenChanged(false);
+        final String message = e.getMessage();
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+          @Override
+          public void run() {
+            node.removeAllChildren();
+            node.add(getNodeFactory().createMessageNode(
+              new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
+            );
+            node.childrenChanged(false);
+          }
+        });
       }
     }
 
@@ -652,7 +660,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-      final EvaluationContextImpl evaluationContext = suspendContext != null? debuggerContext.createEvaluationContext() : null;
+      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed()? debuggerContext.createEvaluationContext() : null;
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 

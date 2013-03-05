@@ -284,6 +284,7 @@ public class SvnStatusHandler extends DefaultHandler {
       if (createNewChild) {
         assertSAX(myElementsMap.containsKey(qName));
         final ElementHandlerBase newChild = myElementsMap.get(qName).get();
+        newChild.preAttributesEffect(myDataCallback);
         newChild.updateStatus(attributes, myPending, myLockWrapper);
         newChild.preEffect(myDataCallback);
         myParseStack.add(newChild);
@@ -547,12 +548,11 @@ public class SvnStatusHandler extends DefaultHandler {
 
   private static class Lock extends ElementHandlerBase {
     private Lock() {
-      super(new String[]{"token","owner","comment","created"}, new String[]{});
+      super(new String[]{"token", "owner", "comment", "created"}, new String[]{});
     }
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      // todo check inside-repository path
       lock.setPath(status.getPath());
     }
 
@@ -562,8 +562,12 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
-    public void preEffect(DataCallback callback) {
+    public void preAttributesEffect(DataCallback callback) {
       callback.startLock();
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
     }
 
     @Override
@@ -587,8 +591,12 @@ public class SvnStatusHandler extends DefaultHandler {
     }
 
     @Override
+    public void preAttributesEffect(DataCallback callback) {
+      callback.startLock();
+    }
+
+    @Override
     public void preEffect(DataCallback callback) {
-      callback.startRemoteStatus();
     }
 
     @Override
@@ -851,6 +859,8 @@ and no "mod4" under
     }
 
     public abstract void characters(String s, PortableStatus pending, SVNLockWrapper lock);
+
+    public void preAttributesEffect(DataCallback callback) {}
   }
 
   public interface ExternalDataCallback {

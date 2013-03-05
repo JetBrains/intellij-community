@@ -153,7 +153,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   }
 
   public static <T> List<T> findFxmlWithController(final Project project,
-                                                     final String className,
+                                                     @NotNull final String className,
                                                      final Function<VirtualFile, T> f,
                                                      final GlobalSearchScope scope) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<T>>() {

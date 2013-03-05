@@ -25,6 +25,7 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -56,9 +57,13 @@
     "The current <b>inotify</b>(7) watch limit is too low. " \
     "<a href=\"http://confluence.jetbrains.net/display/IDEADEV/Inotify+Watches+Limit\">More details.</a>\n"
 
+#define MISSING_ROOT_TIMEOUT 1
+
+#define UNFLATTEN(root) (root[0] == '|' ? root + 1 : root)
+
 typedef struct {
-  char* name;
-  int id;
+  char* path;
+  int id;  // negative value means missing root
 } watch_root;
 
 static array* roots = NULL;
@@ -76,6 +81,8 @@ static array* unwatchable_mounts();
 static void inotify_callback(char* path, int event);
 static void report_event(char* event, char* path);
 static void output(const char* format, ...);
+static void check_missing_roots();
+static void check_root_removal(char*);
 
 
 int main(int argc, char** argv) {
@@ -208,13 +215,16 @@ static void main_loop() {
   int input_fd = fileno(stdin), inotify_fd = get_inotify_fd();
   int nfds = (inotify_fd > input_fd ? inotify_fd : input_fd) + 1;
   fd_set rfds;
+  struct timeval timeout;
   bool go_on = true;
 
   while (go_on) {
     FD_ZERO(&rfds);
     FD_SET(input_fd, &rfds);
     FD_SET(inotify_fd, &rfds);
-    if (select(nfds, &rfds, NULL, NULL, NULL) < 0) {
+    timeout = (struct timeval){MISSING_ROOT_TIMEOUT, 0};
+
+    if (select(nfds, &rfds, NULL, NULL, &timeout) < 0) {
       userlog(LOG_ERR, "select: %s", strerror(errno));
       go_on = false;
     }
@@ -223,6 +233,9 @@ static void main_loop() {
     }
     else if (FD_ISSET(inotify_fd, &rfds)) {
       go_on = process_inotify_input();
+    }
+    else {
+      check_missing_roots();
     }
   }
 }
@@ -311,9 +324,9 @@ static bool update_roots(array* new_roots) {
 static void unregister_roots() {
   watch_root* root;
   while ((root = array_pop(roots)) != NULL) {
-    userlog(LOG_INFO, "unregistering root: %s", root->name);
+    userlog(LOG_INFO, "unregistering root: %s", root->path);
     unwatch(root->id);
-    free(root->name);
+    free(root->path);
     free(root);
   };
 }
@@ -322,12 +335,11 @@ static void unregister_roots() {
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
   for (int i=0; i<array_size(new_roots); i++) {
     char* new_root = array_get(new_roots, i);
-    char* unflattened = new_root;
-    if (unflattened[0] == '|') ++unflattened;
+    char* unflattened = UNFLATTEN(new_root);
     userlog(LOG_INFO, "registering root: %s", new_root);
 
     if (unflattened[0] != '/') {
-      userlog(LOG_WARNING, "  ... not valid, skipped");
+      userlog(LOG_WARNING, "invalid root: %s", new_root);
       continue;
     }
 
@@ -357,12 +369,12 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
     int id = watch(new_root, inner_mounts);
     array_delete(inner_mounts);
 
-    if (id >= 0) {
+    if (id >= 0 || id == ERR_MISSING) {
       watch_root* root = malloc(sizeof(watch_root));
       CHECK_NULL(root, false);
       root->id = id;
-      root->name = strdup(new_root);
-      CHECK_NULL(root->name, false);
+      root->path = strdup(new_root);
+      CHECK_NULL(root->path, false);
       CHECK_NULL(array_push(roots, root), false);
     }
     else if (id == ERR_ABORT) {
@@ -407,31 +419,25 @@ static array* unwatchable_mounts() {
 
 
 static void inotify_callback(char* path, int event) {
-  if (event & IN_CREATE || event & IN_MOVED_TO) {
+  if (event & (IN_CREATE | IN_MOVED_TO)) {
     report_event("CREATE", path);
     report_event("CHANGE", path);
-    return;
   }
-
-  if (event & IN_MODIFY) {
+  else if (event & IN_MODIFY) {
     report_event("CHANGE", path);
-    return;
   }
-
-  if (event & IN_ATTRIB) {
+  else if (event & IN_ATTRIB) {
     report_event("STATS", path);
-    return;
   }
-
-  if (event & IN_DELETE || event & IN_MOVED_FROM) {
+  else if (event & (IN_DELETE | IN_MOVED_FROM)) {
     report_event("DELETE", path);
-    return;
   }
-
-  if (event & IN_UNMOUNT) {
+  if (event & (IN_DELETE_SELF | IN_MOVE_SELF)) {
+    check_root_removal(path);
+  }
+  else if (event & IN_UNMOUNT) {
     output("RESET\n");
     userlog(LOG_DEBUG, "RESET");
-    return;
   }
 }
 
@@ -465,4 +471,33 @@ static void output(const char* format, ...) {
   va_end(ap);
 
   fflush(stdout);
+}
+
+
+static void check_missing_roots() {
+  struct stat st;
+  for (int i=0; i<array_size(roots); i++) {
+    watch_root* root = array_get(roots, i);
+    if (root->id < 0) {
+      char* unflattened = UNFLATTEN(root->path);
+      if (stat(unflattened, &st) == 0) {
+        root->id = watch(root->path, NULL);
+        userlog(LOG_INFO, "root restored: %s\n", root->path);
+        report_event("CREATE", unflattened);
+        report_event("CHANGE", unflattened);
+      }
+    }
+  }
+}
+
+static void check_root_removal(char* path) {
+  for (int i=0; i<array_size(roots); i++) {
+    watch_root* root = array_get(roots, i);
+    if (root->id >= 0 && strcmp(path, UNFLATTEN(root->path)) == 0) {
+      unwatch(root->id);
+      root->id = -1;
+      userlog(LOG_INFO, "root deleted: %s\n", root->path);
+      report_event("DELETE", path);
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
-    return false;
+    return true;
   }
 
   public PsiElement getElementByReference(PsiReference ref, int flags) {

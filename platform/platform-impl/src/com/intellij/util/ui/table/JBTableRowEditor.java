@@ -16,12 +16,12 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,7 +31,7 @@ public abstract class JBTableRowEditor extends JPanel {
     void documentChanged(DocumentEvent e, int column);
   }
 
-  private Set<RowDocumentListener> myListeners = new HashSet<RowDocumentListener>();
+  private final List<RowDocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private MouseEvent myMouseEvent;
 
   public abstract void prepareEditor(JTable table, int row);

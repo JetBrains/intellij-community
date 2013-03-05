@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,11 @@ package com.intellij.navigation;
 
 
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-
-import java.util.Calendar;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
@@ -52,7 +49,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
-  @Bombed(user = "maxim.medvedev", year = 2013, month = Calendar.MARCH, day = 5)
   public void testShowSelfNonAbstract() throws Throwable {
     //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
     PsiFile file = myFixture.addFileToProject("Foo.java", "public class Hello {\n" +
