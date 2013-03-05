@@ -737,7 +737,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
   public void appendPositionManager(final PositionManager positionManager) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager.appendPositionManager(positionManager);
-    DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().updateBreakpoints(this);
   }
 
   private RunToCursorBreakpoint myRunToCursorBreakpoint;
