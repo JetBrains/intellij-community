@@ -1346,18 +1346,18 @@ class XInternalError {}
   public void "test block selection from bottom to top with single-item insertion"() {
     myFixture.configureByText "a.java", """
 class Foo {{
-  ret;
   ret<caret>;
+  ret;
 }}"""
     edt {
       def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-      myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line - 1, caret.column))
+      myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(caret.line + 1, caret.column), caret)
     }
     myFixture.completeBasic()
     myFixture.checkResult '''
 class Foo {{
-  return;
   return<caret>;
+  return;
 }}'''
   }
 
