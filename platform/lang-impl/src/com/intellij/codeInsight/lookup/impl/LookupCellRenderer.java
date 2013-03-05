@@ -152,7 +152,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     myTailComponent.clear();
     myTailComponent.setBackground(background);
     if (isSelected || allowedWidth >= 0) {
-      setTailTextLabel(isSelected, presentation, foreground, isSelected ? getMaxWidth() : allowedWidth);
+      setTailTextLabel(isSelected, presentation, foreground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection);
     }
 
     if (mySelected.containsKey(index)) {
@@ -195,7 +195,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     return myMaxWidth;
   }
 
-  private void setTailTextLabel(boolean isSelected, LookupElementPresentation presentation, Color foreground, int allowedWidth) {
+  private void setTailTextLabel(boolean isSelected, LookupElementPresentation presentation, Color foreground, int allowedWidth, boolean nonFocusedSelection) {
     int style = getStyle(false, presentation.isStrikeout(), false);
 
     for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
@@ -204,7 +204,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, myNormalMetrics);
-      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground)));
+      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
       allowedWidth -= RealLookupElementPresentation.getStringWidth(trimmed, myNormalMetrics);
     }
   }
@@ -239,7 +239,11 @@ public class LookupCellRenderer implements ListCellRenderer {
     return text.substring(0, i) + ELLIPSIS;
   }
 
-  public static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground) {
+  private static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground, boolean nonFocusedSelection) {
+    if (!nonFocusedSelection) {
+      return defaultForeground;
+    }
+
     if (fragment.isGrayed()) {
       return getGrayedForeground(isSelected);
     }
