@@ -713,7 +713,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     }
     else if (oldLineCount < newLineCount) {
-      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
+      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
     }
 
     if (isAtEndOfDocument) {
