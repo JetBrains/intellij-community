@@ -143,7 +143,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListRemoved(ChangeList list) {
-        disassociateFromTask((LocalChangeList)list);
       }
 
       @Override
@@ -348,11 +347,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     if (!isVcsEnabled()) return;
     List<ChangeListInfo> changeLists = task.getChangeLists();
     if (!changeLists.isEmpty()) {
-      String id = changeLists.get(0).id;
-      LocalChangeList changeList = myChangeListManager.getChangeList(id);
-      if (changeList != null) {
-        myChangeListManager.setDefaultChangeList(changeList);
+      ChangeListInfo info = changeLists.get(0);
+      LocalChangeList changeList = myChangeListManager.getChangeList(info.id);
+      if (changeList == null) {
+        changeList = myChangeListManager.addChangeList(info.name, info.comment);
       }
+      myChangeListManager.setDefaultChangeList(changeList);
       return;
     }
     if (createChangelist) {

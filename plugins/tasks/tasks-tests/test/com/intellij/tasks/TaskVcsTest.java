@@ -178,7 +178,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(anotherChangeList);
     removeChangeList(anotherChangeList);
 
-    assertEquals(0, anotherTask.getChangeLists().size());
+    assertEquals(1, anotherTask.getChangeLists().size());
     assertEquals(1, defaultTask.getChangeLists().size());
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
 
@@ -347,6 +347,18 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     task = new LocalTaskImpl("112", "");
     assertEquals("112", task.getNumber());
     assertEquals(null, task.getProject());
+  }
+
+  public void testRestoreChangelist() throws Exception {
+    LocalTaskImpl task = new LocalTaskImpl("foo", "bar");
+    myTaskManager.activateTask(task, true, true);
+    myTaskManager.activateTask(new LocalTaskImpl("next", ""), true, true);
+
+    String changelistName = myTaskManager.getChangelistName(task);
+    myChangeListManager.removeChangeList(changelistName);
+
+    myTaskManager.activateTask(task, true, true);
+    assertNotNull(myChangeListManager.findChangeList(changelistName));
   }
 
   private TestRepository myRepository;
