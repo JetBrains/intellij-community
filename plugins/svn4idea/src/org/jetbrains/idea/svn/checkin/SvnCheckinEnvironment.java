@@ -165,7 +165,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         List<VcsException> exception, final Set<String> feedback) {
     final MultiMap<Pair<SVNURL,WorkingCopyFormat>,File> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
     for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : map.entrySet()) {
-      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond());
+      doCommitOneRepo(entry.getValue(), committer, comment, force, exception, feedback, entry.getKey().getSecond(), entry.getKey().getFirst());
     }
   }
 
@@ -173,12 +173,13 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                                SVNCommitClient committer,
                                String comment,
                                boolean force,
-                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format) {
+                               List<VcsException> exception, final Set<String> feedback, final WorkingCopyFormat format, SVNURL url) {
     if (committables.isEmpty()) {
       return;
     }
     if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
-        SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration)) {
+        SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
+        (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
       doWithCommandLine(committables, comment, exception, feedback);
       return;
     }

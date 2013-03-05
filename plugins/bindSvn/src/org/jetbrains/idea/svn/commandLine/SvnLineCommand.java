@@ -85,6 +85,7 @@ public class SvnLineCommand extends SvnCommand {
     listener.baseDirectory(base);
 
     boolean certificateAttempt = false;
+    boolean authenticationAsked = false;
     File configDir = null;
     while (true) {
       final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
@@ -93,7 +94,21 @@ public class SvnLineCommand extends SvnCommand {
         if ((errText.startsWith(AUTHENTICATION_REALM) || errText.startsWith(CERTIFICATE_ERROR)) && authenticationCallback != null) {
           cleanup(exePath, commandName, base);
           if (errText.startsWith(CERTIFICATE_ERROR)) {
-            if (! certificateAttempt && authenticationCallback.acceptSSLServerCertificate(base)) {
+            final int idx = errText.indexOf('\n');
+            if (idx == -1) {
+              throw new SvnBindException("Can not detect authentication realm name: " + errText);
+            }
+            String realm = errText.substring(CERTIFICATE_ERROR.length(), idx);
+            final int idx1 = realm.indexOf('\'');
+            if (idx1 == -1) {
+              throw new SvnBindException("Can not detect authentication realm name: " + errText);
+            }
+            final int idx2 = realm.indexOf('\'', idx1 + 1);
+            if (idx2== -1) {
+              throw new SvnBindException("Can not detect authentication realm name: " + errText);
+            }
+            realm = realm.substring(idx1 + 1, idx2);
+            if (! certificateAttempt && authenticationCallback.acceptSSLServerCertificate(base, realm)) {
               certificateAttempt = true;
               if (authenticationCallback.getSpecialConfigDir() != null) {
                 configDir = authenticationCallback.getSpecialConfigDir();
@@ -107,6 +122,10 @@ public class SvnLineCommand extends SvnCommand {
               throw new SvnBindException("Can not detect authentication realm name: " + errText);
             }
             final String realm = errText.substring(AUTHENTICATION_REALM.length(), idx).trim();
+            if (authenticationAsked) {
+              authenticationCallback.clearPassiveCredentials(realm, base);
+            }
+            authenticationAsked = true;
             if (authenticationCallback.authenticateFor(realm, base, configDir != null)) {
               if (authenticationCallback.getSpecialConfigDir() != null) {
                 configDir = authenticationCallback.getSpecialConfigDir();

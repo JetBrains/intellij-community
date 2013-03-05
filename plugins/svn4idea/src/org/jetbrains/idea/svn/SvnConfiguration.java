@@ -615,6 +615,11 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     RUNTIME_AUTH_CACHE.putData(kind, realm, null);
   }
 
+  public void clearRuntimeStorage() {
+    RUNTIME_AUTH_CACHE.clear();
+  }
+
+
   public int getMaxAnnotateRevisions() {
     return myMaxAnnotateRevisions;
   }

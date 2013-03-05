@@ -33,7 +33,9 @@ public interface AuthenticationCallback {
   @Nullable
   File getSpecialConfigDir();
 
-  boolean acceptSSLServerCertificate(String url);
+  boolean acceptSSLServerCertificate(String url, final String realm);
 
-  boolean acceptSSLServerCertificate(File file);
+  boolean acceptSSLServerCertificate(File file, final String realm);
+
+  void clearPassiveCredentials(String realm, File base);
 }
