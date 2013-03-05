@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.icons.AllIcons;
@@ -26,7 +27,6 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
-import com.intellij.lang.ant.config.actions.RemoveBuildFileAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
@@ -187,7 +187,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private JPanel createToolbarPanel() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddAction());
-    group.add(new RemoveAction());
+    group.add(new RemoveMetaTargetsOrBuildFileAction());
     group.add(new RunAction());
     group.add(new ShowAllTargetsAction());
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
@@ -408,9 +408,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(new CreateMetaTargetAction());
     group.add(new RemoveMetaTargetsOrBuildFileAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
-    if (userObject instanceof AntBuildFileNodeDescriptor) {
-      group.add(new RemoveBuildFileAction(this));
-    }
     if (userObject instanceof AntTargetNodeDescriptor) {
       final AntBuildTargetBase target = ((AntTargetNodeDescriptor)userObject).getTarget();
       final DefaultActionGroup executeOnGroup =
@@ -537,21 +534,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public void actionPerformed(AnActionEvent e) {
       addBuildFile();
-    }
-  }
-
-  private final class RemoveAction extends AnAction {
-    public RemoveAction() {
-      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
-            IconUtil.getRemoveIcon());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      removeSelectedBuildFiles();
-    }
-
-    public void update(AnActionEvent event) {
-      event.getPresentation().setEnabled(getCurrentBuildFile() != null);
     }
   }
 
@@ -693,41 +675,31 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private final class RemoveMetaTargetsOrBuildFileAction extends AnAction {
 
     public RemoveMetaTargetsOrBuildFileAction() {
-      super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
+      super(CommonBundle.message("button.remove"), AntBundle.message("remove.meta.targets.or.files.action.description"), IconUtil.getRemoveIcon());
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)), myTree);
       Disposer.register(AntExplorer.this, new Disposable() {
+        @Override
         public void dispose() {
           RemoveMetaTargetsOrBuildFileAction.this.unregisterCustomShortcutSet(myTree);
         }
       });
       myTree.registerKeyboardAction(new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
-          doAction();
+          RemoveMetaTargetsOrBuildFileAction.this.actionPerformed(null);
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
-      doAction();
-    }
-
-    private void doAction() {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return;
       }
       try {
-        // try to remove build file
-        if (paths.length == 1) {
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-          if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
-            final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
-            if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
-              removeSelectedBuildFiles();
-              return;
-            }
-          }
-        }
+        removeSelectedBuildFiles();
+
         // try to remove meta targets
         final AntBuildTarget[] targets = getTargetObjectsFromPaths(paths);
         final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
@@ -747,49 +719,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null) {
-        presentation.setEnabled(false);
-        return;
-      }
-
-      if (paths.length == 1) {
-        String text = AntBundle.message("remove.meta.target.action.name");
-        boolean enabled = false;
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-        if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
-          final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
-          if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
-            text = AntBundle.message("remove.selected.build.file.action.name");
-            enabled = true;
-          }
-        }
-        else {
-          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
-            final AntTargetNodeDescriptor descr = (AntTargetNodeDescriptor)node.getUserObject();
-            final AntBuildTargetBase target = descr.getTarget();
-            if (target instanceof MetaTarget) {
-              enabled = true;
-            }
-          }
-        }
-        presentation.setText(text);
-        presentation.setEnabled(enabled);
-      }
-      else {
-        presentation.setText(AntBundle.message("remove.selected.meta.targets.action.name"));
-        final AntBuildTarget[] targets = getTargetObjectsFromPaths(paths);
-        boolean enabled = targets.length > 0;
-        for (final AntBuildTarget buildTarget : targets) {
-          if (!(buildTarget instanceof MetaTarget)) {
-            enabled = false;
-            break;
-          }
-        }
-        presentation.setEnabled(enabled);
-      }
+      presentation.setEnabled(paths != null);
     }
   }
 
