@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
@@ -298,8 +295,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         storeServerCertificate(myTempDirectory, myCertificateRealm, stored, failures);
         if (myAuthentication != null) {
           try {
-            final String kind = myAuthentication instanceof SVNPasswordAuthentication ? ISVNAuthenticationManager.PASSWORD :
-                                ISVNAuthenticationManager.SSL;
+            final String kind = getFromType(myAuthentication);
             final String realm = myCredentialsRealm == null ? myCertificateRealm : myCredentialsRealm;
             manager.acknowledgeAuthentication(true, kind, realm, null, myAuthentication, myUrl);
           } catch (SvnAuthenticationManager.CredentialsSavedException e) {
@@ -420,76 +416,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     @Override
     protected boolean acknowledge(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
       try {
-        manager.acknowledgeAuthentication(true, myKind, myRealm, null, svnAuthentication, myUrl);
+        manager.acknowledgeAuthentication(true, getFromType(svnAuthentication), myRealm, null, svnAuthentication, myUrl);
       } catch (SvnAuthenticationManager.CredentialsSavedException e) {
         return e.isSuccess();
       }
       return true;
-    }
-  }
-
-  private boolean tryAuthenticate(String realm, SVNURL url, File file, boolean previousFailed) {
-    realm = realm == null ? url.getHost() : realm;
-    // 1. get auth data
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    final SvnAuthenticationManager passive = configuration.getPassiveAuthenticationManager(myVcs.getProject());
-
-    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
-    final ISVNAuthenticationProvider provider = manager.getProvider();
-    //final SvnInteractiveAuthenticationProvider provider = new SvnInteractiveAuthenticationProvider(myVcs, manager);
-
-    SvnAuthenticationManager tmpDirManager = null;
-
-    final List<String> kinds = getKinds(url);
-    for (String kind : kinds) {
-      try {
-        boolean fromPassive = true;
-        SVNAuthentication svnAuthentication = getPassiveAuthentication(realm, url, passive, kind);
-        if (svnAuthentication == null) {
-          fromPassive = false;
-          svnAuthentication = provider.requestClientAuthentication(kind, url, realm,
-                    previousFailed ? SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED) : null, null, true);
-        }
-        if (svnAuthentication == null) return false;
-
-        configuration.acknowledge(kind, realm, svnAuthentication);
-        if (! fromPassive && svnAuthentication.isStorageAllowed()) {
-          //manager.requested(ProviderType.interactive, url, realm, kind, false);
-          manager.acknowledgeAuthentication(true, kind, realm, null, svnAuthentication);
-          return true;
-        } else {
-          if (tmpDirManager == null) {
-            myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-            tmpDirManager = SvnConfiguration.createForTmpDir(myVcs.getProject(), myTempDirectory);
-          }
-          tmpDirManager.setArtificialSaving(true);
-          try {
-            tmpDirManager.acknowledgeAuthentication(true, kind, realm, null, svnAuthentication, url);
-          } catch (SvnAuthenticationManager.CredentialsSavedException e) {
-            return e.isSuccess();
-          }
-        }
-      }
-      catch (SVNException e) {
-        LOG.info(e);
-        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), e.getMessage(), MessageType.ERROR);
-        return false;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), e.getMessage(), MessageType.ERROR);
-        return false;
-      }
-    }
-    return false;
-  }
-
-  private SVNAuthentication getPassiveAuthentication(String realm, SVNURL url, SvnAuthenticationManager passive, String kind)
-    throws SVNException {
-    try {
-      return passive.getFirstAuthentication(kind, realm, url);
-    } catch (SVNCancelException e) {
-      return null;
     }
   }
 
@@ -521,5 +452,21 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Override
   public File getSpecialConfigDir() {
     return myTempDirectory;
+  }
+
+  private String getFromType(SVNAuthentication authentication) {
+    if (authentication instanceof SVNPasswordAuthentication) {
+      return ISVNAuthenticationManager.PASSWORD;
+    }
+    if (authentication instanceof SVNSSHAuthentication) {
+      return ISVNAuthenticationManager.SSH;
+    }
+    if (authentication instanceof SVNSSLAuthentication) {
+      return ISVNAuthenticationManager.SSL;
+    }
+    if (authentication instanceof SVNUserNameAuthentication) {
+      return ISVNAuthenticationManager.USERNAME;
+    }
+    throw new IllegalArgumentException();
   }
 }

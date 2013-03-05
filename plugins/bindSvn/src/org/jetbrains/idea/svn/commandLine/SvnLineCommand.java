@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
@@ -189,6 +190,9 @@ public class SvnLineCommand extends SvnCommand {
       public void onLineAvailable(String line, Key outputType) {
         if (SvnCommand.LOG.isDebugEnabled()) {
           SvnCommand.LOG.debug("==> " + line);
+        }
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("==> " + line);
         }
         listener.onLineAvailable(line, outputType);
         if (listener.isCanceled()) {

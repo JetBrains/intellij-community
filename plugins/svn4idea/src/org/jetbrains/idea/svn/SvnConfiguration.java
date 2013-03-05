@@ -17,6 +17,8 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -579,7 +581,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public void clearAuthenticationDirectory(@Nullable Project project) {
     final File authDir = new File(getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      final Runnable process = new Runnable() {
         public void run() {
           final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
           if (ind != null) {
@@ -599,7 +601,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
             FileUtil.delete(dir);
           }
         }
-      }, "button.text.clear.authentication.cache", false, project);
+      };
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode() || ! application.isDispatchThread()) {
+        process.run();
+      } else {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "button.text.clear.authentication.cache", false, project);
+      }
     }
   }
   
