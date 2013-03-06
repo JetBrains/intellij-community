@@ -22,7 +22,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,11 +70,12 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       if (!JavaTokenType.PLUS.equals(tokenType) || !ExpressionUtils.hasStringType(expression)) {
         return;
       }
+      final boolean formatCall = FormatUtils.isFormatCallArgument(expression);
       final PsiExpression[] operands = expression.getOperands();
       PsiExpression lhs = operands[0];
       for (int i = 1; i < operands.length; i++) {
         final PsiExpression rhs = operands[i];
-        if (isMissingWhitespace(lhs, rhs)) {
+        if (isMissingWhitespace(lhs, rhs, formatCall)) {
           final PsiJavaToken token = expression.getTokenBeforeOperand(rhs);
           if (token != null) {
             registerError(token);
@@ -82,11 +85,14 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       }
     }
 
-    private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs) {
-      final String lhsLiteral = ExpressionUtils.getLiteralString(lhs);
+    private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs, boolean formatCall) {
+      @NonNls final String lhsLiteral = ExpressionUtils.getLiteralString(lhs);
       if (lhsLiteral != null) {
         final int length = lhsLiteral.length();
         if (length == 0) {
+          return false;
+        }
+        if (formatCall && lhsLiteral.endsWith("%n")) {
           return false;
         }
         final char c = lhsLiteral.charAt(length - 1);
@@ -97,9 +103,12 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       else if (ignoreNonStringLiterals) {
         return false;
       }
-      final String rhsLiteral = ExpressionUtils.getLiteralString(rhs);
+      @NonNls final String rhsLiteral = ExpressionUtils.getLiteralString(rhs);
       if (rhsLiteral != null) {
         if (rhsLiteral.isEmpty()) {
+          return false;
+        }
+        if (formatCall && rhsLiteral.startsWith("%n")) {
           return false;
         }
         final char c = rhsLiteral.charAt(0);
