@@ -185,7 +185,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
 
-    boolean canBeClassOrPackage = canBeClassOrPackage();
+    boolean canBeClassOrPackage = ResolveUtil.canBeClassOrPackage(this);
 
     if (canBeClassOrPackage && findClassOrPackageAtFirst()) {
       boolean preferVar = containsLocalVar(fieldCandidates);
@@ -236,17 +236,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
-  }
-
-  private boolean canBeClassOrPackage() {
-    GrExpression qualifier = getQualifier();
-    if (qualifier instanceof GrReferenceExpression) {
-      final PsiElement resolvedQualifier = ((GrReferenceExpression)qualifier).resolve();
-      return resolvedQualifier instanceof PsiClass || resolvedQualifier instanceof PsiPackage;
-    }
-    else {
-      return qualifier == null;
-    }
   }
 
   private static boolean containsLocalVar(GroovyResolveResult[] fieldCandidates) {
