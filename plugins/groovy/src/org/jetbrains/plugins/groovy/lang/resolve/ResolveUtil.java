@@ -867,6 +867,17 @@ public class ResolveUtil {
     }
   }
 
+  public static boolean canBeClassOrPackage(final GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier instanceof GrReferenceExpression) {
+      final PsiElement resolvedQualifier = ((GrReferenceExpression)qualifier).resolve();
+      return resolvedQualifier instanceof PsiClass || resolvedQualifier instanceof PsiPackage;
+    }
+    else {
+      return qualifier == null;
+    }
+  }
+
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;

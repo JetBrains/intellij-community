@@ -43,17 +43,17 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
  * @author ven
  */
 public class CreateMethodFromUsageFix implements IntentionAction {
-  private final PsiClass myTargetClass;
-  private final GrReferenceExpression myRefExpression;
+  protected final PsiClass myTargetClass;
+  protected final GrReferenceExpression myRefExpression;
 
-  public CreateMethodFromUsageFix(GrReferenceExpression refExpression, PsiClass targetClass) {
+  public CreateMethodFromUsageFix(@NotNull GrReferenceExpression refExpression, @NotNull PsiClass targetClass) {
     myRefExpression = refExpression;
     myTargetClass = targetClass;
   }
 
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.method.from.usage", myRefExpression.getReferenceName());
+    return GroovyBundle.message("create.method.from.usage", getMethodName());
   }
 
   @NotNull
@@ -68,17 +68,17 @@ public class CreateMethodFromUsageFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     assert factory != null;
-    PsiMethod method = factory.createMethod(myRefExpression.getReferenceName(), PsiType.VOID);
+    PsiMethod method = factory.createMethod(getMethodName(), PsiType.VOID);
     if (StaticChecker.isInStaticContext(myRefExpression, myTargetClass)) {
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
     }
 
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false);
+    PsiType[] argTypes = getArgumentTypes();
     assert argTypes != null;
 
     ChooseTypeExpression[] paramTypesExpressions = setupParams(method, argTypes, factory);
 
-    TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
+    TypeConstraint[] constraints = getReturnTypeConstraints();
 
     final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
     info.insert(myTargetClass, findInsertionAnchor(info), false);
@@ -93,6 +93,20 @@ public class CreateMethodFromUsageFix implements IntentionAction {
 
     final PsiElement context = PsiTreeUtil.getParentOfType(myRefExpression, PsiClass.class, PsiMethod.class, PsiFile.class);
     IntentionUtils.createTemplateForMethod(argTypes, paramTypesExpressions, method, myTargetClass, constraints, false, context);
+  }
+
+  @NotNull
+  protected TypeConstraint[] getReturnTypeConstraints() {
+    return GroovyExpectedTypesProvider.calculateTypeConstraints((GrExpression)myRefExpression.getParent());
+  }
+
+  protected PsiType[] getArgumentTypes() {
+    return PsiUtil.getArgumentTypes(myRefExpression, false);
+  }
+
+  @NotNull
+  protected String getMethodName() {
+    return myRefExpression.getReferenceName();
   }
 
   protected boolean shouldBeAbstract(PsiClass aClass) {
@@ -110,7 +124,8 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     }
   }
 
-  private ChooseTypeExpression[] setupParams(PsiMethod method, PsiType[] argTypes, JVMElementFactory factory) {
+  @NotNull
+  private ChooseTypeExpression[] setupParams(@NotNull PsiMethod method, @NotNull PsiType[] argTypes, @NotNull JVMElementFactory factory) {
     final PsiParameterList parameterList = method.getParameterList();
 
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];

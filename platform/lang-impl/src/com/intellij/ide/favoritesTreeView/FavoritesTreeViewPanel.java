@@ -324,7 +324,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
       @Override
       public String getDefaultFilePath() {
-        return myProject.getBasePath() + File.separator + "CurrentTask.txt";
+        return myProject.getBasePath() + File.separator + "Favorites.txt";
       }
 
       @Override

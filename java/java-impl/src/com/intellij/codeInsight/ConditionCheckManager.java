@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,7 +147,7 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     loadMethods(myAssertFalseMethods, state.myAssertFalseMethods, ConditionChecker.Type.ASSERT_FALSE_METHOD);
   }
 
-  public void loadMethods(List<ConditionChecker> listToLoadTo, List<String> listToLoadFrom, ConditionChecker.Type type){
+  private static void loadMethods(List<ConditionChecker> listToLoadTo, List<String> listToLoadFrom, ConditionChecker.Type type){
     listToLoadTo.clear();
     for (String setting : listToLoadFrom) {
       try {
@@ -157,70 +158,25 @@ public class ConditionCheckManager implements PersistentStateComponent<Condition
     }
   }
 
-  public static boolean isMethod(@NotNull PsiMethod psiMethod, List<ConditionChecker> checkers) {
+  @Nullable
+  public static ConditionChecker findConditionChecker(@NotNull PsiMethod method) {
+    ConditionCheckManager instance = getInstance(method.getProject());
+    ConditionChecker checker = methodMatches(method, instance.getIsNullCheckMethods());
+    if (checker == null) checker = methodMatches(method, instance.getIsNotNullCheckMethods());
+    if (checker == null) checker = methodMatches(method, instance.getAssertIsNullMethods());
+    if (checker == null) checker = methodMatches(method, instance.getAssertIsNotNullMethods());
+    if (checker == null) checker = methodMatches(method, instance.getAssertTrueMethods());
+    if (checker == null) checker = methodMatches(method, instance.getAssertFalseMethods());
+    return checker;
+  }
+
+  private static ConditionChecker methodMatches(PsiMethod psiMethod, List<ConditionChecker> checkers) {
     for (ConditionChecker checker : checkers) {
       if (checker.matchesPsiMethod(psiMethod)) {
-        return true;
+        return checker;
       }
     }
-    return false;
+    return null;
   }
 
-  public static boolean isNullCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getIsNullCheckMethods());
-  }
-
-  public static boolean isNotNullCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getIsNotNullCheckMethods());
-  }
-
-  public static boolean isAssertIsNullCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getAssertIsNullMethods());
-  }
-
-  public static boolean isAssertIsNotNullCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getAssertIsNotNullMethods());
-  }
-
-  public static boolean isAssertTrueCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getAssertTrueMethods());
-  }
-
-  public static boolean isAssertFalseCheckMethod(PsiMethod psiMethod) {
-    return methodMatches(psiMethod, getInstance(psiMethod.getProject()).getAssertFalseMethods());
-  }
-
-  public static boolean isNullCheckMethod(PsiMethod psiMethod, int paramIndex) {
-    ConditionCheckManager instance = getInstance(psiMethod.getProject());
-    return methodMatches(psiMethod, paramIndex, instance.getIsNullCheckMethods()) ||
-           methodMatches(psiMethod, paramIndex, instance.getIsNotNullCheckMethods());
-  }
-
-  public static boolean isNullabilityAssertionMethod(PsiMethod psiMethod, int paramIndex) {
-    ConditionCheckManager instance = getInstance(psiMethod.getProject());
-    return methodMatches(psiMethod, paramIndex, instance.getAssertIsNullMethods()) ||
-           methodMatches(psiMethod, paramIndex, instance.getAssertIsNotNullMethods());
-  }
-
-  public static boolean isBooleanAssertMethod(PsiMethod psiMethod, int paramIndex) {
-    ConditionCheckManager instance = getInstance(psiMethod.getProject());
-    return methodMatches(psiMethod, paramIndex, instance.getAssertTrueMethods()) ||
-           methodMatches(psiMethod, paramIndex, instance.getAssertFalseMethods());
-  }
-
-  public static boolean methodMatches(PsiMethod psiMethod, List<ConditionChecker> checkers) {
-    for (ConditionChecker checker : checkers) {
-      if (checker.matchesPsiMethod(psiMethod))
-        return true;
-    }
-    return false;
-  }
-
-  public static boolean methodMatches(PsiMethod psiMethod, int paramIndex, List<ConditionChecker> checkers) {
-    for (ConditionChecker checker : checkers) {
-      if (checker.matchesPsiMethod(psiMethod, paramIndex))
-        return true;
-    }
-    return false;
-  }
 }

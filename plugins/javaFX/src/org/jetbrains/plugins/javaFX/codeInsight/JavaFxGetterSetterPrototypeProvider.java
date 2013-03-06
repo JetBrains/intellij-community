@@ -38,7 +38,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
   private static final Logger LOG = Logger.getInstance("#" + JavaFxGetterSetterPrototypeProvider.class.getName());
 
   @Override
-  public boolean accept(PsiField field) {
+  public boolean canGeneratePrototypeFor(PsiField field) {
     return InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE);
   }
 

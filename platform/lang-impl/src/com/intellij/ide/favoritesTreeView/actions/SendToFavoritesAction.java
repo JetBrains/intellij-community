@@ -50,7 +50,7 @@ public class SendToFavoritesAction extends AnAction {
 
     for (FavoritesTreeNodeDescriptor root : roots) {
       FavoritesTreeNodeDescriptor listNode = root.getFavoritesRoot();
-      if (listNode != null && listNode.getElement() instanceof FavoritesListNode) {
+      if (listNode != null && listNode !=root && listNode.getElement() instanceof FavoritesListNode) {
         doSend(favoritesManager, new FavoritesTreeNodeDescriptor[]{root}, listNode.getElement().getName());
       }
     }
@@ -81,6 +81,11 @@ public class SendToFavoritesAction extends AnAction {
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(e.getDataContext());
     if (roots == null || roots.length == 0) {
       return false;
+    }
+    for (FavoritesTreeNodeDescriptor root : roots) {
+      FavoritesTreeNodeDescriptor listNode = root.getFavoritesRoot();
+      if (listNode == null || listNode ==root || !(listNode.getElement() instanceof FavoritesListNode))
+        return false;
     }
     return true;
   }

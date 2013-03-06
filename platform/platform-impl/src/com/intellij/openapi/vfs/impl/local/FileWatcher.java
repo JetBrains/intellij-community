@@ -348,14 +348,14 @@ public class FileWatcher {
   public boolean isWatched(@NotNull final VirtualFile file) {
     if (isOperational()) {
       synchronized (myLock) {
-        return !checkWatchable(file.getPresentableUrl(), true, false).isEmpty();
+        return !checkWatchable(file.getPresentableUrl(), true, true).isEmpty();
       }
     }
     return false;
   }
 
   @NotNull
-  private Collection<String> checkWatchable(String reportedPath, boolean isExact, boolean checkRootParents) {
+  private Collection<String> checkWatchable(String reportedPath, boolean isExact, boolean fastPath) {
     if (reportedPath == null) return Collections.emptyList();
 
     myAllPaths.clear();
@@ -372,26 +372,33 @@ public class FileWatcher {
     myWatchedPaths.clear();
     ext:
     for (String path : myAllPaths) {
+      if (fastPath && !myWatchedPaths.isEmpty()) break;
+
+      for (String root : myFlatWatchRoots) {
+        if (FileUtil.pathsEqual(path, root)) {
+          myWatchedPaths.add(path);
+          continue ext;
+        }
+        if (isExact) {
+          String parentPath = new File(path).getParent();
+          if (parentPath != null && FileUtil.pathsEqual(parentPath, root)) {
+            myWatchedPaths.add(path);
+            continue ext;
+          }
+        }
+      }
+
       for (String root : myRecursiveWatchRoots) {
         if (FileUtil.startsWith(path, root)) {
           myWatchedPaths.add(path);
           continue ext;
         }
-        if (checkRootParents && FileUtil.startsWith(root, path)) {
-          myWatchedPaths.add(root);
-          continue ext;
-        }
-      }
-
-      String checkPath = isExact ? new File(path).getParent() : path;
-      for (String root : myFlatWatchRoots) {
-        if (FileUtil.pathsEqual(checkPath, root)) {
-          myWatchedPaths.add(path);
-          continue ext;
-        }
-        if (checkRootParents && FileUtil.startsWith(root, checkPath)) {
-          myWatchedPaths.add(root);
-          continue ext;
+        if (!isExact) {
+          String parentPath = new File(root).getParent();
+          if (parentPath != null && FileUtil.pathsEqual(path, parentPath)) {
+            myWatchedPaths.add(root);
+            continue ext;
+          }
         }
       }
     }
@@ -538,7 +545,7 @@ public class FileWatcher {
 
       synchronized (myLock) {
         boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;
-        Collection<String> paths = checkWatchable(path, exactPath, true);
+        Collection<String> paths = checkWatchable(path, exactPath, false);
 
         if (paths.isEmpty()) {
           if (LOG.isDebugEnabled()) {

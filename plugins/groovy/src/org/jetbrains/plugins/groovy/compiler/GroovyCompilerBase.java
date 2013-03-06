@@ -224,7 +224,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         toRecompile.add(vFile);
       }
 
-      for (CompilerMessage compilerMessage : processHandler.getCompilerMessages()) {
+      for (CompilerMessage compilerMessage : processHandler.getCompilerMessages(module.getName())) {
         final String url = compilerMessage.getSourcePath();
         compileContext.addMessage(getMessageCategory(compilerMessage), compilerMessage.getMessageText(),
                                   url == null ? null : VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(url)),

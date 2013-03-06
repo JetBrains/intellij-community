@@ -184,7 +184,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return fieldCandidates;
     }
 
-    if (findClassOrPackageAtFirst()) {
+
+    boolean canBeClassOrPackage = ResolveUtil.canBeClassOrPackage(this);
+
+    if (canBeClassOrPackage && findClassOrPackageAtFirst()) {
       boolean preferVar = containsLocalVar(fieldCandidates);
       if (!preferVar) {
         ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
@@ -225,12 +228,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
     if (fieldCandidates.length > 0) return fieldCandidates;
-    if (classCandidates == null) {
+    if (classCandidates == null && canBeClassOrPackage ) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       GrReferenceResolveUtil.resolveImpl(classProcessor, this);
       classCandidates = classProcessor.getCandidates();
     }
-    if (classCandidates.length > 0) return classCandidates;
+    if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
   }

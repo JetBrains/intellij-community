@@ -9,5 +9,6 @@ class Concatenations {
     System.out.println("i" + i);
     System.out.println("i" + ((String)"j"));
     System.out.println('{' + "a" + '\'');
+    String.format("aaaa%n" + "bbbb");
   }
 }

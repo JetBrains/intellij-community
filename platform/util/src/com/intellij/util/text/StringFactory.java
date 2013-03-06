@@ -20,42 +20,35 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 
 public class StringFactory {
-  private static final Constructor<String> sharingCtr;   // String(char[], boolean)
-  private static final Constructor<String> oldSharingCtr; // String(int offset, int count, char value[]) in ancient java 1.6
+  private static final Constructor<String> sharingCtr;    // String(char[], boolean). Works since JDK1.7, earlier jdks have too slow reflection anyway
 
   static {
     Constructor<String> newC = null;
-    Constructor<String> oldC = null;
     try {
       newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
       newC.setAccessible(true);
     }
-    catch (NoSuchMethodException e) {
-      try {
-        oldC = String.class.getDeclaredConstructor(int.class, int.class, char[].class);
-        oldC.setAccessible(true);
-      }
-      catch (NoSuchMethodException ignored) {
-
-      }
+    catch (NoSuchMethodException ignored) {
     }
     sharingCtr = newC;
-    oldSharingCtr = oldC;
   }
 
+  /**
+   * @return new instance of String which backed by chars array.
+   *
+   * CAUTION. EXTREMELY DANGEROUS.
+   * DO NOT USE THIS METHOD UNLESS YOU ARE TOO DESPERATE
+   */
   @NotNull
   public static String createShared(@NotNull char[] chars) {
-    try {
-      if (sharingCtr != null) {
+    if (sharingCtr != null) {
+      try {
         return sharingCtr.newInstance(chars, true);
       }
-      if (oldSharingCtr != null) {
-        return oldSharingCtr.newInstance(0, chars.length, chars);
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
-      return new String(chars);
     }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    return new String(chars);
   }
 }

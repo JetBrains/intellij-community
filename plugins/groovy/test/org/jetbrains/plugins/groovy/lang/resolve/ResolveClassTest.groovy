@@ -275,5 +275,18 @@ class Inheritor {
 ''', PsiClass)
   }
 
+  void testInterfaceDoesNotResolveWithExpressionQualifier() {
+    def ref = configureByText('''\
+class Foo {
+  interface Inner {
+  }
+}
+
+new Foo().Inn<caret>er
+''')
+
+    assertNull(ref.resolve())
+  }
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

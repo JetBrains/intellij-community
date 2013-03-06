@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,6 @@ public class RefCountHolder {
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
-  private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
   private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
   private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
   private static final ProgressIndicator READY = new DaemonProgressIndicator();
@@ -124,7 +124,6 @@ public class RefCountHolder {
     }
     myImportStatements.clear();
     myDclsUsedMap.clear();
-    myPossiblyDuplicateElements.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
@@ -181,16 +180,16 @@ public class RefCountHolder {
       }
     }
     removeInvalidFrom(myDclsUsedMap.keySet());
-    removeInvalidFrom(myPossiblyDuplicateElements.keySet());
   }
-  private static void removeInvalidFrom(Iterable<? extends PsiElement> collection) {
+
+  private static void removeInvalidFrom(@NotNull Collection<? extends PsiElement> collection) {
     for (Iterator<? extends PsiElement> it = collection.iterator(); it.hasNext();) {
       PsiElement element = it.next();
       if (!element.isValid()) it.remove();
     }
   }
 
-  public boolean isReferenced(PsiNamedElement element) {
+  public boolean isReferenced(@NotNull PsiNamedElement element) {
     List<PsiReference> array;
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.getKeysByValue(element);
@@ -201,13 +200,13 @@ public class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  private static boolean isParameterUsedRecursively(final PsiElement element, final List<PsiReference> array) {
+  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull List<PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;
     PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiMethod)) return false;
     PsiMethod method = (PsiMethod)scope;
-    int paramIndex = ArrayUtil.find(method.getParameterList().getParameters(), parameter);
+    int paramIndex = ArrayUtilRt.find(method.getParameterList().getParameters(), parameter);
 
     for (PsiReference reference : array) {
       if (!(reference instanceof PsiElement)) return false;
@@ -223,7 +222,7 @@ public class RefCountHolder {
       if (method != methodExpression.resolve()) return false;
       PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       PsiExpression[] arguments = argumentList.getExpressions();
-      int argumentIndex = ArrayUtil.find(arguments, argument);
+      int argumentIndex = ArrayUtilRt.find(arguments, argument);
       if (paramIndex != argumentIndex) return false;
     }
 

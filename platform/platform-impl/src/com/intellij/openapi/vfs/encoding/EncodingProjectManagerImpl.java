@@ -272,6 +272,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
         for (Map.Entry<VirtualFile, Charset> entry : mapping.entrySet()) {
           VirtualFile virtualFile = entry.getKey();
           Charset charset = entry.getValue();
+          if (charset == null) throw new IllegalArgumentException("Null charset for " + virtualFile + "; mapping: " + mapping);
           if (virtualFile != null) {
             if (!fileIndex.isInContent(virtualFile)) continue;
             if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(virtualFile))) {
@@ -291,7 +292,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
               if (!changed) continue;
             }
           }
-
           newMap.put(virtualFile, charset);
         }
       }

@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,7 +60,18 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     public WatchRequestImpl(String rootPath, boolean toWatchRecursively) throws FileNotFoundException {
       int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
+
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
+      if (index > 0 || !rootFile.isDirectory()) {
+        File parentFile = rootFile.getParentFile();
+        if (parentFile == null) {
+          throw new FileNotFoundException(rootPath);
+        }
+        if (!parentFile.getPath().equals(PathManager.getSystemPath()) || !rootFile.mkdir()) {
+          rootFile = parentFile;
+        }
+      }
+
       myFSRootPath = rootFile.getAbsolutePath();
       myRootPath = FileUtil.toSystemIndependentName(myFSRootPath);
       myToWatchRecursively = toWatchRecursively;
@@ -266,28 +278,27 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      // TODO: different ways to mark dirty for all these cases
-      final FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
+      FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
       markPathsDirty(dirtyPaths.dirtyPaths);
       markFlatDirsDirty(dirtyPaths.dirtyDirectories);
       markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
     }
   }
 
-  private void markPathsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markPathsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirty();
       }
     }
   }
 
-  private void markFlatDirsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markFlatDirsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
-        final NewVirtualFile nvf = (NewVirtualFile)file;
+        NewVirtualFile nvf = (NewVirtualFile)file;
         nvf.markDirty();
         for (VirtualFile child : nvf.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
@@ -296,13 +307,24 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markRecursiveDirsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markRecursiveDirsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirtyRecursively();
       }
     }
+  }
+
+  private VirtualFile findFileOrParentIfCached(String path) {
+    VirtualFile file = findFileByPathIfCached(path);
+    if (file == null) {
+      String parentPath = new File(path).getParent();
+      if (parentPath != null) {
+        file = findFileByPathIfCached(parentPath);
+      }
+    }
+    return file;
   }
 
   public void markSuspiciousFilesDirty(List<VirtualFile> files) {

@@ -1169,4 +1169,12 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
       }
     ''')
   }
+
+  void testInnerAnnotationType() {
+    testHighlighting('''
+      class A {
+        @interface <error descr="Annotation type cannot be inner">X</error> {}
+      }
+    ''')
+  }
 }
