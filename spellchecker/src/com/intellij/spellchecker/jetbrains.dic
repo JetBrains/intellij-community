@@ -25,6 +25,7 @@ backtrace
 barcode
 basedir
 basicfile
+batis
 bfile
 bigfile
 bigint
@@ -250,6 +251,7 @@ multiset
 mutex
 mutexes
 mxml
+mybatis
 mysql
 namespace
 namespaces
