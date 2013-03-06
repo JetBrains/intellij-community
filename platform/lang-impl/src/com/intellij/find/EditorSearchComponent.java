@@ -70,6 +70,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private LinkLabel myClickToHighlightLabel;
   private final Project myProject;
   private ActionToolbar myActionsToolbar;
+  private boolean myAdded;
+  private boolean myChanged;
 
 
   public Editor getEditor() {
@@ -111,7 +113,22 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
 
   private JComponent myToolbarComponent;
-  private DocumentAdapter myDocumentListener;
+
+  private DocumentAdapter myDocumentListener = new DocumentAdapter() {
+    @Override
+    public void documentChanged(final DocumentEvent e) {
+      if (!myAdded) {
+        myChanged = true;
+        return;
+      }
+      if (!mySuppressUpdate) {
+        myLivePreview.inSmartUpdate();
+        updateResults(false);
+      } else {
+        mySuppressUpdate = false;
+      }
+    }
+  };
 
   private MyLivePreviewController myLivePreviewController;
   private LivePreview myLivePreview;
@@ -249,6 +266,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     });
 
     updateUIWithFindModel();
+
+    myEditor.getDocument().addDocumentListener(myDocumentListener);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       initLivePreview();
@@ -759,33 +778,23 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (myReplaceUndo != null){
       myReplaceUndo.dispose();
     }
+    myEditor.getDocument().removeDocumentListener(myDocumentListener);
     myEditor.setHeaderComponent(null);
   }
 
   @Override
   public void addNotify() {
     super.addNotify();
+    myAdded = true;
     initLivePreview();
   }
 
   private void initLivePreview() {
-    myDocumentListener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(final DocumentEvent e) {
-        if (!mySuppressUpdate) {
-          myLivePreview.inSmartUpdate();
-          updateResults(false);
-        } else {
-          mySuppressUpdate = false;
-        }
-      }
-    };
-
-    myEditor.getDocument().addDocumentListener(myDocumentListener);
-
-
     setMatchesLimit(MATCHES_LIMIT);
-
+    if (myChanged) {
+      mySearchResults.clear();
+      myChanged = false;
+    }
     updateResults(false);
 
     myLivePreview = new LivePreview(mySearchResults);
@@ -799,10 +808,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   public void removeNotify() {
     super.removeNotify();
 
-    if (myDocumentListener != null) {
-      myEditor.getDocument().removeDocumentListener(myDocumentListener);
-      myDocumentListener = null;
-    }
     myLivePreview.cleanUp();
     myLivePreview.dispose();
     setTrackingSelection(false);
@@ -810,6 +815,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (myReplaceField != null) {
       addTextToRecent(myReplaceField);
     }
+    myAdded = false;
   }
 
   private void updateResults(final boolean allowedToChangedEditorSelection) {
