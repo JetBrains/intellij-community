@@ -1366,11 +1366,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
               returnCheckingFinally();
               return true;
             }
-            if ("assertTrue".equals(methodName)) {
-              pushParameters(params, 0);
-              conditionalExit(exitPoint, false);
-              return true;
-            }
           }
         }
       }
