@@ -356,11 +356,16 @@ public class BuildFilePropertiesPanel {
     private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{CHECK_BOX_COLUMN, NAME_COLUMN, DESCRIPTION};
 
     public FiltersTab() {
+      myFiltersTable = new JBTable();
       myFiltersTable.getTableHeader().setReorderingAllowed(false);
 
       UIPropertyBinding.TableListBinding tableListBinding = getBinding().bindList(myFiltersTable, COLUMNS, AntBuildFileImpl.TARGET_FILTERS);
       tableListBinding.setColumnWidths(GlobalAntConfiguration.FILTERS_TABLE_LAYOUT);
       tableListBinding.setSortable(true);
+
+      myWholePanel = ToolbarDecorator.createDecorator(myFiltersTable).disableUpDownActions().disableRemoveAction().disableAddAction()
+        .addExtraAction(new FilterTargetCheckAction(true, myFiltersTable))
+        .addExtraAction(new FilterTargetCheckAction(false, myFiltersTable)).createPanel();
     }
 
     public JComponent getComponent() {
