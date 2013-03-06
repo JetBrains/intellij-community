@@ -64,6 +64,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   private ErrorViewTreeBuilder myBuilder;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private volatile boolean myIsDisposed = false;
+  private final ErrorTreeViewConfiguration myConfiguration;
 
   public interface ProcessController {
     void stopProcess();
@@ -103,15 +104,16 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     myProject = project;
     myHelpId = helpId;
     myCreateExitAction = createExitAction;
+    myConfiguration = ErrorTreeViewConfiguration.getInstance(project);
     setLayout(new BorderLayout());
 
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
       protected boolean isAutoScrollMode() {
-        return ErrorTreeViewConfiguration.getInstance(myProject).isAutoscrollToSource();
+        return myConfiguration.isAutoscrollToSource();
       }
 
       protected void setAutoScrollMode(boolean state) {
-        ErrorTreeViewConfiguration.getInstance(myProject).setAutoscrollToSource(state);
+        myConfiguration.setAutoscrollToSource(state);
       }
     };
 
@@ -610,14 +612,14 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     public void setSelected(AnActionEvent event, boolean flag) {
       if (isHideWarnings() != flag) {
-        ErrorTreeViewConfiguration.getInstance(myProject).setHideWarnings(flag);
+        myConfiguration.setHideWarnings(flag);
         myBuilder.updateTree();
       }
     }
   }
 
   public boolean isHideWarnings() {
-    return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+    return myConfiguration.isHideWarnings();
   }
 
   private class MyTreeExpander implements TreeExpander {
