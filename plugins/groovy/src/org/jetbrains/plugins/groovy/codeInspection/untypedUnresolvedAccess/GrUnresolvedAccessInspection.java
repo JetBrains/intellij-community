@@ -463,7 +463,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     QuickFixAction.registerQuickFixAction(info, new GroovyAddImportAction(refElement), key);
   }
 
-  private static void registerCreateClassByTypeFix(GrReferenceElement refElement,
+  private static void registerCreateClassByTypeFix(@NotNull GrReferenceElement refElement,
                                                    @Nullable HighlightInfo info,
                                                    final HighlightDisplayKey key) {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
@@ -474,7 +474,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
         refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
       QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFromNewAction((GrNewExpression)parent), key);
     }
-    else {
+    else if (canBeClassOrPackage(refElement)) {
       if (shouldBeInterface(refElement)) {
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE), key);
       }
@@ -492,6 +492,10 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION), key);
       }
     }
+  }
+
+  private static boolean canBeClassOrPackage(@NotNull GrReferenceElement refElement) {
+    return !(refElement instanceof GrReferenceExpression) || ResolveUtil.canBeClassOrPackage((GrReferenceExpression)refElement);
   }
 
   private static boolean shouldBeAnnotation(GrReferenceElement element) {
