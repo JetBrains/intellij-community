@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -72,7 +73,7 @@ public class SvnRecursiveStatusWalker {
         myHandler.setCurrentItem(item);
         try {
           item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
-          myHandler.checkIfCopyRootWasReported();
+          myHandler.checkIfCopyRootWasReported(null, ioFile);
         }
         catch (SVNException e) {
           handleStatusException(item, path, e);
@@ -223,10 +224,11 @@ public class SvnRecursiveStatusWalker {
       myMetCurrentItem = false;
     }
 
-    public void checkIfCopyRootWasReported() {
-      if (! myMetCurrentItem) {
+    public void checkIfCopyRootWasReported(@Nullable final SVNStatus ioFileStatus, final File ioFile) {
+      if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, myCurrentItem.getPath().getIOFile())) {
         myMetCurrentItem = true;
-        final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
+        final SVNStatus statusInner = ioFileStatus != null ? ioFileStatus :
+                                      SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
         if (statusInner == null)  return;
 
         final SVNStatusType status = statusInner.getNodeStatus();
@@ -261,7 +263,7 @@ public class SvnRecursiveStatusWalker {
     public void handleStatus(final SVNStatus status) throws SVNException {
       myPartner.checkCanceled();
       final File ioFile = status.getFile();
-      checkIfCopyRootWasReported();
+      checkIfCopyRootWasReported(status, ioFile);
 
       final VirtualFile vFile = getVirtualFile(ioFile);
       if (vFile != null) {
