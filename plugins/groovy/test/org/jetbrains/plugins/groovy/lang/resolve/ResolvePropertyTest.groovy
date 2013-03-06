@@ -1056,4 +1056,35 @@ print Fie<caret>ld1
     assertFalse( ref.resolve() instanceof PsiField)
     assertTrue( ref.resolve() instanceof GrVariable)
   }
+
+  void testInterfaceDoesNotResolveWithExpressionQualifier() {
+    def ref = configureByText('''\
+class Foo {
+  interface Inner {
+  }
+
+  public Inner = 5
+}
+
+new Foo().Inn<caret>er
+''')
+
+    assertInstanceOf(ref.resolve(), PsiField)
+  }
+
+  void testInterfaceDoesNotResolveWithExpressionQualifier2() {
+    def ref = configureByText('''\
+class Foo {
+  interface Inner {
+  }
+
+  public Inner = 5
+}
+
+def foo = new Foo()
+print foo.Inn<caret>er
+''')
+
+    assertInstanceOf(ref.resolve(), PsiField)
+  }
 }
