@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,35 +21,15 @@ import org.jetbrains.annotations.NonNls;
 public class LambdaParamsTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/params";
 
-  public void testFormalParams() throws Exception {
-    doTest();
-  }
-  
-  public void testInferredParams() throws Exception {
-    doTest();
-  }
+  public void testFormalParams() { doTest(); }
+  public void testInferredParams() { doTest(); }
+  public void testMethodApplicability() { doTest(); }
+  public void testIncompatibleTypes() { doTest(); }
+  public void testRaw() { doTest(); }
+  public void testFormalParamsWithWildcards() { doTest(); }
+  public void testInferFromFormal() { doTest(); }
 
-  public void testMethodApplicability() throws Exception {
-    doTest();
-  }
-
-  public void testIncompatibleTypes() throws Exception {
-    doTest();
-  }
-
-  public void testRaw() throws Exception {
-    doTest();
-  }
-
-  public void testFormalParamsWithWildcards() throws Exception {
-    doTest();
-  }
-
-  public void testInferFromFormal() throws Exception {
-    doTest();
-  }
-
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }
