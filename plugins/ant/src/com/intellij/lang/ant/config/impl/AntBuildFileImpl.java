@@ -34,8 +34,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -274,13 +272,15 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void updateProperties() {
-    final Map<String, AntBuildTarget> targetByName =
-      ContainerUtil.newMapFromValues(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
-        public String convert(AntBuildTarget target) {
-          return target.getName();
-        }
-      });
-    targetByName.remove(null); // ensure there are no targets with 'null' name
+    // do not change position
+    final AntBuildTarget[] targets = getModel().getTargets();
+    final Map<String, AntBuildTarget> targetByName = new LinkedHashMap<String, AntBuildTarget>(targets.length);
+    for (AntBuildTarget target : targets) {
+      String targetName = target.getName();
+      if(targetName != null) {
+        targetByName.put(targetName, target);
+      }
+    }
 
     synchronized (myOptionsLock) {
       myCachedExternalProperties = null;
