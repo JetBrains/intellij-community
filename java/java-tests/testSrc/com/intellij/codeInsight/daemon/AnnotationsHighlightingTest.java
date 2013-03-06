@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,7 @@ import org.jetbrains.annotations.NonNls;
  * @author ven
  */
 public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls
-  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
-
-  private void doTest(boolean checkWarnings) {
-    setLanguageLevel(LanguageLevel.JDK_1_7);
-    doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);
-  }
+  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
 
   public void testWrongPlace() { doTest(false); }
   public void testNotValueNameOmitted() { doTest(false); }
@@ -49,5 +43,15 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInvalidPackageAnnotationTarget() { doTest(BASE_PATH + "/" + getTestName(true) + "/package-info.java", false, false); }
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }
 
-  //public void testTypeAnnotations() { doTest(false); }  // todo[r.sh] make separate test with correct language level
+  public void testTypeAnnotations() { doTest8(false); }
+
+  private void doTest(boolean checkWarnings) {
+    setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);
+  }
+
+  private void doTest8(boolean checkWarnings) {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);
+  }
 }
