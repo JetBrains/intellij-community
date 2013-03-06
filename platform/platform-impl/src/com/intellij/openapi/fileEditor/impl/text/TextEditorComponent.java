@@ -139,16 +139,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
     updateStatusBar();
   }
 
-  /**
-   * Should be invoked when the corresponding <code>TextEditorImpl</code>
-   * is deselected. Clears the status bar.
-   */
-  void deselectNotify(){
-    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar == null) return;
-    //statusBar.clear();
-  }
-
   private static void assertThread(){
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -183,7 +173,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   }
 
   /**
-   * Disposes resources allocated by the specified editor view and registeres all
+   * Disposes resources allocated by the specified editor view and registers all
    * it's listeners
    */
   private void disposeEditor(@NotNull Editor editor){

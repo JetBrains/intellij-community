@@ -117,7 +117,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void deselectNotify() {
-    myComponent.deselectNotify();
   }
 
   public void updateModifiedProperty() {

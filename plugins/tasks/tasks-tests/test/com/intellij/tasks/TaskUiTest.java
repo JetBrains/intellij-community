@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.tasks.actions.SwitchTaskCombo;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
@@ -61,7 +61,13 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     assertTrue(task.isDefault());
 
     presentation = doTest(combo);
-    assertTrue(presentation.isVisible());
+    if (!presentation.isVisible()) {
+      LocalTask activeTask = manager.getActiveTask();
+      System.out.println(activeTask);
+      System.out.println(activeTask.getCreated());
+      System.out.println(activeTask.getUpdated());
+      fail();
+    }
   }
 
   private static Presentation doTest(AnAction action) {
@@ -72,6 +78,6 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public TaskUiTest() {
-    PlatformTestCase.initPlatformLangPrefix();
+    IdeaTestCase.initPlatformPrefix();
   }
 }

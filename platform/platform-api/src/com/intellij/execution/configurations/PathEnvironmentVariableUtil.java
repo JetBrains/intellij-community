@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,18 +113,42 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName) {
-    String pathEnvVarValue = getReliablePath();
-    List<String> paths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true);
+    return exeFiles.size() > 0 ? exeFiles.get(0) : null;
+  }
+
+  /**
+   * Finds all executable files with the specified base name, that are located in directories
+   * from PATH environment variable.
+   *
+   * @param fileBaseName file base name
+   * @return file list
+   */
+  @NotNull
+  public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName) {
+    return findExeFilesInPath(fileBaseName, false);
+  }
+
+  @NotNull
+  private static List<File> findExeFilesInPath(@NotNull String fileBaseName, boolean stopAfterFirstMatch) {
+    List<String> paths = StringUtil.split(getReliablePath(), File.pathSeparator, true, true);
+    List<File> exeFiles = Collections.emptyList();
     for (String path : paths) {
       File dir = new File(path);
       if (dir.isAbsolute() && dir.isDirectory()) {
         File file = new File(dir, fileBaseName);
         if (file.isFile() && file.canExecute()) {
-          return file;
+          if (stopAfterFirstMatch) {
+            return Collections.singletonList(file);
+          }
+          if (exeFiles.isEmpty()) {
+            exeFiles = ContainerUtil.newArrayListWithExpectedSize(paths.size());
+          }
+          exeFiles.add(file);
         }
       }
     }
-    return null;
+    return exeFiles;
   }
 
 }
