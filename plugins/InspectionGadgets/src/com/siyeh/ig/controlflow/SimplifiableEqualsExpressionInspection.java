@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -29,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +66,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(element);
       if (!(parent instanceof PsiPolyadicExpression)) {
@@ -78,11 +78,13 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         return;
       }
       PsiExpression operand = ParenthesesUtils.stripParentheses(operands[1]);
+      @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (operand instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)operand;
         if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           return;
         }
+        newExpressionText.append('!');
         operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
       }
       if (!(operand instanceof PsiMethodCallExpression)) {
@@ -102,41 +104,41 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       final PsiType type = argument.getType();
-      final String newQualifierText;
       if (PsiType.BOOLEAN.equals(type)) {
         final Object value = ExpressionUtils.computeConstantExpression(argument);
         if (Boolean.TRUE.equals(value)) {
-          newQualifierText = "java.lang.Boolean.TRUE";
+          newExpressionText.append("java.lang.Boolean.TRUE");
         }
         else if (Boolean.FALSE.equals(value)) {
-          newQualifierText = "java.lang.Boolean.FALSE";
+          newExpressionText.append("java.lang.Boolean.FALSE");
         }
         else {
-          newQualifierText = "java.lang.Boolean.valueOf(" + argument.getText() + ")";
+          newExpressionText.append("java.lang.Boolean.valueOf(").append(argument.getText()).append(')');
         }
       }
       else if (PsiType.BYTE.equals(type)) {
-        newQualifierText = "java.lang.Byte.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Byte.valueOf(").append(argument.getText()).append(')');
       }
       else if (PsiType.SHORT.equals(type)) {
-        newQualifierText = "java.lang.Short.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Short.valueOf(").append(argument.getText()).append(')');
       }
       else if (PsiType.INT.equals(type)) {
-        newQualifierText = "java.lang.Integer.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Integer.valueOf(").append(argument.getText()).append(')');
       }
       else if (PsiType.LONG.equals(type)) {
-        newQualifierText = "java.lang.Long.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Long.valueOf(").append(argument.getText()).append(')');
       }
       else if (PsiType.FLOAT.equals(type)) {
-        newQualifierText = "java.lang.Float.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Float.valueOf(").append(argument.getText()).append(')');
       }
       else if (PsiType.DOUBLE.equals(type)) {
-        newQualifierText = "java.lang.Double.valueOf(" + argument.getText() + ')';
+        newExpressionText.append("java.lang.Double.valueOf(").append(argument.getText()).append(')');
       }
       else {
-        newQualifierText = argument.getText();
+        newExpressionText.append(argument.getText());
       }
-      replaceExpression(polyadicExpression, newQualifierText + "." + referenceName + "(" + qualifier.getText() + ")");
+      newExpressionText.append('.').append(referenceName).append('(').append(qualifier.getText()).append(')');
+      replaceExpression(polyadicExpression, newExpressionText.toString());
     }
   }
 
