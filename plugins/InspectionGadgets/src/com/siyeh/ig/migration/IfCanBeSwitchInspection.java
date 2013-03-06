@@ -178,11 +178,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         }
       }
       final PsiIfStatement statementToReplace = ifStatement;
-      final List<IfStatementBranch> branches = new ArrayList<IfStatementBranch>(20);
       final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, myMinimumBranches);
       if (switchExpression == null) {
         return;
       }
+      final List<IfStatementBranch> branches = new ArrayList<IfStatementBranch>(20);
       while (true) {
         final PsiExpression condition = ifStatement.getCondition();
         final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -234,7 +234,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         if (!(breakTarget instanceof PsiLabeledStatement)) {
           out.append(labelString).append(':');
         }
-        termReplace(out, breakTarget, statementToReplace, switchStatementText);
+        termReplace(breakTarget, statementToReplace, switchStatementText, out);
         final String newStatementText = out.toString();
         final PsiStatement newStatement = factory.createStatementFromText(newStatementText, element);
         breakTarget.replace(newStatement);
@@ -247,7 +247,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     @Nullable
     public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
-      @NotNull Class<? extends PsiElement>... stopAt) {
+                                                                @NotNull Class<? extends PsiElement>... stopAt) {
       if (element == null) {
         return null;
       }
@@ -302,12 +302,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         else {
           commentText = comment.getText();
         }
-        out.addStatementComment(commentText);out.addStatementComment(commentText);
+        out.addStatementComment(commentText);
         comment = getPrevSiblingOfType(comment, PsiComment.class, PsiStatement.class, PsiKeyword.class);
       }
     }
 
-    private static void termReplace(StringBuilder out, PsiElement target, PsiElement replace, StringBuilder stringToReplaceWith) {
+    private static void termReplace(PsiElement target, PsiElement replace, StringBuilder stringToReplaceWith, StringBuilder out) {
       if (target.equals(replace)) {
         out.append(stringToReplaceWith);
       }
@@ -317,7 +317,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       else {
         final PsiElement[] children = target.getChildren();
         for (final PsiElement child : children) {
-          termReplace(out, child, replace, stringToReplaceWith);
+          termReplace(child, replace, stringToReplaceWith, out);
         }
       }
     }
@@ -347,8 +347,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           extractCaseExpressions(rhs, switchExpression, values);
         }
         else {
-          if (EquivalenceChecker.expressionsAreEquivalent(
-            switchExpression, rhs)) {
+          if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, rhs)) {
             values.addCaseExpression(lhs);
           }
           else {
@@ -364,13 +363,13 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     private static void dumpBranch(IfStatementBranch branch, boolean castToInt, boolean wrap, boolean renameBreaks, String breakLabelName,
-      @NonNls StringBuilder switchStatementText) {
+                                   @NonNls StringBuilder switchStatementText) {
       dumpComments(branch.getComments(), switchStatementText);
       if (branch.isElse()) {
         switchStatementText.append("default: ");
       }
       else {
-        for (PsiExpression caseExpression : branch.getConditions()) {
+        for (PsiExpression caseExpression : branch.getCaseExpressions()) {
           switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
         }
       }
@@ -416,7 +415,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     private static void dumpBody(PsiStatement bodyStatement, boolean wrap, boolean renameBreaks, String breakLabelName,
-      @NonNls StringBuilder switchStatementText) {
+                                 @NonNls StringBuilder switchStatementText) {
       if (wrap) {
         switchStatementText.append('{');
       }
@@ -426,11 +425,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         //skip the first and last members, to unwrap the block
         for (int i = 1; i < children.length - 1; i++) {
           final PsiElement child = children[i];
-          appendElement(switchStatementText, child, renameBreaks, breakLabelName);
+          appendElement(child, renameBreaks, breakLabelName, switchStatementText);
         }
       }
       else {
-        appendElement(switchStatementText, bodyStatement, renameBreaks, breakLabelName);
+        appendElement(bodyStatement, renameBreaks, breakLabelName, switchStatementText);
       }
       if (ControlFlowUtils.statementMayCompleteNormally(bodyStatement)) {
         switchStatementText.append("break;");
@@ -440,8 +439,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
 
-    private static void appendElement(@NonNls StringBuilder switchStatementText, PsiElement element, boolean renameBreakElements,
-                                      String breakLabelString) {
+    private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString,
+                                      @NonNls StringBuilder switchStatementText) {
       final String text = element.getText();
       if (!renameBreakElements) {
         switchStatementText.append(text);
@@ -459,7 +458,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       else if (element instanceof PsiBlockStatement || element instanceof PsiCodeBlock || element instanceof PsiIfStatement) {
         final PsiElement[] children = element.getChildren();
         for (final PsiElement child : children) {
-          appendElement(switchStatementText, child, renameBreakElements, breakLabelString);
+          appendElement(child, renameBreakElements, breakLabelString, switchStatementText);
         }
       }
       else {
