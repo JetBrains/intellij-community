@@ -1114,6 +1114,7 @@ public class AllIcons {
 
     }
     public static final Icon Css_class = IconLoader.getIcon("/xml/css_class.png"); // 16x16
+    public static final Icon Html5 = IconLoader.getIcon("/xml/html5.png"); // 16x16
     public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.png"); // 16x16
 
   }
