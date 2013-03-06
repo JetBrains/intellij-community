@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,8 +114,8 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void setupCustomAnnotations() {
-    myFixture.addClass("package foo; public @interface Nullable {}");
-    myFixture.addClass("package foo; public @interface NotNull {}");
+    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
+    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNotNulls("foo.NotNull");
     nnnManager.setNullables("foo.Nullable");
@@ -140,7 +140,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testConstantDoubleComparisons() { doTest(); }
-  
+
   public void testMutableNullableFieldsTreatment() { doTest(); }
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }

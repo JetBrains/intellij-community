@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -92,27 +92,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
       assert annotation != null;
-      PsiAnnotationOwner owner = annotation.getOwner();
-      if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiTypeParameter) {
-        PsiElement member = (PsiElement)owner;
-        if (member instanceof PsiModifierList) {
-          member = member.getParent();
+      final PsiAnnotation.TargetType[] targets = PsiImplUtil.getApplicableTargets(annotation.getOwner());
+      return new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          return psiClass.isAnnotationType() && PsiImplUtil.isAnnotationApplicable(psiClass, false, targets);
         }
-        if (member instanceof PsiTypeElement && member.getParent() instanceof PsiMethod) {
-          member = member.getParent();
-        }
-        final String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(member);
-        return new Condition<PsiClass>() {
-          @Override
-          public boolean value(PsiClass psiClass) {
-            if (!psiClass.isAnnotationType()) {
-              return false;
-            }
-            return PsiAnnotationImpl.isAnnotationApplicable(false, psiClass, elementTypeFields, position.getResolveScope());
-          }
-        };
-      }
+      };
     }
+
     //noinspection unchecked
     return Condition.FALSE;
   }
@@ -179,7 +167,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
           return MyResult.qualifiedWithGetter;
         }
       }
-      
+
       return MyResult.normal;
     }
 

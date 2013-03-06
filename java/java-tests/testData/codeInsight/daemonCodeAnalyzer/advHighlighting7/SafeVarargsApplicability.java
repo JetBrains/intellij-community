@@ -1,6 +1,6 @@
 import java.util.List;
 
-@<error descr="'@SafeVarargs' not applicable to type">SafeVarargs</error>
+<error descr="'@SafeVarargs' not applicable to type">@SafeVarargs</error>
 public class SafeVarargsTests {
     //fixed arity
     <error descr="@SafeVarargs is not allowed on methods with fixed arity">@SafeVarargs</error>

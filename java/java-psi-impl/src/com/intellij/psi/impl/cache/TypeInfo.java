@@ -20,14 +20,15 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -94,8 +95,7 @@ public class TypeInfo {
     for (StubElement child : modifierList.getChildrenStubs()) {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getPsiElement();
-      if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
+      if (PsiImplUtil.isAnnotationApplicable(annotationStub.getPsiElement(), true, PsiAnnotation.TargetType.TYPE_USE)) {
         annotationStubs.add(annotationStub);
       }
     }

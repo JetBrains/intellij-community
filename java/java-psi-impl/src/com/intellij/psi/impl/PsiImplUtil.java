@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,18 +46,35 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.psi.PsiAnnotation.TargetType;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
 
-  private PsiImplUtil() {
-  }
+  private static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.newHashSet(
+    TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE,
+    TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+
+  private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
+  private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
+  private static final TargetType[] ANNOTATION_TARGETS = {TargetType.ANNOTATION_TYPE, TargetType.TYPE, TargetType.TYPE_USE};
+  private static final TargetType[] TYPE_TARGETS = {TargetType.TYPE, TargetType.TYPE_USE};
+  private static final TargetType[] TYPE_PARAMETER_TARGETS = {TargetType.TYPE_PARAMETER, TargetType.TYPE_USE};
+  private static final TargetType[] CONSTRUCTOR_TARGETS = {TargetType.CONSTRUCTOR, TargetType.TYPE_USE};
+  private static final TargetType[] METHOD_TARGETS = {TargetType.METHOD, TargetType.TYPE_USE};
+  private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
+  private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
+  private static final TargetType[] LOCAL_VARIABLE_TARGETS ={TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
+
+  private PsiImplUtil() { }
 
   @NotNull
   public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
@@ -142,7 +159,7 @@ public class PsiImplUtil {
     int i;
     for (i = parameters.length - 1; i >= 0; i--) {
       PsiParameter paramInList = parameters[i];
-      if (name.equals(paramInList.getName())) {
+      if (Comparing.equal(name, paramInList.getName())) {
         suspect = paramInList;
         break;
       }
@@ -298,17 +315,152 @@ public class PsiImplUtil {
     return new PsiImmediateClassType(classClass, substitutor);
   }
 
-  @Nullable public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
-    PsiAnnotation[] annotations = modifierList.getAnnotations();
+  @Nullable
+  public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
     if (annotations.length == 0) {
       return null;
     }
 
-    final String shortName = StringUtil.getShortName(qualifiedName);
+    String shortName = StringUtil.getShortName(qualifiedName);
     for (PsiAnnotation annotation : annotations) {
-      final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null && shortName.equals(referenceElement.getReferenceName())) {
-        if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
+        if (qualifiedName.equals(annotation.getQualifiedName())) {
+          return annotation;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static TargetType translateTargetRef(PsiReference reference) {
+    PsiElement field = reference.resolve();
+    if (field instanceof PsiEnumConstant) {
+      String name = ((PsiEnumConstant)field).getName();
+      try {
+        return TargetType.valueOf(name);
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("Unknown target: " + name);
+      }
+    }
+    return null;
+  }
+
+  public static boolean isAnnotationApplicable(@NotNull PsiAnnotation annotation, boolean strict, @Nullable TargetType... types) {
+    if (types != null && types.length != 0) {
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      if (ref != null) {
+        PsiElement annotationType = ref.resolve();
+        if (annotationType instanceof PsiClass) {
+          return findApplicableTarget((PsiClass)annotationType, types) != null;
+        }
+      }
+    }
+
+    return !strict;
+  }
+
+  public static boolean isAnnotationApplicable(@NotNull PsiClass annotationType, boolean strict, @Nullable TargetType... types) {
+    return types == null || types.length == 0 ? !strict : findApplicableTarget(annotationType, types) != null;
+  }
+
+  @Nullable
+  public static TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
+    Set<TargetType> targets = getAnnotationTargets(annotationType);
+    if (targets != null) {
+      for (TargetType type : types) {
+        if (targets.contains(type)) {
+          return type;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
+    if (!annotationType.isAnnotationType()) return null;
+    PsiModifierList modifierList = annotationType.getModifierList();
+    if (modifierList == null) return null;
+
+    // todo[r.sh] cache?
+    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
+    if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
+
+    PsiNameValuePair[] values = target.getParameterList().getAttributes();
+    if (values.length == 0) return Collections.emptySet();
+
+    PsiAnnotationMemberValue value = values[0].getValue();
+    if (value instanceof PsiReference) {
+      TargetType targetType = translateTargetRef((PsiReference)value);
+      if (targetType != null) {
+        return Collections.singleton(targetType);
+      }
+    }
+    else if (value instanceof PsiArrayInitializerMemberValue) {
+      Set <TargetType> targets = ContainerUtil.newHashSet();
+      for (PsiAnnotationMemberValue initializer : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
+        if (initializer instanceof PsiReference) {
+          TargetType targetType = translateTargetRef((PsiReference)initializer);
+          if (targetType != null) {
+            targets.add(targetType);
+          }
+        }
+      }
+      return targets;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static TargetType[] getApplicableTargets(@Nullable PsiAnnotationOwner owner) {
+    if (owner == null) {
+      return null;
+    }
+
+    if (owner instanceof PsiType || owner instanceof PsiTypeElement) {
+      return TYPE_USE_TARGETS;
+    }
+
+    if (owner instanceof PsiTypeParameter) {
+      return TYPE_PARAMETER_TARGETS;
+    }
+
+    if (owner instanceof PsiModifierList) {
+      PsiElement element = ((PsiModifierList)owner).getParent();
+      if (element instanceof PsiPackageStatement) {
+        return PACKAGE_TARGETS;
+      }
+      if (element instanceof PsiClass) {
+        if (((PsiClass)element).isAnnotationType()) {
+          return ANNOTATION_TARGETS;
+        }
+        else {
+          return TYPE_TARGETS;
+        }
+      }
+      if (element instanceof PsiMethod) {
+        if (((PsiMethod)element).isConstructor()) {
+          return CONSTRUCTOR_TARGETS;
+        }
+        else {
+          return METHOD_TARGETS;
+        }
+      }
+      if (element instanceof PsiField) {
+        return FIELD_TARGETS;
+      }
+      if (element instanceof PsiParameter) {
+        return PARAMETER_TARGETS;
+      }
+      if (element instanceof PsiLocalVariable) {
+        return LOCAL_VARIABLE_TARGETS;
       }
     }
 
