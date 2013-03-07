@@ -50,8 +50,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,8 +66,8 @@ public class ShowFilePathAction extends AnAction {
         return false;
       }
 
-      String fileManager = ExecUtil.execAndReadLine("xdg-mime", "query", "default", "inode/directory");
-      if (fileManager == null || !fileManager.contains("nautilus.desktop")) return false;
+      String appName = ExecUtil.execAndReadLine("xdg-mime", "query", "default", "inode/directory");
+      if (appName == null || !appName.matches("nautilus.*\\.desktop")) return false;
 
       String version = ExecUtil.execAndReadLine("nautilus", "--version");
       if (version == null) return false;
@@ -82,27 +81,49 @@ public class ShowFilePathAction extends AnAction {
     @NotNull
     @Override
     protected String compute() {
-      if (SystemInfo.isMac) {
-        return "Finder";
-      }
-
-      if (SystemInfo.isWindows) {
-        return "Explorer";
-      }
-
+      if (SystemInfo.isMac) return "Finder";
+      if (SystemInfo.isWindows) return "Explorer";
       if (SystemInfo.isUnix && SystemInfo.hasXdgMime()) {
-        String fileManager = ExecUtil.execAndReadLine("xdg-mime", "query", "default", "inode/directory");
-        if (fileManager != null) {
-          Matcher m = Pattern.compile("(.+)\\.desktop").matcher(fileManager);
-          if (m.find()) {
-            return StringUtil.capitalize(m.group(1));
-          }
-        }
+        String name = getUnixFileManagerName();
+        if (name != null) return name;
       }
-
       return "File Manager";
     }
   };
+
+  @Nullable
+  private static String getUnixFileManagerName() {
+    String appName = ExecUtil.execAndReadLine("xdg-mime", "query", "default", "inode/directory");
+    if (appName == null || !appName.matches(".+\\.desktop")) return null;
+
+    String dirs = System.getenv("XDG_DATA_DIRS");
+    if (dirs == null) return null;
+
+    try {
+      for (String dir : dirs.split(File.pathSeparator)) {
+        File appFile = new File(dir, "applications/" + appName);
+        if (appFile.exists()) {
+          BufferedReader reader = new BufferedReader(new FileReader(appFile));
+          try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+              if (line.startsWith("Name=")) {
+                return line.substring(5);
+              }
+            }
+          }
+          finally {
+            reader.close();
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.info("Cannot read desktop file", e);
+    }
+
+    return null;
+  }
 
   @Override
   public void update(final AnActionEvent e) {
