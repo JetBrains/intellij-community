@@ -647,7 +647,7 @@ public class SvnUtil {
     boolean wcDbFound = false;
     while (current != null) {
       File wcDb;
-      if ((wcDb = getWcDb(current)).exists() && wcDb.isDirectory()) {
+      if ((wcDb = getWcDb(current)).exists() && ! wcDb.isDirectory()) {
         wcDbFound = true;
         break;
       }
