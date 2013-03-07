@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,29 +32,27 @@ import java.util.List;
  */
 public class PsiClassReferenceType extends PsiClassType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassReferenceType");
+
   private final PsiJavaCodeReferenceElement myReference;
 
-  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel) {
-    super(languageLevel, extractAnnosFromReference(reference));
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel langLevel) {
+    this(reference, langLevel, collectAnnotations(reference));
+  }
+
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel langLevel, @NotNull PsiAnnotation[] annotations) {
+    super(langLevel, annotations);
     myReference = reference;
   }
 
-  private static PsiAnnotation[] extractAnnosFromReference(PsiJavaCodeReferenceElement reference) {
+  private static PsiAnnotation[] collectAnnotations(PsiJavaCodeReferenceElement reference) {
     List<PsiAnnotation> result = null;
-    for(PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()){
+    for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiAnnotation) {
         if (result == null) result = new SmartList<PsiAnnotation>();
         result.add((PsiAnnotation)child);
       }
     }
-
-    if (result == null) return PsiAnnotation.EMPTY_ARRAY;
-    return result.toArray(new PsiAnnotation[result.size()]);
-  }
-
-  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel languageLevel, PsiAnnotation[] annotations) {
-    super(languageLevel,annotations);
-    myReference = reference;
+    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
   @Override
@@ -84,7 +82,7 @@ public class PsiClassReferenceType extends PsiClassType {
   @Override
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
-    return new PsiClassReferenceType(myReference,languageLevel,getAnnotations());
+    return new PsiClassReferenceType(myReference, languageLevel, getAnnotations());
   }
 
   @Override
@@ -158,9 +156,9 @@ public class PsiClassReferenceType extends PsiClassType {
     }
     String qualifiedName = myReference.getQualifiedName();
     String name = myReference.getReferenceName();
-    if (name==null) name="";
+    if (name == null) name = "";
     LightClassReference reference = new LightClassReference(myReference.getManager(), name, qualifiedName, myReference.getResolveScope());
-    return new PsiClassReferenceType(reference, null,getAnnotations());
+    return new PsiClassReferenceType(reference, null, getAnnotations());
   }
 
   @Override
@@ -175,9 +173,9 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   public PsiClassType createImmediateCopy() {
-    final ClassResolveResult resolveResult = resolveGenerics();
-    if (resolveResult.getElement() == null) return this;
-    return new PsiImmediateClassType(resolveResult.getElement(), resolveResult.getSubstitutor());
+    ClassResolveResult resolveResult = resolveGenerics();
+    PsiClass element = resolveResult.getElement();
+    return element != null ? new PsiImmediateClassType(element, resolveResult.getSubstitutor()) : this;
   }
 
   @Override
