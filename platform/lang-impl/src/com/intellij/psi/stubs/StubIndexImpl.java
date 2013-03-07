@@ -22,15 +22,20 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -396,4 +401,30 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  @Override
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
+    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
+    if (faultyContainer != null) {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      PsiFile psiFile = psi.getManager().findFile(file);
+
+      String msg = "Invalid stub element type in index: " + file;
+      msg += "; found: " + psi;
+      msg += "; file stamp: " + file.getModificationStamp();
+      msg += "; file modCount: " + file.getModificationCount();
+      if (document != null) {
+        msg += "; unsaved: " + FileDocumentManager.getInstance().isDocumentUnsaved(document);
+        msg += "; doc stamp: " + document.getModificationStamp();
+        msg += "; committed: " + PsiDocumentManager.getInstance(psi.getProject()).isCommitted(document);
+      }
+      if (psiFile != null) {
+        msg += "; psi stamp: " + psiFile.getModificationStamp();
+        msg += "; viewProvider stamp: " + psiFile.getViewProvider().getModificationStamp();
+      }
+      LOG.error(msg);
+      return;
+    }
+    super.reportStubPsiMismatch(psi, file);
+
+  }
 }

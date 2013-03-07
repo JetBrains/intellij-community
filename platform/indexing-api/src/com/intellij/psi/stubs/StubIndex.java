@@ -67,19 +67,21 @@ public abstract class StubIndex {
       Psi psi = iterator.next();
       if (!requiredClass.isInstance(psi)) {
         iterator.remove();
-        reportStubPsiMismatch(psi);
+
+        VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
+        if (faultyContainer != null && faultyContainer.isValid()) {
+          FileBasedIndex.getInstance().requestReindex(faultyContainer);
+        }
+
+        reportStubPsiMismatch(psi, faultyContainer);
       }
     }
 
     return collection;
   }
 
-  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi) {
-    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
-    LOG.error("Invalid stub element type in index: " + faultyContainer + ". found: " + psi);
-    if (faultyContainer != null && faultyContainer.isValid()) {
-      FileBasedIndex.getInstance().requestReindex(faultyContainer);
-    }
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi, VirtualFile file) {
+    LOG.error("Invalid stub element type in index: " + file + ". found: " + psi);
   }
 
 }
