@@ -69,7 +69,10 @@ public class SetValueAction extends DebuggerAction {
   private void update(final DebuggerContextImpl context) {
     DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
       public void run() {
-        context.getDebuggerSession().refresh(false);
+        final DebuggerSession session = context.getDebuggerSession();
+        if (session != null) {
+          session.refresh(false);
+        }
       }
     });
     //node.setState(context);

@@ -316,14 +316,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   protected abstract void build(DebuggerContextImpl context);
 
   protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
-    DebuggerSession debuggerSession = context.getDebuggerSession();
+    DebuggerSession session = context.getDebuggerSession();
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || (session != null && session.getState() == DebuggerSession.STATE_PAUSED)) {
       showMessage(MessageDescriptor.EVALUATING);
       context.getDebugProcess().getManagerThread().schedule(command);
     }
     else {
-      showMessage(context.getDebuggerSession().getStateDescription());
+      showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
     }
   }
 

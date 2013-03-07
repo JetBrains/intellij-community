@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResumeActionHandler extends DebuggerActionHandler {
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().resume();
+    final DebuggerSession session = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
+    if (session != null) {
+      session.resume();
+    }
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

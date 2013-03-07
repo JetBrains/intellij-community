@@ -415,7 +415,7 @@ public class FrameVariablesTree extends DebuggerTree {
 
         private void autoscrollToNewLocals(DebuggerTreeNodeImpl frameNode) {
           final DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-          final boolean isSteppingThrough = debuggerSession.isSteppingThrough(debuggerContext.getThreadProxy());
+          final boolean isSteppingThrough = debuggerSession != null && debuggerSession.isSteppingThrough(debuggerContext.getThreadProxy());
           final List<DebuggerTreeNodeImpl> toClear = new ArrayList<DebuggerTreeNodeImpl>();
           final List<DebuggerTreeNodeImpl> newLocalsToSelect = new ArrayList<DebuggerTreeNodeImpl>();
 
