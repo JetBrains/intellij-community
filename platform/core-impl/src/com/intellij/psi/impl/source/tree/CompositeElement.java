@@ -317,7 +317,12 @@ public class CompositeElement extends TreeElement {
     @NonNls String msg = "";
     msg += ";\n changed=" + (startStamp != myModificationsCount);
     msg += ";\n buffer=" + text;
-    msg += ";\n this=" + this;
+    try {
+      msg += ";\n this=" + this;
+    }
+    catch (StackOverflowError e) {
+      msg += ";\n this.toString produces SOE";
+    }
     int shitStart = textMatches(text, 0);
     msg += ";\n matches until " + shitStart;
     LeafElement leaf = findLeafElementAt(Math.abs(shitStart));
