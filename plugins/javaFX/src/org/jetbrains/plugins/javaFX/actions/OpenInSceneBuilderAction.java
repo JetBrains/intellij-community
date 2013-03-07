@@ -74,11 +74,12 @@ public class OpenInSceneBuilderAction extends AnAction {
           final File sceneBuilderLibsFile;
           if (SystemInfo.isMac) {
             sceneBuilderLibsFile = new File(new File(pathToSceneBuilder, "Contents"), "Java");
-          }
-          else {
+          } else if (SystemInfo.isWindows) {
             File sceneBuilderRoot = new File(pathToSceneBuilder);
             sceneBuilderRoot = sceneBuilderRoot.getParentFile().getParentFile();
             sceneBuilderLibsFile = new File(sceneBuilderRoot, "lib");
+          } else {
+            sceneBuilderLibsFile = new File(new File(pathToSceneBuilder).getParent(), "app");
           }
           final File[] sceneBuilderLibs = sceneBuilderLibsFile.listFiles();
           if (sceneBuilderLibs != null) {
