@@ -53,7 +53,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final String THROWS = "throws";
-  private final Set<Map> myDeclarations = new HashSet<Map>();
+  private final List<Map> myDeclarations = ContainerUtil.newArrayList();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
