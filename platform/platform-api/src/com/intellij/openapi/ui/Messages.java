@@ -1436,6 +1436,8 @@ public class Messages {
     }
   }
 
+  /** It looks awful! */
+  @Deprecated
   protected static class ChooseDialog extends MessageDialog {
     private ComboBox myComboBox;
     private InputValidator myValidator;
