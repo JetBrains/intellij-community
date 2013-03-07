@@ -80,7 +80,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
             if (item instanceof Tool) {
               id = ((Tool)item).getActionId();
             }
-            final ToolSelectDialog dialog = new ToolSelectDialog(panel.getProject(), id);
+            final ToolSelectDialog dialog = new ToolSelectDialog(panel.getProject(), id, new ToolsPanel());
             dialog.show();
             if (!dialog.isOK()) {
               return;
