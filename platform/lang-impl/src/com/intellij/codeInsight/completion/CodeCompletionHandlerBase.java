@@ -505,14 +505,9 @@ public class CodeCompletionHandlerBase {
       }
     });
     final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy[0]);
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
-    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
-    final OffsetMap original = initContext.getOffsetMap();
-    for (final OffsetKey key : original.getAllOffsets()) {
-      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy[0], original.getOffset(key)));
-    }
+    final OffsetMap hostMap = translateOffsetMapToHost(initContext, fileCopy[0], hostFile, hostEditor);
 
     final Document document = fileCopy[0].getViewProvider().getDocument();
     assert document != null : "no document";
@@ -563,6 +558,19 @@ public class CodeCompletionHandlerBase {
     }
   }
 
+  private OffsetMap translateOffsetMapToHost(CompletionInitializationContext initContext,
+                                             PsiFile context,
+                                             PsiFile hostFile,
+                                             Editor hostEditor) {
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
+    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
+    final OffsetMap original = initContext.getOffsetMap();
+    for (final OffsetKey key : original.getAllOffsets()) {
+      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(context, original.getOffset(key)));
+    }
+    return hostMap;
+  }
+
   private static CompletionContext createCompletionContext(PsiFile hostFile,
                                                            int hostStartOffset,
                                                            Editor hostEditor,
@@ -583,11 +591,8 @@ public class CodeCompletionHandlerBase {
       EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil
         .getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
-      final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
-      for (final OffsetKey key : hostMap.getAllOffsets()) {
-        map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
-      }
-      context = new CompletionContext(hostFile.getProject(), injectedEditor, injected, map);
+      context = new CompletionContext(hostFile.getProject(), injectedEditor, injected,
+                                      translateOffsetMapToInjected(hostEditor, hostMap, injectedEditor));
       assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
       context = new CompletionContext(hostFile.getProject(), hostEditor, hostFile, hostMap);
@@ -597,6 +602,14 @@ public class CodeCompletionHandlerBase {
     assert context.getStartOffset() >= 0 : "start < 0";
 
     return context;
+  }
+
+  private static OffsetMap translateOffsetMapToInjected(Editor hostEditor, OffsetMap hostMap, EditorWindow injectedEditor) {
+    final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
+    for (final OffsetKey key : hostMap.getAllOffsets()) {
+      map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
+    }
+    return map;
   }
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {
