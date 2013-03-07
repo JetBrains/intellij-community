@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -172,17 +173,22 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
   }
 
+  @Nullable
   public ObjectReference thisObject() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
     try {
-      if(myThisReference == null) {
-        myThisReference = getStackFrame().thisObject();
+      for (int attempt = 0; attempt < 2; attempt++) {
+        try {
+          if(myThisReference == null) {
+            myThisReference = getStackFrame().thisObject();
+          }
+          break;
+        }
+        catch (InvalidStackFrameException e) {
+          clearCaches();
+        }
       }
-    }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return thisObject();
     }
     catch (InternalException e) {
       // supress some internal errors caused by bugs in specific JDI implementations
