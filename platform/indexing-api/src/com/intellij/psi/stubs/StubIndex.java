@@ -20,19 +20,25 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 public abstract class StubIndex {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndex");
+
   private static class StubIndexHolder {
     private static final StubIndex ourInstance = ApplicationManager.getApplication().getComponent(StubIndex.class);
   }
-
   public static StubIndex getInstance() {
     return StubIndexHolder.ourInstance;
   }
@@ -50,4 +56,30 @@ public abstract class StubIndex {
 
   @NotNull
   public abstract <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+
+  public <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                               @NotNull Key key,
+                                                               @NotNull final Project project,
+                                                               final GlobalSearchScope scope,
+                                                               @NotNull Class<Psi> requiredClass) {
+    Collection<Psi> collection = getInstance().get(indexKey, key, project, scope);
+    for (Iterator<Psi> iterator = collection.iterator(); iterator.hasNext(); ) {
+      Psi psi = iterator.next();
+      if (!requiredClass.isInstance(psi)) {
+        iterator.remove();
+        reportStubPsiMismatch(psi);
+      }
+    }
+
+    return collection;
+  }
+
+  protected <Psi extends PsiElement> void reportStubPsiMismatch(Psi psi) {
+    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(psi);
+    LOG.error("Invalid stub element type in index: " + faultyContainer + ". found: " + psi);
+    if (faultyContainer != null && faultyContainer.isValid()) {
+      FileBasedIndex.getInstance().requestReindex(faultyContainer);
+    }
+  }
+
 }
