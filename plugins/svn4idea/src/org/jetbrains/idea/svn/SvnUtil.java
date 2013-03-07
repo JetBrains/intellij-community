@@ -638,7 +638,7 @@ public class SvnUtil {
   }
 
   public static File getWcDb(final File file) {
-    return new File(file, ".svn/wc.db");
+    return new File(file, SVN_ADMIN_DIR_NAME + "/wc.db");
   }
 
   @Nullable
