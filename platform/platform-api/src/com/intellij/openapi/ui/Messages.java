@@ -789,8 +789,10 @@ public class Messages {
   }
 
   /**
+   * @deprecated It looks awful!
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
+  @Deprecated
   public static int showChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
