@@ -251,7 +251,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Project project = CommandLineProcessor.processExternalCommandLine(args, null);
+              final Project project = CommandLineProcessor.processExternalCommandLine(args.subList(1, args.size()), args.get(0));
               final JFrame frame;
               if (project != null) {
                 frame = (JFrame)WindowManager.getInstance().getIdeFrame(project);
