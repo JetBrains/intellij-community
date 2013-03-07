@@ -87,7 +87,12 @@ public class ExternalizablePropertyContainer
       if (externalizer == null) {
         continue;
       }
-      myValues.put(property, externalizer.readValue(child));
+      try {
+        myValues.put(property, externalizer.readValue(child));
+      }
+      catch (InvalidDataException e) {
+        LOG.info(e);
+      }
     }
   }
 
