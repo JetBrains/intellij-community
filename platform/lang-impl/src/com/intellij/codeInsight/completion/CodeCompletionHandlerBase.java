@@ -298,11 +298,11 @@ public class CodeCompletionHandlerBase {
                           boolean hasModifiers,
                           int invocationCount,
                           PsiFile hostFile,
-                          int hostStartOffset, Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
+                          Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
     final Editor editor = initContext.getEditor();
     checkEditorValid2(editor);
 
-    CompletionContext context = createCompletionContext(hostFile, hostStartOffset, hostEditor, hostMap);
+    CompletionContext context = createCompletionContext(hostFile, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostEditor, hostMap);
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -506,7 +506,6 @@ public class CodeCompletionHandlerBase {
     });
     final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy[0]);
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy[0], initContext.getStartOffset());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
@@ -553,14 +552,14 @@ public class CodeCompletionHandlerBase {
             Disposer.dispose(translator);
             return;
           }
-          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
+          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostEditor, hostMap, translator);
         }
       });
     }
     else {
       PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostEditor, hostMap, translator);
     }
   }
 
