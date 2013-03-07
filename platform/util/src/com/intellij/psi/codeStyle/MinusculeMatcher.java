@@ -144,6 +144,8 @@ public class MinusculeMatcher implements Matcher {
         if (p < 0) {
           break;
         }
+
+        // favor uppercase letters matching hump start, lowercase ones not matching hump starts
         if (c == myPattern[p]) {
           matchingCase += isUpperCase[p] ? 50 : isHumpStart ? 1 : 0;
         } else if (isHumpStart) {
