@@ -257,17 +257,21 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @NotNull
   public Charset getDefaultCharset() {
-    return myDefaultEncoding;
+    return myDefaultEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myDefaultEncoding;
   }
 
   @Override
   @NotNull
   public String getDefaultCharsetName() {
-    return myDefaultEncoding.name();
+    return myDefaultEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultEncoding.name();
   }
 
   @Override
   public void setDefaultCharsetName(@NotNull String name) {
+    if (name.isEmpty()) {
+      myDefaultEncoding = ChooseFileEncodingAction.NO_ENCODING;
+      return;
+    }
     myDefaultEncoding = CharsetToolkit.forName(name);
     if (myDefaultEncoding == null) myDefaultEncoding = CharsetToolkit.getDefaultSystemCharset();
     if (myDefaultEncoding == null) myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
