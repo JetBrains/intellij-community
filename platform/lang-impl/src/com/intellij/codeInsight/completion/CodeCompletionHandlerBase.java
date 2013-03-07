@@ -126,10 +126,8 @@ public class CodeCompletionHandlerBase {
       CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
     }
 
-    final Document document = editor.getDocument();
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor) ||
+        !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 
@@ -164,56 +162,16 @@ public class CodeCompletionHandlerBase {
     Runnable initCmd = new Runnable() {
       @Override
       public void run() {
-
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
-            documentManager.commitAllDocuments();
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-            int docLength = editor.getDocument().getTextLength();
-            int psiLength = psiFile.getTextLength();
-            if (docLength != psiLength) {
-              if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-                String docText = editor.getDocument().getText();
-                String psiText = psiFile.getText();
-                String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
-                                 "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
-                                 "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
-                                 ;
-                throw new AssertionError(message);
-              }
-
-              throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
-            }
-
+            assertCommitSuccessful(editor, psiFile);
             checkEditorValid2(editor);
 
-            final Ref<CompletionContributor> current = Ref.create(null);
-            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
-              CompletionContributor dummyIdentifierChanger;
-              @Override
-              public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
-                super.setFileCopyPatcher(fileCopyPatcher);
-
-                if (dummyIdentifierChanger != null) {
-                  LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
-                }
-                dummyIdentifierChanger = current.get();
-              }
-            };
-            for (final CompletionContributor contributor : CompletionContributor.forLanguage(initializationContext[0].getPositionLanguage())) {
-              if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
-                continue;
-              }
-
-              current.set(contributor);
-              contributor.beforeCompletion(initializationContext[0]);
-              checkEditorValid2(editor);
-              assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
-            }
+            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile);
           }
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
@@ -229,6 +187,51 @@ public class CodeCompletionHandlerBase {
     }
 
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+  }
+
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile) {
+    final Ref<CompletionContributor> current = Ref.create(null);
+    CompletionInitializationContext context = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
+      CompletionContributor dummyIdentifierChanger;
+
+      @Override
+      public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
+        super.setFileCopyPatcher(fileCopyPatcher);
+
+        if (dummyIdentifierChanger != null) {
+          LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+        }
+        dummyIdentifierChanger = current.get();
+      }
+    };
+    List<CompletionContributor> contributors = CompletionContributor.forLanguage(context.getPositionLanguage());
+    Project project = psiFile.getProject();
+    List<CompletionContributor> filteredContributors = DumbService.getInstance(project).filterByDumbAwareness(contributors);
+    for (final CompletionContributor contributor : filteredContributors) {
+      current.set(contributor);
+      contributor.beforeCompletion(context);
+      checkEditorValid2(editor);
+      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
+    }
+    return context;
+  }
+
+  private static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
+    int docLength = editor.getDocument().getTextLength();
+    int psiLength = psiFile.getTextLength();
+    if (docLength != psiLength) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        String docText = editor.getDocument().getText();
+        String psiText = psiFile.getText();
+        String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
+                         "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
+                         "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
+                         ;
+        throw new AssertionError(message);
+      }
+
+      throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+    }
   }
 
   private static void checkEditorValid2(Editor editor) {
