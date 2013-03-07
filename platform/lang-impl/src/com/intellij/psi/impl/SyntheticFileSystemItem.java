@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +27,14 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   public SyntheticFileSystemItem(Project project) {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
+  }
+
+  protected static boolean processFileSystemItem(PsiElementProcessor<PsiFileSystemItem> processor, PsiFileSystemItem element) {
+    if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(element.getName(), true)) {
+      return true;
+    }
+
+    return processor.execute(element);
   }
 
   public boolean isDirectory() {
