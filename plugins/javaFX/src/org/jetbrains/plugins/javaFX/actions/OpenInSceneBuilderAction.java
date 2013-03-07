@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -76,26 +77,34 @@ public class OpenInSceneBuilderAction extends AnAction {
             sceneBuilderLibsFile = new File(new File(pathToSceneBuilder, "Contents"), "Java");
           } else if (SystemInfo.isWindows) {
             File sceneBuilderRoot = new File(pathToSceneBuilder);
-            sceneBuilderRoot = sceneBuilderRoot.getParentFile().getParentFile();
-            sceneBuilderLibsFile = new File(sceneBuilderRoot, "lib");
+            File sceneBuilderRootDir = sceneBuilderRoot.getParentFile();
+            if (sceneBuilderRootDir == null) {
+              final File foundInPath = PathEnvironmentVariableUtil.findInPath(pathToSceneBuilder);
+              if (foundInPath != null) {
+                sceneBuilderRootDir = foundInPath.getParentFile();
+              }
+            }
+            sceneBuilderRoot = sceneBuilderRootDir != null ? sceneBuilderRootDir.getParentFile() : null;
+            sceneBuilderLibsFile = sceneBuilderRoot != null ? new File(sceneBuilderRoot, "lib") : null;
           } else {
             sceneBuilderLibsFile = new File(new File(pathToSceneBuilder).getParent(), "app");
           }
-          final File[] sceneBuilderLibs = sceneBuilderLibsFile.listFiles();
-          if (sceneBuilderLibs != null) {
-            for (File jarFile : sceneBuilderLibs) {
-              javaParameters.getClassPath().add(jarFile.getPath());
+          if (sceneBuilderLibsFile != null) {
+            final File[] sceneBuilderLibs = sceneBuilderLibsFile.listFiles();
+            if (sceneBuilderLibs != null) {
+              for (File jarFile : sceneBuilderLibs) {
+                javaParameters.getClassPath().add(jarFile.getPath());
+              }
+              javaParameters.setMainClass("com.oracle.javafx.authoring.Main");
+              javaParameters.getProgramParametersList().add(path);
+
+              final OSProcessHandler processHandler = javaParameters.createOSProcessHandler();
+              final String commandLine = processHandler.getCommandLine();
+              LOG.info("scene builder command line: " + commandLine);
+              processHandler.startNotify();
+              return;
             }
           }
-
-          javaParameters.setMainClass("com.oracle.javafx.authoring.Main");
-          javaParameters.getProgramParametersList().add(path);
-
-          final OSProcessHandler processHandler = javaParameters.createOSProcessHandler();
-          final String commandLine = processHandler.getCommandLine();
-          LOG.info("scene builder command line: " + commandLine);
-          processHandler.startNotify();
-          return;
         }
         catch (Throwable ex) {
           LOG.info(ex);
