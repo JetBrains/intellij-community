@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.siyeh.ig.fixes;
+package com.siyeh.ig.fixes.controlflow;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.controlflow.PointlessNullCheckInspection;
+import com.siyeh.ig.controlflow.ConstantIfStatementInspection;
+import com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection;
 
-public class PointlessNullCheckFixTest extends IGQuickFixesTestCase {
+public class SimplifiableEqualsExpressionFixTest extends IGQuickFixesTestCase {
+
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new PointlessNullCheckInspection());
-    myRelativePath = "pointlessnullcheck";
+    myFixture.enableInspections(new SimplifiableEqualsExpressionInspection());
+    myRelativePath = "controlflow/simplifiable_equals_expression";
   }
 
-  public void testScenario1() {
-    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
-  }
+  public void testNormal() { doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equals")); }
+  public void testNegated() { doTest(InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", "equalsIgnoreCase")); }
 }

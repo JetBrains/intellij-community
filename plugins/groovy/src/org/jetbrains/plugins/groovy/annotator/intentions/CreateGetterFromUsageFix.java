@@ -28,13 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  */
 public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix {
   public CreateGetterFromUsageFix(@NotNull GrReferenceExpression refExpression, @NotNull PsiClass targetClass) {
-    super(refExpression, targetClass);
+    super(refExpression);
   }
 
   @NotNull
   @Override
   protected TypeConstraint[] getReturnTypeConstraints() {
-    return GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
+    return GroovyExpectedTypesProvider.calculateTypeConstraints(getRefExpr());
   }
 
   @Override
@@ -45,6 +45,6 @@ public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix {
   @NotNull
   @Override
   protected String getMethodName() {
-    return GroovyPropertyUtils.getGetterNameNonBoolean(myRefExpression.getReferenceName());
+    return GroovyPropertyUtils.getGetterNameNonBoolean(getRefExpr().getReferenceName());
   }
 }

@@ -411,10 +411,11 @@
       <reference ref="Back"/>
       <reference ref="Forward"/>
       <separator/>
-      <reference ref="ShowSettings"/>
+      <group id="MainToolBarSettings">
+        <reference ref="ShowSettings"/>
+      </group>
       <separator/>
       <reference ref="HelpTopics"/>
-
     </group>
 
     <group id="EditorPopupMenu" configurable="true">

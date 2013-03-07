@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Jetbrains
+ * Copyright 2011-2013 Jetbrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,25 +62,28 @@ public class PointlessNullCheckInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new PointlessNullCheckFix();
+    final PsiExpression expression = (PsiExpression)infos[0];
+    return new PointlessNullCheckFix(expression.getText());
   }
 
   private static class PointlessNullCheckFix extends InspectionGadgetsFix {
 
-    @Override
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message(
-        "pointless.nullcheck.simplify.quickfix");
+    private final String myExpressionText;
+
+    public PointlessNullCheckFix(String expressionText) {
+      myExpressionText = expressionText;
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    @NotNull
+    public String getName() {
+      return InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", myExpressionText);
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiBinaryExpression binaryExpression =
-        PsiTreeUtil.getParentOfType(element,
-                                    PsiBinaryExpression.class);
+      final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
       if (binaryExpression == null) {
         return;
       }
@@ -164,7 +166,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (!referencesEqual(referenceExpression1, referenceExpression2)) {
         return;
       }
-      registerError(binaryExpression);
+      registerError(binaryExpression, binaryExpression);
     }
 
     @Nullable

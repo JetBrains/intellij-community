@@ -2,21 +2,28 @@
 <problems>
   <problem>
     <file>IfCanBeSwitch.java</file>
-    <line>3</line>
+    <line>5</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' replaceable with 'switch'</problem_class>
     <description>&lt;code&gt;if&lt;/code&gt; statement replaceable with 'switch' statement #loc</description>
   </problem>
 
   <problem>
     <file>IfCanBeSwitch.java</file>
-    <line>7</line>
+    <line>9</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' replaceable with 'switch'</problem_class>
     <description>&lt;code&gt;if&lt;/code&gt; statement replaceable with 'switch' statement #loc</description>
   </problem>
 
   <problem>
     <file>IfCanBeSwitch.java</file>
-    <line>11</line>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' replaceable with 'switch'</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement replaceable with 'switch' statement #loc</description>
+  </problem>
+
+  <problem>
+    <file>IfCanBeSwitch.java</file>
+    <line>26</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' replaceable with 'switch'</problem_class>
     <description>&lt;code&gt;if&lt;/code&gt; statement replaceable with 'switch' statement #loc</description>
   </problem>

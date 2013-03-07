@@ -16,12 +16,23 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class IfCanBeSwitchInspectionTest extends IGInspectionTestCase {
+
+  @Override
+  protected Sdk getTestProjectSdk() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    return IdeaTestUtil.getMockJdk17();
+  }
+
   public void test() throws Exception {
     final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
     inspection.suggestIntSwitches = true;
-    doTest("com/siyeh/igtest/migration/if_switch", new LocalInspectionToolWrapper(inspection));
+      doTest("com/siyeh/igtest/migration/if_switch", new LocalInspectionToolWrapper(inspection));
   }
 }

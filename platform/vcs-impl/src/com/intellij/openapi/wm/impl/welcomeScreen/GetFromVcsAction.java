@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -44,5 +45,10 @@ public class GetFromVcsAction extends WelcomePopupAction{
   @Override
   protected boolean isSilentlyChooseSingleOption() {
     return true;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME).length > 0);
   }
 }

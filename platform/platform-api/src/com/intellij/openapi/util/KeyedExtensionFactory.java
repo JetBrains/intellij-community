@@ -89,6 +89,9 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
             break;
           }
         }
+        catch (RuntimeException e) {
+          throw e;
+        }
         catch (Exception e) {
           throw new RuntimeException(e);
         }

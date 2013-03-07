@@ -24,25 +24,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.RemoteTemplatesFactory;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -56,17 +52,21 @@ import java.util.List;
 public class ProjectTypesList implements Disposable {
 
   private final JBList myList;
-  private final SearchTextField mySearchField;
-  private final FilteringListModel<TemplateItem> myFilteringListModel;
+  private final CollectionListModel<TemplateItem> myModel;
   private MinusculeMatcher myMatcher;
   private Pair<TemplateItem, Integer> myBestMatch;
 
   private TemplateItem myLoadingItem;
 
-  public ProjectTypesList(JBList list, SearchTextField searchField, MultiMap<TemplatesGroup, ProjectTemplate> map, final WizardContext context) {
+  public ProjectTypesList(JBList list, MultiMap<TemplatesGroup, ProjectTemplate> map, final WizardContext context) {
     myList = list;
-    mySearchField = searchField;
 
+    new ListSpeedSearch(myList) {
+      @Override
+      protected String getElementText(Object element) {
+        return super.getElementText(element);
+      }
+    }.setComparator(new SpeedSearchComparator(false));
     List<TemplateItem> items = buildItems(map);
     final RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
     final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0);
@@ -82,8 +82,7 @@ public class ProjectTypesList implements Disposable {
       }
     };
     items.add(myLoadingItem);
-    final CollectionListModel<TemplateItem> model = new CollectionListModel<TemplateItem>(items);
-    myFilteringListModel = new FilteringListModel<TemplateItem>(model);
+    myModel = new CollectionListModel<TemplateItem>(items);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(context.getProject(), "Loading Templates") {
       @Override
@@ -103,8 +102,8 @@ public class ProjectTypesList implements Disposable {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               int index = myList.getSelectedIndex();
-              model.remove(myLoadingItem);
-              model.add(items);
+              myModel.remove(myLoadingItem);
+              myModel.add(items);
               myList.setSelectedIndex(index);
             }
           });
@@ -137,8 +136,8 @@ public class ProjectTypesList implements Disposable {
       @Override
       public boolean hasSeparatorAboveOf(Object value) {
         TemplateItem item = (TemplateItem)value;
-        int index = myFilteringListModel.getElementIndex(item);
-        return index == 0 || !myFilteringListModel.getElementAt(index -1).getGroupName().equals(item.getGroupName());
+        int index = myModel.getElementIndex(item);
+        return index == 0 || !myModel.getElementAt(index - 1).getGroupName().equals(item.getGroupName());
       }
 
       @Nullable
@@ -148,31 +147,10 @@ public class ProjectTypesList implements Disposable {
       }
     }));
 
-    myFilteringListModel.setFilter(new Condition<TemplateItem>() {
-      @Override
-      public boolean value(TemplateItem item) {
-        return item.getMatchingDegree() > Integer.MIN_VALUE;
-      }
-    });
+    myList.setModel(myModel);
+  }
 
-    myList.setModel(myFilteringListModel);
-    mySearchField.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        String text = "*" + mySearchField.getText().trim();
-        myMatcher = NameUtil.buildMatcher(text, NameUtil.MatchingCaseSensitivity.NONE);
-
-        TemplateItem value = (TemplateItem)myList.getSelectedValue();
-        int degree = value == null ? Integer.MIN_VALUE : value.getMatchingDegree();
-        myBestMatch = Pair.create(degree > Integer.MIN_VALUE ? value : null, degree);
-
-        myFilteringListModel.refilter();
-        if (myBestMatch.first != null) {
-          myList.setSelectedValue(myBestMatch.first, true);
-        }
-      }
-    });
-
+  void installKeyAction(JComponent component) {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -194,7 +172,7 @@ public class ProjectTypesList implements Disposable {
            }
         }
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), mySearchField);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_UP, KeyEvent.VK_DOWN), component);
   }
 
   void resetSelection() {
@@ -287,6 +265,11 @@ public class ProjectTypesList implements Disposable {
     @Nullable
     String getDescription() {
       return myTemplate.getDescription();
+    }
+
+    @Override
+    public String toString() {
+      return getName() + " " + getGroupName();
     }
   }
 }

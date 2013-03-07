@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -322,7 +324,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
 
-    private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch values) {
+    private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch branch) {
       if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -331,34 +333,36 @@ public class IfCanBeSwitchInspection extends BaseInspection {
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
         if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, argument)) {
-          values.addCaseExpression(qualifierExpression);
+          branch.addCaseExpression(qualifierExpression);
         }
         else {
-          values.addCaseExpression(argument);
+          branch.addCaseExpression(argument);
         }
       }
-      else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
+      else if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (JavaTokenType.OROR.equals(tokenType)) {
-          extractCaseExpressions(lhs, switchExpression, values);
-          extractCaseExpressions(rhs, switchExpression, values);
+          for (PsiExpression operand : operands) {
+            extractCaseExpressions(operand, switchExpression, branch);
+          }
         }
-        else {
+        else if (operands.length == 2) {
+          final PsiExpression lhs = operands[0];
+          final PsiExpression rhs = operands[1];
           if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, rhs)) {
-            values.addCaseExpression(lhs);
+            branch.addCaseExpression(lhs);
           }
           else {
-            values.addCaseExpression(rhs);
+            branch.addCaseExpression(rhs);
           }
         }
       }
       else if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         final PsiExpression contents = parenthesizedExpression.getExpression();
-        extractCaseExpressions(contents, switchExpression, values);
+        extractCaseExpressions(contents, switchExpression, branch);
       }
     }
 
@@ -497,6 +501,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches);
       if (switchExpression == null) {
         return;
+      }
+      final PsiExpression unwrappedExpression = ParenthesesUtils.stripParentheses(switchExpression);
+      if (unwrappedExpression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)unwrappedExpression;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiModifierListOwner && NullableNotNullManager.isNullable((PsiModifierListOwner)target)) {
+          return;
+        }
       }
       final PsiType type = switchExpression.getType();
       if (!suggestIntSwitches) {
