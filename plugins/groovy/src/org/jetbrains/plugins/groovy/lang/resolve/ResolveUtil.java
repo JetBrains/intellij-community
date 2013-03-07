@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -83,6 +85,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnT
  */
 @SuppressWarnings({"StringBufferReplaceableByString"})
 public class ResolveUtil {
+  private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
+
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
 
   private ResolveUtil() {
@@ -114,6 +118,7 @@ public class ResolveUtil {
                                    @NotNull final PsiScopeProcessor processor,
                                    boolean processNonCodeMethods,
                                    @NotNull final ResolveState state) {
+    try {
     ClassHint hint = processor.getHint(ClassHint.KEY);
     if (hint != null) {
       return new DeclarationCacheKey(getNameHint(processor), hint, processNonCodeMethods, originalPlace).processCachedDeclarations(place, processor);
@@ -131,6 +136,11 @@ public class ResolveUtil {
         return true;
       }
     });
+    }
+    catch (StackOverflowError e) {
+      LogMessageEx.error(LOG, "StackOverflow", e, place.getContainingFile().getText());
+      throw e;
+    }
   }
 
   static boolean doProcessDeclarations(@NotNull PsiElement place,
