@@ -544,8 +544,8 @@ public class PlatformTestUtil {
     private static String formatTime(long millis) {
       StringBuilder hint = new StringBuilder();
       DecimalFormat format = new DecimalFormat("#.0");
-      if (millis >= 1000) hint.append(format.format(millis / 1000)).append("s");
-      if (millis >= 60 * 1000) hint.append(" ").append(format.format(millis / 60 / 1000)).append("m");
+      if (millis >= 1000) hint.append(format.format(millis / 1000.f)).append("s");
+      if (millis >= 60 * 1000) hint.append(" ").append(format.format(millis / 60 / 1000.f)).append("m");
       String result = millis + "ms";
       if (hint.length() > 0) {
         result = result + " (" + hint.toString() + ")";
