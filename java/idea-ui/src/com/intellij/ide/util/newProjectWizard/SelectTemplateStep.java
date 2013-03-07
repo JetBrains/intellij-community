@@ -197,8 +197,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     if (template != null) {
       description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
-        StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
-        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        StringBuilder sb = new StringBuilder("<html><body><font ");
+        sb.append(SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"").append('>');
         sb.append(description).append("</font></body></html>");
         description = sb.toString();
         myDescriptionPane.setText(description);
