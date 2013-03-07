@@ -49,6 +49,7 @@ public abstract class EncodingManager extends EncodingRegistry {
   public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
 
   @Nullable
+  // returns empty for system default
   public String getDefaultCharsetName() {
     Charset charset = getDefaultCharset();
     return charset == null ? null : charset.displayName();

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -72,16 +73,16 @@ public class ThreadsDebuggerTree extends DebuggerTree {
   }
 
   protected void build(DebuggerContextImpl context) {
-    DebuggerSession debuggerSession = context.getDebuggerSession();
-    final RefreshThreadsTreeCommand command = new RefreshThreadsTreeCommand(debuggerSession);
+    DebuggerSession session = context.getDebuggerSession();
+    final RefreshThreadsTreeCommand command = new RefreshThreadsTreeCommand(session);
     
-    final int state = debuggerSession.getState();
+    final int state = session != null? session.getState() : DebuggerSession.STATE_DISPOSED;
     if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.STATE_PAUSED || state == DebuggerSession.STATE_RUNNING) {
       showMessage(MessageDescriptor.EVALUATING);
       context.getDebugProcess().getManagerThread().schedule(command);
     }
     else {
-      showMessage(debuggerSession.getStateDescription());
+      showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
     }
   }
 

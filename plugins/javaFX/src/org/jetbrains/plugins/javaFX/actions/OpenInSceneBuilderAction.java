@@ -96,7 +96,7 @@ public class OpenInSceneBuilderAction extends AnAction {
           processHandler.startNotify();
           return;
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.info(ex);
         }
       }

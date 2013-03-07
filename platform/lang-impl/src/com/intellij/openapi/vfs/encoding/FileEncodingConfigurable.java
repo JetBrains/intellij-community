@@ -193,7 +193,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
     mySelectedCharsetForPropertiesFiles.set(encodingManager.getDefaultCharsetForPropertiesFiles(null));
 
-    mySelectedIdeCharset.set(EncodingManager.getInstance().getDefaultCharset());
+    mySelectedIdeCharset.set(EncodingManager.getInstance().getDefaultCharsetName().isEmpty() ? null : EncodingManager.getInstance().getDefaultCharset());
     mySelectedProjectCharset.set(EncodingProjectManager.getInstance(myProject).getEncoding(null, false));
     myPropertiesEncodingAction.update(null);
     myIdeEncodingAction.update(null);
