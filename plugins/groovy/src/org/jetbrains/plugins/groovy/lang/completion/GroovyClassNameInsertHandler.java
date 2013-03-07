@@ -100,12 +100,16 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
                                                                PsiArrayType.class) == null;
   }
 
-  private static boolean isInVariable(PsiElement position) {
+  private static boolean isInVariable(@Nullable PsiElement position) {
+    if (position == null) {
+      return false;
+    }
+
     final PsiElement parent = position.getParent();
     if (parent instanceof GrVariable) {
       return ((GrVariable)parent).getTypeElementGroovy() == null && position == ((GrVariable)parent).getNameIdentifierGroovy();
     }
-    if (parent instanceof GrCatchClause)  {
+    if (parent instanceof GrCatchClause) {
       return ((GrCatchClause)parent).getParameter() == null;
     }
 
