@@ -6,7 +6,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,13 +85,17 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
     if (module != null) {
       List<VirtualFile> templatesFolders = getRoots(module);
       for (VirtualFile folder : templatesFolders) {
-        final PsiDirectory directory = PsiManager.getInstance(module.getProject()).findDirectory(folder);
+        final PsiFileSystemItem directory = getPsiDirectory(module, folder);
         if (directory != null) {
           contexts.add(directory);
         }
       }
     }
     return contexts;
+  }
+
+  protected PsiFileSystemItem getPsiDirectory(Module module, VirtualFile folder) {
+    return PsiManager.getInstance(module.getProject()).findDirectory(folder);
   }
 
   protected List<VirtualFile> getRoots(Module module) {
