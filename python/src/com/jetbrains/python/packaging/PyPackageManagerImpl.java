@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
@@ -30,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.remotesdk.RemoteFile;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.util.ArrayUtil;
@@ -630,7 +630,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private String getHelperPath(String helper) {
     String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteCredentials) {
+    if (sdkData instanceof RemoteSdkData) {
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       if (!StringUtil.isEmpty(remoteSdkData.getHelpersPath())) {
         helperPath = new RemoteFile(remoteSdkData.getHelpersPath(),
@@ -652,14 +652,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                          @Nullable String workingDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
-    if (sdkData instanceof RemoteCredentials) { //remote interpreter
+    if (sdkData instanceof RemoteSdkData) { //remote interpreter
       final RemoteSdkData remoteSdkData = (RemoteSdkData)sdkData;
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
         cmdline.add(RemoteFile.detectSystemByPath(mySdk.getHomePath()).createRemoteFile(helperPath).getPath());
-        cmdline.addAll(args);
+        cmdline.addAll(Collections2.transform(args, new com.google.common.base.Function<String, String>() {
+          @Override
+          public String apply(@Nullable String input) {
+            return quoteIfNeeded(input);
+          }
+        }));
         try {
           if (askForSudo) {
             askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
@@ -735,6 +740,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
         return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
       }
     }
+  }
+
+  private static String quoteIfNeeded(String arg) {
+    return arg.replace(" ", "\\ ").replace("<", "\\<").replace(">", "\\>");
   }
 
   @NotNull
