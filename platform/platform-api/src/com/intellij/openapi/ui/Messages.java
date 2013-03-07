@@ -766,6 +766,8 @@ public class Messages {
     }
   }
 
+  /** @deprecated It looks awful! */
+  @Deprecated
   public static int showChooseDialog(String message, String title, String[] values, String initialValue, @Nullable Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -777,6 +779,8 @@ public class Messages {
     }
   }
 
+  /** @deprecated It looks awful! */
+  @Deprecated
   public static int showChooseDialog(Component parent, String message, String title, String[] values, String initialValue, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
