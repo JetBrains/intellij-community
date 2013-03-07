@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class AnalysisScope {
     myModule = null;
     myScope = null;
     myElement = psiDirectory;
-    myType = DIRECTORY;    
+    myType = DIRECTORY;
   }
 
   public AnalysisScope(@NotNull PsiFile psiFile) {
@@ -555,14 +555,18 @@ public class AnalysisScope {
     }
   }
 
-  
   private static PsiFile getPsiFileInReadAction(@NotNull final PsiManager psiManager, @NotNull final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
       @Nullable
       public PsiFile compute() {
-        final PsiFile psiFile = psiManager.findFile(file);
-        return psiFile != null && psiFile.isValid() ? psiFile : null;
+        if (file.isValid()) {
+          PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile != null && psiFile.isValid()) {
+            return psiFile;
+          }
+        }
+        return null;
       }
     });
   }
