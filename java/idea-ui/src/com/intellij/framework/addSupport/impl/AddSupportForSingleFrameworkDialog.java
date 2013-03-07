@@ -16,28 +16,29 @@
 package com.intellij.framework.addSupport.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableModelsProvider;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,20 +57,33 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   private final ModifiableModelsProvider myModifiableModelsProvider;
 
   public AddSupportForSingleFrameworkDialog(@NotNull Module module,
-                                            final @NotNull String contentRootPath,
                                             FrameworkTypeEx frameworkType, @NotNull FrameworkSupportInModuleProvider provider,
                                             @NotNull LibrariesContainer librariesContainer,
                                             ModifiableModelsProvider modifiableModelsProvider) {
     super(module.getProject(), true);
+    VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+    final VirtualFile baseDir = roots.length > 0 ? roots[0] : module.getProject().getBaseDir();
+    final String baseDirectoryForLibraries = baseDir != null ? baseDir.getPath() : "";
     myFrameworkType = frameworkType;
     myModifiableModelsProvider = modifiableModelsProvider;
     setTitle(ProjectBundle.message("dialog.title.add.framework.0.support", frameworkType.getPresentableName()));
     myModule = module;
-    myModel = new FrameworkSupportModelImpl(module.getProject(), contentRootPath, librariesContainer);
+    myModel = new FrameworkSupportModelImpl(module.getProject(), baseDirectoryForLibraries, librariesContainer);
     myConfigurable = provider.createConfigurable(myModel);
     myComponent = new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), myDisposable, myConfigurable, null);
     Disposer.register(myDisposable, myConfigurable);
     init();
+  }
+
+  public static AddSupportForSingleFrameworkDialog createDialog(@NotNull Module module,
+                                                                @NotNull FrameworkSupportInModuleProvider provider) {
+    List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(module, DefaultFacetsProvider.INSTANCE);
+    if (providers.isEmpty()) return null;
+
+    IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
+    LibrariesContainer container = LibrariesContainerFactory.createContainer(modifiableModelsProvider.getModuleModifiableModel(module));
+
+    return new AddSupportForSingleFrameworkDialog(module, provider.getFrameworkType(), provider, container, modifiableModelsProvider);
   }
 
   protected void doOKAction() {
@@ -83,7 +97,12 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         }
         return;
       }
-      myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
+
+      new WriteAction() {
+        protected void run(final Result result) {
+          myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
+        }
+      }.execute();
 
       final boolean downloaded = librarySettings.downloadFiles(getRootPane());
       if (!downloaded) {
