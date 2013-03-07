@@ -72,6 +72,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private final Map<Thread, String> myKeyAlgorithm;
   private boolean myArtificialSaving;
   private ISVNAuthenticationProvider myProvider;
+  private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<ISVNAuthenticationProvider>();
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
@@ -114,6 +115,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   public ISVNAuthenticationProvider getProvider() {
+    final ISVNAuthenticationProvider threadProvider = ourThreadLocalProvider.get();
+    if (threadProvider != null) return threadProvider;
     return myProvider;
   }
 
@@ -377,6 +380,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public void acknowledgeConnectionSuccessful(SVNURL url) {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     SSLExceptionsHelper.removeInfo();
+    ourThreadLocalProvider.remove();
   }
 
   @Override
@@ -396,6 +400,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
     SSLExceptionsHelper.removeInfo();
+    ourThreadLocalProvider.remove();
     if (url != null) {
       CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     }
@@ -417,6 +422,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
     SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
     CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
+    ourThreadLocalProvider.set(myProvider);
     // this code taken from default manager (changed for system properties reading)
     String host = url.getHost();
 
