@@ -132,4 +132,8 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   public List<T> toList() {
     return new ArrayList<T>(myItems);
   }
+
+  public int getElementIndex(T item) {
+    return myItems.indexOf(item);
+  }
 }
