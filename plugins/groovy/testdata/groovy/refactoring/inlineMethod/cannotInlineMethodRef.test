@@ -1,0 +1,7 @@
+class A {
+    def foo() {}
+}
+
+<selection>new A().foo</selection>()
+new A().&foo
+-----
