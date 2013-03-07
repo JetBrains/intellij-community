@@ -240,7 +240,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground, boolean nonFocusedSelection) {
-    if (!nonFocusedSelection) {
+    if (nonFocusedSelection) {
       return defaultForeground;
     }
 

@@ -15,23 +15,22 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.ClickListener;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.util.Calendar.*;
@@ -40,7 +39,6 @@ import static java.util.Calendar.*;
  * User: Vassiliy.Kudryashov
  */
 public class ClockPanel extends JComponent implements CustomStatusBarWidget {
-  @NonNls private static final String CLOCK_BLINKING = "Clock.blinking";
   @NonNls public static final String WIDGET_ID = "Clock";
   private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
   private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
@@ -60,31 +58,23 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   //            bottom
 
   protected final Calendar myCalendar;
-  private final Timer myTimer;
   private final boolean is24Hours;
-  private boolean myBlinking;
-  private final ClickListener myClickListener;
+  private int myLastPaintedState = 0;
+  private ScheduledFuture<?> myScheduledFuture;
+  private final Runnable myCheckAndRepaintRunnable = new Runnable() {
+    @Override
+    public void run() {
+      myCalendar.setTimeInMillis(System.currentTimeMillis());
+      int state = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR) * 100 + myCalendar.get(MINUTE);
+      if (myLastPaintedState != state) {
+        ClockPanel.this.repaint();
+      }
+    }
+  };
 
   public ClockPanel() {
     myCalendar = getInstance();
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
-    myBlinking = PropertiesComponent.getInstance().getBoolean(CLOCK_BLINKING, false);
-    myTimer = new Timer(50, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        repaint();
-      }
-    });
-    myClickListener = new ClickListener() {
-      @Override
-      public boolean onClick(MouseEvent event, int clickCount) {
-        if (clickCount != 1) return false;
-        myBlinking = !myBlinking;
-        PropertiesComponent.getInstance().setValue(CLOCK_BLINKING, String.valueOf(myBlinking));
-        return true;
-      }
-    };
-    myClickListener.installOn(this);
   }
 
   @NotNull
@@ -95,13 +85,20 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    myTimer.start();
+    myScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        UIUtil.invokeLaterIfNeeded(myCheckAndRepaintRunnable);
+      }
+    }, 0, 1000, TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void dispose() {
-    myClickListener.uninstall(this);
-    myTimer.stop();
+    if (myScheduledFuture != null) {
+      myScheduledFuture.cancel(false);
+      myScheduledFuture = null;
+    }
   }
 
 
@@ -168,14 +165,13 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, hours % 10);
       x += w + thickness * 2;
-      if (!myBlinking || myCalendar.get(MILLISECOND) <= 500) {
-        g.draw(new Line2D.Float(x, y + h / 2 - thickness * 2, x, y + h / 2 - thickness * 2 + thickness / 20));
-        g.draw(new Line2D.Float(x, y + h / 2 + thickness * 2, x, y + h / 2 + thickness * 2 + thickness / 20));
-      }
+      g.draw(new Line2D.Float(x, y + h / 2 - thickness * 2, x, y + h / 2 - thickness * 2 + thickness / 20));
+      g.draw(new Line2D.Float(x, y + h / 2 + thickness * 2, x, y + h / 2 + thickness * 2 + thickness / 20));
       x += thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes / 10);
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes % 10);
+      myLastPaintedState = hours * 100 + minutes;
     }
     finally {
       g.dispose();
