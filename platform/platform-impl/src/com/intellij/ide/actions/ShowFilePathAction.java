@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -50,7 +51,10 @@ import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -126,7 +130,7 @@ public class ShowFilePathAction extends AnAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(AnActionEvent e) {
     if (SystemInfo.isMac || !isSupported()) {
       e.getPresentation().setVisible(false);
       return;
@@ -134,11 +138,15 @@ public class ShowFilePathAction extends AnAction {
     e.getPresentation().setEnabled(getFile(e) != null);
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(AnActionEvent e) {
     show(getFile(e), new ShowAction() {
       public void show(final ListPopup popup) {
-        final DataContext context = DataManager.getInstance().getDataContext();
-        popup.showInBestPositionFor(context);
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+          @Override
+          public void run(DataContext context) {
+            popup.showInBestPositionFor(context);
+          }
+        });
       }
     });
   }
@@ -146,8 +154,9 @@ public class ShowFilePathAction extends AnAction {
   public static void show(final VirtualFile file, final MouseEvent e) {
     show(file, new ShowAction() {
       public void show(final ListPopup popup) {
-        if (!e.getComponent().isShowing()) return;
-        popup.show(new RelativePoint(e));
+        if (e.getComponent().isShowing()) {
+          popup.show(new RelativePoint(e));
+        }
       }
     });
   }
@@ -274,6 +283,7 @@ public class ShowFilePathAction extends AnAction {
    *
    * @param directory a directory to show in a file manager.
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static void openDirectory(@NotNull final File directory) {
     if (!directory.isDirectory()) return;
     try {
