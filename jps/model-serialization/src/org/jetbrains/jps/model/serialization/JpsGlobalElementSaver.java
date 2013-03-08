@@ -31,7 +31,7 @@ import java.io.IOException;
  */
 public class JpsGlobalElementSaver {
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
-    new JpsGlobalLoader.GlobalLibrariesSerializer(), new JpsGlobalLoader.SdkTableSerializer()
+    new JpsGlobalLoader.PathVariablesSerializer(), new JpsGlobalLoader.GlobalLibrariesSerializer(), new JpsGlobalLoader.SdkTableSerializer()
   };
   private final JpsGlobal myGlobal;
 

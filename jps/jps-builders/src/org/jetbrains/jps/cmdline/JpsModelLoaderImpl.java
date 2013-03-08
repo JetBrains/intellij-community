@@ -22,7 +22,6 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author nik
@@ -31,14 +30,11 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.JpsModelLoaderImpl");
   private final String myProjectPath;
   private final String myGlobalOptionsPath;
-  private final Map<String, String> myPathVars;
   private final ParameterizedRunnable<JpsModel> myModelInitializer;
 
-  public JpsModelLoaderImpl(String projectPath, String globalOptionsPath, Map<String, String> pathVars,
-                            @Nullable ParameterizedRunnable<JpsModel> initializer) {
+  public JpsModelLoaderImpl(String projectPath, String globalOptionsPath, @Nullable ParameterizedRunnable<JpsModel> initializer) {
     myProjectPath = projectPath;
     myGlobalOptionsPath = globalOptionsPath;
-    myPathVars = pathVars;
     myModelInitializer = initializer;
   }
 
@@ -46,7 +42,7 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   public JpsModel loadModel() throws IOException {
     final long start = System.currentTimeMillis();
     LOG.info("Loading model: project path = " + myProjectPath + ", global options path = " + myGlobalOptionsPath);
-    final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath, myPathVars);
+    final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath);
     if (myModelInitializer != null) {
       myModelInitializer.run(model);
     }

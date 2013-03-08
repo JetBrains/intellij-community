@@ -17,23 +17,21 @@ package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsGlobal;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.model.JpsElement;
 
-import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author nik
  */
-public abstract class JpsSerializationManager {
-  public static JpsSerializationManager getInstance() {
-    return JpsServiceManager.getInstance().getService(JpsSerializationManager.class);
-  }
+public interface JpsPathVariablesConfiguration extends JpsElement {
+  void addPathVariable(@NotNull String name, @NotNull String value);
+
+  void removePathVariable(@NotNull String name);
+
+  @Nullable
+  String getPathVariable(@NotNull String name);
 
   @NotNull
-  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath)
-    throws IOException;
-
-  public abstract void saveGlobalSettings(@NotNull JpsGlobal global, @NotNull String optionsPath) throws IOException;
+  Map<String, String> getAllVariables();
 }

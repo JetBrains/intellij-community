@@ -81,14 +81,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     mySessionId = sessionId;
     myChannel = channel;
 
-    // globals
-    Map<String, String> pathVars = new HashMap<String, String>();
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
-    for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
-      pathVars.put(variable.getKey(), variable.getValue());
-    }
-
-    // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
@@ -99,7 +92,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, null);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
     myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
     myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
   }

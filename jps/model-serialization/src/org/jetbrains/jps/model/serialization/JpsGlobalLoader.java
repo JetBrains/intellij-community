@@ -16,20 +16,22 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementChildRole;
-import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -38,7 +40,7 @@ import java.util.Map;
 public class JpsGlobalLoader extends JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   public static final String SDK_TABLE_COMPONENT_NAME = "ProjectJdkTable";
-  private static final JpsElementChildRole<JpsSimpleElement<Map<String, String>>> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
+  public static final JpsElementChildRole<JpsPathVariablesConfiguration> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
     new GlobalLibrariesSerializer(), new SdkTableSerializer(), new FileTypesSerializer()
   };
@@ -48,18 +50,19 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   private JpsGlobalLoader(JpsGlobal global, Map<String, String> pathVariables) {
     super(new JpsMacroExpander(pathVariables));
     myGlobal = global;
-    global.getContainer().setChild(PATH_VARIABLES_ROLE, JpsElementFactory.getInstance().createSimpleElement(pathVariables));
   }
 
-  public static void loadGlobalSettings(JpsGlobal global, Map<String, String> pathVariables, String optionsPath) throws IOException {
+  public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
     File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
+    new JpsGlobalLoader(global, Collections.<String, String>emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
+    Map<String, String> pathVariables = JpsModelSerializationDataService.getAllPathVariables(global);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
   }
 
   @Nullable
   public static String getPathVariable(JpsGlobal global, String name) {
-    JpsSimpleElement<Map<String, String>> child = global.getContainer().getChild(PATH_VARIABLES_ROLE);
-    return child != null ? child.getData().get(name) : null;
+    JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
+    return configuration != null ? configuration.getPathVariable(name) : null;
   }
 
   private void load(File optionsDir) {
@@ -76,6 +79,41 @@ public class JpsGlobalLoader extends JpsLoaderBase {
 
   private void loadGlobalComponents(File optionsDir, JpsGlobalExtensionSerializer serializer) {
     loadComponents(optionsDir, "other.xml", serializer, myGlobal);
+  }
+
+  public static class PathVariablesSerializer extends JpsGlobalExtensionSerializer {
+    public static final String MACRO_TAG = "macro";
+    public static final String NAME_ATTRIBUTE = "name";
+    public static final String VALUE_ATTRIBUTE = "value";
+
+    public PathVariablesSerializer() {
+      super("path.macros.xml", "PathMacrosImpl");
+    }
+
+    @Override
+    public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
+      JpsPathVariablesConfiguration configuration = global.getContainer().setChild(PATH_VARIABLES_ROLE, new JpsPathVariablesConfigurationImpl());
+      for (Element macroTag : JDOMUtil.getChildren(componentTag, MACRO_TAG)) {
+        String name = macroTag.getAttributeValue(NAME_ATTRIBUTE);
+        String value = macroTag.getAttributeValue(VALUE_ATTRIBUTE);
+        if (name != null && value != null) {
+          configuration.addPathVariable(name, StringUtil.trimEnd(FileUtil.toSystemIndependentName(value), "/"));
+        }
+      }
+    }
+
+    @Override
+    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
+      JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
+      if (configuration != null) {
+        for (Map.Entry<String, String> entry : configuration.getAllVariables().entrySet()) {
+          Element tag = new Element(MACRO_TAG);
+          tag.setAttribute(NAME_ATTRIBUTE, entry.getKey());
+          tag.setAttribute(VALUE_ATTRIBUTE, entry.getValue());
+          componentTag.addContent(tag);
+        }
+      }
+    }
   }
 
   public static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
