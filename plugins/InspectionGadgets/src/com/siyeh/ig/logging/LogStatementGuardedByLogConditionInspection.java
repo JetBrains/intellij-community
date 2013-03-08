@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,9 +221,17 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
       if (arguments.length == 0) {
         return;
       }
-      final PsiExpression firstArgument = arguments[0];
-      if (!flagAllUnguarded && PsiUtil.isConstantExpression(firstArgument)) {
-        return;
+      if (!flagAllUnguarded) {
+        boolean constant = true;
+        for (PsiExpression argument : arguments) {
+          if (!PsiUtil.isConstantExpression(argument)) {
+            constant = false;
+            break;
+          }
+        }
+        if (constant) {
+          return;
+        }
       }
       registerMethodCallError(expression);
     }
