@@ -117,6 +117,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
       d.close();
     }
     disposeAcceptor();
+
+    if (!myServerSocket.isClosed()) {
+      try {
+        myServerSocket.close();
+      }
+      catch (IOException e) {
+        LOG.warn("Error closing socket", e);
+      }
+    }
   }
 
   private List<RemoteDebugger> allDebuggers() {
