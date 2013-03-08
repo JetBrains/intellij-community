@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
+import java.net.*;
 
 /**
  * @author yole
@@ -36,6 +34,41 @@ public class NetUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.NetUtils");
 
   private NetUtils() {
+  }
+
+  public static boolean canConnectToSocket(String host, int port) {
+    if (host.equals("localhost") || host.equals("127.0.0.1")) {
+      try {
+        ServerSocket socket = new ServerSocket();
+        try {
+          //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
+          //socket.setReuseAddress(true);
+          socket.bind(new InetSocketAddress(host, port));
+        }
+        finally {
+          try {
+            socket.close();
+          }
+          catch (IOException ignored) {
+          }
+        }
+        return false;
+      }
+      catch (IOException e) {
+        LOG.debug(e);
+        return true;
+      }
+    }
+    else {
+      try {
+        Socket socket = new Socket(host, port);
+        socket.close();
+        return true;
+      }
+      catch (IOException ignored) {
+        return false;
+      }
+    }
   }
 
   public static int findAvailableSocketPort() throws IOException {
