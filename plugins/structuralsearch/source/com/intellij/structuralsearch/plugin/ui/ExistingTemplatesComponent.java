@@ -156,9 +156,9 @@ public class ExistingTemplatesComponent {
       }
     );
 
-    new ClickListener() {
+    new DoubleClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      protected boolean onDoubleClick(MouseEvent event) {
         owner.close(DialogWrapper.OK_EXIT_CODE);
         return true;
       }
