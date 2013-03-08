@@ -45,7 +45,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   public static final String FILE_TYPES_COMPONENT_NAME_KEY = "jps.file.types.component.name";
   private final JpsGlobal myGlobal;
 
-  public JpsGlobalLoader(JpsGlobal global, Map<String, String> pathVariables) {
+  private JpsGlobalLoader(JpsGlobal global, Map<String, String> pathVariables) {
     super(new JpsMacroExpander(pathVariables));
     myGlobal = global;
     global.getContainer().setChild(PATH_VARIABLES_ROLE, JpsElementFactory.getInstance().createSimpleElement(pathVariables));
@@ -78,8 +78,8 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     loadComponents(optionsDir, "other.xml", serializer, myGlobal);
   }
 
-  private static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
-    private GlobalLibrariesSerializer() {
+  public static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
+    public GlobalLibrariesSerializer() {
       super("applicationLibraries.xml", "libraryTable");
     }
 
@@ -94,8 +94,8 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     }
   }
 
-  private static class SdkTableSerializer extends JpsGlobalExtensionSerializer {
-    private SdkTableSerializer() {
+  public static class SdkTableSerializer extends JpsGlobalExtensionSerializer {
+    public SdkTableSerializer() {
       super("jdk.table.xml", SDK_TABLE_COMPONENT_NAME);
     }
 
