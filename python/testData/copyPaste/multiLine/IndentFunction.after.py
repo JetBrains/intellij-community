@@ -6,5 +6,6 @@ class C:
         x = 1
         y = 2
 
+
     def bar(self):
         y = 2

@@ -41,8 +41,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
-  protected boolean myAddContentRoots = false;
-  protected boolean myAddSourceRoots = false;
+  protected boolean myAddContentRoots = true;
+  protected boolean myAddSourceRoots = true;
 
   protected AbstractPythonTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);

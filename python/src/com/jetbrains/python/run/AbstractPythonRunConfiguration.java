@@ -39,8 +39,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
   private boolean myUseModuleSdk;
-  private boolean myAddContentRoots;
-  private boolean myAddSourceRoots;
+  private boolean myAddContentRoots = true;
+  private boolean myAddSourceRoots = true;
   protected PathMappingSettings myMappingSettings;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {

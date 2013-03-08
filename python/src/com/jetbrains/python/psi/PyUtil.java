@@ -1181,5 +1181,26 @@ public class PyUtil {
     }
     return element instanceof PsiWhiteSpace ? null : element;
   }
+
+  @Nullable
+  public static PsiElement findNextNonWhitespaceAtOffset(@NotNull final PsiFile psiFile, int caretOffset) {
+    PsiElement element = psiFile.findElementAt(caretOffset);
+    if (element == null) {
+      return null;
+    }
+
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    int lineEndOffset = 0;
+    if (document != null) {
+      int lineNumber = document.getLineNumber(caretOffset);
+      lineEndOffset = document.getLineEndOffset(lineNumber);
+    }
+    while (caretOffset <= lineEndOffset && element instanceof PsiWhiteSpace) {
+      caretOffset++;
+      element = psiFile.findElementAt(caretOffset);
+    }
+    return element instanceof PsiWhiteSpace ? null : element;
+  }
+
 }
 

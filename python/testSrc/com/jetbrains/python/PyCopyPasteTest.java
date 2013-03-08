@@ -277,10 +277,25 @@ public class PyCopyPasteTest extends PyTestCase {
     doTestTabs();
   }
 
+  public void testIndent8982() {
+    doTest();
+  }
+
+  public void testIndent7709() {
+    doTest();
+  }
+
+  public void testIndent6994() {
+    doTest();
+  }
+
+  public void testEmpty() {
+    doTest();
+  }
+
   private void doTestTabs() {
     final CommonCodeStyleSettings.IndentOptions indentOptions =
-      CodeStyleSettingsManager.getSettings(myFixture.getProject())
-        .getIndentOptions(PythonFileType.INSTANCE);
+      CodeStyleSettingsManager.getSettings(myFixture.getProject()).getIndentOptions(PythonFileType.INSTANCE);
     indentOptions.USE_TAB_CHARACTER = true;
     try {
       doTest();
@@ -294,33 +309,33 @@ public class PyCopyPasteTest extends PyTestCase {
     doTestTabs();
   }
 
-  private void doTest() {
-    String name = getTestName(false);
+  private void doTest(String prefix) {
+    int oldReformat = CodeInsightSettings.getInstance().REFORMAT_ON_PASTE;
+    try {
+      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
+      String name = getTestName(false);
 
-    myFixture.configureByFile("copyPaste/" + name + ".src.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
-    myFixture.configureByFile("copyPaste/" + name + ".dst.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/" + name + ".after.py", true);
+      myFixture.configureByFile("copyPaste/" + prefix + name + ".src.py");
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
+      myFixture.configureByFile("copyPaste/" + prefix + name + ".dst.py");
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+      myFixture.checkResultByFile("copyPaste/" + prefix + name + ".after.py", true);
+    }
+    finally {
+      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = oldReformat;
+    }
+
+  }
+
+  private void doTest() {
+    doTest("");
   }
 
   private void doTestSingleLine() {
-    String name = getTestName(false);
-
-    myFixture.configureByFile("copyPaste/singleLine/" + name + ".src.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
-    myFixture.configureByFile("copyPaste/singleLine/" + name + ".dst.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/singleLine/" + name + ".after.py", true);
+    doTest("singleLine/");
   }
 
   private void doTestMultiLine() {
-    String name = getTestName(false);
-
-    myFixture.configureByFile("copyPaste/multiLine/" + name + ".src.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
-    myFixture.configureByFile("copyPaste/multiLine/" + name + ".dst.py");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/multiLine/" + name + ".after.py", true);
+    doTest("multiLine/");
   }
 }

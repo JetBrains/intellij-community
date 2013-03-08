@@ -9,13 +9,15 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ import java.util.List;
  */
 public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
+  @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     return null;
@@ -45,95 +48,103 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         return useTabs? ch != '\t' : ch != ' ';
       }
     };
+
     final CaretModel caretModel = editor.getCaretModel();
+    final SelectionModel selectionModel = editor.getSelectionModel();
     final Document document = editor.getDocument();
-    String newText = text;
+    final int caretOffset = selectionModel.getSelectionStart() != selectionModel.getSelectionEnd() ?
+                            selectionModel.getSelectionStart() : caretModel.getOffset();
+    final int lineNumber = document.getLineNumber(caretOffset);
+    final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
 
-    if (file instanceof PyFile) {
-      final int caretOffset = caretModel.getOffset();
-      final int lineNumber = document.getLineNumber(caretOffset);
-      final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+    final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
-      final List<String> strings = StringUtil.split(text, "\n");
-      if (StringUtil.countChars(text, '\n') > 0 || StringUtil.startsWithWhitespace(text)) { //2, 3, 4 case from doc
-        final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset - 1);
-        if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
+    int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
+    if (StringUtil.isEmptyOrSpaces(indentText) && isApplicable(file, text, caretOffset)) {
+      caretModel.moveToOffset(lineStartOffset);
+      editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
+    }
 
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        if (selectionModel.getSelectionStart() != selectionModel.getSelectionEnd()) {
-          final int line = document.getLineNumber(selectionModel.getSelectionStart());
-          final int lineOffset = getLineStartSafeOffset(document, line);
-          final PsiElement ws = file.findElementAt(lineOffset);
-          int offset = ws instanceof PsiWhiteSpace? ws.getTextRange().getEndOffset() : selectionModel.getSelectionStart();
-          if (text.equals(selectionModel.getSelectedText())) return text;
-          caretModel.moveToOffset(offset);
-          selectionModel.setSelection(offset, selectionModel.getSelectionEnd());
-        }
-        else {
-          if (isNotApplicable(document, caretOffset, lineStartOffset)) {
-            return text;
-          }
-          caretModel.moveToOffset(lineStartOffset);
-        }
-        String spaceString;
-        int indent = 0;
-
-        //calculate indent to normalize text
-        if (strings.size() > 0) {
-          spaceString = strings.get(0);   // insert single line
-          indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER);
-          if (indent < 0)
-            indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
-
-          if (!StringUtil.startsWithWhitespace(spaceString) && strings.size() > 1) {    // insert multi-line
-            spaceString = strings.get(1);
-            indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER);
-            if (indent < 0)
-              indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
-
-            if (indent == CodeStyleSettingsManager.getSettings(project).getIndentSize(PythonFileType.INSTANCE)) {
-              indent = 0;
-            }
-            else {
-              final String trimmed = StringUtil.trimLeading(strings.get(0));    //decrease indent if needed
-              if (trimmed.startsWith("def ") || trimmed.startsWith("if ") || trimmed.startsWith("try:") ||
-                  trimmed.startsWith("class ") || trimmed.startsWith("for ") || trimmed.startsWith("elif ") ||
-                  trimmed.startsWith("else:") || trimmed.startsWith("except") || trimmed.startsWith("while ")) {
-                indent = StringUtil.findFirst(spaceString, NOT_INDENT_FILTER) / 2;
-                if (indent < 0) indent = 0;
-              }
-            }
-          }
-        }
-
-        if (!StringUtil.isEmptyOrSpaces(text))    // do not process empty lines
-          text = StringUtil.trimTrailing(text);
-
-        if (!StringUtil.startsWithWhitespace(text)) {   // add missed whitespaces
-          if (indent > 0) {
-            final String indentSymbol = useTabs? "\t" :" ";
-            newText = StringUtil.repeat(indentSymbol, indent) + text;
-          }
-          else
-            newText = new String(text);
-        }
-        else {
-          newText = new String(text);   // to indent correctly (see PasteHandler)
-        }
-
-        if ((element instanceof PsiWhiteSpace || element.getTextOffset() == 0) &&
-            (StringUtil.countChars(element.getText(), '\n') <= 2 && !StringUtil.isEmptyOrSpaces(text))) {
-          newText += "\n";
-        }
-        else
-          newText = new String(newText);      //user already prepared place to paste to and we just want to indent right
+    final List<String> strings = StringUtil.split(text, "\n", false);
+    String newText = "";
+    if (StringUtil.isEmptyOrSpaces(indentText)) {
+      for (String s : strings) {
+        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(useTabs? "\t" : " ", toRemove));
       }
     }
+    else {
+      newText = text;
+    }
+
+    String toString = document.getText(TextRange.create(lineStartOffset, document.getLineEndOffset(lineNumber)));
+    if (addLinebreak(text, toString, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd())
+      newText += "\n";
     return newText;
   }
 
-  private boolean isNotApplicable(Document document, int caretOffset, int lineStartOffset) {
-    return !StringUtil.isEmptyOrSpaces(document.getText(TextRange.create(lineStartOffset, caretOffset)));
+  private static String getIndentText(@NotNull final PsiFile file,
+                                      @NotNull final Document document,
+                                      int caretOffset,
+                                      int lineNumber) {
+
+    final PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+    String indentText = document.getText(TextRange.create(lineStartOffset, caretOffset));
+
+    if (nonWS != null && document.getLineNumber(nonWS.getTextOffset()) == lineNumber) {
+      indentText = document.getText(TextRange.create(lineStartOffset, nonWS.getTextOffset()));
+    }
+    else if (caretOffset == lineStartOffset) {
+      final PsiElement ws = file.findElementAt(lineStartOffset);
+      if (ws != null) {
+        final String wsText = ws.getText();
+        final List<String> strings = StringUtil.split(wsText, "\n");
+        if (strings.size() >= 1) {
+          indentText = strings.get(0);
+        }
+      }
+    }
+    return indentText;
+  }
+
+  private static int calculateIndentToRemove(@NotNull String text, @NotNull final CharFilter filter) {
+    final List<String> strings = StringUtil.split(text, "\n", false);
+    int minIndent = StringUtil.findFirst(text, filter);
+    for (String  s : strings) {
+      final int indent = StringUtil.findFirst(s, filter);
+      if (indent < minIndent)
+        minIndent = indent;
+    }
+    return minIndent;
+  }
+
+  private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
+    final boolean useTabs =
+      CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
+    final PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    if (nonWS == null || text.endsWith("\n"))
+      return true;
+    if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))
+      return true;
+    return false;
+  }
+
+  private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
+    final PsiElement element = file.findElementAt(caretOffset);
+    final PsiElement element1 = file.findElementAt(caretOffset);
+    return PsiTreeUtil.getParentOfType(element, PyStatementList.class) != null ||
+           PsiTreeUtil.getParentOfType(element1, PyStatementList.class) != null ||
+           PsiTreeUtil.getParentOfType(element, PyFunction.class) != null ||
+           PsiTreeUtil.getParentOfType(element1, PyFunction.class) != null ||
+           PsiTreeUtil.getParentOfType(element, PyClass.class) != null ||
+           PsiTreeUtil.getParentOfType(element1, PyClass.class) != null;
+  }
+
+  private static boolean addLinebreak(@NotNull String text, @NotNull String toString, boolean useTabs) {
+    if ((text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1)
+        && !text.endsWith("\n") && !StringUtil.isEmptyOrSpaces(toString))
+      return true;
+    return false;
   }
 
   public static int getLineStartSafeOffset(final Document document, int line) {
