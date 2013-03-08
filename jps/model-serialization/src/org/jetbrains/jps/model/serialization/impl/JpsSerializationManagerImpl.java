@@ -18,7 +18,9 @@ package org.jetbrains.jps.model.serialization.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.serialization.JpsGlobalElementSaver;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.JpsSerializationManager;
@@ -40,5 +42,10 @@ public class JpsSerializationManagerImpl extends JpsSerializationManager {
     }
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
     return model;
+  }
+
+  @Override
+  public void saveGlobalSettings(@NotNull JpsGlobal global, @NotNull String optionsPath) throws IOException {
+    JpsGlobalElementSaver.saveGlobalElement(global, optionsPath);
   }
 }

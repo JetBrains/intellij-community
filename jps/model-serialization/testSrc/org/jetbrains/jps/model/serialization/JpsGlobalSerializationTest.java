@@ -15,12 +15,12 @@
  */
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.util.List;
 public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   private static final String OPTIONS_DIR = "jps/model-serialization/testData/config/options";
 
-  public void testLoadSdks() {
+  public void testLoadSdksAndGlobalLibraries() {
     loadGlobalSettings(OPTIONS_DIR);
     final List<JpsLibrary> libraries = myModel.getGlobal().getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
@@ -43,13 +43,20 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     assertEquals("1.6", sdk2.getName());
   }
 
-  public void testSaveSdks() throws JDOMException, IOException {
+  public void testSaveSdksAndGlobalLibraries() throws JDOMException, IOException {
     loadGlobalSettings(OPTIONS_DIR);
-    Element actual = new Element("component").setAttribute("name", "ProjectJdkTable");
-    JpsSdkTableSerializer.saveSdks(myModel.getGlobal().getLibraryCollection(), actual);
-    File jdkTableFile = new File(getTestDataFileAbsolutePath(OPTIONS_DIR), "jdk.table.xml");
+    File targetOptionsDir = FileUtil.createTempDirectory("options" ,null);
+    JpsSerializationManager.getInstance().saveGlobalSettings(myModel.getGlobal(), targetOptionsDir.getAbsolutePath());
+
+    File originalOptionsDir = new File(getTestDataFileAbsolutePath(OPTIONS_DIR));
+    assertOptionsFilesEqual(originalOptionsDir, targetOptionsDir, "jdk.table.xml");
+    assertOptionsFilesEqual(originalOptionsDir, targetOptionsDir, "applicationLibraries.xml");
+  }
+
+  private void assertOptionsFilesEqual(File originalOptionsDir, File targetOptionsDir, final String fileName) throws IOException {
     JpsMacroExpander expander = new JpsMacroExpander(getPathVariables());
-    Element expected = JDomSerializationUtil.findComponent(JpsLoaderBase.loadRootElement(jdkTableFile, expander), "ProjectJdkTable");
+    Element expected = JpsLoaderBase.loadRootElement(new File(originalOptionsDir, fileName), expander);
+    Element actual = JpsLoaderBase.loadRootElement(new File(targetOptionsDir, fileName), expander);
     PlatformTestUtil.assertElementsEqual(expected, actual);
   }
 
