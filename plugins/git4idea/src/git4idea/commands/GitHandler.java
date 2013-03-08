@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
-import org.jetbrains.git4idea.ssh.GitSSHService;
+import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -418,7 +419,7 @@ public abstract class GitHandler {
 
       // setup environment
       if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
-        GitSSHService ssh = GitSSHService.getInstance();
+        GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
         myEnvironmentCleanedUp = false;
@@ -490,7 +491,7 @@ public abstract class GitHandler {
    */
   protected synchronized void cleanupEnv() {
     if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
-      GitSSHService ssh = GitSSHService.getInstance();
+      GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }

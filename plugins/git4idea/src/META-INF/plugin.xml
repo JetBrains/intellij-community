@@ -149,8 +149,8 @@
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
-    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitSSHService"
-                        serviceImplementation="org.jetbrains.git4idea.ssh.GitSSHService"/>
+    <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"
+                        serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
     <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
                         serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
     <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"
