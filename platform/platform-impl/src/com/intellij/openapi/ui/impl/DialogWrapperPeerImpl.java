@@ -491,7 +491,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     private void initDialog(ActionCallback focused, ActionCallback typeAheadDone, ActionCallback typeAheadCallback) {
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+        @Override
+        protected boolean accept(Component aComponent) {
+          if (UIUtil.isFocusProxy(aComponent)) return false;
+          return super.accept(aComponent);
+        }
+      });
 
       myFocusedCallback = focused;
       myTypeAheadDone = typeAheadDone;

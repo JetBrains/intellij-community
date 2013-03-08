@@ -24,21 +24,28 @@ import org.jetbrains.annotations.NotNull;
 public class DebuggerContextUtil {
   public static void setStackFrame(DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    DebuggerContextImpl context = manager.getContext();
-    if(context == null) return;
+    final DebuggerContextImpl context = manager.getContext();
+    if(context == null) {
+      return;
+    }
 
-    DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(context.getDebuggerSession(), context.getSuspendContext(), stackFrame.threadProxy(), stackFrame);
+    final DebuggerSession session = context.getDebuggerSession();
+    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, context.getSuspendContext(), stackFrame.threadProxy(), stackFrame);
 
-    manager.setState(newContext, context.getDebuggerSession().getState(), DebuggerSession.EVENT_REFRESH, null);
+    manager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_REFRESH, null);
   }
 
   public static void setThread(DebuggerStateManager contextManager, ThreadDescriptorImpl item) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    DebuggerContextImpl context = contextManager.getContext();
+    final DebuggerContextImpl context = contextManager.getContext();
+    if(context == null) {
+      return;
+    }
 
-    DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(context.getDebuggerSession(), item.getSuspendContext(), item.getThreadReference(), null);
+    final DebuggerSession session = context.getDebuggerSession();
+    final DebuggerContextImpl newContext = DebuggerContextImpl.createDebuggerContext(session, item.getSuspendContext(), item.getThreadReference(), null);
 
-    contextManager.setState(newContext, context.getDebuggerSession().getState(), DebuggerSession.EVENT_CONTEXT, null);
+    contextManager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, DebuggerSession.EVENT_CONTEXT, null);
   }
 
   public static DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext){

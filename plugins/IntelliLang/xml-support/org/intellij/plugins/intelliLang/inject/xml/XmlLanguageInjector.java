@@ -41,6 +41,7 @@ import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -227,8 +228,8 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   private static boolean areThereInjectionsWithText(final String text, Trinity<Long, Pattern, Collection<String>> index) {
     if (text == null) return false;
     if (index.third.contains(text)) return true;
-    if (index.second.matcher(text).matches()) return true;
-    return false;
+    Pattern pattern = index.second;
+    return pattern != null && pattern.matcher(text).matches();
   }
 
   private Trinity<Long, Pattern, Collection<String>> getXmlAnnotatedElementsValue() {
@@ -248,6 +249,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
     return index;
   }
 
+  @Nullable
   private static Pattern buildPattern(Collection<String> stringSet) {
     final StringBuilder sb = new StringBuilder();
     for (String s : stringSet) {
@@ -255,7 +257,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
       if (sb.length() > 0) sb.append('|');
       sb.append("(?:").append(s).append(")");
     }
-    return Pattern.compile(sb.toString());
+    return sb.length() == 0 ? null : Pattern.compile(sb.toString());
   }
 
 }

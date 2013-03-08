@@ -766,6 +766,8 @@ public class Messages {
     }
   }
 
+  /** @deprecated It looks awful! */
+  @Deprecated
   public static int showChooseDialog(String message, String title, String[] values, String initialValue, @Nullable Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -777,6 +779,8 @@ public class Messages {
     }
   }
 
+  /** @deprecated It looks awful! */
+  @Deprecated
   public static int showChooseDialog(Component parent, String message, String title, String[] values, String initialValue, Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -789,8 +793,10 @@ public class Messages {
   }
 
   /**
+   * @deprecated It looks awful!
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
+  @Deprecated
   public static int showChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -1434,6 +1440,8 @@ public class Messages {
     }
   }
 
+  /** It looks awful! */
+  @Deprecated
   protected static class ChooseDialog extends MessageDialog {
     private ComboBox myComboBox;
     private InputValidator myValidator;

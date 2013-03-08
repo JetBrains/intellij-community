@@ -32,11 +32,9 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -130,15 +128,13 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
 
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
-    final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
     List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
     int count = 0;
     PsiClass aClass = null;
-    for (PsiElement found : classes) {
-      if (notClass(found)) continue;
-
-      aClass = (PsiClass)found;
+    for (PsiClass found : classes) {
+      aClass = found;
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
@@ -277,12 +273,9 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
   private PsiClass findClassInIndex(String qName, GlobalSearchScope scope) {
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
-    final Collection<? extends PsiElement> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
 
-    for (PsiElement found : classes) {
-      if (notClass(found)) continue;
-
-      PsiClass aClass = (PsiClass)found;
+    for (PsiClass aClass : classes) {
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         LOG.error("aClass=" + aClass);
@@ -344,18 +337,6 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
       myNontrivialPackagePrefixes = names;
     }
     return myNontrivialPackagePrefixes;
-  }
-
-  private static boolean notClass(final PsiElement found) {
-    if (found instanceof PsiClass) return false;
-
-    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(found);
-    LOG.error("Non class in class list: " + faultyContainer + ". found: " + found);
-    if (faultyContainer != null && faultyContainer.isValid()) {
-      FileBasedIndex.getInstance().requestReindex(faultyContainer);
-    }
-
-    return true;
   }
 
   @Nullable

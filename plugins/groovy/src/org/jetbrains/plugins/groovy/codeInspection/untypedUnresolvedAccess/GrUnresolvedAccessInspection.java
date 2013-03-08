@@ -360,7 +360,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return results[0];
   }
 
-  private static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
+  public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
     if (referenceExpression.getParent() instanceof GrMethodCall || referenceExpression.getQualifier() != null) return false;
     GrMember context = PsiTreeUtil.getParentOfType(referenceExpression, GrMember.class, true, GrClosableBlock.class);
     return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
@@ -412,19 +412,18 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     if (!compileStatic) {
       addDynamicAnnotation(info, refExpr, key);
     }
-    if (targetClass.isWritable()) {
-      QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr, targetClass), key);
 
-      if (PsiUtil.isAccessedForReading(refExpr)) {
-        QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
-      }
-      if (PsiUtil.isLValue(refExpr)) {
-        QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr, targetClass), key);
-      }
+    QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
 
-      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
-        QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr, targetClass), key);
-      }
+    if (PsiUtil.isAccessedForReading(refExpr)) {
+      QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
+    }
+    if (PsiUtil.isLValue(refExpr)) {
+      QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
+    }
+
+    if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
+      QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
     }
 
     if (!refExpr.isQualified()) {

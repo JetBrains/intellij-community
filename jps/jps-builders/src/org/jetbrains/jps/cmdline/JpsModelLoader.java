@@ -17,9 +17,11 @@ package org.jetbrains.jps.cmdline;
 
 import org.jetbrains.jps.model.JpsModel;
 
+import java.io.IOException;
+
 /**
  * @author nik
  */
 public interface JpsModelLoader {
-  JpsModel loadModel();
+  JpsModel loadModel() throws IOException;
 }

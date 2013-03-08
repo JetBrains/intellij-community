@@ -17,12 +17,10 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ParameterizedRunnable;
-import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.JpsSerializationManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -37,7 +35,7 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   private final ParameterizedRunnable<JpsModel> myModelInitializer;
 
   public JpsModelLoaderImpl(String projectPath, String globalOptionsPath, Map<String, String> pathVars,
-                            ParameterizedRunnable<JpsModel> initializer) {
+                            @Nullable ParameterizedRunnable<JpsModel> initializer) {
     myProjectPath = projectPath;
     myGlobalOptionsPath = globalOptionsPath;
     myPathVars = pathVars;
@@ -45,32 +43,16 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   }
 
   @Override
-  public JpsModel loadModel() {
+  public JpsModel loadModel() throws IOException {
     final long start = System.currentTimeMillis();
-    try {
-      final JpsModel model = JpsElementFactory.getInstance().createModel();
-      try {
-        if (myGlobalOptionsPath != null) {
-          JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), myPathVars, myGlobalOptionsPath);
-        }
-        JpsProjectLoader.loadProject(model.getProject(), myPathVars, myProjectPath);
-        if (myModelInitializer != null) {
-          myModelInitializer.run(model);
-        }
-        LOG.info("New JPS model: " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries");
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      return model;
+    LOG.info("Loading model: project path = " + myProjectPath + ", global options path = " + myGlobalOptionsPath);
+    final JpsModel model = JpsSerializationManager.getInstance().loadModel(myProjectPath, myGlobalOptionsPath, myPathVars);
+    if (myModelInitializer != null) {
+      myModelInitializer.run(model);
     }
-    finally {
-      final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("New JPS model: project " + myProjectPath + " loaded in " + loadTime + " ms");
-    }
-  }
-
-  private static boolean isDirectoryBased(File projectFile) {
-    return !(projectFile.isFile() && projectFile.getName().endsWith(".ipr"));
+    final long loadTime = System.currentTimeMillis() - start;
+    LOG.info("Model loaded in " + loadTime + " ms");
+    LOG.info("Project has " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries");
+    return model;
   }
 }

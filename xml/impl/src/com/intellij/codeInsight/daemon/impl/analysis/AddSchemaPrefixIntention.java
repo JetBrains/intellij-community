@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           tag.accept(new XmlRecursiveElementVisitor() {
             @Override
             public void visitXmlTag(XmlTag tag) {
-              if (namespace.equals(tag.getNamespace()) && tag.getNamespacePrefix().length() == 0) {
+              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().length() == 0) {
                 tags.add(tag);
               }
               super.visitXmlTag(tag);
@@ -109,7 +109,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
                 if (xmlElement instanceof XmlElement) {
                   final XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
                   if (tag != null) {
-                    if (namespace.equals(tag.getNamespace())) {
+                    if (tag.getNamespace().equals(namespace)) {
                       if (ref.getRangeInElement().getLength() == value.getValue().length()) { //no ns prefix
                         values.add(value);
                       }

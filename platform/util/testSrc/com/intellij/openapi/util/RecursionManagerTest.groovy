@@ -23,14 +23,14 @@ import junit.framework.TestCase;
 public class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest");
   
-  def prevent(String key, boolean memoize = true, Closure c) {
+  def prevent(Object key, boolean memoize = true, Closure c) {
     myGuard.doPreventingRecursion(key, memoize, c as Computable)
   }
 
   public void testPreventRecursion() {
-    assert "foo-return" == prevent("foo") {
+    assert "foo-return" == prevent(["foo"]) {
       assert "bar-return" == prevent("bar") {
-        assert null == prevent("foo") { "foo-return" }
+        assert null == prevent(["foo"]) { "foo-return" }
         return "bar-return"
       }
       return "foo-return"
@@ -154,6 +154,29 @@ public class RecursionManagerTest extends TestCase {
     assert "zoo" == cl()
 
     assert System.currentTimeMillis() - start < 10000
+  }
+
+  public void "test changing hash code doesn't crash RecursionManager"() {
+    def key = ["b"]
+    prevent(key) {
+      key << "a"
+    }
+  }
+
+  public void "test exception from hashCode on exiting"() {
+    boolean fail = false
+    Object key = new Object() {
+      @Override
+      int hashCode() {
+        if (fail) {
+          throw new RuntimeException()
+        }
+        return super.hashCode()
+      }
+    }
+    prevent(key) {
+      fail = true
+    }
   }
 
 }

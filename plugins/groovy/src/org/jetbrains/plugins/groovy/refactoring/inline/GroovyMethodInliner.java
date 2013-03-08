@@ -82,7 +82,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   @Nullable
   public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     PsiElement element = reference.getElement();
-    assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+      final MultiMap<PsiElement, String> map = new MultiMap<PsiElement, String>();
+      map.putValue(element, GroovyRefactoringBundle.message("cannot.inline.reference.0", element.getText()));
+      return map;
+    }
     GrCallExpression call = (GrCallExpression) element.getParent();
     Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(myMethod);
     return collectConflicts(call, infos);

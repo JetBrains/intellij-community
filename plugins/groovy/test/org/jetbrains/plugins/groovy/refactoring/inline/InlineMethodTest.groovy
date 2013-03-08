@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.TreeElement
+import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.inline.GenericInlineHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -106,19 +107,30 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testBadReturns() { doTest() }
 
   public void testInlineAll() {
+    doInlineAllTest()
+  }
+
+  private void doInlineAllTest() {
     doTest(new GroovyInlineHandler() {
       @Override
       public InlineHandler.Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference) {
-        return new InlineHandler.Settings() {
-          @Override
-          boolean isOnlyOneReferenceToInline() {false}
-        }
+        return { false } as InlineHandler.Settings
       }
     })
   }
-  
+
   public void testInlineNamedArgs() {doTest(); }
   public void testInlineVarargs() {doTest()}
+
+  public void testCannotInlineMethodRef() {
+    try {
+      doInlineAllTest()
+      assert false
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Cannot inline reference 'new A().&foo'", e.message)
+    }
+  }
 
   protected void doTest() {
     doTest(new GroovyInlineHandler());
@@ -145,19 +157,19 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
     GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
-    PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
-    if (identifier != null) {
-      if (identifier.parent instanceof GrVariable) {
-        selectedArea = (GroovyPsiElement)identifier.parent;
-      }
-      else if (identifier instanceof GrMethod) {
-        selectedArea = identifier
-      }
-      else {
-        this.assertTrue("Selected area doesn't point to method or variable", false)
+      PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
+      if (identifier != null) {
+        if (identifier.parent instanceof GrVariable) {
+          selectedArea = (GroovyPsiElement)identifier.parent;
+        }
+        else if (identifier instanceof GrMethod) {
+          selectedArea = identifier
+        }
+        else {
+          this.assertTrue("Selected area doesn't point to method or variable", false)
+        }
       }
     }
-  }
     Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
     PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea;
     Assert.assertNotNull("Cannot resolve selected reference expression", element);

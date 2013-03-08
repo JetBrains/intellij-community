@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -30,8 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Max Medvedev
  */
 public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix {
-  public CreateSetterFromUsageFix(@NotNull GrReferenceExpression refExpression, @NotNull PsiClass targetClass) {
-    super(refExpression, targetClass);
+  public CreateSetterFromUsageFix(@NotNull GrReferenceExpression refExpression) {
+    super(refExpression);
   }
 
   @NotNull
@@ -42,10 +41,11 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix {
 
   @Override
   protected PsiType[] getArgumentTypes() {
-    assert PsiUtil.isLValue(myRefExpression);
-    PsiType initializer = TypeInferenceHelper.getInitializerFor(myRefExpression);
+    final GrReferenceExpression ref = getRefExpr();
+    assert PsiUtil.isLValue(ref);
+    PsiType initializer = TypeInferenceHelper.getInitializerFor(ref);
     if (initializer == null || initializer == PsiType.NULL) {
-      initializer = TypesUtil.getJavaLangObject(myRefExpression);
+      initializer = TypesUtil.getJavaLangObject(ref);
     }
     return new PsiType[]{initializer};
   }
@@ -53,6 +53,6 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix {
   @NotNull
   @Override
   protected String getMethodName() {
-    return GroovyPropertyUtils.getSetterName(myRefExpression.getReferenceName());
+    return GroovyPropertyUtils.getSetterName(getRefExpr().getReferenceName());
   }
 }

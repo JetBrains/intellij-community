@@ -638,12 +638,22 @@ public class SvnUtil {
   }
 
   public static File getWcDb(final File file) {
-    return new File(file, ".svn/wc.db");
+    return new File(file, SVN_ADMIN_DIR_NAME + "/wc.db");
   }
 
   @Nullable
   public static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
     File current = file;
+    boolean wcDbFound = false;
+    while (current != null) {
+      File wcDb;
+      if ((wcDb = getWcDb(current)).exists() && ! wcDb.isDirectory()) {
+        wcDbFound = true;
+        break;
+      }
+      current = current.getParentFile();
+    }
+    if (! wcDbFound) return null;
     while (current != null) {
       try {
         final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(current, false);

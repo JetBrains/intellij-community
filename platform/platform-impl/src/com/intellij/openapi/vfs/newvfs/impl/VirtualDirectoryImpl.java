@@ -126,7 +126,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
     });
     if (index >= 0) return; // already added
-    insertChildAt(new VirtualFileImpl(name, NULL_VIRTUAL_FILE, -42, -1), index, myChildren, ignoreCase);
+    insertChildAt(new AdoptedChild(name), index, myChildren, ignoreCase);
+  }
+
+  private static class AdoptedChild extends VirtualFileImpl {
+    private AdoptedChild(String name) {
+      super(name, NULL_VIRTUAL_FILE, -42, -1);
+    }
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE
@@ -527,11 +533,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         assert isAdoptedChild(array[i + 1]);
       }
       if (i != 0) {
-        String prevName = array[i - 1].getName();
+        VirtualFileSystemEntry prev = array[i - 1];
+        String prevName = prev.getName();
         int cmp = file.compareNameTo(prevName, ignoreCase);
         if (cmp == 0) {
+          Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
+            @Override
+            public String fun(VirtualFileSystemEntry entry) {
+              return entry + " (name: '" + entry.getName() + "')";
+            }
+          };
+          String children = StringUtil.join(array, verboseToString, ",");
           throw new AssertionError(
-            prevName + " equals to " + file + "; children: " + Arrays.toString(array) + "\nDetails: " + ContainerUtil.map(details, new Function<Object, Object>() {
+            verboseToString.fun(prev) + " equals to " + file + "; children: " + children + "\nDetails: " + ContainerUtil.map(details, new Function<Object, Object>() {
               @Override
               public Object fun(Object o) {
                 return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
@@ -539,7 +553,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
             }));
         }
 
-        if (isAdopted == isAdoptedChild(array[i - 1])) {
+        if (isAdopted == isAdoptedChild(prev)) {
           assert cmp > 0 : "Not sorted. "+Arrays.toString(details);
         }
       }

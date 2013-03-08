@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,9 +98,7 @@ public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction
     final Module module = getSelectedModule();
     if (module == null) return;
 
-    final VirtualFile baseDir = module.getProject().getBaseDir();
-    final String path = baseDir != null ? baseDir.getPath() : "";
     final LibrariesContainer librariesContainer = LibrariesContainerFactory.createContainer(myModuleStructureConfigurable.getContext());
-    new AddSupportForSingleFrameworkDialog(module, path, myFrameworkType, myProvider, librariesContainer, new IdeaModifiableModelsProvider()).show();
+    new AddSupportForSingleFrameworkDialog(module, myFrameworkType, myProvider, librariesContainer, new IdeaModifiableModelsProvider()).show();
   }
 }

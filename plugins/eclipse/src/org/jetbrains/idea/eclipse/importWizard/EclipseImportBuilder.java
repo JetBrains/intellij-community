@@ -299,8 +299,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT,
                                                     StdModuleTypes.JAVA.getId());
         result.add(module);
-        module2NatureNames.put(module, collectNatures(path));
+        final Set<String> natures = collectNatures(path);
 
+        if (natures.size() > 0) {
+          module2NatureNames.put(module, natures);
+        }
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
         rootModels[idx++] = rootModel;
 
@@ -407,6 +410,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   private static void scheduleNaturesImporting(@NotNull final Project project,
                                                @NotNull final Map<Module, Set<String>> module2NatureNames) {
+    if (module2NatureNames.size() == 0) {
+      return;
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

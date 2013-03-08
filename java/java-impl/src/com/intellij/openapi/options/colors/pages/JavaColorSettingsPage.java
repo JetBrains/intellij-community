@@ -18,8 +18,6 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -181,7 +179,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "        int <localVar>a</localVar> = <implicitAnonymousParameter>localVar</implicitAnonymousParameter>;\n" +
       "      }\n" +
       "    };\n" +
-      "    <reassignedParameter>reassignedParam</reassignedParameter> = new int[2];\n" +
+      "    <reassignedParameter>reassignedParam</reassignedParameter> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().toArray(new int[0]);\n" +
       "  }\n" +
       "}\n" +
       "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n"+

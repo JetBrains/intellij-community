@@ -36,6 +36,10 @@ public class JavaFXOptimizeImportsTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testDblImports() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     new OptimizeImportsProcessor(getProject(), getFile()).run();

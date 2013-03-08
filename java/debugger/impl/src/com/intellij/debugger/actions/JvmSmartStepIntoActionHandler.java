@@ -17,39 +17,27 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.RequestHint;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
   public void perform(@NotNull final Project project, final AnActionEvent event) {
     final DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
-    doStep(project, debuggerContext.getSourcePosition(), debuggerContext.getDebuggerSession());
+    final DebuggerSession session = debuggerContext.getDebuggerSession();
+    if (session != null) {
+      doStep(project, debuggerContext.getSourcePosition(), session);
+    }
   }
 
   private static void doStep(final @NotNull Project project, final @Nullable SourcePosition position, final @NotNull DebuggerSession session) {
