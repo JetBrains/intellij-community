@@ -115,6 +115,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testPrimitiveFieldAccess() { doParserTest("int.x"); }
   public void testChainedClassObjectAccess() { doParserTest("A.class.B.class"); }
   public void testChainedThisObjectAccess() { doParserTest("A.this.B.this"); }
+  public void testAnnotatedRefExpr0() { doParserTest("@A C1.@B() C2"); }
+  public void testAnnotatedRefExpr1() { doParserTest("@A C1.@B() ()"); }
 
   public void testMethodRef0() { doParserTest("a.b.C::m"); }
   public void testMethodRef1() { doParserTest("a.b.C<T>::new"); }
