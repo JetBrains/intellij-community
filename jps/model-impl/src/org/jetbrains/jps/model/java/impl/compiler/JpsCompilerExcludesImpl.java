@@ -41,11 +41,11 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
     addExcludedDirectory(JpsPathUtil.urlToFile(url), recursively);
   }
 
-  public void addExcludedFile(File file) {
+  protected void addExcludedFile(File file) {
     myFiles.add(file);
   }
 
-  public void addExcludedDirectory(File dir, boolean recursively) {
+  protected void addExcludedDirectory(File dir, boolean recursively) {
     (recursively ? myRecursivelyExcludedDirectories : myDirectories).add(dir);
   }
 
