@@ -21,7 +21,7 @@ public class RefTableModel extends AbstractTableModel {
         for (Hash hash : refsModel.getTrackedCommitHashes()) {
             boolean hasBranchRef = false;
             for (Ref ref : refsModel.refsToCommit(hash)) {
-                if (ref.getType() != Ref.Type.TAG) {
+                if (ref.getType() != Ref.RefType.TAG) {
                     hasBranchRef = true;
                 }
             }

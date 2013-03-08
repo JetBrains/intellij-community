@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public class Ref {
     private final Hash commitHash;
     private final String name;
-    private final Type type;
+    private final RefType type;
 
-    public Ref(@NotNull Hash commitHash, @NotNull String name, @NotNull Type type) {
+    public Ref(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type) {
         this.commitHash = commitHash;
         this.name = name;
         this.type = type;
@@ -19,7 +19,7 @@ public class Ref {
     }
 
     @NotNull
-    public Type getType() {
+    public RefType getType() {
         return type;
     }
 
@@ -40,10 +40,11 @@ public class Ref {
     }
 
 
-    public static enum Type {
+    public static enum RefType {
         LOCAL_BRANCH,
         REMOTE_BRANCH,
         TAG,
-        STASH
+        STASH,
+        ANOTHER
     }
 }

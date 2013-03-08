@@ -39,24 +39,24 @@ public class RefParser {
     @NotNull
     private static Ref createRef(@NotNull Hash hash, @NotNull String longRefPath) {
         if (longRefPath.equals("HEAD")) {
-            return new Ref(hash, "HEAD", Ref.Type.LOCAL_BRANCH);
+            return new Ref(hash, "HEAD", Ref.RefType.LOCAL_BRANCH);
         }
 
         if (longRefPath.equals("refs/stash")) {
-            return new Ref(hash, "stash", Ref.Type.STASH);
+            return new Ref(hash, "stash", Ref.RefType.STASH);
         }
 
         String name;
         if ((name = getRefName(longRefPath, "refs/heads/")) != null) {
-            return new Ref(hash, name, Ref.Type.LOCAL_BRANCH);
+            return new Ref(hash, name, Ref.RefType.LOCAL_BRANCH);
         }
         if ((name = getRefName(longRefPath, "refs/remotes/")) != null) {
-            return new Ref(hash, name, Ref.Type.REMOTE_BRANCH);
+            return new Ref(hash, name, Ref.RefType.REMOTE_BRANCH);
         }
         if ((name = getRefName(longRefPath, "refs/tags/")) != null) {
-            return new Ref(hash, name, Ref.Type.TAG);
+            return new Ref(hash, name, Ref.RefType.TAG);
         }
 
-        throw new IllegalArgumentException("Illegal path ref: " + longRefPath);
+        return new Ref(hash, longRefPath, Ref.RefType.ANOTHER);
     }
 }

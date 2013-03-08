@@ -23,13 +23,9 @@ public class RefsModel {
         }
     }
 
-    public boolean isTrackedCommitHash(@NotNull Hash commitHash) {
-        return trackedCommitHashes.contains(commitHash);
-    }
-
     public boolean isBranchRef(@NotNull Hash commitHash) {
         for (Ref ref : refsToCommit(commitHash)) {
-            if (ref.getType() == Ref.Type.LOCAL_BRANCH || ref.getType() == Ref.Type.REMOTE_BRANCH) {
+            if (ref.getType() == Ref.RefType.LOCAL_BRANCH || ref.getType() == Ref.RefType.REMOTE_BRANCH) {
                 return true;
             }
         }
