@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.trilead.ssh2.KnownHosts;
+import git4idea.commands.GitSSHGUIHandler;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -48,7 +49,7 @@ public class GitSSHService {
   /**
    * Registered handlers
    */
-  private final THashMap<Integer, Handler> handlers = new THashMap<Integer, Handler>();
+  private final THashMap<Integer, GitSSHGUIHandler> handlers = new THashMap<Integer, GitSSHGUIHandler>();
 
   @NotNull
   public static GitSSHService getInstance() {
@@ -94,7 +95,7 @@ public class GitSSHService {
    * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
-  public synchronized int registerHandler(@NotNull Handler handler) {
+  public synchronized int registerHandler(@NotNull GitSSHGUIHandler handler) {
     XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
     if (!xmlRpcServer.hasHandler(GitSSHHandler.HANDLER_NAME)) {
       xmlRpcServer.addHandler(GitSSHHandler.HANDLER_NAME, new InternalRequestHandler());
@@ -121,8 +122,8 @@ public class GitSSHService {
    * @return the registered handler
    */
   @NotNull
-  private synchronized Handler getHandler(int key) {
-    Handler rc = handlers.get(key);
+  private synchronized GitSSHGUIHandler getHandler(int key) {
+    GitSSHGUIHandler rc = handlers.get(key);
     if (rc == null) {
       throw new IllegalStateException("No handler for the key " + key);
     }
@@ -138,85 +139,6 @@ public class GitSSHService {
     if (handlers.remove(key) == null) {
       throw new IllegalArgumentException("The handler " + key + " is not registered");
     }
-  }
-
-  /**
-   * Handler interface to use by the client code
-   */
-  public interface Handler {
-    /**
-     * Verify key
-     *
-     * @param hostname               a host name
-     * @param port                   a port number
-     * @param serverHostKeyAlgorithm an algorithm
-     * @param serverHostKey          a key
-     * @param isNew                  a isNew key
-     * @return true if the key is valid
-     */
-    boolean verifyServerHostKey(final String hostname,
-                                final int port,
-                                final String serverHostKeyAlgorithm,
-                                final String serverHostKey,
-                                final boolean isNew);
-
-    /**
-     * Ask passphrase
-     *
-     * @param username      a user name
-     * @param keyPath       a key path
-     * @param resetPassword
-     * @param lastError     the last error for the handler  @return a passphrase or null if dialog was cancelled.
-     */
-    String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError);
-
-    /**
-     * Reply to challenge in keyboard-interactive scenario
-     *
-     * @param username    a user name
-     * @param name        a name of challenge
-     * @param instruction a instructions
-     * @param numPrompts  number of prompts
-     * @param prompt      prompts
-     * @param echo        true if the reply for corresponding prompt should be echoed
-     * @param lastError   the last error
-     * @return replies to the challenges
-     */
-    @SuppressWarnings({"UseOfObsoleteCollectionType"})
-    Vector<String> replyToChallenge(final String username,
-                                    final String name,
-                                    final String instruction,
-                                    final int numPrompts,
-                                    final Vector<String> prompt,
-                                    final Vector<Boolean> echo,
-                                    final String lastError);
-
-    /**
-     * Ask password
-     *
-     * @param username      a user name
-     * @param resetPassword true if the previous password supplied to the service was incorrect
-     * @param lastError     the previous error  @return a password or null if dialog was cancelled.
-     */
-    String askPassword(final String username, boolean resetPassword, final String lastError);
-
-    /**
-     * Get last successful authentication method. The default implementation returns empty string
-     * meaning that last authentication is unknown or failed.
-     *
-     * @param userName the user name
-     * @return the successful authentication method
-     */
-    String getLastSuccessful(String userName);
-
-    /**
-     * Set last successful authentication method
-     *
-     * @param userName the user name
-     * @param method   the authentication method, the empty string if authentication process failed.
-     * @param error    the error to show to user in case when authentication process failed.
-     */
-    void setLastSuccessful(String userName, String method, String error);
   }
 
   /**

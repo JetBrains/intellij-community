@@ -25,7 +25,6 @@ import git4idea.config.SSHConnectionSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -38,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Swing GUI handler for the SSH events
  */
-class GitSSHGUIHandler implements GitSSHService.Handler {
+public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
   @Nullable private final ModalityState myState;
 
@@ -112,6 +111,18 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
     }
   }
 
+  /**
+   * Reply to challenge in keyboard-interactive scenario
+   *
+   * @param username    a user name
+   * @param name        a name of challenge
+   * @param instruction a instructions
+   * @param numPrompts  number of prompts
+   * @param prompt      prompts
+   * @param echo        true if the reply for corresponding prompt should be echoed
+   * @param lastError   the last error
+   * @return replies to the challenges
+   */
   @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
@@ -143,6 +154,13 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
     return rc.get();
   }
 
+  /**
+   * Ask password
+   *
+   * @param username      a user name
+   * @param resetPassword true if the previous password supplied to the service was incorrect
+   * @param lastError     the previous error  @return a password or null if dialog was cancelled.
+   */
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
     return PasswordSafePromptDialog.askPassword(myProject, myState, GitBundle.getString("ssh.password.title"),
@@ -150,14 +168,26 @@ class GitSSHGUIHandler implements GitSSHService.Handler {
                                                 GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
   }
 
-  @Override
+  /**
+   * Get last successful authentication method. The default implementation returns empty string
+   * meaning that last authentication is unknown or failed.
+   *
+   * @param userName the user name
+   * @return the successful authentication method
+   */
   public String getLastSuccessful(String userName) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
     String rc = s.getLastSuccessful(userName);
     return rc == null ? "" : rc;
   }
 
-  @Override
+  /**
+   * Set last successful authentication method
+   *
+   * @param userName the user name
+   * @param method   the authentication method, the empty string if authentication process failed.
+   * @param error    the error to show to user in case when authentication process failed.
+   */
   public void setLastSuccessful(String userName, String method, final String error) {
     SSHConnectionSettings s = SSHConnectionSettings.getInstance();
     s.setLastSuccessful(userName, method);
