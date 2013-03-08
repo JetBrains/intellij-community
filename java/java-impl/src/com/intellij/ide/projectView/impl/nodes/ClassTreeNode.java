@@ -72,7 +72,15 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   public void updateImpl(PresentationData data) {
     final PsiClass aClass = getValue();
     if (aClass != null) {
-      data.setPresentableText(aClass.getName() + PsiFormatUtil.formatTypeParameters(aClass, PsiFormatUtilBase.SHOW_TYPE_PARAMETER_EXTENDS));
+      if(aClass.hasTypeParameters()) {
+        StringBuilder builder  = new StringBuilder();
+        builder.append(aClass.getName());
+        PsiFormatUtil.formatTypeParameters(aClass, builder, PsiFormatUtilBase.SHOW_TYPE_PARAMETER_EXTENDS);
+        data.setPresentableText(builder.toString());
+      }
+      else {
+        data.setPresentableText(aClass.getName());
+      }
     }
   }
 
