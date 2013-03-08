@@ -282,8 +282,18 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     return myAntWorkspaceConfiguration.FILTER_TARGETS;
   }
 
+  @Override
+  public boolean isModuleGrouping() {
+    return myAntWorkspaceConfiguration.MODULE_GROUPING;
+  }
+
   public void setFilterTargets(final boolean value) {
     myAntWorkspaceConfiguration.FILTER_TARGETS = value;
+  }
+
+  @Override
+  public void setModuleGrouping(boolean value) {
+    myAntWorkspaceConfiguration.MODULE_GROUPING = value;
   }
 
   public AntBuildTarget[] getMetaTargets(final AntBuildFile buildFile) {

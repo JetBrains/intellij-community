@@ -85,6 +85,11 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     queueUpdate();
   }
 
+  public void setModuleGrouping(boolean value) {
+    ((AntExplorerTreeStructure)getTreeStructure()).setModuleGrouping(value);
+    queueUpdate();
+  }
+
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return ProgressIndicatorUtils.forceWriteActionPriority(new ProgressIndicatorBase(), this);
