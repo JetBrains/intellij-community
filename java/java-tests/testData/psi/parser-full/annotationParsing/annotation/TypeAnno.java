@@ -35,6 +35,7 @@ class SpecSamples {
     isNonNull = myString instanceof @NonNull; // error: type omitted
 
     m(@Vernal Date::getDay);
+    m(@IllegalAnnotation java.util.@Vernal Date::getDay);
     m(List<@English String>::size);
     m(Arrays::<@NonNegative Integer>sort);
   }
@@ -49,7 +50,7 @@ class SpecSamples {
   // 3. The annotation on a given array level prefixes the brackets that introduce that level ...
   //
 
-  {
+  void m(Document @Readonly ... docs) {
     @Readonly Document [][] docs1 = new @Readonly Document [2][12]; // array of arrays of read-only documents
     Document @Readonly [][] docs2 = new Document @Readonly [2][12]; // read-only array of arrays of documents
     Document[] @Readonly [] docs3 = new Document[2] @Readonly [12]; // array of read-only arrays of documents

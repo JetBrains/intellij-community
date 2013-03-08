@@ -654,6 +654,54 @@ PsiJavaFile:TypeAnno.java
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiExpressionStatement
+          PsiMethodCallExpression:m(@IllegalAnnotation java.util.@Vernal Date::getDay)
+            PsiReferenceExpression:m
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:m('m')
+            PsiExpressionList
+              PsiJavaToken:LPARENTH('(')
+              PsiMethodReferenceExpression:@IllegalAnnotation java.util.@Vernal Date::getDay
+                PsiReferenceExpression:@IllegalAnnotation java.util.@Vernal Date
+                  PsiReferenceExpression:@IllegalAnnotation java.util
+                    PsiReferenceExpression:@IllegalAnnotation java
+                      PsiReferenceParameterList
+                        <empty list>
+                      PsiAnnotation
+                        PsiJavaToken:AT('@')
+                        PsiJavaCodeReferenceElement:IllegalAnnotation
+                          PsiIdentifier:IllegalAnnotation('IllegalAnnotation')
+                          PsiReferenceParameterList
+                            <empty list>
+                        PsiAnnotationParameterList
+                          <empty list>
+                      PsiWhiteSpace(' ')
+                      PsiIdentifier:java('java')
+                    PsiJavaToken:DOT('.')
+                    PsiReferenceParameterList
+                      <empty list>
+                    PsiIdentifier:util('util')
+                  PsiJavaToken:DOT('.')
+                  PsiAnnotation
+                    PsiJavaToken:AT('@')
+                    PsiJavaCodeReferenceElement:Vernal
+                      PsiIdentifier:Vernal('Vernal')
+                      PsiReferenceParameterList
+                        <empty list>
+                    PsiAnnotationParameterList
+                      <empty list>
+                  PsiReferenceParameterList
+                    <empty list>
+                  PsiWhiteSpace(' ')
+                  PsiIdentifier:Date('Date')
+                PsiJavaToken:DOUBLE_COLON('::')
+                PsiReferenceParameterList
+                  <empty list>
+                PsiIdentifier:getDay('getDay')
+              PsiJavaToken:RPARENTH(')')
+          PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n    ')
+        PsiExpressionStatement
           PsiMethodCallExpression:m(List<@English String>::size)
             PsiReferenceExpression:m
               PsiReferenceParameterList
@@ -794,9 +842,43 @@ PsiJavaFile:TypeAnno.java
     PsiWhiteSpace('\n  ')
     PsiComment(END_OF_LINE_COMMENT)('//')
     PsiWhiteSpace('\n\n  ')
-    PsiClassInitializer
+    PsiMethod:m
       PsiModifierList:
         <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:m('m')
+      PsiParameterList:(Document @Readonly ... docs)
+        PsiJavaToken:LPARENTH('(')
+        PsiParameter:docs
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:Document @Readonly ...
+            PsiTypeElement:Document
+              PsiJavaCodeReferenceElement:Document
+                PsiIdentifier:Document('Document')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiAnnotation
+              PsiJavaToken:AT('@')
+              PsiJavaCodeReferenceElement:Readonly
+                PsiIdentifier:Readonly('Readonly')
+                PsiReferenceParameterList
+                  <empty list>
+              PsiAnnotationParameterList
+                <empty list>
+            PsiWhiteSpace(' ')
+            PsiJavaToken:ELLIPSIS('...')
+          PsiWhiteSpace(' ')
+          PsiIdentifier:docs('docs')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
       PsiCodeBlock
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace('\n    ')

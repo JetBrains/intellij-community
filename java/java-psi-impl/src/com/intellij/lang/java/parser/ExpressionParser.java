@@ -332,7 +332,12 @@ public class ExpressionParser {
         final int dotOffset = builder.getCurrentOffset();
         builder.advanceLexer();
 
-        final IElementType dotTokenType = builder.getTokenType();
+        IElementType dotTokenType = builder.getTokenType();
+        if (dotTokenType == JavaTokenType.AT) {
+          myParser.getDeclarationParser().parseAnnotations(builder);
+          dotTokenType = builder.getTokenType();
+        }
+
         if (dotTokenType == JavaTokenType.CLASS_KEYWORD && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P1 && builder.getCurrentOffset() == breakOffset) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
