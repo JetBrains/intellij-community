@@ -31,11 +31,13 @@ abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanc
   public abstract boolean isAutoExpand();
 
   public void customize(@NotNull SimpleColoredComponent component) {
+    component.setIcon(getIcon());
     component.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   @Override
   public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    renderer.setIcon(getIcon());
     renderer.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
