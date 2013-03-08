@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.cmdline;
+package org.jetbrains.jps.model.serialization;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * @author nik
  */
-public interface JpsModelLoader {
-  JpsModel loadModel() throws IOException;
+public abstract class JpsSerializationManager {
+  public static JpsSerializationManager getInstance() {
+    return JpsServiceManager.getInstance().getService(JpsSerializationManager.class);
+  }
+
+  @NotNull
+  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, @NotNull Map<String, String> pathVariables)
+    throws IOException;
 }
