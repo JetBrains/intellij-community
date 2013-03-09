@@ -199,7 +199,8 @@ public class GitHistoryUtils {
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
-    h.addParameters("--branches", "--remotes", "--tags", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
+    h.addParameters("HEAD", "--branches", "--remotes", "--tags",
+                    "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
                     "--sparse");
     h.endOptions();
 

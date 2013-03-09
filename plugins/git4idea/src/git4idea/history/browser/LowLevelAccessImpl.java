@@ -76,6 +76,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
+      parameters.add("HEAD");
       parameters.add("--branches");
       parameters.add("--remotes");
       parameters.add("--tags");
@@ -160,6 +161,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
+      parameters.add("HEAD");
       parameters.add("--branches");
       parameters.add("--remotes");
       parameters.add("--tags");
