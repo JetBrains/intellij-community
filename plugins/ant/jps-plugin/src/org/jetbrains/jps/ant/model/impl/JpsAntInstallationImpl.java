@@ -34,7 +34,7 @@ public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImp
   private final String myName;
   private final List<String> myClasspath;
   private final List<String> myJarDirectories;
-  public static final JpsElementChildRoleBase<JpsAntInstallation> ROLE = JpsElementChildRoleBase.create("ant installation");
+  private static final JpsElementChildRoleBase<JpsAntInstallation> ROLE = JpsElementChildRoleBase.create("ant installation");
   public static final JpsElementCollectionRole<JpsAntInstallation> COLLECTION_ROLE = JpsElementCollectionRole.create(ROLE);
 
   public JpsAntInstallationImpl(File antHome, String name, final List<String> classpath, List<String> jarDirectories) {

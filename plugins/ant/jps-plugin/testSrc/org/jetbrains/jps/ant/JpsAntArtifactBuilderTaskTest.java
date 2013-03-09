@@ -21,11 +21,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderTestCase;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
@@ -43,8 +43,8 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
   }
 
   public void testSimple() throws IOException {
-    Map<String, String> pathVariables = Collections.singletonMap(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
-    JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), pathVariables, getTestDataRootPath() + "/config/options");
+    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(myModel.getGlobal()).addPathVariable(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
+    JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataRootPath() + "/config/options");
     addJdk("1.6");
     loadProject("ant-project");
     rebuildAll();

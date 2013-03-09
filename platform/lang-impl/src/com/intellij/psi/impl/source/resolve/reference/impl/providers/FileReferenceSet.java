@@ -215,6 +215,12 @@ public class FileReferenceSet {
   protected void reparse() {
     String str = myPathStringNonTrimmed;
 
+    final List<FileReference> referencesList = reparse(str, myStartInElement);
+
+    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+  }
+
+  protected List<FileReference> reparse(String str, int startInElement) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
 
 
@@ -235,7 +241,7 @@ public class FileReferenceSet {
 
     if (str.equals(separatorString)) {
       final FileReference fileReference =
-        createFileReference(new TextRange(myStartInElement, myStartInElement + sepLen), index++, separatorString);
+        createFileReference(new TextRange(startInElement, startInElement + sepLen), index++, separatorString);
       referencesList.add(fileReference);
     }
 
@@ -243,7 +249,7 @@ public class FileReferenceSet {
       final int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
       final FileReference ref = createFileReference(
-        new TextRange(myStartInElement + currentSlash + sepLen, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+        new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length())),
         index++,
         subreferenceText);
       referencesList.add(ref);
@@ -251,8 +257,7 @@ public class FileReferenceSet {
         break;
       }
     }
-
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    return referencesList;
   }
 
   public FileReference getReference(int index) {

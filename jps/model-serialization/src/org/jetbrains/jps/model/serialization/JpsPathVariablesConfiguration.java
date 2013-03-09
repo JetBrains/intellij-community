@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.model.module;
+package org.jetbrains.jps.model.serialization;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
+
+import java.util.Map;
 
 /**
  * @author nik
  */
-//todo[nik] I'm not sure that we really need separate interface for facets in the project model.
-//Perhaps facets should be replaced by extensions for module elements
-public abstract class JpsFacetType<P extends JpsElement> {
+public interface JpsPathVariablesConfiguration extends JpsElement {
+  void addPathVariable(@NotNull String name, @NotNull String value);
+
+  void removePathVariable(@NotNull String name);
+
+  @Nullable
+  String getPathVariable(@NotNull String name);
+
+  @NotNull
+  Map<String, String> getAllVariables();
 }

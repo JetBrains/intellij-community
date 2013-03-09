@@ -15,21 +15,11 @@
  */
 package com.intellij.tools;
 
-import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
-
-public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeRunTask> {
+public class ToolBeforeRunTaskProvider extends AbstractToolBeforeRunTaskProvider<ToolBeforeRunTask> {
   static final Key<ToolBeforeRunTask> ID = Key.create("ToolBeforeRunTask");
-  private static final Logger LOG = Logger.getInstance("#" + ToolBeforeRunTaskProvider.class.getName());
-
 
   @Override
   public Key<ToolBeforeRunTask> getId() {
@@ -42,65 +32,12 @@ public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeR
   }
 
   @Override
-  public String getDescription(ToolBeforeRunTask task) {
-    final String actionId = task.getToolActionId();
-    if (actionId == null) {
-      LOG.error("Null id");
-      return ToolsBundle.message("tools.unknown.external.tool");
-    }
-    Tool tool = task.findCorrespondingTool();
-    if (tool == null) {
-      return ToolsBundle.message("tools.unknown.external.tool");
-    }
-    String groupName = tool.getGroup();
-    return ToolsBundle
-      .message("tools.before.run.description", StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName());
-  }
-
-  @Override
-  public Icon getIcon() {
-    return AllIcons.General.ExternalToolsSmall;
-  }
-
-  @Override
-  public boolean isConfigurable() {
-    return true;
-  }
-
-  @Override
   public ToolBeforeRunTask createTask(RunConfiguration runConfiguration) {
     return new ToolBeforeRunTask();
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, ToolBeforeRunTask task) {
-    final ToolSelectDialog dialog = new ToolSelectDialog(runConfiguration.getProject(), task.getToolActionId());
-    dialog.show();
-    if (!dialog.isOK()) {
-      return false;
-    }
-    boolean isModified = dialog.isModified();
-    Tool selectedTool = dialog.getSelectedTool();
-    LOG.assertTrue(selectedTool != null);
-    String selectedToolId = selectedTool.getActionId();
-    String oldToolId = task.getToolActionId();
-    if (oldToolId != null && oldToolId.equals(selectedToolId)) {
-      return isModified;
-    }
-    task.setToolActionId(selectedToolId);
-    return true;
-  }
-
-  @Override
-  public boolean canExecuteTask(RunConfiguration configuration, ToolBeforeRunTask task) {
-    return task.isExecutable();
-  }
-
-  @Override
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, ToolBeforeRunTask task) {
-    if (!task.isExecutable()) {
-      return false;
-    }
-    return task.execute(context, env.getExecutionId());
+  protected ToolsPanel createToolsPanel() {
+    return new ToolsPanel();
   }
 }

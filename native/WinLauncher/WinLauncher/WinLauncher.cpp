@@ -124,8 +124,8 @@ bool FindJVMInEnvVar(const char* envVarName, bool& result)
 		else
 		{
 			char buf[_MAX_PATH];
-			sprintf_s(buf, "The environment variable %s (with the value of %s) does not point to a valid JVM installation",
-				envVarValue, jvmPath);
+			sprintf_s(buf, "The environment variable %s (with the value of %s) does not point to a valid JVM installation.",
+				envVarName, envVarValue);
 			MessageBoxA(NULL, buf, "Error Launching IntelliJ Platform", MB_OK);
 			result = false;
 		}
@@ -553,7 +553,6 @@ bool CheckSingleInstance()
 	{
 		hFileMapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, FILE_MAPPING_SIZE, 
 			mappingName.c_str());
-		hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
 		return true;
 	}
 	else
@@ -704,6 +703,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	if (!LoadVMOptions()) return 1;
 	if (!LoadJVMLibrary()) return 1;
 	if (!CreateJVM()) return 1;
+
+	hSingleInstanceWatcherThread = CreateThread(NULL, 0, SingleInstanceThread, NULL, 0, NULL);
+
 	if (!RunMainClass()) return 1;
 
 	jvm->DestroyJavaVM();
@@ -716,3 +718,4 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	return 0;
 }
+ 

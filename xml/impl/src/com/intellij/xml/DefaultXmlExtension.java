@@ -229,7 +229,7 @@ public class DefaultXmlExtension extends XmlExtension {
         rootTag.add(xmlAttribute);
       } else {
         final String value = xmlAttribute.getValue();
-        if (value != null && !value.contains(namespace)) {
+        if (!StringUtil.notNullize(value).contains(namespace)) {
           if (StringUtil.isEmptyOrSpaces(value)) {
             xmlAttribute.setValue(pair);
           } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.model.module;
+package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsNamedElement;
-import org.jetbrains.jps.model.JpsReferenceableElement;
+import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.service.JpsServiceManager;
+
+import java.io.IOException;
 
 /**
  * @author nik
  */
-//todo[nik] I'm not sure that we really need separate interface for facets in the project model.
-//Perhaps facets should be replaced by extensions for module elements
-public interface JpsFacet extends JpsNamedElement, JpsReferenceableElement<JpsFacet> {
-
-  JpsModule getModule();
-
-  @NotNull
-  JpsFacetType<?> getType();
-
-  void delete();
+public abstract class JpsSerializationManager {
+  public static JpsSerializationManager getInstance() {
+    return JpsServiceManager.getInstance().getService(JpsSerializationManager.class);
+  }
 
   @NotNull
-  @Override
-  JpsFacetReference createReference();
+  public abstract JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath)
+    throws IOException;
 
-  void setParentFacet(@NotNull JpsFacet facet);
-
-  @Nullable
-  JpsFacet getParentFacet();
+  public abstract void saveGlobalSettings(@NotNull JpsGlobal global, @NotNull String optionsPath) throws IOException;
 }

@@ -104,7 +104,7 @@ public class BuildRunner {
       targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
       projectTimestamps = new ProjectTimestamps(dataStorageRoot, targetsState);
       dataManager = new BuildDataManager(dataPaths, targetsState, STORE_TEMP_CACHES_IN_MEMORY);
-      // second attempt succeded
+      // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
 

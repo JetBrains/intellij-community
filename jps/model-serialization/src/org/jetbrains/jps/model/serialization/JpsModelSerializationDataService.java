@@ -17,18 +17,46 @@ package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
+import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSerializationDataExtension;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class JpsModelSerializationDataService {
+  @NotNull
+  public static Map<String, String> getAllPathVariables(JpsGlobal global) {
+    Map<String, String> pathVariables = new HashMap<String, String>(PathMacroUtil.getGlobalSystemMacros());
+    JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
+    if (configuration != null) {
+      pathVariables.putAll(configuration.getAllVariables());
+    }
+    return pathVariables;
+  }
+
+  @Nullable
+  public static JpsPathVariablesConfiguration getPathVariablesConfiguration(JpsGlobal global) {
+    return global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
+  }
+
+  @NotNull
+  public static JpsPathVariablesConfiguration getOrCreatePathVariablesConfiguration(JpsGlobal global) {
+    JpsPathVariablesConfiguration child = global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
+    if (child == null) {
+      return global.getContainer().setChild(JpsGlobalLoader.PATH_VARIABLES_ROLE, new JpsPathVariablesConfigurationImpl());
+    }
+    return child;
+  }
+
 
   @Nullable
   public static JpsProjectSerializationDataExtension getProjectExtension(@NotNull JpsProject project) {

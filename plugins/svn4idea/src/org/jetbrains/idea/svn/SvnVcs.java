@@ -87,6 +87,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
@@ -940,7 +941,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
-    private final static long ourErrorNotificationInterval = 10000;
+    private final static long ourErrorNotificationInterval = 120000;
     private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
@@ -959,13 +960,18 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         final long time = System.currentTimeMillis();
         if ((time - myPreviousTime) > ourErrorNotificationInterval) {
           myPreviousTime = time;
+          if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+            LOG.info(th);
+            return;
+          }
           String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
           } else {
-            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)";
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
+            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
+                                       "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
           }
         }
       }
