@@ -121,7 +121,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final ListProperty<TargetFilter> TARGET_FILTERS = ListProperty.create("targetFilters");
   public static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("properties");
   public static final StringProperty ANT_COMMAND_LINE_PARAMETERS = new StringProperty("antCommandLine", "");
-  public static final StringProperty ANT_GROUP = new StringProperty("antGroup", "");
   public static final AbstractProperty<AntReference> ANT_REFERENCE =
     new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
@@ -171,7 +170,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myProjectOptions.registerProperty(MAX_HEAP_SIZE);
     myProjectOptions.registerProperty(MAX_STACK_SIZE);
     myProjectOptions.registerProperty(CUSTOM_JDK_NAME);
-    myProjectOptions.registerProperty(ANT_GROUP);
     myProjectOptions.registerProperty(ANT_COMMAND_LINE_PARAMETERS);
     myProjectOptions.registerProperty(ANT_PROPERTIES, "property", NewInstanceFactory.fromClass(BuildFileProperty.class));
     myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);
