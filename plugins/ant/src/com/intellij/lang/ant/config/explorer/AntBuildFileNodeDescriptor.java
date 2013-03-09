@@ -28,7 +28,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
+public final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
 
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;

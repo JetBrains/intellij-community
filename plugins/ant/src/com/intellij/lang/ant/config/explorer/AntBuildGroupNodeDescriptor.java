@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.ant.config.AntBuildFileGroup;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -24,26 +25,27 @@ import com.intellij.openapi.project.Project;
  * @since 11:52/09.03.13
  */
 public class AntBuildGroupNodeDescriptor extends AntNodeDescriptor {
-  private final String myName;
+  private final AntBuildFileGroup myGroup;
 
-  public AntBuildGroupNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String name) {
+  public AntBuildGroupNodeDescriptor(Project project, NodeDescriptor parentDescriptor, AntBuildFileGroup group) {
     super(project, parentDescriptor);
-    myName = name;
+    myGroup = group;
+    myName = myGroup.getName();
+    setIcon(AllIcons.Ant.BuildGroup);
   }
 
   @Override
   public boolean isAutoExpand() {
-    return false;
+    return true;
   }
 
   @Override
   public boolean update() {
-    setIcon(AllIcons.Ant.BuildGroup);
     return false;
   }
 
   @Override
-  public Object getElement() {
-    return myName;
+  public AntBuildFileGroup getElement() {
+    return myGroup;
   }
 }

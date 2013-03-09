@@ -16,10 +16,7 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModel;
-import com.intellij.lang.ant.config.AntBuildTarget;
-import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -40,8 +37,32 @@ public enum AntTreeView {
       final AntConfiguration configuration = AntConfiguration.getInstance(project);
 
       final AntBuildFile[] buildFiles = configuration.getBuildFiles();
+      if(buildFiles.length == 0) {
+        return new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      }
+      AntBuildFileGroupManager groupManager = AntBuildFileGroupManager.getInstance(project);
+      final AntBuildFileGroup[] firstLevelGroups = groupManager.getFirstLevelGroups();
+      if(firstLevelGroups.length == 0) {
+        return buildFiles;
+      }
 
-      return buildFiles.length != 0 ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      List<Object> objects = new ArrayList<Object>();
+      Collections.addAll(objects, firstLevelGroups);
+      for (AntBuildFile buildFile : buildFiles) {
+        if(groupManager.findGroup(buildFile) == null) {
+          objects.add(buildFile);
+        }
+      }
+
+      return ArrayUtil.toObjectArray(objects);
+    }
+
+    @Override
+    public Object[] getChildren(Project project, Object element, boolean isFilterTargets) {
+      if(element instanceof AntBuildFileGroup) {
+        return ArrayUtil.mergeArrays(AntBuildFileGroupManager.getInstance(project).getFilesForGroup((AntBuildFileGroup) element), ((AntBuildFileGroup)element).getChildren(), ArrayUtil.OBJECT_ARRAY_FACTORY);
+      }
+      return super.getChildren(project, element, isFilterTargets);
     }
   },
 

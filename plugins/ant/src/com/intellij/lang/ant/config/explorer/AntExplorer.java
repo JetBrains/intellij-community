@@ -26,7 +26,9 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
+import com.intellij.lang.ant.config.actions.AntGroupManagerActionGroup;
 import com.intellij.lang.ant.config.actions.RemoveBuildFileAction;
+import com.intellij.lang.ant.config.actions.RemoveGroupsAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
@@ -192,7 +194,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.addSeparator();
     group.add(new ShowAllTargetsAction());
     group.add(new ShowModuleGrouping());
-    group.addSeparator();
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
     action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.expand.all.nodes.action.description"));
     group.add(action);
@@ -401,6 +402,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(new CreateMetaTargetAction());
     group.add(new RemoveMetaTargetsOrBuildFileAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.add(new AntGroupManagerActionGroup(null, myTree));
+    group.add(new RemoveGroupsAction(myTree));
     if (userObject instanceof AntBuildFileNodeDescriptor) {
       group.add(new RemoveBuildFileAction(this));
     }

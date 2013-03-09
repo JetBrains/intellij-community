@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang.ant.config;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AntBuildFile {
+/**
+ * @author VISTALL
+ * @since 12:27/09.03.13
+ */
+public interface AntBuildFileGroup {
+  AntBuildFileGroup[] EMPTY_ARRAY = new AntBuildFileGroup[0];
 
-  AntBuildFile[] EMPTY_ARRAY = new AntBuildFile[0];
-
-  @Nullable
-  String getPresentableName();
-
-  @Nullable
+  @NotNull
   String getName();
 
-  AntBuildModel getModel();
-
-  @Nullable XmlFile getAntFile();
-
-  Project getProject();
-
   @Nullable
-  VirtualFile getVirtualFile();
+  AntBuildFileGroup getParent();
 
-  @Nullable
-  String getPresentableUrl();
-
-  boolean isTargetVisible(final AntBuildTarget target);
-
-  boolean exists();
+  @NotNull
+  AntBuildFileGroup[] getChildren();
 }
