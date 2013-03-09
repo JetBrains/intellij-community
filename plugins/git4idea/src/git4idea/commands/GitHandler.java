@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -39,6 +40,7 @@ import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
@@ -428,6 +430,18 @@ public abstract class GitHandler {
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
       }
+      else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+        GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
+        GitHttpAuthenticator httpAuthenticator = new GitHttpAuthenticator(myProject, myState, myCommand);
+        myHandlerNo = service.registerHandler(httpAuthenticator);
+        myEnvironmentCleanedUp = false;
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
+        int port = service.getXmlRcpPort();
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
+        addAuthListener(httpAuthenticator);
+      }
       myCommandLine.setEnvParams(myEnv);
       // start process
       myProcess = startProcess();
@@ -436,6 +450,33 @@ public abstract class GitHandler {
     catch (Throwable t) {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
+    }
+  }
+
+  private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
+    // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
+    if (this instanceof GitLineHandler) {
+      ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
+
+        private boolean myAuthFailed;
+
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (line.toLowerCase().contains("authentication failed")) {
+            myAuthFailed = true;
+          }
+        }
+
+        @Override
+        public void processTerminated(int exitCode) {
+          if (myAuthFailed) {
+            authenticator.forgetPassword();
+          }
+          else {
+            authenticator.saveAuthData();
+          }
+        }
+      });
     }
   }
 
@@ -494,6 +535,11 @@ public abstract class GitHandler {
       GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
+    }
+    else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+      GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+      myEnvironmentCleanedUp = true;
+      service.unregisterHandler(myHandlerNo);
     }
   }
 
