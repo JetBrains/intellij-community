@@ -51,15 +51,10 @@ public enum AntTreeView {
     @Override
     public Object[] getRootChildren(Project project) {
       final Module[] modules = ModuleManager.getInstance(project).getModules();
-      List<Object> objects = new ArrayList<Object>();
-      objects.add(ourNoModuleObject);
-      for (Module module : modules) {
-        if(getParentModule(module, project) != null) {
-          continue;
-        }
-        objects.add(module);
-      }
-      return objects.toArray();
+      Object[] objects = new Object[modules.length + 1];
+      objects[0] = ourNoModuleObject;
+      System.arraycopy(modules, 0, objects, 1, modules.length);
+      return objects;
     }
 
     @Override
@@ -69,16 +64,6 @@ public enum AntTreeView {
         List<Object> objects = new ArrayList<Object>();
 
         AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-
-        for(Module module : ModuleManager.getInstance(project).getModules()) {
-          if(module == element) {
-            continue;
-          }
-
-          if(getParentModule(module, project) == element) {
-            objects.add(module);
-          }
-        }
 
         for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
           final VirtualFile virtualFile = buildFile.getVirtualFile();
@@ -96,25 +81,6 @@ public enum AntTreeView {
         return objects.toArray();
       }
       return super.getChildren(project, element, isFilterTargets);
-    }
-
-    private Module getParentModule(Module module, Project project) {
-      final VirtualFile moduleFile = module.getModuleFile();
-      if(moduleFile == null) {
-        return null;
-      }
-
-      VirtualFile parent = moduleFile.getParent();
-      if(parent == null) {
-        return null;
-      }
-      parent = parent.getParent();
-      if(parent == null) {
-        return null;
-      }
-
-      // and then search module of parent
-      return ModuleUtilCore.findModuleForFile(parent, project);
     }
   };
 
