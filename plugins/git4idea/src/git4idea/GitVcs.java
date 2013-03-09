@@ -17,8 +17,8 @@ package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -84,6 +85,7 @@ import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -457,11 +459,22 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     try {
       myVersion = GitVersion.identifyVersion(executable);
       if (! myVersion.isSupported()) {
-        String message = GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN);
-        if (! myProject.isDefault()) {
-          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-        }
-        VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
+        log.info("Unsupported Git version: " + myVersion);
+        String message = String.format("The <a href='settings'>configured</a> version of Git is not supported: %s.<br/> " +
+                                       "The minimal supported version is %s. Please <a href='update'>update</a>.",
+                                       myVersion, GitVersion.MIN);
+        IMPORTANT_ERROR_NOTIFICATION.createNotification("Unsupported Git version", message, NotificationType.ERROR,
+          new NotificationListener.Adapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+              if (e.getDescription().equals("settings")) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
+              }
+              else if (e.getDescription().equals("update")) {
+                BrowserUtil.browse("http://git-scm.com");
+              }
+            }
+        }).notify(myProject);
       }
     } catch (Exception e) {
       if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
