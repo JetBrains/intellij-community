@@ -33,12 +33,10 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 /**
- * Intention to check if the current class overrides the toString() method.
+ * Inspection to check if the current class overrides the toString() method.
  * <p/>
- * This inspection will use filter information from the settings to exclude certain fields (eg. constants etc.).
- * <p/>
- * This inspection will only perform inspection if the class have fields to be dumped but
- * does not have a toString method.
+ * This inspection will use filter information from the GenerateToString plugin settings to exclude certain fields (eg. constants etc.).
+ * Warns if the class has fields to be dumped and does not have a toString method.
  */
 public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
 
@@ -54,6 +52,8 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     public boolean excludeAbstract = false; // must be public for JDOMSerialization
 
     public boolean excludeTestCode = false;
+
+    public boolean excludeInnerClasses = false;
 
     @NotNull
     public String getDisplayName() {
@@ -74,35 +74,27 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (log.isDebugEnabled()) log.debug("checkClass: clazz=" + clazz);
 
                 // must be a class
-                PsiIdentifier nameIdentifier = clazz.getNameIdentifier();
-                if (nameIdentifier == null || clazz.getName() == null)
-                    return;
+                final PsiIdentifier nameIdentifier = clazz.getNameIdentifier();
+                if (nameIdentifier == null || clazz.getName() == null) {
+                  return;
+                }
 
-                // must not be an exception
                 if (excludeException && InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_LANG_THROWABLE)) {
-                    log.debug("This class is an exception");
                     return;
                 }
-
-                // must not be deprecated
                 if (excludeDeprecated && clazz.isDeprecated()) {
-                    log.debug("Class is deprecated");
                     return;
                 }
-
-                // must not be enum
                 if (excludeEnum && clazz.isEnum()) {
-                    log.debug("Class is an enum");
                     return;
                 }
-
                 if (excludeAbstract && clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                    log.debug("Class is abstract");
                     return;
                 }
-
                 if (excludeTestCode && TestFrameworks.getInstance().isTestClass(clazz)) {
-                    log.debug("Class is test class");
+                    return;
+                }
+                if (excludeInnerClasses && clazz.getContainingClass() != null) {
                     return;
                 }
 
@@ -110,7 +102,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 if (StringUtil.isNotEmpty(excludeClassNames)) {
                     String name = clazz.getName();
                     if (name != null && name.matches(excludeClassNames)) {
-                        log.debug("This class is excluded");
                         return;
                     }
                 }
@@ -118,7 +109,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 // must have fields
                 PsiField[] fields = clazz.getFields();
                 if (fields.length == 0) {
-                    log.debug("Class does not have any fields");
                     return;
                 }
 
@@ -155,8 +145,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                         return;
                     }
                 }
-                if (log.isDebugEnabled()) log.debug("Class does not override toString() method: " + clazz.getQualifiedName());
-
                 holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
             }
@@ -227,8 +215,12 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
         final CheckBox excludeInTestCodeCheckBox = new CheckBox("Ignore test classes", this, "excludeTestCode");
         constraints.gridy = 5;
-        constraints.weighty = 1.0;
         panel.add(excludeInTestCodeCheckBox, constraints);
+
+        final CheckBox excludeInnerClasses = new CheckBox("Ignore inner classes", this, "excludeInnerClasses");
+        constraints.gridy = 6;
+        constraints.weighty = 1.0;
+        panel.add(excludeInnerClasses, constraints);
 
         return panel;
     }

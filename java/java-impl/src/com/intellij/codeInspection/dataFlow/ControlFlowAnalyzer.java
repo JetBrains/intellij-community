@@ -35,14 +35,9 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_ERROR;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_THROWABLE;
+import static com.intellij.psi.CommonClassNames.*;
 
 class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
@@ -91,7 +86,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     pass2Flow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
-    LOG.assertTrue(myPass1Flow.getInstructionCount() == pass2Flow.getInstructionCount());
+    if (myPass1Flow.getInstructionCount() != pass2Flow.getInstructionCount()) {
+      LOG.error(Arrays.toString(myPass1Flow.getInstructions()) + "!=\n" + Arrays.toString(pass2Flow.getInstructions()));
+    }
 
     addInstruction(new ReturnInstruction());
 

@@ -15,10 +15,16 @@
  */
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * @author nik
@@ -28,6 +34,7 @@ public class PathMacroUtil {
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+  @NonNls public static final String USER_HOME_NAME = "USER_HOME";
 
   @Nullable
   public static String getModuleDir(String moduleFilePath) {
@@ -47,5 +54,16 @@ public class PathMacroUtil {
       moduleDir = moduleDir.substring(0, moduleDir.length() - 1);
     }
     return moduleDir;
+  }
+
+  public static String getUserHome() {
+    return StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
+  }
+
+  public static Map<String, String> getGlobalSystemMacros() {
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put(APPLICATION_HOME_DIR, FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+    map.put(USER_HOME_NAME, getUserHome());
+    return map;
   }
 }

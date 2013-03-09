@@ -136,6 +136,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("MyController", "label",  "injected/" + getTestName(true) + ".fxml", "injected/FooVBox.java", "injected/MyController.java");
   }
 
+  public void testNamedColor() throws Exception {
+    doTestNavigation(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, "ORANGE");
+  }
+
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
     doTestNavigation(resultClassName, resultFieldName, ArrayUtil.EMPTY_STRING_ARRAY);
   }

@@ -31,7 +31,10 @@ import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDes
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -41,11 +44,11 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
   private final List<PsiElement> myDeclarations = new ArrayList<PsiElement>();
 
-  public static NonCodeMembersHolder generateMembers(Set<Map> methods, final PsiFile place) {
-    Map<Set<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
-      place, new CachedValueProvider<Map<Set<Map>, NonCodeMembersHolder>>() {
-      public Result<Map<Set<Map>, NonCodeMembersHolder>> compute() {
-        final Map<Set<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<Set<Map>, NonCodeMembersHolder>();
+  public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
+    Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
+      place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
+      public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
+        final Map<List<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<List<Map>, NonCodeMembersHolder>();
         return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
@@ -57,7 +60,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     return result;
   }
 
-  private NonCodeMembersHolder(Set<Map> data, PsiElement place) {
+  private NonCodeMembersHolder(List<Map> data, PsiElement place) {
     final PsiManager manager = place.getManager();
     for (Map prop : data) {
       final Object decltype = prop.get("declarationType");
@@ -78,7 +81,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     }
   }
 
-  private PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
+  private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
     String name = String.valueOf(prop.get("name"));
     final String type = String.valueOf(prop.get("type"));
     return new GrLightVariable(manager, name, type, Collections.<PsiElement>emptyList(), place.getContainingFile());

@@ -18,3 +18,10 @@ abstract class MyInputStream extends Reader {
     return super.read(cbuf);
   }
 }
+class Sub extends MethodCanBeVariableArity {
+
+  @Override
+  public void convertMe(String[] ss) {
+    super.convertMe(ss);
+  }
+}

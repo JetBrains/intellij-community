@@ -197,15 +197,15 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
+  public static String findNamespacePrefixByURI(XmlFile file, @NotNull @NonNls String uri) {
     final XmlTag tag = file.getRootTag();
     if (tag == null) return null;
 
     for (XmlAttribute attribute : tag.getAttributes()) {
-      if (attribute.getName().startsWith("xmlns:") && attribute.getValue().equals(uri)) {
+      if (attribute.getName().startsWith("xmlns:") && uri.equals(attribute.getValue())) {
         return attribute.getName().substring("xmlns:".length());
       }
-      if ("xmlns".equals(attribute.getName()) && attribute.getValue().equals(uri)) return "";
+      if ("xmlns".equals(attribute.getName()) && uri.equals(attribute.getValue())) return "";
     }
 
     return null;

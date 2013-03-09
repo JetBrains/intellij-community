@@ -61,11 +61,11 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final UUID mySessionId;
   private final Channel myChannel;
   private volatile boolean myCanceled = false;
-  private String myProjectPath;
+  private final String myProjectPath;
   @Nullable
   private CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
   // state
-  private EventsProcessor myEventsProcessor = new EventsProcessor();
+  private final EventsProcessor myEventsProcessor = new EventsProcessor();
   private volatile long myLastEventOrdinal;
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
@@ -81,14 +81,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     mySessionId = sessionId;
     myChannel = channel;
 
-    // globals
-    Map<String, String> pathVars = new HashMap<String, String>();
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
-    for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
-      pathVars.put(variable.getKey(), variable.getValue());
-    }
-
-    // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
@@ -99,7 +92,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, null);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
     myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
     myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
   }
@@ -304,7 +297,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event, final boolean saveEventStamp) throws IOException {
+  private static void applyFSEvent(ProjectDescriptor pd, @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event,
+                                   final boolean saveEventStamp) throws IOException {
     if (event == null) {
       return;
     }
@@ -369,7 +363,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
+  private static void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
@@ -462,8 +456,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     try {
       final File file = new File(dataStorageRoot, FS_STATE_FILE);
-      final InputStream fs = new FileInputStream(file);
       byte[] bytes;
+      final InputStream fs = new FileInputStream(file);
       try {
         bytes = FileUtil.loadBytes(fs, (int)file.length());
       }

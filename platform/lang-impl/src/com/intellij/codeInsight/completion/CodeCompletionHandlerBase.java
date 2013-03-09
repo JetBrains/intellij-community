@@ -126,10 +126,8 @@ public class CodeCompletionHandlerBase {
       CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
     }
 
-    final Document document = editor.getDocument();
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor) ||
+        !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
 
@@ -164,56 +162,16 @@ public class CodeCompletionHandlerBase {
     Runnable initCmd = new Runnable() {
       @Override
       public void run() {
-
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
-            documentManager.commitAllDocuments();
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-            int docLength = editor.getDocument().getTextLength();
-            int psiLength = psiFile.getTextLength();
-            if (docLength != psiLength) {
-              if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-                String docText = editor.getDocument().getText();
-                String psiText = psiFile.getText();
-                String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
-                                 "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
-                                 "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
-                                 ;
-                throw new AssertionError(message);
-              }
-
-              throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
-            }
-
+            assertCommitSuccessful(editor, psiFile);
             checkEditorValid2(editor);
 
-            final Ref<CompletionContributor> current = Ref.create(null);
-            initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
-              CompletionContributor dummyIdentifierChanger;
-              @Override
-              public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
-                super.setFileCopyPatcher(fileCopyPatcher);
-
-                if (dummyIdentifierChanger != null) {
-                  LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
-                }
-                dummyIdentifierChanger = current.get();
-              }
-            };
-            for (final CompletionContributor contributor : CompletionContributor.forLanguage(initializationContext[0].getPositionLanguage())) {
-              if (DumbService.getInstance(project).isDumb() && !DumbService.isDumbAware(contributor)) {
-                continue;
-              }
-
-              current.set(contributor);
-              contributor.beforeCompletion(initializationContext[0]);
-              checkEditorValid2(editor);
-              assert !documentManager.isUncommited(document) : "Contributor " + contributor + " left the document uncommitted";
-            }
+            initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile);
           }
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
@@ -229,6 +187,51 @@ public class CodeCompletionHandlerBase {
     }
 
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+  }
+
+  private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile) {
+    final Ref<CompletionContributor> current = Ref.create(null);
+    CompletionInitializationContext context = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
+      CompletionContributor dummyIdentifierChanger;
+
+      @Override
+      public void setFileCopyPatcher(@NotNull FileCopyPatcher fileCopyPatcher) {
+        super.setFileCopyPatcher(fileCopyPatcher);
+
+        if (dummyIdentifierChanger != null) {
+          LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+        }
+        dummyIdentifierChanger = current.get();
+      }
+    };
+    List<CompletionContributor> contributors = CompletionContributor.forLanguage(context.getPositionLanguage());
+    Project project = psiFile.getProject();
+    List<CompletionContributor> filteredContributors = DumbService.getInstance(project).filterByDumbAwareness(contributors);
+    for (final CompletionContributor contributor : filteredContributors) {
+      current.set(contributor);
+      contributor.beforeCompletion(context);
+      checkEditorValid2(editor);
+      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
+    }
+    return context;
+  }
+
+  private static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
+    int docLength = editor.getDocument().getTextLength();
+    int psiLength = psiFile.getTextLength();
+    if (docLength != psiLength) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        String docText = editor.getDocument().getText();
+        String psiText = psiFile.getText();
+        String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
+                         "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
+                         "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
+                         ;
+        throw new AssertionError(message);
+      }
+
+      throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+    }
   }
 
   private static void checkEditorValid2(Editor editor) {
@@ -295,11 +298,11 @@ public class CodeCompletionHandlerBase {
                           boolean hasModifiers,
                           int invocationCount,
                           PsiFile hostFile,
-                          int hostStartOffset, Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
+                          Editor hostEditor, OffsetMap hostMap, OffsetTranslator translator) {
     final Editor editor = initContext.getEditor();
     checkEditorValid2(editor);
 
-    CompletionContext context = createCompletionContext(hostFile, hostStartOffset, hostEditor, hostMap);
+    CompletionContext context = createCompletionContext(hostFile, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostEditor, hostMap);
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -502,15 +505,9 @@ public class CodeCompletionHandlerBase {
       }
     });
     final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy[0]);
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy[0], initContext.getStartOffset());
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
-    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
-    final OffsetMap original = initContext.getOffsetMap();
-    for (final OffsetKey key : original.getAllOffsets()) {
-      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy[0], original.getOffset(key)));
-    }
+    final OffsetMap hostMap = translateOffsetMapToHost(initContext, fileCopy[0], hostFile, hostEditor);
 
     final Document document = fileCopy[0].getViewProvider().getDocument();
     assert document != null : "no document";
@@ -550,15 +547,28 @@ public class CodeCompletionHandlerBase {
             Disposer.dispose(translator);
             return;
           }
-          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
+          doComplete(initContext, hasModifiers, invocationCount, hostFile, hostEditor, hostMap, translator);
         }
       });
     }
     else {
       PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostStartOffset, hostEditor, hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, hostFile, hostEditor, hostMap, translator);
     }
+  }
+
+  private OffsetMap translateOffsetMapToHost(CompletionInitializationContext initContext,
+                                             PsiFile context,
+                                             PsiFile hostFile,
+                                             Editor hostEditor) {
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
+    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
+    final OffsetMap original = initContext.getOffsetMap();
+    for (final OffsetKey key : original.getAllOffsets()) {
+      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(context, original.getOffset(key)));
+    }
+    return hostMap;
   }
 
   private static CompletionContext createCompletionContext(PsiFile hostFile,
@@ -581,11 +591,8 @@ public class CodeCompletionHandlerBase {
       EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil
         .getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
-      final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
-      for (final OffsetKey key : hostMap.getAllOffsets()) {
-        map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
-      }
-      context = new CompletionContext(hostFile.getProject(), injectedEditor, injected, map);
+      context = new CompletionContext(hostFile.getProject(), injectedEditor, injected,
+                                      translateOffsetMapToInjected(hostEditor, hostMap, injectedEditor));
       assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
       context = new CompletionContext(hostFile.getProject(), hostEditor, hostFile, hostMap);
@@ -595,6 +602,14 @@ public class CodeCompletionHandlerBase {
     assert context.getStartOffset() >= 0 : "start < 0";
 
     return context;
+  }
+
+  private static OffsetMap translateOffsetMapToInjected(Editor hostEditor, OffsetMap hostMap, EditorWindow injectedEditor) {
+    final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
+    for (final OffsetKey key : hostMap.getAllOffsets()) {
+      map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
+    }
+    return map;
   }
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {

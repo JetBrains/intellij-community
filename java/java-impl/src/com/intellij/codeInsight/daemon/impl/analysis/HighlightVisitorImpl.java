@@ -707,7 +707,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
         else {
-          myHolder.add(HighlightNamesUtil.highlightMethodName(method, element, false, colorsScheme));
+          final PsiElement referenceNameElement = element.getReferenceNameElement();
+          if(referenceNameElement != null) {
+            myHolder.add(HighlightNamesUtil.highlightMethodName(method, referenceNameElement, false, colorsScheme));
+          }
         }
       }
       catch (IndexNotReadyException ignored) {

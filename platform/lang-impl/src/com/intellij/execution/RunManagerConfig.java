@@ -25,6 +25,7 @@ public class RunManagerConfig {
   public static final String MAKE = ExecutionBundle.message("before.run.property.make");
   private final StoringPropertyContainer myProperties;
   private final PropertiesComponent myPropertiesComponent;
+  public static final int MIN_RECENT_LIMIT = 0;
   @NonNls private static final String RECENTS_LIMIT = "recentsLimit";
   @NonNls private static final String RESTART_REQUIRES_CONFIRMATION = "restartRequiresConfirmation";
 
@@ -36,7 +37,7 @@ public class RunManagerConfig {
 
   public int getRecentsLimit() {
     try {
-      return Math.max(1, Integer.valueOf(myPropertiesComponent.getOrInit(RECENTS_LIMIT, "5")).intValue());
+      return Math.max(MIN_RECENT_LIMIT, Integer.valueOf(myPropertiesComponent.getOrInit(RECENTS_LIMIT, "5")).intValue());
     }
     catch (NumberFormatException e) {
       return 5;

@@ -160,7 +160,7 @@ public class ResourcePatterns {
     return wildcardPattern;
   }
 
-  public static boolean isPatternNegated(String wildcardPattern) {
+  private static boolean isPatternNegated(String wildcardPattern) {
     return wildcardPattern.length() > 1 && wildcardPattern.charAt(0) == '!';
   }
 

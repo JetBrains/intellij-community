@@ -624,7 +624,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     try {
-      int i = Math.max(1, Integer.parseInt(myRecentsLimit.getText()));
+      int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, Integer.parseInt(myRecentsLimit.getText()));
       int oldLimit = manager.getConfig().getRecentsLimit();
       if (oldLimit != i) {
         manager.getConfig().setRecentsLimit(i);
