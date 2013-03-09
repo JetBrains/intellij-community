@@ -16,6 +16,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
     <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
+    <projectService serviceInterface="com.intellij.lang.ant.config.AntBuildFileGroupManager" serviceImplementation="com.intellij.lang.ant.config.impl.group.AntBuildFileGroupManagerImpl" />
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
@@ -88,7 +89,7 @@
   </project-components>
 
   <actions>
-    <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
+    <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildActionGroup">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
     </group>
     <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile">

@@ -163,6 +163,7 @@ public class AllIcons {
   public static class Ant {
     public static final Icon AntInstallation = IconLoader.getIcon("/ant/antInstallation.png"); // 16x16
     public static final Icon Build = IconLoader.getIcon("/ant/build.png"); // 16x16
+    public static final Icon BuildGroup = IconLoader.getIcon("/ant/buildGroup.png"); // 16x16
     public static final Icon ChangeView = IconLoader.getIcon("/ant/changeView.png"); // 16x16
     public static final Icon Message = IconLoader.getIcon("/ant/message.png"); // 16x16
     public static final Icon MetaTarget = IconLoader.getIcon("/ant/metaTarget.png"); // 16x16

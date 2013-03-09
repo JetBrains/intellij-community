@@ -49,6 +49,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
   public boolean FILTER_TARGETS;
+  public boolean MODULE_GROUPING;
 
   public AntWorkspaceConfiguration(Project project) {
     myProject = project;

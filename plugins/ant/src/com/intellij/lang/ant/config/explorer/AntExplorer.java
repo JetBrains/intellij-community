@@ -26,7 +26,9 @@ import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
+import com.intellij.lang.ant.config.actions.AntGroupManagerActionGroup;
 import com.intellij.lang.ant.config.actions.RemoveBuildFileAction;
+import com.intellij.lang.ant.config.actions.RemoveGroupsAction;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
@@ -112,6 +114,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     myTree.setCellRenderer(new NodeRenderer());
     myBuilder = new AntExplorerTreeBuilder(project, myTree, model);
     myBuilder.setTargetsFiltered(AntConfigurationBase.getInstance(project).isFilterTargets());
+    myBuilder.setModuleGrouping(AntConfigurationBase.getInstance(project).isModuleGrouping());
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {
@@ -187,14 +190,17 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(new AddAction());
     group.add(new RemoveAction());
     group.add(new RunAction());
+    group.add(myAntBuildFilePropertiesAction);
+    group.addSeparator();
     group.add(new ShowAllTargetsAction());
+    group.add(new ShowModuleGrouping());
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
     action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.expand.all.nodes.action.description"));
     group.add(action);
     action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
     action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.collapse.all.nodes.action.description"));
     group.add(action);
-    group.add(myAntBuildFilePropertiesAction);
+    group.addSeparator();
     group.add(new ContextHelpAction(HelpID.ANT));
 
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_EXPLORER_TOOLBAR, group, true);
@@ -396,6 +402,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     group.add(new CreateMetaTargetAction());
     group.add(new RemoveMetaTargetsOrBuildFileAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.add(new AntGroupManagerActionGroup(null, myTree));
+    group.add(new RemoveGroupsAction(myTree));
     if (userObject instanceof AntBuildFileNodeDescriptor) {
       group.add(new RemoveBuildFileAction(this));
     }
@@ -587,11 +595,27 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public boolean isSelected(AnActionEvent event) {
       final Project project = myProject;
-      return project != null? AntConfigurationBase.getInstance(project).isFilterTargets() : false;
+      return project != null && AntConfigurationBase.getInstance(project).isFilterTargets();
     }
 
     public void setSelected(AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
+    }
+  }
+
+  private final class ShowModuleGrouping extends ToggleAction {
+    public ShowModuleGrouping() {
+      super("Module grouping", "Module grouping",AllIcons.ObjectBrowser.ShowModules);
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      final Project project = myProject;
+      return project != null && AntConfigurationBase.getInstance(project).isModuleGrouping();
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      myBuilder.setModuleGrouping(flag);
+      AntConfigurationBase.getInstance(myProject).setModuleGrouping(flag);
     }
   }
 

@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public final class AntBuildGroup extends ActionGroup implements DumbAware {
+public final class AntBuildActionGroup extends ActionGroup implements DumbAware {
 
   public void update(AnActionEvent event) {
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());

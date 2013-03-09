@@ -28,7 +28,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
+public final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
 
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;
@@ -47,14 +47,16 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   }
 
   public boolean update() {
+    setIcon(AllIcons.Ant.Build);
+
     CompositeAppearance oldAppearance = myAppearance;
     myAppearance = new CompositeAppearance();
     myAppearance.getEnding().addText(myBuildFile.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myAppearance.setIcon(getIcon());
     final AntBuildModelBase buildModel = myBuildFile.getModelIfRegistered();
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }
-    setIcon(AllIcons.Ant.Build);
     myName = myBuildFile.getPresentableName();
     return !Comparing.equal(myAppearance, oldAppearance);
   }

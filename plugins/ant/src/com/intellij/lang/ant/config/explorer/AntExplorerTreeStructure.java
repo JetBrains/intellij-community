@@ -21,31 +21,20 @@ import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.MetaTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 final class AntExplorerTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorerTreeStructure");
   private final Project myProject;
   private final Object myRoot = new Object();
   private boolean myFilteredTargets = false;
-  private static final Comparator<AntBuildTarget> ourTargetComparator = new Comparator<AntBuildTarget>() {
-    @Override
-    public int compare(final AntBuildTarget target1, final AntBuildTarget target2) {
-      final String name1 = target1.getDisplayName();
-      if (name1 == null) return Integer.MIN_VALUE;
-      final String name2 = target2.getDisplayName();
-      if (name2 == null) return Integer.MAX_VALUE;
-      return name1.compareToIgnoreCase(name2);
-    }
-  };
+  private AntTreeView myTreeView;
 
   public AntExplorerTreeStructure(final Project project) {
     myProject = project;
@@ -66,6 +55,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     if (element instanceof String) {
       return new TextInfoNodeDescriptor(myProject, parentDescriptor, (String)element);
     }
+
+    if(element instanceof Module) {
+      return new AntModuleInfoNodeDescriptor(myProject, parentDescriptor, (Module) element);
+    }
     
     if (element instanceof AntBuildFileBase) {
       return new AntBuildFileNodeDescriptor(myProject, parentDescriptor, (AntBuildFileBase)element);
@@ -73,6 +66,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     
     if (element instanceof AntBuildTargetBase) {
       return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTargetBase)element);
+    }
+
+    if(element instanceof AntBuildFileGroup) {
+      return new AntBuildGroupNodeDescriptor(myProject, parentDescriptor, (AntBuildFileGroup) element);
     }
     
     LOG.error("Unknown element for this tree structure " + element);
@@ -86,26 +83,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       if (!configuration.isInitialized()) {
         return new Object[] {AntBundle.message("loading.ant.config.progress")};
       }
-      final AntBuildFile[] buildFiles = configuration.getBuildFiles();
-      return buildFiles.length != 0 ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
+      return myTreeView.getRootChildren(myProject);
     }
 
-    if (element instanceof AntBuildFile) {
-      final AntBuildFile buildFile = (AntBuildFile)element;
-      final AntBuildModel model = buildFile.getModel();
-
-      final List<AntBuildTarget> targets =
-        new ArrayList<AntBuildTarget>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
-      Collections.sort(targets, ourTargetComparator);
-
-      final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
-      Collections.sort(metaTargets, ourTargetComparator);
-      targets.addAll(metaTargets);
-
-      return targets.toArray(new AntBuildTarget[targets.size()]);
-    }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return myTreeView.getChildren(myProject, element, myFilteredTargets);
   }
 
   @Override
@@ -148,6 +129,10 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
   public void setFilteredTargets(boolean value) {
     myFilteredTargets = value;
+  }
+
+  public void setModuleGrouping(boolean value) {
+    myTreeView = value ? AntTreeView.MODULE_GROUPING : AntTreeView.NO_GROUPING;
   }
 
   private final class RootNodeDescriptor extends AntNodeDescriptor {

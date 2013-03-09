@@ -39,7 +39,11 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   public abstract boolean isFilterTargets();
 
+  public abstract boolean isModuleGrouping();
+
   public abstract void setFilterTargets(final boolean value);
+
+  public abstract void setModuleGrouping(final boolean value);
 
   public abstract List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target);
 

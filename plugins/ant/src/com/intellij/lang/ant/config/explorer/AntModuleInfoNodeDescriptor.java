@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,46 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.CellAppearanceEx;
-import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanceEx {
-  public AntNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+/**
+* @author VISTALL
+* @date 14:08/08.03.13
+*/
+final class AntModuleInfoNodeDescriptor extends AntNodeDescriptor {
+  private Module myModule;
+
+  public AntModuleInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, Module module) {
     super(project, parentDescriptor);
-  }
-
-  public abstract boolean isAutoExpand();
-
-  public void customize(@NotNull SimpleColoredComponent component) {
-    component.setIcon(getIcon());
-    component.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myModule = module;
+    myName = module.getName();
+    myClosedIcon = AllIcons.Actions.Module;
   }
 
   @Override
-  public void customize(@NotNull final HtmlListCellRenderer renderer) {
-    renderer.setIcon(getIcon());
-    renderer.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  public boolean isAutoExpand() {
+    return false;
   }
 
-  @NotNull
-  public String getText() {
-    return toString();
+  @Override
+  public boolean update() {
+    return true;
+  }
+
+  @Override
+  public Object getElement() {
+    return myModule;
+  }
+
+  @Override
+  public void customize(@NotNull SimpleColoredComponent component) {
+    component.append(toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    component.setIcon(getIcon());
   }
 }
