@@ -103,9 +103,7 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -128,8 +126,6 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final String LOGGER_CONFIG = "log.xml";
-  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
   private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
@@ -841,10 +837,10 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
+    cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+
     final File workDirectory = getBuildSystemDirectory();
     workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
-
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
@@ -881,6 +877,10 @@ public class BuildManager implements ApplicationComponent{
     return new File(mySystemDirectory, SYSTEM_ROOT);
   }
 
+  public File getBuildLogDirectory() {
+    return new File(PathManager.getLogPath(), "build-log");
+  }
+
   @Nullable
   public File getProjectSystemDirectory(Project project) {
     final String projectPath = getProjectPath(project);
@@ -909,33 +909,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
     return 0;
-  }
-
-  private static void ensureLogConfigExists(File workDirectory) {
-    final File logConfig = new File(workDirectory, LOGGER_CONFIG);
-    if (!logConfig.exists()) {
-      FileUtil.createIfDoesntExist(logConfig);
-      try {
-        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
-        if (in != null) {
-          try {
-            final FileOutputStream out = new FileOutputStream(logConfig);
-            try {
-              FileUtil.copy(in, out);
-            }
-            finally {
-              out.close();
-            }
-          }
-          finally {
-            in.close();
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   public void stopListening() {
