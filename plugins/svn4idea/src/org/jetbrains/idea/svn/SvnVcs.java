@@ -941,7 +941,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
-    private final static long ourErrorNotificationInterval = 10000;
+    private final static long ourErrorNotificationInterval = 120000;
     private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
@@ -967,10 +967,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
           } else {
-            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)";
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
+            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
+                                       "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
           }
         }
       }
