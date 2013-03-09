@@ -31,17 +31,14 @@ import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
-import git4idea.jgit.GitHttpAdapter;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.update.GitFetcher;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -86,18 +83,8 @@ public class GitPull extends GitRepositoryAction {
           return;
         }
 
-        if (GitHttpAdapter.shouldUseJGit(url)) {
-          boolean fetchSuccessful = new GitFetcher(project, indicator, true).fetchRootsAndNotify(Collections.singleton(repository),
-                                                                                                 "Pull failed", false);
-          if (!fetchSuccessful) {
-            return; 
-          }
-          handlerReference.set(dialog.pullOrMergeHandler(null));
-        } else {
-          handlerReference.set(dialog.pullOrMergeHandler(url));
-        }
-        
-        
+        handlerReference.set(dialog.makeHandler(url));
+
         final VirtualFile root = dialog.gitRoot();
         affectedRoots.add(root);
         String revision = repository.getCurrentRevision();
