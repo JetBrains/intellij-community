@@ -87,6 +87,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
@@ -959,6 +960,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         final long time = System.currentTimeMillis();
         if ((time - myPreviousTime) > ourErrorNotificationInterval) {
           myPreviousTime = time;
+          if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+            LOG.info(th);
+            return;
+          }
           String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
