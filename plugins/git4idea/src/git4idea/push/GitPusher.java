@@ -59,11 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class GitPusher {
 
-  /**
-   * if diff-log is not available (new branch is created, for example), we show a few recent commits made on the branch
-   */
-  static final int RECENT_COMMITS_NUMBER = 5;
-  
   @Deprecated
   static final GitRemoteBranch NO_TARGET_BRANCH = new GitStandardRemoteBranch(GitRemote.DOT, "", GitBranch.DUMMY_HASH);
 
@@ -187,7 +182,7 @@ public final class GitPusher {
       List<GitCommit> commits;
       GitPushBranchInfo.Type type;
       if (dest == NO_TARGET_BRANCH) {
-        commits = collectRecentCommitsOnBranch(repository, source);
+        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
         type = GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET;
       }
       else if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
@@ -195,7 +190,7 @@ public final class GitPusher {
         type = GitPushBranchInfo.Type.STANDARD;
       } 
       else {
-        commits = collectRecentCommitsOnBranch(repository, source);
+        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
         type = GitPushBranchInfo.Type.NEW_BRANCH;
       }
       commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, type));
@@ -204,8 +199,13 @@ public final class GitPusher {
     return new GitCommitsByBranch(commitsByBranch);
   }
 
-  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
-    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
+  @NotNull
+  private static List<GitCommit> collectCommitsToPushForNewBranch(@NotNull GitRepository repository, @NotNull GitBranch source,
+                                                                  @NotNull GitRemote remote) throws VcsException {
+    // `git log new_branch --not --remotes=origin`
+    // shows all commits that are in the given branch, but not in any remote branches in the given remote
+    return GitHistoryUtils.history(repository.getProject(), repository.getRoot(),
+                                   source.getName(), "--not", "--remotes=" + remote.getName());
   }
 
   @NotNull
