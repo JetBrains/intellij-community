@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -66,6 +67,15 @@ public class JBSplitter extends Splitter {
    */
   public final void setSplitterProportionKey(@Nullable String key) {
     mySplitterProportionKey = key;
+  }
+
+  /**
+   * Sets proportion key and load from settings.
+   * @param key
+   */
+  public final void setAndLoadSplitterProportionKey(@NotNull String key) {
+    setSplitterProportionKey(key);
+    loadProportion();
   }
 
   @Override

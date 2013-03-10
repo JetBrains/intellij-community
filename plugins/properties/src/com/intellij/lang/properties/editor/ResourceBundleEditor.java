@@ -149,7 +149,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
     myDataProviderPanel = new DataProviderPanel(myPanel);
 
-    getSplitter().setSplitterProportionKey(getClass() + ".splitter");
+    getSplitter().setAndLoadSplitterProportionKey(getClass() + ".splitter");
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
