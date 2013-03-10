@@ -57,12 +57,6 @@ public class JavaCompletionSorting {
     final boolean smart = type == CompletionType.SMART;
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
 
-    List<LookupElementWeigher> afterPriority = new ArrayList<LookupElementWeigher>();
-    if (smart) {
-      afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters));
-    }
-    ContainerUtil.addIfNotNull(afterPriority, recursion(parameters, expectedTypes));
-
     List<LookupElementWeigher> afterProximity = new ArrayList<LookupElementWeigher>();
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     if (smart) {
@@ -76,21 +70,22 @@ public class JavaCompletionSorting {
     } else {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
+    if (smart) {
+      sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters));
+    }
 
     List<LookupElementWeigher> afterPrefix = ContainerUtil.newArrayList();
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
     }
+    ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {
       afterPrefix.add(new PreferExpected(false, expectedTypes));
     }
-    afterPrefix.add(new PreferByKindWeigher(type, position));
-    afterPrefix.add(new PreferSimilarlyEnding(expectedTypes));
-    Collections.addAll(afterPrefix, new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(),
+    Collections.addAll(afterPrefix, new PreferByKindWeigher(type, position), new PreferSimilarlyEnding(expectedTypes),
+                       new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(),
                        new PreferEnumConstants(parameters));
 
-
-    sorter = sorter.weighAfter("priority", afterPriority.toArray(new LookupElementWeigher[afterPriority.size()]));
     sorter = sorter.weighAfter("prefix", afterPrefix.toArray(new LookupElementWeigher[afterPrefix.size()]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
     return result.withRelevanceSorter(sorter);

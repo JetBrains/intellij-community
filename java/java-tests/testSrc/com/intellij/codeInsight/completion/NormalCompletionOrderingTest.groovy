@@ -98,11 +98,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
+    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
   }
 
   public void testDispreferDeclaredOfExpectedType() throws Throwable {
-    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
+    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
   }
 
   public void testDispreferImpls() throws Throwable {
