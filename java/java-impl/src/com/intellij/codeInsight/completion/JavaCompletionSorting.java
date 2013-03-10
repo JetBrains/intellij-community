@@ -51,7 +51,6 @@ public class JavaCompletionSorting {
   }
 
   public static CompletionResultSet addJavaSorting(final CompletionParameters parameters, CompletionResultSet result) {
-    String prefix = result.getPrefixMatcher().getPrefix();
     final PsiElement position = parameters.getPosition();
     final ExpectedTypeInfo[] expectedTypes = PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position) ? ExpectedTypeInfo.EMPTY_ARRAY : JavaSmartCompletionContributor.getExpectedTypes(parameters);
     final CompletionType type = parameters.getCompletionType();
@@ -63,14 +62,14 @@ public class JavaCompletionSorting {
       afterPriority.add(new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
     ContainerUtil.addIfNotNull(afterPriority, recursion(parameters, expectedTypes));
-    afterPriority.add(new PreferSimilarlyEnding(expectedTypes, prefix));
+    afterPriority.add(new PreferSimilarlyEnding(expectedTypes));
 
     List<LookupElementWeigher> afterProximity = new ArrayList<LookupElementWeigher>();
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     if (smart) {
       afterProximity.add(new PreferFieldsAndGetters());
     }
-    afterProximity.add(new PreferShorter(expectedTypes, prefix));
+    afterProximity.add(new PreferShorter(expectedTypes));
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
@@ -207,18 +206,14 @@ public class JavaCompletionSorting {
     return null;
   }
 
-  private static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos, String prefix) {
+  private static int getNameEndMatchingDegree(final String name, ExpectedTypeInfo[] expectedInfos) {
     int res = 0;
     if (name != null && expectedInfos != null) {
-      if (prefix.equals(name)) {
-        res = Integer.MAX_VALUE;
-      } else {
-        final List<String> words = NameUtil.nameToWordsLowerCase(name);
-        final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
-        int max1 = calcMatch(words, 0, expectedInfos);
-        max1 = calcMatch(wordsNoDigits, max1, expectedInfos);
-        res = max1;
-      }
+      final List<String> words = NameUtil.nameToWordsLowerCase(name);
+      final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
+      int max1 = calcMatch(words, 0, expectedInfos);
+      max1 = calcMatch(wordsNoDigits, max1, expectedInfos);
+      res = max1;
     }
 
     return res;
@@ -457,19 +452,17 @@ public class JavaCompletionSorting {
 
   private static class PreferSimilarlyEnding extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
-    private final String myPrefix;
 
-    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes, String prefix) {
+    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
       super("nameEnd");
       myExpectedTypes = expectedTypes;
-      myPrefix = prefix;
     }
 
     @NotNull
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final String name = getLookupObjectName(element.getObject());
-      return -getNameEndMatchingDegree(name, myExpectedTypes, myPrefix);
+      return -getNameEndMatchingDegree(name, myExpectedTypes);
     }
   }
 
@@ -521,12 +514,10 @@ public class JavaCompletionSorting {
 
   private static class PreferShorter extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
-    private final String myPrefix;
 
-    public PreferShorter(ExpectedTypeInfo[] expectedTypes, String prefix) {
+    public PreferShorter(ExpectedTypeInfo[] expectedTypes) {
       super("shorter");
       myExpectedTypes = expectedTypes;
-      myPrefix = prefix;
     }
 
     @NotNull
@@ -535,7 +526,7 @@ public class JavaCompletionSorting {
       final Object object = element.getObject();
       final String name = getLookupObjectName(object);
 
-      if (name != null && getNameEndMatchingDegree(name, myExpectedTypes, myPrefix) != 0) {
+      if (name != null && getNameEndMatchingDegree(name, myExpectedTypes) != 0) {
         return NameUtil.nameToWords(name).length - 1000;
       }
       return 0;
