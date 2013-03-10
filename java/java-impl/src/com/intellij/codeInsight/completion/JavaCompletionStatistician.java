@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.*;
@@ -45,23 +46,26 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);
 
     if (o instanceof PsiMember) {
+      final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
+      final ExpectedTypeInfo firstInfo = infos != null && infos.length > 0 ? infos[0] : null;
       String key2 = JavaStatisticsManager.getMemberUseKey2((PsiMember)o);
       if (o instanceof PsiClass) {
-        final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
-        PsiType expectedType = infos != null && infos.length > 0 ? infos[0].getDefaultType() : null;
+        PsiType expectedType = firstInfo != null ? firstInfo.getDefaultType() : null;
         return new StatisticsInfo(JavaStatisticsManager.getAfterNewKey(expectedType), key2);
       }
 
       PsiClass containingClass = ((PsiMember)o).getContainingClass();
       if (containingClass != null) {
-        String context = JavaStatisticsManager.getMemberUseKey2(containingClass);
+        String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).expectedName.compute() : null;
+        String contextPrefix = expectedName == null ? "" : "expectedName=" + expectedName + "###";
+        String context = contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass);
 
         if (o instanceof PsiMethod) {
           String memberValue = JavaStatisticsManager.getMemberUseKey2(RecursionWeigher.findDeepestSuper((PsiMethod)o));
 
-          List<StatisticsInfo> superMethodInfos = ContainerUtil.newArrayList(new StatisticsInfo(context, memberValue));
+          List<StatisticsInfo> superMethodInfos = ContainerUtil.newArrayList(new StatisticsInfo(contextPrefix + context, memberValue));
           for (PsiClass superClass : InheritanceUtil.getSuperClasses(containingClass)) {
-            superMethodInfos.add(new StatisticsInfo(JavaStatisticsManager.getMemberUseKey2(superClass), memberValue));
+            superMethodInfos.add(new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(superClass), memberValue));
           }
           return StatisticsInfo.createComposite(superMethodInfos);
         }

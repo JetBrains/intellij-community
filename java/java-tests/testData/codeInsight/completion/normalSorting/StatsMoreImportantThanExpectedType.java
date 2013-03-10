@@ -3,7 +3,7 @@ public class AnotherTestClass {
     test(getnu<caret>);
   }
 
-  private static void test(int i, int j) {
+  private static void test(int i) {
   }
 
   public static NumberProvider getNumProvider() {

@@ -533,7 +533,7 @@ import java.lang.annotation.Target;
     invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems 0, 'getNumber', 'getNumProvider'
     lookup.currentItem = lookup.items[1]
-    myFixture.type '\n, getn'
+    myFixture.type '\n);\ntest(getnu'
     myFixture.completeBasic()
     assertPreferredItems 0, 'getNumProvider', 'getNumber'
   }
