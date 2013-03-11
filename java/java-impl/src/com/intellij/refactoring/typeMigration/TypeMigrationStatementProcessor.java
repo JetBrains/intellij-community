@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -500,10 +500,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     public TypeView(@NotNull PsiExpression expr) {
       PsiType exprType = expr.getType();
       exprType = exprType instanceof PsiEllipsisType ? ((PsiEllipsisType)exprType).toArrayType() : exprType;
-      myOriginType = exprType != null ? GenericsUtil.getVariableTypeByExpressionType(exprType) : null;
+      myOriginType = GenericsUtil.getVariableTypeByExpressionType(exprType);
       PsiType type = myTypeEvaluator.evaluateType(expr);
       type = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
-      myType = type != null ? GenericsUtil.getVariableTypeByExpressionType(type) : null;
+      myType = GenericsUtil.getVariableTypeByExpressionType(type);
       myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
     }
 

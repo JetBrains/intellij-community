@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,8 @@ public class GenericsUtil {
   }
 
   @Nullable
-  public static PsiType getVariableTypeByExpressionType(final PsiType type) {
+  public static PsiType getVariableTypeByExpressionType(@Nullable final PsiType type) {
+    if (type == null) return null;
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override
       public PsiType visitArrayType(PsiArrayType arrayType) {
