@@ -722,9 +722,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   @PsiModifier.ModifierConstant
   public static String getMaximumModifierForMember(final PsiClass aClass) {
+    return getMaximumModifierForMember(aClass, true);
+  }
+
+  @PsiModifier.ModifierConstant
+  public static String getMaximumModifierForMember(final PsiClass aClass, boolean allowPublicAbstract) {
     String modifier = PsiModifier.PUBLIC;
 
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
+    if (!allowPublicAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
