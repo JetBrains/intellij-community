@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.io.IOUtil;
@@ -24,6 +25,7 @@ import com.intellij.util.text.StringFactory;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -102,7 +104,7 @@ public class FileNameCache {
   }
 
   @NotNull
-  static Object getRawName(int idx) {
+  private static Object getRawName(int idx) {
     synchronized (ourCacheLock) {
       Object o = ourNameCache.get(idx);
       if (o != null) {
@@ -113,7 +115,7 @@ public class FileNameCache {
     return cacheData(FSRecords.getNameByNameId(idx), idx, true);
   }
 
-  static String getNameSuffix(int idx) {
+  private static String getNameSuffix(int idx) {
     synchronized (ourCacheLock) {
       String suffix = ourSuffixCache.get(idx);
       if (suffix != null) {
@@ -174,6 +176,50 @@ public class FileNameCache {
       if (d != 0) return d;
     }
     return 0;
+  }
+
+  static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, int[] positionRef) {
+    Object o = getRawName(nameId);
+    String suffix = getNameSuffix(nameId);
+    int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
+    int nameLength = rawNameLength + suffix.length();
+    boolean appendSlash = SystemInfo.isWindows && parent == null && suffix.isEmpty() && rawNameLength == 2 &&
+                          (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
+
+    char[] chars;
+    if (parent != null) {
+      chars = parent.appendPathOnFileSystem(accumulatedPathLength + 1 + nameLength, positionRef);
+      if (positionRef[0] > 0 && chars[positionRef[0] - 1] != '/') {
+        chars[positionRef[0]++] = '/';
+      }
+    }
+    else {
+      int rootPathLength = accumulatedPathLength + nameLength;
+      if (appendSlash) ++rootPathLength;
+      chars = new char[rootPathLength];
+    }
+
+    if (o instanceof String) {
+      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], (String)o);
+    }
+    else {
+      byte[] bytes = (byte[])o;
+      int pos = positionRef[0];
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, len = bytes.length; i < len; i++) {
+        chars[pos++] = (char)bytes[i];
+      }
+      positionRef[0] = pos;
+    }
+
+    if (appendSlash) {
+      chars[positionRef[0]++] = '/';
+    }
+    else {
+      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], suffix);
+    }
+
+    return chars;
   }
 
 
