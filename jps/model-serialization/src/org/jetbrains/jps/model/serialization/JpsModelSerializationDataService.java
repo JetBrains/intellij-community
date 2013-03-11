@@ -33,8 +33,15 @@ import java.util.Map;
  * @author nik
  */
 public class JpsModelSerializationDataService {
+  /**
+   * @deprecated use {@link #computeAllPathVariables(org.jetbrains.jps.model.JpsGlobal)} instead
+   */
   @NotNull
   public static Map<String, String> getAllPathVariables(JpsGlobal global) {
+    return computeAllPathVariables(global);
+  }
+
+  public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
     Map<String, String> pathVariables = new HashMap<String, String>(PathMacroUtil.getGlobalSystemMacros());
     JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
     if (configuration != null) {
