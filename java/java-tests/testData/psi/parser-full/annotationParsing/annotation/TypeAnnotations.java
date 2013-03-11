@@ -38,6 +38,13 @@ class SpecSamples {
     m(@IllegalAnnotation java.util.@Vernal Date::getDay);
     m(List<@English String>::size);
     m(Arrays::<@NonNegative Integer>sort);
+
+    m((@TA Object x, @TB Object y) -> { System.out.println("x=" + x + " y=" + y); });
+
+    try { m(); }
+    catch (@A1 NullPointerException | @A2 IllegalArgumentException e) { }
+
+    try (@A Reader r = new @B FileReader("/dev/zero"); @A Writer w = new @B FileWriter("/dev/null")) { }
   }
 
   //
@@ -63,7 +70,7 @@ class SpecSamples {
   @Immutable SpecSamples() { }
 
   //
-  // todo[r.sh] 5. It is permitted to explicitly declare the method receiver as the first formal parameter ...
+  // todo [r.sh] 5. It is permitted to explicitly declare the method receiver as the first formal parameter ...
   //
 
   /*public String toString(@Readonly MyClass this) {  }
@@ -78,7 +85,9 @@ class SpecSamples {
         void innerMethod(@A Outer. @B Middle. @C Inner this) { }
       }
     }
-  }*/
+  }
+
+  void replace(@Readonly Object other, @Mutable MyClass this) {  } // illegal */
 
   //
   // 6. It is permitted to write an annotation on a type parameter declaration ...
