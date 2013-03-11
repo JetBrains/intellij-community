@@ -12,7 +12,7 @@
   <appender name="file" class="org.apache.log4j.RollingFileAppender">
     <param name="MaxFileSize" value="20Mb"/>
     <param name="MaxBackupIndex" value="20"/>
-    <param name="file" value="server.log"/>
+    <param name="file" value="$LOG_FILE_PATH$"/>
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>

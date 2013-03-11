@@ -70,42 +70,38 @@ public class GitCommand {
    */
   public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
 
-  /**
-   * The myLocking policy for the command
-   */
   enum LockingPolicy {
-    /**
-     * Read lock should be acquired for the command
-     */
     READ,
-    /**
-     * Write lock should be acquired for the command
-     */
     WRITE,
-    /**
-     * Write lock should be acquired for the command, and it could be acquired in several intervals
-     */
     WRITE_SUSPENDABLE,
   }
 
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
 
+  private GitCommand(@NotNull String name, @NotNull LockingPolicy lockingPolicy) {
+    myLocking = lockingPolicy;
+    myName = name;
+  }
+
   /**
-   * Creates a git command with LockingPolicy different from the default one.
-   * Use this constructor with care: specifying read-policy on a write operation may result in a conflict during simultaneous
-   * modification of index.
-   * @param command       Original command.
-   * @param lockingPolicy Locking policy overriding default locking policy of the original command.
+   * Copy constructor with other locking policy.
    */
   private GitCommand(@NotNull GitCommand command, @NotNull LockingPolicy lockingPolicy) {
     myName = command.name();
     myLocking = lockingPolicy;
   }
 
-  private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
-    myLocking = locking;
-    myName = name;
+  /**
+   * <p>Creates the clone of this git command, but with LockingPolicy different from the default one.</p>
+   * <p>This can be used for commands, which are considered to be "write" commands in general, but can be "read" commands when a certain
+   *    set of arguments is given ({@code git stash list}, for instance).</p>
+   * <p>Use this constructor with care: specifying read-policy on a write operation may result in a conflict during simultaneous
+   *    modification of index.</p>
+   */
+  @NotNull
+  public GitCommand readLockingCommand() {
+    return new GitCommand(this, LockingPolicy.READ);
   }
 
   @NotNull
@@ -131,11 +127,6 @@ public class GitCommand {
   @NotNull
   public LockingPolicy lockingPolicy() {
     return myLocking;
-  }
-
-  @NotNull
-  public GitCommand readLockingCommand() {
-    return new GitCommand(this, LockingPolicy.READ);
   }
 
   @Override

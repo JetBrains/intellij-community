@@ -55,7 +55,6 @@ public class GitTreeDiffProvider implements TreeDiffProvider {
       for (List<String> pathList : VcsFileUtil.chunkPaths(vcsRoot, files)) {
         GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitCommand.DIFF);
         handler.addParameters("--name-status", "--diff-filter=ADCRUX", "-M", "HEAD..." + searcher.getRemote().getFullName());
-        handler.setNoSSH(true);
         handler.setSilent(true);
         handler.setStdoutSuppressed(true);
         handler.endOptions();

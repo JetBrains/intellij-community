@@ -19,8 +19,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -38,8 +40,9 @@ import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
-import org.jetbrains.git4idea.ssh.GitSSHService;
+import org.jetbrains.git4idea.ssh.GitXmlRpcSshService;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -82,9 +85,6 @@ public abstract class GitHandler {
   @NonNls
   private Charset myCharset = Charset.forName("UTF-8"); // Character set to use for IO
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  private boolean myNoSSHFlag = false;
-
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
@@ -100,6 +100,7 @@ public abstract class GitHandler {
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private ModalityState myState;
+  @Nullable private GitRemoteProtocol myRemoteProtocol;
 
 
   /**
@@ -219,23 +220,12 @@ public abstract class GitHandler {
     return file;
   }
 
-  /**
-   * Set SSH flag. This flag should be set to true for commands that never interact with remote repositories.
-   *
-   * @param value if value is true, the custom ssh is not used for the command.
-   */
-  @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
-  public void setNoSSH(boolean value) {
-    checkNotStarted();
-    myNoSSHFlag = value;
+  public void setRemoteProtocol(@NotNull String url) {
+    myRemoteProtocol = GitRemoteProtocol.fromUrl(url);
   }
 
-  /**
-   * @return true if SSH is not invoked by this command.
-   */
-  @SuppressWarnings({"WeakerAccess"})
-  public boolean isNoSSH() {
-    return myNoSSHFlag;
+  protected boolean isRemote() {
+    return myRemoteProtocol != null;
   }
 
   /**
@@ -430,8 +420,8 @@ public abstract class GitHandler {
       }
 
       // setup environment
-      if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
-        GitSSHService ssh = GitSSHIdeaService.getInstance();
+      if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
+        GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
         myEnvironmentCleanedUp = false;
@@ -439,6 +429,18 @@ public abstract class GitHandler {
         int port = ssh.getXmlRcpPort();
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
+      }
+      else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+        GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
+        GitHttpAuthenticator httpAuthenticator = new GitHttpAuthenticator(myProject, myState, myCommand);
+        myHandlerNo = service.registerHandler(httpAuthenticator);
+        myEnvironmentCleanedUp = false;
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
+        int port = service.getXmlRcpPort();
+        myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
+        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
+        addAuthListener(httpAuthenticator);
       }
       myCommandLine.setEnvParams(myEnv);
       // start process
@@ -448,6 +450,33 @@ public abstract class GitHandler {
     catch (Throwable t) {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
+    }
+  }
+
+  private void addAuthListener(@NotNull final GitHttpAuthenticator authenticator) {
+    // TODO this code should be located in GitLineHandler, and the other remote code should be move there as well
+    if (this instanceof GitLineHandler) {
+      ((GitLineHandler)this).addLineListener(new GitLineHandlerAdapter() {
+
+        private boolean myAuthFailed;
+
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (line.toLowerCase().contains("authentication failed")) {
+            myAuthFailed = true;
+          }
+        }
+
+        @Override
+        public void processTerminated(int exitCode) {
+          if (myAuthFailed) {
+            authenticator.forgetPassword();
+          }
+          else {
+            authenticator.saveAuthData();
+          }
+        }
+      });
     }
   }
 
@@ -502,10 +531,15 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   protected synchronized void cleanupEnv() {
-    if (!myNoSSHFlag && !myEnvironmentCleanedUp) {
-      GitSSHService ssh = GitSSHIdeaService.getInstance();
+    if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
+      GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
+    }
+    else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+      GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
+      myEnvironmentCleanedUp = true;
+      service.unregisterHandler(myHandlerNo);
     }
   }
 

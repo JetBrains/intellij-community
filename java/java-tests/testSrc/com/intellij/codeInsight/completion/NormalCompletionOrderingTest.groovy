@@ -98,11 +98,11 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
+    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
   }
 
   public void testDispreferDeclaredOfExpectedType() throws Throwable {
-    checkPreferredItems(0, "aabbb", "Aaaaaaa", "aaa");
+    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
   }
 
   public void testDispreferImpls() throws Throwable {
@@ -533,7 +533,7 @@ import java.lang.annotation.Target;
     invokeCompletion(getTestName(false) + ".java")
     assertPreferredItems 0, 'getNumber', 'getNumProvider'
     lookup.currentItem = lookup.items[1]
-    myFixture.type '\n, getn'
+    myFixture.type '\n);\ntest(getnu'
     myFixture.completeBasic()
     assertPreferredItems 0, 'getNumProvider', 'getNumber'
   }

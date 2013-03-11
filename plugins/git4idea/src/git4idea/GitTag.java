@@ -65,7 +65,6 @@ public class GitTag extends GitReference {
   public static void listAsStrings(final Project project, final VirtualFile root, final Collection<String> tags,
                                    @Nullable final String containingCommit) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.TAG);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("-l");
     if (containingCommit != null) {

@@ -45,7 +45,7 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
  */
 abstract class GitBranchOperation {
 
-  private static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
+  protected static final Logger LOG = Logger.getInstance(GitBranchOperation.class);
 
   @NotNull protected final Project myProject;
   @NotNull protected final GitPlatformFacade myFacade;

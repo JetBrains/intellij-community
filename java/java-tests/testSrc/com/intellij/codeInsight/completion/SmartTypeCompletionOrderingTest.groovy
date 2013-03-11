@@ -21,7 +21,7 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testJComponentAdd() throws Throwable {
-    checkPreferredItems(0, "name", "getName", "b", "fooBean239", "foo", "this");
+    checkPreferredItems(0, "name", "b", "fooBean239", "foo", "this");
   }
   
   public void testJComponentAddNew() throws Throwable {
@@ -257,11 +257,11 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "bar", "foo", "equals", "false", "true");
   }
 
-  public void testFieldNameOutweighsStats() throws Throwable {
+  public void testExpectedNameDependentStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
     assertPreferredItems(0, "myFoo", "myBar");
     incUseCount(lookup, 1); //myBar
-    assertPreferredItems(0, "myFoo", "myBar");
+    assertPreferredItems(0, "myBar", "myFoo");
   }
 
   public void testPreferSameNamedMethods() {
@@ -306,6 +306,9 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
   public void testPreferOtherGetterInSetterCall() {
     checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'
+  }
+  public void testPreferLocalOverFactoryMatchingName() {
+    checkPreferredItems 0, 'e', 'createEvent'
   }
 
   @Override

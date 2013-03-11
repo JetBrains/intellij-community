@@ -59,11 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class GitPusher {
 
-  /**
-   * if diff-log is not available (new branch is created, for example), we show a few recent commits made on the branch
-   */
-  static final int RECENT_COMMITS_NUMBER = 5;
-  
   @Deprecated
   static final GitRemoteBranch NO_TARGET_BRANCH = new GitStandardRemoteBranch(GitRemote.DOT, "", GitBranch.DUMMY_HASH);
 
@@ -187,7 +182,7 @@ public final class GitPusher {
       List<GitCommit> commits;
       GitPushBranchInfo.Type type;
       if (dest == NO_TARGET_BRANCH) {
-        commits = collectRecentCommitsOnBranch(repository, source);
+        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
         type = GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET;
       }
       else if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
@@ -195,7 +190,7 @@ public final class GitPusher {
         type = GitPushBranchInfo.Type.STANDARD;
       } 
       else {
-        commits = collectRecentCommitsOnBranch(repository, source);
+        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
         type = GitPushBranchInfo.Type.NEW_BRANCH;
       }
       commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, type));
@@ -204,8 +199,13 @@ public final class GitPusher {
     return new GitCommitsByBranch(commitsByBranch);
   }
 
-  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
-    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
+  @NotNull
+  private static List<GitCommit> collectCommitsToPushForNewBranch(@NotNull GitRepository repository, @NotNull GitBranch source,
+                                                                  @NotNull GitRemote remote) throws VcsException {
+    // `git log new_branch --not --remotes=origin`
+    // shows all commits that are in the given branch, but not in any remote branches in the given remote
+    return GitHistoryUtils.history(repository.getProject(), repository.getRoot(),
+                                   source.getName(), "--not", "--remotes=" + remote.getName());
   }
 
   @NotNull
@@ -318,21 +318,18 @@ public final class GitPusher {
     }
 
     GitRemote remote = pushSpec.getRemote();
-    String httpUrl = null;
-    for (String pushUrl : remote.getPushUrls()) {
-      if (GitHttpAdapter.shouldUseJGit(pushUrl)) {
-        httpUrl = pushUrl;
-        break;            // TODO support http and ssh urls in one origin
-      }
+    Collection<String> pushUrls = remote.getPushUrls();
+    if (pushUrls.isEmpty()) {
+      LOG.error("No urls or pushUrls are defined for " + remote);
+      return GitSimplePushResult.error("There are no URLs defined for remote " + remote.getName());
     }
-
+    String url = pushUrls.iterator().next();
     GitSimplePushResult pushResult;
-    boolean pushOverHttp = httpUrl != null;
-    if (pushOverHttp) {
-      pushResult = GitHttpAdapter.push(repository, remote.getName(), httpUrl, formPushSpec(pushSpec, remote));
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      pushResult = GitHttpAdapter.push(repository, remote.getName(), url, formPushSpec(pushSpec, remote));
     }
     else {
-      pushResult = pushNatively(repository, pushSpec);
+      pushResult = pushNatively(repository, pushSpec, url);
     }
     
     if (pushResult.getType() == GitSimplePushResult.Type.SUCCESS) {
@@ -396,10 +393,10 @@ public final class GitPusher {
   }
 
   @NotNull
-  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec) {
+  private GitSimplePushResult pushNatively(GitRepository repository, GitPushSpec pushSpec, @NotNull String url) {
     GitPushRejectedDetector rejectedDetector = new GitPushRejectedDetector();
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    GitCommandResult res = myGit.push(repository, pushSpec, rejectedDetector, progressListener);
+    GitCommandResult res = myGit.push(repository, pushSpec, url, rejectedDetector, progressListener);
     if (rejectedDetector.rejected()) {
       Collection<String> rejectedBranches = rejectedDetector.getRejectedBranches();
       return GitSimplePushResult.reject(rejectedBranches);

@@ -189,14 +189,12 @@ public class GitChangeUtils {
     GitSimpleHandler handler = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", reference);
     handler.endOptions();
-    handler.setNoSSH(true);
     handler.setSilent(true);
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
     if (!stk.hasMoreTokens()) {
       GitSimpleHandler dh = new GitSimpleHandler(project, vcsRoot, GitCommand.LOG);
       dh.addParameters("-1", "HEAD");
-      dh.setNoSSH(true);
       dh.setSilent(true);
       String out = dh.run();
       LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
@@ -241,7 +239,6 @@ public class GitChangeUtils {
                                                           boolean skipDiffsForMerge,
                                                           boolean local, boolean revertable) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--name-status", "--no-abbrev", "-M", "--pretty=format:" + COMMITTED_CHANGELIST_FORMAT, "--encoding=UTF-8",
                     revisionName, "--");
@@ -253,7 +250,6 @@ public class GitChangeUtils {
   @Nullable
   public static String getCommitAbbreviation(final Project project, final VirtualFile root, final SHAHash hash) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--max-count=1", "--pretty=%h", "--encoding=UTF-8", "\"" + hash.getValue() + "\"", "--");
     try {
@@ -270,7 +266,6 @@ public class GitChangeUtils {
   public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
                                      List<VirtualFile> paths, final String... parameters) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(parameters);
     h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", anyReference, "--");
@@ -290,7 +285,6 @@ public class GitChangeUtils {
   public static boolean isAnyLevelChild(final Project project, final VirtualFile root, final SHAHash parent,
                                         final String anyReferenceChild) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("\"" + parent.getValue() + "\"","\"" + anyReferenceChild + "\"",  "--");
     try {
@@ -306,7 +300,6 @@ public class GitChangeUtils {
   @Nullable
   public static List<AbstractHash> commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    h.setNoSSH(true);
     h.setSilent(true);
     String escaped = StringUtil.escapeQuotes(anyReference);
     escaped = StringUtil.escapeSlashes(escaped);
@@ -389,7 +382,6 @@ public class GitChangeUtils {
       for (String parent : parents) {
         final GitRevisionNumber parentRevision = resolveReference(project, root, parent);
         GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitCommand.DIFF);
-        diffHandler.setNoSSH(true);
         diffHandler.setSilent(true);
         diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());
         String diff = diffHandler.run();
@@ -463,7 +455,6 @@ public class GitChangeUtils {
                                                  @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.DIFF);
     handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", diffRange);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();

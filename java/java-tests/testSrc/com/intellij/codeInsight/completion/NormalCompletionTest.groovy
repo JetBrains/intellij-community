@@ -1126,6 +1126,8 @@ public class ListUtils {
   public void testMethodColon() throws Exception { doTest(':') }
   public void testVariableColon() throws Exception { doTest(':') }
 
+  public void testFinishByClosingParenthesis() throws Exception { doTest(')') }
+
   public void testNoMethodsInParameterType() {
     configure()
     assertFirstStringItems "final", "float"

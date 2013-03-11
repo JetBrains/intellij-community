@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -80,4 +81,8 @@ public class GitCommandResult {
     return myException;
   }
 
+  @NotNull
+  public static GitCommandResult error(@NotNull String error) {
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.<String>emptyList(), null);
+  }
 }

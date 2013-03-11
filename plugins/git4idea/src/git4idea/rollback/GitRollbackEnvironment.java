@@ -179,7 +179,6 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
-      handler.setNoSSH(true);
       handler.addParameters("HEAD");
       handler.endOptions();
       handler.addParameters(paths);
@@ -247,7 +246,6 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
 
   public static void resetHardLocal(final Project project, final VirtualFile root) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RESET);
-    handler.setNoSSH(true);
     handler.addParameters("--hard");
     handler.endOptions();
     GitHandlerUtil.runInCurrentThread(handler, null);

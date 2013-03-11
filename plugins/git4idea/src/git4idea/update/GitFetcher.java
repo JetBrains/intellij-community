@@ -132,7 +132,7 @@ public class GitFetcher {
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, null);
     }
-    return fetchNatively(repository.getRoot(), remote, null);
+    return fetchNatively(repository.getRoot(), remote, url, null);
   }
 
   // leaving this unused method, because the wanted behavior can change again
@@ -150,7 +150,7 @@ public class GitFetcher {
     if (GitHttpAdapter.shouldUseJGit(url)) {
       return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
     }
-    return fetchNatively(repository.getRoot(), remote, remoteBranch);
+    return fetchNatively(repository.getRoot(), remote, url, remoteBranch);
   }
 
   @NotNull
@@ -198,7 +198,7 @@ public class GitFetcher {
         }
       }
       else {
-        GitFetchResult res = fetchNatively(repository.getRoot(), remote, null);
+        GitFetchResult res = fetchNatively(repository.getRoot(), remote, url, null);
         res.addPruneInfo(fetchResult.getPrunedRefs());
         fetchResult = res;
         if (!fetchResult.isSuccess()) {
@@ -209,8 +209,9 @@ public class GitFetcher {
     return fetchResult;
   }
 
-  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @Nullable String branch) {
+  private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @NotNull String url, @Nullable String branch) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
+    h.setRemoteProtocol(url);
     h.addProgressParameter();
     if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
       h.addParameters("--prune");

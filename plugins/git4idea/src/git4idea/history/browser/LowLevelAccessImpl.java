@@ -76,6 +76,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
+      parameters.add("HEAD");
       parameters.add("--branches");
       parameters.add("--remotes");
       parameters.add("--tags");
@@ -160,6 +161,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
         parameters.add(startingPoint);
       }
     } else {
+      parameters.add("HEAD");
       parameters.add("--branches");
       parameters.add("--remotes");
       parameters.add("--tags");
@@ -205,7 +207,6 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                                            @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
     final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.BRANCH);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("--no-color");
     boolean remoteOnly = false;

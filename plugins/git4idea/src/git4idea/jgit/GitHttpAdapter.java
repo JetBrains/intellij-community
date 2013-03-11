@@ -34,7 +34,6 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
-import git4idea.util.NetrcData;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Handles remote operations over HTTP via JGit library.
@@ -71,31 +68,11 @@ public final class GitHttpAdapter {
 
   private static final Logger LOG = Logger.getInstance(GitHttpAdapter.class);
 
-  private static final Pattern HTTP_URL_WITH_USERNAME_AND_PASSWORD = Pattern.compile("http(s?)://([^\\s^@:]+):([^\\s^@:]+)@.*");
   private static final String IGNORECASE_SETTING = "ignorecase";
 
   public static boolean shouldUseJGit(@NotNull String url) {
-    if (!url.startsWith("http")) {
-      return false;
-    }
-    // if username & password are specified in the url, give it to the native Git
-    if (HTTP_URL_WITH_USERNAME_AND_PASSWORD.matcher(url).matches()) {
-      return false;
-    }
-
-    try {
-      NetrcData netrcData = NetrcData.parse();
-      return !netrcData.hasAuthDataForUrl(url);
-    }
-    catch (FileNotFoundException e) {
-      return true;
-    }
-    catch (IOException e) {
-      LOG.warn("Couldn't read netrc file", e);
-      return true;
-    }
+    return "jgit".equals(System.getProperty("git.http"));
   }
-
 
   private enum GeneralResult {
     SUCCESS,

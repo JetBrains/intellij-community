@@ -190,9 +190,7 @@ public class GitTestImpl implements Git {
 
   @NotNull
   @Override
-  public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull String remote,
-                               @NotNull String spec,
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
                                @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException();
   }
@@ -200,8 +198,7 @@ public class GitTestImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult push(@NotNull GitRepository repository,
-                               @NotNull GitPushSpec pushSpec,
-                               @NotNull GitLineHandlerListener... listeners) {
+                               @NotNull GitPushSpec spec, @NotNull String url, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException();
   }
 

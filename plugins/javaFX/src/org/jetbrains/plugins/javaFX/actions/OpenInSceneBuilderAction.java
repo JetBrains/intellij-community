@@ -85,7 +85,19 @@ public class OpenInSceneBuilderAction extends AnAction {
               }
             }
             sceneBuilderRoot = sceneBuilderRootDir != null ? sceneBuilderRootDir.getParentFile() : null;
-            sceneBuilderLibsFile = sceneBuilderRoot != null ? new File(sceneBuilderRoot, "lib") : null;
+            if (sceneBuilderRoot != null) {
+              final File libFile = new File(sceneBuilderRoot, "lib");
+              if (libFile.isDirectory()) {
+                sceneBuilderLibsFile = libFile;
+              }
+              else {
+                final File appFile = new File(sceneBuilderRootDir, "app");
+                sceneBuilderLibsFile = appFile.isDirectory() ? appFile : null;
+              }
+            }
+            else {
+              sceneBuilderLibsFile = null;
+            }
           } else {
             sceneBuilderLibsFile = new File(new File(pathToSceneBuilder).getParent(), "app");
           }
