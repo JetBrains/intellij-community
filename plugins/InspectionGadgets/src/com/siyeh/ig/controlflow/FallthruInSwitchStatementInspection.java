@@ -80,19 +80,19 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      final PsiCodeBlock body = statement.getBody();
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement switchStatement) {
+      super.visitSwitchStatement(switchStatement);
+      final PsiCodeBlock body = switchStatement.getBody();
       if (body == null) {
         return;
       }
       final PsiStatement[] statements = body.getStatements();
       for (int i = 1; i < statements.length; i++) {
-        final PsiStatement child = statements[i];
-        if (!(child instanceof PsiSwitchLabelStatement)) {
+        final PsiStatement statement = statements[i];
+        if (!(statement instanceof PsiSwitchLabelStatement)) {
           continue;
         }
-        final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(child, PsiWhiteSpace.class);
+        final PsiElement previousSibling = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
         if (previousSibling instanceof PsiComment) {
           final PsiComment comment = (PsiComment)previousSibling;
           final String commentText = comment.getText();
@@ -100,9 +100,13 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
             continue;
           }
         }
-        final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(child, PsiStatement.class);
+        final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
+        if (previousStatement instanceof PsiSwitchLabelStatement) {
+          // don't warn if there are no regular statements after the switch label
+          continue;
+        }
         if (ControlFlowUtils.statementMayCompleteNormally(previousStatement)) {
-          registerError(child);
+          registerError(statement);
         }
       }
     }

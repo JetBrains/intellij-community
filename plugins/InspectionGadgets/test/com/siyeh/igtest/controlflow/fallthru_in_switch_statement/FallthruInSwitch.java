@@ -20,7 +20,7 @@ public class FallthruInSwitch
             case (4):
                 System.out.println("3");
             case (5):
-            case (6):
+            case (6): // don't warn here
                 System.out.println("4");
         }
     }
