@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeInsight.navigation.actions;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
+import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -39,7 +40,7 @@ import java.util.*;
 /**
  * @author Medvedev Max
  */
-public class GroovyGotoSuperHandler extends GotoTargetHandler implements CodeInsightActionHandler {
+public class GroovyGotoSuperHandler extends GotoTargetHandler implements LanguageCodeInsightActionHandler {
 
   private static final Logger LOG = Logger.getInstance(GroovyGotoSuperHandler.class);
 
@@ -126,5 +127,10 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements CodeIns
     }
 
     return PsiMethod.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean isValidFor(Editor editor, PsiFile file) {
+    return file != null && GroovyFileType.GROOVY_FILE_TYPE.equals(file.getFileType());
   }
 }
