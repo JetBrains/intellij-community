@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
@@ -103,7 +104,7 @@ public class FormsBindingManager extends FormsBuilder {
     final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
     final Map<File, Collection<File>> srcToForms = new THashMap<File, Collection<File>>(FileUtil.FILE_HASHING_STRATEGY);
 
-    if (!context.isProjectRebuild() && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
+    if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
       // force compilation of all forms, but only once per chunk
       if (!FORMS_REBUILD_FORCED.get(context, Boolean.FALSE)) {
         FORMS_REBUILD_FORCED.set(context, Boolean.TRUE);

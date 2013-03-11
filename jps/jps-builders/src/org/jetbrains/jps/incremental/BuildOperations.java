@@ -112,8 +112,7 @@ public class BuildOperations {
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = dropRemovedPaths(context, chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
-        if (context.isMake() && target instanceof ModuleBuildTarget) {
-          // ensure non-incremental flag cleared
+        if (target instanceof ModuleBuildTarget) {
           context.clearNonIncrementalMark((ModuleBuildTarget)target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
