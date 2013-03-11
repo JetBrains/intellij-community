@@ -1,6 +1,6 @@
 package com.siyeh.igtest.bugs.var_arg;
 
-public class PrimitiveArrayArgumnetToVariableArgMethod
+public class PrimitiveArrayArgumentToVariableArgMethod
 {
     public static void main(String[] arg)
     {
@@ -14,5 +14,15 @@ public class PrimitiveArrayArgumnetToVariableArgMethod
 
     private static void methodVarArgByteArray(byte[]... bytes)
     {
+    }
+
+    class X<T> {
+        void method(T... t) {
+        }
+    }
+
+    void foo(byte[] bs) {
+        final X<byte[]> x = new X<byte[]>();
+        x.method(bs);
     }
 }
