@@ -71,6 +71,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JPanel myColorPreviewPanel;
   private JPanel myHeaderPanel;
   private JPanel myFooterPanel;
+  private JPanel myExtraOptionsPanel;
   private JCheckBox myCreateEntryCheckBox;
   private JCheckBox myGlobalEntryCheckBox;
   private JPanel myCreateEntryPanel;
@@ -79,6 +80,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
   private MyColorPreviewPanel myHidingPreviewPanel;
+  private NewColorAndFontPanel myColorAndFontPanel;
 
   public InitialConfigurationDialog(Component parent, String colorSettingsPage) {
     super(parent, true);
@@ -97,10 +99,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myAppearanceComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        UIManager.LookAndFeelInfo selectedLaf = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
-        if (selectedLaf.getName().contains("Darcula")) {
-          myColorSchemeComboBox.setSelectedItem(EditorColorsManager.getInstance().getScheme("Darcula"));
-        }
+        preselectColorScheme();
       }
     });
     myAppearanceComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
@@ -157,6 +156,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
         if (myHidingPreviewPanel != null) myHidingPreviewPanel.updateColorSchemePreview(true);
       }
     });
+    preselectColorScheme();
     setResizable(false);
     setCancelButtonText("Skip");
     init();
@@ -180,14 +180,28 @@ public class InitialConfigurationDialog extends DialogWrapper {
     Disposer.register(myDisposable, new Disposable() {
       @Override
       public void dispose() {
-        if (myPreviewEditor != null) {
-          myPreviewEditor.disposeUIResources();
-        }
-        if (myPreviewOptions != null) {
-          myPreviewOptions.disposeUIResources();
-        }
+        disposeUIResources();
       }
     });
+  }
+
+  private void preselectColorScheme() {
+    UIManager.LookAndFeelInfo selectedLaf = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
+    if (selectedLaf.getName().contains("Darcula")) {
+      myColorSchemeComboBox.setSelectedItem(EditorColorsManager.getInstance().getScheme("Darcula"));
+    }
+  }
+
+  private void disposeUIResources() {
+    if (myPreviewEditor != null) {
+      myPreviewEditor.disposeUIResources();
+    }
+    if (myPreviewOptions != null) {
+      myPreviewOptions.disposeUIResources();
+    }
+    if (myColorAndFontPanel != null) {
+      myColorAndFontPanel.disposeUIResources();
+    }
   }
 
   protected boolean canCreateDesktopEntry() {
@@ -223,6 +237,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private void createUIComponents() {
     myHeaderPanel = createHeaderPanel();
     myFooterPanel = createFooterPanel();
+    myExtraOptionsPanel = createExtraOptionsPanel();
     myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(AllIcons.General.ComboArrowRight,
                                                               AllIcons.General.ComboArrowDown,
                                                               "Click to preview") {
@@ -250,7 +265,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
         revalidate();
         myAddedWidth = getPreferredSize().width - getSize().width;
-        resizeTo(dialog.getSize().width + myAddedWidth, dialog.getSize().height + myPreviewEditor.getPanel().getPreferredSize().height);
+        final int newWidth = dialog.getSize().width + myAddedWidth;
+        final int newHeight = dialog.getSize().height + Math.min(myPreviewEditor.getPanel().getPreferredSize().height, newWidth);
+        resizeTo(newWidth, newHeight);
       }
 
       @Override
@@ -273,6 +290,12 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   protected JPanel createHeaderPanel() {
+    final JPanel panel = new JPanel();
+    panel.setVisible(false);
+    return panel;
+  }
+
+  protected JPanel createExtraOptionsPanel() {
     final JPanel panel = new JPanel();
     panel.setVisible(false);
     return panel;
@@ -321,10 +344,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     @Override
     public void dispose() {
-      if (myPreviewEditor != null) {
-        myPreviewEditor.disposeUIResources();
-      }
-      myPreviewOptions.disposeUIResources();
+      disposeUIResources();
     }
 
     public void updateColorSchemePreview(final boolean recalculateDialogSize) {
@@ -332,7 +352,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
       int wrapperHeight = 0;
       if (myPreviewEditor != null) {
-        wrapperHeight = myPreviewEditor.getPanel().getPreferredSize().height;
+        final Dimension preferredSize = myPreviewEditor.getPanel().getPreferredSize();
+        wrapperHeight = Math.min(preferredSize.height, preferredSize.width);
         myPreviewEditor.disposeUIResources();
         myWrapper.removeAll();
       }
@@ -341,9 +362,9 @@ public class InitialConfigurationDialog extends DialogWrapper {
       }
       myPreviewOptions.reset();
       myPreviewOptions.selectScheme(((EditorColorsScheme)myColorSchemeComboBox.getSelectedItem()).getName());
-      final NewColorAndFontPanel page = myPreviewOptions.findPage(myColorSettingsPage);
-      assert page != null;
-      myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, page.getSettingsPage(), false);
+      myColorAndFontPanel = myPreviewOptions.findPage(myColorSettingsPage);
+      assert myColorAndFontPanel != null;
+      myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, myColorAndFontPanel.getSettingsPage(), false);
       myPreviewEditor.updateView();
       myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
       if (recalculateDialogSize) {
