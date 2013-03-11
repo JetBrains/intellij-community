@@ -242,9 +242,17 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
           }
         }
       }
+      final PsiType newExprType = ((PsiNewExpression)element).getType();
       if (containingClass != null) {
         methodRefText = getClassReferenceName(containingClass);
-        final PsiType newExprType = ((PsiNewExpression)element).getType();
+      } else if (newExprType instanceof PsiArrayType){
+        final PsiType deepComponentType = newExprType.getDeepComponentType();
+        if (deepComponentType instanceof PsiPrimitiveType) {
+          methodRefText = deepComponentType.getCanonicalText();
+        }
+      }
+
+      if (methodRefText != null) {
         if (newExprType != null) {
           int dim = newExprType.getArrayDimensions();
           while (dim-- > 0) {
