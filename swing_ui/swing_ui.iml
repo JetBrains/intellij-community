@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="refs" />
     <orderEntry type="module" module-name="graph" />
+    <orderEntry type="library" name="swingx-1.6.1" level="project" />
   </component>
 </module>
 

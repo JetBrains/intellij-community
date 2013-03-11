@@ -39,6 +39,14 @@ public class Ref {
         return name.substring(ind + 1);
     }
 
+    @Override
+    public String toString() {
+        return "Ref{" +
+                "commitHash=" + commitHash +
+                ", name='" + name + '\'' +
+                ", type=" + type +
+                '}';
+    }
 
     public static enum RefType {
         LOCAL_BRANCH,
