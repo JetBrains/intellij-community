@@ -50,14 +50,13 @@ message Message {
         required string type_id = 1;
         optional bool all_targets = 2;
         repeated string target_id = 3;
+        optional bool force_build = 4;
       }
 
       enum Type {
-        REBUILD = 1;
-        MAKE = 2;
-        CLEAN = 3;
-        FORCED_COMPILATION = 4;
-        UP_TO_DATE_CHECK = 5;
+        BUILD = 1;
+        CLEAN = 2;
+        UP_TO_DATE_CHECK = 3;
       }
 
       required Type build_type = 1;

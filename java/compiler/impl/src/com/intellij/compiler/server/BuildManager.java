@@ -428,7 +428,7 @@ public class BuildManager implements ApplicationComponent{
       }
       final List<String> emptyList = Collections.emptyList();
       final RequestFuture future = scheduleBuild(
-        project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
+        project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(false), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
       );
       if (future != null) {
         futures.add(future);
@@ -560,15 +560,14 @@ public class BuildManager implements ApplicationComponent{
 
           final CmdlineRemoteProto.Message.ControllerMessage params;
           if (isRebuild) {
-            params = CmdlineProtoUtil.createRebuildRequest(projectPath, scopes, userData, globals);
+            params = CmdlineProtoUtil.createBuildRequest(projectPath, scopes, Collections.<String>emptyList(), userData, globals, null);
           }
           else if (onlyCheckUpToDate) {
             params = CmdlineProtoUtil.createUpToDateCheckRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
           }
           else {
-            params = isMake ?
-                     CmdlineProtoUtil.createMakeRequest(projectPath, scopes, userData, globals, currentFSChanges) :
-                     CmdlineProtoUtil.createForceCompileRequest(projectPath, scopes, paths, userData, globals, currentFSChanges);
+            params = CmdlineProtoUtil.createBuildRequest(projectPath, scopes, isMake ? Collections.<String>emptyList() : paths,
+                                                         userData, globals, currentFSChanges);
           }
 
           myMessageDispatcher.registerBuildMessageHandler(sessionId, new BuilderMessageHandlerWrapper(handler) {

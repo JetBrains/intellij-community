@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -120,12 +121,13 @@ public class BuildArtifactAction extends DumbAwareAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  protected static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
+  private static void doBuild(@NotNull Project project, final @NotNull List<ArtifactPopupItem> items, boolean rebuild) {
     final Set<Artifact> artifacts = getArtifacts(items, project);
-    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(project, artifacts);
+    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(project, artifacts, rebuild);
 
     ArtifactsWorkspaceSettings.getInstance(project).setArtifactsToBuild(artifacts);
-    if (!rebuild) {
+    if (!rebuild || CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
+      //in external build we can set 'rebuild' flag per target type
       CompilerManager.getInstance(project).make(scope, null);
     }
     else {
