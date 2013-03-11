@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FormatUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,11 +70,12 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       if (!JavaTokenType.PLUS.equals(tokenType) || !ExpressionUtils.hasStringType(expression)) {
         return;
       }
+      final boolean formatCall = FormatUtils.isFormatCallArgument(expression);
       final PsiExpression[] operands = expression.getOperands();
       PsiExpression lhs = operands[0];
       for (int i = 1; i < operands.length; i++) {
         final PsiExpression rhs = operands[i];
-        if (isMissingWhitespace(lhs, rhs)) {
+        if (isMissingWhitespace(lhs, rhs, formatCall)) {
           final PsiJavaToken token = expression.getTokenBeforeOperand(rhs);
           if (token != null) {
             registerError(token);
@@ -82,39 +85,38 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
       }
     }
 
-    private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs) {
-      final boolean lhsIsString = ExpressionUtils.hasStringType(lhs);
-      final PsiLiteralExpression lhsLiteral = ExpressionUtils.getLiteral(lhs);
-      final PsiLiteralExpression rhsLiteral = ExpressionUtils.getLiteral(rhs);
-      if (lhsLiteral != null && lhsIsString) {
-        final String value = (String)lhsLiteral.getValue();
-        if (value == null) {
-          return false;
-        }
-        final int length = value.length();
+    private boolean isMissingWhitespace(PsiExpression lhs, PsiExpression rhs, boolean formatCall) {
+      @NonNls final String lhsLiteral = ExpressionUtils.getLiteralString(lhs);
+      if (lhsLiteral != null) {
+        final int length = lhsLiteral.length();
         if (length == 0) {
           return false;
         }
-        final char c = value.charAt(length - 1);
+        if (formatCall && lhsLiteral.endsWith("%n")) {
+          return false;
+        }
+        final char c = lhsLiteral.charAt(length - 1);
         if (Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) {
           return false;
         }
       }
-      else if (ignoreNonStringLiterals || rhsLiteral == null || lhsIsString) {
+      else if (ignoreNonStringLiterals) {
         return false;
       }
-      final boolean rhsIsString = ExpressionUtils.hasStringType(rhs);
-      if (rhsLiteral != null && rhsIsString) {
-        final String value = (String)rhsLiteral.getValue();
-        if ((value == null) || value.isEmpty()) {
+      @NonNls final String rhsLiteral = ExpressionUtils.getLiteralString(rhs);
+      if (rhsLiteral != null) {
+        if (rhsLiteral.isEmpty()) {
           return false;
         }
-        final char c = value.charAt(0);
+        if (formatCall && rhsLiteral.startsWith("%n")) {
+          return false;
+        }
+        final char c = rhsLiteral.charAt(0);
         if (Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) {
           return false;
         }
       }
-      else if (ignoreNonStringLiterals || rhsIsString) {
+      else if (ignoreNonStringLiterals) {
         return false;
       }
       return true;

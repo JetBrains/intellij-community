@@ -233,7 +233,7 @@ public abstract class TestUtils {
 
               String name = nameElement.getText();
 
-              assert name.equals(psiReference.getName());
+              assert name.equals(psiReference.getReferenceName());
 
               int last = lastUnresolvedRef.get();
               sb.append(text, last, nameElement.getTextOffset());

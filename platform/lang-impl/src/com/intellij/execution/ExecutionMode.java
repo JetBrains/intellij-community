@@ -17,11 +17,11 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public class ExecutionMode {
   private final JComponent myProgressParentComponent;
   private Function<Object, Boolean> myShouldCancelFun;
   private final Object CANCEL_FUN_LOCK = new Object();
-  private List<ProcessListener> myListeners = new ArrayList<ProcessListener>(1);
+  private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ExecutionMode(final boolean cancelable,
                        @Nullable final String title,

@@ -101,7 +101,6 @@ public class GitImpl implements Git {
     throws VcsException {
     final Set<VirtualFile> untrackedFiles = new HashSet<VirtualFile>();
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
     h.endOptions();
@@ -133,11 +132,12 @@ public class GitImpl implements Git {
   public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
                                 @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
+    handler.setRemoteProtocol(url);
     handler.addParameters("--progress");
     handler.addParameters(url);
     handler.addParameters(clonedDirectoryName);
     addListeners(handler, listeners);
-    return run(handler, true);
+    return run(handler);
   }
 
   @NotNull
@@ -154,7 +154,6 @@ public class GitImpl implements Git {
     final GitLineHandler diff = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.DIFF);
     diff.addParameters(parameters);
     diff.addParameters(range);
-    diff.setNoSSH(true);
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
     diff.setSilent(true);
@@ -357,26 +356,27 @@ public class GitImpl implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec,
-                                      @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
+    h.setRemoteProtocol(url);
     h.setSilent(false);
     addListeners(h, listeners);
     h.addProgressParameter();
     h.addParameters(remote);
     h.addParameters(spec);
-    return run(h, true);
+    return run(h);
   }
 
   @Override
   @NotNull
-  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
-                                      @NotNull GitLineHandlerListener... listeners) {
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull String url,
+                               @NotNull GitLineHandlerListener... listeners) {
     GitRemote remote = pushSpec.getRemote();
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
-    return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
+    return push(repository, remote.getName(), url, pushSpec.getSource().getName() + ":" + destination, listeners);
   }
 
   @NotNull
@@ -417,16 +417,10 @@ public class GitImpl implements Git {
     }
   }
 
-  private static GitCommandResult run(@NotNull GitLineHandler handler) {
-    return run(handler, false);
-  } 
-
   /**
    * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
    */
-  private static GitCommandResult run(@NotNull GitLineHandler handler, boolean remote) {
-    handler.setNoSSH(!remote);
-
+  private static GitCommandResult run(@NotNull GitLineHandler handler) {
     final List<String> errorOutput = new ArrayList<String>();
     final List<String> output = new ArrayList<String>();
     final AtomicInteger exitCode = new AtomicInteger();

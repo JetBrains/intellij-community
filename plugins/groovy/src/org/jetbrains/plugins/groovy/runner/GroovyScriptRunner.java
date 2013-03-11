@@ -79,7 +79,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static void setGroovyHome(JavaParameters params, String groovyHome) {
+  protected static void setGroovyHome(JavaParameters params, @NotNull String groovyHome) {
     params.getVMParametersList().add("-Dgroovy.home=" + groovyHome);
     if (groovyHome.contains("grails")) { //a bit of a hack
       params.getVMParametersList().add("-Dgrails.home=" + groovyHome);

@@ -516,6 +516,13 @@ public class GroovyCompletionData {
         nearestLeftSibling(context.getParent()) instanceof GrIfStatement) {
       return true;
     }
+
+    if (context.getParent() != null &&
+        nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
+        nearestLeftSibling(nearestLeftSibling(context.getParent())) instanceof GrIfStatement) {
+      return true;
+    }
+
     if (context.getParent() != null &&
         nearestLeftSibling(context) != null &&
         nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {

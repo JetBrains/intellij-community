@@ -53,6 +53,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("Y", "X", false, 0);
   }
 
+  public void testDependantConstants() throws Exception {
+    doTest("A", "B", 0, 1);
+  }
+
   public void testTwoMethods() throws Exception {
     doTest("pack1.A", "pack1.C", 0, 1, 2);
   }

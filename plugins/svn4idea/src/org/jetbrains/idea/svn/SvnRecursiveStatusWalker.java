@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
 import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -43,6 +45,7 @@ import java.io.File;
 import java.util.LinkedList;
 
 public class SvnRecursiveStatusWalker {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
   private final StatusWalkerPartner myPartner;
   private final Project myProject;
   private final StatusReceiver myReceiver;
@@ -71,8 +74,9 @@ public class SvnRecursiveStatusWalker {
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
         try {
-          item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
-          myHandler.checkIfCopyRootWasReported();
+          final SvnStatusClientI client = item.getClient(ioFile);
+          client.doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler, null);
+          myHandler.checkIfCopyRootWasReported(null, ioFile);
         }
         catch (SVNException e) {
           handleStatusException(item, path, e);
@@ -223,10 +227,18 @@ public class SvnRecursiveStatusWalker {
       myMetCurrentItem = false;
     }
 
-    public void checkIfCopyRootWasReported() {
-      if (! myMetCurrentItem) {
+    public void checkIfCopyRootWasReported(@Nullable final SVNStatus ioFileStatus, final File ioFile) {
+      if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, myCurrentItem.getPath().getIOFile())) {
         myMetCurrentItem = true;
-        final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
+        SVNStatus statusInner;
+        try {
+          statusInner = ioFileStatus != null ? ioFileStatus :
+            myCurrentItem.getClient().doStatus(myCurrentItem.getPath().getIOFile(), false);
+        }
+        catch (SVNException e) {
+          LOG.info(e);
+          statusInner = null;
+        }
         if (statusInner == null)  return;
 
         final SVNStatusType status = statusInner.getNodeStatus();
@@ -261,7 +273,7 @@ public class SvnRecursiveStatusWalker {
     public void handleStatus(final SVNStatus status) throws SVNException {
       myPartner.checkCanceled();
       final File ioFile = status.getFile();
-      checkIfCopyRootWasReported();
+      checkIfCopyRootWasReported(status, ioFile);
 
       final VirtualFile vFile = getVirtualFile(ioFile);
       if (vFile != null) {

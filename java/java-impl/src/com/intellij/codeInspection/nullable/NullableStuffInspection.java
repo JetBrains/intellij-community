@@ -374,7 +374,12 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               fix = superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
             }
 
-            holder.registerProblem(annotation, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"),
+            PsiElement psiElement = annotation;
+            if (!annotation.isPhysical()) {
+              psiElement = method.getNameIdentifier();
+              if (psiElement == null) continue;
+            }
+            holder.registerProblem(psiElement, InspectionsBundle.message("nullable.stuff.problems.overridden.methods.are.not.annotated"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                    wrapFix(fix));
             methodQuickFixSuggested = true;
@@ -387,10 +392,18 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               if (parameterAnnotated[i] && !nullableManager.isNotNull(parameter, false) && !nullableManager.isNullable(parameter, false)) {
                 parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
-                holder.registerProblem(annotation,
+                PsiElement psiElement = annotation;
+                if (!annotation.isPhysical()) {
+                  psiElement = parameters[i].getNameIdentifier();
+                  if (psiElement == null) continue;
+                }
+                holder.registerProblem(psiElement,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       wrapFix(!applicable ? createChangeDefaultNotNullFix(nullableManager, parameters[i]) : new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())));
+                                       wrapFix(!applicable
+                                               ? createChangeDefaultNotNullFix(nullableManager, parameters[i])
+                                               : new AnnotateOverriddenMethodParameterFix(defaultNotNull,
+                                                                                          nullableManager.getDefaultNullable())));
                 parameterQuickFixSuggested[i] = true;
               }
             }

@@ -945,13 +945,6 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void updateBreakpoints(final DebugProcessImpl debugProcess) {
-    List<Breakpoint> breakpoints = getBreakpoints();
-    for (Breakpoint breakpoint : breakpoints) {
-      RequestManagerImpl.updateRequests(breakpoint);
-    }
-  }
-
   public void updateAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 

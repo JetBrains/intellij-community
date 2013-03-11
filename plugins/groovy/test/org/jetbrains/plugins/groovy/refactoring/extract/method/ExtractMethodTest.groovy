@@ -73,13 +73,19 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   }
 
   private GroovyExtractMethodHandler configureFromText(String fileText, final String name) {
-    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
-    fileText = TestUtils.removeBeginMarker(fileText);
-    int endOffset = fileText.indexOf(TestUtils.END_MARKER);
-    fileText = TestUtils.removeEndMarker(fileText);
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    final caret = fileText.indexOf(TestUtils.CARET_MARKER)
+    if (caret >= 0) {
+      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    }
+    else {
+      int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
+      fileText = TestUtils.removeBeginMarker(fileText);
+      int endOffset = fileText.indexOf(TestUtils.END_MARKER);
+      fileText = TestUtils.removeEndMarker(fileText);
+      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+      myFixture.editor.selectionModel.setSelection(startOffset, endOffset);
+    }
 
-    myFixture.editor.selectionModel.setSelection(startOffset, endOffset);
     return new GroovyExtractMethodHandler() {
       @Override
       protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
@@ -152,4 +158,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testTupleDeclaration() { doTest() }
 
   public void testNonIdentifierName() {doTest('f*f')}
+
+  public void testAutoSelectExpression() { doTest() }
 }

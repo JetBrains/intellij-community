@@ -17,8 +17,7 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
@@ -33,8 +32,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +46,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 public class DiffSideView {
@@ -172,8 +171,14 @@ public class DiffSideView {
     };
 
     private static boolean isEventHandled(MouseEvent e) {
-      int mask = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
-      return e.getButton() == MouseEvent.BUTTON1 && (e.getModifiers() & mask) != 0;
+      Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+      Shortcut[] shortcuts = activeKeymap.getShortcuts(IdeActions.ACTION_GOTO_DECLARATION);
+      for (Shortcut shortcut : shortcuts) {
+        if (shortcut instanceof MouseShortcut) {
+          return ((MouseShortcut)shortcut).getButton() == e.getButton() && ((MouseShortcut)shortcut).getModifiers() == e.getModifiersEx();
+        }
+      }
+      return false;
     }
 
     private OpenFileDescriptor getOpenFileDescriptor(EditorMouseEvent e) {

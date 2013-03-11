@@ -36,12 +36,15 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
 
     myDebuggerContext = stateManager.getContext();
 
-    myInspectView = new InspectPanel(project, myDebuggerContext.getDebuggerSession().getContextManager(), inspectDescriptor);
+    final DebuggerSession session = myDebuggerContext.getDebuggerSession();
+    assert session != null;
+
+    myInspectView = new InspectPanel(project, session.getContextManager(), inspectDescriptor);
     myInspectView.setBorder(BorderFactory.createEtchedBorder());
 
     init();
 
-    myDebuggerContext.getDebuggerSession().getContextManager().addListener(this);
+    session.getContextManager().addListener(this);
     getInspectView().rebuildIfVisible(DebuggerSession.EVENT_CONTEXT);
   }
 
@@ -54,7 +57,10 @@ public class InspectDialog extends DialogWrapper implements DebuggerContextListe
   }
 
   public void dispose() {
-    myDebuggerContext.getDebuggerSession().getContextManager().removeListener(this);
+    final DebuggerSession session = myDebuggerContext.getDebuggerSession();
+    if (session != null) {
+      session.getContextManager().removeListener(this);
+    }
     if (myInspectView != null) {
       myInspectView.dispose();
       myInspectView = null;

@@ -26,7 +26,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class PauseActionHandler extends DebuggerActionHandler {
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().pause();
+    final DebuggerSession session = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
+    if (session != null) {
+      session.pause();
+    }
   }
 
   @Override

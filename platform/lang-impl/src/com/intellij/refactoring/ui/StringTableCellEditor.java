@@ -21,12 +21,12 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author dsl
@@ -34,7 +34,7 @@ import java.util.Set;
 public class StringTableCellEditor extends AbstractCellEditor implements TableCellEditor {
   private Document myDocument;
   private final Project myProject;
-  private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
+  private final List<DocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public StringTableCellEditor(final Project project) {
     myProject = project;

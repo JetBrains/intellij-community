@@ -121,6 +121,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/source/s1.txt", tree.myS1File.getPath());
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
+    sleep(50);
     myWorkingCopyDir.refresh(false, true);
     imitateEvent(myWorkingCopyDir);
     // no dirty scope externally provided! just VFS refresh

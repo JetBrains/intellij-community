@@ -308,9 +308,8 @@ public class HtmlUtil {
 
     switch (type) {
       case XmlEntitiesInspection.UNKNOWN_TAG:
-        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
-                                                                                                   containingFile);
-        HtmlUnknownTagInspection unknownTagInspection = wrapper != null ? (HtmlUnknownTagInspection)wrapper.getTool() : null;
+        HtmlUnknownTagInspection unknownTagInspection = (HtmlUnknownTagInspection)profile.getUnwrappedTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
+                                                                                                           containingFile);
         if (unknownTagInspection != null) {
           return unknownTagInspection.getAdditionalEntries();
         }

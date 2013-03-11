@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -143,5 +145,15 @@ public class ActionUtil {
 
     return true;
   }
+
+  public static void performActionDumbAware(AnAction action, AnActionEvent e) {
+    try {
+      action.actionPerformed(e);
+    }
+    catch (IndexNotReadyException e1) {
+      showDumbModeWarning(e);
+    }
+  }
+
 
 }

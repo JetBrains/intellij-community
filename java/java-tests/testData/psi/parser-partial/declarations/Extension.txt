@@ -2,10 +2,11 @@ PsiJavaFile:Extension.java
   PsiJavaToken:LBRACE('{')
   PsiWhiteSpace(' ')
   PsiMethod:f
-    PsiModifierList:
-      <empty list>
+    PsiModifierList:default
+      PsiKeyword:default('default')
     PsiTypeParameterList
       <empty list>
+    PsiWhiteSpace(' ')
     PsiTypeElement:int
       PsiKeyword:int('int')
     PsiWhiteSpace(' ')
@@ -21,8 +22,6 @@ PsiJavaFile:Extension.java
         PsiIdentifier:E('E')
         PsiReferenceParameterList
           <empty list>
-    PsiWhiteSpace(' ')
-    PsiKeyword:default('default')
     PsiWhiteSpace(' ')
     PsiCodeBlock
       PsiJavaToken:LBRACE('{')

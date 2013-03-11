@@ -16,6 +16,7 @@
 
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -146,5 +147,22 @@ public class URLUtil {
 
   public static boolean containsScheme(String url) {
     return url.contains("://");
+  }
+
+  /**
+   * Splits the url into 2 parts: the scheme ("http://" for instance) and the rest of the URL.
+   * The scheme can be null.
+   */
+  @NotNull
+  public static Pair<String, String> splitScheme(@NotNull String url) {
+    final String schemeSeparator = "://";
+    int ind = url.indexOf(schemeSeparator);
+    if (ind >= 0) {
+      String scheme = url.substring(0, ind + schemeSeparator.length());
+      return Pair.create(scheme, url.substring(ind));
+    }
+    else {
+      return Pair.create(null, url);
+    }
   }
 }

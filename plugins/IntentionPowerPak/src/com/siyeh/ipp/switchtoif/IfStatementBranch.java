@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ class IfStatementBranch {
   private final Set<String> topLevelVariables = new HashSet<String>(3);
   private final LinkedList<String> comments = new LinkedList<String>();
   private final LinkedList<String> statementComments = new LinkedList<String>();
-  private final List<String> conditions = new ArrayList<String>(3);
+  private final List<PsiExpression> caseExpressions = new ArrayList<PsiExpression>(3);
   private final PsiStatement statement;
   private final boolean elseBranch;
 
@@ -42,30 +42,28 @@ class IfStatementBranch {
     statementComments.addFirst(comment);
   }
 
-  public void addCondition(String conditionString) {
-    conditions.add(conditionString);
+  public void addCaseExpression(PsiExpression expression) {
+    caseExpressions.add(expression);
   }
 
   public PsiStatement getStatement() {
     return statement;
   }
 
-  public List<String> getConditions() {
-    return Collections.unmodifiableList(conditions);
+  public List<PsiExpression> getCaseExpressions() {
+    return Collections.unmodifiableList(caseExpressions);
   }
 
   public boolean isElse() {
     return elseBranch;
   }
 
-  public boolean topLevelDeclarationsConflictWith(
-    IfStatementBranch testBranch) {
+  public boolean topLevelDeclarationsConflictWith(IfStatementBranch testBranch) {
     final Set<String> topLevel = testBranch.topLevelVariables;
     return intersects(topLevelVariables, topLevel);
   }
 
-  private static boolean intersects(Set<String> set1,
-                                    Set<String> set2) {
+  private static boolean intersects(Set<String> set1, Set<String> set2) {
     for (final String s : set1) {
       if (set2.contains(s)) {
         return true;
@@ -87,10 +85,8 @@ class IfStatementBranch {
       return;
     }
     if (statement instanceof PsiDeclarationStatement) {
-      final PsiDeclarationStatement declarationStatement =
-        (PsiDeclarationStatement)statement;
-      final PsiElement[] elements =
-        declarationStatement.getDeclaredElements();
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
+      final PsiElement[] elements = declarationStatement.getDeclaredElements();
       for (PsiElement element : elements) {
         final PsiVariable variable = (PsiVariable)element;
         final String varName = variable.getName();

@@ -211,7 +211,7 @@
               icon="AllIcons.Vcs.CheckSpelling"/>
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
-              icon="AllIcons.Vcs.MessageHistory"/>
+              icon="AllIcons.General.MessageHistory"/>
     </group>
 
     <group id="VcsToobarActions">

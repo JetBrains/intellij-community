@@ -20,8 +20,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.tasks.LocalTask;
@@ -51,16 +49,12 @@ public class ShowTaskDescription extends BaseTaskAction {
     final Project project = getProject(e);
     assert project != null;
     final LocalTask task = getActiveTask(e);
-    try {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null);
-        }
-      }, getCommandName(), null);
-    } catch (IndexNotReadyException e1) {
-      DumbService.getInstance(project).showDumbModeNotification("Documentation is not available until indices are built");
-    }
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        DocumentationManager.getInstance(project).showJavaDocInfo(new TaskPsiElement(PsiManager.getInstance(project), task), null);
+      }
+    }, getCommandName(), null);
   }
 
   protected String getCommandName() {

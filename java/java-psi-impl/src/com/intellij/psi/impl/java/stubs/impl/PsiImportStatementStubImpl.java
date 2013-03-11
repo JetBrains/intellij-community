@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,15 @@ import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase> implements PsiImportStatementStub {
   private final byte myFlags;
   private final StringRef myText;
-  private PatchedSoftReference<PsiJavaCodeReferenceElement> myReference = null;
+  private SoftReference<PsiJavaCodeReferenceElement> myReference = null;
 
   private final static int ON_DEMAND = 0x01;
   private final static int STATIC = 0x02;
@@ -80,7 +80,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     PsiJavaCodeReferenceElement ref = myReference != null ? myReference.get() : null;
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
-      myReference = new PatchedSoftReference<PsiJavaCodeReferenceElement>(ref);
+      myReference = new SoftReference<PsiJavaCodeReferenceElement>(ref);
     }
     return ref;
   }

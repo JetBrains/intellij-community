@@ -119,9 +119,20 @@ public class ConstantIfStatementInspection extends BaseInspection {
           final PsiStatement[] statements = block.getStatements();
           if (statements.length > 0) {
             assert containingElement != null;
-            final PsiElement added =
-              containingElement.addRangeBefore(statements[0],
-                                               statements[statements.length - 1], statement);
+            final PsiJavaToken lBrace = block.getLBrace();
+            final PsiJavaToken rBrace = block.getRBrace();
+            PsiElement added = null;
+            if (lBrace != null && rBrace != null) {
+              final PsiElement firstNonBrace = lBrace.getNextSibling();
+              final PsiElement lastNonBrace = rBrace.getPrevSibling();
+              if (firstNonBrace != null && lastNonBrace != null) {
+                added = containingElement.addRangeBefore(firstNonBrace, lastNonBrace, statement);
+              }
+            }
+            if (added == null) {
+              added = containingElement.addRangeBefore(statements[0],
+                                                       statements[statements.length - 1], statement);
+            }
             final Project project = statement.getProject();
             final CodeStyleManager codeStyleManager =
               CodeStyleManager.getInstance(project);

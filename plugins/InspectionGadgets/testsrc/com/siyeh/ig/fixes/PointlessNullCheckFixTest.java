@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
- *pointless.nullcheck.quickfix
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,10 +26,9 @@ public class PointlessNullCheckFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new PointlessNullCheckInspection());
     myRelativePath = "pointlessnullcheck";
-    myDefaultHint = InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix");
   }
 
   public void testScenario1() {
-    doTest();
+    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
   }
 }

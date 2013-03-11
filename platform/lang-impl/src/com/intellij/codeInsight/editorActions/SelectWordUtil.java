@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.extensions.Extensions;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -205,4 +207,28 @@ public class SelectWordUtil {
     return stop;
   }
 
+  public static void addWordHonoringEscapeSequences(CharSequence editorText,
+                                                    TextRange literalTextRange,
+                                                    int cursorOffset,
+                                                    Lexer lexer,
+                                                    List<TextRange> result) {
+    lexer.start(editorText, literalTextRange.getStartOffset(), literalTextRange.getEndOffset());
+
+    while (lexer.getTokenType() != null) {
+      if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {
+        if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
+          result.add(new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()));
+        }
+        else {
+          TextRange word = getWordSelectionRange(editorText, cursorOffset);
+          if (word != null) {
+            result.add(new TextRange(Math.max(word.getStartOffset(), lexer.getTokenStart()),
+                                     Math.min(word.getEndOffset(), lexer.getTokenEnd())));
+          }
+        }
+        break;
+      }
+      lexer.advance();
+    }
+  }
 }

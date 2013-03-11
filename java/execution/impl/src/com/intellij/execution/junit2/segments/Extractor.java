@@ -108,6 +108,10 @@ public class Extractor implements Disposable {
     return new SegmentedInputStreamReader(myStream);
   }
 
+  public void addRequest(Runnable runnable, final DeferredActionsQueue queue) {
+    myQueue.queue(new MyUpdate(runnable, queue, myOrder.incrementAndGet()));
+  }
+  
   private static class MyUpdate extends Update {
     private final Runnable myRunnable;
     private final DeferredActionsQueue myQueue;

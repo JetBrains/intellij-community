@@ -67,7 +67,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) return;
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
     final Project project = myReferenceExpression.getProject();
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>IgnoreResultOfCall.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Result of method call ignored</problem_class>
+    <description>Result of &lt;code&gt;Object.equals()&lt;/code&gt; is ignored #loc</description>
+  </problem>
+</problems>

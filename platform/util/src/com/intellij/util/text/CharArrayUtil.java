@@ -194,17 +194,36 @@ public class CharArrayUtil {
   }
 
   public static int shiftForward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    while (true) {
-      if (offset >= buffer.length()) break;
+    return shiftForward(buffer, offset, buffer.length(), chars);
+  }
+
+  /**
+   * Tries to find an offset from the <code>[startOffset; endOffset)</code> interval such that a char from the given buffer is
+   * not contained at the given 'chars' string.
+   * <p/>
+   * Example:
+   * {@code buffer="abc", startOffset=0, endOffset = 3, chars="ab". Result: 2}
+   * 
+   * @param buffer       target buffer which symbols should be checked
+   * @param startOffset  start offset to use within the given buffer (inclusive)
+   * @param endOffset    end offset to use within the given buffer (exclusive)
+   * @param chars        pass-through symbols
+   * @return             offset from the <code>[startOffset; endOffset)</code> which points to a symbol at the given buffer such
+   *                     as that that symbol is not contained at the given 'chars';
+   *                     <code>endOffset</code> otherwise
+   */
+  public static int shiftForward(@NotNull CharSequence buffer, final int startOffset, final int endOffset, @NotNull String chars) {
+    for (int offset = startOffset, limit = Math.min(endOffset, buffer.length()); offset < limit; offset++) {
       char c = buffer.charAt(offset);
-      int i;      
+      int i;
       for (i = 0; i < chars.length(); i++) {
         if (c == chars.charAt(i)) break;
       }
-      if (i == chars.length()) break;
-      offset++;
+      if (i >= chars.length()) {
+        return offset;
+      }
     }
-    return offset;
+    return endOffset;
   }
 
   public static int shiftForwardCarefully(@NotNull CharSequence buffer, int offset, @NotNull String chars) {

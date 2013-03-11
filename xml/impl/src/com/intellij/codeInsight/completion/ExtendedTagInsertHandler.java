@@ -155,7 +155,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final PsiElement tag = element.getParent();
     if (tag instanceof XmlTag) {
       final String prefix = ((XmlTag)tag).getNamespacePrefix();
-      if (!prefix.equals(namespacePrefix)) {
+      if (!prefix.equals(namespacePrefix) && StringUtil.isNotEmpty(namespacePrefix)) {
         final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
         try {
           ((XmlTag)tag).setName(name);

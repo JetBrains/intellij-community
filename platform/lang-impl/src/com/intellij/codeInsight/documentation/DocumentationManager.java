@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -135,6 +136,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
+          if (action instanceof ListScrollingUtil.ListScrollAction) return;
           if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
@@ -188,21 +190,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
-    if (myToolWindow == null) {
-      createToolWindow(element, original);
-      return;
-    }
-
-    final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content == null || !myToolWindow.isVisible()) {
-      restorePopupBehavior();
-      createToolWindow(element, original);
-      return;
-    }
+    final Content content = recreateToolWindow(element, original);
+    if (content == null) return;
 
     fetchDocInfo(getDefaultCollector(element, original), (DocumentationComponent)content.getComponent(), true);
   }
-  
+
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
     showJavaDocInfo(element, original, false, null);
   }

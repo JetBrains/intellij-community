@@ -139,7 +139,9 @@ public class IntentionUtils {
                 if (hasNoReturnType) {
                   ((GrMethod)method).setReturnType(PsiType.VOID);
                 }
-                CreateFromUsageUtils.setupMethodBody(method);
+                if (method.getBody() != null) {
+                  CreateFromUsageUtils.setupMethodBody(method);
+                }
                 if (hasNoReturnType) {
                   ((GrMethod)method).setReturnType(null);
                 }

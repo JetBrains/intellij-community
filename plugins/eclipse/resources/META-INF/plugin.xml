@@ -24,4 +24,7 @@
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
   </actions>
+  <extensionPoints>
+    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter"/>
+  </extensionPoints>
 </idea-plugin>

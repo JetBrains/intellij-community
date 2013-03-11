@@ -112,8 +112,8 @@ public class ButtonToolbarImpl extends JPanel {
             ActionManager.getInstance(),
             e.getModifiers()
           );
-          if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
-            action.actionPerformed(event);
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            ActionUtil.performActionDumbAware(action, event);
           }
         }
       });

@@ -805,5 +805,13 @@ string
         FileUtil.delete(systemRoot);
       }
     }
+
+    public void "test no groovy library"() {
+      myFixture.addFileToProject("dependent/a.groovy", "");
+      addModule("dependent", true)
+
+      def messages = make()
+      assert messages.find { it.message.contains("Cannot compile Groovy files: no Groovy library is defined for module 'dependent'") }
+    }
   }
 }

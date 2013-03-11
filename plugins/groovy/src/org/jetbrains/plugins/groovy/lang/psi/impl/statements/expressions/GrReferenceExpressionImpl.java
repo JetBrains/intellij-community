@@ -38,7 +38,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -185,7 +184,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return fieldCandidates;
     }
 
-    if (findClassOrPackageAtFirst()) {
+
+    boolean canBeClassOrPackage = ResolveUtil.canBeClassOrPackage(this);
+
+    if (canBeClassOrPackage && findClassOrPackageAtFirst()) {
       boolean preferVar = containsLocalVar(fieldCandidates);
       if (!preferVar) {
         ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
@@ -226,12 +228,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
     if (fieldCandidates.length > 0) return fieldCandidates;
-    if (classCandidates == null) {
+    if (classCandidates == null && canBeClassOrPackage ) {
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       GrReferenceResolveUtil.resolveImpl(classProcessor, this);
       classCandidates = classProcessor.getCandidates();
     }
-    if (classCandidates.length > 0) return classCandidates;
+    if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
   }
@@ -742,22 +744,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
-  }
-
-  public String getName() {
-    return getReferenceName();
-  }
-
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    PsiElement nameElement = getReferenceNameElement();
-    if (nameElement == null) throw new IncorrectOperationException("ref has no name element");
-
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(name).getNode();
-    LOG.assertTrue(newNameNode != null && node != null);
-    node.getTreeParent().replaceChild(node, newNameNode);
-
-    return this;
   }
 
   @NotNull

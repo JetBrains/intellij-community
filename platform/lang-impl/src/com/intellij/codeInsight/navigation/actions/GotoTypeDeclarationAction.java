@@ -27,8 +27,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -67,18 +65,13 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
-    try {
-      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
-      if (symbolTypes == null || symbolTypes.length == 0) return;
-      if (symbolTypes.length == 1) {
-        navigate(project, symbolTypes[0]);
-      }
-      else {
-        NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
-      }
+    PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+    if (symbolTypes == null || symbolTypes.length == 0) return;
+    if (symbolTypes.length == 1) {
+      navigate(project, symbolTypes[0]);
     }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Type information is not available during index update");
+    else {
+      NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
     }
   }
 

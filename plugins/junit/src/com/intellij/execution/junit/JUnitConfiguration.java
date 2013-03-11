@@ -32,10 +32,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -376,6 +373,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
     }
     myData.setPatterns(patterns);
+    final Module module = PatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    if (module == null) {
+      myData.setScope(TestSearchScope.WHOLE_PROJECT);
+      setModule(null);
+    } else {
+      setModule(module);
+    }
     setGeneratedName();
   }
 

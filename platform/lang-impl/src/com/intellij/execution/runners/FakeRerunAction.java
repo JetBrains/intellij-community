@@ -19,15 +19,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Roman.Chernyatchik
  */
 public class FakeRerunAction extends AnAction implements DumbAware {
-  protected static final List<RestartAction> registry = new CopyOnWriteArrayList<RestartAction>();
+  protected static final List<RestartAction> registry = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public void actionPerformed(AnActionEvent e) {
     RestartAction action = RestartAction.findActualAction();

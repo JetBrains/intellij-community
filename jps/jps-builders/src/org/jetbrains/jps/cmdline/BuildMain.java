@@ -18,7 +18,9 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -31,10 +33,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import java.io.File;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
@@ -44,8 +47,11 @@ import java.util.UUID;
  */
 public class BuildMain {
   public static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create("_force_model_loading");
-  private static final String LOG_FILE_NAME = "log.xml";
 
+  private static final String LOG_CONFIG_FILE_NAME = "build-log.xml";
+  private static final String LOG_FILE_NAME = "build.log";
+  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
+  private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
   private static final Logger LOG;
   static {
     initLoggers();
@@ -202,8 +208,18 @@ public class BuildMain {
   }
 
   private static void initLoggers() {
-    if (new File(LOG_FILE_NAME).exists()) {
-      DOMConfigurator.configure(LOG_FILE_NAME);
+    try {
+      final String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
+      final File configFile = logDir != null? new File(logDir, LOG_CONFIG_FILE_NAME) : new File(LOG_CONFIG_FILE_NAME);
+      ensureLogConfigExists(configFile);
+      String text = FileUtil.loadFile(configFile);
+      final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
+      text = StringUtil.replace(text, LOG_FILE_MACRO, StringUtil.replace(logFile, "\\", "\\\\"));
+      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
+    }
+    catch (IOException e) {
+      System.err.println("Failed to configure logging: ");
+      e.printStackTrace(System.err);
     }
 
     Logger.setFactory(new Logger.Factory() {
@@ -259,6 +275,32 @@ public class BuildMain {
         };
       }
     });
+  }
+
+  private static void ensureLogConfigExists(final File logConfig) {
+    if (!logConfig.exists()) {
+      FileUtil.createIfDoesntExist(logConfig);
+      try {
+        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+        if (in != null) {
+          try {
+            final FileOutputStream out = new FileOutputStream(logConfig);
+            try {
+              FileUtil.copy(in, out);
+            }
+            finally {
+              out.close();
+            }
+          }
+          finally {
+            in.close();
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
 }

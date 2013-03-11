@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.StringEscapesTokenTypes;
 
 import java.util.List;
 
@@ -44,25 +43,9 @@ public class LiteralSelectioner extends BasicSelectioner {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
     TextRange range = e.getTextRange();
-    final StringLiteralLexer lexer = new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL);
-    lexer.start(editorText, range.getStartOffset(), range.getEndOffset());
-
-    while (lexer.getTokenType() != null) {
-      if (lexer.getTokenStart() <= cursorOffset && cursorOffset < lexer.getTokenEnd()) {
-        if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
-          result.add(new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()));
-        }
-        else {
-          TextRange word = SelectWordUtil.getWordSelectionRange(editorText, cursorOffset);
-          if (word != null) {
-            result.add(new TextRange(Math.max(word.getStartOffset(), lexer.getTokenStart()),
-                                     Math.min(word.getEndOffset(), lexer.getTokenEnd())));
-          }
-        }
-        break;
-      }
-      lexer.advance();
-    }
+    SelectWordUtil.addWordHonoringEscapeSequences(editorText, range, cursorOffset,
+                                                  new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
+                                                  result);
 
     result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
 

@@ -145,7 +145,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
      */
     public void setState(final DebuggerContextImpl context, final int state, final int event, final String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      LOG.assertTrue(context.getDebuggerSession() == DebuggerSession.this || context.getDebuggerSession() == null);
+      final DebuggerSession session = context.getDebuggerSession();
+      LOG.assertTrue(session == DebuggerSession.this || session == null);
       final Runnable setStateRunnable = new Runnable() {
         public void run() {
           LOG.assertTrue(myDebuggerContext.isInitialised());

@@ -224,7 +224,8 @@ public class FramesPanel extends UpdatableDebuggerView {
 
   private void doRebuild(boolean refreshOnly) {
     final DebuggerContextImpl context = getContext();
-    final boolean paused = context.getDebuggerSession().isPaused();
+    final DebuggerSession session = context.getDebuggerSession();
+    final boolean paused = session != null && session.isPaused();
     if (!paused || !refreshOnly) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {

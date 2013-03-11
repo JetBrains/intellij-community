@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -230,6 +231,18 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       entry.addSourceFolder(url, true);
     }
 
+    for (Object o : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
+      Element ppElement = (Element)o;
+      final String prefix = ppElement.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR);
+      final String url = ppElement.getAttributeValue(IdeaXml.URL_ATTR);
+      for (SourceFolder folder : entry.getSourceFolders()) {
+        if (Comparing.strEqual(folder.getUrl(), url)) {
+          folder.setPackagePrefix(prefix);
+          break;
+        }
+      }
+    }
+    
     final String url = entry.getUrl();
     for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
       final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
@@ -276,6 +289,14 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           Element element = new Element(IdeaXml.TEST_FOLDER_TAG);
           contentEntryElement.addContent(element);
           element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
+          isModified = true;
+        }
+        final String packagePrefix = sourceFolder.getPackagePrefix();
+        if (!StringUtil.isEmptyOrSpaces(packagePrefix)) {
+          Element element = new Element(IdeaXml.PACKAGE_PREFIX_TAG);
+          contentEntryElement.addContent(element);
+          element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
+          element.setAttribute(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR, packagePrefix);
           isModified = true;
         }
       }

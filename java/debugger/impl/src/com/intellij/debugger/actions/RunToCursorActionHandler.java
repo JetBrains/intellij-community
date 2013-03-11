@@ -83,6 +83,9 @@ public class RunToCursorActionHandler extends DebuggerActionHandler {
     if (debugProcess == null) {
       return;
     }
-    context.getDebuggerSession().runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, myIgnoreBreakpoints);
+    final DebuggerSession session = context.getDebuggerSession();
+    if (session != null) {
+      session.runToCursor(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line, myIgnoreBreakpoints);
+    }
   }
 }

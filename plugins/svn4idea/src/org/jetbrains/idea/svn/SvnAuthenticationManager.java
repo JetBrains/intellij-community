@@ -71,6 +71,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private final ThreadLocalSavePermissions mySavePermissions;
   private final Map<Thread, String> myKeyAlgorithm;
   private boolean myArtificialSaving;
+  private ISVNAuthenticationProvider myProvider;
+  private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<ISVNAuthenticationProvider>();
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
@@ -104,6 +106,23 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
       }
     });
+  }
+
+  @Override
+  public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
+    myProvider = provider;
+    super.setAuthenticationProvider(provider);
+  }
+
+  public ISVNAuthenticationProvider getProvider() {
+    final ISVNAuthenticationProvider threadProvider = ourThreadLocalProvider.get();
+    if (threadProvider != null) return threadProvider;
+    return myProvider;
+  }
+
+  @Override
+  public ISVNAuthenticationStorage getRuntimeAuthStorage() {
+    return super.getRuntimeAuthStorage();
   }
 
   // since set to null during dispose and we have background processes
@@ -361,6 +380,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public void acknowledgeConnectionSuccessful(SVNURL url) {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
     SSLExceptionsHelper.removeInfo();
+    ourThreadLocalProvider.remove();
+  }
+
+  @Override
+  public void acknowledgeAuthentication(boolean accepted,
+                                        String kind,
+                                        String realm,
+                                        SVNErrorMessage errorMessage,
+                                        SVNAuthentication authentication) throws SVNException {
+    acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication, null);
   }
 
   @Override
@@ -371,7 +400,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                         SVNAuthentication authentication,
                                         SVNURL url) throws SVNException {
     SSLExceptionsHelper.removeInfo();
-    CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    ourThreadLocalProvider.remove();
+    if (url != null) {
+      CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
+    }
     boolean successSaving = false;
     myListener.getMulticaster().acknowledge(accepted, kind, realm, errorMessage, authentication);
     try {
@@ -390,6 +422,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
     SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
     CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
+    ourThreadLocalProvider.set(myProvider);
     // this code taken from default manager (changed for system properties reading)
     String host = url.getHost();
 

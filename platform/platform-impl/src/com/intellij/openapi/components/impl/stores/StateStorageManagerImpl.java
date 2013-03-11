@@ -94,7 +94,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   public synchronized void addMacro(String macro, String expansion) {
-    myMacros.put("$" + macro + "$", expansion);
+    // avoid hundreds of $MODULE_FILE$ instances
+    myMacros.put(("$" + macro + "$").intern(), expansion);
   }
 
   @Nullable

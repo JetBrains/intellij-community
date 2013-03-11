@@ -22,14 +22,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author dsl
@@ -40,7 +40,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
   private final Project myProject;
   private final FileType myFileType;
   protected EditorTextField myEditorTextField;
-  private Set<DocumentListener> myListeners = new HashSet<DocumentListener>();
+  private final List<DocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public CodeFragmentTableCellEditorBase(final Project project, FileType fileType) {
     myProject = project;

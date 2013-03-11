@@ -237,6 +237,9 @@ public class MavenFoldersImporter {
 
         addAllSubDirsAsSources(targetDir, isTestSources);
         break;
+
+      case IGNORE:
+        break; // Ignore.
     }
   }
 

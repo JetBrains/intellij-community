@@ -1,14 +1,18 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +23,28 @@ import java.util.Map;
 public class PathEnvironmentVariableUtil {
 
   public static final String PATH_ENV_VAR_NAME = "PATH";
-
-  private static final String ourFixedMacPathEnvVarValue;
+  private static final Logger LOG = Logger.getInstance(PathEnvironmentVariableUtil.class);
+  private static final Map<String, String> ENVIRONMENT_VARIABLES;
+  private static final String FIXED_MAC_PATH_VALUE;
 
   static {
-    ourFixedMacPathEnvVarValue = calcFixedMacPathEnvVarValue();
+    Map<String, String> envVars = EnvironmentUtil.getEnvironmentProperties();
+    if (SystemInfo.isWindows) {
+      THashMap<String, String> map = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      map.putAll(envVars);
+      ENVIRONMENT_VARIABLES = map;
+    }
+    else {
+      ENVIRONMENT_VARIABLES = envVars;
+    }
+    String fixedPathValue = null;
+    try {
+      fixedPathValue = calcFixedMacPathEnvVarValue();
+    }
+    catch (Throwable t) {
+      LOG.error("Can't initialize class " + PathEnvironmentVariableUtil.class.getName(), t);
+    }
+    FIXED_MAC_PATH_VALUE = fixedPathValue;
   }
 
   private PathEnvironmentVariableUtil() {
@@ -35,9 +56,10 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static String getFixedPathEnvVarValueOnMac() {
-    return ourFixedMacPathEnvVarValue;
+    return FIXED_MAC_PATH_VALUE;
   }
 
+  @Nullable
   private static String calcFixedMacPathEnvVarValue() {
     if (SystemInfo.isMac) {
       final String originalPath = getOriginalPathEnvVarValue();
@@ -67,8 +89,7 @@ public class PathEnvironmentVariableUtil {
 
   @Nullable
   private static String getOriginalPathEnvVarValue() {
-    Map<String, String> originalEnvVars = EnvironmentUtil.getEnvironmentProperties();
-    return originalEnvVars.get(PATH_ENV_VAR_NAME);
+    return ENVIRONMENT_VARIABLES.get(PATH_ENV_VAR_NAME);
   }
 
   @NotNull
@@ -92,18 +113,42 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName) {
-    String pathEnvVarValue = getReliablePath();
-    List<String> paths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
+    List<File> exeFiles = findExeFilesInPath(fileBaseName, true);
+    return exeFiles.size() > 0 ? exeFiles.get(0) : null;
+  }
+
+  /**
+   * Finds all executable files with the specified base name, that are located in directories
+   * from PATH environment variable.
+   *
+   * @param fileBaseName file base name
+   * @return file list
+   */
+  @NotNull
+  public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName) {
+    return findExeFilesInPath(fileBaseName, false);
+  }
+
+  @NotNull
+  private static List<File> findExeFilesInPath(@NotNull String fileBaseName, boolean stopAfterFirstMatch) {
+    List<String> paths = StringUtil.split(getReliablePath(), File.pathSeparator, true, true);
+    List<File> exeFiles = Collections.emptyList();
     for (String path : paths) {
       File dir = new File(path);
       if (dir.isAbsolute() && dir.isDirectory()) {
         File file = new File(dir, fileBaseName);
         if (file.isFile() && file.canExecute()) {
-          return file;
+          if (stopAfterFirstMatch) {
+            return Collections.singletonList(file);
+          }
+          if (exeFiles.isEmpty()) {
+            exeFiles = ContainerUtil.newArrayListWithExpectedSize(paths.size());
+          }
+          exeFiles.add(file);
         }
       }
     }
-    return null;
+    return exeFiles;
   }
 
 }

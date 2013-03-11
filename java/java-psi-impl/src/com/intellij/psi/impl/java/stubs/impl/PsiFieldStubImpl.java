@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
-    if (!doResolve) return myType;
-
-    return addApplicableTypeAnnotationsFromChildModifierList(this, myType);
+    return doResolve ? addApplicableTypeAnnotationsFromChildModifierList(this, myType) : myType;
   }
 
   public static TypeInfo addApplicableTypeAnnotationsFromChildModifierList(StubBase<?> aThis, TypeInfo type) {
@@ -126,13 +124,11 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     if (isDeprecated() || hasDeprecatedAnnotation()) {
       builder.append("deprecated ");
     }
-
     if (isEnumConstant()) {
       builder.append("enumconst ");
     }
 
-    TypeInfo type = getType(false); // this can be called from low-level code and we don't want resolve to mess with indexing
-    builder.append(getName()).append(':').append(TypeInfo.createTypeText(type));
+    builder.append(myName).append(':').append(myType);
 
     if (myInitializer != null) {
       builder.append('=').append(myInitializer);

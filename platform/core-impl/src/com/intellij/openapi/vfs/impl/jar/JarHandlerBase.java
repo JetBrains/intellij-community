@@ -57,14 +57,14 @@ public class JarHandlerBase {
     protected final String shortName;
     protected final EntryInfo parent;
 
-    public EntryInfo(final String shortName, final EntryInfo parent, final boolean directory) {
+    public EntryInfo(@NotNull String shortName, final EntryInfo parent, final boolean directory) {
       this.shortName = shortName;
       this.parent = parent;
       isDirectory = directory;
     }
   }
 
-  public JarHandlerBase(String path) {
+  public JarHandlerBase(@NotNull String path) {
     myBasePath = path;
   }
 
@@ -100,7 +100,7 @@ public class JarHandlerBase {
     }
   }
 
-  public File getMirrorFile(File originalFile) {
+  public File getMirrorFile(@NotNull File originalFile) {
     return originalFile;
   }
 
@@ -203,11 +203,13 @@ public class JarHandlerBase {
     }
   }
 
+  @NotNull
   protected File getOriginalFile() {
     return new File(myBasePath);
   }
 
-  private static EntryInfo getOrCreate(String entryName, boolean isDirectory, Map<String, EntryInfo> map) {
+  @NotNull
+  private static EntryInfo getOrCreate(@NotNull String entryName, boolean isDirectory, @NotNull Map<String, EntryInfo> map) {
     EntryInfo info = map.get(entryName);
     if (info == null) {
       int idx = entryName.lastIndexOf('/');
@@ -238,28 +240,30 @@ public class JarHandlerBase {
     }
   }
 
-  protected EntryInfo getEntryInfo(final VirtualFile file) {
+  protected EntryInfo getEntryInfo(@NotNull VirtualFile file) {
     synchronized (lock) {
       String parentPath = getRelativePath(file);
       return getEntryInfo(parentPath);
     }
   }
 
-  public EntryInfo getEntryInfo(String parentPath) {
+  public EntryInfo getEntryInfo(@NotNull String parentPath) {
     return getEntriesMap().get(parentPath);
   }
 
+  @NotNull
   protected Map<String, EntryInfo> getEntriesMap() {
     return initEntries();
   }
 
-  private String getRelativePath(final VirtualFile file) {
+  @NotNull
+  private String getRelativePath(@NotNull VirtualFile file) {
     final String path = file.getPath().substring(myBasePath.length() + 1);
     return StringUtil.startsWithChar(path, '/') ? path.substring(1) : path;
   }
 
   @Nullable
-  private JarFile.JarEntry convertToEntry(VirtualFile file) {
+  private JarFile.JarEntry convertToEntry(@NotNull VirtualFile file) {
     String path = getRelativePath(file);
     final JarFile jar = getJar();
     return jar == null ? null : jar.getEntry(path);

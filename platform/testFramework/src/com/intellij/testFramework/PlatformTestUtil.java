@@ -68,6 +68,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -494,15 +495,16 @@ public class PlatformTestUtil {
         String logMessage = message;
         if (duration > expectedOnMyMachine) {
           int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ". (" + percentage + "% longer)";
+          logMessage += ": " + percentage + "% longer";
         }
-        logMessage += ". Expected: " + expectedOnMyMachine + ". Actual: " + duration + "." + Timings.getStatistics() ;
+        logMessage +=
+          ". Expected: " + formatTime(expectedOnMyMachine) + ". Actual: " + formatTime(duration) + "." + Timings.getStatistics();
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
-          logMessage = "(" + percentage + "% faster). " + logMessage;
+          logMessage = percentage + "% faster. " + logMessage;
 
           TeamCityLogger.info(logMessage);
-          System.out.println("SUCCESS: "+logMessage);
+          System.out.println("SUCCESS: " + logMessage);
         }
         else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
           TeamCityLogger.warning(logMessage, null);
@@ -537,6 +539,18 @@ public class PlatformTestUtil {
         }
         break;
       }
+    }
+
+    private static String formatTime(long millis) {
+      StringBuilder hint = new StringBuilder();
+      DecimalFormat format = new DecimalFormat("#.0");
+      if (millis >= 1000) hint.append(format.format(millis / 1000.f)).append("s");
+      if (millis >= 60 * 1000) hint.append(" ").append(format.format(millis / 60 / 1000.f)).append("m");
+      String result = millis + "ms";
+      if (hint.length() > 0) {
+        result = result + " (" + hint.toString() + ")";
+      }
+      return result;
     }
 
     private static int adjust(int expectedOnMyMachine, long thisTiming, long ethanolTiming) {

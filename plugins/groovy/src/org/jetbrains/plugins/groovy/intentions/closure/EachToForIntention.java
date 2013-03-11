@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class EachToForIntention extends Intention {
         final GrExpression invokedExpression = expression.getInvokedExpression();
         if (invokedExpression instanceof GrReferenceExpression) {
           GrReferenceExpression referenceExpression = (GrReferenceExpression)invokedExpression;
-          if ("each".equals(referenceExpression.getName())) {
+          if ("each".equals(referenceExpression.getReferenceName())) {
             final GrArgumentList argumentList = expression.getArgumentList();
             if (argumentList != null) {
               if (PsiImplUtil.hasExpressionArguments(argumentList)) return false;

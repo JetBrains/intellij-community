@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,7 +148,7 @@ public class JavaColorProvider implements ElementColorProvider {
   private static void replaceInt(PsiExpression expr, int newValue, boolean hex) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getInt(expr) != newValue) {
-      String text = hex ? "0x" + Integer.toHexString(newValue & 0x00ffffff).toUpperCase() : Integer.toString(newValue);
+      String text = hex ? "0x" + ColorUtil.toHex(new Color(newValue)).toUpperCase() : Integer.toString(newValue);
       expr.replace(factory.createExpressionFromText(text, null));
     }
   }

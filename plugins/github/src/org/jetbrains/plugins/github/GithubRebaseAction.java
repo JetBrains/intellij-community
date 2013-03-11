@@ -180,7 +180,6 @@ public class GithubRebaseAction extends DumbAwareAction {
             LOG.info("Adding GitHub parent as a remote host");
             ProgressManager.getInstance().getProgressIndicator().setText("Adding GitHub parent as a remote host");
             final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-            addRemoteHandler.setNoSSH(true);
             addRemoteHandler.setSilent(true);
 
             remoteForForkParentRepo.set("upstream");

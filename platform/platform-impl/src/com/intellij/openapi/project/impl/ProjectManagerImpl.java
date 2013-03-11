@@ -189,14 +189,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public void disposeComponent() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     Disposer.dispose(myChangedFilesAlarm);
     if (myDefaultProject != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(myDefaultProject);
-        }
-      });
+      Disposer.dispose(myDefaultProject);
 
       myDefaultProject = null;
       myDefaultProjectWasDisposed = true;

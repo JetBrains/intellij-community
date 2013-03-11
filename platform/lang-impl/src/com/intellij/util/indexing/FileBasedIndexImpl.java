@@ -675,10 +675,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  /**
-   * @param project it is guaranteed to return data which is up-to-date withing the project
-   *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
-   */
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
@@ -687,10 +683,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return allKeys;
   }
 
-  /**
-   * @param project it is guaranteed to return data which is up-to-date withing the project
-   *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
-   */
   @Override
   public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
@@ -867,9 +859,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
 
-  /**
-   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all
-   */
   @Override
   public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
                                       @NotNull ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {

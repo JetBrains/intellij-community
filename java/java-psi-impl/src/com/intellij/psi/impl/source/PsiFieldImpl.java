@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ import java.util.Set;
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
 
-  private volatile PatchedSoftReference<PsiType> myCachedType = null;
+  private volatile SoftReference<PsiType> myCachedType = null;
   private volatile Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
@@ -129,7 +129,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       String typeText = TypeInfo.createTypeText(stub.getType(false));
       try {
         final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new PatchedSoftReference<PsiType>(type);
+        myCachedType = new SoftReference<PsiType>(type);
         return type;
       }
       catch (IncorrectOperationException e) {
@@ -148,7 +148,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public PsiType getType(){
     final PsiFieldStub stub = getStub();
     if (stub != null) {
-      PatchedSoftReference<PsiType> cachedType = myCachedType;
+      SoftReference<PsiType> cachedType = myCachedType;
       if (cachedType != null) {
         PsiType type = cachedType.get();
         if (type != null) return type;
@@ -157,7 +157,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       String typeText = TypeInfo.createTypeText(stub.getType(true));
       try {
         final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new PatchedSoftReference<PsiType>(type);
+        myCachedType = new SoftReference<PsiType>(type);
         return type;
       }
       catch (IncorrectOperationException e) {

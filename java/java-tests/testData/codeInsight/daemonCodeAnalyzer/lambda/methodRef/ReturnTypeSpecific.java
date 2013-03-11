@@ -58,11 +58,11 @@ class MyTest1 {
         System.out.println(i);
     }
 
-    private static void m(I2 i) {
+    private static void <warning descr="Private method 'm(MyTest1.I2)' is never used">m</warning>(I2 i) {
         System.out.println(i);
     }
 
-    private static void <warning descr="Private method 'm(MyTest1.I3)' is never used">m</warning>(I3 i) {
+    private static void m(I3 i) {
         System.out.println(i);
     }
 

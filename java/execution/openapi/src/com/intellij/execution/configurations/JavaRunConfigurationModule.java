@@ -50,15 +50,15 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
   @Nullable
   public PsiClass findClass(final String qualifiedName) {
     if (qualifiedName == null) return null;
+    return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, getSearchScope());
+  }
+
+  public GlobalSearchScope getSearchScope() {
     final Module module = getModule();
-    final GlobalSearchScope scope;
     if (module != null) {
-      scope = myClassesInLibraries ? module.getModuleRuntimeScope(true) : GlobalSearchScope.moduleWithDependenciesScope(module);
+      return myClassesInLibraries ? module.getModuleRuntimeScope(true) : GlobalSearchScope.moduleWithDependenciesScope(module);
     }
-    else {
-      scope = myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());
-    }
-    return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, scope);
+    return myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());
   }
 
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {

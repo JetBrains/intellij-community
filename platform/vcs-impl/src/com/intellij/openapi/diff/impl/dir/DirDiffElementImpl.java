@@ -214,7 +214,7 @@ public class DirDiffElementImpl implements DirDiffElement {
     } else if (myType == DiffType.TARGET) {
       myOperation = op == COPY_FROM ? DELETE : op == DELETE ? NONE : COPY_FROM;
     } else if (myType == DiffType.CHANGED) {
-      myOperation = op == MERGE ? COPY_FROM : op == COPY_FROM ? COPY_TO : MERGE;
+      myOperation = op == MERGE ? COPY_TO : op == COPY_TO ? COPY_FROM : MERGE;
     }
   }
 

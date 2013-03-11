@@ -218,7 +218,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          String... identifiers) {
     StringBuilder text = writeModifiers(modifiers);
 
-    if (type != null) {
+    if (type != null && type != PsiType.NULL) {
       final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(unboxed);
       text.append(typeText).append(" ");
@@ -303,9 +303,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static String getTypeText(PsiType type) {
     if (!(type instanceof PsiArrayType)) {
       final String canonical = type.getCanonicalText();
-      return canonical != null ? canonical : type.getPresentableText();
-    } else {
-      return getTypeText(((PsiArrayType) type).getComponentType()) + "[]";
+      final String text = canonical != null ? canonical : type.getPresentableText();
+      if ("null".equals(text)) {
+        return "";
+      }
+      else {
+        return text;
+      }
+    }
+    else {
+      return getTypeText(((PsiArrayType)type).getComponentType()) + "[]";
     }
   }
 
@@ -421,8 +428,10 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createModifierFromText(String name) {
-    final GroovyFileBase file = createGroovyFileChecked(name + "\"foo\"() {}");
-    return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
+    final GroovyFileBase file = createGroovyFileChecked(name + " foo() {}");
+    final GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
+    if (definitions.length != 1) throw new IncorrectOperationException(name);
+    return definitions[0].getFirstChild().getFirstChild();
   }
 
   public GrCodeBlock createMethodBodyFromText(String text) {

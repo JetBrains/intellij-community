@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,11 +90,11 @@ class A extends geb.Page {
 
   static at = {
     int x = bbb
-    Boolean s = <warning>bbb</warning>
+    Boolean s = bbb
   }
 
   static content = {
-    someField<warning>()</warning>
+    someField<warning descr="'someField' cannot be applied to '()'">()</warning>
     aaa { "Aaa" }
     bbb { aaa.length() }
     ccc(required: false) { aaa.length() }

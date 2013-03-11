@@ -17,10 +17,7 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -77,18 +74,25 @@ public class ExternalizablePropertyContainer
 
   public void readExternal(Element element) throws InvalidDataException {
     HashMap<String, AbstractProperty> propertyByName = new HashMap<String, AbstractProperty>();
-    for (Iterator<AbstractProperty> iterator = myExternalizers.keySet().iterator(); iterator.hasNext();) {
-      AbstractProperty abstractProperty = iterator.next();
+    for (AbstractProperty abstractProperty : myExternalizers.keySet()) {
       propertyByName.put(abstractProperty.getName(), abstractProperty);
     }
-    List<Element> children = element.getChildren();
-    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-      Element child = iterator.next();
+    final List<Element> children = element.getChildren();
+    for (Element child : children) {
       AbstractProperty property = propertyByName.get(child.getName());
-      if (property == null) continue;
-      Externalizer externalizer = myExternalizers.get(property);
-      if (externalizer == null) continue;
-      myValues.put(property, externalizer.readValue(child));
+      if (property == null) {
+        continue;
+      }
+      final Externalizer externalizer = myExternalizers.get(property);
+      if (externalizer == null) {
+        continue;
+      }
+      try {
+        myValues.put(property, externalizer.readValue(child));
+      }
+      catch (InvalidDataException e) {
+        LOG.info(e);
+      }
     }
   }
 
@@ -96,13 +100,16 @@ public class ExternalizablePropertyContainer
     List<AbstractProperty> properties = new ArrayList<AbstractProperty>(myExternalizers.keySet());
     Collections.sort(properties, AbstractProperty.NAME_COMPARATOR);
     for (AbstractProperty property : properties) {
-      Externalizer externalizer = myExternalizers.get(property);
+      final Externalizer externalizer = myExternalizers.get(property);
       if (externalizer == null) {
         continue;
       }
-      Element child = new Element(property.getName());
-      externalizer.writeValue(child, getValueOf(property));
-      element.addContent(child);
+      final Object propValue = property.get(this);
+      if (!Comparing.equal(propValue, property.getDefault(this))) {
+        final Element child = new Element(property.getName());
+        externalizer.writeValue(child, propValue);
+        element.addContent(child);
+      }
     }
   }
 

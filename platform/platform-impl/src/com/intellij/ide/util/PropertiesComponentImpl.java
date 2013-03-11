@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -82,5 +83,20 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
 
   public boolean isValueSet(String name) {
     return myMap.containsKey(name);
+  }
+
+  @Override
+  public String[] getValues(@NonNls String name) {
+    final String value = getValue(name);
+    return value != null ? value.split("\n") : null;
+  }
+
+  @Override
+  public void setValues(@NonNls String name, String[] values) {
+    if (values == null) {
+      setValue(name, null);
+    } else {
+      setValue(name, StringUtil.join(values, "\n"));
+    }
   }
 }

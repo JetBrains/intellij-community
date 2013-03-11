@@ -3,6 +3,7 @@ package org.jetbrains.jps.maven.model.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * @author nik
@@ -71,27 +73,25 @@ public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
     return child != null && child.getData();
   }
 
-  private volatile MavenProjectConfiguration myConfig;
+  private final Map<File, MavenProjectConfiguration> myLoadedConfigs = new THashMap<File, MavenProjectConfiguration>();
 
   @NotNull
   @Override
   public MavenProjectConfiguration getMavenProjectConfiguration(BuildDataPaths paths) {
-    MavenProjectConfiguration config = myConfig;
-    if (config == null) {
-      synchronized (this) {
-        config = myConfig;
-        if (config == null) {
-          config = new MavenProjectConfiguration();
-          try {
-            final File configFile = new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
-            final Document document = JDOMUtil.loadDocument(configFile);
-            XmlSerializer.deserializeInto(config, document.getRootElement());
-          }
-          catch (Exception e) {
-            LOG.info(e);
-          }
-          myConfig = config;
+    final File configFile = new File(paths.getDataStorageRoot(), MavenProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
+    MavenProjectConfiguration config;
+    synchronized (myLoadedConfigs) {
+      config = myLoadedConfigs.get(configFile);
+      if (config == null) {
+        config = new MavenProjectConfiguration();
+        try {
+          final Document document = JDOMUtil.loadDocument(configFile);
+          XmlSerializer.deserializeInto(config, document.getRootElement());
         }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+        myLoadedConfigs.put(configFile, config);
       }
     }
     return config;

@@ -39,7 +39,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.EventDispatcher;
@@ -237,12 +236,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void initSessionTab() {
-    mySessionTab = new XDebugSessionTab(myProject, mySessionName, myIcon);
-    if (myEnvironment != null) {
-      mySessionTab.setEnvironment(myEnvironment);
-    }
-    Disposer.register(myProject, mySessionTab);
-    mySessionTab.attachToSession(this, myRunner, myEnvironment, mySessionData, myConsoleView);
+    mySessionTab = new XDebugSessionTab(myProject, this, myIcon, myEnvironment, myRunner);
     myDebugProcess.sessionInitialized();
   }
 

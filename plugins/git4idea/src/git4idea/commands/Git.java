@@ -92,11 +92,11 @@ public interface Git {
   GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec,
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec spec, @NotNull String url,
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull

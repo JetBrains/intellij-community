@@ -93,6 +93,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testNoParamsHandler() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    doDoTest(false, false);
+  }
+
   private void doTestIdController() throws Exception {
     final String controllerClassName = getTestName(false) + "Controller";
     configureByFiles(null, getTestName(true) + ".fxml", controllerClassName + ".java");
@@ -117,9 +122,22 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doTestNavigation("CustomVBox", "tf", "custom/" + getTestName(true) + ".fxml", "custom/CustomVBox.java");
   }
 
+  public void testCustomComponentFieldsWithSameProperties() throws Exception {
+    configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/" + getTestName(false)+ ".java");
+    doDoTest(false, false);
+  }
+
   public void testCustomComponent_Fields() throws Exception {
     configureByFiles(null, "custom/" + getTestName(true) + ".fxml", "custom/_CustomVBox.java");
     doDoTest(false, false);
+  }
+
+  public void testInjectedController() throws Exception {
+    doTestNavigation("MyController", "label",  "injected/" + getTestName(true) + ".fxml", "injected/FooVBox.java", "injected/MyController.java");
+  }
+
+  public void testNamedColor() throws Exception {
+    doTestNavigation(JavaFxCommonClassNames.JAVAFX_SCENE_COLOR, "ORANGE");
   }
 
   private void doTestNavigation(String resultClassName, String resultFieldName) throws Exception {
@@ -237,6 +255,10 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBooleanPropertyWithoutField() throws Exception {
+    doTest();
+  }
+
+  public void testLineChartInstantiation() throws Exception {
     doTest();
   }
 

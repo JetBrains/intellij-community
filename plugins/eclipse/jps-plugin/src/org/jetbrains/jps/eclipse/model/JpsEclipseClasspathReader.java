@@ -200,6 +200,11 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     return prepareValidUrlInsideJar(url);
   }
 
+  @Override
+  protected Set<String> getDefinedCons() {
+    return Collections.emptySet();
+  }
+
 
   @Override
   protected int rearrange(JpsModule rootModel) {

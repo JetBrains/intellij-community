@@ -24,6 +24,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -125,6 +126,7 @@ public class AntInstallation {
     return myProperties;
   }
 
+  @NotNull
   public ClassLoader getClassLoader() {
     return myClassLoaderHolder.getClassloader();
   }
@@ -164,7 +166,7 @@ public class AntInstallation {
     Properties properties = new Properties();
     InputStream stream = null;
     try {
-      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null, false, false, true).getResourceAsStream(VERSION_RESOURCE);
+      stream = new UrlClassLoader(Collections.singletonList(antJar.toURL()), null, false, false, true, false).getResourceAsStream(VERSION_RESOURCE);
       properties.load(stream);
     }
     catch (MalformedURLException e) {

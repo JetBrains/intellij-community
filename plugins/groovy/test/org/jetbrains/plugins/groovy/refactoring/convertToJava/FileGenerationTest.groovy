@@ -123,4 +123,6 @@ public enum A {
   void testGroovyDoc() { doTest() }
 
   void testReflectedMethodWithEllipsis() { doTest() }
+
+  void testMapAccess2() { doTest() }
 }

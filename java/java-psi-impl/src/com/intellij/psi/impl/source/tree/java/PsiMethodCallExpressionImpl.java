@@ -17,6 +17,8 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -27,19 +29,15 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
-  @NonNls private static final String GET_CLASS_METHOD = "getClass";
 
   public PsiMethodCallExpressionImpl() {
     super(JavaElementType.METHOD_CALL_EXPRESSION);
@@ -174,39 +172,19 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     private static PsiType getResultType(PsiExpression call, PsiReferenceExpression methodExpression, JavaResolveResult result) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
-      PsiManager manager = call.getManager();
 
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
-      //JLS3 15.8.2
-      if (is15OrHigher &&
-          GET_CLASS_METHOD.equals(method.getName()) &&
-          CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) {
-        PsiExpression qualifier = methodExpression.getQualifierExpression();
-        PsiType qualifierType = null;
-        if (qualifier != null) {
-          qualifierType = TypeConversionUtil.erasure(qualifier.getType());
-        }
-        else {
-          ASTNode parent = call.getNode().getTreeParent();
-          while (parent != null && parent.getElementType() != JavaElementType.CLASS) parent = parent.getTreeParent();
-          if (parent != null) {
-            qualifierType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiClass)parent.getPsi());
-          }
-        }
-        if (qualifierType != null) {
-          PsiClass javaLangClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", call.getResolveScope());
-          if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
-            Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-            map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
-            PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
-            final PsiClassType classType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
-              .createType(javaLangClass, substitutor, languageLevel);
-            final PsiElement parent = call.getParent();
-            return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression 
-                   ? PsiUtil.captureToplevelWildcards(classType, methodExpression) : classType;
-          }
-        }
+      final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
+                                                                                    new Condition<IElementType>() {
+                                                                                      @Override
+                                                                                      public boolean value(IElementType type) {
+                                                                                        return type != JavaElementType.CLASS;
+                                                                                      }
+                                                                                    }, languageLevel);
+
+      if (getClassReturnType != null) {
+        return getClassReturnType;
       }
 
       PsiType ret = method.getReturnType();
@@ -217,7 +195,13 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       if (is15OrHigher) {
         final PsiSubstitutor substitutor = result.getSubstitutor();
         PsiType substitutedReturnType = substitutor.substitute(ret);
-        if (PsiUtil.isRawSubstitutor(method, substitutor) && ret.equals(substitutedReturnType)) return TypeConversionUtil.erasure(ret);
+        if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
+        if (PsiUtil.isRawSubstitutor(method, substitutor)) {
+          final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
+          if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {
+            return returnTypeErasure;
+          }
+        }
         PsiType lowerBound = PsiType.NULL;
         if (substitutedReturnType instanceof PsiCapturedWildcardType) {
           lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();

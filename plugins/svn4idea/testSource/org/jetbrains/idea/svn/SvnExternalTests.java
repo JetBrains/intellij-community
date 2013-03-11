@@ -91,31 +91,8 @@ public class SvnExternalTests extends Svn17TestCase {
     Assert.assertTrue(expectedUrls.isEmpty());
   }
 
-  private void prepareInnerCopy() throws Exception {
-    final SubTree subTree = new SubTree(myWorkingCopyDir);
-    checkin();
-    clManager.stopEveryThingIfInTestMode();
-    sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
-    FileUtil.delete(rootFile);
-    FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
-    sleep(200);
-    myWorkingCopyDir.refresh(false, true);
-
-    runInAndVerifyIgnoreOutput("co", myMainUrl);
-    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    final File innerDir = new File(sourceDir, "inner1/inner2/inner");
-    runInAndVerifyIgnoreOutput("co", myExternalURL, innerDir.getPath());
-    sleep(100);
-    myWorkingCopyDir.refresh(false, true);
-    // above is preparation
-
-    // start change list manager again
-    clManager.forceGoInTestMode();
-    refreshSvnMappingsSynchronously();
-    //clManager.ensureUpToDate(false);
-    //clManager.ensureUpToDate(false);
+  protected void prepareInnerCopy() throws Exception {
+    prepareInnerCopy(false);
   }
 
   @Test

@@ -337,7 +337,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTree));
 
     actions.add(new AnAction(CommonBundle.message("button.reset.to.default"), CommonBundle.message("button.reset.to.default"),
-                             AllIcons.Actions.Reset_to_default) {
+                             AllIcons.General.Reset) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK)), myTree);
       }
@@ -353,7 +353,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    actions.add(new AnAction("Reset to Empty", "Reset to empty", AllIcons.General.Reset){
+    actions.add(new AnAction("Reset to Empty", "Reset to empty", AllIcons.Actions.Reset_to_empty){
 
       @Override
       public void update(AnActionEvent e) {

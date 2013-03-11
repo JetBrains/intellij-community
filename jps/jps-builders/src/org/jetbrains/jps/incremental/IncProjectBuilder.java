@@ -49,10 +49,12 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
+import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -177,6 +179,7 @@ public class IncProjectBuilder {
       context = createContext(scope, isMake, isProjectRebuild);
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
+      reportRebuiltModules(context);
     }
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
@@ -191,8 +194,9 @@ public class IncProjectBuilder {
         throw new RebuildRequestedException(cause);
       }
       else {
+        reportRebuiltModules(context);
         if (cause == null) {
-          // some builder desided to stop the build
+          // some builder decided to stop the build
           // report optional progress message if exists
           final String msg = e.getMessage();
           if (!StringUtil.isEmpty(msg)) {
@@ -222,6 +226,41 @@ public class IncProjectBuilder {
     }
   }
 
+  private static void reportRebuiltModules(CompileContextImpl context) {
+    final Set<JpsModule> modules = BuildTargetConfiguration.MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
+    if (modules == null || modules.isEmpty()) {
+      return;
+    }
+    final StringBuilder message = new StringBuilder();
+    if (modules.size() > 1) {
+      message.append("Modules ");
+      final int namesLimit = 5;
+      int idx = 0;
+      for (Iterator<JpsModule> iterator = modules.iterator(); iterator.hasNext(); ) {
+        final JpsModule module = iterator.next();
+        if (idx == namesLimit && iterator.hasNext()) {
+          message.append(" and ").append(modules.size() - namesLimit).append(" others");
+          break;
+        }
+        if (idx > 0) {
+          message.append(", ");
+        }
+        message.append("\"").append(module.getName()).append("\"");
+        idx += 1;
+      }
+      message.append(" were");
+    }
+    else {
+      message.append("Module \"").append(modules.iterator().next().getName()).append("\" was");
+    }
+    message.append(" fully rebuilt due to project configuration");
+    if (ModuleBuildTarget.REBUILD_ON_DEPENDENCY_CHANGE) {
+      message.append("/dependencies");
+    }
+    message.append(" changes");
+    context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message.toString()));
+  }
+
   private static void flushContext(CompileContext context) {
     if (context != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -242,7 +281,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
+  private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
     LOG.info("Building project; isRebuild:" +
@@ -251,6 +290,8 @@ public class IncProjectBuilder {
              context.isMake() +
              " parallel compilation:" +
              BuildRunner.PARALLEL_BUILD_ENABLED);
+
+    context.addBuildListener(new ChainedTargetsBuildListener(context));
 
     for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
       builder.buildStarted(context);
@@ -272,22 +313,6 @@ public class IncProjectBuilder {
 
       context.processMessage(new ProgressMessage("Running 'after' tasks"));
       runTasks(context, myBuilderRegistry.getAfterTasks());
-
-      // cleanup output roots layout, commented for efficiency
-      //final ModuleOutputRootsLayout outputRootsLayout = context.getDataManager().getOutputRootsLayout();
-      //try {
-      //  final Iterator<String> keysIterator = outputRootsLayout.getKeysIterator();
-      //  final Map<String, JpsModule> modules = myProjectDescriptor.project.getModules();
-      //  while (keysIterator.hasNext()) {
-      //    final String moduleName = keysIterator.next();
-      //    if (modules.containsKey(moduleName)) {
-      //      outputRootsLayout.remove(moduleName);
-      //    }
-      //  }
-      //}
-      //catch (IOException e) {
-      //  throw new ProjectBuildException(e);
-      //}
     }
     finally {
       for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {

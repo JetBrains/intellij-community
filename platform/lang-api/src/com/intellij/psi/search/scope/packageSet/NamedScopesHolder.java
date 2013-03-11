@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,22 +59,17 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return myProjectBaseDir;
   }
 
-  private List<ScopeListener> myScopeListeners;
-  public synchronized void addScopeListener(ScopeListener scopeListener) {
-    if (myScopeListeners == null) {
-      myScopeListeners = new ArrayList<ScopeListener>();
-    }
+  private final List<ScopeListener> myScopeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  public void addScopeListener(ScopeListener scopeListener) {
     myScopeListeners.add(scopeListener);
   }
-  public synchronized void removeScopeListener(ScopeListener scopeListener) {
+  public void removeScopeListener(ScopeListener scopeListener) {
     myScopeListeners.remove(scopeListener);
   }
 
-  public synchronized void fireScopeListeners() {
-    if (myScopeListeners != null) {
-      for (ScopeListener listener : myScopeListeners) {
-        listener.scopesChanged();
-      }
+  public void fireScopeListeners() {
+    for (ScopeListener listener : myScopeListeners) {
+      listener.scopesChanged();
     }
   }
 

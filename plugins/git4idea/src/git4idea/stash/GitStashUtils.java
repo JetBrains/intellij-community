@@ -56,7 +56,6 @@ public class GitStashUtils {
                                     final Consumer<StashInfo> consumer) {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     h.setSilent(true);
-    h.setNoSSH(true);
     h.addParameters("list");
     String out;
     try {

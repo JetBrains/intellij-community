@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private final byte myFlags;
   private final StringRef myName;
   private StringRef myDefaultValueText;
-  // todo[r.sh] drop this after transition period finished
-  private boolean myHasExtMethodMark = false;
 
   private static final int CONSTRUCTOR = 0x01;
   private static final int VARARGS = 0x02;
@@ -74,14 +72,6 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     myReturnType = returnType;
   }
 
-  public void setExtensionMethodMark(boolean hasExtMethodMark) {
-    myHasExtMethodMark = hasExtMethodMark;
-  }
-
-  public boolean hasExtensionMethodMark() {
-    return myHasExtMethodMark;
-  }
-
   @Override
   public boolean isConstructor() {
     return (myFlags & CONSTRUCTOR) != 0;
@@ -109,8 +99,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   @NotNull
   public TypeInfo getReturnTypeText(boolean doResolve) {
-    if (!doResolve) return myReturnType;
-    return PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType);
+    return doResolve ? PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType) : myReturnType;
   }
 
   @Override
@@ -172,6 +161,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiMethodStub[");
+
     if (isConstructor()) {
       builder.append("cons ");
     }
@@ -185,9 +175,9 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
       builder.append("deprecated ");
     }
 
-    builder.append(getName()).append(":").append(TypeInfo.createTypeText(getReturnTypeText(false)));
+    builder.append(myName).append(":").append(myReturnType);
 
-    final String defaultValue = getDefaultValueText();
+    String defaultValue = getDefaultValueText();
     if (defaultValue != null) {
       builder.append(" default=").append(defaultValue);
     }

@@ -686,7 +686,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private String getTextSkipWhiteSpaceAndComments() {
     String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
     if (whiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getTextSkipWhiteSpaceAndComments(this);
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = SourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
   }

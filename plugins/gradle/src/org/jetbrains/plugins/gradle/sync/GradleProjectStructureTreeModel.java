@@ -186,8 +186,11 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         }
         GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
         GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode = buildNode(id, id.getDependencyName());
-        libraryDependencies.add(Pair.create(dependencyNode, libraryOrderEntry.getLibrary()));
-        dependencies.add(dependencyNode);
+        Library library = libraryOrderEntry.getLibrary();
+        if (library != null) {
+          libraryDependencies.add(Pair.create(dependencyNode, library));
+          dependencies.add(dependencyNode);
+        }
         return value;
       }
     };
@@ -229,7 +232,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProject project = myChangesModel.getGradleProject();
     if (project != null) {
       GradleChangesCalculationContext context = myChangesModel.getCurrentChangesContext(project, onIdeProjectStructureChange);
-      processChanges(Collections.<GradleProjectStructureChange>emptyList(), context.getCurrentChanges());
+      processChanges(Collections.<GradleProjectStructureChange>emptyList(),
+                     ContainerUtil.union(context.getKnownChanges(), context.getCurrentChanges()));
       filterNodes(root);
     }
   }

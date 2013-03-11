@@ -391,8 +391,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager,
-                                                                      final RunContentDescriptor descriptor,
+  private static RunContentDescriptor chooseReuseContentForDescriptor(@NotNull ContentManager contentManager,
+                                                                      @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName) {
     Content content = null;
@@ -403,20 +403,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       //Stage two: try to get content from descriptor itself
       final Content attachedContent = descriptor.getAttachedContent();
-      if (attachedContent != null && attachedContent.isValid()) content = attachedContent;
+      if (attachedContent != null && attachedContent.isValid() && contentManager.getIndexOfContent(attachedContent) != -1) content = attachedContent;
     }
     //Stage three: choose the content with name we prefer
-    if (content == null && preferredName != null) {
+    if (content == null) {
       content = getContentFromManager(contentManager, preferredName, executionId);
-    }
-    //Stage four: try to get current selected content
-    if (content == null) {
-      content = contentManager.getSelectedContent();
-      if (content != null && content.isPinned()) content = null;
-    }
-    //Stage five: content is still null and every "old good" content is acceptable
-    if (content == null) {
-      content = getContentFromManager(contentManager, null, executionId);
     }
     if (content == null || !isTerminated(content) || (content.getExecutionId() == executionId && executionId != 0)) {
       return null;
@@ -432,19 +423,31 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Nullable
   private static Content getContentFromManager(ContentManager contentManager, @Nullable String preferredName, long executionId) {
-    Content[] contents = contentManager.getContents();
-    for (Content c : contents) {
-      if (c == null || c.isPinned() || !isTerminated(c) || (c.getExecutionId() == executionId && executionId != 0))
-        continue;
-      if (preferredName == null) {
-        return c;
-      } else if (preferredName.equals(c.getDisplayName())) {
+    ArrayList<Content> contents = new ArrayList<Content>(Arrays.asList(contentManager.getContents()));
+    Content first = contentManager.getSelectedContent();
+    if (first != null && contents.remove(first)) {//selected content should be checked first
+      contents.add(0, first);
+    }
+    if (preferredName != null) {//try to match content with specified preferred name
+      for (Content c : contents) {
+        if (canReuseContent(c, executionId) && preferredName.equals(c.getDisplayName())) {
+          return c;
+        }
+      }
+    }
+    for (Content c : contents) {//return first "good" content
+      if (canReuseContent(c, executionId)) {
         return c;
       }
     }
     return null;
   }
 
+  private static boolean canReuseContent(Content c, long executionId) {
+    return c != null && !c.isPinned() && isTerminated(c) && !(c.getExecutionId() == executionId && executionId != 0);
+  }
+
+  @NotNull
   private ContentManager getContentManagerForRunner(final Executor executor) {
     final ContentManager contentManager = myToolwindowIdToContentManagerMap.get(executor.getToolWindowId());
     if (contentManager == null) {

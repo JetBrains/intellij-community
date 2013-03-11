@@ -95,7 +95,11 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
       @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
       @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
       @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onUseAutoImportChange(boolean oldValue, boolean newValue) { refreshAll(); }
+      @Override public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+        if (newValue) {
+          update();
+        }
+      }
 
       private void refreshAll() {
         if (myInBulk) {

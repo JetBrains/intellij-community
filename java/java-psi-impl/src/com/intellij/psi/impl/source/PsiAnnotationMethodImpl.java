@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.util.PatchedSoftReference;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotationMethod {
-  private PatchedSoftReference<PsiAnnotationMemberValue> myCachedDefaultValue = null;
+  private SoftReference<PsiAnnotationMemberValue> myCachedDefaultValue = null;
 
   public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
     super(stub, JavaStubElementTypes.ANNOTATION_METHOD);
@@ -68,7 +68,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, annoText);
       final PsiAnnotationMemberValue value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();
-      myCachedDefaultValue = new PatchedSoftReference<PsiAnnotationMemberValue>(value);
+      myCachedDefaultValue = new SoftReference<PsiAnnotationMemberValue>(value);
       return value;
     }
 

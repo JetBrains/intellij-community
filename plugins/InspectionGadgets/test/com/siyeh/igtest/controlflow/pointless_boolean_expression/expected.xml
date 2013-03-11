@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>'!true' can be simplified 'false'</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;!(b &amp;&amp; false)&lt;/code&gt; can be simplified to 'true' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>25</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;a ^ b ^ true&lt;/code&gt; can be simplified to '!(a^b)' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;a ^ !true ^ b&lt;/code&gt; can be simplified to 'a^b' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;false || c&lt;/code&gt; can be simplified to 'c' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;b != true&lt;/code&gt; can be simplified to '!b' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessBooleanExpression.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless boolean expression</problem_class>
+    <description>&lt;code&gt;true &amp;&amp; king != null &amp;&amp; king.hashCode() &gt; 1&lt;/code&gt; can be simplified to 'king != null &amp;&amp; king.hashCode() &gt; 1' #loc</description>
+  </problem>
+
+</problems>

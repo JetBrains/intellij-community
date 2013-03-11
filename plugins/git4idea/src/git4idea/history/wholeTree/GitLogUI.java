@@ -54,6 +54,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -1158,12 +1159,11 @@ public class GitLogUI implements Disposable {
   }
 
   private static class CommentSearchContext {
-    private final List<HighlightingRendererBase> myListeners;
+    private final List<HighlightingRendererBase> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private final List<String> mySearchContext;
 
     private CommentSearchContext() {
       mySearchContext = new ArrayList<String>();
-      myListeners = new ArrayList<HighlightingRendererBase>();
     }
 
     public void addHighlighter(final HighlightingRendererBase renderer) {

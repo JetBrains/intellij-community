@@ -152,24 +152,31 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String branchName) {
     GitRemote remote = getRemoteByName(repository, remoteName);
     if (remote == null) {
-      return pushDeletionNatively(repository, remoteName, branchName);
+      String error = "Couldn't find remote by name: " + remoteName;
+      LOG.error(error);
+      return GitCommandResult.error(error);
     }
 
     String remoteUrl = remote.getFirstUrl();
-    if (remoteUrl != null && GitHttpAdapter.shouldUseJGit(remoteUrl)) {
+    if (remoteUrl == null) {
+      LOG.warn("No urls are defined for remote: " + remote);
+      return GitCommandResult.error("There is no urls defined for remote " + remote.getName());
+    }
+    if (GitHttpAdapter.shouldUseJGit(remoteUrl)) {
       String fullBranchName = branchName.startsWith(GitBranch.REFS_HEADS_PREFIX) ? branchName : GitBranch.REFS_HEADS_PREFIX + branchName;
       String spec = ":" + fullBranchName;
       GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote.getName(), remoteUrl, spec);
       return convertSimplePushResultToCommandResult(simplePushResult);
     }
     else {
-      return pushDeletionNatively(repository, remoteName, branchName);
+      return pushDeletionNatively(repository, remoteName, remoteUrl, branchName);
     }
   }
 
   @NotNull
-  private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String branchName) {
-    return myGit.push(repository, remoteName, ":" + branchName);
+  private GitCommandResult pushDeletionNatively(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String url,
+                                                @NotNull String branchName) {
+    return myGit.push(repository, remoteName, url,":" + branchName);
   }
 
   @NotNull

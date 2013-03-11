@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class LightTreeUtil {
   private LightTreeUtil() { }
 
@@ -83,13 +84,14 @@ public class LightTreeUtil {
     return result != null ? result: Collections.<LighterASTNode>emptyList();
   }
 
+  @NotNull
   public static String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
     StringBuilder buffer = new StringBuilder(node.getEndOffset() - node.getStartOffset());
     toBuffer(tree, node, buffer, skipTypes);
     return buffer.toString();
   }
 
-  private static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
+  public static void toBuffer(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StringBuilder buffer, @Nullable TokenSet skipTypes) {
     if (skipTypes != null && skipTypes.contains(node.getTokenType())) return;
 
     if (node instanceof LighterASTTokenNode) {

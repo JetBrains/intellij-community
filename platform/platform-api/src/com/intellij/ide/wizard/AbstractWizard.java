@@ -361,7 +361,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     // Commit data of current step
     final Step currentStep = mySteps.get(myCurrentStep);
     LOG.assertTrue(currentStep != null);
-    LOG.assertTrue(!isLastStep());
+    LOG.assertTrue(!isLastStep(), "steps: " + mySteps + " current: " + currentStep);
     try {
       currentStep._commit(false);
     }
@@ -522,8 +522,4 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   @Nullable
   @NonNls
   protected abstract String getHelpID();
-
-  protected boolean isCurrentStep(final T step) {
-    return step != null && getCurrentStepComponent() == step.getComponent();
-  }
 }

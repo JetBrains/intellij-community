@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.*;
  */
 public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseFiles;
-  private boolean myChooseFolders;
+  private final boolean myChooseFolders;
   private final boolean myChooseJars;
   private final boolean myChooseJarsAsFiles;
   private final boolean myChooseJarContents;
@@ -116,8 +116,8 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   /**
-   * Defines whether file can be chosen or not 
-   */ 
+   * Defines whether file can be chosen or not
+   */
   public boolean isFileSelectable(VirtualFile file) {
     if (file == null) return false;
     if (file.isDirectory() && myChooseFolders) return true;
@@ -128,7 +128,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Defines whether file is visible in the tree
-   */ 
+   */
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (!file.isDirectory()) {
       if (FileElement.isArchive(file)) {
@@ -154,7 +154,7 @@ public class FileChooserDescriptor implements Cloneable {
         return false;
       }
     }
-    
+
     return true;
   }
 

@@ -149,6 +149,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     try {
       return myFactory.getValue().create();
     }
+    catch (LinkageError e) {
+      LOG.error(e);
+    }
     catch (Exception e) {
       LOG.error(e);
     }

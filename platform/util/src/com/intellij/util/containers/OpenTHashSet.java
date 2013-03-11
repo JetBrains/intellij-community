@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Makes some THashSet methods open to the public.
+ * Adds {@link #get(Object)} method useful to intern objects.
+ *
 * @author gregsh
 */
 public class OpenTHashSet<T> extends THashSet<T> {
@@ -66,6 +69,9 @@ public class OpenTHashSet<T> extends THashSet<T> {
     return (T)_set[index];
   }
 
+  /**
+   * Returns an element of this set equal to the given one. Can be used for interning objects to save memory.
+   */
   @Nullable
   public T get(final T obj) {
     final int index = index(obj);

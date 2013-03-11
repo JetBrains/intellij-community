@@ -84,7 +84,6 @@ public class MergeChangeCollector {
   public @NotNull Set<String> getUnmergedPaths() throws VcsException {
     String root = myRoot.getPath();
     final GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.LS_FILES);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--unmerged");
     final String result = h.run();
@@ -158,7 +157,6 @@ public class MergeChangeCollector {
     String root = myRoot.getPath();
     GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
-    h.setNoSSH(true);
     // note that moves are not detected here
     h.addParameters("--name-status", "--diff-filter=ADMRUX", revisions);
     for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {

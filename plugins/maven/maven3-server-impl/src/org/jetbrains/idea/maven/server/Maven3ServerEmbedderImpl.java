@@ -191,6 +191,8 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
       Maven3ServerGlobals.getLogger().info(e);
     }
 
+    result.setOffline(settings.isOffline());
+
     if (settings.getLocalRepository() != null) {
       result.setLocalRepository(settings.getLocalRepository().getPath());
     }

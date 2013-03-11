@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -83,6 +84,10 @@ public abstract class Intention implements IntentionAction {
 
   @Nullable
   PsiElement findMatchingElement(PsiFile file, Editor editor) {
+    if (!(file instanceof GroovyFileBase)) {
+      return null;
+    }
+
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());

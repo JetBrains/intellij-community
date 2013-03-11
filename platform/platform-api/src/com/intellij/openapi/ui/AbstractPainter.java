@@ -16,18 +16,18 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
 
 public abstract class AbstractPainter implements Painter {
 
   private boolean myNeedsRepaint;
 
-  private final Set<Listener> myListeners = new HashSet<Listener>();
+  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
 
   public boolean needsRepaint() {

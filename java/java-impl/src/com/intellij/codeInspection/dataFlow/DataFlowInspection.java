@@ -587,6 +587,24 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.insets.bottom = 15;
       add(configureAnnotations, gc);
 
+      final JButton configureCheckAnnotations = new JButton(InspectionsBundle.message("configure.checker.option.button"));
+      configureCheckAnnotations.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          final ConditionCheckDialog dialog = new ConditionCheckDialog(project,
+                                                                       InspectionsBundle.message("configure.checker.option.main.dialog.title")
+          );
+          dialog.show();
+        }
+      });
+      gc.gridy++;
+      gc.fill = GridBagConstraints.NONE;
+      gc.insets.left = 20;
+      gc.insets.bottom = 15;
+      add(configureCheckAnnotations, gc);
+
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weighty = 1;
       gc.insets.left = 0;

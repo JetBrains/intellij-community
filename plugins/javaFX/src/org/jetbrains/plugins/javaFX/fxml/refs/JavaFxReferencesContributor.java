@@ -45,9 +45,9 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)context;
         PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(literalExpression, PsiMethodCallExpression.class);
         if (callExpression != null && "getResource".equals(callExpression.getMethodExpression().getReferenceName())) {
-          final PsiMethodCallExpression superCall = PsiTreeUtil.getParentOfType(callExpression, PsiMethodCallExpression.class, true);
-          if (superCall != null) {
-            final PsiReferenceExpression methodExpression = superCall.getMethodExpression();
+          final PsiCallExpression superCall = PsiTreeUtil.getParentOfType(callExpression, PsiCallExpression.class, true);
+          if (superCall instanceof PsiMethodCallExpression) {
+            final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)superCall).getMethodExpression();
             if ("load".equals(methodExpression.getReferenceName())) {
               final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
               PsiClass psiClass = null;
@@ -60,6 +60,14 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
                 psiClass = PsiUtil.resolveClassInType(qualifierExpression.getType());
               }
               if (psiClass != null && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(psiClass.getQualifiedName())) {
+                return true;
+              }
+            }
+          } else if (superCall instanceof PsiNewExpression) {
+            final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)superCall).getClassOrAnonymousClassReference();
+            if (reference != null) {
+              final PsiElement resolve = reference.resolve();
+              if (resolve instanceof PsiClass && JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER.equals(((PsiClass)resolve).getQualifiedName())) {
                 return true;
               }
             }

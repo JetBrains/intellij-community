@@ -40,6 +40,7 @@ import java.util.*;
  */
 public class GroovycOSProcessHandler extends BaseOSProcessHandler {
   public static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
+  public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
   private final Set<File> toRecompileFiles = new HashSet<File>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
@@ -209,11 +210,16 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
     return false;
   }
 
-  public List<CompilerMessage> getCompilerMessages() {
+  public List<CompilerMessage> getCompilerMessages(String moduleName) {
     ArrayList<CompilerMessage> messages = new ArrayList<CompilerMessage>(compilerMessages);
     final StringBuffer unparsedBuffer = getStdErr();
     if (unparsedBuffer.length() != 0) {
-      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, unparsedBuffer.toString()));
+      String msg = unparsedBuffer.toString();
+      if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
+        msg = "Cannot compile Groovy files: no Groovy library is defined for module '" + moduleName + "'";
+      }
+
+      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, msg));
     }
 
     final int exitValue = getProcess().exitValue();

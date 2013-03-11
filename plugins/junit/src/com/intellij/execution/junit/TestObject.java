@@ -39,7 +39,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -62,7 +61,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -303,22 +301,16 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
-        IJSwingUtilities.invoke(new Runnable() {
+        final Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            try {
-              unboundOutputRoot.flush();
-              packetsReceiver.checkTerminated();
-              final JUnitRunningModel model = packetsReceiver.getModel();
-              notifyByBalloon(model, myStarted, consoleProperties);
-            }
-            finally {
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                Disposer.dispose(consoleView);
-              }
-            }
+            unboundOutputRoot.flush();
+            packetsReceiver.checkTerminated();
+            final JUnitRunningModel model = packetsReceiver.getModel();
+            notifyByBalloon(model, myStarted, consoleProperties);
           }
-        });
+        };
+        handler.getOut().addRequest(runnable, queue);
       }
 
       @Override
@@ -342,10 +334,6 @@ public abstract class TestObject implements JavaCommandLine {
         extractor.getEventsDispatcher().processOutput(printable);
       }
     });
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new DefaultExecutionResult(null, handler);
-    }
 
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.init(consoleProperties, myEnvironment);

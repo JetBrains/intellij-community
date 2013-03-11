@@ -47,10 +47,6 @@ public class SourceStubPsiFactory extends StubPsiFactory {
 
   @Override
   public PsiReferenceList createClassReferenceList(PsiClassReferenceListStub stub) {
-    if (stub.getRole() == PsiReferenceList.Role.EXTENDS_BOUNDS_LIST) {
-      return new PsiTypeParameterExtendsBoundsListImpl(stub, JavaStubElementTypes.EXTENDS_BOUND_LIST);
-    }
-
     return new PsiReferenceListImpl(stub, stub.getStubType());
   }
 

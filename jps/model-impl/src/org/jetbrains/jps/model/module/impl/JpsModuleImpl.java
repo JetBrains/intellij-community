@@ -40,7 +40,7 @@ import java.util.List;
 public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsModuleImpl<P>> implements JpsTypedModule<P> {
   private static final JpsUrlListRole CONTENT_ROOTS_ROLE = new JpsUrlListRole("content roots");
   private static final JpsUrlListRole EXCLUDED_ROOTS_ROLE = new JpsUrlListRole("excluded roots");
-  public static final JpsElementChildRole<JpsDependenciesListImpl> DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
+  private static final JpsElementChildRole<JpsDependenciesListImpl> DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
   private final JpsModuleType<P> myModuleType;
   private final JpsLibraryCollection myLibraryCollection;
 
@@ -50,7 +50,6 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
     myContainer.setChild(myModuleType.getPropertiesRole(), properties);
     myContainer.setChild(CONTENT_ROOTS_ROLE);
     myContainer.setChild(EXCLUDED_ROOTS_ROLE);
-    myContainer.setChild(JpsFacetRole.COLLECTION_ROLE);
     myContainer.setChild(DEPENDENCIES_LIST_CHILD_ROLE, new JpsDependenciesListImpl());
     getDependenciesList().addModuleSourceDependency();
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
@@ -134,18 +133,6 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
         break;
       }
     }
-  }
-
-  @NotNull
-  @Override
-  public <P extends JpsElement> JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties) {
-    return myContainer.getChild(JpsFacetRole.COLLECTION_ROLE).addChild(new JpsFacetImpl(type, name, properties));
-  }
-
-  @NotNull
-  @Override
-  public List<JpsFacet> getFacets() {
-    return myContainer.getChild(JpsFacetRole.COLLECTION_ROLE).getElements();
   }
 
   @NotNull

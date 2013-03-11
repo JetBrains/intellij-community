@@ -70,18 +70,19 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final HashSet<String> onDemand = new HashSet<String>();
     ImportHelper.collectOnDemandImports(sortedNames, onDemand, settings);
-    final Set<String> importedOnDemand = new HashSet<String>();
+    final Set<String> imported = new HashSet<String>();
     final List<String> imports = new ArrayList<String>();
     for (Pair<String, Boolean> pair : sortedNames) {
       final String qName = pair.first;
       final String packageName = StringUtil.getPackageName(qName);
-      if (importedOnDemand.contains(packageName)) {
+      if (imported.contains(packageName) || imported.contains(qName)) {
         continue;
       }
       if (onDemand.contains(packageName)) {
-        importedOnDemand.add(packageName);
+        imported.add(packageName);
         imports.add("<?import " + packageName + ".*?>");
       } else {
+        imported.add(qName);
         imports.add("<?import " + qName + "?>");
       }
     }

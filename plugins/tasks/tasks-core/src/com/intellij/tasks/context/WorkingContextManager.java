@@ -16,6 +16,9 @@
 
 package com.intellij.tasks.context;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +39,7 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,9 +116,10 @@ public class WorkingContextManager {
     saveContext(entryName, CONTEXT_ZIP_POSTFIX, comment);
   }
 
-  private void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+  private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       if (entryName == null) {
         int i = archive.getEntries().size();
         do {
@@ -128,15 +133,38 @@ public class WorkingContextManager {
       Element element = new Element("context");
       saveContext(element);
       String s = new XMLOutputter().outputString(element);
-      entry.setData(s.getBytes());
-      archive.close();
+      entry.setData(s.getBytes("UTF-8"));
     }
     catch (IOException e) {
       LOG.error(e);
     }
+    finally {
+      closeArchive(archive);
+    }
   }
 
   private JBZipFile getTasksArchive(String postfix) throws IOException {
+    File file = getArchiveFile(postfix);
+    try {
+      return new JBZipFile(file);
+    }
+    catch (IOException e) {
+      file.delete();
+      JBZipFile zipFile = null;
+      try {
+        zipFile = new JBZipFile(file);
+        Notifications.Bus.notify(new Notification("Tasks", "Context Data Corrupted",
+                                                  "Context information history for " + myProject.getName() + " was corrupted.\n" +
+                                                  "The history was replaced with empty one.", NotificationType.ERROR), myProject);
+      }
+      catch (IOException e1) {
+        LOG.error("Can't repair form context data corruption", e1);
+      }
+      return zipFile;
+    }
+  }
+
+  private File getArchiveFile(String postfix) {
     String configPath = PathManager.getConfigPath(true);
     File tasksFolder = new File(configPath, TASKS_FOLDER);
     if (!tasksFolder.exists()) {
@@ -144,39 +172,54 @@ public class WorkingContextManager {
       tasksFolder.mkdir();
     }
     String projectName = myProject.getName();
-    return new JBZipFile(new File(tasksFolder, projectName + postfix));
+    return new File(tasksFolder, projectName + postfix);
   }
 
   public void restoreContext(@NotNull Task task) {
     loadContext(TASKS_ZIP_POSTFIX, task.getId() + TASK_XML_POSTFIX);
   }
 
-  private boolean loadContext(String zipPostfix, String entryName) {
+  private synchronized boolean loadContext(String zipPostfix, String entryName) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         byte[] bytes = entry.getData();
         Document document = JDOMUtil.loadDocument(new String(bytes));
         Element rootElement = document.getRootElement();
         loadContext(rootElement);
-        archive.close();
         return true;
       }
     }
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      closeArchive(archive);
+    }
     return false;
+  }
+
+  private static void closeArchive(JBZipFile archive) {
+    if (archive != null) {
+      try {
+        archive.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public List<ContextInfo> getContextHistory() {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }
 
-  private List<ContextInfo> getContextHistory(String zipPostfix) {
+  private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, new NullableFunction<JBZipEntry, ContextInfo>() {
         public ContextInfo fun(JBZipEntry entry) {
@@ -187,6 +230,9 @@ public class WorkingContextManager {
     catch (IOException e) {
       LOG.error(e);
       return Collections.emptyList();
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
@@ -203,16 +249,19 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(postfix);
+      archive = getTasksArchive(postfix);
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
         archive.eraseEntry(entry);
       }
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      closeArchive(archive);
     }
   }
 
@@ -221,9 +270,10 @@ public class WorkingContextManager {
     pack(max, delta, TASKS_ZIP_POSTFIX);
   }
 
-  private void pack(int max, int delta, String zipPostfix) {
+  private synchronized void pack(int max, int delta, String zipPostfix) {
+    JBZipFile archive = null;
     try {
-      JBZipFile archive = getTasksArchive(zipPostfix);
+      archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
         JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
@@ -232,11 +282,17 @@ public class WorkingContextManager {
           archive.eraseEntry(array[i]);
         }
       }
-      archive.close();
     }
     catch (IOException e) {
       LOG.error(e);
     }
+    finally {
+      closeArchive(archive);
+    }
+  }
 
+  @TestOnly
+  public File getContextFile() throws IOException {
+    return getArchiveFile(CONTEXT_ZIP_POSTFIX);
   }
 }

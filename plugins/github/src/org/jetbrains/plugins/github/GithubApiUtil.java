@@ -99,7 +99,7 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  private static String removeProtocolPrefix(final String url) {
+  public static String removeProtocolPrefix(final String url) {
     if (url.startsWith("https://")) {
       return url.substring(8);
     }
@@ -159,7 +159,8 @@ public class GithubApiUtil {
     }
   }
 
-  private static String removeTrailingSlash(String s) {
+  @NotNull
+  public static String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {
       return s.substring(0, s.length() - 1);
     }

@@ -26,7 +26,7 @@ PsiJavaFile:Nested.java
             PsiNameValuePair
               PsiIdentifier:second('second')
               PsiJavaToken:EQ('=')
-              PsiLiteralExpression:"Wampirchik"
-                PsiJavaToken:STRING_LITERAL('"Wampirchik"')
+              PsiLiteralExpression:"Yet One Eugene"
+                PsiJavaToken:STRING_LITERAL('"Yet One Eugene"')
             PsiJavaToken:RPARENTH(')')
       PsiJavaToken:RPARENTH(')')

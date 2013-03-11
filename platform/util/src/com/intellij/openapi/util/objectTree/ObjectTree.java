@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
 
-  private final CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
+  private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet();

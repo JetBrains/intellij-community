@@ -109,7 +109,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     final int previousLineStartOffset = lineNumber > 0 ? document.getLineStartOffset(lineNumber - 1) : lineStartOffset;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     final HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    final IElementType type = getNonWhitespaceElementType(iterator, previousLineStartOffset);
+    final IElementType type = getNonWhitespaceElementType(iterator, lineStartOffset, previousLineStartOffset);
 
     final CharSequence editorCharSequence = document.getCharsSequence();
     final CharSequence lineIndent =
@@ -190,8 +190,8 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, final int lineStartOffset) {
-    while (!iterator.atEnd() && iterator.getStart() >= lineStartOffset) {
+  private IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
+    while (!iterator.atEnd() && iterator.getEnd() >= currentLineStartOffset && iterator.getStart() >= prevLineStartOffset) {
       final IElementType tokenType = iterator.getTokenType();
       if (!myWhitespaceTokens.contains(tokenType)) {
         return tokenType;

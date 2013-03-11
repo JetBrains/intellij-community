@@ -19,9 +19,10 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -214,6 +215,12 @@ public class FileReferenceSet {
   protected void reparse() {
     String str = myPathStringNonTrimmed;
 
+    final List<FileReference> referencesList = reparse(str, myStartInElement);
+
+    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+  }
+
+  protected List<FileReference> reparse(String str, int startInElement) {
     final List<FileReference> referencesList = new ArrayList<FileReference>();
 
 
@@ -234,7 +241,7 @@ public class FileReferenceSet {
 
     if (str.equals(separatorString)) {
       final FileReference fileReference =
-        createFileReference(new TextRange(myStartInElement, myStartInElement + sepLen), index++, separatorString);
+        createFileReference(new TextRange(startInElement, startInElement + sepLen), index++, separatorString);
       referencesList.add(fileReference);
     }
 
@@ -242,7 +249,7 @@ public class FileReferenceSet {
       final int nextSlash = str.indexOf(separatorString, currentSlash + sepLen);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + sepLen, nextSlash) : str.substring(currentSlash + sepLen);
       final FileReference ref = createFileReference(
-        new TextRange(myStartInElement + currentSlash + sepLen, myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+        new TextRange(startInElement + currentSlash + sepLen, startInElement + (nextSlash > 0 ? nextSlash : str.length())),
         index++,
         subreferenceText);
       referencesList.add(ref);
@@ -250,8 +257,7 @@ public class FileReferenceSet {
         break;
       }
     }
-
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    return referencesList;
   }
 
   public FileReference getReference(int index) {
@@ -392,7 +398,7 @@ public class FileReferenceSet {
     }
     final Project project = file.getProject();
     PsiDirectory parent = file.getParent();
-    final Module module = ModuleUtil.findModuleForPsiElement(parent == null ? file : parent);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
     if (module == null) {
       return Collections.emptyList();
     }
@@ -415,7 +421,7 @@ public class FileReferenceSet {
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-    return Condition.TRUE;
+    return Conditions.alwaysTrue();
   }
 
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {

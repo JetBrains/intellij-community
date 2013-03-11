@@ -693,7 +693,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
       PsiElement methodNameElement = element.getReferenceNameElement();
-      if (method != null && methodNameElement != null) {
+      if (method != null && methodNameElement != null&& !(methodNameElement instanceof PsiKeyword)) {
         myHolder.add(HighlightNamesUtil.highlightMethodName(method, methodNameElement, false, colorsScheme));
         myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(element, colorsScheme));
       }
@@ -707,7 +707,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
         else {
-          myHolder.add(HighlightNamesUtil.highlightMethodName(method, element, false, colorsScheme));
+          final PsiElement referenceNameElement = element.getReferenceNameElement();
+          if(referenceNameElement != null) {
+            myHolder.add(HighlightNamesUtil.highlightMethodName(method, referenceNameElement, false, colorsScheme));
+          }
         }
       }
       catch (IndexNotReadyException ignored) {
@@ -1040,7 +1043,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myRefCountHolder != null) {
       myRefCountHolder.registerReference(expression, result);
     }
-    if (result.getElement() != null && !result.isAccessible()) {
+    final PsiElement method = result.getElement();
+    if (method != null && !result.isAccessible()) {
       final String accessProblem = HighlightUtil.buildProblemWithAccessDescription(expression, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
       myHolder.add(info);
@@ -1074,6 +1078,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, expression.getTextRange()));
+    }
+    if (!myHolder.hasErrorResults()) {
+      if (method instanceof PsiMethod && ((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final PsiElement qualifier = expression.getQualifier();
+        if (qualifier instanceof PsiSuperExpression) {
+          myHolder.add(HighlightInfo
+                         .newHighlightInfo(HighlightInfoType.ERROR)
+                         .range(expression.getReferenceNameElement())
+                         .descriptionAndTooltip("Abstract method '" + ((PsiMethod)method).getName() + "' cannot be accessed directly").create());
+        }
+      }
     }
   }
 

@@ -92,7 +92,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
   @NotNull
   @Override
   public String getId() {
-    return "reference.settingsdialog.emmet";
+    return "reference.idesettings.emmet";
   }
 
   @Nullable

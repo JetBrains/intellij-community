@@ -30,9 +30,9 @@ public interface EclipseModuleManager {
   @Nullable
   String getInvalidJdk();
 
-  void addGroovySupport(String name);
+  void registerCon(String name);
 
-  String[] getGroovySupport();
+  String[] getUsedCons();
 
   void registerEclipseVariablePath(String path, String var);
 
@@ -87,10 +87,10 @@ public interface EclipseModuleManager {
     }
 
     @Override
-    public void addGroovySupport(String name) {}
+    public void registerCon(String name) {}
 
     @Override
-    public String[] getGroovySupport() {
+    public String[] getUsedCons() {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 

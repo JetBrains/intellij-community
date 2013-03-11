@@ -34,7 +34,7 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
             String expectedNewText = oldText.substring(0, myInsertOffset) + s + oldText.substring(myInsertOffset);
 
             try {
-              doReparse(s, expectedNewText, 0);
+              doReparseAndCheck(s, expectedNewText, 0);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -62,11 +62,27 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
     String oldText = myDummyFile.getText();
     String expectedNewText = oldText.substring(0, myInsertOffset-count) + oldText.substring(myInsertOffset);
 
-    doReparse("", expectedNewText, count);
+    doReparseAndCheck("", expectedNewText, count);
     myInsertOffset -= count;
   }
 
-  protected void doReparse(final String s, final String expectedNewText, final int length) throws IncorrectOperationException {
+  private void doReparseAndCheck(final String s, final String expectedNewText, final int length) throws IncorrectOperationException {
+    doReparse(s, length);
+    String foundStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), false);
+    final PsiFile psiFile = createDummyFile(getName() + "." + myFileType.getDefaultExtension(), expectedNewText);
+    String expectedStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(psiFile), false);
+    if (!expectedStructure.equals(foundStructure)) {
+      System.out.println("expected: ");
+      System.out.println(expectedStructure);
+      System.out.println("found: ");
+      System.out.println(foundStructure);
+      assertEquals(expectedStructure, foundStructure);
+    }
+
+    assertEquals("Reparse tree should be equal to the document", expectedNewText, myDummyFile.getText());
+  }
+
+  protected void doReparse(final String s, final int length) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -76,18 +92,6 @@ public abstract class AbstractReparseTestCase extends PsiTestCase {
             BlockSupport blockSupport = ServiceManager.getService(myProject, BlockSupport.class);
             try {
               blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
-              String foundStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), false);
-              final PsiFile psiFile = createDummyFile(getName() + "." + myFileType.getDefaultExtension(), expectedNewText);
-              String expectedStructure = DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(psiFile), false);
-              if (!expectedStructure.equals(foundStructure)) {
-                System.out.println("expected: ");
-                System.out.println(expectedStructure);
-                System.out.println("found: ");
-                System.out.println(foundStructure);
-                assertEquals(expectedStructure, foundStructure);
-              }
-
-              assertEquals("Reparse tree should be equal to the document",expectedNewText,myDummyFile.getText());
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

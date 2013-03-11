@@ -48,7 +48,6 @@ public abstract class ExecutionManager {
                                        @NotNull Executor executor,
                                        @NotNull ExecutionEnvironment env);
 
-  @Deprecated
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
                                          @NotNull ExecutionTarget target,

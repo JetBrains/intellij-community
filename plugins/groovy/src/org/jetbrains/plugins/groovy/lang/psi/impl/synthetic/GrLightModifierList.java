@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -131,6 +132,27 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   public String toString() {
     return "GrModifierList";
+  }
+
+  @Override
+  public String getText() {
+    StringBuilder buffer = new StringBuilder();
+    for (GrAnnotation annotation : myAnnotations) {
+      buffer.append(annotation.getText());
+      buffer.append(' ');
+    }
+
+    for (@GrModifier.GrModifierConstant String modifier : GrModifier.GROOVY_MODIFIERS) {
+      if (hasExplicitModifier(modifier)) {
+        buffer.append(modifier);
+        buffer.append(' ');
+      }
+    }
+
+    if (buffer.length() > 0) {
+      buffer.delete(buffer.length() - 1, buffer.length());
+    }
+    return buffer.toString();
   }
 
   @NotNull

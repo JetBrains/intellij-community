@@ -18,7 +18,7 @@ java.util.HashMap<java.lang.String, java.lang.String> map = new java.util.HashMa
 
 print(putAt0(map, "1", "6"));
 print(putAt0(map, 2, "7"));
-org.codehaus.groovy.runtime.DefaultGroovyMethods.putAt(map, "6", 1);
+map.put("6", 1);
 
 print(map.get("1"));
 print(map.get(2));
@@ -45,7 +45,7 @@ public arrayAccess() {
 super();
 }
 private static <K, V, Value extends V>Value putAt0(java.util.Map<K, V> propOwner, K key, Value value) {
-org.codehaus.groovy.runtime.DefaultGroovyMethods.putAt(propOwner, key, value);
+propOwner.put(key, value);
 return value;
 }
 private static <Value>Value putAt1(Foo propOwner, java.lang.String s, java.lang.Integer x, Value value) {

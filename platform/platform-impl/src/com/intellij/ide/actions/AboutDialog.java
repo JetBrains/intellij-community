@@ -19,6 +19,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
@@ -163,10 +164,9 @@ public class AboutDialog extends JDialog {
 
       setOpaque(false);
       col = Color.white;
-      final ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      linkCol = UI.getColor("link.foreground");
+      final ApplicationInfoImpl ideInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+      linkCol = ideInfo.getAboutLinkColor() != null ? ideInfo.getAboutLinkColor() : UI.getColor("link.foreground");
       setBackground(col);
-      ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
       myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, null));
       appendLast();
@@ -204,7 +204,7 @@ public class AboutDialog extends JDialog {
       myLines.add(new AboutBoxLine(info.getCompanyURL(), true, info.getCompanyURL()));
       */
 
-      String thirdParty = info.getThirdPartySoftwareURL();
+      String thirdParty = ideInfo.getThirdPartySoftwareURL();
       if (thirdParty != null) {
         myLines.add(new AboutBoxLine(""));
         myLines.add(new AboutBoxLine(""));

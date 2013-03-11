@@ -114,4 +114,8 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     myName = name;
   }
 
+  @Override
+  public String toString() {
+    return getName() + " (" + getModule().getName() + ")";
+  }
 }

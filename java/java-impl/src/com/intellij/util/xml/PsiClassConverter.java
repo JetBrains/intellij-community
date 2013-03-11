@@ -33,9 +33,11 @@ import org.jetbrains.annotations.Nullable;
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
   public PsiClass fromString(final String s, final ConvertContext context) {
+    if (StringUtil.isEmptyOrSpaces(s)) return null;
+
     final DomElement element = context.getInvocationElement();
     final GlobalSearchScope scope = element instanceof GenericDomValue ? getScope(context) : null;
-    return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), scope);
+    return DomJavaUtil.findClass(s.trim(), context.getFile(), context.getModule(), scope);
   }
 
   @Nullable

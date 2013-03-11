@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * The container for an {@link Editor}, which is added then to {@link com.intellij.openapi.diff.impl.util.ThreePanels}.
@@ -44,7 +46,7 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
   @NotNull private final MergePanel2.DiffEditorState myState;
   @NotNull private final MergePanelColumn myColumn;
   @NotNull private final MergePanel2 myMergePanel;
-  @NotNull private final ArrayList<EditorListener> myListeners = new ArrayList<EditorListener>();
+  @NotNull private final List<EditorListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @Nullable private EditorEx myEditor;
 
   public EditorPlace(@NotNull MergePanel2.DiffEditorState state, @NotNull MergePanelColumn column, @NotNull MergePanel2 mergePanel) {
@@ -197,23 +199,15 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
   }
 
   private void fireEditorCreated() {
-    EditorListener[] listeners = getListeners();
-    for (EditorListener listener : listeners) {
+    for (EditorListener listener : myListeners) {
       listener.onEditorCreated(this);
     }
   }
 
   private void fireEditorReleased(Editor releasedEditor) {
-    EditorListener[] listeners = getListeners();
-    for (EditorListener listener : listeners) {
+    for (EditorListener listener : myListeners) {
       listener.onEditorReleased(releasedEditor);
     }
-  }
-
-  private EditorListener[] getListeners() {
-    EditorListener[] listeners = new EditorListener[myListeners.size()];
-    myListeners.toArray(listeners);
-    return listeners;
   }
 
   public void removeNotify() {

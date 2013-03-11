@@ -53,12 +53,11 @@ public class SelectionTool extends InputTool {
       myState = STATE_DRAG;
       deactivateTracker();
 
-      if (!myArea.isTree()) {
-        if (myInputEvent.isAltDown()) {
-          setTracker(new MarqueeTracker());
-          return;
-        }
+      if (handleTracker()) {
+        return;
+      }
 
+      if (!myArea.isTree()) {
         InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
         if (tracker != null) {
           setTracker(tracker);
@@ -77,9 +76,17 @@ public class SelectionTool extends InputTool {
       }
       else {
         Point location = component.convertPoint(myArea.getNativeComponent(), myCurrentScreenX, myCurrentScreenY);
-        setTracker(component.getDragTracker(location, myArea.isTree()));
+        setTracker(component.getDragTracker(location, myInputEvent, myArea.isTree()));
       }
     }
+  }
+
+  protected boolean handleTracker() {
+    if (!myArea.isTree() && myInputEvent.isAltDown()) {
+      setTracker(new MarqueeTracker());
+      return true;
+    }
+    return false;
   }
 
   @Override

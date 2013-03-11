@@ -21,12 +21,10 @@ import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,10 +39,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 
 /**
@@ -171,13 +167,7 @@ public class ITNReporter extends ErrorReportSubmitter {
             NotificationType type = reportInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED
                                     ? NotificationType.ERROR
                                     : NotificationType.INFORMATION;
-            NotificationListener listener = url != null ? new NotificationListener() {
-              @Override
-              public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                BrowserUtil.launchBrowser(url);
-                notification.expire();
-              }
-            } : null;
+            NotificationListener listener = url != null ? new NotificationListener.UrlOpeningListener(true) : null;
             ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
                                                     text.toString(),
                                                     type, listener).setImportant(false).notify(project);

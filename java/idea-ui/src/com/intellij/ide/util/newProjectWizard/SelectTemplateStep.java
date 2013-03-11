@@ -38,7 +38,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.TemplateModuleBuilder;
 import com.intellij.projectImport.ProjectFormatPanel;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.HideableDecorator;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.MultiMap;
@@ -61,7 +64,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   private JBList myTemplatesList;
   private JPanel mySettingsPanel;
-  private SearchTextField mySearchField;
   private JTextPane myDescriptionPane;
   private JPanel myDescriptionPanel;
 
@@ -121,7 +123,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myExpertPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myExpertDecorator.setContentComponent(myExpertPanel);
 
-    myList = new ProjectTypesList(myTemplatesList, mySearchField, map, context);
+    myList = new ProjectTypesList(myTemplatesList, map, context);
+    myList.installKeyAction(getNameComponent());
 
     myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
@@ -145,6 +148,10 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myLeftPanel.setMinimumSize(new Dimension(200, 200));
     mySplitter.setFirstComponent(myLeftPanel);
     mySplitter.setSecondComponent(myRightPanel);
+  }
+
+  private JTextField getNameComponent() {
+    return myWizardContext.isCreatingNewProject() ? myNamePathComponent.getNameComponent() : myModuleName;
   }
 
   private void addProjectFormat(JPanel panel) {
@@ -190,8 +197,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     if (template != null) {
       description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
-        StringBuilder sb = new StringBuilder("<html><body><font face=\"Verdana\" ");
-        sb.append(SystemInfo.isMac ? "" : "size=\"-1\"").append('>');
+        StringBuilder sb = new StringBuilder("<html><body><font ");
+        sb.append(SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"").append('>');
         sb.append(description).append("</font></body></html>");
         description = sb.toString();
         myDescriptionPane.setText(description);
@@ -268,7 +275,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return mySearchField;
+    return getNameComponent();
   }
 
   @Override
@@ -298,10 +305,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Override
   public String getName() {
     return "Template Type";
-  }
-
-  private void createUIComponents() {
-    mySearchField = new SearchTextField(false);
   }
 
   @Override

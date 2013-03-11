@@ -30,7 +30,7 @@ public class CoreJarHandler extends JarHandlerBase {
   private final CoreJarFileSystem myFileSystem;
   private final VirtualFile myRoot;
 
-  public CoreJarHandler(CoreJarFileSystem fileSystem, String path) {
+  public CoreJarHandler(@NotNull CoreJarFileSystem fileSystem, @NotNull String path) {
     super(path);
     myFileSystem = fileSystem;
 
@@ -46,7 +46,7 @@ public class CoreJarHandler extends JarHandlerBase {
   }
 
   @NotNull
-  private CoreJarVirtualFile getOrCreateFile(EntryInfo info, Map<EntryInfo, CoreJarVirtualFile> entries) {
+  private CoreJarVirtualFile getOrCreateFile(@NotNull EntryInfo info, @NotNull Map<EntryInfo, CoreJarVirtualFile> entries) {
     CoreJarVirtualFile answer = entries.get(info);
     if (answer == null) {
       EntryInfo parentEntry = info.parent;
@@ -58,10 +58,11 @@ public class CoreJarHandler extends JarHandlerBase {
   }
 
   @Nullable
-  public VirtualFile findFileByPath(String pathInJar) {
+  public VirtualFile findFileByPath(@NotNull String pathInJar) {
     return myRoot != null ? myRoot.findFileByRelativePath(pathInJar) : null;
   }
 
+  @NotNull
   public CoreJarFileSystem getFileSystem() {
     return myFileSystem;
   }

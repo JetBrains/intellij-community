@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
@@ -78,7 +79,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+    for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroExpand(entry.getKey(), entry.getValue());
     }
     getPathMacros().addMacroExpands(result);
@@ -87,7 +88,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
-    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
+    for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
     getPathMacros().addMacroReplacements(result);

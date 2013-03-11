@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -77,8 +78,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "result.of.method.call.ignored.display.name");
+    return InspectionGadgetsBundle.message("result.of.method.call.ignored.display.name");
   }
 
   @Override
@@ -86,9 +86,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
     final String className = containingClass.getName();
-    return InspectionGadgetsBundle.message(
-      "result.of.method.call.ignored.problem.descriptor",
-      className);
+    return InspectionGadgetsBundle.message("result.of.method.call.ignored.problem.descriptor", className);
   }
 
   @Override
@@ -106,9 +104,9 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle
-      .message("result.of.method.call.ignored.class.column.title"), InspectionGadgetsBundle
-      .message("result.of.method.call.ignored.method.column.title")));
+    final ListTable table = new ListTable(new ListWrappingTableModel(
+      Arrays.asList(classNames, methodNamePatterns), InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
     final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
@@ -130,15 +128,13 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpressionStatement(
-      @NotNull PsiExpressionStatement statement) {
+    public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       super.visitExpressionStatement(statement);
       final PsiExpression expression = statement.getExpression();
       if (!(expression instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression;
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       final PsiMethod method = call.resolveMethod();
       if (method == null || method.isConstructor()) {
         return;
@@ -151,13 +147,14 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      if (m_reportAllNonLibraryCalls &&
-          !LibraryUtil.classIsInLibrary(aClass)) {
+      if (PsiUtilCore.hasErrorElementChild(statement)) {
+        return;
+      }
+      if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
         registerMethodCallError(call, aClass);
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (methodName == null) {
         return;
@@ -176,8 +173,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       }
     }
 
-    private boolean methodNamesMatch(String methodName,
-                                     String methodNamePattern) {
+    private boolean methodNamesMatch(String methodName, String methodNamePattern) {
       Pattern pattern;
       if (patternCache != null) {
         pattern = patternCache.get(methodNamePattern);

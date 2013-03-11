@@ -42,7 +42,6 @@ message Message {
     }
 
     message GlobalSettings {
-      repeated KeyValuePair path_variable = 1;
       required string global_options_path = 5;
     }
 

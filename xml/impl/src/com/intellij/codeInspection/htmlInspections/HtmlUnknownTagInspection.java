@@ -24,6 +24,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -63,6 +63,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
   public JDOMExternalizableStringList myValues;
   public boolean myCustomValuesEnabled = true;
   @NonNls public static final String TAG_SHORT_NAME = "HtmlUnknownTag";
+  public static final Key<HtmlUnknownTagInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
 
   public HtmlUnknownTagInspection() {
     this("nobr,noembed,comment,noscript,embed,script");
@@ -229,7 +230,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
         final AddCustomTagOrAttributeIntentionAction action =
-          new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_TAG);
+          new AddCustomTagOrAttributeIntentionAction(TAG_KEY, name, XmlEntitiesInspection.UNKNOWN_TAG);
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)

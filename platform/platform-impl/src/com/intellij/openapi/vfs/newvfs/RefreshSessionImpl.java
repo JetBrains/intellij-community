@@ -132,7 +132,7 @@ public class RefreshSessionImpl extends RefreshSession {
           nvf.markDirty();
         }
 
-        RefreshWorker worker = myWorker = new RefreshWorker(file, myIsRecursive);
+        RefreshWorker worker = myWorker = new RefreshWorker(nvf, myIsRecursive);
         worker.scan();
         List<VFileEvent> events = worker.getEvents();
         if (myEvents.addAll(events)) {

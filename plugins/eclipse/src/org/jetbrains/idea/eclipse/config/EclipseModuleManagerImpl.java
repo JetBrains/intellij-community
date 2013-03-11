@@ -63,7 +63,7 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   private Map<String, Integer> mySrcPlace = new LinkedHashMap<String, Integer>();
   private String myInvalidJdk;
 
-  private Set<String> myGroovyDslSupport = new LinkedHashSet<String>();
+  private Set<String> myKnownCons = new LinkedHashSet<String>();
 
   public EclipseModuleManagerImpl(Module module) {
     myModule = module;
@@ -80,13 +80,13 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
   }
 
   @Override
-  public void addGroovySupport(String name) {
-    myGroovyDslSupport.add(name);
+  public void registerCon(String name) {
+    myKnownCons.add(name);
   }
 
   @Override
-  public String[] getGroovySupport() {
-    return ArrayUtil.toStringArray(myGroovyDslSupport);
+  public String[] getUsedCons() {
+    return ArrayUtil.toStringArray(myKnownCons);
   }
 
   public static EclipseModuleManagerImpl getInstance(Module module) {
@@ -260,7 +260,7 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     myEclipseVariablePaths.clear();
     myUnknownCons.clear();
     mySrcPlace.clear();
-    myGroovyDslSupport.clear();
+    myKnownCons.clear();
   }
 
   @Override

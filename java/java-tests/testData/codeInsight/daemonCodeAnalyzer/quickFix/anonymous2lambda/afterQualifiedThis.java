@@ -7,7 +7,7 @@ class Test {
   interface InOut<A> {
     A run() throws IOException;
 
-    <B> InOut<B> bind(final Eff<A, InOut<B>> f) default {
+    default <B> InOut<B> bind(final Eff<A, InOut<B>> f) {
       return () -> f.f(InOut.this.run()).run();
     }
   }

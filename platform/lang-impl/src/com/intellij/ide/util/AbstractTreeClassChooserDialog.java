@@ -81,6 +81,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   @Nullable private final T myBaseClass;
   private T myInitialClass;
   private final boolean myIsShowMembers;
+  private final boolean myIsShowLibraryContents;
 
   public AbstractTreeClassChooserDialog(String title, Project project, final Class<T> elementClass) {
     this(title, project, elementClass, null);
@@ -96,7 +97,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @NotNull Class<T> elementClass,
                                         @Nullable Filter<T> classFilter,
                                         @Nullable T initialClass) {
-    this(title, project, scope, elementClass, classFilter, null, initialClass, false);
+    this(title, project, scope, elementClass, classFilter, null, initialClass, false, true);
   }
 
   public AbstractTreeClassChooserDialog(String title,
@@ -106,7 +107,8 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @Nullable Filter<T> classFilter,
                                         @Nullable T baseClass,
                                         @Nullable T initialClass,
-                                        boolean isShowMembers) {
+                                        boolean isShowMembers,
+                                        boolean isShowLibraryContents) {
     super(project, true);
     myScope = scope;
     myElementClass = elementClass;
@@ -114,6 +116,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myBaseClass = baseClass;
     myInitialClass = initialClass;
     myIsShowMembers = isShowMembers;
+    myIsShowLibraryContents = isShowLibraryContents;
     setTitle(title);
     myProject = project;
     init();
@@ -161,7 +164,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
       @Override
       public boolean isShowLibraryContents() {
-        return true;
+        return myIsShowLibraryContents;
       }
 
       @Override

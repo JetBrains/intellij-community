@@ -41,27 +41,21 @@ import java.util.List;
  * @author dyoma
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
-  public static final Icon RERUN_ICON = AllIcons.Actions.Rerun;
-  public static final Icon RERUN_DEBUGGER_ICON = AllIcons.Actions.Rerun;
 
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;
-  private final Icon myIcon;
   private final ExecutionEnvironment myEnvironment;
 
   public RestartAction(@NotNull final Executor executor,
                        final ProgramRunner runner,
                        final ProcessHandler processHandler,//todo kill ProcessHandler here, use descriptor.getProcessHandler() is need
-                       final Icon icon,
                        @NotNull final RunContentDescriptor descriptor,
                        @NotNull final ExecutionEnvironment env) {
-    getTemplatePresentation().setIcon(icon);
     Disposer.register(descriptor, this);
     registry.add(this);
 
-    myIcon = icon;
     myEnvironment = env;
     getTemplatePresentation().setEnabled(false);
     myProcessHandler = processHandler;
@@ -155,7 +149,7 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     final boolean isRunning = processHandler != null && !processHandler.isProcessTerminated();
 
     presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", name));
-    presentation.setIcon(isRunning ? AllIcons.Actions.Restart : myIcon);
+    presentation.setIcon(isRunning ? AllIcons.Actions.Restart : myExecutor.getIcon());
     presentation.setEnabled(isEnabled());
   }
 
