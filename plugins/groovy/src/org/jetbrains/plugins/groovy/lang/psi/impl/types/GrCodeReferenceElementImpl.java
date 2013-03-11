@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -496,14 +496,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
                 final PsiPackage aPackage = JavaPsiFacade.getInstance(ref.getProject()).findPackage(fqName);
                 if (aPackage != null) return new GroovyResolveResult[]{new GroovyResolveResultImpl(aPackage, true)};
               }
-            } else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
-              PsiClass[] classes = ((PsiClass) qualifierResolved).getAllInnerClasses();
-              for (final PsiClass aClass : classes) {
-                if (refName.equals(aClass.getName())) {
-                  boolean isAccessible = PsiUtil.isAccessible(ref, aClass);
-                  return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
-                }
-              }
+            }
+            else if ((kind == CLASS || kind == CLASS_OR_PACKAGE) && qualifierResolved instanceof PsiClass) {
+              final ClassResolverProcessor processor = new ClassResolverProcessor(refName, ref);
+              qualifierResolved.processDeclarations(processor, ResolveState.initial(), null, ref);
+              return processor.getCandidates();
             }
           } else {
             EnumSet<ClassHint.ResolveKind> kinds = kind == CLASS ? ResolverProcessor.RESOLVE_KINDS_CLASS :
