@@ -47,13 +47,13 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     myIconOpen = iconOpen;
     setLayout(new GridBagLayout());
     myLabel = new JLabel(icon);
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
     Color oldColor = UIManager.getColor("Separator.foreground");
     UIManager.put("Separator.foreground", UIUtil.getBorderColor());
     mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
     UIManager.put("Separator.foreground", oldColor);
     GridBagConstraints gb =
-            new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
+            new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                    new Insets(3, 0, 0, 0), 0, 0);
     add(mySeparator, gb);
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
@@ -66,6 +66,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     gb.gridx = 0;
     gb.fill = GridBagConstraints.BOTH;
     gb.anchor = GridBagConstraints.NORTHWEST;
+    gb.weighty = 1;
     myWrapper = new JPanel(new BorderLayout());
     add(myWrapper, gb);
 
