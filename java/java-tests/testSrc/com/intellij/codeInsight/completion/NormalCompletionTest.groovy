@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
@@ -906,6 +907,7 @@ public class ListUtils {
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testCastInstanceofedQualifierInForeach() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
+  public void _testCastIncompleteInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testCastTooComplexInstanceofedQualifier() throws Throwable { doAntiTest(); }
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
@@ -1124,6 +1126,8 @@ public class ListUtils {
   public void testMethodColon() throws Exception { doTest(':') }
   public void testVariableColon() throws Exception { doTest(':') }
 
+  public void testFinishByClosingParenthesis() throws Exception { doTest(')') }
+
   public void testNoMethodsInParameterType() {
     configure()
     assertFirstStringItems "final", "float"
@@ -1323,13 +1327,42 @@ class XInternalError {}
 
     def p = LookupElementPresentation.renderElement(item)
     assert p.itemText == 'public void run'
-    assert p.tailText == '(s, myInt) {...}'
+    assert p.tailText == '(t, myInt) {...}'
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item
     myFixture.type('\n')
     checkResult()
   }
+
+  public void testBraceOnNextLine() {
+    codeStyleSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    doTest()
+  }
+
+  public void testDoForceBraces() {
+    codeStyleSettings.DOWHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+    doTest('\n')
+  }
+
+  public void "test block selection from bottom to top with single-item insertion"() {
+    myFixture.configureByText "a.java", """
+class Foo {{
+  ret<caret>;
+  ret;
+}}"""
+    edt {
+      def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
+      myFixture.editor.selectionModel.setBlockSelection(new LogicalPosition(caret.line + 1, caret.column), caret)
+    }
+    myFixture.completeBasic()
+    myFixture.checkResult '''
+class Foo {{
+  return<caret>;
+  return;
+}}'''
+  }
+
 
 
 }

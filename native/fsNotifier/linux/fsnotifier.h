@@ -46,6 +46,7 @@ void array_put(array* a, int index, void* element);
 void* array_get(array* a, int index);
 void array_delete(array* a);
 void array_delete_vs_data(array* a);
+void array_delete_data(array* a);
 
 
 // poor man's hash table
@@ -61,7 +62,8 @@ void table_delete(table* t);
 enum {
   ERR_IGNORE = -1,
   ERR_CONTINUE = -2,
-  ERR_ABORT = -3
+  ERR_ABORT = -3,
+  ERR_MISSING = -4
 };
 
 bool init_inotify();

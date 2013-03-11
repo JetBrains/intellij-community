@@ -161,7 +161,7 @@ public class SocketLock {
       if (result.contains(path)) {
         try {
           DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-          out.writeUTF(ACTIVATE_COMMAND + StringUtil.join(args, "\0"));
+          out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
           out.flush();
           String response = in.readUTF();
           if (response.equals("ok")) {

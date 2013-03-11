@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testMethodNormal2() { doParserTest("{ default public void f() { } }", false, false); }
   public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }", false, false); }
   public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
-  public void testExtension() { doParserTest("{ int f() throws E default { return 42; } }", false, false); }
+  public void testExtension() { doParserTest("{ default int f() throws E { return 42; } }", false, false); }
   public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
   public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }
   public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }
@@ -88,7 +88,6 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testUnclosed6() { doParserTest("{ void f() default ; }", true, false); }
   public void testUnclosed7() { doParserTest("{ void f() default {return 42;} }", true, false); }
   public void testUnclosed8() { doParserTest("{ void f() default }", false, false); }
-  public void testUnclosed9() { doParserTest("{ void f() default ; }", false, false); }
   public void testConstructorBrackets() { doParserTest("{ A() [] { } }", false, false); }
   public void testVarArgBrackets() { doParserTest("{ void foo(int... x[]); }", false, false); }
 
@@ -104,7 +103,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }", false, false); }
   public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }
 
-  private void doParserTest(final String text, final boolean isAnnotation, final boolean isEnum) {
+  private void doParserTest(String text, boolean isAnnotation, boolean isEnum) {
     doParserTest(text, new MyTestParser(isAnnotation, isEnum));
   }
 
@@ -118,7 +117,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
     }
 
     @Override
-    public void parse(final PsiBuilder builder) {
+    public void parse(PsiBuilder builder) {
       JavaParser.INSTANCE.getDeclarationParser().parseClassBodyWithBraces(builder, myAnnotation, myAnEnum);
     }
   }

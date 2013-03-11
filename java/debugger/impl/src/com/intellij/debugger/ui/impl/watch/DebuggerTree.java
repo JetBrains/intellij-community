@@ -316,14 +316,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   protected abstract void build(DebuggerContextImpl context);
 
   protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
-    DebuggerSession debuggerSession = context.getDebuggerSession();
+    DebuggerSession session = context.getDebuggerSession();
 
-    if (ApplicationManager.getApplication().isUnitTestMode() || debuggerSession.getState() == DebuggerSession.STATE_PAUSED) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || (session != null && session.getState() == DebuggerSession.STATE_PAUSED)) {
       showMessage(MessageDescriptor.EVALUATING);
       context.getDebugProcess().getManagerThread().schedule(command);
     }
     else {
-      showMessage(context.getDebuggerSession().getStateDescription());
+      showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
     }
   }
 
@@ -540,16 +540,24 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     public void threadAction() {
-      ValueDescriptorImpl descriptor = (ValueDescriptorImpl)getNode().getDescriptor();
+      final DebuggerTreeNodeImpl node = getNode();
+      ValueDescriptorImpl descriptor = (ValueDescriptorImpl)node.getDescriptor();
       try {
         final NodeRenderer renderer = descriptor.getRenderer(getSuspendContext().getDebugProcess());
         renderer.buildChildren(descriptor.getValue(), this, getDebuggerContext().createEvaluationContext());
       }
       catch (ObjectCollectedException e) {
-        getNode().removeAllChildren();
-        getNode().add(getNodeFactory().createMessageNode(
-          new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", e.getMessage()))));
-        getNode().childrenChanged(false);
+        final String message = e.getMessage();
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
+          @Override
+          public void run() {
+            node.removeAllChildren();
+            node.add(getNodeFactory().createMessageNode(
+              new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
+            );
+            node.childrenChanged(false);
+          }
+        });
       }
     }
 
@@ -652,7 +660,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       final DebuggerContextImpl debuggerContext = getDebuggerContext();
       final SuspendContextImpl suspendContext = debuggerContext.getSuspendContext();
-      final EvaluationContextImpl evaluationContext = suspendContext != null? debuggerContext.createEvaluationContext() : null;
+      final EvaluationContextImpl evaluationContext = suspendContext != null && !suspendContext.isResumed()? debuggerContext.createEvaluationContext() : null;
 
       boolean showCurrent = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD;
 

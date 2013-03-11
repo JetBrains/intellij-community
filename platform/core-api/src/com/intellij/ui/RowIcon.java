@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class RowIcon implements Icon {
   private int myHeight;
 
   public RowIcon(int iconCount/*, int orientation*/) {
-    this(iconCount, Alignment.CENTER);
+    this(iconCount, Alignment.TOP);
   }
 
   public RowIcon(int iconCount, Alignment alignment) {
@@ -68,9 +68,12 @@ public class RowIcon implements Icon {
     for (Icon icon : myIcons) {
       if (icon == null) continue;
       switch (myAlignment) {
-        case TOP: _y = y;break;
-        case CENTER: _y = (myHeight - icon.getIconHeight())/2;break;
-        case BOTTOM: _y = (myHeight - icon.getIconHeight());break;
+        case TOP: _y = y;
+          break;
+        case CENTER: _y = y + (myHeight - icon.getIconHeight())/2;
+          break;
+        case BOTTOM: _y = y + (myHeight - icon.getIconHeight());
+          break;
       }
       icon.paintIcon(c, g, _x, _y);
       _x += icon.getIconWidth();

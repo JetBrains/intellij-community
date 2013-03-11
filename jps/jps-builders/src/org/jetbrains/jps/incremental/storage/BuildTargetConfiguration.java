@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -23,6 +24,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.Collection;
@@ -34,6 +37,7 @@ import java.util.Set;
  * @author nik
  */
 public class BuildTargetConfiguration {
+  public static final Key<Set<JpsModule>> MODULES_WITH_TARGET_CONFIG_CHANGED_KEY = GlobalContextKey.create("_modules_with_target_config_changed_");
   private static final Logger LOG = Logger.getInstance(BuildTargetConfiguration.class);
   private final BuildTarget<?> myTarget;
   private final BuildTargetsState myTargetsState;
@@ -60,8 +64,8 @@ public class BuildTargetConfiguration {
     return "";
   }
 
-  public boolean isTargetDirty() {
-    final String currentState = getCurrentState();
+  public boolean isTargetDirty(CompileContext context) {
+    final String currentState = getCurrentState(context);
     if (!currentState.equals(myConfiguration)) {
       LOG.debug(myTarget + " configuration was changed:");
       LOG.debug("Old:");
@@ -69,18 +73,28 @@ public class BuildTargetConfiguration {
       LOG.debug("New:");
       LOG.debug(currentState);
       LOG.debug(myTarget + " will be recompiled");
+      if (myTarget instanceof ModuleBuildTarget) {
+        final JpsModule module = ((ModuleBuildTarget)myTarget).getModule();
+        synchronized (MODULES_WITH_TARGET_CONFIG_CHANGED_KEY) {
+          Set<JpsModule> modules = MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context);
+          if (modules == null) {
+            MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.set(context, modules = new THashSet<JpsModule>());
+          }
+          modules.add(module);
+        }
+      }
       return true;
     }
     return false;
   }
 
-  public void save() {
+  public void save(CompileContext context) {
     try {
       File configFile = getConfigFile();
       FileUtil.createParentDirs(configFile);
       Writer out = new BufferedWriter(new FileWriter(configFile));
       try {
-        String current = getCurrentState();
+        String current = getCurrentState(context);
         out.write(current);
         myConfiguration = current;
       }
@@ -101,18 +115,18 @@ public class BuildTargetConfiguration {
     return new File(myTargetsState.getDataPaths().getTargetDataRoot(myTarget), "nonexistent-outputs.dat");
   }
 
-  private String getCurrentState() {
+  private String getCurrentState(CompileContext context) {
     String state = myCurrentState;
     if (state == null) {
-      myCurrentState = state = saveToString();
+      myCurrentState = state = saveToString(context);
     }
     return state;
   }
 
-  private String saveToString() {
+  private String saveToString(CompileContext context) {
     StringWriter out = new StringWriter();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    myTarget.writeConfiguration(new PrintWriter(out), myTargetsState.getDataPaths(), myTargetsState.getBuildRootIndex());
+    myTarget.writeConfiguration(context.getProjectDescriptor(), new PrintWriter(out));
     return out.toString();
   }
 

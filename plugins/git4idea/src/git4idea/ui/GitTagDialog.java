@@ -180,7 +180,6 @@ public class GitTagDialog extends DialogWrapper {
     }
     try {
       GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.TAG);
-      h.setNoSSH(true);
       if (hasMessage) {
         h.addParameters("-a");
       }
@@ -250,7 +249,6 @@ public class GitTagDialog extends DialogWrapper {
   private void fetchTags() {
     myExistingTags.clear();
     GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.TAG);
-    h.setNoSSH(true);
     h.setSilent(true);
     String output = GitHandlerUtil.doSynchronously(h, GitBundle.getString("tag.getting.existing.tags"), h.printableCommandLine());
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {

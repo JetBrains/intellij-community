@@ -146,7 +146,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     if (tasks.size() == 1 && task != null) {
       group.add(new AnAction("&Switch to") {
         public void actionPerformed(AnActionEvent e) {
-          manager.activateTask(task, !shiftPressed.get(), false);
+          manager.activateTask(task, !shiftPressed.get(), true);
         }
       });
     }
@@ -201,7 +201,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       group.add(new TaskListItem(task, group.size() == 1 ? "" : null, false) {
         @Override
         void select() {
-          manager.activateTask(task, !shiftPressed.get(), false);
+          manager.activateTask(task, !shiftPressed.get(), true);
         }
       });
     }
@@ -212,7 +212,7 @@ public class SwitchTaskAction extends BaseTaskAction {
         group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
           @Override
           void select() {
-            manager.activateTask(task, !shiftPressed.get(), false);
+            manager.activateTask(task, !shiftPressed.get(), true);
           }
         });
       }

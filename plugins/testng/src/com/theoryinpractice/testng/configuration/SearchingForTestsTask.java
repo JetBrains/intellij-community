@@ -57,6 +57,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class SearchingForTestsTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
@@ -373,23 +375,57 @@ public class SearchingForTestsTask extends Task.Backgroundable {
             return ClassUtil.findPsiClass(psiManager, className.replace('/', '.'), null, true, getSearchScope());
           }
         });
-        if (psiClass == null) {
-          throw new CantRunException("Class " + className + " not found");
+        if (psiClass != null) {
+          final Boolean hasTest = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+            @Override
+            public Boolean compute() {
+              return TestNGUtil.hasTest(psiClass);
+            }
+          });
+          if (hasTest) {
+            if (StringUtil.isEmpty(methodName)) {
+              calculateDependencies(null, classes, psiClass);
+            }
+            else {
+              collectTestMethods(classes, psiClass, methodName);
+            }
+          } else {
+            throw new CantRunException("No tests found in class " + className);
+          }
         }
-        if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return TestNGUtil.hasTest(psiClass);
+      }
+      if (classes.size() != data.getPatterns().size()) {
+        TestSearchScope scope = myConfig.getPersistantData().getScope();
+        final List<Pattern> compilePatterns = new ArrayList<Pattern>();
+        for (String p : data.getPatterns()) {
+          final Pattern compilePattern;
+          try {
+            compilePattern = Pattern.compile(p);
           }
-        })) {
-          if (StringUtil.isEmpty(methodName)) {
-            calculateDependencies(null, classes, psiClass);
+          catch (PatternSyntaxException e) {
+            continue;
           }
-          else {
-            collectTestMethods(classes, psiClass, methodName);
+          if (compilePattern != null) {
+            compilePatterns.add(compilePattern);
           }
-        } else {
-          throw new CantRunException("No tests found in class " + className);
+        }
+        TestClassFilter projectFilter =
+          new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true){
+            @Override
+            public boolean isAccepted(PsiClass psiClass) {
+              if (super.isAccepted(psiClass)) {
+                final String qualifiedName = psiClass.getQualifiedName();
+                LOG.assertTrue(qualifiedName != null);
+                for (Pattern pattern : compilePatterns) {
+                  if (pattern.matcher(qualifiedName).matches()) return true;
+                }
+              }
+              return false;
+            }
+          };
+        calculateDependencies(null, classes, TestNGUtil.getAllTestClasses(projectFilter, false));
+        if (classes.size() == 0) {
+          throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(data.getPatterns(), " || ") + '\"');
         }
       }
     }

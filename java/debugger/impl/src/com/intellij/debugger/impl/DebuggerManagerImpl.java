@@ -82,7 +82,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       final DebuggerSession session = newContext.getDebuggerSession();
       if (event == DebuggerSession.EVENT_PAUSE && myDebuggerStateManager.myDebuggerSession != session) {
         // if paused in non-active session; switch current session
-        myDebuggerStateManager.setState(newContext, session.getState(), event, null);
+        myDebuggerStateManager.setState(newContext, session != null? session.getState() : DebuggerSession.STATE_DISPOSED, event, null);
         return;
       }
 

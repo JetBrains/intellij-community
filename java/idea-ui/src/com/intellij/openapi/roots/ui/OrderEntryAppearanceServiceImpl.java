@@ -122,9 +122,9 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     String name = jdk.getName();
     CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(((SdkType) jdk.getSdkType()).getIcon());
-    VirtualFile homeDirectory = jdk.getHomeDirectory();
-    SimpleTextAttributes attributes = getTextAttributes(homeDirectory != null && homeDirectory.isValid(), selected);
+    SdkType sdkType = (SdkType)jdk.getSdkType();
+    appearance.setIcon(sdkType.getIcon());
+    SimpleTextAttributes attributes = getTextAttributes(sdkType.sdkHasValidPath(jdk), selected);
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);
 

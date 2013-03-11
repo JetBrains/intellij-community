@@ -29,7 +29,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -38,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ import java.util.List;
 
 class Browser extends JPanel {
   private static final String UNDER_CONSTRUCTION = InspectionsBundle.message("inspection.tool.description.under.construction.text");
-  private final List<ClickListener> myClickListeners;
+  private final List<ClickListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private RefEntity myCurrentEntity;
   private JEditorPane myHTMLViewer;
   private final InspectionResultsView myView;
@@ -172,7 +172,6 @@ class Browser extends JPanel {
     super(new BorderLayout());
     myView = view;
 
-    myClickListeners = new ArrayList<ClickListener>();
     myCurrentEntity = null;
     myCurrentDescriptor = null;
 

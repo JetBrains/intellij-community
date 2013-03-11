@@ -163,7 +163,6 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.clear.confirmation.message"),
                                                      GitBundle.message("git.unstash.clear.confirmation.title"), Messages.getWarningIcon())) {
           GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
-          h.setNoSSH(true);
           h.addParameters("clear");
           GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.clearing.stashes"), h.printableCommandLine());
           refreshStashList();
@@ -203,7 +202,6 @@ public class GitUnstashDialog extends DialogWrapper {
 
       private GitSimpleHandler dropHandler(String stash) {
         GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
-        h.setNoSSH(true);
         h.addParameters("drop");
         addStashParameter(h, stash);
         return h;
@@ -216,7 +214,6 @@ public class GitUnstashDialog extends DialogWrapper {
         String selectedStash = getSelectedStash().getStash();
         try {
           GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
-          h.setNoSSH(true);
           h.setSilent(true);
           h.addParameters("--timestamp", "--max-count=1");
           addStashParameter(h, selectedStash);
@@ -343,7 +340,6 @@ public class GitUnstashDialog extends DialogWrapper {
    */
   private GitLineHandler handler() {
     GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
-    h.setNoSSH(true);
     String branch = myBranchTextField.getText();
     if (branch.length() == 0) {
       h.addParameters(myPopStashCheckBox.isSelected() ? "pop" : "apply");

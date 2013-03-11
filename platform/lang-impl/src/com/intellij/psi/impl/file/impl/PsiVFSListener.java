@@ -320,7 +320,9 @@ public class PsiVFSListener extends VirtualFileAdapter {
       myFileManager.setViewProvider(vFile, viewProvider);
       PsiFile newPsiFile = myManager.findFile(vFile);
       if (newPsiFile == null) {
-        LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
+        // psi file here can be null for any custom file with null parent
+        // that is currently open in a file editor, e.g. db table editor
+        //LOG.error("null psi file for "+vFile+"; provider: "+viewProvider);
         return;
       }
       if (!viewProvider.isPhysical()) {

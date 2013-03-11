@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,14 +113,6 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     return ((GrArgumentList)newNode.getPsi());
   }
 
-  public boolean isIndexPropertiesList() {
-    PsiElement firstChild = getFirstChild();
-    if (firstChild == null) return false;
-    ASTNode node = firstChild.getNode();
-    assert node != null;
-    return node.getElementType() == GroovyTokenTypes.mLBRACK;
-  }
-
   @Nullable
   public PsiElement getLeftParen() {
     ASTNode paren = getNode().findChildByType(GroovyTokenTypes.mLPAREN);
@@ -144,16 +136,6 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     }
 
     return -1;
-  }
-
-  @Nullable
-  public GrExpression removeArgument(final int argNumber) {
-    GrExpression[] arguments = getExpressionArguments();
-    if (argNumber < 0 || arguments.length <= argNumber) return null;
-
-    GrExpression expression = arguments[argNumber];
-    expression.delete();
-    return expression;
   }
 
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) {

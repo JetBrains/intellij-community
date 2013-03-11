@@ -153,13 +153,12 @@ public class GitPullDialog extends DialogWrapper {
   /**
    * @return a pull handler configured according to dialog options
    */
-  public GitLineHandler pullOrMergeHandler(boolean pull) {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), pull ? GitCommand.PULL : GitCommand.MERGE);
+  public GitLineHandler makeHandler(@NotNull String url) {
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     // ignore merge failure for the pull
     h.ignoreErrorCode(1);
-    if (pull) {
-      h.addProgressParameter();
-    }
+    h.setRemoteProtocol(url);
+    h.addProgressParameter();
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
@@ -180,24 +179,15 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
-    if (pull) {
-      h.addProgressParameter();
-    }
+    h.addProgressParameter();
 
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
     String remote = getRemote();
     LOG.assertTrue(remote != null, "Selected remote can't be null here.");
-    if (pull) {
-      // git pull origin master (remote branch name in the format local to that remote)
-      h.addParameters(remote);
-      for (String branch : markedBranches) {
-        h.addParameters(removeRemotePrefix(branch, remote));
-      }
-    } else {
-      // git merge origin/master (remote branch name in format of this repository)
-      for (String branch : markedBranches) {
-        h.addParameters(branch);
-      }
+    // git pull origin master (remote branch name in the format local to that remote)
+    h.addParameters(remote);
+    for (String branch : markedBranches) {
+      h.addParameters(removeRemotePrefix(branch, remote));
     }
     return h;
   }

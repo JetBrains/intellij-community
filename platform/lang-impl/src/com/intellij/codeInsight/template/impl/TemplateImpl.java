@@ -478,4 +478,9 @@ public class TemplateImpl extends Template implements SchemeElement {
       this.offset = offset;
     }
   }
+
+  @Override
+  public String toString() {
+    return myGroupName +"/" + myKey;
+  }
 }

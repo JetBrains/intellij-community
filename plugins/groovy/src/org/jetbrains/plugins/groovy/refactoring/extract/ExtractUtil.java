@@ -404,9 +404,9 @@ public class ExtractUtil {
         PsiType paramType = info.getType();
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
         if (unboxed != null) paramType = unboxed;
-        String paramTypeText;
 
-        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        String paramTypeText;
+        if (paramType == null || paramType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || paramType.equals(PsiType.NULL)) {
           paramTypeText = "";
         }
         else {
@@ -419,21 +419,20 @@ public class ExtractUtil {
     return ArrayUtil.toStringArray(params);
   }
 
-  public static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation, String modifier) {
-    PsiType type = helper.getOutputType();
-    final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
-    if (outUnboxed != null) type = outUnboxed;
+  @NotNull
+  public static String getTypeString(@NotNull ExtractMethodInfoHelper helper, boolean forPresentation, @NotNull String modifier) {
+    if (!helper.specifyType()) {
+      return modifier.isEmpty() ? "def " : "";
+    }
 
-    String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
-    String returnType = typeText == null || !helper.specifyType() ? "" : typeText;
+    PsiType type = helper.getOutputType();
+    final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
+    if (unboxed != null) type = unboxed;
+
+    final String returnType = StringUtil.notNullize(forPresentation ? type.getPresentableText() : type.getCanonicalText());
 
     if (StringUtil.isEmptyOrSpaces(returnType) || "null".equals(returnType)) {
-      if (modifier.length() == 0) {
-        return "def ";
-      }
-      else {
-        return "";
-      }
+      return modifier.isEmpty() ? "def " : "";
     }
     else {
       return returnType + " ";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.actions.generate;
+package org.jetbrains.plugins.groovy.lang.actions.generate
 
+import com.intellij.codeInsight.generation.*
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.RunResult
 import com.intellij.openapi.command.WriteCommandAction
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.generation.*
 
 /**
  * @author peter
@@ -203,7 +203,8 @@ class Test {
       @Nullable
       def foo
 
-      @Nullable getFoo() {
+      @Nullable
+      getFoo() {
           return foo
       }
   }'''

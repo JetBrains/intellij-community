@@ -131,6 +131,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
+  private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
@@ -232,7 +233,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
-  private final ArrayList<FocusChangeListener> myFocusListeners = new ArrayList<FocusChangeListener>();
+  private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
@@ -932,20 +933,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void fireFocusLost() {
-    FocusChangeListener[] listeners = getFocusListeners();
-    for (FocusChangeListener listener : listeners) {
+    for (FocusChangeListener listener : myFocusListeners) {
       listener.focusLost(this);
     }
   }
 
-  @NotNull
-  private FocusChangeListener[] getFocusListeners() {
-    return myFocusListeners.toArray(new FocusChangeListener[myFocusListeners.size()]);
-  }
-
   private void fireFocusGained() {
-    FocusChangeListener[] listeners = getFocusListeners();
-    for (FocusChangeListener listener : listeners) {
+    for (FocusChangeListener listener : myFocusListeners) {
       listener.focusGained(this);
     }
   }
@@ -5797,7 +5791,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(int fontSize) {
-      if (fontSize < 8) fontSize = 8;
+      if (fontSize < MIN_FONT_SIZE) fontSize = MIN_FONT_SIZE;
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       myFontSize = fontSize;
       initFonts();
@@ -6507,7 +6501,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(@NotNull MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled() && !MouseGestureManager.getInstance().hasTrackpad()) {
         if (EditorUtil.isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
+          int size = myScheme.getEditorFontSize() - e.getWheelRotation();
+          if (size >= MIN_FONT_SIZE) {
+            setFontSize(size);
+          }
           return;
         }
       }

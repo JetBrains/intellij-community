@@ -16,7 +16,6 @@
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
@@ -29,7 +28,10 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +39,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -100,9 +103,7 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -125,8 +126,6 @@ public class BuildManager implements ApplicationComponent{
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final String LOGGER_CONFIG = "log.xml";
-  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private static final int MAKE_TRIGGER_DELAY = 300 /*300 ms*/;
   private static final int DOCUMENT_SAVE_TRIGGER_DELAY = 1500 /*1.5 sec*/;
   private final boolean IS_UNIT_TEST_MODE;
@@ -181,7 +180,7 @@ public class BuildManager implements ApplicationComponent{
       @Override
       public void run() {
         try {
-          FileDocumentManager.getInstance().saveAllDocuments();
+          ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false);
         }
         finally {
           mySemaphore.up();
@@ -211,7 +210,6 @@ public class BuildManager implements ApplicationComponent{
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
   private volatile int myListenPort = -1;
-  private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
   @Nullable
   private final Charset mySystemCharset;
 
@@ -371,7 +369,6 @@ public class BuildManager implements ApplicationComponent{
   }
 
   public void clearState(Project project) {
-    myGlobals = null;
     final String projectPath = getProjectPath(project);
     synchronized (myProjectDataMap) {
       final ProjectData data = myProjectDataMap.get(projectPath);
@@ -534,11 +531,10 @@ public class BuildManager implements ApplicationComponent{
             return;
           }
 
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = myGlobals;
-          if (globals == null) {
-            globals = buildGlobalSettings();
-            myGlobals = globals;
-          }
+          final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals =
+            CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder()
+              .setGlobalOptionsPath(PathManager.getOptionsPath())
+              .build();
           CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
           final SequentialTaskExecutor projectTaskQueue;
           synchronized (myProjectDataMap) {
@@ -685,39 +681,6 @@ public class BuildManager implements ApplicationComponent{
   @Override
   public String getComponentName() {
     return "com.intellij.compiler.server.BuildManager";
-  }
-
-  private static CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings buildGlobalSettings() {
-    final Map<String, String> data = new HashMap<String, String>();
-
-    for (Map.Entry<String, String> entry : PathMacrosImpl.getGlobalSystemMacros().entrySet()) {
-      data.put(entry.getKey(), FileUtil.toSystemIndependentName(entry.getValue()));
-    }
-
-    final PathMacros pathVars = PathMacros.getInstance();
-    for (String name : pathVars.getAllMacroNames()) {
-      final String path = pathVars.getValue(name);
-      if (path != null) {
-        data.put(name, FileUtil.toSystemIndependentName(path));
-      }
-    }
-
-    final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder cmdBuilder =
-      CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder();
-
-    cmdBuilder.setGlobalOptionsPath(PathManager.getOptionsPath());
-
-    if (!data.isEmpty()) {
-      for (Map.Entry<String, String> entry : data.entrySet()) {
-        final String var = entry.getKey();
-        final String value = entry.getValue();
-        if (var != null && value != null) {
-          cmdBuilder.addPathVariable(CmdlineProtoUtil.createPair(var, value));
-        }
-      }
-    }
-
-    return cmdBuilder.build();
   }
 
   private OSProcessHandler launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
@@ -874,10 +837,10 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
+    cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+
     final File workDirectory = getBuildSystemDirectory();
     workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
-
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
@@ -914,6 +877,10 @@ public class BuildManager implements ApplicationComponent{
     return new File(mySystemDirectory, SYSTEM_ROOT);
   }
 
+  public File getBuildLogDirectory() {
+    return new File(PathManager.getLogPath(), "build-log");
+  }
+
   @Nullable
   public File getProjectSystemDirectory(Project project) {
     final String projectPath = getProjectPath(project);
@@ -942,33 +909,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
     return 0;
-  }
-
-  private static void ensureLogConfigExists(File workDirectory) {
-    final File logConfig = new File(workDirectory, LOGGER_CONFIG);
-    if (!logConfig.exists()) {
-      FileUtil.createIfDoesntExist(logConfig);
-      try {
-        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
-        if (in != null) {
-          try {
-            final FileOutputStream out = new FileOutputStream(logConfig);
-            try {
-              FileUtil.copy(in, out);
-            }
-            finally {
-              out.close();
-            }
-          }
-          finally {
-            in.close();
-          }
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   public void stopListening() {

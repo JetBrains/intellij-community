@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.TemplateManager
@@ -1136,7 +1137,7 @@ class Foo {{
     assert lookup.items.size() == 2
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type ' '
-    myFixture.checkResult '''import bar.Abcdefg;
+    myFixture.checkResult '''import foo.Abcdefg;
 
 class Foo extends Abcdefg <caret>'''
   }
@@ -1195,11 +1196,17 @@ class Foo extends Abcdefg <caret>'''
   }
 
   public void testAmbiguousClassQualifier() {
-    myFixture.addClass("package foo; public class Util { public static void foo() {} }")
+    myFixture.addClass("package foo; public class Util<T> { public static void foo() {}; public static final int CONSTANT = 2; }")
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
     type 'Util.'
-    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.foo']
+    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
+
+    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    assert p.itemText == 'Util.CONSTANT'
+    assert p.tailText == ' (foo)'
+    assert p.typeText == 'int'
+
     type 'fo\n'
     myFixture.checkResult '''import foo.Util;
 
@@ -1336,6 +1343,38 @@ class Foo {
   }
 }
 '''
+  }
+
+  public void "test no focus in variable name"() {
+    myFixture.configureByText 'a.java', '''
+class FooBar {
+  void foo() {
+    FooBar <caret>
+  }
+}
+'''
+    type 'f'
+    assert lookup
+    assert !lookup.focused
+    type '\n'
+    assert !myFixture.editor.document.text.contains('fooBar')
+  }
+
+  public void "test choose variable name by enter when selection by chars is disabled"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    myFixture.configureByText 'a.java', '''
+class FooBar {
+  void foo() {
+    FooBar <caret>
+  }
+}
+'''
+    type 'f'
+    assert lookup
+    assert !lookup.focused
+    assert myFixture.lookupElementStrings == ['fooBar']
+    type '\n'
+    assert myFixture.editor.document.text.contains('fooBar')
   }
 
 }

@@ -24,8 +24,8 @@ import org.jetbrains.jps.model.JpsElement;
  * @author nik
  */
 public abstract class JpsElementExtensionSerializerBase<E extends JpsElement> {
-  protected final String myConfigFileName;
-  protected final String myComponentName;
+  private final String myConfigFileName;
+  private final String myComponentName;
 
   protected JpsElementExtensionSerializerBase(@Nullable String configFileName, @NotNull String componentName) {
     myComponentName = componentName;

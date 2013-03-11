@@ -259,6 +259,9 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
           buf.append(", ");
         }
         int startOffset = buf.length();
+        if (myMustBeFinal || myPanel.isGenerateFinal()) {
+          buf.append("final ");
+        }
         buf.append(parameter.getType().getPresentableText()).append(" ").append(variable == parameter ? value : parameter.getName());
         int endOffset = buf.length();
         if (variable == parameter) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,26 +36,30 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreByteAndShortArrayParameters = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreOverridingMethods = false;
+
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.can.be.variable.arity.method.display.name");
+    return InspectionGadgetsBundle.message("method.can.be.variable.arity.method.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.can.be.variable.arity.method.problem.descriptor");
+    return InspectionGadgetsBundle.message("method.can.be.variable.arity.method.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "method.can.be.variable.arity.method.ignore.byte.short.option"),
-                                          this, "ignoreByteAndShortArrayParameters");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
+                      "ignoreByteAndShortArrayParameters");
+    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.overriding.methods"),
+                      "ignoreOverridingMethods");
+    return panel;
   }
 
   @Override
@@ -63,19 +67,16 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     return new MethodCanBeVariableArityMethodFix();
   }
 
-  private static class MethodCanBeVariableArityMethodFix
-    extends InspectionGadgetsFix {
+  private static class MethodCanBeVariableArityMethodFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "convert.to.variable.arity.method.quickfix");
+      return InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) {
@@ -87,19 +88,15 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter =
-        parameters[parameters.length - 1];
+      final PsiParameter lastParameter = parameters[parameters.length - 1];
       final PsiType type = lastParameter.getType();
       if (!(type instanceof PsiArrayType)) {
         return;
       }
       final PsiArrayType arrayType = (PsiArrayType)type;
       final PsiType componentType = arrayType.getComponentType();
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiTypeElement newTypeElement =
-        factory.createTypeElementFromText(
-          componentType.getCanonicalText() + "...", method);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiTypeElement newTypeElement = factory.createTypeElementFromText(componentType.getCanonicalText() + "...", method);
       final PsiTypeElement typeElement = lastParameter.getTypeElement();
       if (typeElement != null) {
         typeElement.replace(newTypeElement);
@@ -112,8 +109,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     return new MethodCanBeVariableArityMethodVisitor();
   }
 
-  private class MethodCanBeVariableArityMethodVisitor
-    extends BaseInspectionVisitor {
+  private class MethodCanBeVariableArityMethodVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -126,8 +122,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter =
-        parameters[parameters.length - 1];
+      final PsiParameter lastParameter = parameters[parameters.length - 1];
       final PsiType type = lastParameter.getType();
       if (!(type instanceof PsiArrayType)) {
         return;
@@ -142,12 +137,14 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       if (ignoreByteAndShortArrayParameters) {
-        if (PsiType.BYTE.equals(componentType) ||
-            PsiType.SHORT.equals(componentType)) {
+        if (PsiType.BYTE.equals(componentType) || PsiType.SHORT.equals(componentType)) {
           return;
         }
       }
       if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
+      if (ignoreOverridingMethods && SuperMethodsSearch.search(method, null, true, false).findFirst() != null) {
         return;
       }
       registerMethodError(method);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@ import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -41,13 +42,13 @@ import java.util.Set;
 public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
-  private final List<PsiElement> myMethods = new ArrayList<PsiElement>();
+  private final List<PsiElement> myDeclarations = new ArrayList<PsiElement>();
 
-  public static NonCodeMembersHolder generateMembers(Set<Map> methods, final PsiFile place) {
-    Map<Set<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
-      place, new CachedValueProvider<Map<Set<Map>, NonCodeMembersHolder>>() {
-      public Result<Map<Set<Map>, NonCodeMembersHolder>> compute() {
-        final Map<Set<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<Set<Map>, NonCodeMembersHolder>();
+  public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
+    Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
+      place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
+      public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
+        final Map<List<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<List<Map>, NonCodeMembersHolder>();
         return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
@@ -59,20 +60,31 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     return result;
   }
 
-  private NonCodeMembersHolder(Set<Map> data, PsiElement place) {
+  private NonCodeMembersHolder(List<Map> data, PsiElement place) {
     final PsiManager manager = place.getManager();
     for (Map prop : data) {
-      if (prop.get("closure") == Boolean.TRUE) {
+      final Object decltype = prop.get("declarationType");
+      if (decltype == DeclarationType.CLOSURE) {
         PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
         if (closureDescriptor != null) {
-          myMethods.add(closureDescriptor);
+          myDeclarations.add(closureDescriptor);
         }
       }
+      else if (decltype == DeclarationType.VARIABLE) {
+        myDeclarations.add(createVariable(prop, place, manager));
+      }
       else {
+        //declarationType == DeclarationType.METHOD
         final PsiElement method = createMethod(prop, place, manager);
-        myMethods.add(method);
+        myDeclarations.add(method);
       }
     }
+  }
+
+  private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
+    String name = String.valueOf(prop.get("name"));
+    final String type = String.valueOf(prop.get("type"));
+    return new GrLightVariable(manager, name, type, Collections.<PsiElement>emptyList(), place.getContainingFile());
   }
 
   @Nullable
@@ -189,7 +201,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-    for (PsiElement method : myMethods) {
+    for (PsiElement method : myDeclarations) {
       if (!processor.execute(method, state)) {
         return false;
       }

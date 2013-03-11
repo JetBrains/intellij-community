@@ -23,20 +23,23 @@ import org.jetbrains.annotations.NotNull;
 */
 public class RelaxIncludeIndex {
   public static boolean processForwardDependencies(XmlFile file, final PsiElementProcessor<XmlFile> processor) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return processor.execute(file);
+    }
     final Project project = file.getProject();
-    final VirtualFile[] files = FileIncludeManager.getManager(project).getIncludedFiles(file.getVirtualFile(), true);
+    final VirtualFile[] files = FileIncludeManager.getManager(project).getIncludedFiles(virtualFile, true);
 
     return processRelatedFiles(file, files, processor);
   }
 
   public static boolean processBackwardDependencies(@NotNull XmlFile file, PsiElementProcessor<XmlFile> processor) {
-    return processBackwardDependencies((PsiFile)file, processor);
-  }
-
-
-  private static boolean processBackwardDependencies(@NotNull PsiFile file, PsiElementProcessor<XmlFile> processor) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return processor.execute(file);
+    }
     final Project project = file.getProject();
-    final VirtualFile[] files = FileIncludeManager.getManager(project).getIncludingFiles(file.getVirtualFile(), true);
+    final VirtualFile[] files = FileIncludeManager.getManager(project).getIncludingFiles(virtualFile, true);
 
     return processRelatedFiles(file, files, processor);
   }
@@ -51,25 +54,28 @@ public class RelaxIncludeIndex {
     });
 
     for (final PsiFile psiFile : psiFiles) {
-      final FileType type = file.getFileType();
-      if (type == XmlFileType.INSTANCE && isRngFile(psiFile)) {
-        if (!processor.execute((XmlFile)psiFile)) {
-          return false;
-        }
-      } else if (type == RncFileType.getInstance()) {
-        if (!processor.execute((XmlFile)psiFile)) {
-          return false;
-        }
+      if (!processFile(psiFile, processor)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean processFile(PsiFile psiFile, PsiElementProcessor<XmlFile> processor) {
+    final FileType type = psiFile.getFileType();
+    if (type == XmlFileType.INSTANCE && isRngFile(psiFile)) {
+      if (!processor.execute((XmlFile)psiFile)) {
+        return false;
+      }
+    } else if (type == RncFileType.getInstance()) {
+      if (!processor.execute((XmlFile)psiFile)) {
+        return false;
       }
     }
     return true;
   }
 
   static boolean isRngFile(PsiFile psiFile) {
-    try {
-      return DomManager.getDomManager(psiFile.getProject()).getFileElement((XmlFile)psiFile, RngGrammar.class) != null;
-    } catch (ClassCastException e) {
-      return false; // fileType == XML && !instanceof XmlFile
-    }
+     return psiFile instanceof XmlFile && DomManager.getDomManager(psiFile.getProject()).getFileElement((XmlFile)psiFile, RngGrammar.class) != null;
   }
 }

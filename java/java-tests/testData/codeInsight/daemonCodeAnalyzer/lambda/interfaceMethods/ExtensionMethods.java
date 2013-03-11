@@ -17,11 +17,11 @@
 class C {
   interface I {
     int i = 42;
-    void m() default { }
+    default void m() { }
   }
 
   interface II extends I {
-    void m() default {
+    default void m() {
       I.super.m();
       <error descr="Unqualified super reference is not allowed in extension method">super.m</error>();
 
@@ -46,18 +46,18 @@ class C {
 }
 
 class D {
-  <error descr="Extension methods can only be used within an interface">void m()</error> default { }
+  <error descr="Extension methods can only be used within an interface">default void m()</error> { }
 }
 
 interface IllegalMods {
-  <error descr="Static methods in interfaces should have a body">static void m1()</error>;
-  <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> void m2() default { }
+  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Not allowed in interface">{ }</error>
+
+  <error descr="Static methods in interfaces should have a body">static void m2()</error>;
   <error descr="Illegal combination of modifiers: 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers: 'default' and 'static'">default</error> void m3() { }
 
-  <error descr="Illegal combination of modifiers: 'abstract' and 'default'">abstract</error> void m4() default { }
-  <error descr="Illegal combination of modifiers: 'abstract' and 'default'">abstract</error> <error descr="Illegal combination of modifiers: 'default' and 'abstract'">default</error> void m5() { }
+  <error descr="Illegal combination of modifiers: 'abstract' and 'default'">abstract</error> <error descr="Illegal combination of modifiers: 'default' and 'abstract'">default</error> void m4() { }
 
-  <error descr="Extension method should have a body">default void m6()</error>;
+  <error descr="Extension method should have a body">default void m5()</error>;
 
   <error descr="Modifier 'default' not allowed here">default</error> int i;
   <error descr="Modifier 'default' not allowed here">default</error> interface X { }

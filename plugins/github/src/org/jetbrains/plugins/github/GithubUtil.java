@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.config.GitVcsApplicationSettings;
@@ -42,6 +41,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Various utility methods for the GutHub plugin.
@@ -86,8 +86,8 @@ public class GithubUtil {
 
   private static <T> T doAccessToGithubWithModalProgress(@NotNull final Project project,
                                                          @NotNull final ThrowableComputable<T, IOException> computable) throws IOException {
-    final Ref<T> result = new Ref<T>();
-    final Ref<IOException> exception = new Ref<IOException>();
+    final AtomicReference<T> result = new AtomicReference<T>();
+    final AtomicReference<IOException> exception = new AtomicReference<IOException>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -98,7 +98,8 @@ public class GithubUtil {
         }
       }
     });
-    if (exception.isNull()) {
+    //noinspection ThrowableResultOfMethodCallIgnored
+    if (exception.get() == null) {
       return result.get();
     }
     throw exception.get();
@@ -385,7 +386,7 @@ public class GithubUtil {
   }
 
   public static boolean isGithubUrl(@NotNull String url) {
-    return url.contains(GithubApiUtil.getGitHost());
+    return url.contains(GithubApiUtil.removeProtocolPrefix(GithubSettings.getInstance().getHost()));
   }
 
   static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {

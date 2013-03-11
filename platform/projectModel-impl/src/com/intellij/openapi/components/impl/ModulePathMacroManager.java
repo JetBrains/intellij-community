@@ -50,7 +50,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
 
     if (!myModule.isDisposed()) {
       final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
-      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath, PathMacrosImpl.getUserHome());
+      addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHome());
     }
 
     return result;

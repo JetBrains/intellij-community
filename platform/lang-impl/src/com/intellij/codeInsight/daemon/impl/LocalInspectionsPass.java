@@ -620,16 +620,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
       int start = hostRange.getStartOffset();
       int end = hostRange.getEndOffset();
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(info.type);
-      builder.range(element, start, end);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(info.type).range(element, start, end);
       if (info.description != null) {
         builder.description(info.description);
       }
       if (info.toolTip != null) {
         builder.escapedToolTip(info.toolTip);
       }
-      HighlightInfo patched = builder.create();
-      if (patched != null && (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset)) {
+      HighlightInfo patched = builder.createUnconditionally();
+      if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
         patched.fromInjection = true;
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);

@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowExecutionPointActionHandler extends DebuggerActionHandler {
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().showExecutionPoint();
+    final DebuggerSession session = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
+    if (session != null) {
+      session.showExecutionPoint();
+    }
   }
 
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -179,7 +180,8 @@ public class BlockSupportImpl extends BlockSupport {
       FileViewProvider viewProvider = fileImpl.getViewProvider();
       viewProvider.getLanguages();
       FileType fileType = viewProvider.getVirtualFile().getFileType();
-      final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
+      String fileName = fileImpl.getName();
+      final LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getViewProvider().getModificationStamp());
       lightFile.setOriginalFile(viewProvider.getVirtualFile());
 
@@ -187,11 +189,15 @@ public class BlockSupportImpl extends BlockSupport {
       copy.getLanguages();
       Language language = fileImpl.getLanguage();
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
-      final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(language);
+      PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(language);
+
+      if (newFile == null && language == PlainTextLanguage.INSTANCE && fileImpl == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+        newFile = (PsiFileImpl)copy.getPsi(copy.getBaseLanguage());
+      }
 
       if (newFile == null) {
         throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language +
-                  "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
+                  "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType + "; file name=" + fileName);
       }
 
       newFile.setOriginalFile(fileImpl);

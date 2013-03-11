@@ -229,6 +229,7 @@ public class GradleUtil {
       @Override
       public void set(@Nullable String error) {
         if (!StringUtil.isEmpty(error)) {
+          assert error != null;
           GradleLog.LOG.warn(error);
         }
       }

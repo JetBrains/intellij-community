@@ -20,10 +20,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,7 +31,7 @@ import java.util.List;
  * {@link #getComponent()} should be called before {@link #resetFrom(Object)}
  */
 public abstract class SettingsEditor<Settings> implements Disposable {
-  private List<SettingsEditorListener<Settings>> myListeners;
+  private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
   private final Factory<Settings> mySettingsFactory;
@@ -120,20 +120,16 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   }
 
   public final void addSettingsEditorListener(SettingsEditorListener<Settings> listener) {
-    if (myListeners == null) myListeners = new ArrayList<SettingsEditorListener<Settings>>();
     myListeners.add(listener);
   }
 
   public final void removeSettingsEditorListener(SettingsEditorListener<Settings> listener) {
-    if (myListeners == null) return;
     myListeners.remove(listener);
-    if (myListeners.size() == 0) myListeners = null;
   }
 
   protected final void fireEditorStateChanged() {
     if (myIsInUpdate || myListeners == null) return;
-    SettingsEditorListener[] listeners = myListeners.toArray(new SettingsEditorListener[myListeners.size()]);
-    for (SettingsEditorListener listener : listeners) {
+    for (SettingsEditorListener listener : myListeners) {
       listener.stateChanged(this);
     }
   }

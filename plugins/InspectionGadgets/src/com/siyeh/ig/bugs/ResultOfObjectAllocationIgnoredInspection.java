@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,40 +23,33 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ResultOfObjectAllocationIgnoredInspection
-  extends BaseInspection {
+public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "result.of.object.allocation.ignored.display.name");
+    return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.display.name");
   }
 
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "result.of.object.allocation.ignored.problem.descriptor");
+    return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
   }
 
   public BaseInspectionVisitor buildVisitor() {
-    return new IgnoreResultOfCallVisitor();
+    return new ResultOfObjectAllocationIgnoredVisitor();
   }
 
-  private static class IgnoreResultOfCallVisitor
-    extends BaseInspectionVisitor {
+  private static class ResultOfObjectAllocationIgnoredVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpressionStatement(
-      @NotNull PsiExpressionStatement statement) {
+    public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       super.visitExpressionStatement(statement);
       final PsiExpression expression = statement.getExpression();
       if (!(expression instanceof PsiNewExpression)) {
         return;
       }
-      final PsiNewExpression newExpression =
-        (PsiNewExpression)expression;
-      final PsiExpression[] arrayDimensions =
-        newExpression.getArrayDimensions();
+      final PsiNewExpression newExpression = (PsiNewExpression)expression;
+      final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
       if (arrayDimensions.length != 0) {
         return;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2012 Bas Leijdekkers
+ * Copyright 2005-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,6 +152,19 @@ public class ExpressionUtils {
       return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type);
     }
     return false;
+  }
+
+  @Nullable
+  public static String getLiteralString(@Nullable PsiExpression expression) {
+    final PsiLiteralExpression literal = getLiteral(expression);
+    if (literal == null) {
+      return null;
+    }
+    final Object value = literal.getValue();
+    if (value == null) {
+      return null;
+    }
+    return value.toString();
   }
 
   @Nullable

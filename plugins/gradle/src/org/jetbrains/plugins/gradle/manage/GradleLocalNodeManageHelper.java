@@ -210,9 +210,7 @@ public class GradleLocalNodeManageHelper {
     Collection<Object> entities = ContainerUtilRt.newArrayList();
     for (GradleProjectStructureNode<?> node : nodes) {
       GradleProjectStructureNodeDescriptor<? extends GradleEntityId> descriptor = node.getDescriptor();
-      if (descriptor.getAttributes() == GradleTextAttributes.GRADLE_LOCAL_CHANGE
-          || descriptor.getElement().getType() == GradleEntityType.SYNTHETIC
-          || node.getParent() == null /* is root */) {
+      if (descriptor.getAttributes() != GradleTextAttributes.INTELLIJ_LOCAL_CHANGE) {
         continue;
       }
       Object entity = myIdMapper.mapIdToEntity(descriptor.getElement());

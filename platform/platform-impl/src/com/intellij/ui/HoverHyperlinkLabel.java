@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.NonNls;
 
@@ -26,14 +27,14 @@ import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
  */
 public class HoverHyperlinkLabel extends JLabel {
   private String myOriginalText;
-  private final ArrayList<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
+  private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public HoverHyperlinkLabel(String text) {
     this(text, PlatformColors.BLUE);
@@ -62,9 +63,8 @@ public class HoverHyperlinkLabel extends JLabel {
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
-        HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
         HyperlinkEvent event = new HyperlinkEvent(HoverHyperlinkLabel.this, HyperlinkEvent.EventType.ACTIVATED, null);
-        for (HyperlinkListener listener : listeners) {
+        for (HyperlinkListener listener : myListeners) {
           listener.hyperlinkUpdate(event);
         }
         return true;

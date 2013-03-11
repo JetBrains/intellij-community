@@ -59,7 +59,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
     switch (passwordSafe.getSettings().getProviderType()) {
       case MASTER_PASSWORD:
         myRememberPasswordCheckBox.setEnabled(true);
-        myRememberPasswordCheckBox.setSelected(false);
+        myRememberPasswordCheckBox.setSelected(true);
         myRememberPasswordCheckBox.setToolTipText("The password will be stored between application sessions.");
         break;
       case MEMORY_ONLY:

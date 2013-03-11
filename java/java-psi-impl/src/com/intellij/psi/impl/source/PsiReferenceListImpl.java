@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,37 +22,38 @@ import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
+/**
+ * @author max
+ */
+public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiReferenceListImpl");
-  private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(Constants.JAVA_CODE_REFERENCE);
 
-  public PsiReferenceListImpl(final PsiClassReferenceListStub stub, final IStubElementType nodeType) {
+  public PsiReferenceListImpl(PsiClassReferenceListStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
 
-  public PsiReferenceListImpl(final ASTNode node) {
+  public PsiReferenceListImpl(ASTNode node) {
     super(node);
   }
 
   @Override
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, PsiJavaCodeReferenceElement.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements(JavaElementType.JAVA_CODE_REFERENCE, PsiJavaCodeReferenceElement.ARRAY_FACTORY);
   }
 
   @Override
   @NotNull
   public PsiClassType[] getReferencedTypes() {
-    final PsiClassReferenceListStub stub = getStub();
+    PsiClassReferenceListStub stub = getStub();
     if (stub != null) {
       return stub.getReferencedTypes();
     }
 
-    final PsiJavaCodeReferenceElement[] refs = getReferenceElements();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiJavaCodeReferenceElement[] refs = getReferenceElements();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     PsiClassType[] types = new PsiClassType[refs.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = factory.createType(refs[i]);
@@ -63,24 +64,22 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
 
   @Override
   public Role getRole() {
-    final IElementType tt = getElementType();
-
-    if (tt == JavaElementType.EXTENDS_LIST) {
+    IElementType type = getElementType();
+    if (type == JavaElementType.EXTENDS_LIST) {
       return Role.EXTENDS_LIST;
     }
-    else if (tt == JavaElementType.IMPLEMENTS_LIST) {
+    else if (type == JavaElementType.IMPLEMENTS_LIST) {
       return Role.IMPLEMENTS_LIST;
     }
-    else if (tt == JavaElementType.THROWS_LIST) {
+    else if (type == JavaElementType.THROWS_LIST) {
       return Role.THROWS_LIST;
     }
-    else if (tt == JavaElementType.EXTENDS_BOUND_LIST) {
+    else if (type == JavaElementType.EXTENDS_BOUND_LIST) {
       return Role.EXTENDS_BOUNDS_LIST;
     }
-    else {
-      LOG.error("Unknown element type:" + tt);
-      return null;
-    }
+
+    LOG.error("Unknown element type:" + type);
+    return null;
   }
 
   @Override
@@ -94,6 +93,7 @@ public final class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassRefer
   }
 
   public String toString() {
-    return "PsiReferenceList";
+    return getElementType() == JavaElementType.EXTENDS_BOUND_LIST ? "PsiElement(EXTENDS_BOUND_LIST)"
+                                                                  : "PsiReferenceList"; // todo[r.sh] fix test data
   }
 }

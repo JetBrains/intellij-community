@@ -16,11 +16,8 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkListener;
 import java.awt.event.MouseEvent;
 
 /**
@@ -44,21 +41,4 @@ public abstract class XDebuggerTreeNodeHyperlink {
   }
 
   public abstract void onClick(MouseEvent event);
-
-  public static final class HyperlinkListenerDelegator extends XDebuggerTreeNodeHyperlink {
-    private final HyperlinkListener hyperlinkListener;
-    private final String href;
-
-    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
-      super(linkText);
-
-      this.hyperlinkListener = hyperlinkListener;
-      this.href = href;
-    }
-
-    @Override
-    public void onClick(MouseEvent event) {
-      hyperlinkListener.hyperlinkUpdate(IJSwingUtilities.createHyperlinkEvent(href, getLinkText()));
-    }
-  }
 }

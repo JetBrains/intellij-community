@@ -17,6 +17,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.Table;
@@ -42,7 +43,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   private JBTable myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
-  private final List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
+  private final List<ElementsMarkListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
   private final Map<T, Boolean> myDisabledMap = new HashMap<T, Boolean>();
 
@@ -402,9 +403,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   }
 
   private void notifyElementMarked(T element, boolean isMarked) {
-    final Object[] listeners = myListeners.toArray();
-    for (Object listener1 : listeners) {
-      ElementsMarkListener<T> listener = (ElementsMarkListener<T>)listener1;
+    for (ElementsMarkListener<T> listener : myListeners) {
       listener.elementMarkChanged(element, isMarked);
     }
   }

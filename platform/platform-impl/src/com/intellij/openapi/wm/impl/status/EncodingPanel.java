@@ -217,7 +217,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
         String toolTip = "File Encoding" +
                          (currentCharset == null ? "" : ": "+currentCharset.displayName()) +
-                         (failReason == null ? "" : actionEnabled ? " ("+failReason+")" : " (change disabled: " + failReason + ")");
+                         (actionEnabled ? "" : " (change disabled: " + failReason + ")");
         myComponent.setToolTipText(toolTip);
         myComponent.setText(text);
 

@@ -122,8 +122,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
-    Disposer.register(contentDescriptor, myConsoleView);
-
 // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());

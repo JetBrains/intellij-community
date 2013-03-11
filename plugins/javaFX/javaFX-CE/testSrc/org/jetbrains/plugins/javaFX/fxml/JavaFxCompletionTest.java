@@ -109,6 +109,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("stylesheets");
   }
 
+  public void testNamedColors() throws Exception {
+    doTest("blue");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

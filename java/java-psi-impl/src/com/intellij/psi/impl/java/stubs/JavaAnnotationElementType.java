@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
@@ -48,42 +49,42 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   }
 
   @Override
-  public PsiAnnotation createPsi(@NotNull final PsiAnnotationStub stub) {
+  public PsiAnnotation createPsi(@NotNull PsiAnnotationStub stub) {
     return getPsiFactory(stub).createAnnotation(stub);
   }
 
   @Override
-  public PsiAnnotation createPsi(@NotNull final ASTNode node) {
+  public PsiAnnotation createPsi(@NotNull ASTNode node) {
     return new PsiAnnotationImpl(node);
-  }  
+  }
 
   @Override
-  public PsiAnnotationStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
-    final String text = LightTreeUtil.toFilteredString(tree, node, null);
+  public PsiAnnotationStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+    String text = LightTreeUtil.toFilteredString(tree, node, null);
     return new PsiAnnotationStubImpl(parentStub, text);
   }
 
   @Override
-  public void serialize(final PsiAnnotationStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(PsiAnnotationStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeUTFFast(stub.getText());
   }
 
   @Override
-  public PsiAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiAnnotationStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 
   @Override
-  public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {
-    final String refText = getReferenceShortName(stub.getText());
-    sink.occurrence(JavaStubIndexKeys.ANNOTATIONS, refText);
+  public void indexStub(PsiAnnotationStub stub, IndexSink sink) {
+    String shortName = getReferenceShortName(stub.getText());
+    if (!StringUtil.isEmptyOrSpaces(shortName)) {
+      sink.occurrence(JavaStubIndexKeys.ANNOTATIONS, shortName);
+    }
   }
 
   private static String getReferenceShortName(String annotationText) {
-    final int index = annotationText.indexOf('('); //to get the text of reference itself
-    if (index >= 0) {
-      return PsiNameHelper.getShortClassName(annotationText.substring(0, index));
-    }
+    int index = annotationText.indexOf('(');
+    if (index >= 0) annotationText = annotationText.substring(0, index);
     return PsiNameHelper.getShortClassName(annotationText);
   }
 }

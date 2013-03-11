@@ -28,10 +28,10 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
@@ -163,7 +163,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
 
-    final Set<EditorCustomization> editorFeatures = new HashSet<EditorCustomization>();
+    final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
     editorFeatures.add(SpellCheckingEditorCustomization.ENABLED);
 
     if (defaultLines == 1) {

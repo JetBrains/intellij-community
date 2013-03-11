@@ -34,8 +34,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -119,11 +117,12 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
   public static final BooleanProperty CLOSE_ON_NO_ERRORS = new BooleanProperty("viewClosedWhenNoErrors", false);
-  public static final AbstractProperty<String> CUSTOM_JDK_NAME = new StringProperty("customJdkName", "");
+  public static final StringProperty CUSTOM_JDK_NAME = new StringProperty("customJdkName", "");
   public static final ListProperty<TargetFilter> TARGET_FILTERS = ListProperty.create("targetFilters");
   public static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("properties");
-  public static final AbstractProperty<String> ANT_COMMAND_LINE_PARAMETERS = new StringProperty("antCommandLine", "");
-  public static final AbstractProperty<AntReference> ANT_REFERENCE = new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
+  public static final StringProperty ANT_COMMAND_LINE_PARAMETERS = new StringProperty("antCommandLine", "");
+  public static final AbstractProperty<AntReference> ANT_REFERENCE =
+    new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
   public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
     public String getName() {
@@ -164,21 +163,20 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myWorkspaceOptions.registerProperty(TREE_VIEW);
     myWorkspaceOptions.registerProperty(VERBOSE);
     myWorkspaceOptions.registerProperty(TARGET_FILTERS, "filter", NewInstanceFactory.fromClass(TargetFilter.class));
-    myWorkspaceOptions.registerProperty((StringProperty)ANT_COMMAND_LINE_PARAMETERS);
 
     myWorkspaceOptions.rememberKey(RUN_WITH_ANT);
 
     myProjectOptions = new ExternalizablePropertyContainer();
     myProjectOptions.registerProperty(MAX_HEAP_SIZE);
     myProjectOptions.registerProperty(MAX_STACK_SIZE);
-    myProjectOptions.registerProperty((StringProperty)CUSTOM_JDK_NAME);
+    myProjectOptions.registerProperty(CUSTOM_JDK_NAME);
+    myProjectOptions.registerProperty(ANT_COMMAND_LINE_PARAMETERS);
     myProjectOptions.registerProperty(ANT_PROPERTIES, "property", NewInstanceFactory.fromClass(BuildFileProperty.class));
     myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);
     myProjectOptions.registerProperty(ANT_REFERENCE, AntReference.EXTERNALIZER);
 
-    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
-        myWorkspaceOptions, myProjectOptions, GlobalAntConfiguration.getInstance().getProperties(getProject())
-    });
+    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{myWorkspaceOptions, myProjectOptions,
+      GlobalAntConfiguration.getInstance().getProperties(getProject())});
 
     myClassloaderHolder = new AntBuildFileClassLoaderHolder(myAllOptions);
   }
@@ -203,7 +201,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   @Nullable
   public String getName() {
     final VirtualFile vFile = getVirtualFile();
-    return vFile != null? vFile.getName() : null;
+    return vFile != null ? vFile.getName() : null;
   }
 
 
@@ -222,12 +220,12 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   @Nullable
   public XmlFile getAntFile() {
-    final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
+    final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
     if (!(psiFile instanceof XmlFile)) {
       return null;
     }
     final XmlFile xmlFile = (XmlFile)psiFile;
-    return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
+    return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
   }
 
   public Project getProject() {
@@ -274,18 +272,20 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void updateProperties() {
-    final Map<String, AntBuildTarget> targetByName =
-      ContainerUtil.newMapFromValues(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
-        public String convert(AntBuildTarget target) {
-          return target.getName();
-        }
-      });
-    targetByName.remove(null); // ensure there are no targets with 'null' name
+    // do not change position
+    final AntBuildTarget[] targets = getModel().getTargets();
+    final Map<String, AntBuildTarget> targetByName = new LinkedHashMap<String, AntBuildTarget>(targets.length);
+    for (AntBuildTarget target : targets) {
+      String targetName = target.getName();
+      if(targetName != null) {
+        targetByName.put(targetName, target);
+      }
+    }
 
     synchronized (myOptionsLock) {
       myCachedExternalProperties = null;
       final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
-      for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
+      for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext(); ) {
         final TargetFilter filter = iterator.next();
         final String name = filter.getTargetName();
         if (name == null) {
@@ -333,6 +333,12 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       if (expanded != null) {
         myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
       }
+
+      // don't lose old command line parameters
+      final Element antCommandLine = parentNode.getChild("antCommandLine");
+      if (antCommandLine != null) {
+        ANT_COMMAND_LINE_PARAMETERS.set(myProjectOptions, antCommandLine.getAttributeValue("value"));
+      }
     }
   }
 
@@ -375,7 +381,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
         result = myCachedExternalProperties;
         if (result == null) {
           result = new HashMap<String, String>();
-          
+
           final DataContext context = SimpleDataContext.getProjectContext(myProject);
           final MacroManager macroManager = MacroManager.getInstance();
           Iterator<BuildFileProperty> properties = ANT_PROPERTIES.getIterator(myAllOptions);
@@ -391,13 +397,13 @@ public class AntBuildFileImpl implements AntBuildFileBase {
               LOG.debug(e);
             }
           }
-          myCachedExternalProperties = result;  
+          myCachedExternalProperties = result;
         }
       }
     }
     return result;
   }
-  
+
   private void bindAnt() {
     ANT_REFERENCE.set(getAllOptions(), ANT_REFERENCE.get(getAllOptions()).bind(GlobalAntConfiguration.getInstance()));
   }

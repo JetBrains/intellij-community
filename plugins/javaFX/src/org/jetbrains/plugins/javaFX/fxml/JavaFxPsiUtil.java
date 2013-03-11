@@ -18,10 +18,9 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -141,6 +140,10 @@ public class JavaFxPsiUtil {
   }
 
   public static PsiClassType getPropertyClassType(PsiElement field) {
+    return getPropertyClassType(field, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY);
+  }
+
+  public static PsiClassType getPropertyClassType(PsiElement field, final String superTypeFQN) {
     if (field instanceof PsiField) {
       final PsiType type = ((PsiField)field).getType();
       if (type instanceof PsiClassType) {
@@ -148,7 +151,7 @@ public class JavaFxPsiUtil {
         final PsiClass attributeClass = resolveResult.getElement();
         if (attributeClass != null) {
           final PsiClass objectProperty = JavaPsiFacade.getInstance(attributeClass.getProject())
-            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY_OBJECT_PROPERTY, attributeClass.getResolveScope());
+            .findClass(superTypeFQN, attributeClass.getResolveScope());
           if (objectProperty != null) {
             final PsiSubstitutor superClassSubstitutor = TypeConversionUtil
               .getClassSubstitutor(objectProperty, attributeClass, resolveResult.getSubstitutor());
@@ -205,25 +208,46 @@ public class JavaFxPsiUtil {
   }
   
   private static final Key<CachedValue<PsiClass>> INJECTED_CONTROLLER = Key.create("javafx.injected.controller");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("javafx.controller");
   public static PsiClass getControllerClass(final PsiFile containingFile) {
     if (containingFile instanceof XmlFile) {
       final XmlTag rootTag = ((XmlFile)containingFile).getRootTag();
       final Project project = containingFile.getProject();
       if (rootTag != null) {
         XmlAttribute attribute = rootTag.getAttribute(FxmlConstants.FX_CONTROLLER);
-        if (attribute == null && FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
-          attribute = rootTag.getAttribute(FxmlConstants.TYPE);
-        }
         if (attribute != null) {
-          final String attributeValue = attribute.getValue();
-          if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
-            return  JavaPsiFacade.getInstance(project).findClass(attributeValue, containingFile.getResolveScope());
+          final PsiClass controllerClass = findControllerClass(containingFile, project, attribute);
+          if (controllerClass != null) {
+            return controllerClass;
           }
         }
       }
-      CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
-      return manager.getCachedValue(containingFile, INJECTED_CONTROLLER,
-                                    new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true);
+      final CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
+      final PsiClass injectedControllerClass = ourGuard.doPreventingRecursion(containingFile, true, new Computable<PsiClass>() {
+        @Override
+        public PsiClass compute() {
+          return manager.getCachedValue(containingFile, INJECTED_CONTROLLER, 
+                                        new JavaFxControllerCachedValueProvider(containingFile.getProject(), containingFile), true);
+        }
+      });
+      if (injectedControllerClass != null) {
+        return injectedControllerClass;
+      }
+
+      if (rootTag != null && FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
+        final XmlAttribute rootTypeAttr = rootTag.getAttribute(FxmlConstants.TYPE);
+        if (rootTypeAttr != null) {
+          return findControllerClass(containingFile, project, rootTypeAttr);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static PsiClass findControllerClass(PsiFile containingFile, Project project, XmlAttribute attribute) {
+    final String attributeValue = attribute.getValue();
+    if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
+      return  JavaPsiFacade.getInstance(project).findClass(attributeValue, containingFile.getResolveScope());
     }
     return null;
   }
@@ -383,16 +407,21 @@ public class JavaFxPsiUtil {
                                                                                      GlobalSearchScope.allScope(project));
           if (builderClass != null) {
             //todo cache this info
-            final PsiTypeParameter typeParameter = builderClass.getTypeParameters()[0];
-            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass aClass) {
-                final PsiType initType =
-                  TypeConversionUtil.getSuperClassSubstitutor(builderClass, aClass, PsiSubstitutor.EMPTY).substitute(typeParameter);
-                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(initType));
+            final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
+            if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+              if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+                @Override
+                public boolean process(PsiClass aClass) {
+                  PsiType returnType = null;
+                  final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+                  if (method != null) {
+                    returnType = method.getReturnType();
+                  }
+                  return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+                }
+              })) {
+                return "Unable to instantiate";
               }
-            })) {
-              return "Unable to instantiate";
             }
           }
         }
@@ -426,7 +455,9 @@ public class JavaFxPsiUtil {
               return methodCallExpression.resolveMethod() == injectControllerMethods[0];
             }
           };
-          ReferencesSearch.search(myContainingFile).forEach(new Processor<PsiReference>() {
+          final GlobalSearchScope globalSearchScope = GlobalSearchScope
+                      .notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(myContainingFile.getResolveScope(), StdFileTypes.XML));
+          ReferencesSearch.search(myContainingFile, globalSearchScope).forEach(new Processor<PsiReference>() {
             @Override
             public boolean process(PsiReference reference) {
               final PsiElement element = reference.getElement();
@@ -436,7 +467,7 @@ public class JavaFxPsiUtil {
                   final PsiType type = expression.getType();
                   if (type != null && type.equalsToText(JavaFxCommonClassNames.JAVAFX_FXML_FXMLLOADER)) {
                     final PsiElement parent = expression.getParent();
-                    if (parent instanceof PsiVariable) {
+                    if (parent instanceof PsiLocalVariable) {
                       ReferencesSearch.search(parent).forEach(processor);
                       final PsiClass controller = processor.getInjectedController();
                       if (controller != null) {

@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author peter
@@ -64,6 +65,7 @@ public class SemServiceImpl extends SemService{
   private final Project myProject;
 
   private boolean myBulkChange = false;
+  private final AtomicInteger myCreatingSem = new AtomicInteger(0);
 
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
@@ -92,7 +94,9 @@ public class SemServiceImpl extends SemService{
     final LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
-        clearCache();
+        if (myCreatingSem.get() == 0) {
+          clearCache();
+        }
         //System.out.println("SemService cache flushed");
       }
     });
@@ -104,7 +108,7 @@ public class SemServiceImpl extends SemService{
   }
 
   private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {
-    final MultiMap<SemKey, SemKey> result = new MultiMap<SemKey, SemKey>();
+    final MultiMap<SemKey, SemKey> result = MultiMap.createSmartList();
     ContainerUtil.process(allKeys, new Processor<SemKey>() {
       public boolean process(SemKey key) {
         result.putValue(key, key);
@@ -124,7 +128,7 @@ public class SemServiceImpl extends SemService{
   }
 
   private MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> collectProducers() {
-    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = new MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>>();
+    final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = MultiMap.createSmartList();
 
     final SemRegistrar registrar = new SemRegistrar() {
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
@@ -228,11 +232,17 @@ public class SemServiceImpl extends SemService{
     final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
     if (!producers.isEmpty()) {
       for (final NullableFunction<PsiElement, ? extends SemElement> producer : producers) {
-        final SemElement element = producer.fun(psi);
-        if (element != null) {
-          if (result == null) result = new SmartList<SemElement>();
-          result.add(element);
-        }  
+        myCreatingSem.incrementAndGet();
+        try {
+          final SemElement element = producer.fun(psi);
+          if (element != null) {
+            if (result == null) result = new SmartList<SemElement>();
+            result.add(element);
+          }
+        }
+        finally {
+          myCreatingSem.decrementAndGet();
+        }
       }
     }
     return result == null ? Collections.<SemElement>emptyList() : Collections.unmodifiableList(result);

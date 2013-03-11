@@ -224,7 +224,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
     if (cannotBeDynamic || shouldHighlightAsUnresolved(ref)) {
       HighlightInfo info = createAnnotationForRef(ref, cannotBeDynamic, GroovyBundle.message("cannot.resolve", ref.getReferenceName()));
-      LOG.assertTrue(info != null);
+      if (info == null) return null;
 
       HighlightDisplayKey displayKey = HighlightDisplayKey.find(SHORT_NAME);
       if (ref.getParent() instanceof GrMethodCall) {
@@ -360,7 +360,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     return results[0];
   }
 
-  private static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
+  public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
     if (referenceExpression.getParent() instanceof GrMethodCall || referenceExpression.getQualifier() != null) return false;
     GrMember context = PsiTreeUtil.getParentOfType(referenceExpression, GrMember.class, true, GrClosableBlock.class);
     return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
@@ -412,12 +412,18 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     if (!compileStatic) {
       addDynamicAnnotation(info, refExpr, key);
     }
-    if (targetClass.isWritable()) {
-      QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr, targetClass), key);
 
-      if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
-        QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr, targetClass), key);
-      }
+    QuickFixAction.registerQuickFixAction(info, new CreateFieldFromUsageFix(refExpr), key);
+
+    if (PsiUtil.isAccessedForReading(refExpr)) {
+      QuickFixAction.registerQuickFixAction(info, new CreateGetterFromUsageFix(refExpr, targetClass), key);
+    }
+    if (PsiUtil.isLValue(refExpr)) {
+      QuickFixAction.registerQuickFixAction(info, new CreateSetterFromUsageFix(refExpr), key);
+    }
+
+    if (refExpr.getParent() instanceof GrCall && refExpr.getParent() instanceof GrExpression) {
+      QuickFixAction.registerQuickFixAction(info, new CreateMethodFromUsageFix(refExpr), key);
     }
 
     if (!refExpr.isQualified()) {
@@ -463,7 +469,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     QuickFixAction.registerQuickFixAction(info, new GroovyAddImportAction(refElement), key);
   }
 
-  private static void registerCreateClassByTypeFix(GrReferenceElement refElement,
+  private static void registerCreateClassByTypeFix(@NotNull GrReferenceElement refElement,
                                                    @Nullable HighlightInfo info,
                                                    final HighlightDisplayKey key) {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
@@ -474,7 +480,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
         refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
       QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFromNewAction((GrNewExpression)parent), key);
     }
-    else {
+    else if (canBeClassOrPackage(refElement)) {
       if (shouldBeInterface(refElement)) {
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE), key);
       }
@@ -492,6 +498,10 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
         QuickFixAction.registerQuickFixAction(info, CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION), key);
       }
     }
+  }
+
+  private static boolean canBeClassOrPackage(@NotNull GrReferenceElement refElement) {
+    return !(refElement instanceof GrReferenceExpression) || ResolveUtil.canBeClassOrPackage((GrReferenceExpression)refElement);
   }
 
   private static boolean shouldBeAnnotation(GrReferenceElement element) {

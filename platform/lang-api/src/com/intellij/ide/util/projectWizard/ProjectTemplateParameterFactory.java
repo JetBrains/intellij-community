@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,4 +41,6 @@ public abstract class ProjectTemplateParameterFactory {
 
   @Nullable
   public abstract String detectParameterValue(Project project);
+
+  public void applyResult(String value, ModifiableRootModel model) {}
 }

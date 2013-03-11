@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.html.structureView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -47,7 +48,7 @@ public class Html5SectionsNodeProvider implements FileStructureNodeProvider<Html
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(XmlBundle.message("html5.outline.mode"), null, null);
+    return new ActionPresentationData(XmlBundle.message("html5.outline.mode"), null, AllIcons.Xml.Html5);
   }
 
   public String getCheckBoxText() {

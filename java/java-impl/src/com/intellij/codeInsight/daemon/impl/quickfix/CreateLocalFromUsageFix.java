@@ -60,7 +60,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) {
+    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) {
       return;
     }
 

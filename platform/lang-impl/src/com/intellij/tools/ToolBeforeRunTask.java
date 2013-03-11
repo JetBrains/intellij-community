@@ -15,76 +15,16 @@
  */
 package com.intellij.tools;
 
-import com.intellij.execution.BeforeRunTask;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
-public class ToolBeforeRunTask extends BeforeRunTask<ToolBeforeRunTask> {
-  @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
-  private String myToolActionId;
+public class ToolBeforeRunTask extends AbstractToolBeforeRunTask<ToolBeforeRunTask, Tool> {
 
   protected ToolBeforeRunTask() {
     super(ToolBeforeRunTaskProvider.ID);
   }
 
-  @Nullable
-  public String getToolActionId() {
-    return myToolActionId;
-  }
-
-  public void setToolActionId(String toolActionId) {
-    myToolActionId = toolActionId;
-  }
-
-  public boolean isExecutable() {
-    return myToolActionId != null;
-  }
-
   @Override
-  public void writeExternal(Element element) {
-    super.writeExternal(element);
-    if (myToolActionId != null) {
-      element.setAttribute(ACTION_ID_ATTRIBUTE, myToolActionId);
-    }
-  }
-
-  @Override
-  public void readExternal(Element element) {
-    super.readExternal(element);
-    myToolActionId = element.getAttributeValue(ACTION_ID_ATTRIBUTE);
-  }
-
-  @Override
-  public ToolBeforeRunTask clone() {
-    return (ToolBeforeRunTask)super.clone();
-  }
-
-  public void execute(final DataContext context, final long executionId) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-
-      @Override
-      public void run() {
-        ToolAction.runTool(myToolActionId, context, executionId);
-      }
-    });
-  }
-
-  @Nullable
-  public Tool findCorrespondingTool() {
-    if (myToolActionId == null) {
-      return null;
-    }
-    List<Tool> tools = ToolManager.getInstance().getTools();
-    for (Tool tool : tools) {
-      if (myToolActionId.equals(tool.getActionId())) {
-        return tool;
-      }
-    }
-    return null;
+  protected List<Tool> getTools() {
+    return ToolManager.getInstance().getTools();
   }
 }

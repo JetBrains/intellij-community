@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -152,22 +153,23 @@ public class GenerationUtil {
   }
 
   public static void invokeMethodByName(@Nullable GrExpression caller,
-                                        String methodName,
-                                        GrExpression[] exprs,
-                                        GrNamedArgument[] namedArgs,
-                                        GrClosableBlock[] closureArgs,
-                                        ExpressionGenerator expressionGenerator,
-                                        GroovyPsiElement psiContext) {
+                                        @NotNull String methodName,
+                                        @NotNull GrExpression[] exprs,
+                                        @NotNull GrNamedArgument[] namedArgs,
+                                        @NotNull GrClosableBlock[] closureArgs,
+                                        @NotNull ExpressionGenerator expressionGenerator,
+                                        @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = resolveMethod(caller, methodName, exprs, namedArgs, closureArgs, psiContext);
     invokeMethodByResolveResult(caller, call, methodName, exprs, namedArgs, closureArgs, expressionGenerator, psiContext);
   }
 
+  @NotNull
   public static GroovyResolveResult resolveMethod(@Nullable GrExpression caller,
-                                                   String methodName,
-                                                   GrExpression[] exprs,
-                                                   GrNamedArgument[] namedArgs,
-                                                   GrClosableBlock[] closureArgs,
-                                                   GroovyPsiElement psiContext) {
+                                                   @NotNull String methodName,
+                                                   @NotNull GrExpression[] exprs,
+                                                   @NotNull GrNamedArgument[] namedArgs,
+                                                   @NotNull GrClosableBlock[] closureArgs,
+                                                   @NotNull GroovyPsiElement psiContext) {
     GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
 
     final PsiType type;
@@ -186,13 +188,13 @@ public class GenerationUtil {
   }
 
   public static void invokeMethodByResolveResult(@Nullable GrExpression caller,
-                                                 GroovyResolveResult resolveResult,
-                                                 String methodName,
-                                                 GrExpression[] exprs,
-                                                 GrNamedArgument[] namedArgs,
-                                                 GrClosableBlock[] closureArgs,
-                                                 ExpressionGenerator expressionGenerator,
-                                                 GroovyPsiElement psiContext) {
+                                                 @NotNull GroovyResolveResult resolveResult,
+                                                 @NotNull String methodName,
+                                                 @NotNull GrExpression[] exprs,
+                                                 @NotNull GrNamedArgument[] namedArgs,
+                                                 @NotNull GrClosableBlock[] closureArgs,
+                                                 @NotNull ExpressionGenerator expressionGenerator,
+                                                 @NotNull GroovyPsiElement psiContext) {
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod) {
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -212,8 +214,8 @@ public class GenerationUtil {
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
   }
 
-  static void writeStatement(final StringBuilder codeBlockBuilder,
-                             StringBuilder statementBuilder,
+  static void writeStatement(@NotNull StringBuilder codeBlockBuilder,
+                             @NotNull StringBuilder statementBuilder,
                              @Nullable GrStatement statement,
                              @Nullable ExpressionContext context) {
     final PsiElement parent = statement == null ? null : statement.getParent();
@@ -682,5 +684,16 @@ public class GenerationUtil {
     }
 
     return null;
+  }
+
+  static void writeDocComment(StringBuilder buffer, PsiMember member, boolean addLineFeed) {
+    if (member instanceof PsiDocCommentOwner) {
+      final PsiDocComment comment = ((PsiDocCommentOwner)member).getDocComment();
+      if (comment != null) {
+        final String text = comment.getText();
+        buffer.append(text);
+        if (addLineFeed) buffer.append('\n');
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private String myFSRootPath;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) throws FileNotFoundException {
-      final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
+    public WatchRequestImpl(String rootPath, boolean toWatchRecursively) throws FileNotFoundException {
+      int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
       if (index > 0 || !rootFile.isDirectory()) {
-        final File parentFile = rootFile.getParentFile();
+        File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
           throw new FileNotFoundException(rootPath);
         }
@@ -278,28 +278,27 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      // TODO: different ways to mark dirty for all these cases
-      final FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
+      FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
       markPathsDirty(dirtyPaths.dirtyPaths);
       markFlatDirsDirty(dirtyPaths.dirtyDirectories);
       markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
     }
   }
 
-  private void markPathsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markPathsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileByPathIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirty();
       }
     }
   }
 
-  private void markFlatDirsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markFlatDirsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
-        final NewVirtualFile nvf = (NewVirtualFile)file;
+        NewVirtualFile nvf = (NewVirtualFile)file;
         nvf.markDirty();
         for (VirtualFile child : nvf.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
@@ -308,13 +307,24 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  private void markRecursiveDirsDirty(final List<String> dirtyFiles) {
-    for (String dirtyFile : dirtyFiles) {
-      VirtualFile file = findFileByPathIfCached(dirtyFile);
+  private void markRecursiveDirsDirty(List<String> dirtyPaths) {
+    for (String dirtyPath : dirtyPaths) {
+      VirtualFile file = findFileOrParentIfCached(dirtyPath);
       if (file instanceof NewVirtualFile) {
         ((NewVirtualFile)file).markDirtyRecursively();
       }
     }
+  }
+
+  private VirtualFile findFileOrParentIfCached(String path) {
+    VirtualFile file = findFileByPathIfCached(path);
+    if (file == null) {
+      String parentPath = new File(path).getParent();
+      if (parentPath != null) {
+        file = findFileByPathIfCached(parentPath);
+      }
+    }
+    return file;
   }
 
   public void markSuspiciousFilesDirty(List<VirtualFile> files) {
@@ -374,7 +384,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       while (true) {
         final Application application = ApplicationManager.getApplication();
         if (application == null || application.isDisposed()) break;
-        
+
         storeRefreshStatusToFiles();
         TimeoutUtil.sleep(PERIOD);
       }

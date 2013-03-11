@@ -80,7 +80,7 @@ public class EclipseClasspathWriter {
         outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, myModel);
       }
     }
-    for (String support : eclipseModuleManager.getGroovySupport()) {
+    for (String support : eclipseModuleManager.getUsedCons()) {
       final Integer place = eclipseModuleManager.getSrcPlace(support);
       addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, place != null ? place.intValue() : -1);
     }

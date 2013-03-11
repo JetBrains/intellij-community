@@ -56,11 +56,11 @@ public abstract class WizardInputField<T extends JComponent> {
 
   public boolean validate() throws ConfigurationException { return true; }
 
-  public static WizardInputField getFieldById(String id, String initialValue) {
+  public static ProjectTemplateParameterFactory getFactoryById(String id) {
     ProjectTemplateParameterFactory[] extensions = ProjectTemplateParameterFactory.EP_NAME.getExtensions();
     for (ProjectTemplateParameterFactory extension : extensions) {
       if (extension.getParameterId().equals(id)) {
-        return extension.createField(initialValue);
+        return extension;
       }
     }
     return null;

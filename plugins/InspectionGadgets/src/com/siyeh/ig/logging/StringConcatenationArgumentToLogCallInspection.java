@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.Set;
  */
 public class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
 
+  @NonNls
   private static final Set<String> logNames = new THashSet<String>();
   static {
     logNames.add("trace");
@@ -95,8 +97,8 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       if (arguments.length == 0) {
         return;
       }
-      final StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
-      newMethodCall.append("(");
+      @NonNls final StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
+      newMethodCall.append('(');
       PsiExpression argument = arguments[0];
       int usedArguments;
       if (!(argument instanceof PsiPolyadicExpression)) {
@@ -137,7 +139,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       boolean inStringLiteral = false;
       for (PsiExpression operand : operands) {
         if (ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
-          if (ExpressionUtils.hasStringType(operand)) {
+          if (ExpressionUtils.hasStringType(operand) && operand instanceof PsiLiteralExpression) {
             final String text = operand.getText();
             final int count = StringUtil.getOccurrenceCount(text, "{}");
             for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {

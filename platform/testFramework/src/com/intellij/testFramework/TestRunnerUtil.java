@@ -34,9 +34,9 @@ public class TestRunnerUtil {
     final int modifiers = aClass.getModifiers();
     if ((modifiers & Modifier.ABSTRACT) != 0) return false;
     if ((modifiers & Modifier.PUBLIC) == 0) return false;
-    if (aClass.isAnnotationPresent(RunWith.class)) return true;
+    if (aClass.getAnnotation(RunWith.class) != null) return true;
     for (Method method : aClass.getMethods()) {
-      if (method.isAnnotationPresent(Test.class)) return true;
+      if (method.getAnnotation(Test.class) != null) return true;
     }
     return false;
   }

@@ -28,6 +28,8 @@ public interface IdeaXml {
   @NonNls String SOURCE_FOLDER_TAG = "sourceFolder";
   @NonNls String CONTENT_ENTRY_TAG = "contentEntry";
   @NonNls String TEST_FOLDER_TAG = "testFolder";
+  @NonNls String PACKAGE_PREFIX_TAG = "packagePrefix";
+  @NonNls String PACKAGE_PREFIX_VALUE_ATTR = "value";
   @NonNls String EXCLUDE_FOLDER_TAG = "excludeFolder";
   @NonNls String FOR_TESTS_ATTR = "forTests";
   @NonNls String TRUE_VALUE = "true";

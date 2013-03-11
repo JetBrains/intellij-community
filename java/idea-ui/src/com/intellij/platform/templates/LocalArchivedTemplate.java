@@ -147,4 +147,8 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   public ZipInputStream getStream() throws IOException {
     return new ZipInputStream(myArchivePath.openStream());
   }
+
+  public URL getArchivePath() {
+    return myArchivePath;
+  }
 }

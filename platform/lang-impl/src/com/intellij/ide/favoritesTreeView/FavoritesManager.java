@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -63,7 +64,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     });
   private final Map<String, String> myDescriptions = new HashMap<String, String>();
   private final Project myProject;
-  private final List<FavoritesListener> myListeners = new CopyOnWriteArrayList<FavoritesListener>();
+  private final List<FavoritesListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final FavoritesViewSettings myViewSettings = new FavoritesViewSettings();
   private final Map<String, FavoritesListProvider> myProviders = new HashMap<String, FavoritesListProvider>();
 
@@ -109,12 +110,12 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  public synchronized void addFavoritesListener(FavoritesListener listener) {
+  public void addFavoritesListener(FavoritesListener listener) {
     myListeners.add(listener);
     listener.rootsChanged();
   }
 
-  public synchronized void removeFavoritesListener(FavoritesListener listener) {
+  public void removeFavoritesListener(FavoritesListener listener) {
     myListeners.remove(listener);
   }
 

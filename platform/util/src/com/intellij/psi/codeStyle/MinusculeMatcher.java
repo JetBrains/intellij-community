@@ -72,7 +72,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int i = 0;
     while (isWildcard(i)) i++;
-    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i + 1, isLowerCase);
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
     myHasDots = hasDots(i);
     myHasWildCards = hasWildCards();
   }
@@ -127,7 +127,11 @@ public class MinusculeMatcher implements Matcher {
     int nextHumpStart = 0;
     for (TextRange range : iterable) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+        boolean isHumpStart = false;
         while (nextHumpStart <= i) {
+          if (nextHumpStart == i) {
+            isHumpStart = true;
+          }
           nextHumpStart = NameUtil.nextWord(name, nextHumpStart);
           if (first != range) {
             humpIndex++;
@@ -140,8 +144,13 @@ public class MinusculeMatcher implements Matcher {
         if (p < 0) {
           break;
         }
+
+        // favor uppercase letters matching hump start
         if (c == myPattern[p]) {
-          matchingCase += isUpperCase[p] ? 50 : i == range.getStartOffset() || Character.isUpperCase(c) ? 1 : 0;
+          matchingCase += isUpperCase[p] ? 50 : isHumpStart ? 1 : 0;
+        } else if (isHumpStart) {
+          // disfavor hump starts where pattern letter case doesn't match name case
+          matchingCase -= 20;
         }
       }
     }

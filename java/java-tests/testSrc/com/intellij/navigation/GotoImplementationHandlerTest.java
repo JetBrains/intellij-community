@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,30 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
     assertEquals(2, impls.length);
+  }
+
+  public void testShowSelfNonAbstract() throws Throwable {
+    //fails if groovy plugin is enabled: org.jetbrains.plugins.groovy.codeInsight.JavaClsMethodElementEvaluator
+    PsiFile file = myFixture.addFileToProject("Foo.java", "public class Hello {\n" +
+                                                          "    void foo(){}\n" +
+                                                          "\n" +
+                                                          "    class A {\n" +
+                                                          "        {\n" +
+                                                          "            fo<caret>o();\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "    class Hello2 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}\n" +
+                                                          "\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    assertEquals(3, impls.length);
   }
 
   public void testMultipleImplsFromStaticCall() throws Throwable {

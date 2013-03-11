@@ -116,7 +116,7 @@
     <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="GradleIcons.GradleImport"/>
     <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="AllIcons.Actions.Diff"/>
     <action id="Gradle.RemoveEntity" class="org.jetbrains.plugins.gradle.action.GradleRemoveIdeEntityAction" icon="AllIcons.General.Remove"/>
-    <action id="Gradle.SyncOutdatedLibrary" class="org.jetbrains.plugins.gradle.action.GradleSyncOutdatedLibraryAction" icon="GradleIcons.GradleSync"/>
+    <action id="Gradle.SyncOutdatedLibrary" class="org.jetbrains.plugins.gradle.action.GradleSyncAction" icon="GradleIcons.GradleSync"/>
     <group id="Gradle.SyncTreeGroup">
       <reference id="Gradle.ImportEntity"/>
       <reference id="Gradle.RemoveEntity"/>

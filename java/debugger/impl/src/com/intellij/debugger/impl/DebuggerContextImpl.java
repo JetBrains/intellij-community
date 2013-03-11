@@ -46,6 +46,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
 
   private boolean myInitialized;
 
+  @Nullable
   private final DebuggerSession      myDebuggerSession;
   private final DebugProcessImpl     myDebugProcess;
   private final SuspendContextImpl   mySuspendContext;
@@ -55,7 +56,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
   private       SourcePosition       mySourcePosition;
   private       PsiElement           myContextElement;
 
-  private DebuggerContextImpl(DebuggerSession session, DebugProcessImpl debugProcess, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy, SourcePosition position, PsiElement contextElement, boolean initialized) {
+  private DebuggerContextImpl(@Nullable DebuggerSession session, DebugProcessImpl debugProcess, SuspendContextImpl context, ThreadReferenceProxyImpl threadProxy, StackFrameProxyImpl frameProxy, SourcePosition position, PsiElement contextElement, boolean initialized) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     LOG.assertTrue(debugProcess == null ? frameProxy == null && threadProxy == null : true);
     myDebuggerSession = session;
@@ -68,6 +69,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
     myInitialized = initialized;
   }
 
+  @Nullable
   public DebuggerSession getDebuggerSession() {
     return myDebuggerSession;
   }

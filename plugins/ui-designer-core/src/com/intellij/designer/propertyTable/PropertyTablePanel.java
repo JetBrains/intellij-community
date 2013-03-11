@@ -149,9 +149,14 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
       myActionPolicy = policy;
 
       for (AnAction action : myActions) {
-        JComponent button = (JComponent)action.getTemplatePresentation().getClientProperty(BUTTON_KEY);
+        boolean visible = policy.showAction(action);
+
+        Presentation presentation = action.getTemplatePresentation();
+        presentation.setVisible(visible);
+
+        JComponent button = (JComponent)presentation.getClientProperty(BUTTON_KEY);
         if (button != null) {
-          button.setVisible(policy.showAction(action));
+          button.setVisible(visible);
         }
       }
 

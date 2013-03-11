@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
  * Date: 07-Feb-2006
  */
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
-  private final Map<String, Set<OptionDescription>> myStorage = Collections.synchronizedMap(new THashMap<String, Set<OptionDescription>>(1500, 0.9f));
+  private final Map<String, Set<OptionDescription>> myStorage = Collections.synchronizedMap(new THashMap<String, Set<OptionDescription>>(20, 0.9f));
   private final Map<String, String> myId2Name = Collections.synchronizedMap(new THashMap<String, String>(20, 0.9f));
 
   private final Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());

@@ -197,15 +197,15 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String findNamespacePrefixByURI(XmlFile file, @NonNls String uri) {
+  public static String findNamespacePrefixByURI(XmlFile file, @NotNull @NonNls String uri) {
     final XmlTag tag = file.getRootTag();
     if (tag == null) return null;
 
     for (XmlAttribute attribute : tag.getAttributes()) {
-      if (attribute.getName().startsWith("xmlns:") && attribute.getValue().equals(uri)) {
+      if (attribute.getName().startsWith("xmlns:") && uri.equals(attribute.getValue())) {
         return attribute.getName().substring("xmlns:".length());
       }
-      if ("xmlns".equals(attribute.getName()) && attribute.getValue().equals(uri)) return "";
+      if ("xmlns".equals(attribute.getName()) && uri.equals(attribute.getValue())) return "";
     }
 
     return null;
@@ -359,19 +359,17 @@ public class XmlUtil {
     return XSLT_URI.equals(ns) || XINCLUDE_URI.equals(ns);
   }
 
-
   public static char getCharFromEntityRef(@NonNls String text) {
-    //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
-    if (text.charAt(1) != '#') {
-      try {
+    try {
+      if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);
+        return XmlTagUtil.getCharacterByEntityName(text);
       }
-      catch (StringIndexOutOfBoundsException e) {
-        LOG.error("Cannot parse ref: '" + text + "'", e);
-      }
-      return XmlTagUtil.getCharacterByEntityName(text);
+      text = text.substring(2, text.length() - 1);
     }
-    text = text.substring(2, text.length() - 1);
+    catch (StringIndexOutOfBoundsException e) {
+      LOG.error("Cannot parse ref: '" + text + "'", e);
+    }
     try {
       int code;
       if (StringUtil.startsWithChar(text, 'x')) {

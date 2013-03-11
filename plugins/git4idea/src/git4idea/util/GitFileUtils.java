@@ -61,7 +61,6 @@ public class GitFileUtils {
       handler.addParameters(additionalOptions);
       handler.endOptions();
       handler.addParameters(paths);
-      handler.setNoSSH(true);
       handler.run();
     }
   }
@@ -80,7 +79,6 @@ public class GitFileUtils {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
       handler.endOptions();
       handler.addParameters(paths);
-      handler.setNoSSH(true);
       handler.run();
     }
   }
@@ -159,7 +157,6 @@ public class GitFileUtils {
       handler.addParameters("--ignore-errors");
       handler.endOptions();
       handler.addParameters(paths);
-      handler.setNoSSH(true);
       handler.run();
     }
   }
@@ -168,7 +165,6 @@ public class GitFileUtils {
   private static List<String> excludeIgnoredFiles(@NotNull Project project, @NotNull VirtualFile root,
                                                   @NotNull List<String> paths) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
-    handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("--ignored", "--others", "--exclude-standard");
     handler.endOptions();
@@ -197,7 +193,6 @@ public class GitFileUtils {
    */
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters(revisionOrBranch + ":" + relativePath);
     return h.run();

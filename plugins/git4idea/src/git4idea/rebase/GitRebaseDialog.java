@@ -163,7 +163,6 @@ public class GitRebaseDialog extends DialogWrapper {
 
   public GitLineHandler handler() {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.REBASE);
-    h.setNoSSH(true);
     if (myInteractiveCheckBox.isSelected() && myInteractiveCheckBox.isEnabled()) {
       h.addParameters("-i");
     }

@@ -374,12 +374,22 @@ public class MasterDetailPopupBuilder implements MasterController {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        ItemWrapper[] items = getSelectedItems();
-        if (items.length > 0) {
-          myDelegate.itemChosen(items[0], myProject, myPopup, true);
-        }
+        chooseItemWithEnterOrDoubleClick();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), list);
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        chooseItemWithEnterOrDoubleClick();
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, list);
+  }
+
+  private void chooseItemWithEnterOrDoubleClick() {
+    ItemWrapper[] items = getSelectedItems();
+    if (items.length > 0) {
+      myDelegate.itemChosen(items[0], myProject, myPopup, true);
+    }
   }
 
   public MasterDetailPopupBuilder setDelegate(Delegate delegate) {

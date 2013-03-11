@@ -112,7 +112,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected JPanel myWholePanel;
   public JPanel myNorthPanel = new JPanel(new BorderLayout());
 
-  private final ArrayList<ItemsChangeListener> myListeners = new ArrayList<ItemsChangeListener>();
+  private final List<ItemsChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
 

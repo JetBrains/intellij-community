@@ -17,7 +17,6 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,15 +24,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
@@ -46,15 +43,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.PathMacrosImpl");
   private final Map<String, String> myLegacyMacros = new HashMap<String, String>();
   private final Map<String, String> myMacros = new HashMap<String, String>();
+  private int myModificationStamp = 0;
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final List<String> myIgnoredMacros = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NonNls
-  public static final String MACRO_ELEMENT = "macro";
-  @NonNls
-  public static final String NAME_ATTR = "name";
-  @NonNls
-  public static final String VALUE_ATTR = "value";
+  public static final String MACRO_ELEMENT = JpsGlobalLoader.PathVariablesSerializer.MACRO_TAG;
+  public static final String NAME_ATTR = JpsGlobalLoader.PathVariablesSerializer.NAME_ATTRIBUTE;
+  public static final String VALUE_ATTR = JpsGlobalLoader.PathVariablesSerializer.VALUE_ATTRIBUTE;
 
   @NonNls
   public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
@@ -67,7 +62,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   @NonNls
   public static final String MODULE_DIR_MACRO_NAME = PathMacroUtil.MODULE_DIR_MACRO_NAME;
   @NonNls
-  public static final String USER_HOME_MACRO_NAME = "USER_HOME";
+  public static final String USER_HOME_MACRO_NAME = PathMacroUtil.USER_HOME_NAME;
 
   private static final Set<String> SYSTEM_MACROS = new HashSet<String>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
@@ -196,11 +191,14 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     if (!myIgnoredMacros.contains(name)) myIgnoredMacros.add(name);
   }
 
-  public static Map<String, String> getGlobalSystemMacros() {
-    final Map<String, String> map = new HashMap<String, String>();
-    map.put(APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    map.put(USER_HOME_MACRO_NAME, getUserHome());
-    return map;
+  public int getModificationStamp() {
+    myLock.readLock().lock();
+    try {
+      return myModificationStamp;
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
   }
 
   @Override
@@ -236,6 +234,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.clear();
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -259,6 +258,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.put(name, value);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -271,6 +271,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       myMacros.remove(name);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -283,6 +284,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       LOG.assertTrue(value != null);
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -322,6 +324,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       }
     }
     finally {
+      myModificationStamp++;
       myLock.writeLock().unlock();
     }
   }
@@ -376,9 +379,5 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     finally {
       myLock.readLock().unlock();
     }
-  }
-
-  public static String getUserHome() {
-    return StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 }

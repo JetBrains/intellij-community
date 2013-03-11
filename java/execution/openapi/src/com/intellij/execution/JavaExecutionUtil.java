@@ -26,7 +26,9 @@ import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author spleaner
@@ -60,6 +64,33 @@ public class JavaExecutionUtil {
     }
 
     return false;
+  }
+
+  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
+    final Set<Module> modules = new HashSet<Module>();
+    for (String className : patterns) {
+      final PsiClass psiClass = findMainClass(project,
+                                              className.contains(",") ? className.substring(0, className.indexOf(',')) : className,
+                                              GlobalSearchScope.allScope(project));
+      if (psiClass != null && isTestMethod.value(psiClass)) {
+        modules.add(ModuleUtilCore.findModuleForPsiElement(psiClass));
+      }
+    }
+
+    if (modules.size() == 1) {
+      final Module nextModule = modules.iterator().next();
+      if (nextModule != null) {
+        return nextModule;
+      }
+    }
+    if (contextModule != null && modules.size() > 1) {
+      final HashSet<Module> moduleDependencies = new HashSet<Module>();
+      ModuleUtilCore.getDependencies(contextModule, moduleDependencies);
+      if (moduleDependencies.containsAll(modules)) {
+        return contextModule;
+      }
+    }
+    return null;
   }
 
   private static final class DefaultRunProfile implements RunProfile {

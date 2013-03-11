@@ -209,7 +209,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, vcsRoot, GitCommand.REV_LIST);
-    h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--timestamp", "--max-count=1", rev);
     h.endOptions();

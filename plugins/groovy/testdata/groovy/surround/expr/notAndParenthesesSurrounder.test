@@ -1,0 +1,3 @@
+print <selection>2</selection>
+-----
+print !(2)

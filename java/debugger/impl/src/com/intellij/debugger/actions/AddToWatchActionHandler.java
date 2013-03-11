@@ -125,9 +125,13 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
     }
 
     public void threadAction() {
+      final DebuggerSession session = myDebuggerContext.getDebuggerSession();
+      if (session == null) {
+        return;
+      }
+      final Project project = session.getProject();
       for (final DebuggerTreeNodeImpl node : mySelectedNodes) {
         final NodeDescriptorImpl descriptor = node.getDescriptor();
-        final Project project = myDebuggerContext.getDebuggerSession().getProject();
         try {
           final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
           if (expression != null) {

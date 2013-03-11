@@ -113,7 +113,7 @@ public class ShowByteCodeAction extends AnAction {
           Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
             @Override
             public boolean process(JBPopup popup) {
-              codeViewerManager.createToolWindow(targetElement, targetElement);
+              codeViewerManager.recreateToolWindow(targetElement, targetElement);
               popup.cancel();
               return false;
             }

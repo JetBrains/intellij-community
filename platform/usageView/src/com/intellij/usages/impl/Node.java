@@ -17,7 +17,6 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.usages.UsageView;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -27,28 +26,11 @@ import javax.swing.tree.DefaultTreeModel;
  * @author max
  */
 public abstract class Node extends DefaultMutableTreeNode {
+  private boolean myIsValid = true;
   protected final DefaultTreeModel myTreeModel;
-  private String myText;
-
-  private byte flags;
-  private static final int INVALID_FLAG = 0;
-  private static final int READ_ONLY_FLAG = 1;
-  private static final int READ_ONLY_COMPUTED_FLAG = 2;
-  private static final int EXCLUDED_FLAG = 3;
-  private static final int UPDATED_FLAG = 4;
-
-  @MagicConstant(intValues = {INVALID_FLAG, READ_ONLY_FLAG, READ_ONLY_COMPUTED_FLAG, EXCLUDED_FLAG, UPDATED_FLAG})
-  @interface FlagConstant {}
-
-  private boolean isFlagSet(@FlagConstant int flag) {
-    int state = flags >> flag;
-    return (state & 1) != 0;
-  }
-
-  private void setFlag(@FlagConstant int flag, boolean value) {
-    int state = value ? 1 : 0;
-    flags = (byte)(flags & ~(1 << flag) | state << flag);
-  }
+  private Boolean myIsReadOnly = null;
+  private boolean myExcluded = false;
+  private String myText = null;
 
   protected Node(@NotNull DefaultTreeModel model) {
     myTreeModel = model;
@@ -62,57 +44,35 @@ public abstract class Node extends DefaultMutableTreeNode {
   protected abstract boolean isDataValid();
   protected abstract boolean isDataReadOnly();
   protected abstract boolean isDataExcluded();
-  protected abstract String getText(@NotNull UsageView view);
+  protected abstract String getText(UsageView view);
 
   public final boolean isValid() {
-    return !isFlagSet(INVALID_FLAG);
+    return myIsValid;
   }
 
   public final boolean isReadOnly() {
-    boolean result;
-    boolean computed = isFlagSet(READ_ONLY_COMPUTED_FLAG);
-    if (computed) {
-      result = isFlagSet(READ_ONLY_FLAG);
-    }
-    else {
-      result = isDataReadOnly();
-      setFlag(READ_ONLY_COMPUTED_FLAG, true);
-      setFlag(READ_ONLY_FLAG, result);
-    }
-    return result;
+    if (myIsReadOnly == null) myIsReadOnly = Boolean.valueOf(isDataReadOnly());
+    return myIsReadOnly.booleanValue();
   }
 
   public final boolean isExcluded() {
-    return isFlagSet(EXCLUDED_FLAG);
+    return myExcluded;
   }
 
-  public final void update(@NotNull UsageView view) {
+  public final void update(UsageView view) {
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     boolean isExcluded = isDataExcluded();
     String text = getText(view);
-
-    boolean cachedValid = isValid();
-    boolean cachedExcluded = isFlagSet(EXCLUDED_FLAG);
-    boolean cachedReadOnly = isFlagSet(READ_ONLY_FLAG);
-
-    if (isDataValid != cachedValid || isReadOnly != cachedReadOnly || isExcluded != cachedExcluded || !Comparing.equal(myText, text)) {
-      setFlag(INVALID_FLAG, !isDataValid);
-      setFlag(READ_ONLY_FLAG, isReadOnly);
-      setFlag(EXCLUDED_FLAG, isExcluded);
-
+    if (isDataValid != myIsValid || myIsReadOnly == null || isReadOnly != myIsReadOnly.booleanValue() || isExcluded != myExcluded ||
+      !Comparing.equal(myText, text)) {
+      myIsValid = isDataValid;
+      myExcluded = isExcluded;
+      myIsReadOnly = Boolean.valueOf(isReadOnly);
       myText = text;
       updateNotify();
       myTreeModel.nodeChanged(this);
     }
-    setFlag(UPDATED_FLAG, true);
-  }
-
-  public void markNeedUpdate() {
-    setFlag(UPDATED_FLAG, false);
-  }
-  public boolean needsUpdate() {
-    return !isFlagSet(UPDATED_FLAG);
   }
 
   /**

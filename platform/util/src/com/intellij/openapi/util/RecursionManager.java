@@ -75,7 +75,7 @@ public class RecursionManager {
   public static RecursionGuard createGuard(@NonNls final String id) {
     return new RecursionGuard() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
+      public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation) {
         MyKey realKey = new MyKey(id, key);
         final CalculationStack stack = ourStack.get();
 
@@ -101,8 +101,6 @@ public class RecursionManager {
           }
         }
 
-        int oldHash = realKey.hashCode();
-
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
@@ -122,17 +120,15 @@ public class RecursionManager {
             stack.afterComputation(realKey, sizeBefore, sizeAfter);
           }
           catch (Throwable e) {
+            //noinspection ThrowFromFinallyBlock
             throw new RuntimeException("Throwable in afterComputation", e);
           }
 
           stack.checkDepth("4");
-
-          if (oldHash != realKey.hashCode()) {
-            throw new AssertionError("Object has changed its hashCode: " + key);
-          }
         }
       }
 
+      @NotNull
       @Override
       public StackStamp markStack() {
         final int stamp = ourStack.get().reentrancyCount;
@@ -144,6 +140,7 @@ public class RecursionManager {
         };
       }
 
+      @NotNull
       @Override
       public List<Object> currentStack() {
         ArrayList<Object> result = new ArrayList<Object>();
@@ -168,8 +165,17 @@ public class RecursionManager {
   }
 
   private static class MyKey extends Pair<String, Object> {
-    public MyKey(String first, Object second) {
-      super(first, second);
+    private int myHashCode;
+
+    public MyKey(String guardId, Object userObject) {
+      super(guardId, userObject);
+      // remember user object hashCode to ensure our internal maps consistency
+      myHashCode = guardId.hashCode() * 31 + userObject.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
     }
   }
 
@@ -266,10 +272,10 @@ public class RecursionManager {
       if (depth == 0) {
         intermediateCache.clear();
         if (!key2ReentrancyDuringItsCalculation.isEmpty()) {
-          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap(key2ReentrancyDuringItsCalculation));
+          LOG.error("non-empty key2ReentrancyDuringItsCalculation: " + new HashMap<MyKey, MyKey>(key2ReentrancyDuringItsCalculation));
         }
         if (!toMemoize.isEmpty()) {
-          LOG.error("non-empty toMemoize: " + new HashSet(toMemoize));
+          LOG.error("non-empty toMemoize: " + new HashSet<MyKey>(toMemoize));
         }
       }
 

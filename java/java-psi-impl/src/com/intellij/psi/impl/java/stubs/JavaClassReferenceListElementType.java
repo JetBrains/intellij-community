@@ -26,7 +26,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -55,12 +54,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
 
   @Override
   public PsiReferenceList createPsi(@NotNull ASTNode node) {
-    if (node.getElementType() == JavaStubElementTypes.EXTENDS_BOUND_LIST) {
-      return new PsiTypeParameterExtendsBoundsListImpl(node);
-    }
-    else {
-      return new PsiReferenceListImpl(node);
-    }
+    return new PsiReferenceListImpl(node);
   }
 
   @Override

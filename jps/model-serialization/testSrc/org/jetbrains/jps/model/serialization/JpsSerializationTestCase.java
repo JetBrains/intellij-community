@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -65,7 +66,11 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
     try {
       String optionsPath = getTestDataFileAbsolutePath(optionsDir);
       Map<String,String> pathVariables = getPathVariables();
-      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), pathVariables, optionsPath);
+      JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(myModel.getGlobal());
+      for (Map.Entry<String, String> entry : pathVariables.entrySet()) {
+        configuration.addPathVariable(entry.getKey(), entry.getValue());
+      }
+      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), optionsPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -74,7 +79,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
 
   protected Map<String, String> getPathVariables() {
     Map<String, String> variables = new HashMap<String, String>();
-    variables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManagerEx.getHomePath(getClass()));
+    variables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
     variables.put(PathMacrosImpl.USER_HOME_MACRO_NAME, SystemProperties.getUserHome());
     return variables;
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
@@ -181,23 +182,55 @@ public class GradleDependencyManager {
     }
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
     Project project = dependency.getOwnerModule().getProject();
     GradleUtil.executeProjectChangeAction(project, dependency, synchronous, new Runnable() {
       @Override
       public void run() {
-        dependency.setScope(scope); 
+        doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
+          @Override
+          public void consume(ExportableOrderEntry entry) {
+            entry.setScope(scope);
+          }
+        });
       }
     });
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void setExported(final boolean exported, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
     Project project = dependency.getOwnerModule().getProject();
     GradleUtil.executeProjectChangeAction(project, dependency, synchronous, new Runnable() {
       @Override
       public void run() {
-        dependency.setExported(exported);
+        doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
+          @Override
+          public void consume(ExportableOrderEntry entry) {
+            entry.setExported(exported);
+          }
+        });
       }
     });
+  }
+
+  private static void doForDependency(@NotNull ExportableOrderEntry entry, @NotNull Consumer<ExportableOrderEntry> consumer) {
+    // We need to get an up-to-date modifiable model to work with.
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(entry.getOwnerModule());
+    final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+    try {
+      // The thing is that intellij created order entry objects every time new modifiable model is created,
+      // that's why we can't use target dependency object as is but need to get a reference to the current
+      // entry object from the model instead.
+      for (OrderEntry e : moduleRootModel.getOrderEntries()) {
+        if (e instanceof ExportableOrderEntry && e.getPresentableName().equals(entry.getPresentableName())) {
+          consumer.consume((ExportableOrderEntry)e);
+          break;
+        }
+      }
+    }
+    finally {
+      moduleRootModel.commit();
+    }
   }
 }

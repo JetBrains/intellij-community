@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
  */
 public class GradleProjectManager {
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void renameProject(@NotNull final String newName, @NotNull final Project project, boolean synchronous) {
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
@@ -40,6 +41,7 @@ public class GradleProjectManager {
     });
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project, boolean synchronous) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
     if (languageLevel == languageLevelExtension.getLanguageLevel()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, true);
       addCandidate(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
-      return !isAccessible || !isStaticsOK;
+      return !(isAccessible && isStaticsOK);
     }
 
     return true;

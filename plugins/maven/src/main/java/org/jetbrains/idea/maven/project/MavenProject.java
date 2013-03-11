@@ -844,10 +844,10 @@ public class MavenProject {
     return findDependencies(depProject.getMavenId());
   }
 
-  public List<MavenArtifact> findDependencies(MavenId id) {
+  public List<MavenArtifact> findDependencies(@NotNull MavenId id) {
     List<MavenArtifact> result = new SmartList<MavenArtifact>();
     for (MavenArtifact each : getDependencies()) {
-      if (each.getMavenId().equals(id)) result.add(each);
+      if (id.equals(each.getGroupId(), each.getArtifactId(), each.getVersion())) result.add(each);
     }
     return result;
   }
@@ -856,7 +856,9 @@ public class MavenProject {
   public List<MavenArtifact> findDependencies(@Nullable String groupId, @Nullable String artifactId) {
     List<MavenArtifact> result = new SmartList<MavenArtifact>();
     for (MavenArtifact each : getDependencies()) {
-      if (each.getMavenId().equals(groupId, artifactId)) result.add(each);
+      if (Comparing.equal(artifactId, each.getArtifactId()) && Comparing.equal(groupId, each.getGroupId())) {
+        result.add(each);
+      }
     }
     return result;
   }

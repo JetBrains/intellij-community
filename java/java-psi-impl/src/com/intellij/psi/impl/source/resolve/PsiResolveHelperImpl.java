@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Computable;
@@ -32,6 +34,7 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -1147,6 +1150,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                 }
                 return null;
               }
+              final Pair<PsiType, ConstraintType> inferredExceptionTypeConstraint = inferExceptionConstrains(typeParameter, expression, method, resolveResult.getSubstitutor());
+              if (inferredExceptionTypeConstraint != null) {
+                return inferredExceptionTypeConstraint;
+              }
             }
           }
         }
@@ -1188,6 +1195,55 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       result = new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
     }
     return result;
+  }
+
+  private static Pair<PsiType, ConstraintType> inferExceptionConstrains(PsiTypeParameter typeParameter,
+                                                                        PsiExpression expression,
+                                                                        PsiMethod method,
+                                                                        PsiSubstitutor substitutor) {
+    final PsiClassType[] declaredExceptions = method.getThrowsList().getReferencedTypes();
+    for (PsiClassType exception : declaredExceptions) {
+      final PsiType substitute = substitutor.substitute(exception);
+      if (PsiUtil.resolveClassInType(substitute) == typeParameter) {
+        if (expression instanceof PsiLambdaExpression) {
+          final PsiElement body = ((PsiLambdaExpression)expression).getBody();
+          if (body != null) {
+            final List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(body);
+            if (unhandledExceptions.isEmpty()) {
+              return inferUncheckedException(typeParameter, exception, method);
+            }
+          }
+        }
+        else if (expression instanceof PsiMethodReferenceExpression) {
+          final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
+          if (resolve instanceof PsiMethod) {
+            final PsiClassType[] declaredThrowsList = ((PsiMethod)resolve).getThrowsList().getReferencedTypes();
+            for (PsiClassType psiClassType : declaredThrowsList) {
+              if (!ExceptionUtil.isUncheckedException(psiClassType)) return null;
+            }
+            return inferUncheckedException(typeParameter, exception, method);
+          }
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  private static Pair<PsiType, ConstraintType> inferUncheckedException(PsiTypeParameter typeParameter,
+                                                                       PsiClassType exception,
+                                                                       PsiMethod method) {
+    final Project project = typeParameter.getProject();
+    final PsiClass runtimeException = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, method.getResolveScope());
+    if (runtimeException != null) {
+      for (PsiType superType : exception.getSuperTypes()) {
+        if (!InheritanceUtil.isInheritorOrSelf(runtimeException, PsiUtil.resolveClassInType(superType), true)) {
+          return getFailedInferenceConstraint(typeParameter);
+        }
+      }
+      return Pair.<PsiType, ConstraintType>create(JavaPsiFacade.getElementFactory(project).createType(runtimeException, PsiSubstitutor.EMPTY), ConstraintType.EQUALS);
+    }
+    return null;
   }
 
   private static Pair<PsiType, ConstraintType> inferFromConditionalExpression(PsiElement parent,

@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,6 +68,13 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSettings> implements RefactoringActionHandler {
+  public static final Function<GrExpression, String> GR_EXPRESSION_RENDERER = new Function<GrExpression, String>() {
+    @Override
+    public String fun(@NotNull GrExpression expr) {
+      return expr.getText();
+    }
+  };
+
   protected abstract String getRefactoringName();
 
   protected abstract String getHelpID();
@@ -175,19 +185,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions,
-                                           new Pass<GrExpression>() {
-                                             public void pass(final GrExpression selectedValue) {
-                                               invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(),
-                                                      selectedValue.getTextRange().getEndOffset());
-                                             }
-                                           },
-                                           new Function<GrExpression, String>() {
-                                             @Override
-                                             public String fun(GrExpression grExpression) {
-                                               return grExpression.getText();
-                                             }
-                                           });
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
+          public void pass(final GrExpression selectedValue) {
+            invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+          }
+        }, GR_EXPRESSION_RENDERER);
         return;
       }
     }

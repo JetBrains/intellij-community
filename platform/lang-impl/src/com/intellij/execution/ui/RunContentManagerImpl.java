@@ -425,19 +425,26 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static Content getContentFromManager(ContentManager contentManager, @Nullable String preferredName, long executionId) {
     ArrayList<Content> contents = new ArrayList<Content>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
-    if (first != null && contents.remove(first)) {
+    if (first != null && contents.remove(first)) {//selected content should be checked first
       contents.add(0, first);
     }
-    for (Content c : contents) {
-      if (c == null || c.isPinned() || !isTerminated(c) || (c.getExecutionId() == executionId && executionId != 0))
-        continue;
-      if (preferredName == null) {
-        return c;
-      } else if (preferredName.equals(c.getDisplayName())) {
+    if (preferredName != null) {//try to match content with specified preferred name
+      for (Content c : contents) {
+        if (canReuseContent(c, executionId) && preferredName.equals(c.getDisplayName())) {
+          return c;
+        }
+      }
+    }
+    for (Content c : contents) {//return first "good" content
+      if (canReuseContent(c, executionId)) {
         return c;
       }
     }
-    return preferredName != null  && !contents.isEmpty() ? getContentFromManager(contentManager, null, executionId) : null;
+    return null;
+  }
+
+  private static boolean canReuseContent(Content c, long executionId) {
+    return c != null && !c.isPinned() && isTerminated(c) && !(c.getExecutionId() == executionId && executionId != 0);
   }
 
   @NotNull

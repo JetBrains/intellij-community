@@ -17,10 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiAnnotationOwner;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -88,23 +88,40 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
   }
 
   @Override
+  public String getText() {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append('@').append(myQualifiedName);
+    buffer.append(myAnnotationArgList.getText());
+
+    return buffer.toString();
+  }
+
+  @Override
   public String getQualifiedName() {
     return myQualifiedName;
   }
 
   @Override
   public PsiJavaCodeReferenceElement getNameReferenceElement() {
-    return null;  
+    final GroovyResolveResult resolveResult = myRef.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+
+    if (resolved instanceof PsiClass) {
+      return new LightClassReference(getManager(), getClassReference().getText(), (PsiClass)resolved, resolveResult.getSubstitutor());
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
   public PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName) {
-    return null;
+    return PsiImplUtil.findAttributeValue(this, attributeName);
   }
 
   @Override
   public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName) {
-    return null;
+    return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 
   @Override
@@ -169,6 +186,22 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     @Override
     public String toString() {
       return "light annotation argument list";
+    }
+
+    @Override
+    public String getText() {
+      if (myAttributes.isEmpty()) return "";
+
+      StringBuilder buffer = new StringBuilder();
+      buffer.append('(');
+
+      for (GrAnnotationNameValuePair attribute : myAttributes) {
+        buffer.append(attribute.getText());
+        buffer.append(',');
+      }
+      if (!myAttributes.isEmpty()) buffer.deleteCharAt(buffer.length() - 1);
+      buffer.append(')');
+      return buffer.toString();
     }
   }
 }

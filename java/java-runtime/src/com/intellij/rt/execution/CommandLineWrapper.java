@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package com.intellij.rt.execution;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -33,8 +32,7 @@ import java.util.List;
 public class CommandLineWrapper {
   private static final String PREFIX = "-D";
 
-  public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-                                                IllegalAccessException, IOException, InstantiationException {
+  public static void main(String[] args) throws Exception {
     final List urls = new ArrayList();
     final File file = new File(args[0]);
     final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -64,10 +62,10 @@ public class CommandLineWrapper {
       try {
         while (vmParamsReader.ready()) {
           final String vmParam = vmParamsReader.readLine().trim();
-          final int eqIdx = vmParam.indexOf("=");
+          final int eqIdx = vmParam.indexOf('=');
           String vmParamName;
           String vmParamValue;
-          
+
           if (eqIdx > -1 && eqIdx < vmParam.length() - 1) {
             vmParamName = vmParam.substring(0, eqIdx);
             vmParamValue = vmParam.substring(eqIdx + 1);
@@ -92,6 +90,11 @@ public class CommandLineWrapper {
     String[] mainArgs = new String[args.length - startArgsIdx];
     System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
 
+    for (int i = 0; i < urls.size(); i++) {
+      URL url = (URL)urls.get(i);
+      urls.set(i, internFileProtocol(url));
+    }
+
     ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
     final String classLoader = System.getProperty("java.system.class.loader");
     if (classLoader != null) {
@@ -112,16 +115,27 @@ public class CommandLineWrapper {
     main.invoke(null, new Object[]{mainArgs});
   }
 
-   private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-local classes
-    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
-    final Class aClass = reflectionObject.getClass();
+  private static URL internFileProtocol(URL url) {
     try {
-      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
-      setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
+      if ("file".equals(url.getProtocol())) {
+        return new URL("file", url.getHost(), url.getPort(), url.getFile());
+      }
     }
-    catch (Exception e) {
-      // the method not found
+    catch (MalformedURLException ignored) {
     }
+    return url;
   }
+
+  private static void ensureAccess(Object reflectionObject) {
+   // need to call setAccessible here in order to be able to launch package-local classes
+   // calling setAccessible() via reflection because the method is missing from java version 1.1.x
+   final Class aClass = reflectionObject.getClass();
+   try {
+     final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
+     setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
+   }
+   catch (Exception e) {
+     // the method not found
+   }
+ }
 }

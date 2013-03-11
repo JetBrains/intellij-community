@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     boolean isVarArgs = false;
     boolean isDeprecatedByComment = false;
     boolean hasDeprecatedAnnotation = false;
-    boolean isExtension = false;
     String defValueText = null;
 
     boolean expectingDef = false;
@@ -103,24 +102,18 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       else if (type == JavaTokenType.DEFAULT_KEYWORD) {
         expectingDef = true;
       }
-      else if (expectingDef && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type) && type != JavaTokenType.SEMICOLON) {
-        if (type != JavaElementType.CODE_BLOCK) {
-          defValueText = LightTreeUtil.toFilteredString(tree, child, null);
-        }
-        else {
-          isExtension = true;
-        }
+      else if (expectingDef && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(type) &&
+               type != JavaTokenType.SEMICOLON && type != JavaElementType.CODE_BLOCK) {
+        defValueText = LightTreeUtil.toFilteredString(tree, child, null);
         break;
       }
     }
 
-    final TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
-    final boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation);
+    TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
+    boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
+    byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation);
 
-    final PsiMethodStubImpl stub = new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
-    stub.setExtensionMethodMark(isExtension);
-    return stub;
+    return new PsiMethodStubImpl(parentStub, StringRef.fromString(name), typeInfo, flags, StringRef.fromString(defValueText));
   }
 
   @Override

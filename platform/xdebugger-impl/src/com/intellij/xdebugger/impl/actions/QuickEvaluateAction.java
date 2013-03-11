@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -78,10 +77,6 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
           if (area != EditorMouseEventArea.EDITING_AREA) {
             return false;
           }
-        }
-      } else {
-        if (StringUtil.isEmptyOrSpaces(editor.getSelectionModel().getSelectedText())) {
-          return false;
         }
       }
 

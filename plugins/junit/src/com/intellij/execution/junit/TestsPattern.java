@@ -28,7 +28,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -121,29 +120,9 @@ public class TestsPattern extends TestPackage {
   }
 
   protected void configureClasspath() throws CantRunException {
-    final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final Project project = myConfiguration.getProject();
-    final Set<Module> modules = new HashSet<Module>();
-    for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
-                                                                className.contains(",")
-                                                                ? className.substring(0, className.indexOf(','))
-                                                                : className,
-                                                                GlobalSearchScope.allScope(project));
-      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
-        modules.add(ModuleUtil.findModuleForPsiElement(psiClass));
-      }
-    }
-
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 
-    Module module = myConfiguration.getConfigurationModule().getModule();
-    if (module == null && modules.size() == 1) {
-      final Module nextModule = modules.iterator().next();
-      if (nextModule != null) {
-        module = nextModule;
-      }
-    }
+    final Module module = myConfiguration.getConfigurationModule().getModule();
 
     if (module != null) {
       JavaParametersUtil.configureModule(module, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);

@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -77,7 +76,7 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.jetbrains.idea.svn.lowLevel.SvnIdeaRepositoryPoolManager;
+import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -88,6 +87,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
@@ -127,7 +127,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
     new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
-  private SvnIdeaRepositoryPoolManager myPool;
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
@@ -436,7 +435,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    createPool();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (!myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
@@ -593,8 +591,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
     myLoadedBranchesStorage.deactivate();
-    myPool.dispose();
-    myPool = null;
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -640,29 +636,17 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return repos;
   }
 
-  private void createPool() {
-    if (myPool != null) return;
-    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
-    final boolean keep;
-    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    // pool variant by default
-    if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
-      keep = ! unitTestMode;  // default
-    } else {
-      keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
-    }
-    myPool = new SvnIdeaRepositoryPoolManager(false, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+  @NotNull
+  private ISVNRepositoryPool getPool() {
+    return getPool(myConfiguration.getAuthenticationManager(this));
   }
 
   @NotNull
-  private ISVNRepositoryPool getPool() {
+  private ISVNRepositoryPool getPool(ISVNAuthenticationManager manager) {
     if (myProject.isDisposed()) {
       throw new ProcessCanceledException();
     }
-    if (myPool == null) {
-      createPool();
-    }
-    return myPool;
+    return new PrimitivePool(manager, myConfiguration.getOptions(myProject));
   }
 
   public SVNUpdateClient createUpdateClient() {
@@ -672,7 +656,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public SVNUpdateClient createUpdateClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNUpdateClient client = new SVNUpdateClient(getPool(manager), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
@@ -691,7 +675,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNWCClient client = new SVNWCClient(getPool(manager), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
@@ -715,7 +699,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public SVNLogClient createLogClient(@NotNull ISVNAuthenticationManager manager) {
-    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNLogClient client = new SVNLogClient(getPool(manager), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(manager);
     return client;
   }
@@ -957,7 +941,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
-    private final static long ourErrorNotificationInterval = 10000;
+    private final static long ourErrorNotificationInterval = 120000;
     private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
@@ -976,13 +960,18 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         final long time = System.currentTimeMillis();
         if ((time - myPreviousTime) > ourErrorNotificationInterval) {
           myPreviousTime = time;
+          if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+            LOG.info(th);
+            return;
+          }
           String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
           } else {
-            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)";
-            PopupUtil.showBalloonForActiveComponent("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
+            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
+                                       "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
+            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
           }
         }
       }

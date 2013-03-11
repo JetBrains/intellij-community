@@ -159,7 +159,10 @@ public abstract class ZenCodingGenerator {
   }
 
   @NotNull
-  public EmmetParser createParser(List<ZenCodingToken> tokens, CustomTemplateCallback callback, ZenCodingGenerator generator) {
-    return new XmlEmmetParser(tokens, callback, generator);
+  public EmmetParser createParser(List<ZenCodingToken> tokens,
+                                  CustomTemplateCallback callback,
+                                  ZenCodingGenerator generator,
+                                  boolean surroundWithTemplate) {
+    return new XmlEmmetParser(tokens, callback, generator, surroundWithTemplate);
   }
 }

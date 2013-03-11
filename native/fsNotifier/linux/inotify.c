@@ -113,7 +113,7 @@ inline int get_inotify_fd() {
 }
 
 
-#define EVENT_MASK IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF
+#define EVENT_MASK IN_MODIFY | IN_ATTRIB | IN_CREATE | IN_DELETE | IN_MOVE | IN_DELETE_SELF | IN_MOVE_SELF
 
 static int add_watch(const char* path, watch_node* parent) {
   int wd = inotify_add_watch(inotify_fd, path, EVENT_MASK);
@@ -301,7 +301,7 @@ int watch(const char* root, array* mounts) {
       return ERR_IGNORE;
     }
     else if (errno == ENOENT) {
-      return ERR_CONTINUE;
+      return ERR_MISSING;
     }
     userlog(LOG_ERR, "stat(%s): %s", root, strerror(errno));
     return ERR_ABORT;
@@ -342,14 +342,14 @@ static bool process_inotify_event(struct inotify_event* event) {
     strcat(path, event->name);
   }
 
-  if (is_dir && ((event->mask & IN_CREATE) == IN_CREATE || (event->mask & IN_MOVED_TO) == IN_MOVED_TO)) {
+  if (is_dir && event->mask & (IN_CREATE | IN_MOVED_TO)) {
     int result = walk_tree(path, node, true, NULL);
     if (result < 0 && result != ERR_IGNORE && result != ERR_CONTINUE) {
       return false;
     }
   }
 
-  if (is_dir && ((event->mask & IN_DELETE) == IN_DELETE || (event->mask & IN_MOVED_FROM) == IN_MOVED_FROM)) {
+  if (is_dir && event->mask & (IN_DELETE | IN_MOVED_FROM)) {
     for (int i=0; i<array_size(node->kids); i++) {
       watch_node* kid = array_get(node->kids, i);
       if (kid != NULL && strcmp(kid->name, path) == 0) {
@@ -363,6 +363,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   if (callback != NULL) {
     (*callback)(path, event->mask);
   }
+
   return true;
 }
 

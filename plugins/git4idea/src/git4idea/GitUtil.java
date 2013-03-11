@@ -522,7 +522,6 @@ public class GitUtil {
                                               final Consumer<GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
-    h.setNoSSH(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
@@ -937,7 +936,6 @@ public class GitUtil {
     if (staged) {
       diff.addParameters("--cached");
     }
-    diff.setNoSSH(true);
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
     diff.setSilent(true);

@@ -914,7 +914,9 @@ public class FindUtil {
     boolean shouldReplace(TextRange range, String replace);
   }
 
-  public static UsageView showInUsageView(PsiElement sourceElement, final PsiElement[] targets, String title, Project project) {
+  @Nullable
+  public static UsageView showInUsageView(PsiElement sourceElement, @NotNull final PsiElement[] targets, String title, Project project) {
+    if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
     presentation.setTabName(title);

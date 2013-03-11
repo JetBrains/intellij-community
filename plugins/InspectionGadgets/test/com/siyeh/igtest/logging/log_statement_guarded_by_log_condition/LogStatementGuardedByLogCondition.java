@@ -32,6 +32,10 @@ public class LogStatementGuardedByLogCondition {
         }
     }
 
+    void alternativeDebugMethodSignature(int i) {
+        LOG.debug(i, "asdfasdf");
+    }
+
   static class Logger {
 
     public Logger(String log) {
@@ -39,6 +43,8 @@ public class LogStatementGuardedByLogCondition {
 
     public void debug(String s) {
     }
+
+    public void debug(int i, String s) {}
 
     public void trace(String s) {}
 

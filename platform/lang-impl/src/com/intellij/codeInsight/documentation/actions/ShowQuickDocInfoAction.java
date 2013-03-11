@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -124,28 +123,23 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
-    try {
-      if (project != null && editor != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
-        final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
-        if (lookup != null) {
-          //dumpLookupElementWeights(lookup);
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
-        }
-        actionPerformedImpl(project, editor);
+    if (project != null && editor != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
+      final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
+      if (lookup != null) {
+        //dumpLookupElementWeights(lookup);
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
       }
-      else if (project != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
-          }
-        }, getCommandName(), null);
-      }
+      actionPerformedImpl(project, editor);
     }
-    catch (IndexNotReadyException e1) {
-      DumbService.getInstance(project).showDumbModeNotification("Documentation is not available until indices are built");
+    else if (project != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
+        public void run() {
+          DocumentationManager.getInstance(project).showJavaDocInfo(element, null);
+        }
+      }, getCommandName(), null);
     }
   }
 

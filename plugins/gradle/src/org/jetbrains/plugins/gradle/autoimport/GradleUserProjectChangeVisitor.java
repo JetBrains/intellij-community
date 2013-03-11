@@ -29,4 +29,8 @@ public interface GradleUserProjectChangeVisitor {
   void visit(@NotNull GradleRemoveModuleDependencyUserChange change);
   void visit(@NotNull GradleAddLibraryDependencyUserChange change);
   void visit(@NotNull GradleRemoveLibraryDependencyUserChange change);
+  void visit(@NotNull GradleLibraryDependencyScopeUserChange change);
+  void visit(@NotNull GradleModuleDependencyScopeUserChange change);
+  void visit(@NotNull GradleLibraryDependencyExportedChange change);
+  void visit(@NotNull GradleModuleDependencyExportedChange change);
 }

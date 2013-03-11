@@ -17,9 +17,9 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.THashSet;
 
 import java.net.URL;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,15 +28,20 @@ import java.util.Set;
 *         Date: Oct 21, 2008
 */
 public class AntResourcesClassLoader extends UrlClassLoader {
-  private final Set<String> myMisses = new HashSet<String>();
+  private final Set<String> myMisses = new THashSet<String>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
-    super(urls, parentLoader, canLockJars, canUseCache, true);
+    super(urls, parentLoader, canLockJars, canUseCache, true, false);
   }
 
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
     if (myMisses.contains(name)) {
-      throw new ClassNotFoundException(name);
+      throw new ClassNotFoundException(name) {
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+          return this;
+        }
+      };
     }
     return super.loadClass(name, resolve);
   }

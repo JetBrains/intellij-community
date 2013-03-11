@@ -301,7 +301,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
 
-  String vmOptions = "${vmOptions()} -Xverify:none"
+  String vmOptions = "-Dfile.encoding=UTF-8 ${vmOptions()} -Xverify:none"
   if (isEap() && !args.mac_no_yjp) {
     vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=${args.system_selector}"
   }

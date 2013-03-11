@@ -310,8 +310,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myInputMessageFilter = compositeInputFilter;
       for (ConsoleInputFilterProvider eachProvider : inputFilters) {
         InputFilter[] filters = eachProvider.getDefaultFilters(project);
-        for (InputFilter filter : filters) {
-          compositeInputFilter.addFilter(filter);
+        for (final InputFilter filter : filters) {
+          compositeInputFilter.addFilter(new InputFilter() {
+            boolean isBroken;
+
+            @Nullable
+            @Override
+            public List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType) {
+              if (!isBroken) {
+                try {
+                  return filter.applyFilter(text, contentType);
+                }
+                catch (Throwable e) {
+                  isBroken = true;
+                  LOG.error(e);
+                }
+              }
+              return null;
+            }
+          });
         }
       }
     }
@@ -531,18 +548,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     
-    Pair<String, ConsoleViewContentType> result = myInputMessageFilter.applyFilter(s, contentType);
+    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(s, contentType);
     if (result == null) {
       printHyperlink(s, contentType, null);
     }
     else {
-      if (result.first != null) {
-        printHyperlink(result.first, result.second == null ? contentType : result.second, null);
+      for (Pair<String, ConsoleViewContentType> pair : result) {
+        if (pair.first != null) {
+          printHyperlink(pair.first, pair.second == null ? contentType : pair.second, null);
+        }
       }
     }
   }
 
-  private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
+  private void printHyperlink(String s, ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     synchronized (LOCK) {
       Pair<String, Integer> pair = myBuffer.print(s, contentType, info);
       s = pair.first;
@@ -711,7 +730,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     }
     else if (oldLineCount < newLineCount) {
-      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
+      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 1);
     }
 
     if (isAtEndOfDocument) {

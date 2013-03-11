@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,30 +19,28 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
-
 public class AnnotationParserTest extends JavaParsingTestCase {
   public AnnotationParserTest() {
     super("parser-partial/annotations");
   }
 
   public void testMarker() { doParserTest("@Preliminary"); }
-  public void testSimple0() { doParserTest("@Copyright(\"bla-bla-bla\")"); }
+  public void testSimple0() { doParserTest("@Copyright(\"blah-blah-blah\")"); }
   public void testSimple1() { doParserTest("@Copyright(treatedAsValue)"); }
-  public void testComplex() { doParserTest("@Author(first=\"Eugene\", second=\"Wampirchik\")"); }
+  public void testComplex() { doParserTest("@Author(first=\"Eugene\", second=\"Another Eugene\")"); }
   public void testMultiple() { doParserTest("@Preliminary @Other(name=value)"); }
   public void testArray() { doParserTest("@Endorsers({\"Children\", \"Unscrupulous dentists\"})"); }
-  public void testNested() { doParserTest("@Author(@Name(first=\"Eugene\", second=\"Wampirchik\"))"); }
+  public void testNested() { doParserTest("@Author(@Name(first=\"Eugene\", second=\"Yet One Eugene\"))"); }
   public void testQualifiedAnnotation() { doParserTest("@org.jetbrains.annotations.Nullable"); }
   public void testExtraCommaInList() { doParserTest("@Anno({0, 1,})"); }
-
   public void testParameterizedAnnotation () { doParserTest("@Nullable<T>"); }
   public void testFirstNameMissed() { doParserTest("@Anno(value1, param2=value2)"); }
 
   private void doParserTest(final String text) {
-    doParserTest(text, new MyTestParser1());
+    doParserTest(text, new MyTestParser());
   }
 
-  private static class MyTestParser1 implements TestParser {
+  private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
       JavaParser.INSTANCE.getDeclarationParser().parseAnnotations(builder);

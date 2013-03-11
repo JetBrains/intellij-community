@@ -371,7 +371,6 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchInfo.getDestBranch();
 
         GitPushBranchInfo.Type type = branchInfo.getType();
-        final String showingRecentCommits = ", showing " + GitPusher.RECENT_COMMITS_NUMBER + " recent commits";
         String text = fromBranch.getName();
         SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         String additionalText = "";
@@ -385,11 +384,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           case NEW_BRANCH:
             text += " -> +" + dest.getName();
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " new branch will be created" + showingRecentCommits;
+            additionalText = " new branch will be created.";
             break;
           case NO_TRACKED_OR_TARGET:
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified" + showingRecentCommits;
+            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified.";
             break;
         }
         renderer.append(text, attrs);

@@ -25,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 
-public class MavenArtifact implements Serializable {
+public class MavenArtifact implements Serializable, MavenCoordinate {
+
+  static long serialVersionUID = 6389627095309274357L;
 
   public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
@@ -46,6 +48,8 @@ public class MavenArtifact implements Serializable {
   private final boolean myStubbed;
 
   private transient volatile String myLibraryNameCache;
+
+  private transient volatile long myLastFileCheckTimeStamp; // File.exists() is a slow operation, don't run it more than once a second
 
   public MavenArtifact(String groupId,
                        String artifactId,
@@ -124,7 +128,21 @@ public class MavenArtifact implements Serializable {
   }
 
   public boolean isResolved() {
-    return myResolved && !myStubbed && myFile.exists();
+    if (myResolved && !myStubbed) {
+      long currentTime = System.currentTimeMillis();
+
+      if (myLastFileCheckTimeStamp + 2000 < currentTime) { // File.exists() is a slow operation, don't run it more than once a second
+        if (!myFile.exists()) {
+          return false; // Don't cache result if file is not exist.
+        }
+
+        myLastFileCheckTimeStamp = currentTime;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   @NotNull

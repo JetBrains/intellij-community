@@ -50,7 +50,7 @@ public interface MoveMemberHandler {
                               @NotNull MultiMap<PsiElement, String> conflicts);
 
   @Nullable
-  PsiElement getAnchor(@NotNull PsiMember member, @NotNull PsiClass targetClass);
+  PsiElement getAnchor(@NotNull PsiMember member, @NotNull PsiClass targetClass, Set<PsiMember> membersToMove);
 
   boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage);
 

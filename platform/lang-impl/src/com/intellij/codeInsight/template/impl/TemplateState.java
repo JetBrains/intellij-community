@@ -87,7 +87,7 @@ public class TemplateState implements Disposable {
 
   private CommandAdapter myCommandListener;
 
-  private final List<TemplateEditingListener> myListeners = new ArrayList<TemplateEditingListener>();
+  private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentAdapter myEditorDocumentListener;
   private final Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
@@ -315,8 +315,7 @@ public class TemplateState implements Disposable {
   private void fireTemplateCancelled() {
     if (myFinished) return;
     myFinished = true;
-    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
-    for (TemplateEditingListener listener : listeners) {
+    for (TemplateEditingListener listener : myListeners) {
       listener.templateCancelled(myTemplate);
     }
   }
@@ -1150,29 +1149,25 @@ public class TemplateState implements Disposable {
   private void fireTemplateFinished(boolean brokenOff) {
     if (myFinished) return;
     myFinished = true;
-    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
-    for (TemplateEditingListener listener : listeners) {
+    for (TemplateEditingListener listener : myListeners) {
       listener.templateFinished(myTemplate, brokenOff);
     }
   }
 
   private void fireBeforeTemplateFinished() {
-    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
-    for (TemplateEditingListener listener : listeners) {
+    for (TemplateEditingListener listener : myListeners) {
       listener.beforeTemplateFinished(this, myTemplate);
     }
   }
 
   private void fireWaitingForInput() {
-    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
-    for (TemplateEditingListener listener : listeners) {
+    for (TemplateEditingListener listener : myListeners) {
       listener.waitingForInput(myTemplate);
     }
   }
 
   private void currentVariableChanged(int oldIndex) {
-    TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
-    for (TemplateEditingListener listener : listeners) {
+    for (TemplateEditingListener listener : myListeners) {
       listener.currentVariableChanged(this, myTemplate, oldIndex, myCurrentVariableNumber);
     }
     if (myCurrentSegmentNumber < 0) {

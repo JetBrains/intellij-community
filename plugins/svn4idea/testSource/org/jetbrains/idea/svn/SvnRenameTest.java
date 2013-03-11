@@ -284,6 +284,7 @@ public class SvnRenameTest extends Svn17TestCase {
   // IDEA-13824
   @Test
   public void testRenameFileRenameDir() throws Exception {
+    setNativeAcceleration(true);  //todo debug
     final VirtualFile child = prepareDirectoriesForRename();
     final VirtualFile f = child.findChild("a.txt");
     renameFileInCommand(f, "anew.txt");

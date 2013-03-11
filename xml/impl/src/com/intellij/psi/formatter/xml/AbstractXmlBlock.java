@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -61,9 +62,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                           final boolean preserveSpace) {
     super(node, wrap, alignment);
     myXmlFormattingPolicy = policy;
-    if (node == null) {
-      LOG.assertTrue(false);
-    }
     if (node.getTreeParent() == null) {
       myXmlFormattingPolicy.setRootBlock(node, this);
     }
@@ -105,9 +103,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
 
   public static WrapType getWrapType(final int type) {
-    if (type == CodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
-    if (type == CodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
-    if (type == CodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
+    if (type == CommonCodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
+    if (type == CommonCodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
+    if (type == CommonCodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
     return WrapType.CHOP_DOWN_IF_LONG;
   }
 
@@ -127,8 +125,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
     final IElementType elementType = child.getElementType();
     if (elementType == XmlElementType.XML_ATTRIBUTE) return attrWrap;
-    if (elementType == XmlElementType.XML_START_TAG_START) return tagBeginWrap;
-    if (elementType == XmlElementType.XML_END_TAG_START) {
+    if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
+    if (elementType == XmlTokenType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
       if (parent instanceof XmlTag) {
         final XmlTag tag = (XmlTag)parent;
@@ -138,7 +136,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == XmlElementType.XML_TEXT || elementType == XmlElementType.XML_DATA_CHARACTERS) return textWrap;
+    if (elementType == XmlElementType.XML_TEXT || elementType == XmlTokenType.XML_DATA_CHARACTERS) return textWrap;
     return null;
   }
 
@@ -273,7 +271,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                          final Indent indent) {
     ASTNode resultNode = child;
     ASTNode currentChild = child.getTreeNext();
-    while (currentChild != null && currentChild.getElementType() != XmlElementType.XML_END_TAG_START) {
+    while (currentChild != null && currentChild.getElementType() != XmlTokenType.XML_END_TAG_START) {
       if (!containsWhiteSpacesOnly(currentChild)) {
         currentChild = processChild(result, currentChild, wrap, alignment, indent);
         resultNode = currentChild;
@@ -297,7 +295,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace()) {
           protected Wrap getDefaultWrap(final ASTNode node) {
             final IElementType type = node.getElementType();
-            return type == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN ? Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false) : null;
+            return type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+                   ? Wrap.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false) : null;
           }
         }
       );
@@ -415,8 +414,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   public boolean isLeaf() {
     return (isComment(myNode)) ||
            myNode.getElementType() == TokenType.WHITE_SPACE ||
-           myNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS ||
-           myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN;
+           myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
+           myNode.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
   private static  boolean isComment(final ASTNode node) {
@@ -460,11 +459,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public boolean isCDATAStart() {
-    return myNode.getElementType() == XmlElementType.XML_CDATA_START;
+    return myNode.getElementType() == XmlTokenType.XML_CDATA_START;
   }
 
   public boolean isCDATAEnd() {
-    return myNode.getElementType() == XmlElementType.XML_CDATA_END;
+    return myNode.getElementType() == XmlTokenType.XML_CDATA_END;
   }
 
   public static boolean containsWhiteSpacesOnly(ASTNode node) {

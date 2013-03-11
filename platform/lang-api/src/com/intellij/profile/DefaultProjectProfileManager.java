@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +60,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   private final Map<String, Profile> myProfiles = new HashMap<String, Profile>();
   protected final DependencyValidationManager myHolder;
-  private final List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
+  private final List<ProfileChangeAdapter> myProfilesListener = ContainerUtil.createLockFreeCopyOnWriteList();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
   public DefaultProjectProfileManager(final Project project, final ApplicationProfileManager applicationProfileManager,

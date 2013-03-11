@@ -4,7 +4,7 @@ int missing() {
   try {
     return 1;
   }
-  catch(Exception i) {
+  catch(Exception e) {
 
   }
 <warning descr="Not all execution paths return a value">}</warning>

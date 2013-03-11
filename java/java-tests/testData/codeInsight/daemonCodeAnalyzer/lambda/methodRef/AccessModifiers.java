@@ -69,7 +69,7 @@ class MyTest1 {
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I3'">I3 c3 = arr::clone;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I4'">I4 c5 = arr::clone;</error>
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I5'">I5 c4 = this::getClass;</error>
+        I5 c4 = this::getClass;
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I6'">I6 c6 = this::getClass;</error>
     }
 }

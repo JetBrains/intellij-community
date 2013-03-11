@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@ Its elements should be calls to <code>parameter</code> method.'''),
             parameter(name:'type', type:Object.name, doc:'Return type name of the method'),
             parameter(name:'doc', type:String.name, doc:'Method documentation text'),
     ]], doc:'Describe a DSL method'
+    method name: "variable", type: "void", params: [args: [
+            parameter(name: "name", type: String.name, doc: 'Variable name'),
+            parameter(name: 'type', type: String.name, doc: 'Variable type')
+    ]], doc: 'Descrive a DSL local variable'
     method name: "property", type: "void", params: [args: [
             parameter(name:'name', type:String.name, doc:'Property name'),
             parameter(name:'type', type:Object.name, doc:'Property type name'),

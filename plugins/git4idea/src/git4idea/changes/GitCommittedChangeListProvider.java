@@ -133,9 +133,9 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();
-    final Long afterRev = settings.getChangeBeforeFilter();
+    final Long afterRev = settings.getChangeAfterFilter();
     final Date beforeDate = settings.getDateBeforeFilter();
-    final Date afterDate = settings.getDateBeforeFilter();
+    final Date afterDate = settings.getDateAfterFilter();
     final String author = settings.getUserFilter();
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {

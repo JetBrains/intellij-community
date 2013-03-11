@@ -138,6 +138,9 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                        @NotNull String text,
                                        @NotNull Charset charset,
                                        @NotNull Project project) {
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document document = documentManager.getDocument(virtualFile);
+    if (document == null) return true;
     byte[] bytes;
     try {
       bytes = virtualFile.contentsToByteArray();
@@ -145,9 +148,6 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     catch (IOException e) {
       return true;
     }
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    Document document = documentManager.getDocument(virtualFile);
-    if (document == null) return true;
     String separator = LoadTextUtil.detectLineSeparator(virtualFile, false);
     if (separator == null) {
       separator = documentManager.isDocumentUnsaved(document) ?

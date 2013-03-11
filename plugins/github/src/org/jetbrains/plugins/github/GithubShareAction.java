@@ -188,7 +188,6 @@ public class GithubShareAction extends DumbAwareAction {
     if (!gitDetected) {
       LOG.info("No git detected, creating empty git repo");
       final GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-      h.setNoSSH(true);
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
       if (!h.errors().isEmpty()) {
         GitUIUtil.showOperationErrors(project, h.errors(), "git init");
@@ -216,7 +215,6 @@ public class GithubShareAction extends DumbAwareAction {
     //git remote add origin git@github.com:login/name.git
     LOG.info("Adding GitHub as a remote host");
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-    addRemoteHandler.setNoSSH(true);
     addRemoteHandler.setSilent(true);
     final String remoteUrl = GithubApiUtil.getGitHost() + "/" + login + "/" + name + ".git";
     addRemoteHandler.addParameters("add", "origin", remoteUrl);
@@ -372,7 +370,6 @@ public class GithubShareAction extends DumbAwareAction {
           }
           GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
           handler.addParameters("-m", "First commit");
-          handler.setNoSSH(true);
           handler.endOptions();
           handler.run();
         }

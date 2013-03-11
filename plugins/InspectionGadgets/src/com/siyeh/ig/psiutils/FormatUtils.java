@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Bas Leijdekkers
+ * Copyright 2010-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +47,8 @@ public class FormatUtils {
 
   private FormatUtils() {}
 
-  public static boolean isFormatCall(
-    PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
+  public static boolean isFormatCall(PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
     if (!formatMethodNames.contains(name)) {
       return false;
@@ -64,6 +63,16 @@ public class FormatUtils {
     }
     final String className = containingClass.getQualifiedName();
     return formatClassNames.contains(className);
+  }
+
+  public static boolean isFormatCallArgument(PsiElement element) {
+    final PsiExpressionList expressionList =
+      PsiTreeUtil.getParentOfType(element, PsiExpressionList.class, true, PsiCodeBlock.class, PsiStatement.class, PsiClass.class);
+    if (expressionList == null) {
+      return false;
+    }
+    final PsiElement parent = expressionList.getParent();
+    return parent instanceof PsiMethodCallExpression && isFormatCall((PsiMethodCallExpression)parent);
   }
 
   @Nullable

@@ -121,7 +121,10 @@ public abstract class EvaluationDialog extends DialogWrapper {
     }
     getEditor().addRecent(getCodeToEvaluate());
 
-    myEvaluationPanel.getContextManager().getContext().getDebuggerSession().refresh(true);
+    final DebuggerSession session = myEvaluationPanel.getContextManager().getContext().getDebuggerSession();
+    if (session != null) {
+      session.refresh(true);
+    }
   }
 
   @Nullable

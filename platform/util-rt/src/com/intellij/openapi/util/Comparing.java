@@ -54,7 +54,7 @@ public class Comparing {
   }
 
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
-    return equal(arg1, arg2, true);
+    return arg1 == null ? arg2 == null : arg1.equals(arg2);
   }
 
   public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {

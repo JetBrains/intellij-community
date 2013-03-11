@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,10 @@ public class ParameterDeclaration implements GroovyElementTypes {
         }
         ParserUtils.getToken(builder, mNLS);
       }
-      else if (Annotation.parse(builder, parser)) {
+      else { // @
+        if (!Annotation.parse(builder, parser)) {
+          ParserUtils.wrapError(builder, GroovyBundle.message("annotation.expected"));
+        }
         ParserUtils.getToken(builder, mNLS);
       }
     }

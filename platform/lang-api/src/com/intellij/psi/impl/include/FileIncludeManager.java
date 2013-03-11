@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,9 +35,9 @@ public abstract class FileIncludeManager {
     return ServiceManager.getService(project, FileIncludeManager.class);
   }
 
-  public abstract VirtualFile[] getIncludedFiles(VirtualFile file, boolean compileTimeOnly);
+  public abstract VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly);
 
-  public abstract VirtualFile[] getIncludingFiles(VirtualFile file, boolean compileTimeOnly);
+  public abstract VirtualFile[] getIncludingFiles(@NotNull VirtualFile file, boolean compileTimeOnly);
 
   public abstract void processIncludingFiles(PsiFile context, Processor<Pair<VirtualFile, FileIncludeInfo>> processor);
 

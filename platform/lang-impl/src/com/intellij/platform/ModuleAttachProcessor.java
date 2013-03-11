@@ -44,9 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -159,6 +157,9 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
 
   @Nullable
   public static Module getPrimaryModule(Project project) {
+    if (!canAttachToProject()) {
+      return null;
+    }
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile root : roots) {
@@ -173,14 +174,20 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   public static List<Module> getSortedModules(Project project) {
     List<Module> result = new ArrayList<Module>();
     final Module primaryModule = getPrimaryModule(project);
-    if (primaryModule != null) {
-      result.add(primaryModule);
-    }
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       if (module != primaryModule) {
         result.add(module);
       }
+    }
+    Collections.sort(result, new Comparator<Module>() {
+      @Override
+      public int compare(Module module, Module module2) {
+        return module.getName().compareTo(module2.getName());
+      }
+    });
+    if (primaryModule != null) {
+      result.add(0, primaryModule);
     }
     return result;
   }

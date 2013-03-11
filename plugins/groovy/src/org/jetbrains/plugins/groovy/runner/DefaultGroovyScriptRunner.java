@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.groovy.GroovycOSProcessHandler;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
@@ -96,7 +97,9 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     if (groovyHome != null) {
       groovyHome = FileUtil.toSystemDependentName(groovyHome);
     }
-    setGroovyHome(params, groovyHome);
+    if (groovyHome != null) {
+      setGroovyHome(params, groovyHome);
+    }
 
     final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
@@ -109,6 +112,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
+
+    if (params.getVMParametersList().getPropertyValue(GroovycOSProcessHandler.GRAPE_ROOT) == null) {
+      String sysRoot = System.getProperty(GroovycOSProcessHandler.GRAPE_ROOT);
+      if (sysRoot != null) {
+        params.getVMParametersList().defineProperty(GroovycOSProcessHandler.GRAPE_ROOT, sysRoot);
+      }
+    }
   }
 
   private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, Module module) {

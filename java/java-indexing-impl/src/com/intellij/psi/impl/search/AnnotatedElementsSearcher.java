@@ -3,7 +3,6 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
@@ -11,13 +10,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -43,46 +41,32 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     final PsiManagerImpl psiManager = (PsiManagerImpl)annClass.getManager();
 
     final SearchScope useScope = p.getScope();
-    Class<? extends PsiModifierListOwner>[] types = p.getTypes();
+    final Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
-    for (PsiElement elt : getAnnotationCandidates(annClass, useScope)) {
-      if (notAnnotation(elt)) continue;
-
-      final PsiAnnotation ann = (PsiAnnotation)elt;
-      final PsiJavaCodeReferenceElement ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiJavaCodeReferenceElement>() {
+    for (final PsiAnnotation ann : getAnnotationCandidates(annClass, useScope)) {
+      final PsiModifierListOwner candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiModifierListOwner>() {
         @Override
-        public PsiJavaCodeReferenceElement compute() {
-          return ann.getNameReferenceElement();
+        public PsiModifierListOwner compute() {
+          PsiElement parent = ann.getParent();
+          if (!(parent instanceof PsiModifierList)) {
+            return null; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
+          }
+
+          final PsiElement owner = parent.getParent();
+          if (!isInstanceof(owner, types)) {
+            return null;
+          }
+
+          final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
+          if (ref == null || !psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
+            return null;
+          }
+
+          return (PsiModifierListOwner)owner;
         }
       });
-      if (ref == null) continue;
 
-      PsiElement parent = ann.getParent();
-      if (!(parent instanceof PsiModifierList)) continue; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
-
-      final PsiElement owner = parent.getParent();
-
-      if (!isInstanceof(owner, types)) continue;
-
-      final PsiModifierListOwner candidate = (PsiModifierListOwner)owner;
-
-      if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if (!candidate.isValid()) {
-            return false;
-          }
-          if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
-            return false;
-          }
-          return !(useScope instanceof GlobalSearchScope) ||
-                 ((GlobalSearchScope)useScope).contains(candidate.getContainingFile().getVirtualFile());
-        }
-      })) {
-        continue;
-      }
-
-      if (!consumer.process(candidate)) {
+      if (candidate != null && !consumer.process(candidate)) {
         return false;
       }
     }
@@ -90,23 +74,17 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     return true;
   }
 
-  private static Collection<? extends PsiElement> getAnnotationCandidates(final PsiClass annClass, final SearchScope useScope) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<? extends PsiElement>>() {
+  private static Collection<PsiAnnotation> getAnnotationCandidates(final PsiClass annClass, final SearchScope useScope) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiAnnotation>>() {
       @Override
-      public Collection<? extends PsiElement> compute() {
+      public Collection<PsiAnnotation> compute() {
         if (useScope instanceof GlobalSearchScope) {
           return JavaAnnotationIndex.getInstance().get(annClass.getName(), annClass.getProject(), (GlobalSearchScope)useScope);
         }
-        final List<PsiElement> result = new ArrayList<PsiElement>();
+
+        final List<PsiAnnotation> result = ContainerUtil.newArrayList();
         for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
-          element.accept(new PsiRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(PsiElement element) {
-              if (element instanceof PsiAnnotation) {
-                result.add(element);
-              }
-            }
-          });
+          result.addAll(PsiTreeUtil.findChildrenOfType(element, PsiAnnotation.class));
         }
         return result;
       }
@@ -120,15 +98,4 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     return false;
   }
 
-  private static boolean notAnnotation(final PsiElement found) {
-    if (found instanceof PsiAnnotation) return false;
-
-    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(found);
-    LOG.error("Non annotation in annotations list: " + faultyContainer+"; element:"+found);
-    if (faultyContainer != null && faultyContainer.isValid()) {
-      FileBasedIndex.getInstance().requestReindex(faultyContainer);
-    }
-
-    return true;
-  }
 }

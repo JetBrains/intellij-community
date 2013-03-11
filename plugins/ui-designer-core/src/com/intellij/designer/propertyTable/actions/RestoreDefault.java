@@ -36,7 +36,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
     String text = DesignerBundle.message("designer.properties.restore_default");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(AllIcons.Actions.Reset_to_default);
+    presentation.setIcon(AllIcons.General.Reset);
   }
 
   @Override

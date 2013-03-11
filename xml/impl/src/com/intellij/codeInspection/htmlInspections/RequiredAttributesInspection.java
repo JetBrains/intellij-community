@@ -16,11 +16,13 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.XmlInspectionGroupNames;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +45,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
   @NonNls public static final String SHORT_NAME = "RequiredAttributes";
+  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(SHORT_NAME);
 
   @NotNull
   public String getGroupDisplayName() {
@@ -87,7 +90,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   }
 
   public IntentionAction getIntentionAction(String name, int type) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(getShortName(), name, type);
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type);
   }
 
   public String getAdditionalEntries(int type) {

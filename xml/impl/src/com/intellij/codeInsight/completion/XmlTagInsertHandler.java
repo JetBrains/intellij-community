@@ -27,12 +27,10 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -57,7 +55,6 @@ import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlTagInsertHandler");
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   public void handleInsert(InsertionContext context, LookupElement item) {
@@ -201,10 +198,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     if (tag instanceof HtmlTag) {
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
-      LocalInspectionToolWrapper localInspectionToolWrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(
+      RequiredAttributesInspection inspection = (RequiredAttributesInspection)profile.getUnwrappedTool(
         RequiredAttributesInspection.SHORT_NAME, tag);
-      RequiredAttributesInspection inspection = localInspectionToolWrapper != null ?
-        (RequiredAttributesInspection) localInspectionToolWrapper.getTool(): null;
 
       if (inspection != null) {
         StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries(0));

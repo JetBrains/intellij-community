@@ -166,7 +166,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
 
     } else {
-      myAction.actionPerformed(event);
+      ActionUtil.performActionDumbAware(myAction, event);
     }
   }
 

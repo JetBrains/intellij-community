@@ -119,11 +119,19 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
         configuration.setModule(predefinedModule);
         return true;
       }
-      else if (configuration.getConfigurationModule().getModule() == null && contextModule != null) {
-        configuration.setModule(contextModule);
+      final Module module = findModule(configuration, contextModule);
+      if (module != null) {
+        configuration.setModule(module);
         return true;
       }
     }
     return false;
+  }
+  
+  protected Module findModule(ModuleBasedConfiguration configuration, Module contextModule) {
+    if (configuration.getConfigurationModule().getModule() == null && contextModule != null) {
+      return contextModule;
+    }
+    return null;
   }
 }

@@ -157,11 +157,16 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
       // collect anchors to place moved members at
       final Map<PsiMember, SmartPsiElementPointer<PsiElement>> anchors = new HashMap<PsiMember, SmartPsiElementPointer<PsiElement>>();
+      final Map<PsiMember, PsiMember> anchorsInSourceClass = new HashMap<PsiMember, PsiMember>();
       for (PsiMember member : myMembersToMove) {
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
         if (handler != null) {
-          final PsiElement anchor = handler.getAnchor(member, targetClass);
-          anchors.put(member, anchor == null ? null : SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anchor));
+          final PsiElement anchor = handler.getAnchor(member, targetClass, myMembersToMove);
+          if (anchor instanceof PsiMember && myMembersToMove.contains((PsiMember)anchor)) {
+            anchorsInSourceClass.put(member, (PsiMember)anchor);
+          } else {
+            anchors.put(member, anchor == null ? null : SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anchor));
+          }
         }
       }
 
@@ -178,6 +183,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       }
 
       // correct references inside moved members and outer references to Inner Classes
+      final Map<PsiMember, PsiMember> movedMembers = new HashMap<PsiMember, PsiMember>();
       for (PsiMember member : myMembersToMove) {
         ArrayList<PsiReference> refsToBeRebind = new ArrayList<PsiReference>();
         for (Iterator<MoveMembersUsageInfo> iterator = otherUsages.iterator(); iterator.hasNext();) {
@@ -193,8 +199,21 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
         if (handler != null) {
-          final SmartPsiElementPointer<PsiElement> pointer = anchors.get(member);
-          PsiMember newMember = handler.doMove(myOptions, member, pointer != null ? pointer.getElement() : null, targetClass);
+
+          final PsiElement anchor;
+          if (anchorsInSourceClass.containsKey(member)) {
+            final PsiMember memberInSourceClass = anchorsInSourceClass.get(member);
+            //anchor should be already moved as myMembersToMove contains members in order they appear in source class 
+            anchor = memberInSourceClass != null ? movedMembers.get(memberInSourceClass) : null;
+          }
+          else {
+            final SmartPsiElementPointer<PsiElement> pointer = anchors.get(member);
+            anchor = pointer != null ? pointer.getElement() : null;
+          }
+
+          PsiMember newMember = handler.doMove(myOptions, member, anchor, targetClass);
+
+          movedMembers.put(member, newMember);
           elementListener.elementMoved(newMember);
 
           fixModifierList(member, newMember, usages);

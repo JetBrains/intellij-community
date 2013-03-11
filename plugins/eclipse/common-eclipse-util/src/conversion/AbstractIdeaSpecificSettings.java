@@ -35,6 +35,15 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
 
     setupCompilerOutputs(root, model);
 
+    updateEntries(root, model);
+
+    setupJdk(root, model, projectSdkType);
+    setupLibraryRoots(root, model);
+    overrideModulesScopes(root, model);
+    readLibraryLevels(root, levels);
+  }
+
+  public void updateEntries(Element root, T model) {
     final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
     if (!entriesElements.isEmpty()) {
       for (Object o : entriesElements) {
@@ -46,11 +55,6 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
         readContentEntry(root, entries[0], model);
       }
     }
-
-    setupJdk(root, model, projectSdkType);
-    setupLibraryRoots(root, model);
-    overrideModulesScopes(root, model);
-    readLibraryLevels(root, levels);
   }
 
   protected abstract void readLibraryLevels(Element root, Map<String, String> levels);

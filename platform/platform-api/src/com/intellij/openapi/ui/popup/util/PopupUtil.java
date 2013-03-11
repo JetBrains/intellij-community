@@ -114,6 +114,27 @@ public class PopupUtil {
     return JOptionPane.getRootFrame();
   }
 
+  public static void showBalloonForActiveFrame(@NotNull final String message, final MessageType type) {
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
+        if (frame == null) {
+          final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+          final Project project = projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
+          final JFrame jFrame = WindowManager.getInstance().getFrame(project);
+          if (jFrame != null) {
+            showBalloonForComponent(jFrame, message, type, true, project);
+          } else {
+            LOG.info("Can not get component to show message: " + message);
+          }
+          return;
+        }
+        showBalloonForComponent(frame.getComponent(), message, type, true, frame.getProject());
+      }
+    };
+    UIUtil.invokeLaterIfNeeded(runnable);
+  }
+
   public static void showBalloonForActiveComponent(@NotNull final String message, final MessageType type) {
     Runnable runnable = new Runnable() {
       public void run() {
@@ -154,22 +175,24 @@ public class PopupUtil {
 
   public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
                                              final boolean atTop, @Nullable final Disposable disposable) {
-      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, type, null);
-      balloonBuilder.setDisposable(disposable == null ? ApplicationManager.getApplication() : disposable);
-      Balloon balloon = balloonBuilder.createBalloon();
-      Dimension size = component.getSize();
-      Balloon.Position position;
-      int x;
-      int y;
-      if (size == null) {
-        x = y = 0;
-        position = Balloon.Position.above;
-      }
-      else {
-        x = Math.min(10, size.width / 2);
-        y = size.height;
-        position = Balloon.Position.below;
-      }
-      balloon.show(new RelativePoint(component, new Point(x, y)), position);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    if (popupFactory == null) return;
+    BalloonBuilder balloonBuilder = popupFactory.createHtmlTextBalloonBuilder(message, type, null);
+    balloonBuilder.setDisposable(disposable == null ? ApplicationManager.getApplication() : disposable);
+    Balloon balloon = balloonBuilder.createBalloon();
+    Dimension size = component.getSize();
+    Balloon.Position position;
+    int x;
+    int y;
+    if (size == null) {
+      x = y = 0;
+      position = Balloon.Position.above;
+    }
+    else {
+      x = Math.min(10, size.width / 2);
+      y = size.height;
+      position = Balloon.Position.below;
+    }
+    balloon.show(new RelativePoint(component, new Point(x, y)), position);
   }
 }

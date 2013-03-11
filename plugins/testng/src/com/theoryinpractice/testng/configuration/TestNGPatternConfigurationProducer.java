@@ -20,15 +20,19 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
@@ -112,6 +116,21 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
 
   public PsiElement getSourceElement() {
     return myElements[0];
+  }
+
+  @Override
+  protected Module findModule(ModuleBasedConfiguration configuration, Module contextModule) {
+    final Set<String> patterns = ((TestNGConfiguration)configuration).data.getPatterns();
+    return findModule(configuration, contextModule, patterns);
+  }
+
+  public static Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
+    return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass psiClass) {
+        return TestNGUtil.hasTest(psiClass);
+      }
+    });
   }
 
   @Override
