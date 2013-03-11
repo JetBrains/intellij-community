@@ -119,7 +119,7 @@ public final class InjectedLanguage {
   }
 
   private static boolean isInjectableLanguage(Language language) {
-    if (language == Language.ANY || language == FileTypes.PLAIN_TEXT.getLanguage()) {
+    if (language == Language.ANY) {
       return false;
     }
     if (language.getID().startsWith("$")) {

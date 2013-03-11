@@ -334,7 +334,7 @@ public class CopiesPanel {
 
   private void changeFormat(final WCInfo wcInfo) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, ! wcInfo.isIsWcRoot());
-    dialog.setData(true, wcInfo.getFormat().getOption());
+    dialog.setData(wcInfo.getFormat().getOption());
     dialog.show();
     if (! dialog.isOK()) {
       return;

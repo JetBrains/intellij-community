@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
+  public static final String PASSPHRASE_FOR = "Passphrase for";
   /**
    * the partial line from stdout stream
    */
@@ -85,55 +87,21 @@ public class SvnLineCommand extends SvnCommand {
 
     listener.baseDirectory(base);
 
-    boolean certificateAttempt = false;
-    boolean authenticationAsked = false;
     File configDir = null;
     while (true) {
       final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
       if (command.myErr.length() > 0) {
         final String errText = command.myErr.toString().trim();
-        if ((errText.startsWith(AUTHENTICATION_REALM) || errText.startsWith(CERTIFICATE_ERROR)) && authenticationCallback != null) {
-          cleanup(exePath, commandName, base);
-          if (errText.startsWith(CERTIFICATE_ERROR)) {
-            final int idx = errText.indexOf('\n');
-            if (idx == -1) {
-              throw new SvnBindException("Can not detect authentication realm name: " + errText);
-            }
-            String realm = errText.substring(CERTIFICATE_ERROR.length(), idx);
-            final int idx1 = realm.indexOf('\'');
-            if (idx1 == -1) {
-              throw new SvnBindException("Can not detect authentication realm name: " + errText);
-            }
-            final int idx2 = realm.indexOf('\'', idx1 + 1);
-            if (idx2== -1) {
-              throw new SvnBindException("Can not detect authentication realm name: " + errText);
-            }
-            realm = realm.substring(idx1 + 1, idx2);
-            if (! certificateAttempt && authenticationCallback.acceptSSLServerCertificate(base, realm)) {
-              certificateAttempt = true;
+        if (authenticationCallback != null) {
+          final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base);
+          if (callback != null) {
+            cleanup(exePath, commandName, base);
+            if (callback.getCredentials(errText)) {
               if (authenticationCallback.getSpecialConfigDir() != null) {
                 configDir = authenticationCallback.getSpecialConfigDir();
               }
               continue;
             }
-            throw new SvnBindException("Server SSL certificate rejected");
-          } else {
-            final int idx = errText.indexOf('\n');
-            if (idx == -1) {
-              throw new SvnBindException("Can not detect authentication realm name: " + errText);
-            }
-            final String realm = errText.substring(AUTHENTICATION_REALM.length(), idx).trim();
-            if (authenticationAsked) {
-              authenticationCallback.clearPassiveCredentials(realm, base);
-            }
-            authenticationAsked = true;
-            if (authenticationCallback.authenticateFor(realm, base, configDir != null)) {
-              if (authenticationCallback.getSpecialConfigDir() != null) {
-                configDir = authenticationCallback.getSpecialConfigDir();
-              }
-              continue;
-            }
-            throw new SvnBindException("Authentication canceled for realm: " + realm);
           }
         }
         throw new SvnBindException(errText);
@@ -145,6 +113,85 @@ public class SvnLineCommand extends SvnCommand {
       return;
     }
     //ok
+  }
+
+  private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base) {
+    if (errText.startsWith(CERTIFICATE_ERROR)) {
+      return new CertificateCallbackCase(callback, base);
+    }
+    if (errText.startsWith(AUTHENTICATION_REALM)) {
+      return new CredentialsCallback(callback, base);
+    }
+    if (errText.startsWith(PASSPHRASE_FOR)) {
+      return new PassphraseCallback(callback, base);
+    }
+    return null;
+  }
+
+  private static class CredentialsCallback extends AuthCallbackCase {
+    protected CredentialsCallback(AuthenticationCallback callback, File base) {
+      super(callback, base);
+    }
+
+    @Override
+    boolean getCredentials(String errText) throws SvnBindException {
+      final int idx = errText.indexOf('\n');
+      if (idx == -1) {
+        throw new SvnBindException("Can not detect authentication realm name: " + errText);
+      }
+      final String realm = errText.substring(AUTHENTICATION_REALM.length(), idx).trim();
+      final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
+      if (myTried) {
+        myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
+      }
+      myTried = true;
+      if (myAuthenticationCallback.authenticateFor(realm, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
+        return true;
+      }
+      throw new SvnBindException("Authentication canceled for realm: " + realm);
+    }
+  }
+
+  private static class CertificateCallbackCase extends AuthCallbackCase {
+    private CertificateCallbackCase(AuthenticationCallback callback, File base) {
+      super(callback, base);
+    }
+
+    @Override
+    public boolean getCredentials(final String errText) throws SvnBindException {
+      final int idx = errText.indexOf('\n');
+      if (idx == -1) {
+        throw new SvnBindException("Can not detect authentication realm name: " + errText);
+      }
+      String realm = errText.substring(CERTIFICATE_ERROR.length(), idx);
+      final int idx1 = realm.indexOf('\'');
+      if (idx1 == -1) {
+        throw new SvnBindException("Can not detect authentication realm name: " + errText);
+      }
+      final int idx2 = realm.indexOf('\'', idx1 + 1);
+      if (idx2== -1) {
+        throw new SvnBindException("Can not detect authentication realm name: " + errText);
+      }
+      realm = realm.substring(idx1 + 1, idx2);
+      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myBase, realm)) {
+        myTried = true;
+        return true;
+      }
+      throw new SvnBindException("Server SSL certificate rejected");
+    }
+  }
+
+  private static abstract class AuthCallbackCase {
+    protected boolean myTried = false;
+    protected final AuthenticationCallback myAuthenticationCallback;
+    protected final File myBase;
+
+    protected AuthCallbackCase(AuthenticationCallback callback, final File base) {
+      myAuthenticationCallback = callback;
+      myBase = base;
+    }
+
+    abstract boolean getCredentials(final String errText) throws SvnBindException;
   }
 
   private static void cleanup(String exePath, SvnCommandName commandName, File base) throws SvnBindException {
@@ -179,7 +226,15 @@ public class SvnLineCommand extends SvnCommand {
                                            final LineCommandListener listener,
                                            File base, File configDir,
                                            String... parameters) throws SvnBindException {
-    final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir);
+    final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
+      @Override
+      protected void onTextAvailable(String text, Key outputType) {
+        if (ProcessOutputTypes.STDERR.equals(outputType)) {
+          destroyProcess();
+        }
+        super.onTextAvailable(text, outputType);
+      }
+    };
 
     //command.addParameters("--non-interactive");
     command.addParameters(parameters);
@@ -204,10 +259,6 @@ public class SvnLineCommand extends SvnCommand {
             command.myErr.append('\n');
           }
           command.myErr.append(line);
-          if (line.trim().startsWith(AUTHENTICATION_REALM) || line.trim().startsWith(CERTIFICATE_ERROR)) {
-            command.destroyProcess();
-            return;
-          }
         }
       }
 
@@ -279,5 +330,24 @@ public class SvnLineCommand extends SvnCommand {
   public void addListener(LineProcessEventListener listener) {
     myLineListeners.addListener(listener);
     super.addListener(listener);
+  }
+
+  private static class PassphraseCallback extends AuthCallbackCase {
+    public PassphraseCallback(AuthenticationCallback callback, File base) {
+      super(callback, base);
+    }
+
+    @Override
+    boolean getCredentials(String errText) throws SvnBindException {
+      // try to get from file
+      /*if (myTried) {
+        myAuthenticationCallback.clearPassiveCredentials(null, myBase);
+      }*/
+      myTried = true;
+      if (myAuthenticationCallback.authenticateFor(null, myBase, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
+        return true;
+      }
+      throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));
+    }
   }
 }

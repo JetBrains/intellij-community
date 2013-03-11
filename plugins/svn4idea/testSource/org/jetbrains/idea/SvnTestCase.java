@@ -83,11 +83,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myWcRootName;
   protected boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
-  private final String myTestDataDir;
+  protected final String myTestDataDir;
   private File myRepoRoot;
   private File myWcRoot;
   private ChangeListManagerGate myGate;
   protected String myAnotherRepoUrl;
+  protected File myPluginRoot;
 
   protected SvnTestCase(@NotNull String testDataDir) {
     PlatformTestCase.initPlatformLangPrefix();
@@ -128,15 +129,15 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
           assert myRepoRoot.mkdir() || myRepoRoot.isDirectory() : myRepoRoot;
 
-          File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
-          if (!pluginRoot.isDirectory()) {
+          myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+          if (!myPluginRoot.isDirectory()) {
             // try standalone mode
             Class aClass = SvnTestCase.class;
             String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-            pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
+            myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
           }
 
-          File svnBinDir =  new File(pluginRoot, myTestDataDir + "/svn/bin");
+          File svnBinDir =  new File(myPluginRoot, myTestDataDir + "/svn/bin");
           File svnExecutable = null;
           if (SystemInfo.isWindows) {
             svnExecutable = new File(svnBinDir, "windows/svn.exe");
@@ -154,7 +155,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
                      ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
                      : createClientRunner();
 
-          ZipUtil.extract(new File(pluginRoot, myTestDataDir + "/svn/newrepo.zip"), myRepoRoot, null);
+          ZipUtil.extract(new File(myPluginRoot, myTestDataDir + "/svn/newrepo.zip"), myRepoRoot, null);
 
           myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
           assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;

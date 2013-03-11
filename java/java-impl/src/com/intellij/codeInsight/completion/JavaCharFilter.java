@@ -76,7 +76,7 @@ public class JavaCharFilter extends CharFilter {
     }
 
 
-    if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '[' || c == ']' || c == ')' || c == '>') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(') {
       if (o instanceof PsiClass) {

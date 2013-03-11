@@ -1137,7 +1137,7 @@ class Foo {{
     assert lookup.items.size() == 2
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type ' '
-    myFixture.checkResult '''import bar.Abcdefg;
+    myFixture.checkResult '''import foo.Abcdefg;
 
 class Foo extends Abcdefg <caret>'''
   }
@@ -1343,6 +1343,38 @@ class Foo {
   }
 }
 '''
+  }
+
+  public void "test no focus in variable name"() {
+    myFixture.configureByText 'a.java', '''
+class FooBar {
+  void foo() {
+    FooBar <caret>
+  }
+}
+'''
+    type 'f'
+    assert lookup
+    assert !lookup.focused
+    type '\n'
+    assert !myFixture.editor.document.text.contains('fooBar')
+  }
+
+  public void "test choose variable name by enter when selection by chars is disabled"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    myFixture.configureByText 'a.java', '''
+class FooBar {
+  void foo() {
+    FooBar <caret>
+  }
+}
+'''
+    type 'f'
+    assert lookup
+    assert !lookup.focused
+    assert myFixture.lookupElementStrings == ['fooBar']
+    type '\n'
+    assert myFixture.editor.document.text.contains('fooBar')
   }
 
 }

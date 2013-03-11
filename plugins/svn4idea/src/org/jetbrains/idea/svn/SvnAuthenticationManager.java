@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
+import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -414,8 +416,29 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     } finally {
       mySavePermissions.remove();
       if (myArtificialSaving) {
+        myArtificialSaving = false;
         throw new CredentialsSavedException(successSaving);
       }
+    }
+  }
+
+  public void acknowledgeForSSL(boolean accepted, String kind, String realm, SVNErrorMessage message, SVNAuthentication proxy) {
+    if (accepted && proxy instanceof SVNSSLAuthentication && (((SVNSSLAuthentication) proxy).getCertificateFile() != null)) {
+      final SVNSSLAuthentication svnsslAuthentication = (SVNSSLAuthentication)proxy;
+      final SVNURL url = svnsslAuthentication.getURL();
+
+      final IdeaSVNHostOptionsProvider provider = getHostOptionsProvider();
+      final SVNCompositeConfigFile serversFile = provider.getServersFile();
+      String groupName = getGroupName(serversFile.getProperties("groups"), url.getHost());
+
+      if (StringUtil.isEmptyOrSpaces(groupName)) {
+        serversFile.setPropertyValue("global", SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
+        //serversFile.setPropertyValue("global", SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD, null, true);
+      } else {
+        serversFile.setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_FILE, svnsslAuthentication.getCertificateFile().getPath(), true);
+        //serversFile.setPropertyValue(groupName, SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD, null, true);
+      }
+      serversFile.save();
     }
   }
 
