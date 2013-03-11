@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.IntSLRUCache;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.StringFactory;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,59 +32,38 @@ import org.jetbrains.annotations.Nullable;
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls private static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
-  private static final TIntObjectHashMap<String> ourSuffixCache = new TIntObjectHashMap<String>();
-  private static final TIntObjectHashMap<Object> ourNameCache = new TIntObjectHashMap<Object>();
-  private static final Object ourCacheLock = new Object();
-
-  @SuppressWarnings("UnusedDeclaration")
-  private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Clearing VFS name cache");
-      synchronized (ourCacheLock) {
-        ourSuffixCache.clear();
-        ourNameCache.clear();
-      }
-    }
-  });
+  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {EMPTY, "$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
+  private static final IntSLRUCache<NameSuffixEntry> ourNameCache = new IntSLRUCache<NameSuffixEntry>(100000, 100000);
 
   static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
-    cacheData(name, idx, true);
+    cacheData(name, idx);
     return idx;
   }
 
   @NotNull
-  private static Object cacheData(String name, int idx, boolean returnName) {
+  private static NameSuffixEntry cacheData(String name, int id) {
     if (name == null) {
       ourNames.markCorrupted();
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    String suffix = findSuffix(name);
-    Object rawName = convertToBytesIfAsciiString(stripSuffix(name, suffix));
-
-    synchronized (ourCacheLock) {
-      ourSuffixCache.put(idx, suffix);
-      ourNameCache.put(idx, rawName);
+    byte suffixId = findSuffix(name);
+    Object rawName = convertToBytesIfAsciiString(suffixId == 0 ? name : name.substring(0, name.length() -
+                                                                                          WELL_KNOWN_SUFFIXES[suffixId].length()));
+    synchronized (ourNameCache) {
+      return ourNameCache.cacheEntry(id, new NameSuffixEntry(suffixId, rawName));
     }
-
-    return returnName ? rawName : suffix;
   }
 
-  private static String stripSuffix(String name, String suffix) {
-    return suffix == EMPTY ? name : name.substring(0, name.length() - suffix.length());
-  }
-
-  private static String findSuffix(String name) {
-    for (String suffix : WELL_KNOWN_SUFFIXES) {
+  private static byte findSuffix(String name) {
+    for (byte i = 1; i < WELL_KNOWN_SUFFIXES.length; i++) {
+      String suffix = WELL_KNOWN_SUFFIXES[i];
       if (name.endsWith(suffix)) {
-        return suffix;
+        return i;
       }
     }
-    return EMPTY;
+    return 0;
   }
 
   private static Object convertToBytesIfAsciiString(@NotNull String name) {
@@ -104,32 +82,22 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static Object getRawName(int idx) {
-    synchronized (ourCacheLock) {
-      Object o = ourNameCache.get(idx);
-      if (o != null) {
-        return o;
+  private static NameSuffixEntry getEntry(int id) {
+    synchronized (ourNameCache) {
+      NameSuffixEntry entry = ourNameCache.getCachedEntry(id);
+      if (entry != null) {
+        return entry;
       }
     }
 
-    return cacheData(FSRecords.getNameByNameId(idx), idx, true);
-  }
-
-  private static String getNameSuffix(int idx) {
-    synchronized (ourCacheLock) {
-      String suffix = ourSuffixCache.get(idx);
-      if (suffix != null) {
-        return suffix;
-      }
-    }
-
-    return (String)cacheData(FSRecords.getNameByNameId(idx), idx, false);
+    return cacheData(FSRecords.getNameByNameId(id), id);
   }
 
   @NotNull
   static String getVFileName(int nameId) {
-    Object name = getRawName(nameId);
-    String suffix = getNameSuffix(nameId);
+    NameSuffixEntry entry = getEntry(nameId);
+    Object name = entry.getRawName();
+    String suffix = entry.getSuffix();
     if (name instanceof String) {
       //noinspection StringEquality
       return suffix == EMPTY ? (String)name : name + suffix;
@@ -146,7 +114,8 @@ public class FileNameCache {
   }
 
   static int compareNameTo(int nameId, @NotNull String name, boolean ignoreCase) {
-    Object rawName = getRawName(nameId);
+    NameSuffixEntry entry = getEntry(nameId);
+    Object rawName = entry.getRawName();
     if (rawName instanceof String) {
       String thisName = getVFileName(nameId);
       return VirtualFileSystemEntry.compareNames(thisName, name, ignoreCase);
@@ -155,7 +124,7 @@ public class FileNameCache {
     byte[] bytes = (byte[])rawName;
     int bytesLength = bytes.length;
 
-    String suffix = getNameSuffix(nameId);
+    String suffix = entry.getSuffix();
     int suffixLength = suffix.length();
 
     int d = bytesLength + suffixLength - name.length();
@@ -179,8 +148,9 @@ public class FileNameCache {
   }
 
   static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, int[] positionRef) {
-    Object o = getRawName(nameId);
-    String suffix = getNameSuffix(nameId);
+    NameSuffixEntry entry = getEntry(nameId);
+    Object o = entry.getRawName();
+    String suffix = entry.getSuffix();
     int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
     int nameLength = rawNameLength + suffix.length();
     boolean appendSlash = SystemInfo.isWindows && parent == null && suffix.isEmpty() && rawNameLength == 2 &&
@@ -220,6 +190,23 @@ public class FileNameCache {
     }
 
     return chars;
+  }
+
+  private static class NameSuffixEntry extends IntSLRUCache.CacheEntry<Object> {
+    final byte suffixId;
+
+    private NameSuffixEntry(byte suffixId, Object rawName) {
+      super(rawName);
+      this.suffixId = suffixId;
+    }
+
+    Object getRawName() {
+      return userObject;
+    }
+
+    public String getSuffix() {
+      return WELL_KNOWN_SUFFIXES[suffixId];
+    }
   }
 
 
