@@ -173,7 +173,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
 
   private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, String[] newMode) {
     UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
-    dialog.setData(dispay13format, newMode[0]);
+    dialog.setData(newMode[0]);
     dialog.show();
     if (dialog.isOK()) {
       newMode[0] = dialog.getUpgradeMode();
