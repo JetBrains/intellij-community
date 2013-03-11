@@ -545,7 +545,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           };
           String children = StringUtil.join(array, verboseToString, ",");
           throw new AssertionError(
-            verboseToString.fun(prev) + " equals to " + file + "; children: " + children + "\nDetails: " + ContainerUtil.map(details, new Function<Object, Object>() {
+            verboseToString.fun(prev) + " equals to " + verboseToString.fun(file) + "; children: " + children + "\nDetails: " + ContainerUtil.map(details, new Function<Object, Object>() {
               @Override
               public Object fun(Object o) {
                 return o instanceof Object[] ? Arrays.toString((Object[])o) : o;
