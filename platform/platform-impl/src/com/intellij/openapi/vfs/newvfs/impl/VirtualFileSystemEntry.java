@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -87,11 +86,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     setFlagInt(HAS_SYMLINK_FLAG, isSymLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
-  @NotNull
-  private String getEncodedSuffix() {
-    return FileNameCache.getNameSuffix(myNameId);
-  }
-
   @Override
   @NotNull
   public String getName() {
@@ -115,10 +109,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       if (d != 0) return d;
     }
     return 0;
-  }
-
-  protected Object rawName() {
-    return FileNameCache.getRawName(myNameId);
   }
 
   @Override
@@ -182,48 +172,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-    Object o = rawName();
-    String suffix = getEncodedSuffix();
-    int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
-    int nameLength = rawNameLength + suffix.length();
-    boolean appendSlash = SystemInfo.isWindows && myParent == null && suffix.isEmpty() && rawNameLength == 2 &&
-                          (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
-
-    char[] chars;
-    if (myParent != null) {
-      chars = myParent.appendPathOnFileSystem(pathLength + 1 + nameLength, position);
-      if (position[0] > 0 && chars[position[0] - 1] != '/') {
-        chars[position[0]++] = '/';
-      }
-    }
-    else {
-      int rootPathLength = pathLength + nameLength;
-      if (appendSlash) ++rootPathLength;
-      chars = new char[rootPathLength];
-    }
-
-    if (o instanceof String) {
-      position[0] = copyString(chars, position[0], (String)o);
-    }
-    else {
-      byte[] bytes = (byte[])o;
-      int pos = position[0];
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, len = bytes.length; i < len; i++) {
-        chars[pos++] = (char)bytes[i];
-      }
-      position[0] = pos;
-    }
-
-    if (appendSlash) {
-      chars[position[0]++] = '/';
-    }
-    else {
-      position[0] = copyString(chars, position[0], suffix);
-    }
-
-    return chars;
+  protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+    return FileNameCache.appendPathOnFileSystem(myNameId, myParent, accumulatedPathLength, positionRef);
   }
 
   protected static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
