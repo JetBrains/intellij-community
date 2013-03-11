@@ -76,6 +76,9 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
 
+    public DataPack getDataPack() {
+        return dataPack;
+    }
 
     @Override
     @NotNull

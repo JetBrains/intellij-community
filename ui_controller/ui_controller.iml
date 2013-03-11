@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="refs" />
     <orderEntry type="module" module-name="graph_model" />
-    <orderEntry type="module" module-name="data_model" />
+    <orderEntry type="module" module-name="data_model" exported="" />
     <orderEntry type="module" module-name="git_reader" />
   </component>
 </module>

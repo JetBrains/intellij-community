@@ -17,9 +17,11 @@ public class RefTreeTableNode extends AbstractMutableTreeTableNode {
     @Nullable
     private final String text;
 
+    // notNull if isRefNode()
+    @Nullable
     private final CommitSelectManager selectManager;
 
-    private RefTreeTableNode(@Nullable Ref ref, @Nullable String text, @NotNull CommitSelectManager selectManager) {
+    private RefTreeTableNode(@Nullable Ref ref, @Nullable String text, @Nullable CommitSelectManager selectManager) {
         this.ref = ref;
         this.text = text;
         this.selectManager = selectManager;
@@ -29,11 +31,11 @@ public class RefTreeTableNode extends AbstractMutableTreeTableNode {
         this(ref, null, selectManager);
     }
 
-    public RefTreeTableNode(@NotNull String text, @NotNull CommitSelectManager selectManager) {
-        this(null, text, selectManager);
+    public RefTreeTableNode(@NotNull String text) {
+        this(null, text, null);
     }
 
-    private boolean isRefNode() {
+    public boolean isRefNode() {
         return ref != null;
     }
 
