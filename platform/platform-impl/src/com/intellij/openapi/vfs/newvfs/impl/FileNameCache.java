@@ -16,9 +16,11 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.text.StringFactory;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
-  @NonNls static final String EMPTY = "";
+  @NonNls private static final String EMPTY = "";
   @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {"$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
   private static final TIntObjectHashMap<String> ourSuffixCache = new TIntObjectHashMap<String>();
   private static final TIntObjectHashMap<Object> ourNameCache = new TIntObjectHashMap<Object>();
@@ -38,6 +40,7 @@ public class FileNameCache {
   private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.println("Clearing VFS name cache");
       synchronized (ourCacheLock) {
         ourSuffixCache.clear();
@@ -120,5 +123,58 @@ public class FileNameCache {
 
     return (String)cacheData(FSRecords.getNameByNameId(idx), idx, false);
   }
+
+  @NotNull
+  static String getVFileName(int nameId) {
+    Object name = getRawName(nameId);
+    String suffix = getNameSuffix(nameId);
+    if (name instanceof String) {
+      //noinspection StringEquality
+      return suffix == EMPTY ? (String)name : name + suffix;
+    }
+
+    byte[] bytes = (byte[])name;
+    int length = bytes.length;
+    char[] chars = new char[length + suffix.length()];
+    for (int i = 0; i < length; i++) {
+      chars[i] = (char)bytes[i];
+    }
+    VirtualFileSystemEntry.copyString(chars, length, suffix);
+    return StringFactory.createShared(chars);
+  }
+
+  static int compareNameTo(int nameId, @NotNull String name, boolean ignoreCase) {
+    Object rawName = getRawName(nameId);
+    if (rawName instanceof String) {
+      String thisName = getVFileName(nameId);
+      return VirtualFileSystemEntry.compareNames(thisName, name, ignoreCase);
+    }
+
+    byte[] bytes = (byte[])rawName;
+    int bytesLength = bytes.length;
+
+    String suffix = getNameSuffix(nameId);
+    int suffixLength = suffix.length();
+
+    int d = bytesLength + suffixLength - name.length();
+    if (d != 0) return d;
+
+    d = compareBytes(bytes, 0, name, 0, bytesLength, ignoreCase);
+    if (d != 0) return d;
+
+    d = VirtualFileSystemEntry.compareNames(suffix, name, ignoreCase, bytesLength);
+    return d;
+  }
+
+  private static int compareBytes(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
+    for (int i1 = offset1, i2=offset2; i1 < offset1 + len; i1++, i2++) {
+      char c1 = (char)name1[i1];
+      char c2 = name2.charAt(i2);
+      int d = StringUtil.compare(c1, c2, ignoreCase);
+      if (d != 0) return d;
+    }
+    return 0;
+  }
+
 
 }

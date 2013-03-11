@@ -95,44 +95,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   @NotNull
   public String getName() {
-    Object name = rawName();
-    String suffix = getEncodedSuffix();
-    if (name instanceof String) {
-      //noinspection StringEquality
-      return suffix == FileNameCache.EMPTY ? (String)name : name + suffix;
-    }
-
-    byte[] bytes = (byte[])name;
-    int length = bytes.length;
-    char[] chars = new char[length + suffix.length()];
-    for (int i = 0; i < length; i++) {
-      chars[i] = (char)bytes[i];
-    }
-    copyString(chars, length, suffix);
-    return StringFactory.createShared(chars);
+    return FileNameCache.getVFileName(myNameId);
   }
 
   int compareNameTo(@NotNull String name, boolean ignoreCase) {
-    Object rawName = rawName();
-    if (rawName instanceof String) {
-      String thisName = getName();
-      return compareNames(thisName, name, ignoreCase);
-    }
-
-    byte[] bytes = (byte[])rawName;
-    int bytesLength = bytes.length;
-
-    String suffix = getEncodedSuffix();
-    int suffixLength = suffix.length();
-
-    int d = bytesLength + suffixLength - name.length();
-    if (d != 0) return d;
-
-    d = compare(bytes, 0, name, 0, bytesLength, ignoreCase);
-    if (d != 0) return d;
-
-    d = compareNames(suffix, name, ignoreCase, bytesLength);
-    return d;
+    return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
   }
 
   static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
@@ -145,17 +112,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     for (int i=0; i<name1.length(); i++) {
       // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
       d = StringUtil.compare(name1.charAt(i), name2.charAt(i + offset2), ignoreCase);
-      if (d != 0) return d;
-    }
-    return 0;
-  }
-
-
-  private static int compare(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
-    for (int i1 = offset1, i2=offset2; i1 < offset1 + len; i1++, i2++) {
-      char c1 = (char)name1[i1];
-      char c2 = name2.charAt(i2);
-      int d = StringUtil.compare(c1, c2, ignoreCase);
       if (d != 0) return d;
     }
     return 0;
@@ -270,7 +226,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-  private static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
+  static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
     int length = s.length();
     s.getChars(0, length, chars, pos);
     return pos + length;
