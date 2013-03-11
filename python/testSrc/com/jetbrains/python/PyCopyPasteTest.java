@@ -289,6 +289,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentBeforeElse() {
+    doTest();
+  }
+
   public void testEmpty() {
     doTest();
   }

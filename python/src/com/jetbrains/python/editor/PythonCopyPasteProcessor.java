@@ -10,7 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -87,7 +89,16 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                       int caretOffset,
                                       int lineNumber) {
 
-    final PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    if (nonWS != null) {
+      final IElementType nonWSType = nonWS.getNode().getElementType();
+      if (nonWSType == PyTokenTypes.ELSE_KEYWORD || nonWSType == PyTokenTypes.ELIF_KEYWORD ||
+          nonWSType == PyTokenTypes.EXCEPT_KEYWORD || nonWSType == PyTokenTypes.FINALLY_KEYWORD) {
+        lineNumber -= 1;
+        nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, getLineStartSafeOffset(document, lineNumber));
+      }
+    }
+
     int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     String indentText = document.getText(TextRange.create(lineStartOffset, caretOffset));
 
