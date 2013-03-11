@@ -81,4 +81,9 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
   public void setIcon(Icon icon) {
     myIcon = icon;
   }
+
+  @Override
+  public String toString() {
+    return myName;
+  }
 }

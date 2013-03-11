@@ -193,7 +193,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       @Override
       public boolean shouldBeSaved(final AbstractFileType fileType) {
         return shouldBeSavedToFile(fileType);
-
       }
 
       @Override
