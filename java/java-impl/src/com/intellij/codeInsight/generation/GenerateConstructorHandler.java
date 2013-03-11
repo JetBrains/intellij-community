@@ -219,7 +219,8 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor(aClass.getName(), aClass);
-    String modifier = PsiUtil.getMaximumModifierForMember(aClass);
+    String modifier = PsiUtil.getMaximumModifierForMember(aClass, false);
+
     if (modifier != null) {
       PsiUtil.setModifierProperty(constructor, modifier, true);
     }
