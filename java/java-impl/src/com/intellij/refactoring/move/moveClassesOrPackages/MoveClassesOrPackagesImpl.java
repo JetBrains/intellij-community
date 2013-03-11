@@ -53,33 +53,28 @@ public class MoveClassesOrPackagesImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
 
   public static void doMove(final Project project,
-                            PsiElement[] elements,
+                            PsiElement[] adjustedElements,
                             PsiElement initialTargetElement,
                             final MoveCallback moveCallback) {
-    final PsiElement[] psiElements = adjustForMove(project, elements, initialTargetElement);
-    if (psiElements == null) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(psiElements), true)) {
-      return;
-    }
-
-    final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, psiElements);
-    final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, psiElements);
+    final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, adjustedElements);
+    final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, adjustedElements);
     final boolean isTargetDirectoryFixed = initialTargetDirectory == null;
 
     boolean searchTextOccurences = false;
-    for (int i = 0; i < psiElements.length && !searchTextOccurences; i++) {
-      PsiElement psiElement = psiElements[i];
+    for (int i = 0; i < adjustedElements.length && !searchTextOccurences; i++) {
+      PsiElement psiElement = adjustedElements[i];
       searchTextOccurences = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement);
     }
     final MoveClassesOrPackagesDialog moveDialog =
-      new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, initialTargetElement, moveCallback);
+      new MoveClassesOrPackagesDialog(project, searchTextOccurences, adjustedElements, initialTargetElement, moveCallback);
     boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
     boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, initialTargetElement == null, searchInComments,
-                       searchForTextOccurences, HelpID.getMoveHelpID(psiElements[0]));
+    moveDialog.setData(adjustedElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, initialTargetElement == null, searchInComments,
+                       searchForTextOccurences, HelpID.getMoveHelpID(adjustedElements[0]));
     moveDialog.show();
   }
 
