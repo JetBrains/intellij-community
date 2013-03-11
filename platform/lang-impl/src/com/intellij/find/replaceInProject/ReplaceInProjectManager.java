@@ -49,9 +49,13 @@ import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReplaceInProjectManager {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
@@ -225,7 +229,7 @@ public class ReplaceInProjectManager {
 
       int result;
       try {
-        doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), true);
+        replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), true);
         result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
       }
       catch (FindManager.MalformedReplacementStringException e) {
@@ -246,7 +250,7 @@ public class ReplaceInProjectManager {
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
-            success.set(doReplace(usage, replaceContext));
+            success.set(replaceUsageAndRemoveFromView(usage, replaceContext));
           }
         };
         CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
@@ -273,7 +277,7 @@ public class ReplaceInProjectManager {
               if (!otherPsiFile.equals(psiFile)) {
                 break;
               }
-              if (!doReplace(usage, replaceContext)) {
+              if (!replaceUsageAndRemoveFromView(usage, replaceContext)) {
                 success = false;
               }
             }
@@ -292,7 +296,7 @@ public class ReplaceInProjectManager {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           @Override
           public void run() {
-            final boolean success = doReplace(replaceContext, _usages);
+            final boolean success = replaceUsages(replaceContext, _usages);
             closeUsageViewIfEmpty(replaceContext.getUsageView(), success);
           }
         }, FindBundle.message("find.replace.command"), null);
@@ -301,9 +305,9 @@ public class ReplaceInProjectManager {
     }
   }
 
-  private boolean doReplace(Usage usage, ReplaceContext replaceContext) {
+  private boolean replaceUsageAndRemoveFromView(Usage usage, ReplaceContext replaceContext) {
     try {
-      if (doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
+      if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
         replaceContext.getUsageView().removeUsage(usage);
       }
     }
@@ -318,10 +322,7 @@ public class ReplaceInProjectManager {
     final Runnable replaceRunnable = new Runnable() {
       @Override
       public void run() {
-        final UsageView usageView = replaceContext.getUsageView();
-        final boolean success = doReplace(replaceContext, usageView.getUsages());
-        replaceContext.invalidateExcludedSetCache();
-        closeUsageViewIfEmpty(usageView, success);
+        replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getUsages());
       }
     };
     replaceContext.getUsageView().addButtonToLowerPane(replaceRunnable, FindBundle.message("find.replace.all.action"));
@@ -329,15 +330,14 @@ public class ReplaceInProjectManager {
     final Runnable replaceSelectedRunnable = new Runnable() {
       @Override
       public void run() {
-        doReplaceSelected(replaceContext);
-        replaceContext.invalidateExcludedSetCache();
+        replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
       }
     };
 
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
   }
 
-  private boolean doReplace(final ReplaceContext replaceContext, Collection<Usage> usages) {
+  private boolean replaceUsages(final ReplaceContext replaceContext, Collection<Usage> usages) {
     boolean success = true;
     int replacedCount = 0;
     if (!ensureUsagesWritable(replaceContext, usages)) {
@@ -345,7 +345,7 @@ public class ReplaceInProjectManager {
     }
     for (final Usage usage : usages) {
       try {
-        if (doReplace(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
+        if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
           replaceContext.getUsageView().removeUsage(usage);
           replacedCount++;
         }
@@ -372,10 +372,10 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public boolean doReplace(@NotNull final Usage usage,
-                        @NotNull final FindModel findModel,
-                        @NotNull final Set<Usage> excludedSet,
-                        final boolean justCheck)
+  public boolean replaceUsage(@NotNull final Usage usage,
+                              @NotNull final FindModel findModel,
+                              @NotNull final Set<Usage> excludedSet,
+                              final boolean justCheck)
     throws FindManager.MalformedReplacementStringException {
     final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
     final boolean result = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
@@ -440,24 +440,25 @@ public class ReplaceInProjectManager {
     return true;
   }
 
-  private void doReplaceSelected(final ReplaceContext replaceContext) {
-    final Set<Usage> selectedUsages = replaceContext.getUsageView().getSelectedUsages();
-    if (selectedUsages == null) {
+  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @Nullable final Set<Usage> usages) {
+    if (usages == null) {
       return;
     }
 
-    if (!ensureUsagesWritable(replaceContext, selectedUsages)) return;
+    if (!ensureUsagesWritable(replaceContext, usages)) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
-        final boolean success = doReplace(replaceContext, selectedUsages);
+        final boolean success = replaceUsages(replaceContext, usages);
         final UsageView usageView = replaceContext.getUsageView();
 
         if (closeUsageViewIfEmpty(usageView, success)) return;
         usageView.getComponent().requestFocus();
       }
     }, FindBundle.message("find.replace.command"), null);
+
+    replaceContext.invalidateExcludedSetCache();
   }
 
   private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<Usage> selectedUsages) {
