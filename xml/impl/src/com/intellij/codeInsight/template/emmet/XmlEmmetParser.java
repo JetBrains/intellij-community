@@ -349,6 +349,10 @@ public class XmlEmmetParser extends EmmetParser {
 
     final String name = ((IdentifierToken)token).getText();
 
+    if (name.isEmpty()) {
+      return null;
+    }
+
     advance();
     token = getToken();
     if (token != ZenCodingTokens.EQ) {
