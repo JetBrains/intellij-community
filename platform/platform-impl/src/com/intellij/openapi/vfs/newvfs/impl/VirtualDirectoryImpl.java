@@ -540,7 +540,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
             @Override
             public String fun(VirtualFileSystemEntry entry) {
-              return entry + " (name: '" + entry.getName() + "')";
+              return entry + " (name: '" + entry.getName() + "', " + entry.getClass()+ ")";
             }
           };
           String children = StringUtil.join(array, verboseToString, ",");
