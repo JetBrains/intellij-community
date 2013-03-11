@@ -129,7 +129,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) return DiamondInferenceResult.NULL_RESULT;
     final Ref<PsiMethod> staticFactoryRef = new Ref<PsiMethod>();
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(newExpression, true, new Computable<PsiSubstitutor>() {
+    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(newExpression, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
         final PsiMethod constructor = findConstructor(psiClass, newExpression);
@@ -149,7 +149,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
     final PsiMethod staticFactory = staticFactoryRef.get();
     if (staticFactory == null) {
-      LOG.assertTrue(false);
+      LOG.error(inferredSubstitutor);
       return DiamondInferenceResult.NULL_RESULT;
     }
     final PsiTypeParameter[] parameters = staticFactory.getTypeParameters();
