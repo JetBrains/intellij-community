@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafComboBoxRenderer;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.LafManagerImpl;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,6 +69,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JTextField myScriptPathTextField;
   private JPanel myCreateScriptPanel;
   private JPanel myColorPreviewPanel;
+  private JPanel myHeaderPanel;
+  private JPanel myFooterPanel;
   private JCheckBox myCreateEntryCheckBox;
   private JCheckBox myGlobalEntryCheckBox;
   private JPanel myCreateEntryPanel;
@@ -155,9 +158,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
       }
     });
     setResizable(false);
+    setCancelButtonText("Skip");
     init();
 
-    final boolean canCreateLauncherScript = CreateLauncherScriptAction.isAvailable();
+    final boolean canCreateLauncherScript = canCreateLauncherScript();
     myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
     myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
     myCreateScriptPanel.setVisible(canCreateLauncherScript);
@@ -165,7 +169,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       myScriptPathTextField.setText("/usr/local/bin/" + CreateLauncherScriptAction.defaultScriptName());
     }
 
-    final boolean canCreateDesktopEntry = CreateDesktopEntryAction.isAvailable();
+    final boolean canCreateDesktopEntry = canCreateDesktopEntry();
     myCreateEntryCheckBox.setVisible(canCreateDesktopEntry);
     myCreateEntryCheckBox.setSelected(canCreateDesktopEntry);
     myCreateEntryPanel.setVisible(canCreateDesktopEntry);
@@ -186,6 +190,26 @@ public class InitialConfigurationDialog extends DialogWrapper {
     });
   }
 
+  protected boolean canCreateDesktopEntry() {
+    return CreateDesktopEntryAction.isAvailable();
+  }
+
+  protected boolean canCreateLauncherScript() {
+    return CreateLauncherScriptAction.isAvailable();
+  }
+
+  public JComboBox getKeymapComboBox() {
+    return myKeymapComboBox;
+  }
+
+  public JComboBox getColorSchemeComboBox() {
+    return myColorSchemeComboBox;
+  }
+
+  public ComboBox getAppearanceComboBox() {
+    return myAppearanceComboBox;
+  }
+
   private void preselectKeyMap(ArrayList<Keymap> keymaps) {
     final Keymap defaultKeymap = KeymapManager.getInstance().getActiveKeymap();
     for (Keymap keymap : keymaps) {
@@ -197,6 +221,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
+    myHeaderPanel = createHeaderPanel();
+    myFooterPanel = createFooterPanel();
     myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(AllIcons.General.ComboArrowRight,
                                                               AllIcons.General.ComboArrowDown,
                                                               "Click to preview") {
@@ -238,6 +264,18 @@ public class InitialConfigurationDialog extends DialogWrapper {
         myOn = false;
       }
     };
+  }
+
+  protected JPanel createFooterPanel() {
+    final JPanel panel = new JPanel();
+    panel.setVisible(false);
+    return panel;
+  }
+
+  protected JPanel createHeaderPanel() {
+    final JPanel panel = new JPanel();
+    panel.setVisible(false);
+    return panel;
   }
 
   private void resizeTo(final int newWidth, final int newHeight) {
@@ -370,7 +408,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
     UIManager.LookAndFeelInfo info = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
     LafManagerImpl lafManager = (LafManagerImpl)LafManager.getInstance();
-    if (info.getName().contains("Darcula")) {
+    if (info.getName().contains("Darcula") != (LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo)) {
       lafManager.setLookAndFeelAfterRestart(info);
       int rc = Messages.showYesNoDialog(project, "IDE appearance settings will be applied after restart. Would you like to restart now?",
                                         "IDE Appearance", Messages.getQuestionIcon());
