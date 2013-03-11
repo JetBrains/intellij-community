@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.MacUIUtil;
 
@@ -93,11 +94,7 @@ public class TabAction extends EditorAction {
         EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, "\t", false);
       }
       else {
-        StringBuilder buffer = new StringBuilder(spacesToAddCount);
-        for(int i=0; i<spacesToAddCount; i++) {
-          buffer.append(' ');
-        }
-        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, buffer.toString(), false);
+        EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, StringUtil.repeatSymbol(' ', spacesToAddCount), false);
       }
     }
     catch (ReadOnlyFragmentModificationException e) {
