@@ -4,6 +4,8 @@ import com.intellij.compiler.BaseCompilerTestCase;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -64,14 +66,29 @@ public class ArtifactCompileScopeTest extends ArtifactCompilerTestCase {
       assertOutput(a, fs().file("A.class"));
     }
 
-    private static void createFileInOutput(Artifact a, final String name)  {
-      try {
-        boolean created = new File(a.getOutputPath(), name).createNewFile();
-        assertTrue(created);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    public void testDoNotRebuildIncludedModulesOnRebuildingArtifact() throws IOException {
+      Module m = addModule("m", createFile("src/AB.java", "class A{} class B{}").getParent());
+      Artifact a = addArtifact(root().module(m));
+      make(a);
+      deleteFileInOutput(a, "A.class");
+      deleteFileInOutput(a, "B.class");
+      deleteFileInOutput(m, "A.class");
+      assertOutput(a, fs());
+      assertOutput(m, fs().file("B.class"));
+
+      recompile(a);
+      assertOutput(a, fs().file("B.class"));
+      assertOutput(m, fs().file("B.class"));
+    }
+
+    private static void deleteFileInOutput(Artifact a, final String fileName) {
+      boolean deleted = FileUtil.delete(new File(VfsUtilCore.virtualToIoFile(getOutputDir(a)), fileName));
+      assertTrue(deleted);
+    }
+
+    private static void deleteFileInOutput(Module m, final String fileName) {
+      boolean deleted = FileUtil.delete(new File(getOutputDir(m), fileName));
+      assertTrue(deleted);
     }
   }
 
