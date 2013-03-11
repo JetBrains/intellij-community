@@ -227,7 +227,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   public void setData(PsiElement[] psiElements,
                       String targetPackageName,
-                      final PsiDirectory initialTargetDirectory,
+                      PsiDirectory initialTargetDirectory,
                       boolean isTargetDirectoryFixed,
                       boolean suggestToMoveToAnotherRoot,
                       boolean searchInComments,
@@ -268,6 +268,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
+    if (initialTargetDirectory != null && 
+        JavaMoveClassesOrPackagesHandler.packageHasMultipleDirectoriesInModule(myProject, initialTargetDirectory)) {
+      initialTargetDirectory = null;
+    }
     ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, initialTargetDirectory,
                                                                new Pass<String>() {
                                                                  @Override

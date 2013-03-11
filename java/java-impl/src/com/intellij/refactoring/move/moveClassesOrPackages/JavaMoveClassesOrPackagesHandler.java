@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -133,10 +133,18 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
         return;
       }
     }
-    if (tryDirectoryMove ( project, elements, targetContainer, callback)) {
-      return;
+    final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, elements, targetContainer);
+    if (adjustedElements == null) return;
+
+    if (targetContainer instanceof PsiDirectory) {
+      if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
+        if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
+          new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
+          return;
+        }
+      }
     }
-    MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
+    MoveClassesOrPackagesImpl.doMove(project, adjustedElements, targetContainer, callback);
   }
 
   private static void moveDirectoriesLibrariesSafe(Project project,
@@ -254,22 +262,13 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     return super.adjustTargetForMove(dataContext, targetContainer);
   }
 
-  private static boolean tryDirectoryMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement, final MoveCallback callback) {
-    if (targetElement instanceof PsiDirectory) {
-      final PsiElement[] adjustedElements = MoveClassesOrPackagesImpl.adjustForMove(project, sourceElements, targetElement);
-      if (adjustedElements != null) {
-        if ( CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements),true) ) {
-          final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)targetElement);
-          if (psiPackage != null) {
-            final Module module = ModuleUtil.findModuleForFile(((PsiDirectory)targetElement).getVirtualFile(), project);
-            if (module != null) {
-              if (psiPackage.getDirectories(GlobalSearchScope.moduleScope(module)).length > 1) return false;
-            }
-          }
-          new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetElement, adjustedElements, callback).show();
-        }
+  public static boolean packageHasMultipleDirectoriesInModule(Project project, PsiDirectory targetElement) {
+    final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(targetElement);
+    if (psiPackage != null) {
+      final Module module = ModuleUtilCore.findModuleForFile(targetElement.getVirtualFile(), project);
+      if (module != null) {
+        if (psiPackage.getDirectories(GlobalSearchScope.moduleScope(module)).length > 1) return true;
       }
-      return true;
     }
     return false;
   }
@@ -442,7 +441,12 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (isReferenceInAnonymousClass(reference)) return false;
 
     if (!invalid4Move(element)) {
-      MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{element}, LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext), null);
+      final PsiElement initialTargetElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+      PsiElement[] adjustedElements = adjustForMove(project, new PsiElement[]{element}, initialTargetElement);
+      if (adjustedElements == null) {
+        return true;
+      }
+      MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, null);
       return true;
     }
     return false;
