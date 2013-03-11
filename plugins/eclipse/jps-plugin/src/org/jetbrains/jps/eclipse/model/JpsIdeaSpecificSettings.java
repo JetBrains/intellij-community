@@ -18,6 +18,7 @@ package org.jetbrains.jps.eclipse.model;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -149,6 +151,13 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
         model.removeSourceRoot(folderToBeTest.getUrl(), JavaSourceRootType.SOURCE);
       }
       model.addSourceRoot(url, JavaSourceRootType.TEST_SOURCE);
+    }
+
+    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+      if (FileUtil.isAncestor(new File(contentUrl), new File(excludeUrl), false)) {
+        model.getExcludeRootsList().addUrl(excludeUrl);
+      }
     }
   }
 
