@@ -1137,7 +1137,7 @@ class Foo {{
     assert lookup.items.size() == 2
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN) }
     type ' '
-    myFixture.checkResult '''import bar.Abcdefg;
+    myFixture.checkResult '''import foo.Abcdefg;
 
 class Foo extends Abcdefg <caret>'''
   }
