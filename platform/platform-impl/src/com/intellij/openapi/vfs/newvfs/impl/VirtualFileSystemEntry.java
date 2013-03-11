@@ -226,7 +226,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return chars;
   }
 
-  static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
+  protected static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
     int length = s.length();
     s.getChars(0, length, chars, pos);
     return pos + length;
