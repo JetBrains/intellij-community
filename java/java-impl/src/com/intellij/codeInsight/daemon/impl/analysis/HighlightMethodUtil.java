@@ -1061,10 +1061,13 @@ public class HighlightMethodUtil {
       if (otherSuperReturnType == null || currentType == null || otherSuperReturnType.equals(currentType)) continue;
 
       if (PsiUtil.isLanguageLevel5OrHigher(currentMethod)) {
-        if (otherSuperReturnType.isAssignableFrom(currentType)) continue;
-        if (currentType.isAssignableFrom(otherSuperReturnType)) {
-          returnTypeSubstitutable = otherSuperSignature;
-          continue;
+        //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.8 Example 8.1.5-3
+        if (!(otherSuperReturnType instanceof PsiPrimitiveType || currentType instanceof PsiPrimitiveType)) {
+          if (otherSuperReturnType.isAssignableFrom(currentType)) continue;
+          if (currentType.isAssignableFrom(otherSuperReturnType)) {
+            returnTypeSubstitutable = otherSuperSignature;
+            continue;
+          }
         }
       }
       return createIncompatibleReturnTypeMessage(currentMethod, currentMethod, otherSuperMethod, false, otherSuperReturnType,

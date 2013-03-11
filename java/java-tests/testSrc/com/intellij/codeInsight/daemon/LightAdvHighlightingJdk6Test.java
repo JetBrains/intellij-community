@@ -58,4 +58,5 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testJavacQuirks() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testMethodReturnTypeSubstitutability() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
 }
