@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -31,15 +33,29 @@ import java.util.Set;
  * @author nik
  */
 public class CompileScopeImpl extends CompileScope {
-  protected final boolean myForcedCompilation;
   private final Collection<? extends BuildTargetType<?>> myTypes;
+  private final Collection<BuildTargetType<?>> myTypesToForceBuild;
   private final Collection<BuildTarget<?>> myTargets;
   private final Map<BuildTarget<?>, Set<File>> myFiles;
 
-  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType<?>> types, Collection<BuildTarget<?>> targets,
+  public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
+                          Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          Collection<BuildTarget<?>> targets,
                           Map<BuildTarget<?>, Set<File>> files) {
-    myForcedCompilation = forcedCompilation;
     myTypes = types;
+    myTypesToForceBuild = new HashSet<BuildTargetType<?>>();
+    boolean forceBuildAllModuleBasedTargets = false;
+    for (BuildTargetType<?> type : typesToForceBuild) {
+      myTypesToForceBuild.add(type);
+      forceBuildAllModuleBasedTargets |= type instanceof JavaModuleBuildTargetType;
+    }
+    if (forceBuildAllModuleBasedTargets) {
+      for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        if (targetType instanceof ModuleBasedBuildTargetType<?>) {
+          myTypesToForceBuild.add(targetType);
+        }
+      }
+    }
     myTargets = targets;
     myFiles = files;
   }
@@ -51,7 +67,18 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isRecompilationForced(@NotNull BuildTarget<?> target) {
-    return myForcedCompilation && (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+    BuildTargetType<?> type = target.getTargetType();
+    return myTypesToForceBuild.contains(type) && (myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+  }
+
+  @Override
+  public boolean isRecompilationForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
+    return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType);
+  }
+
+  @Override
+  public boolean isRecompilationForcedForTargetsOfType(@NotNull BuildTargetType<?> targetType) {
+    return myTypesToForceBuild.contains(targetType);
   }
 
   @Override

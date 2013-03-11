@@ -171,8 +171,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
     if (!dataStorageRoot.exists()) {
-      // invoked the very first time for this project. Force full rebuild
-      myBuildType = BuildType.PROJECT_REBUILD;
+      // invoked the very first time for this project
+      myBuildRunner.setForceCleanCaches(true);
     }
 
     final DataInputStream fsStateStream = createFSDataStream(dataStorageRoot);
@@ -180,7 +180,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     if (fsStateStream != null) {
       // optimization: check whether we can skip the build
       final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
-      if (!myForceModelLoading && (myBuildType == BuildType.MAKE || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules && scopeContainsModulesOnly(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
+      if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
+          && scopeContainsModulesOnlyForIncrementalMake(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -219,9 +220,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static boolean scopeContainsModulesOnly(List<TargetTypeBuildScope> scopes) {
+  private static boolean scopeContainsModulesOnlyForIncrementalMake(List<TargetTypeBuildScope> scopes) {
     TargetTypeRegistry typeRegistry = null;
     for (TargetTypeBuildScope scope : scopes) {
+      if (scope.getForceBuild()) return false;
       final String typeId = scope.getTypeId();
       if (isJavaModuleBuildType(typeId)) { // fast check
         continue;
@@ -551,12 +553,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   private static BuildType convertCompileType(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type compileType) {
     switch (compileType) {
       case CLEAN: return BuildType.CLEAN;
-      case MAKE: return BuildType.MAKE;
-      case REBUILD: return BuildType.PROJECT_REBUILD;
-      case FORCED_COMPILATION: return BuildType.FORCED_COMPILATION;
+      case BUILD: return BuildType.BUILD;
       case UP_TO_DATE_CHECK: return BuildType.UP_TO_DATE_CHECK;
     }
-    return BuildType.MAKE; // use make by default
+    return BuildType.BUILD;
   }
 
   private static class EventsProcessor extends SequentialTaskExecutor {

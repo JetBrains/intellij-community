@@ -21,6 +21,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -38,8 +39,6 @@ import java.util.*;
 public class CompileContextImpl extends UserDataHolderBase implements CompileContext {
   private static final String CANCELED_MESSAGE = "The build has been canceled";
   private final CompileScope myScope;
-  private final boolean myIsMake;
-  private final boolean myIsProjectRebuild;
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
@@ -51,8 +50,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
   public CompileContextImpl(CompileScope scope,
-                            ProjectDescriptor pd, boolean isMake,
-                            boolean isProjectRebuild,
+                            ProjectDescriptor pd,
                             MessageHandler delegateMessageHandler,
                             Map<String, String> builderParams,
                             CanceledStatus cancelStatus) throws ProjectBuildException {
@@ -61,8 +59,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myCancelStatus = cancelStatus;
     myCompilationStartStamp = System.currentTimeMillis();
     myScope = scope;
-    myIsProjectRebuild = isProjectRebuild;
-    myIsMake = !isProjectRebuild && isMake;
     myDelegateMessageHandler = delegateMessageHandler;
   }
 
@@ -78,12 +74,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public boolean isMake() {
-    return myIsMake;
+    return !JavaBuilderUtil.isForcedRecompilationJava(this);
   }
 
   @Override
   public boolean isProjectRebuild() {
-    return myIsProjectRebuild;
+    return JavaBuilderUtil.isForcedRecompilationAllJavaModules(this);
   }
 
   @Override
@@ -117,8 +113,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public boolean shouldDifferentiate(ModuleChunk chunk) {
-    if (!isMake()) {
-      // the check makes sense only in make mode
+    if (myNonIncrementalModules.isEmpty()) {
       return true;
     }
     for (ModuleBuildTarget target : chunk.getTargets()) {

@@ -27,10 +27,10 @@ import java.util.*;
  * @author nik
  */
 public class CompileScopeUtil {
-  public static void addScopesForModules(Collection<Module> modules, List<TargetTypeBuildScope> scopes) {
+  public static void addScopesForModules(Collection<Module> modules, List<TargetTypeBuildScope> scopes, boolean forceBuild) {
     if (!modules.isEmpty()) {
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId());
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
         for (Module module : modules) {
           builder.addTargetId(module.getName());
         }
@@ -63,13 +63,23 @@ public class CompileScopeUtil {
   }
 
   private static TargetTypeBuildScope mergeScope(TargetTypeBuildScope scope1, TargetTypeBuildScope scope2) {
-    if (scope1.getAllTargets()) return scope1;
-    if (scope2.getAllTargets()) return scope2;
+    String typeId = scope1.getTypeId();
+    if (scope1.getAllTargets()) {
+      return !scope1.getForceBuild() && scope2.getForceBuild() ? createAllTargetForcedBuildScope(typeId) : scope1;
+    }
+    if (scope2.getAllTargets()) {
+      return !scope2.getForceBuild() && scope1.getForceBuild() ? createAllTargetForcedBuildScope(typeId) : scope2;
+    }
     return TargetTypeBuildScope.newBuilder()
-      .setTypeId(scope1.getTypeId())
+      .setTypeId(typeId)
+      .setForceBuild(scope1.getForceBuild() || scope2.getForceBuild())
       .addAllTargetId(scope1.getTargetIdList())
       .addAllTargetId(scope2.getTargetIdList())
       .build();
+  }
+
+  private static TargetTypeBuildScope createAllTargetForcedBuildScope(final String typeId) {
+    return TargetTypeBuildScope.newBuilder().setTypeId(typeId).setForceBuild(true).setAllTargets(true).build();
   }
 
   public static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
