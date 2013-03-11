@@ -392,6 +392,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i3", false, false, false, "int"));
   }
 
+  public void testMethodReferenceExpr() throws Exception {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo.I"));
+  }
+
   private void doTest(IntroduceVariableBase testMe) throws Exception {
     @NonNls String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");
