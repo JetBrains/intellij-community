@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
@@ -32,6 +33,7 @@ import org.jetbrains.idea.svn.auth.ProviderType;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.internal.wc.ISVNHostOptions;
 
 import javax.swing.*;
 import java.io.File;
@@ -150,7 +152,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
       command = new Runnable() {
         public void run() {
+          final ISVNHostOptions options = myManager.getHostOptionsProvider().getHostOptions(url);
+          final String file = options.getSSLClientCertFile();
           final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
+          if (!StringUtil.isEmptyOrSpaces(file)) {
+            dialog.setFile(file);
+          }
           if (errorMessage == null) {
             dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
           }
