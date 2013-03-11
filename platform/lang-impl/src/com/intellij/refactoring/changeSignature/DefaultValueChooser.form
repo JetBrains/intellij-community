@@ -35,7 +35,7 @@
           <gridbag top="0" left="20" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="In the method call place the new parameter value would be leaved blank"/>
+          <text value="In the method call place the new parameter value would be left blank"/>
         </properties>
       </component>
       <component id="433d4" class="javax.swing.JRadioButton" binding="myFeelLuckyRadioButton" default-binding="true">
