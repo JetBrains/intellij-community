@@ -19,7 +19,7 @@ public class MainFrame extends JFrame {
     private final UI_RefTable refTable;
 
     private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
-    private final JPanel leftPanel = new JPanel();
+    private final JPanel leftGraphPanel = new JPanel();
     private final JPanel mainPanel = new JPanel();
 
     public MainFrame(final UI_Controller ui_controller) {
@@ -38,8 +38,13 @@ public class MainFrame extends JFrame {
     }
 
     private void packTabs() {
+        packLeftGraphPanel();
         JScrollPane graphScroll = new JScrollPane(graphTable);
-        tabs.add("graph", graphScroll);
+        JPanel graphPanel = new JPanel();
+        graphPanel.setLayout(new BoxLayout(graphPanel, BoxLayout.X_AXIS));
+        graphPanel.add(leftGraphPanel);
+        graphPanel.add(graphScroll);
+        tabs.add("graph", graphPanel);
 
         JScrollPane branchScroll = new JScrollPane(refTable);
         tabs.add("branches", branchScroll);
@@ -54,9 +59,9 @@ public class MainFrame extends JFrame {
         });
     }
 
-    private void packLeftPanel() {
-        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
-        leftPanel.setMaximumSize(new Dimension(10, 10000));
+    private void packLeftGraphPanel() {
+        leftGraphPanel.setLayout(new BoxLayout(leftGraphPanel, BoxLayout.PAGE_AXIS));
+        leftGraphPanel.setMaximumSize(new Dimension(10, 10000));
 
         JButton hideButton = new JButton("H");
         hideButton.addMouseListener(new MouseAdapter() {
@@ -65,7 +70,7 @@ public class MainFrame extends JFrame {
                 ui_controller.hideAll();
             }
         });
-        leftPanel.add(hideButton);
+        leftGraphPanel.add(hideButton);
 
         JButton showButton = new JButton("S");
         showButton.addMouseListener(new MouseAdapter() {
@@ -74,7 +79,7 @@ public class MainFrame extends JFrame {
                 ui_controller.showAll();
             }
         });
-        leftPanel.add(showButton);
+        leftGraphPanel.add(showButton);
 
 
         final JCheckBox visibleLongEdges = new JCheckBox("", false);
@@ -84,14 +89,13 @@ public class MainFrame extends JFrame {
                 ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
             }
         });
-        leftPanel.add(visibleLongEdges);
+        leftGraphPanel.add(visibleLongEdges);
 
-        leftPanel.add(Box.createVerticalGlue());
+        leftGraphPanel.add(Box.createVerticalGlue());
     }
 
     private void packMainPanel() {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
-        mainPanel.add(leftPanel);
         mainPanel.add(tabs);
 
         setContentPane(mainPanel);
@@ -103,7 +107,6 @@ public class MainFrame extends JFrame {
         setTitle("GitAlk");
 
         packTabs();
-        packLeftPanel();
         packMainPanel();
 
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
