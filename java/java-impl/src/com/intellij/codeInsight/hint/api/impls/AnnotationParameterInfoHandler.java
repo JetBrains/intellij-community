@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,8 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
   public void updateParameterInfo(@NotNull final PsiAnnotationParameterList o, final UpdateParameterInfoContext context) {
     CharSequence chars = context.getEditor().getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, context.getEditor().getCaretModel().getOffset(), " \t");
-    if (chars.charAt(offset1) == ',') {
+    final char c = chars.charAt(offset1);
+    if (c == ',' || c == ')') {
       offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
     }
     context.setHighlightedParameter(findAnnotationMethod(context.getFile(), offset1));
