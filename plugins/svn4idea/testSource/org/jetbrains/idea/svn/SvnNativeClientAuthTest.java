@@ -31,6 +31,7 @@ import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -72,7 +73,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    final File certFile = new File(myPluginRoot, myTestDataDir + "/svn/____.pfx");
+    final File certFile = new File(myPluginRoot, myTestDataDir + "/svn/Irina.Chernushina2013_2.pfx");
     setNativeAcceleration(true);
     myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
@@ -626,5 +627,5 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     Assert.assertTrue(!list.isEmpty());
   }
 
-  private static @interface Test {}
+  //private static @interface Test {}
 }
