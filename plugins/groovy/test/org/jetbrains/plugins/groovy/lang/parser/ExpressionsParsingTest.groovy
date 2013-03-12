@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,6 +151,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testmapLiteral() throws Throwable { doTest(); }
 
   public void testnew$arr_decl() throws Throwable { doTest(); }
+  public void testnew$emptyTypeArgs() { doTest() }
 //  public void testnew$new1() throws Throwable { doTest(); }
   public void testanonymous$anonymous() throws Throwable { doTest(); }
 
@@ -245,18 +246,13 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testpath$typeVsExpr() { doTest(); }
 
   public void testreferences$ref1() throws Throwable { doTest(); }
-
   public void testreferences$ref2() throws Throwable { doTest(); }
-
   public void testreferences$ref3() throws Throwable { doTest(); }
-
   public void testreferences$ref4() throws Throwable { doTest(); }
-
   public void testreferences$ref5() throws Throwable { doTest(); }
-
   public void testreferences$ref6() throws Throwable { doTest(); }
-
   public void testreferences$ref7() throws Throwable { doTest(); }
+  public void testreferences$emptyTypeArgs() { doTest() }
 
   public void testregex$chen() throws Throwable { doTest(); }
 
