@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -39,13 +40,14 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
-          for (Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry : map.entrySet()) {
+          for (Iterator<Map.Entry<FileNameMatcher, Pair<FileType, Boolean>>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry = iterator.next();
             if (entry.getValue().getSecond()) {
               continue;
             }
             final FileNameMatcher matcher = entry.getKey();
             final FileType fileType = entry.getValue().getFirst();
-            if (Messages.showYesNoDialog(project, "Do you want to re-assign " + matcher.getPresentableString() +
+            if (Messages.showYesNoDialog(project, "Do you want to reassign " + matcher.getPresentableString() +
                                                   " files to " + fileType.getName() + "?",
                                          "File Extension Recognized", Messages.getQuestionIcon()) == Messages.YES) {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -53,6 +55,7 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
                   FileTypeManager.getInstance().associate(fileType, matcher);
                 }
               });
+              iterator.remove();
             }
             else {
               entry.setValue(Pair.create(fileType, true));
