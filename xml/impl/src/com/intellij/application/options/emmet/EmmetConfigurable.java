@@ -40,6 +40,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
   private JComboBox myEmmetExpandShortcutCombo;
   private JBCheckBox myEnableBEMFilterJBCheckBox;
   private JBCheckBox myAutoInsertCssVendorJBCheckBox;
+  private JBCheckBox myEnabledFuzzySearchJBCheckBox;
   private JPanel myPanel;
   private JPanel myPrefixesPanel;
 
@@ -59,6 +60,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
         myAutoInsertCssVendorJBCheckBox.setEnabled(selected);
         myCssEditPrefixesListPanel.setEnabled(selected && myAutoInsertCssVendorJBCheckBox.isSelected());
         myEnableBEMFilterJBCheckBox.setEnabled(selected);
+        myEnabledFuzzySearchJBCheckBox.setEnabled(selected);
       }
     });
 
@@ -125,6 +127,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
     return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
            emmetOptions.isBemFilterEnabledByDefault() != myEnableBEMFilterJBCheckBox.isSelected() ||
            emmetOptions.isAutoInsertCssPrefixedEnabled() != myAutoInsertCssVendorJBCheckBox.isSelected() ||
+           emmetOptions.isFuzzySearchEnabled() != myEnabledFuzzySearchJBCheckBox.isSelected() ||
            !emmetOptions.getAllPrefixInfo().equals(myCssEditPrefixesListPanel.getState()) ||
            emmetOptions.getEmmetExpandShortcut() != getSelectedEmmetExpandShortcut();
   }
@@ -137,6 +140,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
     emmetOptions.setEnableBemFilterByDefault(myEnableBEMFilterJBCheckBox.isSelected());
     emmetOptions.setEmmetExpandShortcut(getSelectedEmmetExpandShortcut());
     emmetOptions.setAutoInsertCssPrefixedEnabled(myAutoInsertCssVendorJBCheckBox.isSelected());
+    emmetOptions.setFuzzySearchEnabled(myEnabledFuzzySearchJBCheckBox.isSelected());
     emmetOptions.setPrefixInfo(myCssEditPrefixesListPanel.getState());
   }
 
@@ -149,6 +153,8 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
     myEmmetExpandShortcutCombo.setEnabled(emmetOptions.isEmmetEnabled());
     myAutoInsertCssVendorJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myAutoInsertCssVendorJBCheckBox.setSelected(emmetOptions.isAutoInsertCssPrefixedEnabled());
+    myEnabledFuzzySearchJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
+    myEnabledFuzzySearchJBCheckBox.setSelected(emmetOptions.isFuzzySearchEnabled());
     //myInsertFallbackGradientColorJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     //myInsertFallbackGradientColorJBCheckBox.setSelected(emmetOptions.isInsertFallbackGradientColorEnabled());
 
