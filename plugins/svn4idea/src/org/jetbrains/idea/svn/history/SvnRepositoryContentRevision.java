@@ -112,6 +112,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     if (exception != null) {
       throw new VcsException(exception);
     }
+    ContentRevisionCache.checkContentsSize(myPath, buffer.size());
     return buffer;
   }
 

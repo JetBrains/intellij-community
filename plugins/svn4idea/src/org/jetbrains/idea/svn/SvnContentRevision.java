@@ -120,6 +120,7 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
     SVNWCClient wcClient = myVcs.createWCClient();
     try {
       wcClient.doGetFileContents(file, SVNRevision.UNDEFINED, myUseBaseRevision ? SVNRevision.BASE : myRevision, true, buffer);
+      ContentRevisionCache.checkContentsSize(file.getPath(), buffer.size());
       buffer.close();
     }
     catch (SVNException e) {

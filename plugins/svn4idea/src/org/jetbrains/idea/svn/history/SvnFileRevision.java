@@ -153,6 +153,7 @@ public class SvnFileRevision implements VcsFileRevision {
       loader.run();
     }
     if (loader.getException() == null) {
+      ContentRevisionCache.checkContentsSize(myURL, contents.size());
       return contents.toByteArray();
     }
     else {

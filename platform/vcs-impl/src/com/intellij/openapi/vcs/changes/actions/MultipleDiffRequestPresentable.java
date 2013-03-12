@@ -66,13 +66,14 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
     if (list.isEmpty()) return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.removeFromList);
 
     DiffRequest request = null;
+    final StringBuilder err = new StringBuilder();
     for (Pair<String, DiffRequestPresentable> pair : list) {
       final MyResult step = pair.getSecond().step(context);
       if (step == null) continue;
       final DiffPresentationReturnValue returnValue = step.getReturnValue();
       if (DiffPresentationReturnValue.quit.equals(returnValue)) {
-        return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.quit);
-      } else if (! DiffPresentationReturnValue.removeFromList.equals(returnValue)) {
+        return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.quit, step.getAsOneError());
+      } else if (! DiffPresentationReturnValue.removeFromList.equals(returnValue) && ! step.hasErrors()) {
         // use contents
         if (request == null) {
           request = step.getRequest();
@@ -82,12 +83,17 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
         } else {
           request.addOtherLayer(pair.getFirst(), step.getRequest());
         }
+      } else {
+        final String error = step.getAsOneError();
+        if (! StringUtil.isEmptyOrSpaces(error)) {
+          err.append(error);
+        }
       }
     }
-    if (request == null) {
-      return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.removeFromList);
+    if (request == null || err.length() > 0) {
+      return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.removeFromList, err.toString());
     }
-    return new MyResult(request, DiffPresentationReturnValue.useRequest);
+    return new MyResult(request, DiffPresentationReturnValue.useRequest, err.toString());
   }
 
   @Override
