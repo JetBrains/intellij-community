@@ -11,6 +11,11 @@ import java.util.Set;
  */
 public class CommitSelectManager {
     private final Set<Hash> selectCommits = new HashSet<Hash>();
+    private final Hash headHash;
+
+    public CommitSelectManager(@NotNull Hash headHash) {
+        this.headHash = headHash;
+    }
 
     public boolean isSelect(@NotNull Hash commitHash) {
         return selectCommits.contains(commitHash);
@@ -21,6 +26,9 @@ public class CommitSelectManager {
             selectCommits.add(commitHash);
         } else {
             selectCommits.remove(commitHash);
+        }
+        if (selectCommits.isEmpty()) {
+            selectCommits.add(headHash);
         }
     }
 

@@ -1,10 +1,12 @@
 package org.hanuna.gitalk.swing_ui.frame.refs;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.refs.Ref;
 import org.hanuna.gitalk.refs.RefsModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,7 +14,7 @@ import java.util.Map;
  */
 public class RefTreeModelImpl implements RefTreeModel {
     private final RefsModel refsModel;
-    private final CommitSelectManager selectManager = new CommitSelectManager();
+    private final CommitSelectManager selectManager;
     private final RefTreeTableNode rootNode = new RefTreeTableNode("root");
 
     private final Map<String, RefTreeTableNode> nodeMap = new HashMap<String, RefTreeTableNode>();
@@ -20,13 +22,28 @@ public class RefTreeModelImpl implements RefTreeModel {
 
     public RefTreeModelImpl(RefsModel refsModel) {
         this.refsModel = refsModel;
+        this.selectManager = new CommitSelectManager(getHeadHash(refsModel));
         selectAll();
         createTree();
     }
 
+    private Hash getHeadHash(@NotNull RefsModel refsModel) {
+        List<Ref> allRefs = refsModel.getAllRefs();
+        Hash headHash = allRefs.get(0).getCommitHash();
+        for (Ref ref : allRefs) {
+            if (ref.getName().equals("HEAD")) {
+                headHash = ref.getCommitHash();
+                break;
+            }
+        }
+        return headHash;
+    }
+
     private void selectAll() {
         for (Ref ref : refsModel.getAllRefs()) {
-            selectManager.setSelectCommit(ref.getCommitHash(), true);
+            if (ref.getType() != Ref.RefType.TAG) {
+                selectManager.setSelectCommit(ref.getCommitHash(), true);
+            }
         }
     }
 
