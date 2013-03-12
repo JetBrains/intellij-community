@@ -882,6 +882,7 @@
 
     <!-- SQLAlchemy -->
     <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyClassMembersProvider"/>
   </extensions>
 
   <project-components>
