@@ -782,7 +782,7 @@ public class LambdaUtil {
       if (owner instanceof PsiModifierList) {
         final PsiElement parent = ((PsiModifierList)owner).getParent();
         if (parent instanceof PsiClass) {
-          return LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent);
+          return LambdaHighlightingUtil.checkInterfaceFunctional((PsiClass)parent, ((PsiClass)parent).getName() + " is not a functional interface");
         }
       }
     }
