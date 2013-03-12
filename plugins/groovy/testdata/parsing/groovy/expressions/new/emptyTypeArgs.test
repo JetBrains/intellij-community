@@ -1,0 +1,14 @@
+new List<>()
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('List')
+      Type arguments
+        PsiElement(<)('<')
+        PsiElement(>)('>')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')
