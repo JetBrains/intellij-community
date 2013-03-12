@@ -103,6 +103,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
@@ -1572,6 +1573,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   static class SelectionAndCaretMarkupLoader {
+    final String filePath;
     final String newFileText;
     final RangeMarker caretMarker;
     final RangeMarker selStartMarker;
@@ -1580,7 +1582,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     static SelectionAndCaretMarkupLoader fromFile(String path, Project project, String charset) throws IOException {
       return new SelectionAndCaretMarkupLoader(
-        StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), project);
+        project, StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path), charset)), path);
     }
 
     static SelectionAndCaretMarkupLoader fromFile(VirtualFile file, Project project) {
@@ -1591,14 +1593,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(text), project);
+      return new SelectionAndCaretMarkupLoader(project, StringUtil.convertLineSeparators(text), file.getPath());
     }
 
     static SelectionAndCaretMarkupLoader fromText(String text, Project project) {
-      return new SelectionAndCaretMarkupLoader(text, project);
+      return new SelectionAndCaretMarkupLoader(project, text, null);
     }
 
-    private SelectionAndCaretMarkupLoader(String fileText, Project project) {
+    private SelectionAndCaretMarkupLoader(Project project, String fileText, String filePath) {
+      this.filePath = filePath;
       final Document document = EditorFactory.getInstance().createDocument(fileText);
 
       int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -1681,8 +1684,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     actualText = StringUtil.convertLineSeparators(actualText);
 
-    //noinspection HardCodedStringLiteral
-    Assert.assertEquals("Text mismatch in file " + expectedFile, newFileText1, actualText);
+    if (!Comparing.equal(newFileText1, actualText)) {
+      throw new FileComparisonFailure(expectedFile, newFileText1, actualText, loader.filePath);
+    }
 
     if (loader.caretMarker != null) {
       final int tabSize = CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE;
