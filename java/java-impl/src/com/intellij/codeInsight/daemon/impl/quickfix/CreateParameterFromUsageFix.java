@@ -124,7 +124,11 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
                     new WriteCommandAction(project){
                       @Override
                       protected void run(Result result) throws Throwable {
-                        myReferenceExpression.replace(newExpr);
+                        final PsiReferenceExpression[] refs =
+                          CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+                        for (PsiReferenceExpression ref : refs) {
+                          ref.replace(newExpr.copy());
+                        }
                       }
                     }.execute();
                   }
