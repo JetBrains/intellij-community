@@ -28,9 +28,14 @@ import java.util.List;
 public class LambdaHighlightingUtil {
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
+    return checkInterfaceFunctional(psiClass, "Target type of a lambda conversion must be an interface");
+  }
+
+  @Nullable
+  public static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
     final List<MethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
-    if (signatures == null) return "Target type of a lambda conversion must be an interface";
+    if (signatures == null) return interfaceNonFunctionalMessage;
     if (signatures.isEmpty()) return "No target method found";
     if (signatures.size() == 1) {
       final MethodSignature functionalMethod = signatures.get(0);
