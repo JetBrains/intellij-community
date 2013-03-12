@@ -53,7 +53,7 @@ public class CoreVirtualFilePointerManager extends VirtualFilePointerManager {
   @NotNull
   @Override
   public VirtualFilePointerContainer createContainer(@NotNull Disposable parent) {
-    return new VirtualFilePointerContainerImpl(this, parent, null);
+    return createContainer(parent, null);
   }
 
   @NotNull

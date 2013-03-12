@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
@@ -133,7 +134,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Boolean> myAbbreviatePackageNames = new THashMap<String, Boolean>();
   private static final boolean ourAbbreviatePackagesDefaults = false;
   private final Map<String, Boolean> myAutoscrollToSource = new THashMap<String, Boolean>();
-  private static final boolean ourAutoscrollToSourceDefaults = false;
   private final Map<String, Boolean> myAutoscrollFromSource = new THashMap<String, Boolean>();
   private static final boolean ourAutoscrollFromSourceDefaults = false;
   private static final boolean ourShowStructureDefaults = false;
@@ -244,7 +244,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (window.isVisible() && !toolWindowVisible) {
           String id = getCurrentViewId();
           if (isAutoscrollToSource(id)) {
-            myAutoScrollToSourceHandler.onMouseClicked(getCurrentProjectViewPane().getTree());
+            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+
+            if (currentProjectViewPane != null) {
+              myAutoScrollToSourceHandler.onMouseClicked(currentProjectViewPane.getTree());
+            }
           }
           if (isAutoscrollFromSource(id)) {
             myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
@@ -1417,7 +1421,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public boolean isAutoscrollToSource(String paneId) {
-    return getPaneOptionValue(myAutoscrollToSource, paneId, ourAutoscrollToSourceDefaults);
+    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().DEFAULT_AUTOSCROLL_TO_SOURCE);
   }
 
   private void setAutoscrollToSource(boolean autoscrollMode, String paneId) {

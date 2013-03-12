@@ -210,7 +210,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean checkChunkRebuildNeeded(CompileContext context, GroovycOSProcessHandler handler) {
-    if (context.isProjectRebuild() || !handler.shouldRetry()) {
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || !handler.shouldRetry()) {
       return false;
     }
 

@@ -29,7 +29,7 @@ public interface AuthenticationCallback {
   /**
    * @return false if authentication canceled
    */
-  boolean authenticateFor(String realm, File base, boolean previousFailed);
+  boolean authenticateFor(String realm, File base, boolean previousFailed, boolean passwordRequest);
   @Nullable
   File getSpecialConfigDir();
 
@@ -37,5 +37,5 @@ public interface AuthenticationCallback {
 
   boolean acceptSSLServerCertificate(File file, final String realm);
 
-  void clearPassiveCredentials(String realm, File base);
+  void clearPassiveCredentials(String realm, File base, boolean password);
 }

@@ -31,11 +31,9 @@ import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
+import org.junit.Test;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -58,19 +56,24 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   private boolean mySaveCredentials = false;
   private boolean myCancelAuth = false;
 
-  private String outHttpUser = "sally";
-  private String outHttpPassword = "abcde";
+  private String outHttpUser = "test";
+  private String outHttpPassword = "test";
 
-  private final static String ourHTTP_URL = "http://unit-364.labs.intellij.net/svn/forMerge/tmp";
-  private final static String ourHTTPS_URL = "https://unit-364.labs.intellij.net:8443/svn/visualsvn/trunk";
+  private final static String ourHTTP_URL = "http://svnsrvtest/stuff/autoTest";
+  private final static String ourHTTPS_URL = "https://svnsrvtest:443/TestSSL/autoTest";
 
   private int myCertificateAskedInteractivelyCount = 0;
   private int myCredentialsAskedInteractivelyCount = 0;
+
+  private int myExpectedCreds = 0;
+  private int myExpectedCert = 0;
+  private boolean myIsSecure;
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    final File certFile = new File(myPluginRoot, myTestDataDir + "/svn/____.pfx");
     setNativeAcceleration(true);
     myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
@@ -117,7 +120,20 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
                                          }
                                        }
                                      });
-    //authentication.addAuthentication(ISVNAuthenticationManager);
+    authentication.addAuthentication(ISVNAuthenticationManager.SSL,
+                                     new Convertor<SVNURL, SVNAuthentication>() {
+                                       @Override
+                                       public SVNAuthentication convert(SVNURL o) {
+                                         ++ myCredentialsAskedInteractivelyCount;
+                                         if (myCancelAuth) return null;
+                                         if (myCredentialsCorrect) {
+                                           return new SVNSSLAuthentication(certFile, "12345", mySaveCredentials, o, false);
+                                         } else {
+                                           myCredentialsCorrect = true;// only once
+                                           return new SVNSSLAuthentication(new File("1232432423"), "3245321532534235445", mySaveCredentials, o, false);
+                                         }
+                                       }
+                                     });
     myCertificateAskedInteractivelyCount = 0;
     myCredentialsAskedInteractivelyCount = 0;
   }
@@ -125,7 +141,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   @Test
   public void testTmpHttpUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -136,19 +152,19 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testTmpSSLUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -159,21 +175,21 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testPermanentSSLUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -184,20 +200,20 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testPermanentHttpUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -208,18 +224,18 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testTmpHttpCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -230,19 +246,19 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testTmpSSLCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -253,21 +269,21 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testPermanentSSLCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -278,21 +294,21 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void test2PermanentSSLCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -304,21 +320,21 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testMixedSSLCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -330,14 +346,14 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
     //------------
     instance.clearAuthenticationDirectory(myProject);
     instance.clearRuntimeStorage();
@@ -345,17 +361,17 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
 
     testCommitImpl(wc1);
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(3, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
     testCommitImpl(wc1);
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(3, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testPermanentHttpCommit() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -366,18 +382,18 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     testCommitImpl(wc1);
 
-    Assert.assertEquals(2, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testFailedThenSuccessTmpHttpUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -389,19 +405,19 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testFailedThenSuccessTmpSSLUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -413,22 +429,22 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
     // credentials wrong, but certificate was ok accepted
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testCertificateRejectedThenCredentialsFailedThenSuccessTmpSSLUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -440,29 +456,29 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateExpectAuthCanceled(wc1, "Authentication canceled");
 
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
     myCredentialsCorrect = false;
 
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
     // credentials wrong, but certificate was ok accepted
-    Assert.assertEquals(3, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(3, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   @Test
   public void testCanceledThenFailedThenSuccessTmpHttpUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTP_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -477,19 +493,19 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
   }
 
   @Test
   public void testCanceledThenFailedThenSuccessTmpSSLUpdate() throws Exception {
     final File wc1 = testCheckoutImpl(ourHTTPS_URL);
-    Assert.assertEquals(1, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(1, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     final SvnConfiguration instance = SvnConfiguration.getInstance(myProject);
     instance.clearAuthenticationDirectory(myProject);
@@ -504,14 +520,14 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
 
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
 
     // credentials are cached now only
     updateSimple(wc1);
 
-    Assert.assertEquals(3, myCredentialsAskedInteractivelyCount);
-    Assert.assertEquals(2, myCertificateAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCreds, myCredentialsAskedInteractivelyCount);
+    //Assert.assertEquals(myExpectedCert, myCertificateAskedInteractivelyCount);
   }
 
   private File testCommitImpl(File wc1) throws IOException {
@@ -527,6 +543,8 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     final Change change = new Change(null, new CurrentContentRevision(new FilePathImpl(vf)));
     final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
     Assert.assertTrue(commit.isEmpty());
+    ++ myExpectedCreds;
+    ++ myExpectedCert;
     return file;
   }
 
@@ -554,6 +572,13 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       }
     });
     Assert.assertTrue(cnt[0] > 1);
+    myIsSecure = url.contains("https:");
+    if (myIsSecure) {
+      ++ myExpectedCreds;
+      ++ myExpectedCert;
+    }
+    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping(root.getPath(), SvnVcs.VCS_NAME);
+    refreshSvnMappingsSynchronously();
     return root;
   }
 
@@ -567,6 +592,11 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     Assert.assertTrue(session.getExceptions() != null && ! session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());
     Assert.assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
+
+    if (myIsSecure) {
+      ++ myExpectedCreds;
+      ++ myExpectedCert;
+    }
   }
 
   private void updateSimple(File wc1) {
@@ -578,6 +608,10 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
                                                      new Ref<SequentialUpdatesContext>());
     Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
     Assert.assertTrue(!session.isCanceled());
+    if (myIsSecure) {
+      ++ myExpectedCreds;
+      ++ myExpectedCert;
+    }
   }
 
   private void testBrowseRepositoryImpl(final String url) throws SVNException {
@@ -593,5 +627,5 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     Assert.assertTrue(!list.isEmpty());
   }
 
-  private static @interface Test {}
+  //private static @interface Test {}
 }

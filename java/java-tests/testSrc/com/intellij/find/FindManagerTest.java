@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -371,7 +370,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     List<Usage> usages = FindUtil.findAll(getProject(), myEditor, findModel);
     for (Usage usage : usages) {
-      ReplaceInProjectManager.getInstance(getProject()).doReplace(usage, findModel, Collections.<Usage>emptySet(), false);
+      ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
     }
     String newText = StringUtil.repeat(toReplace + "\n",6);
     assertEquals(newText, getEditor().getDocument().getText());

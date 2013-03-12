@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,21 +23,18 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class PrimitiveArrayArgumentToVariableArgMethodInspection
-  extends BaseInspection {
+public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "primitive.array.argument.to.var.arg.method.display.name");
+    return InspectionGadgetsBundle.message("primitive.array.argument.to.var.arg.method.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "primitive.array.argument.to.var.arg.method.problem.descriptor");
+    return InspectionGadgetsBundle.message("primitive.array.argument.to.var.arg.method.problem.descriptor");
   }
 
   @Override
@@ -50,12 +47,10 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
     return new PrimitiveArrayArgumentToVariableArgVisitor();
   }
 
-  private static class PrimitiveArrayArgumentToVariableArgVisitor
-    extends BaseInspectionVisitor {
+  private static class PrimitiveArrayArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
         return;
@@ -70,7 +65,8 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
       if (!isPrimitiveArrayType(argumentType)) {
         return;
       }
-      final PsiMethod method = call.resolveMethod();
+      final JavaResolveResult result = call.resolveMethodGenerics();
+      final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) {
         return;
       }
@@ -79,13 +75,12 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
         return;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter =
-        parameters[parameters.length - 1];
+      final PsiParameter lastParameter = parameters[parameters.length - 1];
       if (!lastParameter.isVarArgs()) {
         return;
       }
       final PsiType parameterType = lastParameter.getType();
-      if (isDeepPrimitiveArrayType(parameterType)) {
+      if (isDeepPrimitiveArrayType(parameterType, result.getSubstitutor())) {
         return;
       }
       registerError(lastArgument);
@@ -93,9 +88,6 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
   }
 
   private static boolean isPrimitiveArrayType(PsiType type) {
-    if (type == null) {
-      return false;
-    }
     if (!(type instanceof PsiArrayType)) {
       return false;
     }
@@ -103,11 +95,12 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection
     return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
   }
 
-  private static boolean isDeepPrimitiveArrayType(PsiType type) {
-    if (!(type instanceof PsiArrayType)) {
+  private static boolean isDeepPrimitiveArrayType(PsiType type, PsiSubstitutor substitutor) {
+    if (!(type instanceof PsiEllipsisType)) {
       return false;
     }
     final PsiType componentType = type.getDeepComponentType();
-    return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
+    final PsiType substitute = substitutor.substitute(componentType);
+    return TypeConversionUtil.isPrimitiveAndNotNull(substitute.getDeepComponentType());
   }
 }

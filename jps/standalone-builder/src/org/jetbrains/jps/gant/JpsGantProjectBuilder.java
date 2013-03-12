@@ -22,7 +22,6 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.build.Standalone;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -173,7 +172,7 @@ public class JpsGantProjectBuilder {
       Logger.setFactory(new AntLoggerFactory(messageHandler));
       info("Starting build: modules = " + modulesSet + ", caches are saved to " + myDataStorageRoot.getAbsolutePath());
       try {
-        Standalone.runBuild(myModelLoader, myDataStorageRoot, BuildType.PROJECT_REBUILD, modulesSet, Collections.<String>emptyList(),
+        Standalone.runBuild(myModelLoader, myDataStorageRoot, true, modulesSet, Collections.<String>emptyList(),
                             includeTests, messageHandler);
       }
       catch (Throwable e) {

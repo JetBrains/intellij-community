@@ -27,7 +27,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -336,8 +335,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
       if (entry instanceof JdkOrderEntry) {
         final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
-        if (EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null || 
-            (jdk != null && !(jdk.getSdkType() instanceof JavaSdk))) {
+        if (EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null || jdk != null) {
           if (entry instanceof InheritedJdkOrderEntry) {
             root.setAttribute(INHERIT_JDK, "true");
           } else {

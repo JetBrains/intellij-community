@@ -112,29 +112,20 @@ public class BuildRunner {
                                  targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
+  public void setForceCleanCaches(boolean forceCleanCaches) {
+    myForceCleanCaches = forceCleanCaches;
+  }
+
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
                        MessageHandler msgHandler, BuildType buildType) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
-      if (myForceCleanCaches && myScopes.isEmpty() && myFilePaths.isEmpty()) {
-        // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
-        buildType = BuildType.PROJECT_REBUILD;
-      }
-
-      final CompileScope compileScope = createCompilationScope(buildType, pd, myScopes, myFilePaths);
+      final CompileScope compileScope = createCompilationScope(pd, myScopes, myFilePaths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
         switch (buildType) {
-          case PROJECT_REBUILD:
-            builder.build(compileScope, false, true, myForceCleanCaches);
-            break;
-
-          case FORCED_COMPILATION:
-            builder.build(compileScope, false, false, myForceCleanCaches);
-            break;
-
-          case MAKE:
-            builder.build(compileScope, true, false, myForceCleanCaches);
+          case BUILD:
+            builder.build(compileScope, myForceCleanCaches);
             break;
 
           case CLEAN:
@@ -159,9 +150,10 @@ public class BuildRunner {
     }
   }
 
-  private static CompileScope createCompilationScope(BuildType buildType, ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
-                                                     Collection<String> paths) throws Exception {
+  private CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
+                                              Collection<String> paths) throws Exception {
     Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
+    Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<BuildTargetType<?>>();
     Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
     Map<BuildTarget<?>, Set<File>> files;
 
@@ -171,6 +163,9 @@ public class BuildRunner {
       if (targetType == null) {
         LOG.info("Unknown target type: " + scope.getTypeId());
         continue;
+      }
+      if (scope.getForceBuild() || myForceCleanCaches && paths.isEmpty()) {
+        targetTypesToForceBuild.add(targetType);
       }
       if (scope.getAllTargets()) {
         targetTypes.add(targetType);
@@ -202,7 +197,7 @@ public class BuildRunner {
             files.put(descriptor.getTarget(), fileSet);
           }
           fileSet.add(file);
-          if (buildType == BuildType.FORCED_COMPILATION) {
+          if (targetTypesToForceBuild.contains(descriptor.getTarget().getTargetType())) {
             pd.fsState.markDirty(null, file, descriptor, timestamps, false);
           }
         }
@@ -212,7 +207,7 @@ public class BuildRunner {
       files = Collections.emptyMap();
     }
 
-    return new CompileScopeImpl(!(buildType == BuildType.MAKE || buildType == BuildType.UP_TO_DATE_CHECK), targetTypes, targets, files);
+    return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 
   public List<TargetTypeBuildScope> getScopes() {

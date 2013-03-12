@@ -250,6 +250,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testOnMethodReference() throws Exception {
+    doTestInlineThisOnly();
+  }
+
   public void testNonCodeUsage() throws Exception {
     doTest(true);
   }

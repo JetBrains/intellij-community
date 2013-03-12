@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.ant.model;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,6 @@ import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
-import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -69,10 +68,10 @@ public class JpsAntExtensionService {
   }
 
   @Nullable
-  private static JpsAntInstallation getBundledAntInstallation(@NotNull JpsGlobal global) {
-    String appHome = JpsGlobalLoader.getPathVariable(global, PathMacroUtil.APPLICATION_HOME_DIR);
+  private static JpsAntInstallation getBundledAntInstallation() {
+    final String appHome = PathManager.getHomePath();
     if (appHome == null) {
-      LOG.debug(PathMacroUtil.APPLICATION_HOME_DIR + " path variable not found, bundled Ant won't be configured");
+      LOG.debug("IDEA home path is null, bundled Ant won't be configured");
       return null;
     }
 
@@ -104,7 +103,7 @@ public class JpsAntExtensionService {
       antInstallationName = options.getAntInstallationName();
     }
 
-    if (antInstallationName == null) return getBundledAntInstallation(model.getGlobal());
+    if (antInstallationName == null) return getBundledAntInstallation();
 
     return findAntInstallation(model, antInstallationName);
   }

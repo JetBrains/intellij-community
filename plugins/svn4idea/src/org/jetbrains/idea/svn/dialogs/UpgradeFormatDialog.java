@@ -31,9 +31,6 @@ import java.awt.*;
 import java.io.File;
 
 public class UpgradeFormatDialog extends DialogWrapper  {
-  private JRadioButton myUpgradeNoneButton;
-  private JRadioButton myUpgradeAutoButton;
-  private JRadioButton myUpgradeAuto15Button;
   private JRadioButton myUpgradeAuto16Button;
   private JRadioButton myUpgradeAuto17Button;
 
@@ -64,21 +61,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return "svn.upgradeDialog";
   }
 
-  public void setData(final boolean display13format, final String selectedFormat) {
+  public void setData(final String selectedFormat) {
     if (SvnConfiguration.UPGRADE_AUTO_17.equals(selectedFormat)) {
       myUpgradeAuto17Button.setSelected(true);
-    } else if (SvnConfiguration.UPGRADE_AUTO_16.equals(selectedFormat)) {
-      myUpgradeAuto16Button.setSelected(true);
-    } else if (SvnConfiguration.UPGRADE_AUTO.equals(selectedFormat)) {
-      myUpgradeAutoButton.setSelected(true);
-    } else if (SvnConfiguration.UPGRADE_AUTO_15.equals(selectedFormat)) {
-      myUpgradeAuto15Button.setSelected(true);
     } else {
-      myUpgradeNoneButton.setSelected(true);
-    }
-    myUpgradeNoneButton.setVisible(display13format);
-    if (myUpgradeNoneButton.isSelected() && (! display13format)) {
-      myUpgradeAutoButton.setSelected(true);
+      myUpgradeAuto16Button.setSelected(true);
     }
   }
 
@@ -114,30 +101,17 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     panel.add(topLabel, gb);
     gb.gridy += 1;
 
-    myUpgradeNoneButton = new JRadioButton(SvnBundle.message("radio.configure." + label + ".none"));
-    myUpgradeAutoButton = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto"));
-    myUpgradeAuto15Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.15format"));
+
     myUpgradeAuto16Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.16format"));
     myUpgradeAuto17Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.17format"));
 
     ButtonGroup group = new ButtonGroup();
-    group.add(myUpgradeNoneButton);
-    group.add(myUpgradeAutoButton);
-    group.add(myUpgradeAuto15Button);
     group.add(myUpgradeAuto16Button);
     group.add(myUpgradeAuto17Button);
-    panel.add(myUpgradeNoneButton, gb);
-    gb.gridy += 1;
-    panel.add(myUpgradeAutoButton, gb);
-    gb.gridy += 1;
-    panel.add(myUpgradeAuto15Button, gb);
-    gb.gridy += 1;
     panel.add(myUpgradeAuto16Button, gb);
     gb.gridy += 1;
     panel.add(myUpgradeAuto17Button, gb);
     gb.gridy += 1;
-
-    myUpgradeNoneButton.setSelected(true);
 
     final JPanel auxiliaryPanel = getBottomAuxiliaryPanel();
     if (auxiliaryPanel != null) {
@@ -165,12 +139,6 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   public String getUpgradeMode() {
     if (myUpgradeAuto17Button.isSelected()) {
       return SvnConfiguration.UPGRADE_AUTO_17;
-    } else if (myUpgradeNoneButton.isSelected()) {
-      return SvnConfiguration.UPGRADE_NONE;
-    } else if (myUpgradeAutoButton.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO;
-    } else if (myUpgradeAuto15Button.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO_15;
     } else if (myUpgradeAuto16Button.isSelected()) {
       return SvnConfiguration.UPGRADE_AUTO_16;
     }

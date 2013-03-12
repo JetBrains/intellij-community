@@ -161,8 +161,8 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog recompile(final Artifact... artifacts) {
-    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
-    return compile(scope, CompilerFilter.ALL, true);
+    final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts), true);
+    return make(scope, CompilerFilter.ALL);
   }
 
   protected CompilationLog make(Module... modules) {
@@ -381,6 +381,26 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     String outputUrl = extension.getCompilerOutputUrl();
     Assert.assertNotNull("Output directory for module '" + module.getName() + "' isn't specified", outputUrl);
     return JpsPathUtil.urlToFile(outputUrl);
+  }
+
+  protected static void createFileInOutput(Module m, final String fileName) {
+    try {
+      boolean created = new File(getOutputDir(m), fileName).createNewFile();
+      assertTrue(created);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected static void createFileInOutput(Artifact a, final String name)  {
+    try {
+      boolean created = new File(a.getOutputPath(), name).createNewFile();
+      assertTrue(created);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected class CompilationLog {

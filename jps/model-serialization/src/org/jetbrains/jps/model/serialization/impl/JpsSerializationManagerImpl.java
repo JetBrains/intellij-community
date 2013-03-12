@@ -37,7 +37,7 @@ public class JpsSerializationManagerImpl extends JpsSerializationManager {
     if (optionsPath != null) {
       JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), optionsPath);
     }
-    Map<String, String> pathVariables = JpsModelSerializationDataService.getAllPathVariables(model.getGlobal());
+    Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectPath);
     return model;
   }
