@@ -106,7 +106,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     myColorSchemeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        EditorColorsScheme scheme = (EditorColorsScheme) myColorSchemeComboBox.getSelectedItem();
+        EditorColorsScheme scheme = (EditorColorsScheme)myColorSchemeComboBox.getSelectedItem();
         if (scheme.getName().equals("Darcula")) {
           UIManager.LookAndFeelInfo[] lafs = LafManager.getInstance().getInstalledLookAndFeels();
           for (UIManager.LookAndFeelInfo laf : lafs) {
@@ -265,9 +265,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
         revalidate();
         myAddedWidth = getPreferredSize().width - getSize().width;
-        final int newWidth = dialog.getSize().width + myAddedWidth;
-        final int newHeight = dialog.getSize().height + Math.min(myPreviewEditor.getPanel().getPreferredSize().height, newWidth);
-        resizeTo(newWidth, newHeight);
+        resizeTo(dialog.getSize().width + myAddedWidth, dialog.getSize().height + getPreviewPreferredHeight());
       }
 
       @Override
@@ -275,12 +273,16 @@ public class InitialConfigurationDialog extends DialogWrapper {
         myLabel.setIcon(myIcon);
         setText("Click to preview");
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
-        resizeTo(dialog.getSize().width - myAddedWidth, dialog.getSize().height - myPreviewEditor.getPanel().getPreferredSize().height);
+        resizeTo(dialog.getSize().width - myAddedWidth, dialog.getSize().height - getPreviewPreferredHeight());
         myWrapper.removeAll();
         myWrapper.setVisible(false);
         myOn = false;
       }
     };
+  }
+
+  private int getPreviewPreferredHeight() {
+    return myPreviewEditor.getPanel().getPreferredSize().height / 2;
   }
 
   protected JPanel createFooterPanel() {
@@ -352,8 +354,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
       int wrapperHeight = 0;
       if (myPreviewEditor != null) {
-        final Dimension preferredSize = myPreviewEditor.getPanel().getPreferredSize();
-        wrapperHeight = Math.min(preferredSize.height, preferredSize.width);
+        wrapperHeight = getPreviewPreferredHeight();
         myPreviewEditor.disposeUIResources();
         myWrapper.removeAll();
       }
@@ -369,7 +370,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
       if (recalculateDialogSize) {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
-        resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + myPreviewEditor.getPanel().getPreferredSize().height);
+        resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + getPreviewPreferredHeight());
       }
     }
   }
