@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class FileNameCache {
-  private static final boolean ourUseCache = false;
-
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls private static final String EMPTY = "";
   @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {EMPTY, "$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
@@ -54,12 +52,16 @@ public class FileNameCache {
     Object rawName = convertToBytesIfAsciiString(suffixId == 0 ? name : name.substring(0, name.length() -
                                                                                           WELL_KNOWN_SUFFIXES[suffixId].length()));
     NameSuffixEntry entry = new NameSuffixEntry(suffixId, rawName);
-    if (ourUseCache) {
+    if (shouldUseCache()) {
       synchronized (ourNameCache) {
         entry = ourNameCache.cacheEntry(id, entry);
       }
     }
     return entry;
+  }
+
+  private static boolean shouldUseCache() {
+    return true;
   }
 
   private static byte findSuffix(String name) {
@@ -89,7 +91,7 @@ public class FileNameCache {
 
   @NotNull
   private static NameSuffixEntry getEntry(int id) {
-    if (ourUseCache) {
+    if (shouldUseCache()) {
       synchronized (ourNameCache) {
         NameSuffixEntry entry = ourNameCache.getCachedEntry(id);
         if (entry != null) {
