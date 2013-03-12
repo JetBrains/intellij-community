@@ -65,8 +65,8 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     loadGlobalSettings(OPTIONS_DIR);
     JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(myModel.getGlobal());
     assertNotNull(configuration);
-    assertEquals("/home/nik/.m2/repository", configuration.getPathVariable("MAVEN_REPOSITORY"));
-    assertEquals(1, configuration.getAllVariables().size());
+    assertEquals("/home/nik/.m2/repository", configuration.getUserVariableValue("MAVEN_REPOSITORY"));
+    assertEquals(1, configuration.getAllUserVariables().size());
   }
 
   public void testSavePathVariables() {

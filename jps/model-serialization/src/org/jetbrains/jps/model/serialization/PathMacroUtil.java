@@ -56,14 +56,25 @@ public class PathMacroUtil {
     return moduleDir;
   }
 
-  public static String getUserHome() {
+  public static String getUserHomePath() {
     return StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 
   public static Map<String, String> getGlobalSystemMacros() {
     final Map<String, String> map = new HashMap<String, String>();
-    map.put(APPLICATION_HOME_DIR, FileUtil.toSystemIndependentName(PathManager.getHomePath()));
-    map.put(USER_HOME_NAME, getUserHome());
+    map.put(APPLICATION_HOME_DIR, getApplicationHomeDirPath());
+    map.put(USER_HOME_NAME, getUserHomePath());
     return map;
+  }
+
+  private static String getApplicationHomeDirPath() {
+    return FileUtil.toSystemIndependentName(PathManager.getHomePath());
+  }
+
+  @Nullable
+  public static String getGlobalSystemMacroValue(String name) {
+    if (APPLICATION_HOME_DIR.equals(name)) return getApplicationHomeDirPath();
+    if (USER_HOME_NAME.equals(name)) return getUserHomePath();
+    return null;
   }
 }
