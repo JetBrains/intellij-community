@@ -311,6 +311,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_MAPPING = "mapping";
   @NonNls private static final String ATTRIBUTE_EXT = "ext";
   @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
+  /** Applied for removed mappings approved by user */
+  @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
+
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
@@ -330,20 +333,20 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return result;
   }
 
-  public static List<Pair<FileNameMatcher, String>> readRemovedAssociations(final Element e) {
-    ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
+  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(final Element e) {
+    ArrayList<Trinity<FileNameMatcher, String, Boolean>> result = new ArrayList<Trinity<FileNameMatcher, String, Boolean>>();
     List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
     for (Object removedMapping : removedMappings) {
       Element mapping = (Element)removedMapping;
       String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
       String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
-      FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
-      result.add(new Pair<FileNameMatcher, String>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
+      String approved = mapping.getAttributeValue(ATTRIBUTE_APPROVED);
 
+      FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
+      result.add(new Trinity<FileNameMatcher, String, Boolean>(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE), Boolean.parseBoolean(approved)));
     }
 
     return result;
-
   }
 
   public static Element writeMapping(final FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
@@ -369,10 +372,13 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   }
 
-  public static Element writeRemovedMapping(final FileType type, final FileNameMatcher matcher, final boolean specifyTypeName) {
+  static Element writeRemovedMapping(final FileType type, final FileNameMatcher matcher, final boolean specifyTypeName, boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
+      if (approved) {
+        mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
+      }
     }
     else if (matcher instanceof WildcardFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());

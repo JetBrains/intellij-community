@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,12 +27,15 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -46,14 +50,14 @@ import java.util.Set;
  */
 public class ContentRevisionCache {
   private final Object myLock;
-  private final SLRUMap<Key, byte[]> myCache;
+  private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
   private final SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object> myCustom;
   private long myCounter;
 
   public ContentRevisionCache() {
     myLock = new Object();
-    myCache = new SLRUMap<Key, byte[]>(100, 50);
+    myCache = new SLRUMap<Key, SoftReference<byte[]>>(100, 50);
     myCurrentRevisionsCache = new SLRUMap<CurrentKey, VcsRevisionNumber>(200, 50);
     myCustom = new SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object>(30,30);
     myCounter = 0;
@@ -62,7 +66,7 @@ public class ContentRevisionCache {
   private void put(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type, @Nullable final byte[] bytes) {
     if (bytes == null) return;
     synchronized (myLock) {
-      myCache.put(new Key(path, number, vcsKey, type), bytes);
+      myCache.put(new Key(path, number, vcsKey, type), new SoftReference<byte[]>(bytes));
     }
   }
 
@@ -169,7 +173,8 @@ public class ContentRevisionCache {
   @Nullable
   public byte[] getBytes(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
     synchronized (myLock) {
-      return myCache.get(new Key(path, number, vcsKey, type));
+      final SoftReference<byte[]> reference = myCache.get(new Key(path, number, vcsKey, type));
+      return reference != null ? reference.get() : null;
     }
   }
 
@@ -194,9 +199,27 @@ public class ContentRevisionCache {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);
     if (bytes != null) return bytes;
+
+    checkLocalFileSize(path);
     bytes = loader.compute();
     cache.put(path, number, vcsKey, type, bytes);
     return bytes;
+  }
+
+  private static void checkLocalFileSize(FilePath path) throws VcsException {
+    File ioFile;
+    if ((ioFile = path.getIOFile()).exists()) {
+      checkContentsSize(ioFile.getPath(), ioFile.length());
+    }
+  }
+
+  public static void checkContentsSize(final String path, final long size) throws VcsException {
+    if (size > PersistentFSConstants.getMaxIntellisenseFileSize()) {
+      throw new VcsException("Can not show contents of \n'" + path +
+                             "'.\nFile size is bigger than " +
+                             StringUtil.formatFileSize(PersistentFSConstants.getMaxIntellisenseFileSize()) +
+                             ".\n\nYou can change maximum file size parameter through -Didea.max.intellisense.filesize=<size in KB>");
+    }
   }
 
   @Nullable
@@ -239,6 +262,7 @@ public class ContentRevisionCache {
       if (cachedCurrent != null) {
         return new Pair<VcsRevisionNumber, byte[]>(currentRevision, cachedCurrent);
       }
+      checkLocalFileSize(path);
       loaded = loader.get();
       if (loaded.getFirst().equals(currentRevision)) break;
     }

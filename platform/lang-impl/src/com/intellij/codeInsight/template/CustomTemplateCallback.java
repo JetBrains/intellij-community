@@ -96,7 +96,7 @@ public class CustomTemplateCallback {
     return templates;
   }
 
-  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
+  public List<TemplateImpl> filterApplicableCandidates(Collection<? extends TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
       if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {

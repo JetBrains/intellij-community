@@ -228,7 +228,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    assert !application.isWriteAccessAllowed() : "Must not start highlighting from within write action to avoid deadlock";
+    if (application.isWriteAccessAllowed()) {
+      throw new AssertionError("Must not start highlighting from within write action, or deadlock is imminent");
+    }
 
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();

@@ -45,7 +45,7 @@ public class JpsModelSerializationDataService {
     Map<String, String> pathVariables = new HashMap<String, String>(PathMacroUtil.getGlobalSystemMacros());
     JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
     if (configuration != null) {
-      pathVariables.putAll(configuration.getAllVariables());
+      pathVariables.putAll(configuration.getAllUserVariables());
     }
     return pathVariables;
   }
@@ -85,5 +85,15 @@ public class JpsModelSerializationDataService {
   public static File getBaseDirectory(@NotNull JpsModule module) {
     JpsModuleSerializationDataExtension extension = getModuleExtension(module);
     return extension != null ? extension.getBaseDirectory() : null;
+  }
+
+  @Nullable
+  public static String getPathVariableValue(@NotNull JpsGlobal global, @NotNull String name) {
+    String value = PathMacroUtil.getGlobalSystemMacroValue(name);
+    if (value != null) {
+      return value;
+    }
+    JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
+    return configuration != null ? configuration.getUserVariableValue(name) : null;
   }
 }

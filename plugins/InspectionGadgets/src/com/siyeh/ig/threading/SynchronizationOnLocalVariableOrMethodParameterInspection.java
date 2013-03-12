@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class SynchronizationOnLocalVariableOrMethodParameterInspection
-  extends BaseInspection {
+public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean reportLocalVariables = true;
@@ -34,8 +33,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronization.on.local.variable.or.method.parameter.display.name");
+    return InspectionGadgetsBundle.message("synchronization.on.local.variable.or.method.parameter.display.name");
   }
 
   public boolean isEnabledByDefault() {
@@ -46,12 +44,10 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
   protected String buildErrorString(Object... infos) {
     final Boolean localVariable = (Boolean)infos[0];
     if (localVariable.booleanValue()) {
-      return InspectionGadgetsBundle.message(
-        "synchronization.on.local.variable.problem.descriptor");
+      return InspectionGadgetsBundle.message("synchronization.on.local.variable.problem.descriptor");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "synchronization.on.method.parameter.problem.descriptor");
+      return InspectionGadgetsBundle.message("synchronization.on.method.parameter.problem.descriptor");
     }
   }
 
@@ -59,11 +55,9 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
     return new SynchronizationOnLocalVariableVisitor();
   }
 
-  private class SynchronizationOnLocalVariableVisitor
-    extends BaseInspectionVisitor {
+  private class SynchronizationOnLocalVariableVisitor extends BaseInspectionVisitor {
 
-    public void visitSynchronizedStatement(
-      PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       if (!reportLocalVariables && !reportMethodParameters) {
         return;
@@ -72,8 +66,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
       if (!(lockExpression instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)lockExpression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       if (referenceExpression.isQualified()) {
         return;
       }
@@ -103,13 +96,16 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection
       else {
         return;
       }
-      final PsiClass parentClass =
-        PsiTreeUtil.getParentOfType(statement, PsiClass.class);
-      if (!PsiTreeUtil.isAncestor(parentClass, target, true)) {
-        // different class, probably different thread.
+      final PsiElement statementScope = getScope(statement);
+      final PsiElement targetScope = getScope(target);
+      if (statementScope != targetScope) {
         return;
       }
       registerError(referenceExpression, Boolean.valueOf(localVariable));
+    }
+
+    private PsiElement getScope(PsiElement element) {
+      return PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
     }
   }
 }

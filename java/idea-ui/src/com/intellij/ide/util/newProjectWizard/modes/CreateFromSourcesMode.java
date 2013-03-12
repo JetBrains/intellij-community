@@ -39,7 +39,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class CreateFromSourcesMode extends WizardMode {
   protected ProjectFromSourcesBuilderImpl myProjectBuilder;
@@ -71,7 +73,10 @@ public abstract class CreateFromSourcesMode extends WizardMode {
       addStep(sequence, new ProjectNameStep(context, this), specific);
     }
     addStep(sequence, new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"), specific);
+
+    Set<String> detectorTypes = new HashSet<String>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
+      detectorTypes.add(detector.getDetectorId());
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), icon)) {
         sequence.addSpecificStep(detector.getDetectorId(), step);
       }
@@ -88,7 +93,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
         }
       };
       projectBuilder.addConfigurationUpdater(frameworkDetectionStep);
-      sequence.addCommonFinishingStep(frameworkDetectionStep);
+      sequence.addCommonFinishingStep(frameworkDetectionStep, detectorTypes);
     }
   }
 

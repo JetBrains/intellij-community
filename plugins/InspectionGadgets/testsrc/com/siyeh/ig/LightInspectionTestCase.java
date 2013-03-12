@@ -31,11 +31,9 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
 
   @Override
   protected void setUp() throws Exception {
-    System.out.println("LightInspectionTestCase.setUp()");
     super.setUp();
 
     for (String environmentClass : getEnvironmentClasses()) {
-      System.out.println("environmentClass = " + environmentClass);
       myFixture.addClass(environmentClass);
     }
     myFixture.enableInspections(getInspection());

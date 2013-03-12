@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -36,7 +35,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,9 +65,9 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   public MyResult step(DiffChainContext context) {
     final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-    if (! canShowChange(context)) {
-      return new MyResult(request, DiffPresentationReturnValue.removeFromList,
-                          "Can not show diff for binary '" + ChangesUtil.getFilePath(myChange).getPath() + "'");
+    final StringBuilder errSb = new StringBuilder();
+    if (! canShowChange(context, errSb)) {
+      return new MyResult(request, DiffPresentationReturnValue.removeFromList, errSb.toString());
     }
     if (! loadCurrentContents(request, myChange)) return new MyResult(request, DiffPresentationReturnValue.quit);
     return new MyResult(request, DiffPresentationReturnValue.useRequest);
@@ -82,9 +80,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @Nullable
   public void haveStuff() throws VcsException {
-    final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision());
+    final StringBuilder errSb = new StringBuilder();
+    final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision(), errSb);
     if (! canShow) {
-      throw new VcsException("Can not load contents of " + ChangesUtil.getFilePath(myChange).getPath());
+      throw new VcsException(errSb.toString());
     }
   }
 
@@ -197,26 +196,27 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return content;
   }
 
-  private boolean canShowChange(DiffChainContext context) {
+  private boolean canShowChange(DiffChainContext context, StringBuilder errSb) {
     final ContentRevision bRev = myChange.getBeforeRevision();
     final ContentRevision aRev = myChange.getAfterRevision();
 
     if (myIgnoreDirectoryFlag) {
-      if (! checkContentsAvailable(bRev, aRev)) return false;
+      if (! checkContentsAvailable(bRev, aRev, errSb)) return false;
       return true;
     }
 
-    boolean isOk = checkContentRevision(bRev, context);
-    isOk &= checkContentRevision(aRev, context);
+    boolean isOk = checkContentRevision(bRev, context, errSb);
+    isOk &= checkContentRevision(aRev, context, errSb);
 
     return isOk;
   }
 
-  private boolean checkContentRevision(ContentRevision rev, final DiffChainContext context) {
+  private boolean checkContentRevision(ContentRevision rev, final DiffChainContext context, final StringBuilder errSb) {
     if (rev == null) return true;
     if (rev.getFile().isDirectory()) return false;
-    if (! hasContents(rev)) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Can not get contents for " + rev.getFile().getPath(), MessageType.WARNING);
+    if (! hasContents(rev, errSb)) {
+      // message box is shown with more detailed text
+      //VcsBalloonProblemNotifier.showOverChangesView(myProject, "Can not get contents for " + rev.getFile().getPath(), MessageType.WARNING);
       return false;
     }
     final FileType type = rev.getFile().getFileType();
@@ -227,7 +227,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return true;
   }
 
-  private static boolean hasContents(@Nullable final ContentRevision rev) {
+  private static boolean hasContents(@Nullable final ContentRevision rev, final StringBuilder errSb) {
     if (rev == null) return false;
       try {
         if (rev instanceof BinaryContentRevision) {
@@ -237,13 +237,15 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         }
       }
       catch (VcsException e) {
+        if (errSb.length() > 0) errSb.append('\n');
+        errSb.append(e.getMessage());
         return false;
       }
   }
 
-  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev) {
-    if (hasContents(bRev)) return true;
-    return hasContents(aRev);
+  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev, final StringBuilder errSb) {
+    if (hasContents(bRev, errSb)) return true;
+    return hasContents(aRev, errSb);
   }
 
   public static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
