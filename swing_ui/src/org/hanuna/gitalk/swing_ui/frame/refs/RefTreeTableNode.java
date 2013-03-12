@@ -39,6 +39,16 @@ public class RefTreeTableNode extends AbstractMutableTreeTableNode {
         return ref != null;
     }
 
+    @Nullable
+    public Ref getRef() {
+        return ref;
+    }
+
+    @Nullable
+    public String getText() {
+        return text;
+    }
+
     private boolean isSelectNode() {
         if (isRefNode()) {
             return selectManager.isSelect(ref.getCommitHash());
