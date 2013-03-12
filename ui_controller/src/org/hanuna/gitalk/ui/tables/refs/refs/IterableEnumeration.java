@@ -1,4 +1,4 @@
-package org.hanuna.gitalk.swing_ui.frame.refs;
+package org.hanuna.gitalk.ui.tables.refs.refs;
 
 import java.util.Enumeration;
 import java.util.Iterator;

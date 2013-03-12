@@ -2,7 +2,7 @@ package org.hanuna.gitalk.swing_ui.render;
 
 import org.hanuna.gitalk.common.OneElementList;
 import org.hanuna.gitalk.swing_ui.frame.TestTableFrame;
-import org.hanuna.gitalk.swing_ui.frame.refs.RefTreeTableNode;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
 
 import javax.swing.*;
