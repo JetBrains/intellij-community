@@ -15,16 +15,22 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -47,19 +53,28 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
             }
             final FileNameMatcher matcher = entry.getKey();
             final FileType fileType = entry.getValue().getFirst();
-            if (Messages.showYesNoDialog(project, "Do you want to reassign " + matcher.getPresentableString() +
-                                                  " files to " + fileType.getName() + "?",
-                                         "File Extension Recognized", Messages.getQuestionIcon()) == Messages.YES) {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  FileTypeManager.getInstance().associate(fileType, matcher);
-                }
-              });
-              iterator.remove();
-            }
-            else {
-              entry.setValue(Pair.create(fileType, true));
-            }
+            Notification notification = new Notification("File type recognized", "File type recognized",
+                                                         "File extension " + matcher.getPresentableString() +
+                                                         " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
+                                                         NotificationType.WARNING, new NotificationListener.Adapter() {
+              @Override
+              protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    FileTypeManager.getInstance().associate(PlainTextFileType.INSTANCE, matcher);
+                    map.put(matcher, Pair.create(fileType, true));
+                  }
+                });
+                notification.expire();
+              }
+            });
+            Notifications.Bus.notify(notification, project);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                FileTypeManager.getInstance().associate(fileType, matcher);
+              }
+            });
+            iterator.remove();
           }
         }
       });
