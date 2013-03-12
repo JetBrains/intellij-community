@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffRequest;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 
 import java.util.ArrayList;
@@ -61,6 +62,15 @@ public interface DiffRequestPresentable {
 
     public DiffPresentationReturnValue getReturnValue() {
       return myReturnValue;
+    }
+
+    public boolean hasErrors() {
+      return ! myErrors.isEmpty();
+    }
+
+    public String getAsOneError() {
+      if (myErrors.isEmpty()) return null;
+      return StringUtil.join(myErrors, "\n");
     }
   }
 }
