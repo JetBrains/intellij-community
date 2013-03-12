@@ -608,7 +608,7 @@
       <option name="HTML_TEXT" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;....css&quot; media=&quot;all&quot;&gt;" name="link:css" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$.css&quot; media=&quot;all&quot;/&gt;">
+  <template description="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;....css&quot; /&gt;" name="link:css" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;$END$.css&quot; /&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
@@ -651,6 +651,21 @@
     </context>
   </template>
   <template description="&lt;button&gt;...&lt;/button&gt;" name="btn" toReformat="true" toShortenFQNames="true" value="&lt;button&gt;$END$&lt;/button&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;button type=&quot;button&quot;&gt;...&lt;/button&gt;" name="btn:b" toReformat="true" toShortenFQNames="true" value="&lt;button type=&quot;button&quot;&gt;$END$&lt;/button&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;button type=&quot;reset&quot;&gt;...&lt;/button&gt;" name="btn:r" toReformat="true" toShortenFQNames="true" value="&lt;button type=&quot;reset&quot;&gt;$END$&lt;/button&gt;">
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;button type=&quot;submit&quot;&gt;...&lt;/button&gt;" name="btn:s" toReformat="true" toShortenFQNames="true" value="&lt;button type=&quot;submit&quot;&gt;$END$&lt;/button&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
     </context>
