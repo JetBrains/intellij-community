@@ -74,7 +74,7 @@ public class JavaBuilderUtil {
 
       final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
-      if (!context.isProjectRebuild()) {
+      if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
           context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getName() + "]"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
@@ -138,7 +138,7 @@ public class JavaBuilderUtil {
               for (File file : newlyAffectedFiles) {
                 FSOperations.markDirtyIfNotDeleted(context, file);
               }
-              additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              additionalPassRequired = !isForcedRecompilationJava(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
           }
           else {
@@ -146,7 +146,7 @@ public class JavaBuilderUtil {
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
-            additionalPassRequired = context.isMake();
+            additionalPassRequired = !isForcedRecompilationJava(context);
             FSOperations.markDirtyRecursively(context, chunk);
           }
         }
@@ -182,6 +182,16 @@ public class JavaBuilderUtil {
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
     }
+  }
+
+  public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
+    CompileScope scope = context.getScope();
+    return scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.TEST);
+  }
+
+  public static boolean isForcedRecompilationJava(CompileContext context) {
+    CompileScope scope = context.getScope();
+    return scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.TEST);
   }
 
   private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,

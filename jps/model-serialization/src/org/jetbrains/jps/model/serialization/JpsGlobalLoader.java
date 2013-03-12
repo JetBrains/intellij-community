@@ -55,14 +55,16 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
     File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
     new JpsGlobalLoader(global, Collections.<String, String>emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
-    Map<String, String> pathVariables = JpsModelSerializationDataService.getAllPathVariables(global);
+    Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
   }
 
+  /**
+   * @deprecated use {@link JpsModelSerializationDataService#getPathVariableValue(org.jetbrains.jps.model.JpsGlobal, String)} instead
+   */
   @Nullable
   public static String getPathVariable(JpsGlobal global, String name) {
-    JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
-    return configuration != null ? configuration.getPathVariable(name) : null;
+    return JpsModelSerializationDataService.getPathVariableValue(global, name);
   }
 
   private void load(File optionsDir) {
@@ -106,7 +108,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
       if (configuration != null) {
-        for (Map.Entry<String, String> entry : configuration.getAllVariables().entrySet()) {
+        for (Map.Entry<String, String> entry : configuration.getAllUserVariables().entrySet()) {
           Element tag = new Element(MACRO_TAG);
           tag.setAttribute(NAME_ATTRIBUTE, entry.getKey());
           tag.setAttribute(VALUE_ATTRIBUTE, entry.getValue());

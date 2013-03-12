@@ -181,12 +181,12 @@ public class CvsUtil {
 
   public static boolean fileIsLocallyAdded(File file) {
     Entry entry = getEntryFor(file);
-    return entry == null ? false : entry.isAddedFile();
+    return entry != null && entry.isAddedFile();
   }
 
   public static boolean fileIsLocallyDeleted(File file) {
     Entry entry = getEntryFor(file);
-    return entry == null ? false : entry.isRemoved();
+    return entry != null && entry.isRemoved();
   }
 
   public static boolean fileIsLocallyAdded(VirtualFile file) {
@@ -209,9 +209,9 @@ public class CvsUtil {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final String entriesFileRelativePath = CVS + File.separatorChar + ENTRIES;
-            Messages
-              .showErrorDialog(CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
-                               CvsBundle.message("message.error.invalid.entries.title"));
+            Messages.showErrorDialog(
+              CvsBundle.message("message.error.invalid.entries", entriesFileRelativePath, dir.getAbsolutePath(), entries),
+              CvsBundle.message("message.error.invalid.entries.title"));
           }
         });
       }
@@ -520,7 +520,7 @@ public class CvsUtil {
     if (storedRevisionFile.isFile()) return;
     try {
       FileUtil.writeToFile(storedRevisionFile, bytes);
-      storedRevisionFile.setLastModified(file.getModificationStamp());
+      storedRevisionFile.setLastModified(file.getTimeStamp());
     }
     catch (IOException e) {
       LOG.info(e);

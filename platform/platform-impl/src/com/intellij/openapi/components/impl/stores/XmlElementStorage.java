@@ -42,7 +42,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @NonNls private static final String ATTR_NAME = "name";
 
-  protected static StringInterner ourInterner = new StringInterner();
+  private static final StringInterner ourInterner = new StringInterner();
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -443,10 +443,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
                   Document copy = (Document)getDocumentToSave().clone();
                   filterComponentsDisabledForRoaming(copy.getRootElement(), roamingType);
 
-                  if (copy.getRootElement().getChildren().size() > 0) {
+                  if (!copy.getRootElement().getChildren().isEmpty()) {
                     StorageUtil.sendContent(myStreamProvider, myFileSpec, copy, roamingType, true);
                     Document versionDoc = createVersionDocument(copy);
-                    if (versionDoc.getRootElement().getChildren().size() > 0) {
+                    if (!versionDoc.getRootElement().getChildren().isEmpty()) {
                       StorageUtil.sendContent(myStreamProvider, myFileSpec + ".ver", versionDoc, roamingType, true);
                     }
                   }

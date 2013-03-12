@@ -35,6 +35,7 @@ public class JetBrainsTvAction extends AnAction implements DumbAware {
 
   protected JetBrainsTvAction(@NotNull @NonNls final String channel) {
     final String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
+    getTemplatePresentation().setText(fullProductName + " TV");
     getTemplatePresentation().setDescription(UIBundle.message("welcome.screen.jetbrains.tv.action.description", fullProductName));
     myUrl = JETBRAINS_TV_URL + "channel/" + channel;
   }

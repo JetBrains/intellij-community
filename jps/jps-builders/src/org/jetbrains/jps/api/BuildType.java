@@ -20,5 +20,5 @@ package org.jetbrains.jps.api;
 *         Date: 9/10/11
 */
 public enum BuildType {
-  PROJECT_REBUILD, FORCED_COMPILATION, MAKE, CLEAN, UP_TO_DATE_CHECK
+  PROJECT_REBUILD, BUILD, CLEAN, UP_TO_DATE_CHECK
 }

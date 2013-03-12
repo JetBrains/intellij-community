@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
 
@@ -35,7 +36,8 @@ import java.util.List;
 public class PluginModuleBuildScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
-  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter, @NotNull Project project) {
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
+                                                         @NotNull Project project, boolean forceBuild) {
     List<String> pluginArtifactTargetIds = new ArrayList<String>();
     for (Module module : baseScope.getAffectedModules()) {
       if (PluginModuleType.isOfType(module)) {
@@ -46,6 +48,6 @@ public class PluginModuleBuildScopeProvider extends BuildTargetScopeProvider {
     if (pluginArtifactTargetIds.isEmpty()) {
       return Collections.emptyList();
     }
-    return Collections.singletonList(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).addAllTargetId(pluginArtifactTargetIds).build());
+    return Collections.singletonList(CmdlineProtoUtil.createTargetsScope(ArtifactBuildTargetType.INSTANCE.getTypeId(), pluginArtifactTargetIds, forceBuild));
   }
 }
