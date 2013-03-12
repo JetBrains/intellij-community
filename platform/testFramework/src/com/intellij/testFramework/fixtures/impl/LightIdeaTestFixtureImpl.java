@@ -37,7 +37,7 @@ import gnu.trove.THashMap;
 /**
  * @author mike
  */
-class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
+public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
 
   public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
