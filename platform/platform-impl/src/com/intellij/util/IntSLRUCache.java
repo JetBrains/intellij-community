@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
+  private static final boolean ourPrintDebugStatistics = false;
   /**
    * A map from int id to entries.
    * Entries keep user objects as well as some queue maintenance data:
@@ -31,6 +32,9 @@ public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
   private final TIntObjectHashMap<Entry> myEntryMap = new TIntObjectHashMap<Entry>();
   private final IntSLRUQueue myProtectedQueue;
   private final IntSLRUQueue myProbationalQueue;
+  private int probationalHits = 0;
+  private int protectedHits = 0;
+  private int misses = 0;
 
   public IntSLRUCache(int protectedQueueSize, int probationalQueueSize) {
     myProtectedQueue = new IntSLRUQueue(protectedQueueSize);
@@ -57,8 +61,13 @@ public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
     Entry entry = myEntryMap.get(id);
     if (entry != null) {
       if (entry.isProtected) {
+        protectedHits++;
         return entry;
       }
+
+      probationalHits++;
+      printStatistics(probationalHits);
+
 
       myProbationalQueue.removeEntry(entry);
       entry.isProtected = true;
@@ -74,7 +83,20 @@ public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
       return entry;
     }
 
+    misses++;
+    //noinspection ConstantConditions
+    printStatistics(misses);
+
     return null;
+  }
+
+  private void printStatistics(int hits) {
+    //noinspection ConstantConditions
+    if (ourPrintDebugStatistics && hits % 1000 == 0) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("IntSLRUCache.getCachedEntry time " + System.currentTimeMillis() +
+                         ", prot=" + protectedHits + ", prob=" + probationalHits + ", misses=" + misses);
+    }
   }
 
   public static class CacheEntry<T> {
