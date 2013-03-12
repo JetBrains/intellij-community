@@ -3,6 +3,7 @@ package org.hanuna.gitalk.ui.tables.refs.refs;
 import org.hanuna.gitalk.commit.Hash;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,6 +31,10 @@ public class CommitSelectManager {
         if (selectCommits.isEmpty()) {
             selectCommits.add(headHash);
         }
+    }
+
+    public Set<Hash> getSelectCommits() {
+        return Collections.unmodifiableSet(selectCommits);
     }
 
 

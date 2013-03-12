@@ -17,7 +17,10 @@ import org.hanuna.gitalk.printmodel.SelectController;
 import org.hanuna.gitalk.ui.ControllerListener;
 import org.hanuna.gitalk.ui.UI_Controller;
 import org.hanuna.gitalk.ui.tables.GraphTableModel;
-import org.hanuna.gitalk.ui.tables.RefTableModel;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModelImpl;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableModel;
+import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,9 @@ public class UI_ControllerImpl implements UI_Controller {
     private final EventsController events = new EventsController();
 
     private DataPack dataPack;
-    private RefTableModel refTableModel;
+    private RefTreeTableModel refTableModel;
+    private RefTreeModel refTreeModel;
+
     private GraphTableModel graphTableModel;
 
     private GraphElement prevGraphElement = null;
@@ -43,10 +48,11 @@ public class UI_ControllerImpl implements UI_Controller {
 
     private void dataInit() {
         dataPack = dataLoader.getDataPack();
-        refTableModel = new RefTableModel(dataPack.getRefsModel(), dataPack.getCommitDataGetter());
+        refTreeModel = new RefTreeModelImpl(dataPack.getRefsModel());
+        refTableModel = new RefTreeTableModel(refTreeModel);
         graphTableModel = new GraphTableModel(dataPack);
 
-        prevSelectionBranches = new HashSet<Hash>(refTableModel.getCheckedCommits());
+        prevSelectionBranches = new HashSet<Hash>(refTreeModel.getCheckedCommits());
     }
 
     public void init(boolean readAllLog) {
@@ -88,7 +94,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     @NotNull
-    public TableModel getRefsTableModel() {
+    public TreeTableModel getRefsTreeTableModel() {
         return refTableModel;
     }
 
@@ -147,7 +153,7 @@ public class UI_ControllerImpl implements UI_Controller {
 
     @Override
     public void updateVisibleBranches() {
-        final Set<Hash> checkedCommitHashes = refTableModel.getCheckedCommits();
+        final Set<Hash> checkedCommitHashes = refTreeModel.getCheckedCommits();
         if (! prevSelectionBranches.equals(checkedCommitHashes)) {
             MyTimer timer = new MyTimer("update branch shows");
 

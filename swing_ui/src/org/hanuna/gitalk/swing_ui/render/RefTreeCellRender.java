@@ -1,9 +1,8 @@
 package org.hanuna.gitalk.swing_ui.render;
 
 import org.hanuna.gitalk.common.OneElementList;
-import org.hanuna.gitalk.swing_ui.frame.TestTableFrame;
-import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 import org.hanuna.gitalk.swing_ui.render.painters.RefPainter;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
@@ -25,16 +24,11 @@ public class RefTreeCellRender implements TreeCellRenderer {
             }
         }
     };
-    private TestTableFrame testTableFrame;
-
-    public RefTreeCellRender(TestTableFrame testTableFrame) {
-        this.testTableFrame = testTableFrame;
-    }
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         this.node = (RefTreeTableNode) value;
-        testTableFrame.setFont(new Font("Arial", Font.BOLD, 14));
+        label.setFont(new Font("Arial", Font.BOLD, 14));
 
         if (node.isRefNode()) {
             label.setText(node.getRef().getName() + "   ");

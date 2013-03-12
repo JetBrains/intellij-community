@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
 public class MainFrame extends JFrame {
     private final UI_Controller ui_controller;
     private final UI_GraphTable graphTable;
-    private final UI_RefTable refTable;
+    private final UI_NewRefTable refTable;
 
     private final JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
     private final JPanel leftGraphPanel = new JPanel();
@@ -25,7 +25,7 @@ public class MainFrame extends JFrame {
     public MainFrame(final UI_Controller ui_controller) {
         this.ui_controller = ui_controller;
         this.graphTable = new UI_GraphTable(ui_controller);
-        this.refTable = new UI_RefTable(ui_controller.getRefsTableModel());
+        this.refTable = new UI_NewRefTable(ui_controller.getRefsTreeTableModel());
         packElements();
     }
 
@@ -33,9 +33,6 @@ public class MainFrame extends JFrame {
         return graphTable;
     }
 
-    public UI_RefTable getRefTable() {
-        return refTable;
-    }
 
     private void packTabs() {
         packLeftGraphPanel();
