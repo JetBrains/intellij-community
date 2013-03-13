@@ -11,9 +11,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   private static final String EXT_ID_ATTR = "ID";
   private static final String EXTENSION_ROOT_ATTR = "EXTENSION";
   protected final ExtensionPointName<T> myExtensionPointName;
+  private final StringInterner myInterner = new StringInterner();
 
   public RunConfigurationExtensionsManager(ExtensionPointName<T> extensionPointName) {
     myExtensionPointName = extensionPointName;
@@ -59,7 +62,13 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
       }
     }
     if (!found) {
-      configuration.putCopyableUserData(RUN_EXTENSIONS, children);
+      List<Element> copy = new ArrayList<Element>(children.size());
+      for (Element child : children) {
+        Element clone = (Element)child.clone();
+        JDOMUtil.internElement(clone, myInterner);
+        copy.add(clone);
+      }
+      configuration.putCopyableUserData(RUN_EXTENSIONS, copy);
     }
   }
 

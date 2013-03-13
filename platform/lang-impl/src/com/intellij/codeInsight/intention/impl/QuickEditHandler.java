@@ -15,12 +15,16 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -30,6 +34,8 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -41,21 +47,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -70,25 +83,34 @@ import java.util.Set;
 */
 public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final Project myProject;
-  private final PsiFile myInjectedFile;
-  private final Editor myEditor;
   private final QuickEditAction myAction;
+
+  private final Editor myEditor;
   private final Document myOrigDocument;
+
+  private final Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
-  private final Document myNewDocument;
-  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers = new LinkedList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>();
+
   private final long myOrigCreationStamp;
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
+  @Nullable
+  private final PsiFile myInjectedFile;
+  private final List<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>> myMarkers =
+    new LinkedList<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>();
+
+  @Nullable
+  private final RangeMarker myAltFullRange;
+  private static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
+
   QuickEditHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
     myProject = project;
-    myInjectedFile = injectedFile;
     myEditor = editor;
     myAction = action;
     myOrigDocument = editor.getDocument();
-    final Place shreds = InjectedLanguageUtil.getShreds(myInjectedFile);
+    final Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
     final FileType fileType = injectedFile.getFileType();
     final Language language = injectedFile.getLanguage();
 
@@ -100,16 +122,14 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
     myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
     assert myNewVirtualFile != null;
+    // suppress possible errors as in injected mode
+    myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
+                          injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, smartPointerManager.createSmartPsiElementPointer(origFile));
     myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
     assert myNewDocument != null;
-    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new ReadonlyFragmentModificationHandler() {
-      @Override
-      public void handle(final ReadOnlyFragmentModificationException e) {
-        //nothing
-      }
-    });
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     myOrigDocument.addDocumentListener(this, this);
     myNewDocument.addDocumentListener(this, this);
@@ -146,14 +166,28 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (-- myEditorCount > 0) return;
         Disposer.dispose(QuickEditHandler.this);
-        myInjectedFile.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, null);
       }
     }, this);
-    initMarkers(shreds);
+
+    if ("JAVA".equals(shreds.get(0).getHost().getLanguage().getID())) {
+      myAltFullRange = myOrigDocument.createRangeMarker(
+        shreds.get(0).getHostRangeMarker().getStartOffset(),
+        shreds.get(shreds.size() - 1).getHostRangeMarker().getEndOffset());
+      myAltFullRange.setGreedyToLeft(true);
+      myAltFullRange.setGreedyToRight(true);
+
+      initGuardedBlocks(shreds);
+      myInjectedFile = null;
+    }
+    else {
+      initMarkers(shreds);
+      myAltFullRange = null;
+      myInjectedFile = injectedFile;
+    }
   }
 
   public boolean isValid() {
-    return myNewVirtualFile.isValid() && myInjectedFile.isValid();
+    return myNewVirtualFile.isValid() && (myAltFullRange == null && myInjectedFile.isValid() || myAltFullRange.isValid());
   }
 
   public void navigate(int injectedOffset) {
@@ -179,14 +213,37 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         }
         balloon.show(point, position);
       }
-    } else {
+    }
+    else {
       final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
       final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
         mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
       }
-      fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
+      Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
+      // fold missing values
+      if (editor != null) {
+        editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
+        final FoldingModel foldingModel = editor.getFoldingModel();
+        foldingModel.runBatchFoldingOperation(new Runnable() {
+          @Override
+          public void run() {
+            for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
+              String replacement = o.getUserData(REPLACEMENT_KEY);
+              FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
+              region.setExpanded(false);
+            }
+          }
+        });
+      }
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        }
+      });
+
     }
   }
 
@@ -213,7 +270,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       commitToOriginal();
     }
     else if (e.getDocument() == myOrigDocument) {
-      if (myCommittingToOriginal) return;
+      if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
       closeEditor();
     }
   }
@@ -234,40 +291,52 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     }
   }
 
-  public void initMarkers(final Place shreds) {
-    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+  public void initMarkers(Place shreds) {
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
         shred.getRange().getStartOffset() + shred.getPrefix().length(),
         shred.getRange().getEndOffset() - shred.getSuffix().length());
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
-      final RangeMarker origMarker =
-        myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(shred.getHost().getTextRange().getStartOffset()));
-      SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(shred.getHost());
-      myMarkers.add(Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer));
-    }
-    for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers : myMarkers) {
-      markers.first.setGreedyToLeft(true);
-      markers.second.setGreedyToLeft(true);
+      PsiLanguageInjectionHost host = shred.getHost();
+      // todo fixme: char literal update will throw exceptions
+      boolean oneCharOnly = host.getText().startsWith("'") && "JAVA".equals(host.getLanguage().getID());
+      RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
+      SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
+      Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
+        Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer);
+      myMarkers.add(markers);
       markers.first.setGreedyToRight(true);
       markers.second.setGreedyToRight(true);
+      markers.first.setGreedyToLeft(true);
+      markers.second.setGreedyToLeft(true);
     }
+    initGuardedBlocks(shreds);
+  }
+
+  private void initGuardedBlocks(Place shreds) {
+    int origOffset = -1;
     int curOffset = 0;
-    for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markerPair : myMarkers) {
-      final RangeMarker marker = markerPair.second;
-      final int start = marker.getStartOffset();
-      final int end = marker.getEndOffset();
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      Segment hostRangeMarker = shred.getHostRangeMarker();
+      int start = shred.getRange().getStartOffset() + shred.getPrefix().length();
+      int end = shred.getRange().getEndOffset() - shred.getSuffix().length();
       if (curOffset < start) {
-        final RangeMarker rangeMarker = myNewDocument.createGuardedBlock(curOffset, start);
-        if (curOffset == 0) rangeMarker.setGreedyToLeft(true);
+        RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, start);
+        if (curOffset == 0 && shred == shreds.get(0)) guard.setGreedyToLeft(true);
+        String padding = origOffset < 0 ? "" : myOrigDocument.getText().substring(origOffset, hostRangeMarker.getStartOffset());
+        guard.putUserData(REPLACEMENT_KEY, fixQuotes(padding));
       }
       curOffset = end;
+      origOffset = hostRangeMarker.getEndOffset();
     }
     if (curOffset < myNewDocument.getTextLength()) {
-      final RangeMarker rangeMarker = myNewDocument.createGuardedBlock(curOffset, myNewDocument.getTextLength());
-      rangeMarker.setGreedyToRight(true);
+      RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, myNewDocument.getTextLength());
+      guard.setGreedyToRight(true);
+      guard.putUserData(REPLACEMENT_KEY, "");
     }
   }
+
 
   private void commitToOriginal() {
     if (!isValid()) return;
@@ -279,6 +348,10 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(new Runnable() {
           @Override
           public void run() {
+            if (myAltFullRange != null) {
+              altCommitToOriginal();
+              return;
+            }
             commitToOriginalInner();
           }
         });
@@ -328,6 +401,64 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     }
   }
 
+  private void altCommitToOriginal() {
+    final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
+    String newText = myNewDocument.getText();
+    // prepare guarded blocks
+    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<String, String>();
+    for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
+      String replacement = o.getUserData(REPLACEMENT_KEY);
+      String tempText = "REPLACE"+Long.toHexString(StringHash.calc(replacement));
+      newText = newText.substring(0, o.getStartOffset()) + tempText + newText.substring(o.getEndOffset());
+      replacementMap.put(tempText, replacement);
+    }
+    // run preformat processors
+    myEditor.getCaretModel().moveToOffset(myAltFullRange.getStartOffset());
+    for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+      newText = preProcessor.preprocessOnPaste(myProject, origPsiFile, myEditor, newText, null);
+    }
+    myOrigDocument.replaceString(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset(), newText);
+    // replace temp strings for guarded blocks
+    for (String tempText : replacementMap.keySet()) {
+      int idx = CharArrayUtil.indexOf(myOrigDocument.getCharsSequence(), tempText, myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
+      myOrigDocument.replaceString(idx, idx + tempText.length(), replacementMap.get(tempText));
+    }
+    // JAVA: fix occasional char literal concatenation
+    fixDocumentQuotes(myOrigDocument, myAltFullRange.getStartOffset() - 1);
+    fixDocumentQuotes(myOrigDocument, myAltFullRange.getEndOffset());
+
+    // reformat
+    PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
+    Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          CodeStyleManager.getInstance(myProject).reformatRange(
+            origPsiFile, myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset(), true);
+        }
+        catch (IncorrectOperationException e) {
+          //LOG.error(e);
+        }
+      }
+    };
+    DocumentUtil.executeInBulk(myOrigDocument, true, task);
+    myEditor.getCaretModel().moveToOffset(myAltFullRange.getStartOffset());
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+  }
+
+  private static String fixQuotes(String padding) {
+    if (padding.isEmpty()) return padding;
+    if (padding.startsWith("'")) padding = '\"' + padding.substring(1);
+    if (padding.endsWith("'")) padding = padding.substring(0, padding.length() - 1) + "\"";
+    return padding;
+  }
+
+  private static void fixDocumentQuotes(Document doc, int offset) {
+    if (doc.getCharsSequence().charAt(offset) == '\'') {
+      doc.replaceString(offset, offset+1, "\"");
+    }
+  }
+
   @Override
   public void dispose() {
     // noop
@@ -336,5 +467,24 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   @TestOnly
   public PsiFile getNewFile() {
     return myNewFile;
+  }
+
+  public boolean changesRange(TextRange range) {
+    if (myAltFullRange != null) {
+       return range.intersects(myAltFullRange.getStartOffset(), myAltFullRange.getEndOffset());
+    }
+    else if (!myMarkers.isEmpty()) {
+      TextRange hostRange = TextRange.create(myMarkers.get(0).first.getStartOffset(),
+                                             myMarkers.get(myMarkers.size()-1).first.getEndOffset());
+      return range.intersects(hostRange);
+    }
+    return false;
+  }
+
+  private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
+    @Override
+    public void handle(final ReadOnlyFragmentModificationException e) {
+      //nothing
+    }
   }
 }

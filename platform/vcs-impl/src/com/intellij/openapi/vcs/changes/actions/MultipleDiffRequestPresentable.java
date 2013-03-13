@@ -72,7 +72,12 @@ public class MultipleDiffRequestPresentable implements DiffRequestPresentable {
       if (step == null) continue;
       final DiffPresentationReturnValue returnValue = step.getReturnValue();
       if (DiffPresentationReturnValue.quit.equals(returnValue)) {
-        return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.quit, step.getAsOneError());
+        final String error = step.getAsOneError();
+        if (StringUtil.isEmptyOrSpaces(error)) {
+          return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.quit);
+        } else {
+          return new MyResult(new SimpleDiffRequest(myProject, ""), DiffPresentationReturnValue.quit, error);
+        }
       } else if (! DiffPresentationReturnValue.removeFromList.equals(returnValue) && ! step.hasErrors()) {
         // use contents
         if (request == null) {

@@ -6,8 +6,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,19 +22,9 @@ public class PathEnvironmentVariableUtil {
 
   public static final String PATH_ENV_VAR_NAME = "PATH";
   private static final Logger LOG = Logger.getInstance(PathEnvironmentVariableUtil.class);
-  private static final Map<String, String> ENVIRONMENT_VARIABLES;
   private static final String FIXED_MAC_PATH_VALUE;
 
   static {
-    Map<String, String> envVars = EnvironmentUtil.getEnvironmentProperties();
-    if (SystemInfo.isWindows) {
-      THashMap<String, String> map = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      map.putAll(envVars);
-      ENVIRONMENT_VARIABLES = map;
-    }
-    else {
-      ENVIRONMENT_VARIABLES = envVars;
-    }
     String fixedPathValue = null;
     try {
       fixedPathValue = calcFixedMacPathEnvVarValue();
@@ -89,7 +77,7 @@ public class PathEnvironmentVariableUtil {
 
   @Nullable
   private static String getOriginalPathEnvVarValue() {
-    return ENVIRONMENT_VARIABLES.get(PATH_ENV_VAR_NAME);
+    return EnvironmentUtil.getValue(PATH_ENV_VAR_NAME);
   }
 
   @NotNull

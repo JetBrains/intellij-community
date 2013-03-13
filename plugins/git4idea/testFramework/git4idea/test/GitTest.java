@@ -25,6 +25,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.testng.annotations.AfterMethod;
@@ -64,6 +65,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
 
   @BeforeMethod
   protected void setUp(final Method testMethod) throws Exception {
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
     myProjectDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myProjectDirFixture.setUp();
     myProjectDir = new File(myProjectDirFixture.getTempDirPath());

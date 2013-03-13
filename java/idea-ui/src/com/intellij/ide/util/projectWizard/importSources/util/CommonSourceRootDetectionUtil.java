@@ -17,15 +17,15 @@ package com.intellij.ide.util.projectWizard.importSources.util;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.text.CharsetUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 public abstract class CommonSourceRootDetectionUtil<F> {
 
@@ -98,7 +98,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected CharSequence loadText(final File file) throws IOException {
-      return StringFactory.createShared(FileUtil.loadFileText(file));
+      return StringFactory.createShared(loadFileTextSkippingBom(file));
     }
 
     @Override
@@ -106,6 +106,18 @@ public abstract class CommonSourceRootDetectionUtil<F> {
       return file.isFile();
     }
   };
+
+  private static char[] loadFileTextSkippingBom(File file) throws IOException {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    InputStream stream = CharsetUtil.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
+    Reader reader = new InputStreamReader(stream);
+    try {
+      return FileUtilRt.loadText(reader, (int)file.length());
+    }
+    finally {
+      reader.close();
+    }
+  }
 
   public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<VirtualFile>() {
 

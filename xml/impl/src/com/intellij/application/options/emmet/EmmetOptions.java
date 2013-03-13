@@ -51,6 +51,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   private boolean myEnableBemFilterByDefault = false;
   private boolean myEmmetEnabled = WebEditorOptions.getInstance().isZenCodingEnabled();
   private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+  private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   @Nullable
   private Map<String, Integer> prefixes = null;
@@ -104,6 +105,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
 
   public void setAutoInsertCssPrefixedEnabled(boolean autoInsertCssPrefixedEnabled) {
     myAutoInsertCssPrefixedEnabled = autoInsertCssPrefixedEnabled;
+  }
+
+  public void setFuzzySearchEnabled(boolean fuzzySearchEnabled) {
+    myFuzzySearchEnabled = fuzzySearchEnabled;
+  }
+
+  public boolean isFuzzySearchEnabled() {
+    return myFuzzySearchEnabled;
   }
 
   @NotNull

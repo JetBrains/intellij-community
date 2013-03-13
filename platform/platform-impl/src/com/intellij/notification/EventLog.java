@@ -84,7 +84,7 @@ public class EventLog {
     });
   }
 
-  public static void expire(@NotNull Notification notification) {
+  public static void expireNotification(@NotNull Notification notification) {
     getApplicationComponent().myModel.removeNotification(notification);
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       getProjectComponent(p).myProjectModel.removeNotification(notification);

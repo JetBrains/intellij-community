@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.testIntegration;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.generation.GenerationInfo;
-import com.intellij.codeInsight.generation.GenerationInfoBase;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
@@ -164,30 +164,18 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
 
     @Nullable
-    private PsiMethod generateDummyMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
-      List<GenerationInfo> members = new ArrayList<GenerationInfo>();
-
+    private static PsiMethod generateDummyMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
       final PsiMethod method = TestIntegrationUtils.createDummyMethod(file);
-      final PsiMethod[] result = new PsiMethod[1];
-
-      members.add(new GenerationInfoBase() {
-        @NotNull
-        public PsiMember getPsiMember() {
-          return method;
-        }
-
-        public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
-          result[0] = (PsiMethod)GenerateMembersUtil.insert(aClass, method, anchor, before);
-        }
-      });
+      final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
 
       int offset = findOffsetToInsertMethodTo(editor, file);
+      GenerateMembersUtil.insertMembersAtOffset(file, offset, Collections.singletonList(info));
 
-      GenerateMembersUtil.insertMembersAtOffset(file, offset, members);
-      return result[0] != null ? CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(result[0]) : null;
+      final PsiMethod member = info.getPsiMember();
+      return member != null ? CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(member) : null;
     }
 
-    private int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {
+    private static int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {
       int result = editor.getCaretModel().getOffset();
 
       PsiClass classAtCursor = PsiTreeUtil.getParentOfType(file.findElementAt(result), PsiClass.class, false);

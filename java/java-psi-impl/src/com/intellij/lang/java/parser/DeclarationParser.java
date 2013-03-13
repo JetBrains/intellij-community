@@ -441,24 +441,24 @@ public class DeclarationParser {
   }
 
   @NotNull
-  public PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
-    return parseElementList(builder, ListType.NORMAL);
+  public PsiBuilder.Marker parseParameterList(PsiBuilder builder) {
+    return parseElementList(builder, ListType.METHOD);
   }
 
   @NotNull
-  public PsiBuilder.Marker parseResourceList(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseResourceList(PsiBuilder builder) {
     return parseElementList(builder, ListType.RESOURCE);
   }
 
   @NotNull
-  public PsiBuilder.Marker parseLambdaParameterList(final PsiBuilder builder, final boolean typed) {
+  public PsiBuilder.Marker parseLambdaParameterList(PsiBuilder builder, boolean typed) {
     return parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
   }
 
-  private enum ListType { NORMAL, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED }
+  private enum ListType {METHOD, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED}
 
   @NotNull
-  private PsiBuilder.Marker parseElementList(final PsiBuilder builder, final ListType type) {
+  private PsiBuilder.Marker parseElementList(PsiBuilder builder, ListType type) {
     final boolean lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED);
     final boolean resources = (type == ListType.RESOURCE);
     final PsiBuilder.Marker elementList = builder.mark();
@@ -559,29 +559,25 @@ public class DeclarationParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunctiveType) {
+  public PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType) {
     return parseListElement(builder, true, ellipsis, disjunctiveType, false);
   }
 
   @Nullable
-  public PsiBuilder.Marker parseResource(final PsiBuilder builder) {
+  public PsiBuilder.Marker parseResource(PsiBuilder builder) {
     return parseListElement(builder, true, false, false, true);
   }
 
   @Nullable
-  public PsiBuilder.Marker parseLambdaParameter(final PsiBuilder builder, final boolean typed) {
+  public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
     return parseListElement(builder, typed, true, false, false);
   }
 
   @Nullable
-  private PsiBuilder.Marker parseListElement(final PsiBuilder builder,
-                                             final boolean typed,
-                                             final boolean ellipsis,
-                                             final boolean disjunctiveType,
-                                             final boolean resource) {
-    final PsiBuilder.Marker param = builder.mark();
+  private PsiBuilder.Marker parseListElement(PsiBuilder builder, boolean typed, boolean ellipsis, boolean disjunctiveType, boolean resource) {
+    PsiBuilder.Marker param = builder.mark();
 
-    final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
+    Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
     ReferenceParser.TypeInfo typeInfo = null;
     if (typed) {
@@ -626,8 +622,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseFieldOrLocalVariable(final PsiBuilder builder, final PsiBuilder.Marker declaration,
-                                                             final int declarationStart, final Context context) {
+  private PsiBuilder.Marker parseFieldOrLocalVariable(PsiBuilder builder, PsiBuilder.Marker declaration, int declarationStart, Context context) {
     final IElementType varType;
     if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {
       varType = JavaElementType.FIELD;

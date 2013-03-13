@@ -45,6 +45,8 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
   @Override
   public void actionPerformed(AnActionEvent e) {
+    long start = System.currentTimeMillis();
+
     suffixes.clear();
     nameCount.clear();
     VirtualFile[] roots = ManagingFS.getInstance().getRoots(LocalFileSystem.getInstance());
@@ -178,6 +180,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
       saved += count * s.length();
     }
     System.out.println("total saved = " + saved);
+    System.out.println("Time spent: " + (System.currentTimeMillis() - start));
   }
 
   private static List<Pair<String,Integer>> show(final TObjectIntHashMap<String> prefixes) {

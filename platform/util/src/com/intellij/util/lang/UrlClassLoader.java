@@ -63,7 +63,7 @@ public class UrlClassLoader extends ClassLoader {
     List<URL> list = ContainerUtil.map(urls, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
-        return internFileProtocol(url);
+        return internProtocol(url);
       }
     });
     myClassPath = new ClassPath(list.toArray(new URL[list.size()]), canLockJars, canUseCache, acceptUnescapedUrls, preloadJarContents);
@@ -71,10 +71,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @NotNull
-  private static URL internFileProtocol(@NotNull URL url) {
+  public static URL internProtocol(@NotNull URL url) {
     try {
       if ("file".equals(url.getProtocol())) {
         return new URL("file", url.getHost(), url.getPort(), url.getFile());
+      }
+      if ("jar".equals(url.getProtocol())) {
+        return new URL("jar", url.getHost(), url.getPort(), url.getFile());
       }
       return url;
     }
