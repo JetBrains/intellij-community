@@ -40,7 +40,7 @@ import java.awt.*;
  */
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
-  protected abstract void doShowPopup(Project project, EditorGutterComponentEx gutterComponent, Point whereToShow, Object breakpoint);
+  protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint);
 
   @Override
   public void perform(@NotNull Project project, AnActionEvent event) {
@@ -65,5 +65,9 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     final Icon icon = breakpointGutterRenderer.getIcon();
     Point whereToShow = new Point(point.x + icon.getIconWidth() / 2 + gutterComponent.getIconsAreaWidth(), point.y + icon.getIconHeight() / 2);
     doShowPopup(project, gutterComponent, whereToShow, breakpoint);
+  }
+
+  public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull Object breakpoint) {
+    doShowPopup(project, parent, whereToShow, breakpoint);
   }
 }

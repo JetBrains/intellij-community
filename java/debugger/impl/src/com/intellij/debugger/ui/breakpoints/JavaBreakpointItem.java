@@ -38,7 +38,7 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+  public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     if (plainView) {
       renderer.setIcon(myBreakpoint.getIcon());
     }
@@ -99,12 +99,21 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public boolean navigate() {
+  public void navigate(boolean requestFocus) {
     if (myBreakpoint instanceof BreakpointWithHighlighter) {
-      ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().navigate(true);
-      return true;
+      ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().navigate(requestFocus);
     }
-    return false;
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return myBreakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().canNavigate();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return myBreakpoint instanceof BreakpointWithHighlighter &&
+           ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().canNavigateToSource();
   }
 
   @Override
