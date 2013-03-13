@@ -22,6 +22,8 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setTitle(state.myTitle);
     myState.setVendor(state.myVendor);
     myState.setDescription(state.myDescription);
+    myState.setWidth(state.myWidth);
+    myState.setHeight(state.myHeight);
   }
 
   @NotNull
@@ -40,6 +42,8 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myVendor;
     private String myDescription;
     private String myAppClass;
+    private String myWidth = "600";
+    private String myHeight = "400";
 
     public String getTitle() {
       return myTitle;
@@ -71,6 +75,22 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setAppClass(String appClass) {
       myAppClass = appClass;
+    }
+
+    public String getWidth() {
+      return myWidth;
+    }
+
+    public String getHeight() {
+      return myHeight;
+    }
+
+    public void setWidth(String width) {
+      myWidth = width;
+    }
+
+    public void setHeight(String height) {
+      myHeight = height;
     }
   }
 }
