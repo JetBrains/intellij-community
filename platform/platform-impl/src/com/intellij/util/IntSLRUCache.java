@@ -99,9 +99,9 @@ public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
   }
 
   public static class CacheEntry<T> extends IntObjectChainedMap.MapEntry<T> {
-    private CacheEntry<T> prevId;
-    private CacheEntry<T> nextId;
-    private boolean isProtected;
+    CacheEntry<T> prevId;
+    CacheEntry<T> nextId;
+    boolean isProtected;
 
     public CacheEntry(int id, T userObject) {
       super(id, userObject);
@@ -218,7 +218,7 @@ class IntObjectChainedMap<Entry extends IntObjectChainedMap.MapEntry> {
   static class MapEntry<T> {
     public final int key;
     public final T value;
-    private MapEntry next;
+    MapEntry next;
 
     MapEntry(int key, T value) {
       this.key = key;
