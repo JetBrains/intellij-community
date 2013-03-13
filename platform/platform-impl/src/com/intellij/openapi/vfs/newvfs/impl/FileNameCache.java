@@ -33,8 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class FileNameCache {
   private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
   @NonNls private static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {EMPTY, "$1.class", "$2.class","Test.java","List.java","tion.java", ".class", ".java", ".html", ".txt", ".xml",".php",".gif",".svn",".css",".js"};
-  private static final IntSLRUCache<NameSuffixEntry> ourNameCache = new IntSLRUCache<NameSuffixEntry>(40000, 20000);
+  private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> ourNameCache = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(40000, 20000);
 
   static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
@@ -43,36 +42,17 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static NameSuffixEntry cacheData(String name, int id) {
+  private static IntObjectLinkedMap.MapEntry<Object> cacheData(String name, int id) {
     if (name == null) {
       ourNames.markCorrupted();
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    byte suffixId = findSuffix(name);
-    Object rawName = convertToBytesIfAsciiString(suffixId == 0 ? name : name.substring(0, name.length() -
-                                                                                          WELL_KNOWN_SUFFIXES[suffixId].length()));
-    NameSuffixEntry entry = new NameSuffixEntry(id, suffixId, rawName);
-    if (shouldUseCache()) {
-      synchronized (ourNameCache) {
-        entry = ourNameCache.cacheEntry(entry);
-      }
+    Object rawName = convertToBytesIfAsciiString(name);
+    IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
+    synchronized (ourNameCache) {
+      return ourNameCache.cacheEntry(entry);
     }
-    return entry;
-  }
-
-  private static boolean shouldUseCache() {
-    return true;
-  }
-
-  private static byte findSuffix(String name) {
-    for (byte i = 1; i < WELL_KNOWN_SUFFIXES.length; i++) {
-      String suffix = WELL_KNOWN_SUFFIXES[i];
-      if (name.endsWith(suffix)) {
-        return i;
-      }
-    }
-    return 0;
   }
 
   private static Object convertToBytesIfAsciiString(@NotNull String name) {
@@ -91,13 +71,11 @@ public class FileNameCache {
   }
 
   @NotNull
-  private static NameSuffixEntry getEntry(int id) {
-    if (shouldUseCache()) {
-      synchronized (ourNameCache) {
-        NameSuffixEntry entry = ourNameCache.getCachedEntry(id);
-        if (entry != null) {
-          return entry;
-        }
+  private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
+    synchronized (ourNameCache) {
+      IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache.getCachedEntry(id);
+      if (entry != null) {
+        return entry;
       }
     }
 
@@ -106,27 +84,25 @@ public class FileNameCache {
 
   @NotNull
   static String getVFileName(int nameId) {
-    NameSuffixEntry entry = getEntry(nameId);
-    Object name = entry.getRawName();
-    String suffix = entry.getSuffix();
+    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
+    Object name = entry.value;
     if (name instanceof String) {
       //noinspection StringEquality
-      return suffix == EMPTY ? (String)name : name + suffix;
+      return (String)name;
     }
 
     byte[] bytes = (byte[])name;
     int length = bytes.length;
-    char[] chars = new char[length + suffix.length()];
+    char[] chars = new char[length];
     for (int i = 0; i < length; i++) {
       chars[i] = (char)bytes[i];
     }
-    VirtualFileSystemEntry.copyString(chars, length, suffix);
     return StringFactory.createShared(chars);
   }
 
   static int compareNameTo(int nameId, @NotNull String name, boolean ignoreCase) {
-    NameSuffixEntry entry = getEntry(nameId);
-    Object rawName = entry.getRawName();
+    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
+    Object rawName = entry.value;
     if (rawName instanceof String) {
       String thisName = getVFileName(nameId);
       return VirtualFileSystemEntry.compareNames(thisName, name, ignoreCase);
@@ -135,17 +111,10 @@ public class FileNameCache {
     byte[] bytes = (byte[])rawName;
     int bytesLength = bytes.length;
 
-    String suffix = entry.getSuffix();
-    int suffixLength = suffix.length();
-
-    int d = bytesLength + suffixLength - name.length();
+    int d = bytesLength - name.length();
     if (d != 0) return d;
 
-    d = compareBytes(bytes, 0, name, 0, bytesLength, ignoreCase);
-    if (d != 0) return d;
-
-    d = VirtualFileSystemEntry.compareNames(suffix, name, ignoreCase, bytesLength);
-    return d;
+    return compareBytes(bytes, 0, name, 0, bytesLength, ignoreCase);
   }
 
   private static int compareBytes(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
@@ -159,12 +128,10 @@ public class FileNameCache {
   }
 
   static char[] appendPathOnFileSystem(int nameId, @Nullable VirtualFileSystemEntry parent, int accumulatedPathLength, int[] positionRef) {
-    NameSuffixEntry entry = getEntry(nameId);
-    Object o = entry.getRawName();
-    String suffix = entry.getSuffix();
-    int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
-    int nameLength = rawNameLength + suffix.length();
-    boolean appendSlash = SystemInfo.isWindows && parent == null && suffix.isEmpty() && rawNameLength == 2 &&
+    IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
+    Object o = entry.value;
+    int nameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
+    boolean appendSlash = SystemInfo.isWindows && parent == null && nameLength == 2 &&
                           (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
 
     char[] chars;
@@ -196,29 +163,8 @@ public class FileNameCache {
     if (appendSlash) {
       chars[positionRef[0]++] = '/';
     }
-    else {
-      positionRef[0] = VirtualFileSystemEntry.copyString(chars, positionRef[0], suffix);
-    }
 
     return chars;
   }
-
-  private static class NameSuffixEntry extends IntObjectLinkedMap.MapEntry<Object> {
-    final byte suffixId;
-
-    private NameSuffixEntry(int nameId, byte suffixId, Object rawName) {
-      super(nameId, rawName);
-      this.suffixId = suffixId;
-    }
-
-    Object getRawName() {
-      return value;
-    }
-
-    public String getSuffix() {
-      return WELL_KNOWN_SUFFIXES[suffixId];
-    }
-  }
-
 
 }
