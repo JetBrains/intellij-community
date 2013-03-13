@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.xml;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface XmlTagChild extends XmlElement{
