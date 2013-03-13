@@ -140,6 +140,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
       context.checkCanceled();
 
+      context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "': copying files..."));
       final Set<JarInfo> changedJars = new THashSet<JarInfo>();
       for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
         context.checkCanceled();
