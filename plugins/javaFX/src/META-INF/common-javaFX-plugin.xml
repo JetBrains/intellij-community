@@ -35,6 +35,7 @@
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
     <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
+    <packaging.elementType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxRootPackagingElementType"/>
   </extensions>
 
   <actions>
