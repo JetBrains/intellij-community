@@ -193,9 +193,9 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return null;
   }
 
-  @Nullable
+  @NotNull
   public static TargetType[] translate(@Nullable String... types) {
-    if (types == null) return null;
+    if (types == null || types.length == 0) return TargetType.EMPTY_ARRAY;
 
     List<TargetType> targets = ContainerUtil.newArrayListWithExpectedSize(types.length);
     for (String type : types) {
@@ -210,6 +210,8 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   public static boolean isAnnotationApplicableTo(GrAnnotation annotation, boolean strict, String... elementTypeFields) {
-    return elementTypeFields == null || PsiImplUtil.isAnnotationApplicable(annotation, strict, translate(elementTypeFields));
+    if (elementTypeFields == null) return true;
+    TargetType target = PsiImplUtil.findApplicableTarget(annotation, translate(elementTypeFields));
+    return target != null && (!strict || target != TargetType.UNKNOWN);
   }
 }

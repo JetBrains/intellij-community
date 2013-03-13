@@ -20,7 +20,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.psi.PsiAnnotation.TargetType;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
@@ -56,8 +56,8 @@ public class TypeInfo {
     ourIndexFrequentType = new String[]{
       "",
       "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
-      "Object", CommonClassNames.JAVA_LANG_OBJECT,
-      "String", CommonClassNames.JAVA_LANG_STRING
+      CommonClassNames.JAVA_LANG_OBJECT_SHORT, CommonClassNames.JAVA_LANG_OBJECT,
+      CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
     };
 
     ourFrequentTypeIndex = new TObjectIntHashMap<String>();
@@ -95,7 +95,7 @@ public class TypeInfo {
     for (StubElement child : modifierList.getChildrenStubs()) {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.isAnnotationApplicable(annotationStub.getPsiElement(), true, PsiAnnotation.TargetType.TYPE_USE)) {
+      if (PsiImplUtil.findApplicableTarget(annotationStub.getPsiElement(), TargetType.TYPE_USE) == TargetType.TYPE_USE) {
         annotationStubs.add(annotationStub);
       }
     }

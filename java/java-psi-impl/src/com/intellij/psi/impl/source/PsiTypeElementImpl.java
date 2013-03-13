@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.psi.PsiAnnotation.TargetType;
+
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
 
@@ -160,7 +162,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
     PsiAnnotation[] annotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
-      if (PsiImplUtil.isAnnotationApplicable(annotation, true, PsiAnnotation.TargetType.TYPE_USE)) {
+      if (PsiImplUtil.findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
         typeAnnotations.add(annotation);
       }
     }

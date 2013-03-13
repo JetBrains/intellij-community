@@ -45,7 +45,12 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * Kinds of element to which an annotation type is applicable (see {@link java.lang.annotation.ElementType}).
    */
   enum TargetType {
-    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER
+    // see java.lang.annotation.ElementType
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER,
+    // auxiliary value, used when it's impossible to determine annotation's targets
+    UNKNOWN;
+
+    public static final TargetType[] EMPTY_ARRAY = {};
   }
 
   /**
@@ -76,8 +81,8 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   /**
    * Returns the value of the annotation element with the specified name.
    *
-   * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation, the default
-   *                      value is returned.
+   * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation,
+   *                      the default value is returned.
    * @return the element value, or null if the annotation does not contain a value for
    *         the element and the element has no default value.
    */
