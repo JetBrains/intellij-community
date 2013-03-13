@@ -90,7 +90,7 @@ public class GitRemoteSteps {
 
   private static class TestAuthenticator implements GitHttpAuthenticator {
 
-    private static final int TIMEOUT = 1;
+    private static final int TIMEOUT = 10;
 
     private final CountDownLatch myPasswordAskedWaiter = new CountDownLatch(1);
     private final CountDownLatch myUsernameAskedWaiter = new CountDownLatch(1);
