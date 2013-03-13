@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.Change;
@@ -163,7 +164,8 @@ public class SvnHistoryProvider
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {
-    reportAppendableHistory(path, partner, null, null, 0, null, false);
+    // we need + 1 rows to be reported to further detect that number of rows exceeded the limit
+    reportAppendableHistory(path, partner, null, null, VcsConfiguration.getInstance(myVcs.getProject()).MAXIMUM_HISTORY_ROWS + 1, null, false);
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
@@ -319,10 +321,11 @@ public class SvnHistoryProvider
       final SVNRevision pegRevision = myInfo.getRevision();
       SVNLogClient client = myVcs.createLogClient();
       try {
+        // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
         client
           .doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())},
                  myFrom == null ? SVNRevision.HEAD : myFrom, myTo == null ? SVNRevision.create(1) : myTo, myPeg,
-                 false, true, myShowMergeSources && mySupport15, myLimit, null,
+                 false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
                  new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, createConsumerAdapter(myConsumer), repoRootURL, myFile.getCharset()));
       }
       catch (SVNCancelException e) {
@@ -393,8 +396,9 @@ public class SvnHistoryProvider
           relativeUrl = myUrl.substring(root.length());
         }
         SVNLogClient client = myVcs.createLogClient();
+        // a bug noticed when testing: we should pass "limit + 1" to get "limit" rows
         client.doLog(svnurl, new String[]{}, myPeg == null ? myFrom : myPeg,
-                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, myLimit, null,
+                     operationalFrom, myTo == null ? SVNRevision.create(1) : myTo, false, true, myShowMergeSources && mySupport15, myLimit + 1, null,
                      new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, createConsumerAdapter(myConsumer), rootURL));
       }
       catch (SVNCancelException e) {
