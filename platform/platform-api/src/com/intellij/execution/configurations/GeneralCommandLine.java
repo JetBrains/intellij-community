@@ -262,8 +262,8 @@ public class GeneralCommandLine implements UserDataHolder {
     return result;
   }
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
-  private static String prepareCommand(String parameter) {
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() && org.jetbrains.jps.incremental.ExternalProcessUtil.prepareCommand()
+  public static String prepareCommand(String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");

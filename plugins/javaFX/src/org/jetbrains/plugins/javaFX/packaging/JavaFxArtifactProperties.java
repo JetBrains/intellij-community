@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,7 +52,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myAppClass;
 
   @Override
-  public void onBuildFinished(@NotNull final Artifact artifact, @NotNull CompileContext compileContext) {
+  public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
     if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) {
       return;
     }
@@ -91,24 +93,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
 
-    JavaFxPackagerUtil.createJarAndDeploy(artifact, compileContext, binPath, properties);
-  }
-
-
-  @Nullable
-  public String getManifestString() {
-    final StringBuilder buf = new StringBuilder();
-    if (!StringUtil.isEmptyOrSpaces(myTitle)) {
-      buf.append("Implementation-Title=").append(myTitle).append(";");
-    }
-    if (!StringUtil.isEmptyOrSpaces(myVendor)) {
-      buf.append("Implementation-Vendor=").append(myVendor).append(";");
-    }
-    final int lastIdx = buf.length() - 1;
-    if (lastIdx > 0 && buf.charAt(lastIdx) == ';') {
-      buf.deleteCharAt(lastIdx);
-    }
-    return buf.length() == 0 ? null : buf.toString();
+    new JavaFxPackager(artifact, properties, compileContext).createJarAndDeploy(binPath);
   }
 
   @Override
@@ -157,5 +142,62 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
   public void setAppClass(String appClass) {
     myAppClass = appClass;
+  }
+
+  private static class JavaFxPackager extends AbstractJavaFxPackager {
+    private final Artifact myArtifact;
+    private final JavaFxArtifactProperties myProperties;
+    private final CompileContext myCompileContext;
+
+    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, CompileContext compileContext) {
+      myArtifact = artifact;
+      myProperties = properties;
+      myCompileContext = compileContext;
+    }
+
+    @Override
+    protected String getArtifactName() {
+      return myArtifact.getName();
+    }
+
+    @Override
+    protected String getArtifactOutputPath() {
+      return myArtifact.getOutputPath();
+    }
+
+    @Override
+    protected String getArtifactOutputFilePath() {
+      return myArtifact.getOutputFilePath();
+    }
+
+    @Override
+    protected String getAppClass() {
+      return myProperties.getAppClass();
+    }
+
+    @Override
+    protected String getTitle() {
+      return myProperties.getTitle();
+    }
+
+    @Override
+    protected String getVendor() {
+      return myProperties.getVendor();
+    }
+
+    @Override
+    protected String getDescription() {
+      return myProperties.getDescription();
+    }
+
+    @Override
+    protected void registerJavaFxPackagerError(String message) {
+      myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+    }
+
+    @Override
+    protected void addParameter(List<String> commandLine, String param) {
+      super.addParameter(commandLine, GeneralCommandLine.prepareCommand(param));
+    }
   }
 }
