@@ -79,18 +79,16 @@ public class IntObjectLinkedMap<Entry extends IntObjectLinkedMap.MapEntry> {
 
   public Entry putEntry(Entry entry) {
     removeEntry(entry.key);
+
     int index = getArrayIndex(entry.key);
     entry.next = myArray[index];
+    myArray[index] = entry;
 
     entry.before = myHeader.before;
     entry.after = myHeader;
     entry.before.after = entry;
     myHeader.before = entry;
-    if (mySize == 0) {
-      myHeader.after = entry;
-    }
 
-    myArray[index] = entry;
     mySize++;
     if (mySize <= myCapacity) {
       return null;
