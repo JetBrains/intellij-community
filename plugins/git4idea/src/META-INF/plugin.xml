@@ -151,7 +151,7 @@
     <applicationService serviceInterface="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"
                         serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
-                        serviceImplementation="git4idea.commands.GitHttpAuthService" />
+                        serviceImplementation="git4idea.commands.GitHttpAuthServiceImpl" />
     <applicationService serviceInterface="git4idea.rebase.GitRebaseEditorService"
                         serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>
     <applicationService serviceInterface="git4idea.config.SSHConnectionSettings"

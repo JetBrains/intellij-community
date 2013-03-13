@@ -29,6 +29,7 @@ import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
 import static git4idea.test.GitExecutor.touch;
 import static git4idea.test.GitScenarios.checkout;
+import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -67,9 +68,11 @@ public class GeneralStepdefs {
     NotificationType type = notificationType.equals("success") ? NotificationType.INFORMATION :
                             notificationType.equals("warning") ? NotificationType.WARNING :
                             notificationType.equals("error") ? NotificationType.ERROR : null;
-    assertEquals("Notification type is incorrect", type, lastNotification().getType());
-    assertEquals("Notification title is incorrect", title, lastNotification().getTitle());
-    assertNotificationContent(content, lastNotification().getContent());
+    Notification actualNotification = lastNotification();
+    assertNotNull("Notification should be shown", actualNotification);
+    assertEquals("Notification type is incorrect", type, actualNotification.getType());
+    assertEquals("Notification title is incorrect", title, actualNotification.getTitle());
+    assertNotificationContent(content, actualNotification.getContent());
   }
 
   private static void assertNotificationContent(String expected, String actual) {
