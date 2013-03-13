@@ -42,6 +42,8 @@ public abstract class AbstractJavaFxPackager {
   protected abstract String getTitle();
   protected abstract String getVendor();
   protected abstract String getDescription();
+  protected abstract String getWidth();
+  protected abstract String getHeight();
 
   protected abstract void registerJavaFxPackagerError(final String message);
 
@@ -122,9 +124,9 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, getAppClass());
 
     addParameter(commandLine, "-width");
-    addParameter(commandLine, "600");
+    addParameter(commandLine, getWidth());
     addParameter(commandLine, "-height");
-    addParameter(commandLine, "400");
+    addParameter(commandLine, getHeight());
 
     addParameter(commandLine, "-name");
     addParameter(commandLine, getArtifactName());

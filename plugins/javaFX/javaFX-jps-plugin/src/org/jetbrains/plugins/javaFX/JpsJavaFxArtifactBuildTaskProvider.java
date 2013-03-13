@@ -124,6 +124,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getWidth() {
+      return myProperties.myState.getWidth();
+    }
+
+    @Override
+    protected String getHeight() {
+      return myProperties.myState.getHeight();
+    }
+
+    @Override
     protected void registerJavaFxPackagerError(String message) {
       myCompileContext.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
     }

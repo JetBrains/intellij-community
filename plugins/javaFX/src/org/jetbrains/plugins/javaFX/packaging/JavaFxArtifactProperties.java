@@ -50,6 +50,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myVendor;
   private String myDescription;
   private String myAppClass;
+  private String myWidth = "600";
+  private String myHeight = "400";
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -144,6 +146,22 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myAppClass = appClass;
   }
 
+  public String getWidth() {
+    return myWidth;
+  }
+
+  public String getHeight() {
+    return myHeight;
+  }
+
+  public void setWidth(String width) {
+    myWidth = width;
+  }
+
+  public void setHeight(String height) {
+    myHeight = height;
+  }
+
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -188,6 +206,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getDescription() {
       return myProperties.getDescription();
+    }
+
+    @Override
+    protected String getWidth() {
+      return myProperties.getWidth();
+    }
+
+    @Override
+    protected String getHeight() {
+      return myProperties.getHeight();
     }
 
     @Override

@@ -49,6 +49,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JTextField myVendorTF;
   private JEditorPane myDescriptionEditorPane;
   private TextFieldWithBrowseButton myAppClass;
+  private JTextField myWidthTF;
+  private JTextField myHeightTF;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, Project project, Artifact artifact) {
     super();
@@ -72,6 +74,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getTitle(), myTitleTF)) return true;
     if (isModified(myProperties.getVendor(), myVendorTF)) return true;
     if (isModified(myProperties.getDescription(), myDescriptionEditorPane)) return true;
+    if (isModified(myProperties.getWidth(), myWidthTF)) return true;
+    if (isModified(myProperties.getHeight(), myHeightTF)) return true;
     if (!Comparing.strEqual(myProperties.getAppClass(), myAppClass.getText().trim())) return true;
     return false;
   }
@@ -86,6 +90,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setVendor(myVendorTF.getText());
     myProperties.setDescription(myDescriptionEditorPane.getText());
     myProperties.setAppClass(myAppClass.getText());
+    myProperties.setWidth(myWidthTF.getText());
+    myProperties.setHeight(myHeightTF.getText());
   }
 
   @Override
@@ -93,6 +99,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myTitleTF, myProperties.getTitle());
     setText(myVendorTF, myProperties.getVendor());
     setText(myDescriptionEditorPane, myProperties.getDescription());
+    setText(myWidthTF, myProperties.getWidth());
+    setText(myHeightTF, myProperties.getHeight());
     final String appClass = myProperties.getAppClass();
     if (appClass != null) {
       myAppClass.setText(appClass.trim());
