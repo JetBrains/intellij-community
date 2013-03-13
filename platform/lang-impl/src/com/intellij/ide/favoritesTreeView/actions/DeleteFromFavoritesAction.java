@@ -61,7 +61,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     FavoritesListProvider provider = favoritesManager.getListProvider(listName);
     if (provider != null && provider.willHandle(CommonActionsPanel.Buttons.REMOVE, project, selection)) {
-      provider.handle(CommonActionsPanel.Buttons.REMOVE, project, selection);
+      provider.handle(CommonActionsPanel.Buttons.REMOVE, project, selection, builder.getTree());
       return;
     }
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);

@@ -86,7 +86,14 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
   }
 
   @Override
-  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
+  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component) {
+  }
+
+  @Override
+  public int compareTo(FavoritesListProvider o) {
+    if (getWeight() > o.getWeight()) return 1;
+    if (getWeight() < o.getWeight()) return -1;
+    return 0;
   }
 
   @Override
