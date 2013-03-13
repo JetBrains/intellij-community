@@ -172,8 +172,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myVendorLogoPath = pluginBean.vendor.logo;
     }
 
-    Set<PluginId> dependentPlugins = new HashSet<PluginId>();
-    Set<PluginId> optionalDependentPlugins = new HashSet<PluginId>();
+    // preserve items order as specified in xml (filterBadPlugins will not fail if module comes first)
+    Set<PluginId> dependentPlugins = new LinkedHashSet<PluginId>();
+    Set<PluginId> optionalDependentPlugins = new LinkedHashSet<PluginId>();
     myOptionalConfigs = new HashMap<PluginId, String>();
     if (pluginBean.dependencies != null) {
       for (PluginDependency dependency : pluginBean.dependencies) {

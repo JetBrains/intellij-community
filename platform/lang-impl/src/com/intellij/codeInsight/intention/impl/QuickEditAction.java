@@ -22,11 +22,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,6 +86,10 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    invokeImpl(project, editor, file);
+  }
+
+  public QuickEditHandler invokeImpl(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     assert pair != null;
@@ -92,6 +99,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       handler.navigate(injectedOffset);
     }
+    return handler;
   }
 
   @Override
@@ -101,15 +109,30 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
 
   @NotNull
   private QuickEditHandler getHandler(Project project, PsiFile injectedFile, Editor editor, PsiFile origFile) {
-    QuickEditHandler handler = injectedFile.getUserData(QUICK_EDIT_HANDLER);
+    QuickEditHandler handler = getExistingHandler(injectedFile);
     if (handler != null && handler.isValid()) {
       return handler;
     }
     handler = new QuickEditHandler(project, injectedFile, origFile, editor, this);
-    injectedFile.putUserData(QUICK_EDIT_HANDLER, handler);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // todo remove and hide QUICK_EDIT_HANDLER
+      injectedFile.putUserData(QUICK_EDIT_HANDLER, handler);
+    }
     return handler;
   }
-  
+
+  public static QuickEditHandler getExistingHandler(PsiFile injectedFile) {
+    Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
+    if (shreds == null) return null;
+    TextRange hostRange = TextRange.create(shreds.get(0).getHostRangeMarker().getStartOffset(),
+                                           shreds.get(shreds.size() - 1).getHostRangeMarker().getEndOffset());
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      QuickEditHandler handler = editor.getUserData(QUICK_EDIT_HANDLER);
+      if (handler != null && handler.changesRange(hostRange)) return handler;
+    }
+    return null;
+  }
+
   protected boolean isShowInBalloon() {
     return false;
   }

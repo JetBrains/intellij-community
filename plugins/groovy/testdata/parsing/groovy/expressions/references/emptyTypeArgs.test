@@ -1,0 +1,17 @@
+foo.<>bar()
+-----
+Groovy script
+  Method call
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('foo')
+      PsiElement(.)('.')
+      Type arguments
+        PsiElement(<)('<')
+        PsiErrorElement:Type argument expected
+          <empty list>
+        PsiElement(>)('>')
+      PsiElement(identifier)('bar')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

@@ -62,8 +62,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @Override
-  public void expire(@NotNull Notification notification) {
-    EventLog.expire(notification);
+  public void expire(@NotNull final Notification notification) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        EventLog.expireNotification(notification);
+      }
+    });
   }
 
   @Override

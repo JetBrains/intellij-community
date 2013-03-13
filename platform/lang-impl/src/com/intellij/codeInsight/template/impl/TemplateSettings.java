@@ -340,6 +340,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     myLastSelectedTemplate = group == null ? null : new TemplateKey(group, key);
   }
 
+  public Collection<? extends TemplateImpl> getTemplatesAsList() {
+    return myTemplates.values();
+  }
+
   public TemplateImpl[] getTemplates() {
     final Collection<? extends TemplateImpl> all = myTemplates.values();
     return all.toArray(new TemplateImpl[all.size()]);

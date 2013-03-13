@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +36,7 @@ import java.util.*;
 
 public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
-  private final List<ModuleWizardStep> myCommonFinishingSteps = new ArrayList<ModuleWizardStep>();
+  private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<Pair<ModuleWizardStep, Set<String>>>();
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<String, ModuleWizardStep>();
   @NonNls private List<String> myTypes = new ArrayList<String>();
   private List<ModuleWizardStep> mySelectedSteps;
@@ -48,8 +49,8 @@ public class StepSequence {
     myCommonSteps.add(step);
   }
 
-  public void addCommonFinishingStep(@NotNull ModuleWizardStep step) {
-    myCommonFinishingSteps.add(step);
+  public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @NotNull Set<String> suitableTypes) {
+    myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
   }
 
   public void addStepsForBuilder(ModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
@@ -71,7 +72,11 @@ public class StepSequence {
         Collection<ModuleWizardStep> steps = mySpecificSteps.get(type);
         mySelectedSteps.addAll(steps);
       }
-      mySelectedSteps.addAll(myCommonFinishingSteps);
+      for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
+        if (ContainerUtil.intersects(myTypes, pair.getSecond())) {
+          mySelectedSteps.add(pair.getFirst());
+        }
+      }
       ContainerUtil.removeDuplicates(mySelectedSteps);
     }
 
@@ -110,7 +115,9 @@ public class StepSequence {
     final List<ModuleWizardStep> result = new ArrayList<ModuleWizardStep>();
     result.addAll(myCommonSteps);
     result.addAll(mySpecificSteps.values());
-    result.addAll(myCommonFinishingSteps);
+    for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
+      result.add(pair.getFirst());
+    }
     ContainerUtil.removeDuplicates(result);
     return result;
   }
