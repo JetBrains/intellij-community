@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
@@ -110,6 +111,9 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     try {
       final String result = command.run();
+      if (StringUtil.isEmptyOrSpaces(result)) {
+        throw new VcsException("Status request returned nothing for command: " + command.myCommandLine.getCommandLineString());
+      }
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (! svnHandl[0].isAnythingReported()) {
