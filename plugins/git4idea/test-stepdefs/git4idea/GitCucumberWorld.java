@@ -16,13 +16,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import cucumber.annotation.After;
 import cucumber.annotation.Before;
+import cucumber.annotation.Order;
 import git4idea.commands.Git;
+import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
+import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestInitUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.WebServerManagerImpl;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
@@ -52,11 +57,14 @@ public class GitCucumberWorld {
   public static MockVcsHelper myVcsHelper;
   public static TestNotificator myNotificator;
 
+  public static GitHttpAuthTestService myHttpAuthService; // only with @remote tag
+
   public static GitTestVirtualCommitsHolder virtualCommits;
 
   private static IdeaProjectTestFixture myProjectFixture;
 
   @Before
+  @Order(0)
   public void setUp() throws Throwable {
     myProjectFixture = new GitCucumberLightProjectFixture();
     myProjectFixture.setUp();
@@ -94,6 +102,19 @@ public class GitCucumberWorld {
     GitRepository repository = myPlatformFacade.getRepositoryManager(myProject).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
+  }
+
+  @Before("@remote")
+  @Order(1)
+  public void setUpRemoteOperations() {
+    ((WebServerManagerImpl)WebServerManager.getInstance()).setEnabledInUnitTestMode(true);
+    // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
+    System.setProperty(WebServerManagerImpl.PROPERTY_RPC_PORT, "64463");
+    if (myHttpAuthService == null) {
+      // this should be executed only once, because the service is registered in the XmlRcpServer only once.
+      // otherwise the service instance will be recreated for each test while only the first instance will be called by XML RPC.
+      myHttpAuthService = overrideAppService(GitHttpAuthService.class, GitHttpAuthTestService.class);
+    }
   }
 
   @After

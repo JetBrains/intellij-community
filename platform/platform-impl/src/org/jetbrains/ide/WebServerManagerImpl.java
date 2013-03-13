@@ -27,7 +27,7 @@ public class WebServerManagerImpl extends WebServerManager {
   private static final Logger LOG = Logger.getInstance(WebServerManager.class);
 
   @NonNls
-  private static final String PROPERTY_RPC_PORT = "rpc.port";
+  public static final String PROPERTY_RPC_PORT = "rpc.port";
   private static final int FIRST_PORT_NUMBER = 63342;
   private static final int PORTS_COUNT = 20;
 
