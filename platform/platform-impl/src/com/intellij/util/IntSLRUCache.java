@@ -15,69 +15,56 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.IntObjectLinkedMap;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
+public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
   private static final boolean ourPrintDebugStatistics = false;
-  /**
-   * A map from int id to entries.
-   * Entries keep user objects as well as some queue maintenance data:
-   *   next, previous element ids in the queues,
-   *   and a flag which queue this entry belongs to: protected or probational.
-   */
-  private final IntObjectChainedMap<Entry> myEntryMap;
-  private final IntSLRUQueue myProtectedQueue;
-  private final IntSLRUQueue myProbationalQueue;
+  private final IntObjectLinkedMap<Entry> myProtectedQueue;
+  private final IntObjectLinkedMap<Entry> myProbationalQueue;
   private int probationalHits = 0;
   private int protectedHits = 0;
   private int misses = 0;
 
   public IntSLRUCache(int protectedQueueSize, int probationalQueueSize) {
-    myProtectedQueue = new IntSLRUQueue(protectedQueueSize);
-    myProbationalQueue = new IntSLRUQueue(probationalQueueSize);
-    myEntryMap = new IntObjectChainedMap<Entry>(protectedQueueSize + probationalQueueSize);
+    myProtectedQueue = new IntObjectLinkedMap<Entry>(protectedQueueSize);
+    myProbationalQueue = new IntObjectLinkedMap<Entry>(probationalQueueSize);
   }
 
   public Entry cacheEntry(final Entry entry) {
-    Entry cached = myEntryMap.getEntry(entry.key);
+    Entry cached = myProtectedQueue.getEntry(entry.key);
+    if (cached == null) {
+      cached = myProbationalQueue.getEntry(entry.key);
+    }
     if (cached != null) {
       return cached;
     }
 
-    entry.isProtected = false;
-    myEntryMap.putEntry(entry);
-    Entry toDrop = myProbationalQueue.queueFirst(entry);
-    if (toDrop != null) {
-      myEntryMap.removeEntry(toDrop);
-    }
+    myProbationalQueue.putEntry(entry);
     return entry;
   }
 
   @Nullable
   public Entry getCachedEntry(int id) {
-    Entry entry = myEntryMap.getEntry(id);
+    Entry entry = myProtectedQueue.getEntry(id);
     if (entry != null) {
-      if (entry.isProtected) {
-        protectedHits++;
-        return entry;
-      }
+      protectedHits++;
+      return entry;
+    }
 
+    entry = myProbationalQueue.getEntry(id);
+    if (entry != null) {
       probationalHits++;
       printStatistics(probationalHits);
 
 
-      myProbationalQueue.removeEntry(entry);
-      entry.isProtected = true;
-      Entry demoted = myProtectedQueue.queueFirst(entry);
+      myProbationalQueue.removeEntry(entry.key);
+      Entry demoted = myProtectedQueue.putEntry(entry);
       if (demoted != null) {
-        demoted.isProtected = false;
-        Entry toDrop = myProbationalQueue.queueFirst(demoted);
-        if (toDrop != null) {
-          myEntryMap.removeEntry(toDrop);
-        }
+        myProbationalQueue.putEntry(demoted);
       }
       return entry;
     }
@@ -97,134 +84,5 @@ public class IntSLRUCache<Entry extends IntSLRUCache.CacheEntry> {
                          ", prot=" + protectedHits + ", prob=" + probationalHits + ", misses=" + misses);
     }
   }
-
-  public static class CacheEntry<T> extends IntObjectChainedMap.MapEntry<T> {
-    CacheEntry<T> prevId;
-    CacheEntry<T> nextId;
-    boolean isProtected;
-
-    public CacheEntry(int id, T userObject) {
-      super(id, userObject);
-    }
-  }
-
-  /**
-   * Keeps queue start & end id and size. The queue entries themselves are stored in {@link IntSLRUCache#myEntryMap}
-   */
-  private class IntSLRUQueue {
-    private final int queueLimit;
-
-    private Entry firstId = null;
-    private Entry lastId = null;
-    private int queueSize = 0;
-
-    private IntSLRUQueue(int limit) {
-      queueLimit = limit;
-    }
-
-    void removeEntry(Entry entry) {
-      if (entry.prevId != null) {
-        entry.prevId.nextId = entry.nextId;
-      } else {
-        //noinspection unchecked
-        firstId = (Entry)entry.nextId;
-      }
-      if (entry.nextId != null) {
-        entry.nextId.prevId = entry.prevId;
-      } else {
-        //noinspection unchecked
-        lastId = (Entry)entry.prevId;
-      }
-      queueSize--;
-    }
-
-    Entry queueFirst(Entry entry) {
-      CacheEntry oldFirst = firstId;
-      entry.nextId = oldFirst;
-      entry.prevId = null;
-
-      firstId = entry;
-      if (oldFirst != null) {
-        oldFirst.prevId = entry;
-      } else {
-        lastId = entry;
-      }
-      queueSize++;
-
-      if (queueSize <= queueLimit) {
-        return null;
-      }
-
-      Entry eldest = lastId;
-      removeEntry(eldest);
-      return eldest;
-    }
-
-  }
-
-}
-
-class IntObjectChainedMap<Entry extends IntObjectChainedMap.MapEntry> {
-  private final MapEntry[] myArray;
-
-  IntObjectChainedMap(int capacity) {
-    myArray = new MapEntry[capacity * 8 / 5];
-  }
-
-  @Nullable
-  Entry getEntry(int key) {
-    MapEntry candidate = myArray[getArrayIndex(key)];
-    while (candidate != null) {
-      if (candidate.key == key) {
-        //noinspection unchecked
-        return (Entry)candidate;
-      }
-      candidate = candidate.next;
-    }
-    return null;
-  }
-
-  private int getArrayIndex(int key) {
-    return (key & 0x7fffffff) % myArray.length;
-  }
-
-  void removeEntry(Entry entry) {
-    int key = entry.key;
-    int index = getArrayIndex(key);
-    MapEntry candidate = myArray[index];
-    MapEntry prev = null;
-    while (candidate != null) {
-      if (candidate.key == key) {
-        if (prev == null) {
-          myArray[index] = candidate.next;
-        } else {
-          prev.next = candidate.next;
-        }
-        candidate.next = null;
-        return;
-      }
-      prev = candidate;
-      candidate = candidate.next;
-    }
-  }
-
-  void putEntry(Entry entry) {
-    removeEntry(entry);
-    int index = getArrayIndex(entry.key);
-    entry.next = myArray[index];
-    myArray[index] = entry;
-  }
-
-  static class MapEntry<T> {
-    public final int key;
-    public final T value;
-    MapEntry next;
-
-    MapEntry(int key, T value) {
-      this.key = key;
-      this.value = value;
-    }
-  }
-
 
 }
