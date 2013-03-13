@@ -51,10 +51,10 @@ public class FileNameCache {
     byte suffixId = findSuffix(name);
     Object rawName = convertToBytesIfAsciiString(suffixId == 0 ? name : name.substring(0, name.length() -
                                                                                           WELL_KNOWN_SUFFIXES[suffixId].length()));
-    NameSuffixEntry entry = new NameSuffixEntry(suffixId, rawName);
+    NameSuffixEntry entry = new NameSuffixEntry(id, suffixId, rawName);
     if (shouldUseCache()) {
       synchronized (ourNameCache) {
-        entry = ourNameCache.cacheEntry(id, entry);
+        entry = ourNameCache.cacheEntry(entry);
       }
     }
     return entry;
@@ -205,13 +205,13 @@ public class FileNameCache {
   private static class NameSuffixEntry extends IntSLRUCache.CacheEntry<Object> {
     final byte suffixId;
 
-    private NameSuffixEntry(byte suffixId, Object rawName) {
-      super(rawName);
+    private NameSuffixEntry(int nameId, byte suffixId, Object rawName) {
+      super(nameId, rawName);
       this.suffixId = suffixId;
     }
 
     Object getRawName() {
-      return userObject;
+      return value;
     }
 
     public String getSuffix() {
