@@ -17,10 +17,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -29,10 +26,17 @@ import com.intellij.util.IncorrectOperationException;
 public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   @Override
   public PsiLiteralExpression handleContentChange(PsiLiteralExpression expr, TextRange range, String newContent) throws IncorrectOperationException {
-    final Object value = expr.getValue();
-    if (!(value instanceof String)) throw new IncorrectOperationException("cannot handle content change for: "+ value+", expr: "+expr);
     String oldText = expr.getText();
-    newContent = StringUtil.escapeStringCharacters(newContent);
+    if (oldText.startsWith("\"")) {
+      newContent = StringUtil.escapeStringCharacters(newContent);
+    }
+    else if (oldText.startsWith("'") && newContent.length() <= 1) {
+      newContent = newContent.length() == 1 && newContent.charAt(0) == '\''? "\\'" : newContent;
+    }
+    else {
+      throw new IncorrectOperationException("cannot handle content change for: " + oldText + ", expr: " + expr);
+    }
+
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     final PsiExpression newExpr = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(newText, null);
     return (PsiLiteralExpression)expr.replace(newExpr);

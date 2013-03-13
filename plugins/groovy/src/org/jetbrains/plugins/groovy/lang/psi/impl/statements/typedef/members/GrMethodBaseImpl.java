@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public GrTypeElement getReturnTypeElementGroovy() {
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(stub.getTypeText(), this);
+    }
+
     return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
   }
 
