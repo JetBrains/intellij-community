@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -55,9 +56,20 @@ public class TypeInfo {
   static {
     ourIndexFrequentType = new String[]{
       "",
-      "boolean", "byte", "char", "double", "float", "int", "long", "null", "short", "void",
-      "Object", CommonClassNames.JAVA_LANG_OBJECT,
-      "String", CommonClassNames.JAVA_LANG_STRING
+      "boolean",
+      "byte",
+      "char",
+      "double",
+      "float",
+      "int",
+      "long",
+      "null",
+      "short",
+      "void",
+      "Object",
+      CommonClassNames.JAVA_LANG_OBJECT,
+      CommonClassNames.JAVA_LANG_STRING_SHORT,
+      CommonClassNames.JAVA_LANG_STRING
     };
 
     ourFrequentTypeIndex = new TObjectIntHashMap<String>();
@@ -83,7 +95,7 @@ public class TypeInfo {
     this(StringRef.fromString(_text == null ? null : internFrequentType(_text)), _arrayCount, ellipsis, annotationStubs);
   }
 
-  public TypeInfo(StringRef _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+  private TypeInfo(StringRef _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
     text = _text;
     arrayCount = _arrayCount;
     isEllipsis = ellipsis;
