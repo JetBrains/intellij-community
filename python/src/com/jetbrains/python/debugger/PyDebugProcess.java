@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.remotesdk.RemoteProcessHandlerBase;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -26,7 +27,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.django.util.DjangoUtil;
-import com.intellij.remotesdk.RemoteProcessHandlerBase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
 import com.jetbrains.python.debugger.pydev.*;
@@ -48,6 +48,8 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
+  private static final int CONNECTION_TIMEOUT = 60000;
+
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
@@ -78,7 +80,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myDebugger = createMultiprocessDebugger(serverSocket);
     }
     else {
-      myDebugger = new RemoteDebugger(this, serverSocket, 10000);
+      myDebugger = new RemoteDebugger(this, serverSocket, getConnectTimeout());
     }
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
       new DjangoLineBreakpointHandler(this), new DjangoExceptionBreakpointHandler(this)};
@@ -656,5 +658,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public void setWaitingForConnection(boolean waitingForConnection) {
     myWaitingForConnection = waitingForConnection;
+  }
+
+  public int getConnectTimeout() {
+    return CONNECTION_TIMEOUT;
   }
 }
