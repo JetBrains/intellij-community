@@ -696,9 +696,12 @@ public class ExpressionParser {
     myParser.getReferenceParser().parseReferenceParameterList(builder, false, true);
 
     PsiBuilder.Marker refOrType;
-
+    PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
     IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
+    if (tokenType == JavaTokenType.IDENTIFIER) {
+      if (anno != null) {
+        anno.rollbackTo();
+      }
       refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
