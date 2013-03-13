@@ -1,1 +1,1 @@
-org.jetbrains.plugins.javaFX.JavaFxBuilderService
+org.jetbrains.jps.incremental.artifacts.ArtifactBuilderService
