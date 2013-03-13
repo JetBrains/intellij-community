@@ -52,3 +52,4 @@ pycharm-numpy
 textmate
 restClient
 puppet
+fileWatcher
