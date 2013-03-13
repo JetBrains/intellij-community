@@ -54,6 +54,10 @@ public class JavaSourceRootDetectionTest extends PlatformTestCase {
     doTest();
   }
 
+  public void testFileWithBom() {
+    doTest("src", "");
+  }
+
   private void doTest(String... expected) {
     final String dirPath = JavaTestUtil.getJavaTestDataPath() + FileUtil.toSystemDependentName("/ide/sourceRootDetection/" + getTestName(true));
     final File dir = new File(dirPath);
