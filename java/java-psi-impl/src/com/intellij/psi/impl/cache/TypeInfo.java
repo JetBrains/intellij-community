@@ -71,7 +71,7 @@ public class TypeInfo {
   private static final int HAS_ARRAY_COUNT = 0x40;
   private static final int HAS_ELLIPSIS = 0x80;
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false, ContainerUtil.<PsiAnnotationStub>emptyList());
+  private static final TypeInfo NULL = new TypeInfo((StringRef)null, (byte)0, false, Collections.<PsiAnnotationStub>emptyList());
 
   public final StringRef text;
   public final byte arrayCount;
@@ -79,13 +79,17 @@ public class TypeInfo {
 
   private final List<PsiAnnotationStub> myAnnotationStubs;
 
-  public TypeInfo(StringRef text, byte arrayCount, boolean isEllipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
-    this.text = text;
-    this.arrayCount = arrayCount;
-    this.isEllipsis = isEllipsis;
-    this.myAnnotationStubs = annotationStubs;
+  public TypeInfo(String _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+    this(StringRef.fromString(_text == null ? null : internFrequentType(_text)), _arrayCount, ellipsis, annotationStubs);
   }
 
+  public TypeInfo(StringRef _text, byte _arrayCount, boolean ellipsis, @NotNull List<PsiAnnotationStub> annotationStubs) {
+    text = _text;
+    arrayCount = _arrayCount;
+    isEllipsis = ellipsis;
+    myAnnotationStubs = annotationStubs;
+  }
+  
   @NotNull
   public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
     PsiModifierListStub modifierList = (PsiModifierListStub)owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
@@ -128,7 +132,7 @@ public class TypeInfo {
   @NotNull
   public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement parentStub) {
     String text;
-    int arrayCount = 0;
+    byte arrayCount = 0;
     boolean isEllipsis = false;
 
     if (element.getTokenType() == JavaElementType.ENUM_CONSTANT) {
@@ -171,7 +175,9 @@ public class TypeInfo {
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    return new TypeInfo(StringRef.fromString(text), (byte)arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    List<PsiAnnotationStub> annotations = Collections.emptyList();  // todo[r.sh] JDK 8 type annotations
+
+    return new TypeInfo(text , arrayCount, isEllipsis, annotations);
   }
 
   @NotNull
@@ -184,9 +190,7 @@ public class TypeInfo {
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    StringRef text = StringRef.fromString(typeText);
-
-    return new TypeInfo(text, arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(typeText, arrayCount, isEllipsis, Collections.<PsiAnnotationStub>emptyList());
   }
 
   @NotNull
@@ -263,5 +267,11 @@ public class TypeInfo {
     }
 
     return buf.toString();
+  }
+
+  @NotNull
+  private static String internFrequentType(@NotNull String type) {
+    int frequentIndex = ourFrequentTypeIndex.get(type);
+    return frequentIndex == 0 ? type : ourIndexFrequentType[frequentIndex];
   }
 }
