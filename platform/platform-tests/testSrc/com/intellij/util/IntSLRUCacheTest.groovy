@@ -25,22 +25,22 @@ class IntSLRUCacheTest extends UsefulTestCase {
     return new IntSLRUCache<IntSLRUCache.CacheEntry<String>>(prot, prob)
   }
 
-  static IntSLRUCache.CacheEntry<String> entry(String s) {
-    return new IntSLRUCache.CacheEntry<String>(s)
+  static IntSLRUCache.CacheEntry<String> entry(int i) {
+    return new IntSLRUCache.CacheEntry<String>(i, i as String)
   }
 
   public void "test cached after add"() {
     def cache = createCache()
-    cache.cacheEntry(0, entry("a"))
+    cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0)
     assert !cache.getCachedEntry(1)
   }
 
   public void "test evict infrequent"() {
     def cache = createCache(2, 2)
-    cache.cacheEntry(0, entry("a"))
-    cache.cacheEntry(1, entry("b"))
-    cache.cacheEntry(2, entry("c"))
+    cache.cacheEntry(entry(0))
+    cache.cacheEntry(entry(1))
+    cache.cacheEntry(entry(2))
     assert !cache.getCachedEntry(0)
     assert cache.getCachedEntry(1)
     assert cache.getCachedEntry(2)
@@ -48,12 +48,12 @@ class IntSLRUCacheTest extends UsefulTestCase {
 
   public void "test frequently accessed should survive"() {
     def cache = createCache(2, 2)
-    cache.cacheEntry(0, entry("a"))
-    cache.cacheEntry(1, entry("b"))
+    cache.cacheEntry(entry(0))
+    cache.cacheEntry(entry(1))
     assert cache.getCachedEntry(0)
 
-    cache.cacheEntry(2, entry("c"))
-    cache.cacheEntry(3, entry("d"))
+    cache.cacheEntry(entry(2))
+    cache.cacheEntry(entry(3))
 
     assert cache.getCachedEntry(0)
     assert !cache.getCachedEntry(1)
@@ -62,17 +62,17 @@ class IntSLRUCacheTest extends UsefulTestCase {
 
   public void "test drop frequently accessed in the past"() {
     def cache = createCache()
-    cache.cacheEntry(0, entry("a"))
+    cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0) // protected now
 
-    cache.cacheEntry(1, entry("b"))
-    cache.cacheEntry(2, entry("c"))
+    cache.cacheEntry(entry(1))
+    cache.cacheEntry(entry(2))
 
     assert cache.getCachedEntry(0) // still protected
     assert !cache.getCachedEntry(1)
     assert cache.getCachedEntry(2) // protected now instead of 0
 
-    cache.cacheEntry(1, entry("b"))
+    cache.cacheEntry(entry(1))
 
     assert !cache.getCachedEntry(0)
     assert cache.getCachedEntry(2)
@@ -81,16 +81,16 @@ class IntSLRUCacheTest extends UsefulTestCase {
 
   public void "test changing working set"() {
     def cache = createCache()
-    cache.cacheEntry(0, entry("a"))
+    cache.cacheEntry(entry(0))
     assert cache.getCachedEntry(0)
 
-    cache.cacheEntry(1, entry("b"))
+    cache.cacheEntry(entry(1))
     assert cache.getCachedEntry(1)
     assert cache.getCachedEntry(0)
     assert cache.getCachedEntry(1)
     assert cache.getCachedEntry(0)
 
-    cache.cacheEntry(2, entry("c"))
+    cache.cacheEntry(entry(2))
     assert cache.getCachedEntry(2)
     assert cache.getCachedEntry(0)
     assert !cache.getCachedEntry(1)
