@@ -16,17 +16,19 @@
 package com.intellij.util
 
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.containers.IntObjectLinkedMap
+
 /**
  * @author peter
  */
 class IntSLRUCacheTest extends UsefulTestCase {
 
-  static IntSLRUCache<IntSLRUCache.CacheEntry<String>> createCache(int prot = 1, int prob = 1) {
-    return new IntSLRUCache<IntSLRUCache.CacheEntry<String>>(prot, prob)
+  static IntSLRUCache<IntObjectLinkedMap.MapEntry<String>> createCache(int prot = 1, int prob = 1) {
+    return new IntSLRUCache<IntObjectLinkedMap.MapEntry<String>>(prot, prob)
   }
 
-  static IntSLRUCache.CacheEntry<String> entry(int i) {
-    return new IntSLRUCache.CacheEntry<String>(i, i as String)
+  static IntObjectLinkedMap.MapEntry<String> entry(int i) {
+    return new IntObjectLinkedMap.MapEntry<String>(i, i as String)
   }
 
   public void "test cached after add"() {

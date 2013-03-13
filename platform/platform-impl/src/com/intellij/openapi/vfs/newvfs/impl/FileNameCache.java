@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.containers.IntObjectLinkedMap;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -202,7 +203,7 @@ public class FileNameCache {
     return chars;
   }
 
-  private static class NameSuffixEntry extends IntSLRUCache.CacheEntry<Object> {
+  private static class NameSuffixEntry extends IntObjectLinkedMap.MapEntry<Object> {
     final byte suffixId;
 
     private NameSuffixEntry(int nameId, byte suffixId, Object rawName) {
