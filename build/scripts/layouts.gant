@@ -185,6 +185,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
             module("javaFX")
             module("javaFX-CE")
           }
+          jar("javaFX-jps-plugin.jar") {
+            module("javaFX-jps-plugin")
+          }
+          jar("common-javaFX-plugin.jar") {
+            module("common-javaFX-plugin")
+          }
         }
       }
     }
