@@ -46,6 +46,7 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
+  public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
   /**
    * the partial line from stdout stream
    */
@@ -227,10 +228,19 @@ public class SvnLineCommand extends SvnCommand {
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
       @Override
       protected void onTextAvailable(String text, Key outputType) {
+        int myErrCnt = 0;
+
         // we won't stop right now if got "authentication realm" -> since we want to get "password" string (that would mean password is expected
         // or certificate maybe is expected
-        if (ProcessOutputTypes.STDERR.equals(outputType) && ! text.trim().startsWith(AUTHENTICATION_REALM)) {
-          destroyProcess();
+        // but for certificate passphrase we get just "Passphrase for ..." - one line without line feed
+
+        // for client certificate (when no path in servers file) we get
+        // Authentication realm: <text>
+        // Client certificate filename:
+        if (ProcessOutputTypes.STDERR.equals(outputType)) {
+          if (text.trim().startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
+            destroyProcess();
+          }
         }
         super.onTextAvailable(text, outputType);
       }
