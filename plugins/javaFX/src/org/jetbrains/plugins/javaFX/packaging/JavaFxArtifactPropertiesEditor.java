@@ -19,6 +19,9 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -51,11 +54,17 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private TextFieldWithBrowseButton myAppClass;
   private JTextField myWidthTF;
   private JTextField myHeightTF;
+  private TextFieldWithBrowseButton myHtmlParams;
+  private TextFieldWithBrowseButton myParams;
+  private JCheckBox myUpdateInBackgroundCB;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, Project project, Artifact artifact) {
     super();
     myProperties = properties;
     new JavaFxApplicationClassBrowser(project, artifact).setField(myAppClass);
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
+    myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
+    myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
   }
 
   @Override
@@ -76,11 +85,19 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getDescription(), myDescriptionEditorPane)) return true;
     if (isModified(myProperties.getWidth(), myWidthTF)) return true;
     if (isModified(myProperties.getHeight(), myHeightTF)) return true;
-    if (!Comparing.strEqual(myProperties.getAppClass(), myAppClass.getText().trim())) return true;
+    if (isModified(myProperties.getAppClass(), myAppClass)) return true;
+    if (isModified(myProperties.getHtmlParamFile(), myHtmlParams)) return true;
+    if (isModified(myProperties.getParamFile(), myParams)) return true;
+    final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
+    if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
     return false;
   }
 
   private static boolean isModified(final String title, JTextComponent tf) {
+    return !Comparing.strEqual(title, tf.getText().trim());
+  }
+  
+  private static boolean isModified(final String title, TextFieldWithBrowseButton tf) {
     return !Comparing.strEqual(title, tf.getText().trim());
   }
 
@@ -92,6 +109,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setAppClass(myAppClass.getText());
     myProperties.setWidth(myWidthTF.getText());
     myProperties.setHeight(myHeightTF.getText());
+    myProperties.setHtmlParamFile(myHtmlParams.getText());
+    myProperties.setParamFile(myParams.getText());
+    myProperties.setUpdateMode(myUpdateInBackgroundCB.isSelected() ? JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND 
+                                                                   : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
   }
 
   @Override
@@ -101,9 +122,15 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myDescriptionEditorPane, myProperties.getDescription());
     setText(myWidthTF, myProperties.getWidth());
     setText(myHeightTF, myProperties.getHeight());
-    final String appClass = myProperties.getAppClass();
-    if (appClass != null) {
-      myAppClass.setText(appClass.trim());
+    setText(myAppClass, myProperties.getAppClass());
+    setText(myHtmlParams, myProperties.getHtmlParamFile());
+    setText(myParams, myProperties.getParamFile());
+    myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
+  }
+
+  private static void setText(TextFieldWithBrowseButton tf, final String title) {
+    if (title != null) {
+      tf.setText(title.trim());
     }
   }
 

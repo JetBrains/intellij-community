@@ -2,6 +2,7 @@ package org.jetbrains.plugins.javaFX;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 
 /**
  * User: anna
@@ -24,6 +25,9 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setDescription(state.myDescription);
     myState.setWidth(state.myWidth);
     myState.setHeight(state.myHeight);
+    myState.setHtmlParamFile(state.myHtmlParamFile);
+    myState.setParamFile(state.myParamFile);
+    myState.setUpdateMode(state.myUpdateMode);
   }
 
   @NotNull
@@ -42,8 +46,11 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myVendor;
     private String myDescription;
     private String myAppClass;
-    private String myWidth = "600";
-    private String myHeight = "400";
+    private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
+    private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
+    private String myHtmlParamFile;
+    private String myParamFile;
+    private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
 
     public String getTitle() {
       return myTitle;
@@ -91,6 +98,30 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setHeight(String height) {
       myHeight = height;
+    }
+
+    public String getHtmlParamFile() {
+      return myHtmlParamFile;
+    }
+
+    public String getParamFile() {
+      return myParamFile;
+    }
+
+    public void setHtmlParamFile(String htmlParamFile) {
+      myHtmlParamFile = htmlParamFile;
+    }
+
+    public void setParamFile(String paramFile) {
+      myParamFile = paramFile;
+    }
+
+    public String getUpdateMode() {
+      return myUpdateMode;
+    }
+
+    public void setUpdateMode(String updateMode) {
+      myUpdateMode = updateMode;
     }
   }
 }
