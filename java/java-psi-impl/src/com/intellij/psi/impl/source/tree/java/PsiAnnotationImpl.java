@@ -119,6 +119,10 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return (PsiAnnotationOwner)parent;
     }
 
+    if (parent instanceof PsiNewExpression) {
+      return ((PsiNewExpression)parent).getOwner(this);
+    }
+
     if (parent instanceof PsiReferenceExpression) {
       PsiElement ctx = parent.getParent();
       if (ctx instanceof PsiMethodReferenceExpression) {
