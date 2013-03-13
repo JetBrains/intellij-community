@@ -27,11 +27,11 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,18 +207,18 @@ public class ContentRevisionCache {
   }
 
   private static void checkLocalFileSize(FilePath path) throws VcsException {
-    File ioFile;
-    if ((ioFile = path.getIOFile()).exists()) {
+    File ioFile = path.getIOFile();
+    if (ioFile.exists()) {
       checkContentsSize(ioFile.getPath(), ioFile.length());
     }
   }
 
   public static void checkContentsSize(final String path, final long size) throws VcsException {
-    if (size > PersistentFSConstants.getMaxIntellisenseFileSize()) {
+    if (size > VcsUtil.getMaxVcsLoadedFileSize()) {
       throw new VcsException("Can not show contents of \n'" + path +
                              "'.\nFile size is bigger than " +
-                             StringUtil.formatFileSize(PersistentFSConstants.getMaxIntellisenseFileSize()) +
-                             ".\n\nYou can change maximum file size parameter through -Didea.max.intellisense.filesize=<size in KB>");
+                             StringUtil.formatFileSize(VcsUtil.getMaxVcsLoadedFileSize()) +
+                             ".\n\nYou can relax this restriction by increasing max.vcs.loaded.size.kb property in idea.properties file.");
     }
   }
 

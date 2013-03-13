@@ -45,7 +45,9 @@ public interface DiffRequestPresentable {
       myRequest = request;
       myReturnValue = returnValue;
       myErrors = new ArrayList<String>();
-      myErrors.add(error);
+      if (! StringUtil.isEmptyOrSpaces(error)) {
+        myErrors.add(error);
+      }
     }
 
     public void addError(final String e) {

@@ -29,16 +29,12 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -143,23 +139,24 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   public byte[] loadContent() throws IOException, VcsException {
-    ByteArrayOutputStream contents = new ByteArrayOutputStream();
-    ContentLoader loader = new ContentLoader(myURL, contents, myRevision, myPegRevision);
+    ContentLoader loader = new ContentLoader(myURL, myRevision, myPegRevision);
     if (ApplicationManager.getApplication().isDispatchThread() &&
         !myRevision.isLocal()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"), false, myVCS.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"),
+                                                                        false, myVCS.getProject());
     }
     else {
       loader.run();
     }
     if (loader.getException() == null) {
-      ContentRevisionCache.checkContentsSize(myURL, contents.size());
-      return contents.toByteArray();
+      final byte[] contents = loader.getContents();
+      ContentRevisionCache.checkContentsSize(myURL, contents.length);
+      return contents;
     }
     else {
-      final SVNException svnException = loader.getException();
-      LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + svnException.getMessage(), svnException);
-      throw new VcsException(svnException);
+      final VcsException vcsException = loader.getException();
+      LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + vcsException.getMessage(), vcsException);
+      throw vcsException;
     }
   }
 
@@ -189,18 +186,21 @@ public class SvnFileRevision implements VcsFileRevision {
     private final SVNRevision myRevision;
     private final SVNRevision myPegRevision;
     private final String myURL;
-    private final OutputStream myDst;
-    private SVNException myException;
+    private VcsException myException;
+    private byte[] myContents;
 
-    public ContentLoader(String url, OutputStream dst, SVNRevision revision, SVNRevision pegRevision) {
+    public ContentLoader(String url, SVNRevision revision, SVNRevision pegRevision) {
       myURL = url;
-      myDst = dst;
       myRevision = revision;
       myPegRevision = pegRevision;
     }
 
-    public SVNException getException() {
+    public VcsException getException() {
       return myException;
+    }
+
+    private byte[] getContents() {
+      return myContents;
     }
 
     public void run() {
@@ -209,11 +209,11 @@ public class SvnFileRevision implements VcsFileRevision {
         progress.setText(SvnBundle.message("progress.text.loading.contents", myURL));
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
+
       try {
-        SVNWCClient client = myVCS.createWCClient();
-        client.doGetFileContents(SVNURL.parseURIEncoded(myURL), myRevision, myRevision, true, myDst);
+        myContents = SvnUtil.getFileContents(myVCS, myURL, true, myRevision, myPegRevision);
       }
-      catch (SVNException e) {
+      catch (VcsException e) {
         myException = e;
       }
     }
