@@ -710,19 +710,19 @@ public class SvnUtil {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream() {
       @Override
       public synchronized void write(int b) {
-        if (buf.length > maxSize) throw new FileTooBigRuntimeException();
+        if (size() > maxSize) throw new FileTooBigRuntimeException();
         super.write(b);
       }
 
       @Override
       public synchronized void write(byte[] b, int off, int len) {
-        if (buf.length > maxSize) throw new FileTooBigRuntimeException();
+        if (size() > maxSize) throw new FileTooBigRuntimeException();
         super.write(b, off, len);
       }
 
       @Override
       public synchronized void writeTo(OutputStream out) throws IOException {
-        if (buf.length > maxSize) throw new FileTooBigRuntimeException();
+        if (size() > maxSize) throw new FileTooBigRuntimeException();
         super.writeTo(out);
       }
     };
