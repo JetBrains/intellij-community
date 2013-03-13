@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,13 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   };
 
   @NonNls String DEFAULT_REFERENCED_METHOD_NAME = "value";
+
+  /**
+   * Kinds of element to which an annotation type is applicable (see {@link java.lang.annotation.ElementType}).
+   */
+  enum TargetType {
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER
+  }
 
   /**
    * Returns the list of parameters for the annotation.

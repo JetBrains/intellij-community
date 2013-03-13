@@ -540,7 +540,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           Function<VirtualFileSystemEntry, String> verboseToString = new Function<VirtualFileSystemEntry, String>() {
             @Override
             public String fun(VirtualFileSystemEntry entry) {
-              return entry + " (name: '" + entry.getName() + "', " + entry.getClass()+ ", parent:"+entry.getParent()+"; id:"+entry.getId()+"; FS:" +entry.getFileSystem()+ "; delegate.attrs:" +entry.getFileSystem().getAttributes(entry)+ ") ";
+              return entry + " (name: '" + entry.getName()
+                     + "', " + entry.getClass()
+                     + ", parent:"+entry.getParent()
+                     + "; id:"+entry.getId()
+                     + "; FS:" +entry.getFileSystem()
+                     + "; delegate.attrs:" +entry.getFileSystem().getAttributes(entry)
+                     + "; caseSensitive:" +entry.getFileSystem().isCaseSensitive()
+                     + "; canonical:" +entry.getFileSystem().getCanonicallyCasedName(entry)
+                     + ") ";
             }
           };
           String children = StringUtil.join(array, verboseToString, ",");

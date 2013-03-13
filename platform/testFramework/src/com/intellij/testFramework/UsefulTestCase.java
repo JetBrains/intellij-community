@@ -121,6 +121,10 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  protected boolean shouldDeleteTempFilesOnTearDown() {
+    return true;
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -128,7 +132,7 @@ public abstract class UsefulTestCase extends TestCase {
       cleanupSwingDataStructures();
     }
     finally {
-      if (shouldContainTempFiles()) {
+      if (shouldContainTempFiles() && shouldDeleteTempFilesOnTearDown()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         FileUtil.delete(new File(myTempDir));
       }

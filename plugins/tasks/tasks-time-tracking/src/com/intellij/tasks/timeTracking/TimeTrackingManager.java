@@ -76,16 +76,16 @@ public class TimeTrackingManager implements ProjectComponent, PersistentStateCom
         toolWindow =
           ToolWindowManager.getInstance(myProject).registerToolWindow(ToolWindowId.TASKS, true, ToolWindowAnchor.RIGHT, myProject, true);
         new TasksToolWindowFactory().createToolWindowContent(myProject, toolWindow);
-        final ToolWindow finalToolWindow = toolWindow;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            finalToolWindow.setAvailable(true, null);
-            finalToolWindow.show(null);
-            finalToolWindow.activate(null);
-          }
-        });
       }
+      final ToolWindow finalToolWindow = toolWindow;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          finalToolWindow.setAvailable(true, null);
+          finalToolWindow.show(null);
+          finalToolWindow.activate(null);
+        }
+      });
     }
     else {
       if (toolWindow != null) {

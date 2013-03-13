@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -52,7 +51,7 @@ import java.awt.*;
  */
 public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(final Project project, final EditorGutterComponentEx gutterComponent, final Point whereToShow, final Object breakpoint) {
+  protected void doShowPopup(final Project project, final JComponent component, final Point whereToShow, final Object breakpoint) {
     if (!(breakpoint instanceof BreakpointWithHighlighter)) return;
 
     final BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpoint;
@@ -103,7 +102,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         });
       }
     };
-    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions,
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, component, showMoreOptions,
                                                                 breakpoint);
     balloon.addListener(saveOnClose);
 
@@ -113,7 +112,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         propertiesPanel.setActionsPanelVisible(true);
         balloon.hide();
         final Balloon newBalloon =
-          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions, breakpoint);
+          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, component, showMoreOptions, breakpoint);
         newBalloon.addListener(saveOnClose);
       }
     });

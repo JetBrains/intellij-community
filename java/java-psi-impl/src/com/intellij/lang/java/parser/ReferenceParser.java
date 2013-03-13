@@ -74,7 +74,8 @@ public class ReferenceParser {
 
         while (builder.getTokenType() == operator) {
           builder.advanceLexer();
-          if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
+          IElementType tokenType = builder.getTokenType();
+          if (tokenType != JavaTokenType.IDENTIFIER && tokenType != JavaTokenType.AT) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
           }
           parseTypeInfo(builder, flags, false);

@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -34,7 +35,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 
 import javax.swing.*;
 
-public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem> {
+public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
   public abstract Object getBreakpoint();
@@ -94,7 +95,7 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   }
 
 
-  protected abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
+  public abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
 
   public abstract Icon getIcon();
 
@@ -117,6 +118,4 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   public int hashCode() {
     return getBreakpoint() != null ? getBreakpoint().hashCode() : 0;
   }
-
-  public abstract boolean navigate();
 }

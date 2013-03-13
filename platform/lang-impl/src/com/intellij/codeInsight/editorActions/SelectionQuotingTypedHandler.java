@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -56,11 +55,10 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       final int selectionEnd = selectionModel.getSelectionEnd();
       if (selectedText.length() > 1) {
         final char firstChar = selectedText.charAt(0);
-        if (isSimilarDelimiters(firstChar, c) &&
-            selectedText.charAt(selectedText.length() - 1) == getMatchingDelimiter(firstChar) &&
-            (isQuote(firstChar) || firstChar != c) &&
-            !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c)
-          ) {
+        final char lastChar = selectedText.charAt(selectedText.length() - 1);
+        if (isSimilarDelimiters(firstChar, c) && lastChar == getMatchingDelimiter(firstChar) &&
+            (isQuote(firstChar) || firstChar != c) && !shouldSkipReplacementOfQuotesOrBraces(psiFile, editor, selectedText, c) &&
+            selectedText.indexOf(lastChar, 1) == selectedText.length() - 1) {
           selectedText = selectedText.substring(1, selectedText.length() - 1);
         }
       }

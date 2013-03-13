@@ -21,14 +21,9 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointMasterDetailPopupBuilder;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class BreakpointsMasterDetailPopupFactory {
 
@@ -40,20 +35,6 @@ public class BreakpointsMasterDetailPopupFactory {
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
-  }
-
-  public static List<BreakpointPanelProvider> collectPanelProviders() {
-    List<BreakpointPanelProvider> panelProviders = new ArrayList<BreakpointPanelProvider>();
-    for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
-      panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
-    }
-    Collections.sort(panelProviders, new Comparator<BreakpointPanelProvider>() {
-      @Override
-      public int compare(BreakpointPanelProvider o1, BreakpointPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
-    return panelProviders;
   }
 
   public void setBalloonToHide(Balloon balloonToHide, Object breakpoint) {
@@ -76,11 +57,12 @@ public class BreakpointsMasterDetailPopupFactory {
     }
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
     builder.setInitialBreakpoint(initialBreakpoint != null ? initialBreakpoint : myBreakpoint);
-    builder.setBreakpointsPanelProviders(collectPanelProviders());
+    builder.setBreakpointsPanelProviders(XBreakpointUtil.collectPanelProviders());
     builder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
       @Override
       public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup, boolean withEnterOrDoubleClick) {
-        if (withEnterOrDoubleClick && breakpointItem.navigate()) {
+        if (withEnterOrDoubleClick && breakpointItem.canNavigate()) {
+          breakpointItem.navigate(true);
           popup.cancel();
         }
       }
@@ -101,7 +83,7 @@ public class BreakpointsMasterDetailPopupFactory {
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        for (BreakpointPanelProvider provider : collectPanelProviders()) {
+        for (BreakpointPanelProvider provider : XBreakpointUtil.collectPanelProviders()) {
           provider.onDialogClosed(myProject);
         }
         myPopupShowing = null;

@@ -95,6 +95,10 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     doTest('[', "<selection><caret>(aaa)</selection>\nbbb\n\n", "[aaa]\nbbb\n\n");
   }
 
+  public void testDontChangeBrackets() {
+    doTest('(', "aaa<selection>[foo][bar]<caret></selection>bbb", "aaa([foo][bar])bbb");
+  }
+
   public void testDoubleBrackets() {
     doTest('[', "<selection><caret>[aaa]</selection>\nbbb\n\n", "[[aaa]]\nbbb\n\n");
   }
@@ -110,6 +114,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
   public void testTripleEnquote() {
     doTest("\"\"\"", "<selection>text<caret></selection>\nbbb\n\n", "\"\"\"<selection>text</selection>\"\"\"\nbbb\n\n");
   }
+
 
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
     final boolean smarterSelection = Registry.is("editor.smarterSelectionQuoting");

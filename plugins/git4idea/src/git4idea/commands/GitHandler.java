@@ -433,7 +433,7 @@ public abstract class GitHandler {
       else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
         GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-        GitHttpAuthenticator httpAuthenticator = new GitHttpAuthenticator(myProject, myState, myCommand);
+        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myState, myCommand);
         myHandlerNo = service.registerHandler(httpAuthenticator);
         myEnvironmentCleanedUp = false;
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));

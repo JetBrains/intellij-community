@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +186,7 @@ public final class IntentionActionMetaData {
     if (pageURL != null) {
       try {
         final String url = pageURL.toExternalForm();
-        return new URL(url.substring(0, url.lastIndexOf('/')));
+        return UrlClassLoader.internProtocol(new URL(url.substring(0, url.lastIndexOf('/'))));
       }
       catch (MalformedURLException e) {
         LOG.error(e);

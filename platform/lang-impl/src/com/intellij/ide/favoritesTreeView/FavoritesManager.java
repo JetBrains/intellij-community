@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
@@ -124,7 +123,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     for (String listName : myName2FavoritesRoots.keySet()) {
       result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
     }
-    for (FavoritesListProvider provider : myProviders.values()) {
+    ArrayList<FavoritesListProvider> providers = new ArrayList<FavoritesListProvider>(myProviders.values());
+    Collections.sort(providers);
+    for (FavoritesListProvider provider : providers) {
       result.add(provider.createFavoriteListNode(myProject));
     }
     return result;

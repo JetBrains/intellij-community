@@ -44,24 +44,15 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   private static final int DEPRECATED = 0x08;
   private static final int DEPRECATED_ANNOTATION = 0x10;
 
-  public PsiMethodStubImpl(final StubElement parent,
-                           final StringRef name,
-                           final byte flags,
-                           final StringRef defaultValueText) {
+  public PsiMethodStubImpl(StubElement parent, StringRef name, byte flags, StringRef defaultValueText) {
     super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
-
     myFlags = flags;
     myName = name;
     myDefaultValueText = defaultValueText;
   }
 
-  public PsiMethodStubImpl(final StubElement parent,
-                           final StringRef name,
-                           final TypeInfo returnType,
-                           final byte flags,
-                           final StringRef defaultValueText) {
+  public PsiMethodStubImpl(StubElement parent, StringRef name, TypeInfo returnType, byte flags, StringRef defaultValueText) {
     super(parent, isAnnotationMethod(flags) ? JavaStubElementTypes.ANNOTATION_METHOD : JavaStubElementTypes.METHOD);
-
     myReturnType = returnType;
     myFlags = flags;
     myName = name;
@@ -99,7 +90,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   @NotNull
   public TypeInfo getReturnTypeText(boolean doResolve) {
-    return doResolve ? PsiFieldStubImpl.addApplicableTypeAnnotationsFromChildModifierList(this, myReturnType) : myReturnType;
+    return doResolve ? myReturnType.applyAnnotations(this) : myReturnType;
   }
 
   @Override

@@ -207,42 +207,24 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @Override
   public final ASTNode findChildByRole(final int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
+
     switch (role) {
-    default:
-           return null;
+      case ChildRole.REFERENCE_NAME:
+        return TreeUtil.findChildBackward(this, JavaTokenType.IDENTIFIER);
 
-    case ChildRole.REFERENCE_NAME:
-           if (getLastChildNode().getElementType() == JavaTokenType.IDENTIFIER) {
-             return getLastChildNode();
-           }
-           else {
-             if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
-               ASTNode current = getLastChildNode().getTreePrev();
-               while (current != null && (current.getPsi() instanceof PsiWhiteSpace || current.getPsi() instanceof PsiComment)) {
-                 current = current.getTreePrev();
-               }
-               if (current != null && current.getElementType() == JavaTokenType.IDENTIFIER) {
-                 return current;
-               }
-             }
-             return null;
-           }
-
-    case ChildRole.REFERENCE_PARAMETER_LIST:
-      if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
-        return getLastChildNode();
+      case ChildRole.REFERENCE_PARAMETER_LIST: {
+        TreeElement lastChild = getLastChildNode();
+        return lastChild.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST ? lastChild : null;
       }
-      return null;
 
       case ChildRole.QUALIFIER:
-        if (getFirstChildNode().getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
-          return getFirstChildNode();
-        }
-        return null;
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
 
       case ChildRole.DOT:
-      return findChildByType(JavaTokenType.DOT);
+        return findChildByType(JavaTokenType.DOT);
     }
+
+    return null;
   }
 
   @Override
@@ -712,7 +694,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   @Override
   public boolean isQualified() {
-    return getChildRole(getFirstChildNode()) != ChildRole.REFERENCE_NAME;
+    return getQualifier() != null;
   }
 
   @Override

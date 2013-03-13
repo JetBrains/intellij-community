@@ -126,7 +126,6 @@ public final class Presentation implements Cloneable {
     myDisplayedMnemonicIndex = -1;
 
     if (text != null) {
-
       if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
         text = text.replace(UIUtil.MNEMONIC, '&');
       }
@@ -153,10 +152,10 @@ public final class Presentation implements Cloneable {
           }
           plainText.append(ch);
         }
-        myText = plainText.toString();
+        myText = plainText.length() == 0 ? "" : plainText.toString();
       }
       else {
-        myText = text;
+        myText = text.isEmpty() ? "" : text;
       }
     }
     else {
