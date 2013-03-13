@@ -74,7 +74,15 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     String prompt = "Enter the password for " + url;
     String key = adjustHttpUrl(url);
     myPasswordKey = key;
-    return PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, key, false, null);
+    String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, key, false, null);
+    if (password == null) {
+      return "";
+    }
+    // Password is stored in the safe in PasswordSafePromptDialog.askPassword,
+    // but it is not the right behavior (incorrect password is stored too because of that) and should be fixed separately.
+    // We store it here manually, to let it work after that behavior is fixed.
+    myPassword = password;
+    return password;
   }
 
   @Override

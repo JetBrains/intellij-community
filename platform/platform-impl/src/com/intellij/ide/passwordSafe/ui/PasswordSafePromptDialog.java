@@ -101,6 +101,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
+  @Nullable
   public static String askPassword(final Project project,
                                    @Nullable ModalityState modalityState, final String title,
                                    final String message,
@@ -121,6 +122,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
+  @Nullable
   public static String askPassword(final String title,
                                    final String message,
                                    final Class<?> requester,
@@ -144,6 +146,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
+  @Nullable
   public static String askPassphrase(final Project project,
                                      @Nullable ModalityState modalityState, final String title,
                                      final String message,
@@ -172,6 +175,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param promptLabel   the prompt label text
    * @param checkboxLabel the checkbox text   @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
+  @Nullable
   private static String askPassword(final Project project,
                                     @Nullable ModalityState modalityState, final String title,
                                     final String message,
