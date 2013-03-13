@@ -51,17 +51,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.PsiAnnotation.TargetType;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
 
-  private static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.newHashSet(
+  private static final Set<TargetType> DEFAULT_TARGETS = Collections.unmodifiableSet(ContainerUtil.newHashSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE,
     TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE));
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};
@@ -336,66 +339,47 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  private static TargetType translateTargetRef(PsiReference reference) {
-    PsiElement field = reference.resolve();
-    if (field instanceof PsiEnumConstant) {
-      String name = ((PsiEnumConstant)field).getName();
-      try {
-        return TargetType.valueOf(name);
-      }
-      catch (IllegalArgumentException e) {
-        LOG.warn("Unknown target: " + name);
-      }
-    }
-    return null;
-  }
-
-  public static boolean isAnnotationApplicable(@NotNull PsiAnnotation annotation, boolean strict, @Nullable TargetType... types) {
-    if (types != null && types.length != 0) {
+  public static TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull TargetType... types) {
+    if (types.length != 0) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       if (ref != null) {
         PsiElement annotationType = ref.resolve();
         if (annotationType instanceof PsiClass) {
-          return findApplicableTarget((PsiClass)annotationType, types) != null;
+          return findApplicableTarget((PsiClass)annotationType, types);
         }
       }
     }
 
-    return !strict;
-  }
-
-  public static boolean isAnnotationApplicable(@NotNull PsiClass annotationType, boolean strict, @Nullable TargetType... types) {
-    return types == null || types.length == 0 ? !strict : findApplicableTarget(annotationType, types) != null;
+    return TargetType.UNKNOWN;
   }
 
   @Nullable
   public static TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
-    Set<TargetType> targets = getAnnotationTargets(annotationType);
-    if (targets != null) {
-      for (TargetType type : types) {
-        if (targets.contains(type)) {
-          return type;
+    if (types.length != 0) {
+      Set<TargetType> targets = getAnnotationTargets(annotationType);
+      if (targets != null) {
+        for (TargetType type : types) {
+          if (type != TargetType.UNKNOWN && targets.contains(type)) {
+            return type;
+          }
         }
+        return null;
       }
     }
 
-    return null;
+    return TargetType.UNKNOWN;
   }
 
+  // todo[r.sh] cache?
   @Nullable
   private static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;
-
-    // todo[r.sh] cache?
     PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 
-    PsiNameValuePair[] values = target.getParameterList().getAttributes();
-    if (values.length == 0) return Collections.emptySet();
-
-    PsiAnnotationMemberValue value = values[0].getValue();
+    PsiAnnotationMemberValue value = target.findAttributeValue(null);
     if (value instanceof PsiReference) {
       TargetType targetType = translateTargetRef((PsiReference)value);
       if (targetType != null) {
@@ -419,9 +403,24 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static TargetType[] getApplicableTargets(@Nullable PsiAnnotationOwner owner) {
+  private static TargetType translateTargetRef(PsiReference reference) {
+    PsiElement field = reference.resolve();
+    if (field instanceof PsiEnumConstant) {
+      String name = ((PsiEnumConstant)field).getName();
+      try {
+        return TargetType.valueOf(name);
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("Unknown target: " + name);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     if (owner == null) {
-      return null;
+      return TargetType.EMPTY_ARRAY;
     }
 
     if (owner instanceof PsiType || owner instanceof PsiTypeElement) {
@@ -464,7 +463,7 @@ public class PsiImplUtil {
       }
     }
 
-    return null;
+    return TargetType.EMPTY_ARRAY;
   }
 
   @Nullable

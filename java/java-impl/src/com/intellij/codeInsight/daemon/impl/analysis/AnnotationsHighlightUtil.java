@@ -264,12 +264,10 @@ public class AnnotationsHighlightUtil {
 
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
-    PsiElement annotationType = nameRef.resolve();
-    if (!(annotationType instanceof PsiClass)) return null;
 
     PsiAnnotationOwner owner = annotation.getOwner();
-    PsiAnnotation.TargetType[] targets = PsiImplUtil.getApplicableTargets(owner);
-    if (owner == null || targets == null) {
+    PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
+    if (owner == null || targets.length == 0) {
       String message = JavaErrorMessages.message("annotation.not.allowed.here");
       return annotationError(annotation, message);
     }
@@ -279,7 +277,9 @@ public class AnnotationsHighlightUtil {
       if (info != null) return info;
     }
 
-    PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget((PsiClass)annotationType, targets);
+    PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(annotation, targets);
+    if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
+
     if (applicable == null) {
       String target = JavaErrorMessages.message("annotation.target." + targets[0]);
       String message = JavaErrorMessages.message("annotation.not.applicable", nameRef.getText(), target);

@@ -20,7 +20,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -44,6 +43,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.PsiAnnotation.TargetType;
 import static com.intellij.util.BitUtil.isSet;
 
 /**
@@ -101,7 +101,7 @@ public class TypeInfo {
     isEllipsis = ellipsis;
     myAnnotationStubs = annotationStubs;
   }
-  
+
   @NotNull
   public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
     PsiModifierListStub modifierList = (PsiModifierListStub)owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
@@ -111,7 +111,7 @@ public class TypeInfo {
     for (StubElement child : modifierList.getChildrenStubs()) {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.isAnnotationApplicable(annotationStub.getPsiElement(), true, PsiAnnotation.TargetType.TYPE_USE)) {
+      if (PsiImplUtil.findApplicableTarget(annotationStub.getPsiElement(), TargetType.TYPE_USE) == TargetType.TYPE_USE) {
         annotationStubs.add(annotationStub);
       }
     }

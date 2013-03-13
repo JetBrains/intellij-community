@@ -258,11 +258,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
-    final PsiAnnotation.TargetType[] targets = PsiImplUtil.getApplicableTargets(this);
+    final PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
       @Override
       public boolean value(PsiAnnotation annotation) {
-        return PsiImplUtil.isAnnotationApplicable(annotation, true, targets);
+        PsiAnnotation.TargetType target = PsiImplUtil.findApplicableTarget(annotation, targets);
+        return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
       }
     });
 
