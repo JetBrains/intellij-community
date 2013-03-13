@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * an array creation expression.
    *
    * @return the array of expressions for the dimensions, or an empty array if the
-   * <code>new</code> expression is not an array creation expression.
+   *         <code>new</code> expression is not an array creation expression.
    */
   @NotNull
   PsiExpression[] getArrayDimensions();
@@ -47,7 +47,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    * an array creation expression.
    *
    * @return the array initializer expression, or null if the <code>new</code>
-   * expression is not an array creation expression or has no initializer.
+   *         expression is not an array creation expression or has no initializer.
    */
   @Nullable
   PsiArrayInitializerExpression getArrayInitializer();
@@ -63,8 +63,7 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
   /**
    * Returns the anonymous class created by the <code>new</code> expression.
    *
-   * @return the anonymous class, or null if the expression does not create an
-   * anonymous class.
+   * @return the anonymous class, or null if the expression does not create an anonymous class.
    */
   @Nullable
   PsiAnonymousClass getAnonymousClass();
@@ -75,5 +74,16 @@ public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall 
    *
    * @return class reference, or null if the expression is incomplete.
    */
-  @Nullable PsiJavaCodeReferenceElement getClassOrAnonymousClassReference();
+  @Nullable
+  PsiJavaCodeReferenceElement getClassOrAnonymousClassReference();
+
+  /**
+   * For type-annotated array creation expressions returns subtype of getType(),
+   * to which an annotation belongs.
+   *
+   * @param annotation annotation to find the type for.
+   * @return annotated subtype or null, if annotation is incorrectly placed.
+   */
+  @Nullable
+  PsiType getOwner(@NotNull PsiAnnotation annotation);
 }

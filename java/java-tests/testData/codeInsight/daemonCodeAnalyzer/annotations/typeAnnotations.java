@@ -102,9 +102,10 @@ class Outer {
   void m(List<@TA ? extends Comparable<Object>> p) { }
 
   void arrays(String @TA ... docs) {
-    //todo[r.sh]
-    //@TA String @TA [] @TA [] docs1 = new @TA String @TA [2] @TA [2];
-    //@TA int @TA [] ints = new @TA int @TA [2];
+    @TA String @TA [] @TA [] docs1 = new @TA String @TA [2] @TA [2];
+    @TA int @TA [] ints = new @TA int @TA [2];
+    new Boolean @TA [2] <error descr="Annotations are not allowed here">@TA</error>;
+    new Boolean @<error descr="Duplicate annotation">TA</error> @<error descr="Duplicate annotation">TA</error> [42];
   }
 
   @TA Outer() { }
