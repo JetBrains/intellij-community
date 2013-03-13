@@ -61,6 +61,8 @@ class SpecSamples {
     @Readonly Document [][] docs1 = new @Readonly Document [2][12]; // array of arrays of read-only documents
     Document @Readonly [][] docs2 = new Document @Readonly [2][12]; // read-only array of arrays of documents
     Document[] @Readonly [] docs3 = new Document[2] @Readonly [12]; // array of read-only arrays of documents
+
+    @NonNegative int @NonEmpty [] ints = new @NonNegative int @MinSize(2) [2];
   }
 
   //

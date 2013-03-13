@@ -104,6 +104,7 @@ class Outer {
   void arrays(String @TA ... docs) {
     //todo[r.sh]
     //@TA String @TA [] @TA [] docs1 = new @TA String @TA [2] @TA [2];
+    //@TA int @TA [] ints = new @TA int @TA [2];
   }
 
   @TA Outer() { }
