@@ -35,4 +35,10 @@ class AutoClosableTest2
             bar.go();
         }
     }
+
+    void dodo() throws java.io.IOException {
+        try (java.io.Reader  reader = new java.io.FileReader("/home/steve/foo.txt")) {
+            System.out.println(reader);
+        }
+    }
 }
