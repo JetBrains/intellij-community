@@ -18,10 +18,7 @@ package com.intellij.psi.impl.java.stubs.impl;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
-import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
@@ -41,13 +38,12 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   private static final int DEPRECATED = 0x02;
   private static final int DEPRECATED_ANNOTATION = 0x04;
 
-  public PsiFieldStubImpl(final StubElement parent, final String name, @NotNull TypeInfo type, @Nullable String initializer, final byte flags) {
+  public PsiFieldStubImpl(StubElement parent, String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
   }
 
-  public PsiFieldStubImpl(final StubElement parent, final StringRef name, @NotNull TypeInfo type, final StringRef initializer, final byte flags) {
+  public PsiFieldStubImpl(StubElement parent, StringRef name, @NotNull TypeInfo type, @Nullable StringRef initializer, byte flags) {
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
-
     myName = name;
     myType = type;
     myInitializer = initializer;
@@ -57,22 +53,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
-    return doResolve ? addApplicableTypeAnnotationsFromChildModifierList(this, myType) : myType;
-  }
-
-  public static TypeInfo addApplicableTypeAnnotationsFromChildModifierList(StubBase<?> aThis, TypeInfo type) {
-    PsiModifierListStub modifierList = (PsiModifierListStub)aThis.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (modifierList == null) return type;
-    TypeInfo typeInfo = new TypeInfo(type);
-    for (StubElement child: modifierList.getChildrenStubs()){
-      if (!(child instanceof PsiAnnotationStub)) continue;
-      PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getPsiElement();
-      if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
-        typeInfo.addAnnotation(annotationStub);
-      }
-    }
-    return typeInfo;
+    return doResolve ? myType.applyAnnotations(this) : myType;
   }
 
   @Override

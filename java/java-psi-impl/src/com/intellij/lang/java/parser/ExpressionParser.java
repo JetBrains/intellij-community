@@ -332,7 +332,12 @@ public class ExpressionParser {
         final int dotOffset = builder.getCurrentOffset();
         builder.advanceLexer();
 
-        final IElementType dotTokenType = builder.getTokenType();
+        IElementType dotTokenType = builder.getTokenType();
+        if (dotTokenType == JavaTokenType.AT) {
+          myParser.getDeclarationParser().parseAnnotations(builder);
+          dotTokenType = builder.getTokenType();
+        }
+
         if (dotTokenType == JavaTokenType.CLASS_KEYWORD && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P1 && builder.getCurrentOffset() == breakOffset) {
             error(builder, JavaErrorMessages.message("expected.identifier"));
@@ -691,9 +696,12 @@ public class ExpressionParser {
     myParser.getReferenceParser().parseReferenceParameterList(builder, false, true);
 
     PsiBuilder.Marker refOrType;
-
+    PsiBuilder.Marker anno = myParser.getDeclarationParser().parseAnnotations(builder);
     IElementType tokenType = builder.getTokenType();
-    if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
+    if (tokenType == JavaTokenType.IDENTIFIER) {
+      if (anno != null) {
+        anno.rollbackTo();
+      }
       refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));

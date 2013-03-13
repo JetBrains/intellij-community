@@ -14,34 +14,21 @@ package git4idea;/*
  * limitations under the License.
  */
 
-import com.intellij.dvcs.test.MockProject;
-import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import cucumber.annotation.After;
-import cucumber.annotation.Before;
 import cucumber.annotation.en.And;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
-import git4idea.test.GitTestImpl;
-import git4idea.test.GitTestPlatformFacade;
-import git4idea.test.TestNotificator;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static com.intellij.dvcs.test.Executor.mkdir;
-import static git4idea.GitCucumberWorld.*;
+import static git4idea.GitCucumberWorld.myNotificator;
+import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
 import static git4idea.test.GitExecutor.touch;
 import static git4idea.test.GitScenarios.checkout;
-import static git4idea.test.GitTestInitUtil.createRepository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -49,30 +36,6 @@ import static org.junit.Assert.assertNull;
  * @author Kirill Likhodedov
  */
 public class GeneralStepdefs {
-
-  @Before
-  public void setUpProject() throws IOException {
-    myTestRoot = FileUtil.createTempDirectory("", "").getPath();
-    cd(myTestRoot);
-    myProjectRoot = mkdir("project");
-    myProject = new MockProject(myProjectRoot);
-    myPlatformFacade = new GitTestPlatformFacade();
-    myGit = new GitTestImpl();
-    mySettings = myPlatformFacade.getSettings(myProject);
-    myVcsHelper = (MockVcsHelper) myPlatformFacade.getVcsHelper(myProject);
-    myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
-
-    cd(myProjectRoot);
-    myRepository = createRepository(myProjectRoot, myPlatformFacade, myProject);
-
-    virtualCommits = new GitTestVirtualCommitsHolder();
-  }
-
-  @After
-  public void cleanup() {
-    FileUtil.delete(new File(myTestRoot));
-    Disposer.dispose(myProject);
-  }
 
   @Given("^file (.+) '(.+)'$")
   public void file_untracked_txt(String fileName, String content) throws Throwable {
@@ -123,7 +86,7 @@ public class GeneralStepdefs {
   }
 
   private static Notification lastNotification() {
-    return ((TestNotificator)myPlatformFacade.getNotificator(myProject)).getLastNotification();
+    return myNotificator.getLastNotification();
   }
 
   @And("^no notification is shown$")

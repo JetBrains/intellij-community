@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
@@ -65,9 +67,9 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   public MyResult step(DiffChainContext context) {
     final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
-    final StringBuilder errSb = new StringBuilder();
+    final List<String> errSb = new ArrayList<String>();
     if (! canShowChange(context, errSb)) {
-      return new MyResult(request, DiffPresentationReturnValue.removeFromList, errSb.toString());
+      return new MyResult(request, DiffPresentationReturnValue.removeFromList, StringUtil.join(errSb, "\n"));
     }
     if (! loadCurrentContents(request, myChange)) return new MyResult(request, DiffPresentationReturnValue.quit);
     return new MyResult(request, DiffPresentationReturnValue.useRequest);
@@ -80,10 +82,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
   @Nullable
   public void haveStuff() throws VcsException {
-    final StringBuilder errSb = new StringBuilder();
+    final List<String> errSb = new ArrayList<String>();
     final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision(), errSb);
     if (! canShow) {
-      throw new VcsException(errSb.toString());
+      throw new VcsException(StringUtil.join(errSb, "\n"));
     }
   }
 
@@ -196,7 +198,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return content;
   }
 
-  private boolean canShowChange(DiffChainContext context, StringBuilder errSb) {
+  private boolean canShowChange(DiffChainContext context, List<String> errSb) {
     final ContentRevision bRev = myChange.getBeforeRevision();
     final ContentRevision aRev = myChange.getAfterRevision();
 
@@ -211,12 +213,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return isOk;
   }
 
-  private boolean checkContentRevision(ContentRevision rev, final DiffChainContext context, final StringBuilder errSb) {
+  private boolean checkContentRevision(ContentRevision rev, final DiffChainContext context, final List<String> errSb) {
     if (rev == null) return true;
     if (rev.getFile().isDirectory()) return false;
     if (! hasContents(rev, errSb)) {
-      // message box is shown with more detailed text
-      //VcsBalloonProblemNotifier.showOverChangesView(myProject, "Can not get contents for " + rev.getFile().getPath(), MessageType.WARNING);
       return false;
     }
     final FileType type = rev.getFile().getFileType();
@@ -227,7 +227,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return true;
   }
 
-  private static boolean hasContents(@Nullable final ContentRevision rev, final StringBuilder errSb) {
+  private static boolean hasContents(@Nullable final ContentRevision rev, final List<String> errSb) {
     if (rev == null) return false;
       try {
         if (rev instanceof BinaryContentRevision) {
@@ -237,13 +237,13 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         }
       }
       catch (VcsException e) {
-        if (errSb.length() > 0) errSb.append('\n');
-        errSb.append(e.getMessage());
+        LOG.info(e);
+        errSb.add(e.getMessage());
         return false;
       }
   }
 
-  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev, final StringBuilder errSb) {
+  private static boolean checkContentsAvailable(@Nullable final ContentRevision bRev, @Nullable final ContentRevision aRev, final List<String> errSb) {
     if (hasContents(bRev, errSb)) return true;
     return hasContents(aRev, errSb);
   }

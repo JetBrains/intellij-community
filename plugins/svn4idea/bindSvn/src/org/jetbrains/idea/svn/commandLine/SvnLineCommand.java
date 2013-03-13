@@ -135,11 +135,7 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     boolean getCredentials(String errText) throws SvnBindException {
-      final int idx = errText.indexOf('\n');
-      if (idx == -1) {
-        throw new SvnBindException("Can not detect authentication realm name: " + errText);
-      }
-      final String realm = errText.substring(AUTHENTICATION_REALM.length(), idx).trim();
+      final String realm = cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim();
       final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
       if (myTried) {
         myAuthenticationCallback.clearPassiveCredentials(realm, myBase, isPassword);
@@ -152,6 +148,12 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
+  private static String cutFirstLine(final String text) {
+    final int idx = text.indexOf('\n');
+    if (idx == -1) return text;
+    return text.substring(0, idx);
+  }
+
   private static class CertificateCallbackCase extends AuthCallbackCase {
     private CertificateCallbackCase(AuthenticationCallback callback, File base) {
       super(callback, base);
@@ -159,11 +161,7 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     public boolean getCredentials(final String errText) throws SvnBindException {
-      final int idx = errText.indexOf('\n');
-      if (idx == -1) {
-        throw new SvnBindException("Can not detect authentication realm name: " + errText);
-      }
-      String realm = errText.substring(CERTIFICATE_ERROR.length(), idx);
+      String realm = cutFirstLine(errText).substring(CERTIFICATE_ERROR.length());
       final int idx1 = realm.indexOf('\'');
       if (idx1 == -1) {
         throw new SvnBindException("Can not detect authentication realm name: " + errText);
@@ -229,7 +227,9 @@ public class SvnLineCommand extends SvnCommand {
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
       @Override
       protected void onTextAvailable(String text, Key outputType) {
-        if (ProcessOutputTypes.STDERR.equals(outputType)) {
+        // we won't stop right now if got "authentication realm" -> since we want to get "password" string (that would mean password is expected
+        // or certificate maybe is expected
+        if (ProcessOutputTypes.STDERR.equals(outputType) && ! text.trim().startsWith(AUTHENTICATION_REALM)) {
           destroyProcess();
         }
         super.onTextAvailable(text, outputType);
