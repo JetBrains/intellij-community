@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,8 +49,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myVendor;
   private String myDescription;
   private String myAppClass;
-  private String myWidth = "600";
-  private String myHeight = "400";
+  private String myWidth = JavaFxPackagerConstants.DEFAULT_WEIGHT;
+  private String myHeight = JavaFxPackagerConstants.DEFAULT_HEIGHT;
+  private String myHtmlParamFile;
+  private String myParamFile;
+  private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -162,6 +164,30 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myHeight = height;
   }
 
+  public String getHtmlParamFile() {
+    return myHtmlParamFile;
+  }
+
+  public void setHtmlParamFile(String htmlParamFile) {
+    myHtmlParamFile = htmlParamFile;
+  }
+
+  public String getParamFile() {
+    return myParamFile;
+  }
+
+  public void setParamFile(String paramFile) {
+    myParamFile = paramFile;
+  }
+
+  public String getUpdateMode() {
+    return myUpdateMode;
+  }
+
+  public void setUpdateMode(String updateMode) {
+    myUpdateMode = updateMode;
+  }
+
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -224,8 +250,23 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
-    protected void addParameter(List<String> commandLine, String param) {
-      super.addParameter(commandLine, GeneralCommandLine.prepareCommand(param));
+    protected String prepareParam(String param) {
+      return GeneralCommandLine.prepareCommand(param);
+    }
+    
+    @Override
+    protected String getHtmlParamFile() {
+      return myProperties.getHtmlParamFile();
+    }
+    
+    @Override
+    protected String getParamFile() {
+      return myProperties.getParamFile();
+    }
+
+    @Override
+    protected String getUpdateMode() {
+      return myProperties.getUpdateMode();
     }
   }
 }

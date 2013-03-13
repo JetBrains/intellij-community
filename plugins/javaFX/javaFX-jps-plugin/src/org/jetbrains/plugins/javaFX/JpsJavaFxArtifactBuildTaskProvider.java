@@ -139,8 +139,23 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
-    protected void addParameter(List<String> commandLine, String param) {
-      super.addParameter(commandLine, ExternalProcessUtil.prepareCommand(param));
+    protected String prepareParam(String param) {
+      return ExternalProcessUtil.prepareCommand(param);
+    }
+
+    @Override
+    protected String getHtmlParamFile() {
+      return myProperties.myState.getHtmlParamFile();
+    }
+
+    @Override
+    protected String getParamFile() {
+      return myProperties.myState.getParamFile();
+    }
+
+    @Override
+    protected String getUpdateMode() {
+      return myProperties.myState.getUpdateMode();
     }
   }
 }

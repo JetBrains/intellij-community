@@ -44,6 +44,9 @@ public abstract class AbstractJavaFxPackager {
   protected abstract String getDescription();
   protected abstract String getWidth();
   protected abstract String getHeight();
+  protected abstract String getHtmlParamFile();
+  protected abstract String getParamFile();
+  protected abstract String getUpdateMode();
 
   protected abstract void registerJavaFxPackagerError(final String message);
 
@@ -128,6 +131,15 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, "-height");
     addParameter(commandLine, getHeight());
 
+    addParameter(commandLine, "-htmlparamfile");
+    addParameter(commandLine, getHtmlParamFile());
+
+    addParameter(commandLine, "-paramfile");
+    addParameter(commandLine, getParamFile());
+
+    addParameter(commandLine, "-updatemode");
+    addParameter(commandLine, getUpdateMode());
+
     addParameter(commandLine, "-name");
     addParameter(commandLine, getArtifactName());
 
@@ -191,8 +203,11 @@ public abstract class AbstractJavaFxPackager {
     registerJavaFxPackagerError(ex.getMessage());
   }
 
-  protected void addParameter(List<String> commandLine, String param) {
-    commandLine.add(param);
+  protected abstract String prepareParam(String param);
+  private void addParameter(List<String> commandLine, String param) {
+    if (!StringUtil.isEmptyOrSpaces(param)) {
+      commandLine.add(prepareParam(param));
+    }
   }
 
   private void appendManifestProperties(List<String> commandLine) {
