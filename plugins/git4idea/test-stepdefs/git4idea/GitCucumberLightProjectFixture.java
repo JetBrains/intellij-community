@@ -49,7 +49,7 @@ class GitCucumberLightProjectFixture extends LightIdeaTestFixtureImpl {
   }
 
   @Override
-  protected boolean shouldContainTempFiles() {
+  protected boolean shouldDeleteTempFilesOnTearDown() {
     return false;
   }
 
