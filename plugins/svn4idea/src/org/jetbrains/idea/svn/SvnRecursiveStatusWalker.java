@@ -70,6 +70,7 @@ public class SvnRecursiveStatusWalker {
       final MyItem item = myQueue.removeFirst();
       final FilePath path = item.getPath();
       final File ioFile = path.getIOFile();
+      if (! ioFile.exists()) continue;  // skip items that have already moved/deleted (some time passed after they were reported as dirty)
 
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
