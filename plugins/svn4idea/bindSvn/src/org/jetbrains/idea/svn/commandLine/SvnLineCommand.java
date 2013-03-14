@@ -226,9 +226,10 @@ public class SvnLineCommand extends SvnCommand {
                                            File base, File configDir,
                                            String... parameters) throws SvnBindException {
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
+      int myErrCnt = 0;
+
       @Override
       protected void onTextAvailable(String text, Key outputType) {
-        int myErrCnt = 0;
 
         // we won't stop right now if got "authentication realm" -> since we want to get "password" string (that would mean password is expected
         // or certificate maybe is expected
@@ -238,6 +239,7 @@ public class SvnLineCommand extends SvnCommand {
         // Authentication realm: <text>
         // Client certificate filename:
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
+          ++ myErrCnt;
           if (text.trim().startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
             destroyProcess();
           }
