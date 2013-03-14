@@ -406,9 +406,10 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     String newText = myNewDocument.getText();
     // prepare guarded blocks
     LinkedHashMap<String, String> replacementMap = new LinkedHashMap<String, String>();
+    int count = 0;
     for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(REPLACEMENT_KEY);
-      String tempText = "REPLACE"+Long.toHexString(StringHash.calc(replacement));
+      String tempText = "REPLACE"+(count++)+Long.toHexString(StringHash.calc(replacement));
       newText = newText.substring(0, o.getStartOffset()) + tempText + newText.substring(o.getEndOffset());
       replacementMap.put(tempText, replacement);
     }
