@@ -71,7 +71,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        CompositeGenerator generator) {
     if (preprocessing) return;
     final String artifactName = artifact.getName();
-    String tempPathToFileSet = BuildProperties.propertyRef("artifact.temp.output." + artifactName);
+    final String tempPathToFileSet = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
     final List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
@@ -138,7 +138,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(tempPathToFileSet);
     generator.add(creator.createDirectoryContentCopyInstruction(tempPathToFileSet + "/deploy"));
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
-    final Tag deleteFileSetTag = new Tag("fileset", new Pair<String, String>("dir", "${artifact.temp.output.unnamed}"));
+    final Tag deleteFileSetTag = new Tag("fileset", new Pair<String, String>("dir", tempPathToFileSet));
     deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactFileName)));
     deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactName + ".jnlp")));
     deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactName + ".html")));
