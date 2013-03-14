@@ -95,6 +95,8 @@ public class ArtifactsGenerator {
       initTarget.add(generator);
     }
 
+    initArtifacts(myResolvingContext.getProject(), initTarget);
+
     Target buildAllArtifacts = new Target(BUILD_ALL_ARTIFACTS_TARGET, depends.toString(), "Build all artifacts", null);
     for (Artifact artifact : myAllArtifacts) {
       final String artifactOutputPath = artifact.getOutputPath();
@@ -181,6 +183,12 @@ public class ArtifactsGenerator {
   private void generateTasksForArtifacts(Artifact artifact, Target artifactTarget, final boolean preprocessing) {
     for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
       extension.generateTasksForArtifact(artifact, preprocessing, myContext, artifactTarget);
+    }
+  }
+
+  private void initArtifacts(Project project, CompositeGenerator generator) {
+    for (ChunkBuildExtension extension : ChunkBuildExtension.EP_NAME.getExtensions()) {
+      extension.initArtifacts(project, myContext.getGenerationOptions(), generator);
     }
   }
 
