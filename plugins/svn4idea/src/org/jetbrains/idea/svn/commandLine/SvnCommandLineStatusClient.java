@@ -26,8 +26,6 @@ import org.jetbrains.idea.svn.Util;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.tmatesoft.sqljet.core.SqlJetErrorCode;
-import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.*;
@@ -197,10 +195,10 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       @Override
       public void switchPath() {
         final PortableStatus pending = svnHandl[0].getPending();
-        if (pending.isLocked()) {
+        /*if (pending.isLocked()) {
           throw new SvnExceptionWrapper(new SVNException(SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR),
-                                                         new SqlJetException(SqlJetErrorCode.BUSY)));
-        }
+                                                         new SqlJetException(SqlJetErrorCode.BUSY, "Working copy is locked for: " + base)));
+        }*/
         pending.setChangelistName(changelistName[0]);
         try {
           //if (infoBase != null) {
