@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public final class BundledFileTemplate extends FileTemplateBase {
   
   private final DefaultTemplate myDefaultTemplate;
+  private final boolean myInternal;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
 
-  public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate) {
+  public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
+    myInternal = internal;
   }
   
   @NotNull
@@ -72,7 +74,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
   }
 
   public boolean isEnabled() {
-    return myEnabled;
+    return myInternal || myEnabled;
   }
 
   public void setEnabled(boolean enabled) {
