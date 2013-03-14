@@ -83,15 +83,16 @@ public class JpsProjectLoader extends JpsLoaderBase {
       new JpsProjectLoader(project, pathVariables, file.getParentFile()).loadFromIpr(file);
     }
     else {
+      File dotIdea = new File(file, PathMacroUtil.DIRECTORY_STORE_NAME);
       File directory;
-      if (file.isDirectory() && file.getName().equals(PathMacroUtil.DIRECTORY_STORE_NAME)) {
+      if (dotIdea.isDirectory()) {
+        directory = dotIdea;
+      }
+      else if (file.isDirectory() && file.getName().equals(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directory = file;
       }
       else {
-        directory = new File(file, PathMacroUtil.DIRECTORY_STORE_NAME);
-        if (!directory.isDirectory()) {
-          throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
-        }
+        throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
       new JpsProjectLoader(project, pathVariables, directory.getParentFile()).loadFromDirectory(directory);
     }
