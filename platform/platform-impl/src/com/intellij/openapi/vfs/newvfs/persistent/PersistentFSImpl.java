@@ -60,7 +60,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
   private final Object myInputLock = new Object();
 
-  @Nullable private VirtualFileSystemEntry myFakeRoot;
+  @Nullable private volatile VirtualFileSystemEntry myFakeRoot;
   private boolean myShutDown = false;
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
