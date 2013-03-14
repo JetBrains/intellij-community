@@ -51,4 +51,8 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
     return PackagingElementFactory.getInstance().createArchive(artifactName + ".jar");
   }
+  
+  public static JavaFxApplicationArtifactType getInstance() {
+    return EP_NAME.findExtension(JavaFxApplicationArtifactType.class);
+  }
 }

@@ -24,10 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.AntCopyInstructionCreator;
-import com.intellij.packaging.elements.ArtifactAntGenerationContext;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +33,7 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -51,6 +49,31 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   @Override
   public void process(Project project, ModuleChunk chunk, GenerationOptions genOptions, CompositeGenerator generator) {}
+
+  @Override
+  public void initArtifacts(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
+    final Collection<? extends Artifact> artifacts =
+      ArtifactManager.getInstance(project).getArtifactsByType(JavaFxApplicationArtifactType.getInstance());
+    if (artifacts.isEmpty()) return;
+    final Sdk[] jdks = BuildProperties.getUsedJdks(project);
+    Sdk javaSdk = null;
+    for (Sdk jdk : jdks) {
+      if (jdk.getSdkType() instanceof JavaSdkType) {
+        javaSdk = jdk;
+        break;
+      }
+    }
+    if (javaSdk != null) {
+      final Tag taskdef = new Tag("taskdef",
+                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
+                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
+                                  new Pair<String, String>("classpath",
+                                                           BuildProperties
+                                                             .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
+                                                           "/lib/ant-javafx.jar"));
+      generator.add(taskdef);
+    }
+  }
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                   final AntCopyInstructionCreator copyInstructionCreator,
@@ -72,69 +95,54 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     if (preprocessing) return;
     final String artifactName = artifact.getName();
     final String tempPathToFileSet = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
-    final List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
+    final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+    final List<PackagingElement<?>> children = rootElement.getChildren();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
                                                               new DirectoryAntCopyInstructionCreator(tempPathToFileSet),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
     }
-    final Sdk[] jdks = BuildProperties.getUsedJdks(context.getProject());
-    Sdk javaSdk = null;
-    for (Sdk jdk : jdks) {
-      if (jdk.getSdkType() instanceof JavaSdkType) {
-        javaSdk = jdk;
-        break;
-      }
-    }
-    final String artifactFileName = artifactName + ".jar";
-    if (javaSdk != null) {
-      final Tag taskdef = new Tag("taskdef",
-                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
-                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
-                                  new Pair<String, String>("classpath", 
-                                                           BuildProperties.propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) + "/lib/ant-javafx.jar"));
-      generator.add(taskdef);
-
-      final JavaFxArtifactProperties properties =
-        (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
-
-      //register application
-      final String appId = artifactName + "_id";
-      final Tag applicationTag = new Tag("fx:application",
-                                         new Pair<String, String>("id", appId),
-                                         new Pair<String, String>("name", artifactName),
-                                         new Pair<String, String>("mainClass", properties.getAppClass()));
-      generator.add(applicationTag);
-
-      //create jar task
-      final Tag createJarTag = new Tag("fx:jar",
-                                       new Pair<String, String>("destfile", tempPathToFileSet + "/" + artifactFileName));
-      createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-      createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempPathToFileSet)));
-      generator.add(createJarTag);
-
-      //deploy task
-      final Tag deployTag = new Tag("fx:deploy",
-                                    new Pair<String, String>("width", properties.getWidth()),
-                                    new Pair<String, String>("height", properties.getHeight()),
-                                    new Pair<String, String>("updatemode", properties.getUpdateMode()),
-                                    new Pair<String, String>("outdir", tempPathToFileSet + "/deploy"),
-                                    new Pair<String, String>("outfile", artifactName));
-      deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-
-      deployTag.add(new Tag("fx:info",
-                            new Pair<String, String>("title", properties.getTitle()),
-                            new Pair<String, String>("vendor", properties.getVendor()),
-                            new Pair<String, String>("description", properties.getDescription())));
-      final Tag deployResourcesTag = new Tag("fx:resources");
-      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempPathToFileSet), 
-                                                   new Pair<String, String>("includes", artifactFileName)));
-      deployTag.add(deployResourcesTag);
-
-      generator.add(deployTag);
-    }
     
+    final String artifactFileName = artifactName + ".jar";
+    final JavaFxArtifactProperties properties =
+      (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
+
+    //register application
+    final String appId = artifactName + "_id";
+    final Tag applicationTag = new Tag("fx:application",
+                                       new Pair<String, String>("id", appId),
+                                       new Pair<String, String>("name", artifactName),
+                                       new Pair<String, String>("mainClass", properties.getAppClass()));
+    generator.add(applicationTag);
+
+    //create jar task
+    final Tag createJarTag = new Tag("fx:jar",
+                                     new Pair<String, String>("destfile", tempPathToFileSet + "/" + artifactFileName));
+    createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
+    createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempPathToFileSet)));
+    generator.add(createJarTag);
+
+    //deploy task
+    final Tag deployTag = new Tag("fx:deploy",
+                                  new Pair<String, String>("width", properties.getWidth()),
+                                  new Pair<String, String>("height", properties.getHeight()),
+                                  new Pair<String, String>("updatemode", properties.getUpdateMode()),
+                                  new Pair<String, String>("outdir", tempPathToFileSet + "/deploy"),
+                                  new Pair<String, String>("outfile", artifactName));
+    deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
+
+    deployTag.add(new Tag("fx:info",
+                          new Pair<String, String>("title", properties.getTitle()),
+                          new Pair<String, String>("vendor", properties.getVendor()),
+                          new Pair<String, String>("description", properties.getDescription())));
+    final Tag deployResourcesTag = new Tag("fx:resources");
+    deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempPathToFileSet), 
+                                                 new Pair<String, String>("includes", artifactFileName)));
+    deployTag.add(deployResourcesTag);
+
+    generator.add(deployTag);
+
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(tempPathToFileSet);
     generator.add(creator.createDirectoryContentCopyInstruction(tempPathToFileSet + "/deploy"));
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
