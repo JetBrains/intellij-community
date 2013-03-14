@@ -132,10 +132,17 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return getParameterList().getParameters();
   }
 
+  @Nullable
   public GrTypeElement getReturnTypeElementGroovy() {
     final GrMethodStub stub = getStub();
     if (stub != null) {
-      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(stub.getTypeText(), this);
+      final String typeText = stub.getTypeText();
+      if (typeText != null) {
+        return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
+      }
+      else {
+        return null;
+      }
     }
 
     return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
