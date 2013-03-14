@@ -5,7 +5,6 @@
  */
 package com.jetbrains.python.debugger.pydev;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 public class RemoteDebugger implements ProcessDebugger {
+  private static final int RESPONSE_TIMEOUT = 60000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
 
@@ -37,15 +37,12 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private static final SecureRandom ourRandom = new SecureRandom();
 
-
-  private static final int CONNECTION_TIMEOUT = 60000;
-
   private final IPyDebugProcess myDebugProcess;
 
   @NotNull
   private final ServerSocket myServerSocket;
 
-  private final int myTimeout;
+  private final int myConnectionTimeout;
   private final Object mySocketObject = new Object(); // for synchronization on socket
   private Socket mySocket;
   private volatile boolean myConnected = false;
@@ -61,7 +58,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
     myServerSocket = serverSocket;
-    myTimeout = timeout;
+    myConnectionTimeout = timeout;
   }
 
   public IPyDebugProcess getDebugProcess() {
@@ -78,7 +75,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public void waitForConnect() throws Exception {
     try {
       //noinspection SocketOpenedButNotSafelyClosed
-      myServerSocket.setSoTimeout(CONNECTION_TIMEOUT);
+      myServerSocket.setSoTimeout(myConnectionTimeout);
       synchronized (mySocketObject) {
         mySocket = myServerSocket.accept();
         myConnected = true;
@@ -264,7 +261,7 @@ public class RemoteDebugger implements ProcessDebugger {
   @Nullable
   ProtocolFrame waitForResponse(final int sequence) {
     ProtocolFrame response;
-    long until = System.currentTimeMillis() + myTimeout;
+    long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
     synchronized (myResponseQueue) {
       do {

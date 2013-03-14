@@ -180,6 +180,7 @@ private layoutPlugins(layouts) {
       }
     }
     layouts.layoutPlugin("puppet")
+    layouts.layoutPlugin("fileWatcher")
   }
 
   layouts.layoutPlugins()
