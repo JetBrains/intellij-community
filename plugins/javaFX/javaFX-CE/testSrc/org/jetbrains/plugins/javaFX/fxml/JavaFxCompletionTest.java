@@ -113,6 +113,10 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("blue");
   }
 
+  public void testRootTagNameLayout() throws Exception {
+    doTest("GridPane");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

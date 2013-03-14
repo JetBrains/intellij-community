@@ -42,6 +42,7 @@ public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_FXML_FXMLLOADER = "javafx.fxml.FXMLLoader";
   @NonNls public static final String JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE = "javafx.beans.value.ObservableValue";
   @NonNls public static final String JAVAFX_BEANS_VALUE_WRITABLE_VALUE = "javafx.beans.value.WritableValue";
+  @NonNls public static final String JAVAFX_SCENE_LAYOUT_PANE = "javafx.scene.layout.Pane";
 
   public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
   static {
