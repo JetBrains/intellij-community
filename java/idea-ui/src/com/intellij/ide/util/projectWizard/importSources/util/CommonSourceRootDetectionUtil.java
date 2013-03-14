@@ -18,10 +18,10 @@ package com.intellij.ide.util.projectWizard.importSources.util;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.text.CharsetUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +109,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
   private static char[] loadFileTextSkippingBom(File file) throws IOException {
     //noinspection IOResourceOpenedButNotSafelyClosed
-    InputStream stream = CharsetUtil.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
+    InputStream stream = CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
     Reader reader = new InputStreamReader(stream);
     try {
       return FileUtilRt.loadText(reader, (int)file.length());

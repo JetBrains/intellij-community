@@ -16,8 +16,8 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathUtil;
-import com.intellij.util.text.CharsetUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
@@ -175,7 +175,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
       ZipOutputStream output = new ZipOutputStream(new FileOutputStream(file));
       try {
         output.putNextEntry(new ZipEntry(fileNameInArchive));
-        output.write(text.getBytes(CharsetUtil.UTF8));
+        output.write(text.getBytes(CharsetToolkit.UTF8));
         output.closeEntry();
       }
       finally {

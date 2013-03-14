@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.NullableFunction;
@@ -338,7 +339,7 @@ public class IdeaGateway {
     try {
       VirtualFile file = findVirtualFile(path);
       if (file == null) {
-        return CharsetToolkit.bytesToString(bytes);
+        return CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset());
       }
       return new String(bytes, file.getCharset().name());
     }

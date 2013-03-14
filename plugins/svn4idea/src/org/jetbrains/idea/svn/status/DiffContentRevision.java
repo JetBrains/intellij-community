@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class DiffContentRevision implements ContentRevision {
       }
       final byte[] bytes = bos.toByteArray();
       final Charset charset = myFilePath.getCharset();
-      myContents = charset == null ? CharsetToolkit.bytesToString(bytes) : CharsetToolkit.bytesToString(bytes, charset);
+      myContents = charset == null ? CharsetToolkit.bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset()) : CharsetToolkit.bytesToString(bytes, charset);
     }
     return myContents;
   }
