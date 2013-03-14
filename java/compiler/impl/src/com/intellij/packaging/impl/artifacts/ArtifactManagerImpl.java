@@ -98,6 +98,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return myModel.getOriginalArtifact(artifact);
   }
 
+  @NotNull
   public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
     return myModel.getArtifactsByType(type);
   }
