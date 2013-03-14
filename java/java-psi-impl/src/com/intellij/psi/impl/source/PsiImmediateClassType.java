@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,9 @@ public class PsiImmediateClassType extends PsiClassType {
         enclosingClass = (PsiClass)parent;
       }
     }
-    buffer.append(getAnnotationsTextPrefix());
+    if (canonical == internal) {
+      buffer.append(getAnnotationsTextPrefix());
+    }
     if (enclosingClass != null) {
       buildText(enclosingClass, substitutor, buffer, canonical, false);
       buffer.append('.');
@@ -203,7 +205,7 @@ public class PsiImmediateClassType extends PsiClassType {
       buffer.append(name);
     }
 
-    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     if (typeParameters.length > 0) {
       StringBuilder pineBuffer = new StringBuilder();
       pineBuffer.append('<');
