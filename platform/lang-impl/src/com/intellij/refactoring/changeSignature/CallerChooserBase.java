@@ -249,7 +249,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         }
       }
     };
-    Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, false, true, false));
+    Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, true, true, false));
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 
