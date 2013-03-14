@@ -45,4 +45,19 @@ public class PersistentFSTest extends PlatformTestCase {
 
     assertNull(PersistentFS.getInstance().findFileById(id));
   }
+
+  public void testListChildrenOfTheRootOfTheRoot() {
+    PersistentFS fs = PersistentFS.getInstance();
+    VirtualFile fakeRoot = fs.findRoot("", LocalFileSystem.getInstance());
+    int users = fs.getId(fakeRoot, "Users", LocalFileSystem.getInstance());
+    assertEquals(0, users);
+    int win = fs.getId(fakeRoot, "Windows", LocalFileSystem.getInstance());
+    assertEquals(0, win);
+
+    VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
+    for (VirtualFile root : roots) {
+      int rid = fs.getId(fakeRoot, root.getName(), LocalFileSystem.getInstance());
+      assertTrue(0 != rid);
+    }
+  }
 }
