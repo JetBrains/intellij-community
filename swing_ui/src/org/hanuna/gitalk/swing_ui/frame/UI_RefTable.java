@@ -1,39 +1,32 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
-import org.hanuna.gitalk.swing_ui.render.CommitCellRender;
-import org.hanuna.gitalk.ui.tables.CommitCell;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
-import java.awt.*;
-
-import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
+import org.hanuna.gitalk.swing_ui.render.Print_Parameters;
+import org.hanuna.gitalk.swing_ui.render.RefTreeCellRender;
+import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.treetable.TreeTableModel;
 
 /**
  * @author erokhins
  */
-public class UI_RefTable extends JTable {
+public class UI_RefTable extends JXTreeTable {
 
-    public UI_RefTable(@NotNull TableModel refsTableModel) {
-        super(refsTableModel);
+    public UI_RefTable(TreeTableModel treeModel) {
+        super(treeModel);
         prepare();
     }
 
     private void prepare() {
-        setDefaultRenderer(CommitCell.class, new CommitCellRender());
+        setRootVisible(false);
+        expandAll();
 
-        setRowHeight(HEIGHT_CELL);
-        setShowHorizontalLines(false);
-        setIntercellSpacing(new Dimension(0, 0));
+        getColumnModel().getColumn(0).setMaxWidth(20);
 
+        setTreeCellRenderer(new RefTreeCellRender());
 
-        getColumnModel().getColumn(0).setMinWidth(24);
-        getColumnModel().getColumn(0).setMaxWidth(24);
-        getColumnModel().getColumn(1).setPreferredWidth(800);
-        getColumnModel().getColumn(2).setMinWidth(80);
-        getColumnModel().getColumn(3).setMinWidth(80);
+        setRowHeight(Print_Parameters.HEIGHT_CELL);
 
+        setLeafIcon(null);
+        setClosedIcon(null);
+        setOpenIcon(null);
     }
-
 }
