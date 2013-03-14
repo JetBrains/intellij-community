@@ -65,7 +65,7 @@ public class FileTemplatesLoader {
   public FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager) {
     myTypeManager = typeManager;
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
-    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR);
+    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR, true);
     myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, INCLUDES_DIR);
     myCodeTemplatesManager = new FTManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY, CODETEMPLATES_DIR);
     myJ2eeTemplatesManager = new FTManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, J2EE_TEMPLATES_DIR);
