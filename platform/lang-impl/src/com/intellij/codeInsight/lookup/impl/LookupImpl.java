@@ -73,7 +73,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -174,7 +173,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myList.setFixedCellWidth(50);
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setBackground(UIUtil.isUnderDarcula() ? LookupCellRenderer.BACKGROUND_COLOR_DARK_VARIANT : LookupCellRenderer.BACKGROUND_COLOR);
+    myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
     myList.getExpandableItemsHandler();
 
@@ -218,7 +217,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     addListeners();
 
-    mySortingLabel.setBorder(new LineBorder(Color.LIGHT_GRAY));
+    mySortingLabel.setBorder(new LineBorder(new JBColor(Color.LIGHT_GRAY, JBColor.background)));
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
