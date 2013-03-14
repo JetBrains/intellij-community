@@ -103,7 +103,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
       }
 
       public void visitAntDomElement(AntDomElement element) {
-        if (result.get() != null || element instanceof AntDomCustomElement) {
+        if (result.get() != null) {
           return;
         }
         if (id.equals(element.getId().getRawText())) {
