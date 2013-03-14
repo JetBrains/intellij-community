@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
@@ -74,6 +75,8 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   private final Map<Thread, String> myKeyAlgorithm;
   private boolean myArtificialSaving;
   private ISVNAuthenticationProvider myProvider;
+  public static final Topic<ISVNAuthenticationProviderListener> AUTHENTICATION_PROVIDER_LISTENER =
+    new Topic<ISVNAuthenticationProviderListener>("AUTHENTICATION_PROVIDER_LISTENER", ISVNAuthenticationProviderListener.class);
   private final static ThreadLocal<ISVNAuthenticationProvider> ourThreadLocalProvider = new ThreadLocal<ISVNAuthenticationProvider>();
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
@@ -110,10 +113,56 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     });
   }
 
+  private class AuthenticationProviderProxy implements ISVNAuthenticationProvider {
+    private final ISVNAuthenticationProvider myDelegate;
+
+    private AuthenticationProviderProxy(ISVNAuthenticationProvider delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public SVNAuthentication requestClientAuthentication(String kind,
+                                                         SVNURL url,
+                                                         String realm,
+                                                         SVNErrorMessage errorMessage,
+                                                         SVNAuthentication previousAuth, boolean authMayBeStored) {
+      final SVNAuthentication authentication =
+        myDelegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
+      if (myProject != null && ! myProject.isDisposed()) {
+        myProject.getMessageBus().syncPublisher(AUTHENTICATION_PROVIDER_LISTENER)
+          .requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored, authentication);
+      }
+      return authentication;
+    }
+
+    @Override
+    public int acceptServerAuthentication(SVNURL url,
+                                          String realm,
+                                          Object certificate,
+                                          boolean resultMayBeStored) {
+      final int result = myDelegate.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
+      if (myProject != null && ! myProject.isDisposed()) {
+        myProject.getMessageBus().syncPublisher(AUTHENTICATION_PROVIDER_LISTENER)
+          .acceptServerAuthentication(url, realm, certificate, resultMayBeStored, result);
+      }
+      return result;
+    }
+  }
+
+  public static interface ISVNAuthenticationProviderListener {
+    void requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage,
+      SVNAuthentication previousAuth, boolean authMayBeStored, SVNAuthentication authentication);
+    void acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored, int accepted);
+  }
+
   @Override
   public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
-    myProvider = provider;
-    super.setAuthenticationProvider(provider);
+    ISVNAuthenticationProvider useProvider = provider;
+    if (! (provider instanceof AuthenticationProviderProxy)) {
+      useProvider = new AuthenticationProviderProxy(provider);
+    }
+    myProvider = useProvider;
+    super.setAuthenticationProvider(myProvider);
   }
 
   public ISVNAuthenticationProvider getProvider() {
