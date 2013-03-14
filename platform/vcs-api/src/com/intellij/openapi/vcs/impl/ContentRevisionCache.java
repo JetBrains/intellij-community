@@ -218,7 +218,7 @@ public class ContentRevisionCache {
       throw new VcsException("Can not show contents of \n'" + path +
                              "'.\nFile size is bigger than " +
                              StringUtil.formatFileSize(VcsUtil.getMaxVcsLoadedFileSize()) +
-                             ".\n\nYou can relax this restriction by increasing max.vcs.loaded.size.kb property in idea.properties file.");
+                             ".\n\nYou can relax this restriction by increasing " + VcsUtil.MAX_VCS_LOADED_SIZE_KB + " property in idea.properties file.");
     }
   }
 
