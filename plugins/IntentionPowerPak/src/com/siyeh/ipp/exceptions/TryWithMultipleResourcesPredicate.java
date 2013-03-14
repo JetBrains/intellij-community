@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,15 @@ class TryWithMultipleResourcesPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
-      return false;
+
+    if (element instanceof PsiJavaToken) {
+      final PsiJavaToken javaToken = (PsiJavaToken)element;
+      final IElementType tokenType = javaToken.getTokenType();
+      if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
+        return false;
+      }
     }
-    final PsiJavaToken javaToken = (PsiJavaToken)element;
-    final IElementType tokenType = javaToken.getTokenType();
-    if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
+    else if (!(element instanceof PsiResourceList)) {
       return false;
     }
     final PsiElement parent = element.getParent();
@@ -41,10 +44,6 @@ class TryWithMultipleResourcesPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
-    final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-    if (catchBlocks.length > 0) {
-      return false;
-    }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
       return false;
@@ -57,7 +56,6 @@ class TryWithMultipleResourcesPredicate implements PsiElementPredicate {
     if (tryBlock == null) {
       return false;
     }
-    final List<PsiResourceVariable> variables = resourceList.getResourceVariables();
-    return variables.size() > 1;
+    return resourceList.getResourceVariables().size() > 1;
   }
 }

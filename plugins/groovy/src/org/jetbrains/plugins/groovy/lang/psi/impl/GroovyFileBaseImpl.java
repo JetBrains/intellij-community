@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,6 +242,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private volatile SoftReference<Instruction[]> myControlFlow = null;
 
   public Instruction[] getControlFlow() {
+    assert isValid();
     SoftReference<Instruction[]> flow = myControlFlow;
     Instruction[] result = flow != null ? flow.get() : null;
     if (result == null) {

@@ -72,19 +72,19 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        type = factory.createPrimitiveType(child.getText(), copyArray(untied));
+        type = factory.createPrimitiveType(child.getText(), copyAndClear(untied));
         if (stop) return type;
       }
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
-        type = type.createArrayType(copyArray(untied));
+        type = type.createArrayType(copyAndClear(untied));
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
-        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), copyArray(untied));
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), copyAndClear(untied));
         if (stop) return type;
       }
     }
@@ -93,7 +93,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     return stop ? null : type;
   }
 
-  private static PsiAnnotation[] copyArray(SmartList<PsiAnnotation> list) {
+  private static PsiAnnotation[] copyAndClear(SmartList<PsiAnnotation> list) {
     PsiAnnotation[] array = list.toArray(PsiAnnotation.ARRAY_FACTORY);
     list.clear();
     return array;

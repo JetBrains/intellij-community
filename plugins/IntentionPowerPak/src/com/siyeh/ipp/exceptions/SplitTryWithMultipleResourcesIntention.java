@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class SplitTryWithMultipleResourcesIntention extends Intention {
     if (resourceList == null) {
       return;
     }
-    final StringBuilder newTryStatementText = new StringBuilder();
+    @NonNls final StringBuilder newTryStatementText = new StringBuilder();
     final List<PsiResourceVariable> variables = resourceList.getResourceVariables();
     boolean braces = false;
     for (PsiResourceVariable variable : variables) {
@@ -59,6 +60,10 @@ public class SplitTryWithMultipleResourcesIntention extends Intention {
     newTryStatementText.append(tryBlock.getText());
     for (int i = 1; i < variables.size(); i++) {
       newTryStatementText.append("\n}");
+    }
+    final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+    for (PsiCatchSection catchSection : catchSections) {
+      newTryStatementText.append(catchSection.getText());
     }
     replaceStatement(newTryStatementText.toString(), tryStatement);
   }

@@ -92,11 +92,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
       assert annotation != null;
-      final PsiAnnotation.TargetType[] targets = PsiImplUtil.getApplicableTargets(annotation.getOwner());
+      final PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(annotation.getOwner());
       return new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass psiClass) {
-          return psiClass.isAnnotationType() && PsiImplUtil.isAnnotationApplicable(psiClass, false, targets);
+          return psiClass.isAnnotationType() && PsiImplUtil.findApplicableTarget(psiClass, targets) != null;
         }
       };
     }

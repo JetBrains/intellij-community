@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
@@ -44,22 +45,17 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     checkScriptField(holder, annotation);
 
-    PsiElement parent = annotation.getParent();
-    PsiElement owner = parent.getParent();
-
-    final PsiElement ownerToUse = parent instanceof PsiModifierList ? owner : parent;
-
+    PsiElement annoParent = annotation.getParent();
+    PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
     if (!(ownerToUse instanceof GrVariableDeclaration) ||
         !GroovyRefactoringUtil.isLocalVariable(((GrVariableDeclaration)ownerToUse).getVariables()[0])) {
       return false;
     }
 
-    String[] elementTypeFields = {"LOCAL_VARIABLE"};
-
-    final GrCodeReferenceElement ref = annotation.getClassReference();
-
-    if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
-      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
+    if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, PsiAnnotation.TargetType.LOCAL_VARIABLE)) {
+      GrCodeReferenceElement ref = annotation.getClassReference();
+      String target = JavaErrorMessages.message("annotation.target.LOCAL_VARIABLE");
+      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), target);
       holder.createErrorAnnotation(ref, description);
     }
 

@@ -96,9 +96,9 @@ public class GrKindWeigher extends CompletionWeigher {
           final GrAnnotation annotation = PsiTreeUtil.getParentOfType(position, GrAnnotation.class);
           if (annotation != null) {
             PsiElement annoParent = annotation.getParent();
-            PsiElement owner = annoParent.getParent();
-            String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(annoParent instanceof PsiModifierList ? owner : annoParent);
-            if (PsiImplUtil.isAnnotationApplicable((PsiClass)o, false, GrAnnotationImpl.translate(elementTypeFields))) {
+            PsiElement ownerToUse = annoParent instanceof PsiModifierList ? annoParent.getParent() : annoParent;
+            PsiAnnotation.TargetType[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
+            if (PsiImplUtil.findApplicableTarget((PsiClass)o, elementTypeFields) != null) {
               return NotQualifiedKind.restrictedClass;
             }
           }

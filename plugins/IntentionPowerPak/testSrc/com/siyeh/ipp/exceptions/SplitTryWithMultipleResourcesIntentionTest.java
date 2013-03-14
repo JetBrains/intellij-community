@@ -9,6 +9,7 @@ import com.siyeh.ipp.IPPTestCase;
 public class SplitTryWithMultipleResourcesIntentionTest extends IPPTestCase {
 
   public void testSimple() { doTest(); }
+  public void testWithCatch() { doTest(); }
 
   @Override
   protected String getIntentionName() {
