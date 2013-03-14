@@ -37,6 +37,7 @@ public interface ArtifactModel {
   @NotNull
   Artifact getOriginalArtifact(@NotNull Artifact artifact);
 
+  @NotNull
   Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type);
 
   List<? extends Artifact> getAllArtifactsIncludingInvalid();
