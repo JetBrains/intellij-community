@@ -4,10 +4,8 @@ from tcunittest import TeamcityTestRunner
 from tcmessages import TeamcityServiceMessages
 
 from pycharm_run_utils import adjust_django_sys_path
-from pycharm_run_utils import import_system_module
 
 adjust_django_sys_path()
-unittest = import_system_module("unittest")
 
 from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
 from django.test.testcases import TestCase

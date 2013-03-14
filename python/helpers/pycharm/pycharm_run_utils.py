@@ -25,17 +25,8 @@ def adjust_django_sys_path():
   sys.path.insert(0, script_path)
 
 def import_system_module(name):
-  import __future__
-  lib_path = os.path.dirname(sys.modules['__future__'].__file__)
-
-  module_path = os.path.join(lib_path, name + '.py')
-  if not os.path.exists(module_path):
-    module_path = os.path.join(lib_path, name + '/')
-
-  if os.path.exists(module_path):
-    return imp.load_source('pycharm_' + name, module_path)
-
-  return None
+  f, filename, desc = imp.find_module(name)
+  return imp.load_module('pycharm_' + name, f, filename, desc)
 
 def getModuleName(prefix, cnt):
   return prefix + "%" + str(cnt)
