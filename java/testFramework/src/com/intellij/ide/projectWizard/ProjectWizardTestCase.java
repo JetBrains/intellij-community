@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -62,7 +63,7 @@ public abstract class ProjectWizardTestCase extends PlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     Project[] projects = myProjectManager.getOpenProjects();
-    assertEquals(2, projects.length);
+    assertEquals(Arrays.asList(projects).toString(), 2, projects.length);
     return myCreatedProject;
   }
 
