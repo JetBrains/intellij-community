@@ -96,7 +96,7 @@ public class TypeInfo {
     this.text = text;
     this.arrayCount = arrayCount;
     this.isEllipsis = isEllipsis;
-    this.myAnnotationStubs = annotationStubs;
+    myAnnotationStubs = annotationStubs;
   }
 
   @NotNull
@@ -112,7 +112,7 @@ public class TypeInfo {
         annotationStubs.add(annotationStub);
       }
     }
-    return new TypeInfo(this.text, this.arrayCount, this.isEllipsis, annotationStubs);
+    return new TypeInfo(text, arrayCount, isEllipsis, annotationStubs);
   }
 
   @NotNull
@@ -172,7 +172,7 @@ public class TypeInfo {
 
       assert typeElement != null : element + " in " + parentStub;
 
-      isEllipsis = (LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null);
+      isEllipsis = LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null;
 
       while (true) {
         LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
@@ -184,7 +184,7 @@ public class TypeInfo {
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
     }
 
-    return new TypeInfo(StringRef.fromString(text), arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
+    return new TypeInfo(text, arrayCount, isEllipsis, ContainerUtil.<PsiAnnotationStub>emptyList());
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see com.intellij.psi.util.PsiTreeUtil#processElements(com.intellij.psi.PsiElement, PsiElementProcessor)
  */
 public interface PsiElementProcessor<T extends PsiElement> {
-
   /**
    * Processes a PsiElement
    *
@@ -41,22 +41,25 @@ public interface PsiElementProcessor<T extends PsiElement> {
   class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
     private final Collection<T> myCollection;
 
-    public CollectElements(@NotNull Collection<T> collection) {
-      myCollection = Collections.synchronizedCollection(collection);
-    }
-
     public CollectElements() {
       this(new ArrayList<T>());
     }
 
+    public CollectElements(@NotNull Collection<T> collection) {
+      myCollection = Collections.synchronizedCollection(collection);
+    }
+
+    @NotNull
     public PsiElement[] toArray() {
       return PsiUtilCore.toPsiElementArray(myCollection);
     }
 
+    @NotNull
     public Collection<T> getCollection() {
       return myCollection;
     }
 
+    @NotNull
     public T[] toArray(T[] array) {
       return myCollection.toArray(array);
     }
@@ -122,6 +125,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return myFoundElement != null;
     }
 
+    @Nullable
     public T getFoundElement() {
       return myFoundElement;
     }

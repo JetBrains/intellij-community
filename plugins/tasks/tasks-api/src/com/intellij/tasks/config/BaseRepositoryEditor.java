@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepository;
@@ -65,6 +66,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private JPanel myEditorPanel;
   protected JBCheckBox myLoginAnonymouslyJBCheckBox;
   protected JBTabbedPane myTabbedPane;
+  private JTextPane myAdvertiser;
 
   private boolean myApplying;
   protected Project myProject;
@@ -115,6 +117,11 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
     myComment.setText("Available placeholders: " + repository.getComment());
+    String advertiser = repository.getRepositoryType().getAdvertiser();
+    if (advertiser != null) {
+      Messages.installHyperlinkSupport(myAdvertiser);
+      myAdvertiser.setText(advertiser);
+    }
 
     installListener(myAddCommitMessage);
     installListener(myDocument);

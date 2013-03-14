@@ -51,7 +51,7 @@ import java.awt.event.MouseEvent;
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
-  @NotNull private static final BorderStrategy NAME_BORDER_STRATEGY       = new NameBorderStrategy();
+  @NotNull private static final BorderStrategy TEXT_BORDER_STRATEGY       = new NameBorderStrategy();
   @NotNull private static final BorderStrategy PREDEFINED_BORDER_STRATEGY = new PredefinedConditionBorderStrategy();
 
   @NotNull
@@ -92,7 +92,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
-  @Nullable private Listener myListener;
+  @Nullable private Listener  myListener;
 
   private boolean myEnabled = true;
   private boolean mySelected;
@@ -106,18 +106,27 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
-    myBorderStrategy = StdArrangementTokens.General.NAME.equals(condition.getType()) ? NAME_BORDER_STRATEGY : PREDEFINED_BORDER_STRATEGY;
-    if (condition.getType().equals(condition.getValue())) {
-      myText = condition.getType().getRepresentationValue();
+    ArrangementSettingsToken type = condition.getType();
+    if (StdArrangementTokens.Regexp.is(type)) {
+      myBorderStrategy = TEXT_BORDER_STRATEGY;
+    }
+    else {
+      myBorderStrategy = PREDEFINED_BORDER_STRATEGY;
+    }
+    if (type.equals(condition.getValue())) {
+      myText = type.getRepresentationValue();
+    }
+    else if (StdArrangementTokens.Regexp.is(type)) {
+      myText = String.format("%s %s", type.getRepresentationValue().toLowerCase(), condition.getValue());
     }
     else {
       myText = condition.getValue().toString();
     }
     myTextControl.setTextAlign(SwingConstants.CENTER);
-    myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
+    myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(type, false)));
     myTextControl.setOpaque(false);
-    int maxWidth = manager.getWidth(condition.getType());
-    if (maxWidth > 0) {
+    int maxWidth = manager.getWidth(type);
+    if (!StdArrangementTokens.Regexp.is(type) && maxWidth > 0) {
       myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
     }
     else {

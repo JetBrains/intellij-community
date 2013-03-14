@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,15 +256,18 @@ public class PsiTreeUtil {
     return (T)processor.getFoundElement();
   }
 
-  public static <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable final PsiElement element,
-                                                                           @NotNull final Class<T> aClass) {
+  @NotNull
+  public static <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return findChildrenOfAnyType(element, aClass);
-
   }
 
-
+  @NotNull
   public static <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable final PsiElement element,
                                                                            @NotNull final Class<T>... classes) {
+    if (element == null) {
+      return ContainerUtil.emptyList();
+    }
+
     PsiElementProcessor.CollectElements<T> processor = new PsiElementProcessor.CollectElements<T>() {
       @Override
       public boolean execute(@NotNull T each) {
@@ -275,9 +278,7 @@ public class PsiTreeUtil {
         return true;
       }
     };
-
     processElements(element, processor);
-    //noinspection unchecked
     return processor.getCollection();
   }
 

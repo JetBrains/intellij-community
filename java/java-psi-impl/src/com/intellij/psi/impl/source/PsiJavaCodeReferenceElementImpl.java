@@ -49,6 +49,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
@@ -193,15 +195,27 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
-      ASTNode dot = findChildByRole(ChildRole.DOT);
+      ASTNode dot = findChildByType(JavaTokenType.DOT, child);
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
+
+      List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
+      if (!annotations.isEmpty()) {
+        PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
+        if (modifierList != null) {
+          for (PsiAnnotation annotation : annotations) {
+            modifierList.add(annotation);
+            annotation.delete();
+          }
+        }
+      }
+
+      return;
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+
+    super.deleteChildInternal(child);
   }
 
   @Override

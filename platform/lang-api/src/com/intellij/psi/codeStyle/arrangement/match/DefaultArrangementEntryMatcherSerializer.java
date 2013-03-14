@@ -162,8 +162,9 @@ public class DefaultArrangementEntryMatcherSerializer {
     
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-      final Element element = new Element(condition.getType().getId());
-      if (StdArrangementTokens.General.NAME.equals(condition.getType())) {
+      ArrangementSettingsToken type = condition.getType();
+      final Element element = new Element(type.getId());
+      if (StdArrangementTokens.Regexp.is(type)) {
         element.setText(StringUtil.escapeStringCharacters(condition.getValue().toString()));
       }
       register(element);

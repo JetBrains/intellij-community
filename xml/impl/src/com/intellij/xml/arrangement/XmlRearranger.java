@@ -11,10 +11,7 @@ import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +20,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.NAME;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.ORDER;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.TYPE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
@@ -50,7 +45,8 @@ public class XmlRearranger
 
   @Override
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
-    return NAME.equals(token) || KEEP.equals(token) || BY_NAME.equals(token) || SUPPORTED_TYPES.contains(token);
+    return SUPPORTED_TYPES.contains(token) || StdArrangementTokens.Regexp.NAME.equals(token) || StdArrangementTokens.Regexp.XML_NAMESPACE.equals(token) || KEEP.equals(token)
+           || BY_NAME.equals(token) || SUPPORTED_TYPES.contains(token);
   }
 
   @NotNull
@@ -109,7 +105,8 @@ public class XmlRearranger
   public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
     return ContainerUtilRt.newArrayList(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
-      new CompositeArrangementSettingsToken(NAME),
+      new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),
+      new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.XML_NAMESPACE),
       new CompositeArrangementSettingsToken(ORDER, KEEP, BY_NAME)
     );
   }

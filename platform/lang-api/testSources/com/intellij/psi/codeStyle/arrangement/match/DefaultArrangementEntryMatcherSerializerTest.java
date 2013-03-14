@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
 import static org.junit.Assert.*;
 
@@ -109,7 +108,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
 
   @Test
   public void nameConditionOnly() {
-    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(NAME, "get*");
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, "get*");
     doTest(condition);
   }
   
@@ -118,7 +117,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
     condition.addOperand(new ArrangementAtomMatchCondition(METHOD));
     condition.addOperand(new ArrangementAtomMatchCondition(SYNCHRONIZED));
-    condition.addOperand(new ArrangementAtomMatchCondition(NAME, ("get*")));
+    condition.addOperand(new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, ("get*")));
     doTest(condition);
   }
 

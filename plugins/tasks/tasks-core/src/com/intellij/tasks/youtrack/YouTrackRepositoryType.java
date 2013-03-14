@@ -7,6 +7,7 @@ import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.EnumSet;
@@ -24,6 +25,12 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
   @NotNull
   public Icon getIcon() {
     return TasksIcons.Youtrack;
+  }
+
+  @Nullable
+  @Override
+  public String getAdvertiser() {
+    return "<html>Not YouTrack customer yet? Get <a href='http://www.jetbrains.com/youtrack/download/get_youtrack.html?idea_integration'>YouTrack</a></html>";
   }
 
   @NotNull

@@ -120,7 +120,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
 
   @NotNull
   protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
-    new ArrangementAtomMatchCondition(StdArrangementTokens.General.NAME, nameFilter)
+    new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter)
   }
   
   protected void doTest(@NotNull args) {

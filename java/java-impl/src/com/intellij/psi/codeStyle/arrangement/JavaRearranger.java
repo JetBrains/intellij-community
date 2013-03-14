@@ -58,18 +58,25 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Ge
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware, ArrangementColorsAware {
 
   // Type
-  @NotNull private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(
-    FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM
-  );
+  @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_TYPES     =
+    ContainerUtilRt.newLinkedHashSet(
+      FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM
+    );
   // Modifier
-  @NotNull private static final Set<ArrangementSettingsToken> SUPPORTED_MODIFIERS = ContainerUtilRt.newLinkedHashSet(
-    PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, ABSTRACT, SYNCHRONIZED, TRANSIENT, VOLATILE
-  );
-  @NotNull private static final List<ArrangementSettingsToken> SUPPORTED_ORDERS = ContainerUtilRt.newArrayList(KEEP, BY_NAME);
-  @NotNull private static final ArrangementSettingsToken NO_TYPE = new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
+  @NotNull private static final Set<ArrangementSettingsToken>                                SUPPORTED_MODIFIERS =
+    ContainerUtilRt.newLinkedHashSet(
+      PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, ABSTRACT, SYNCHRONIZED, TRANSIENT, VOLATILE
+    );
+  @NotNull private static final List<ArrangementSettingsToken>                               SUPPORTED_ORDERS    =
+    ContainerUtilRt.newArrayList(KEEP, BY_NAME);
+  @NotNull private static final ArrangementSettingsToken                                     NO_TYPE             =
+    new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
   @NotNull
-  private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE = ContainerUtilRt.newHashMap();
-  @NotNull private static final Collection<Set<ArrangementSettingsToken>> MUTEXES = ContainerUtilRt.newArrayList();
+  private static final          Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE   =
+    ContainerUtilRt.newHashMap();
+  @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
+    ContainerUtilRt.newArrayList();
+
   static {
     Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtilRt.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
     MUTEXES.add(visibilityModifiers);
@@ -85,7 +92,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
+
   private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();
+
   static {
     GROUPING_RULES.put(GETTERS_AND_SETTERS, Collections.<ArrangementSettingsToken>emptyList());
     GROUPING_RULES.put(OVERRIDDEN_METHODS, ContainerUtilRt.newArrayList(BY_NAME, KEEP));
@@ -302,14 +311,14 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     return ContainerUtilRt.newArrayList(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
       new CompositeArrangementSettingsToken(MODIFIER, SUPPORTED_MODIFIERS),
-      new CompositeArrangementSettingsToken(NAME),
+      new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),
       new CompositeArrangementSettingsToken(ORDER, KEEP, BY_NAME)
     );
   }
   
   @Override
   public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
-    if (SUPPORTED_TYPES.contains(token) || SUPPORTED_ORDERS.contains(token) || NAME.equals(token)) {
+    if (SUPPORTED_TYPES.contains(token) || SUPPORTED_ORDERS.contains(token) || StdArrangementTokens.Regexp.NAME.equals(token)) {
       return true;
     }
     ArrangementSettingsToken type = null;

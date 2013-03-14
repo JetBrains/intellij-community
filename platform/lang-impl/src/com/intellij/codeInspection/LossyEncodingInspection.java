@@ -108,28 +108,32 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (charset instanceof Native2AsciiCharset) return null;
 
     List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-    checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
-    checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, text, virtualFile, charset, descriptors);
+    boolean ok = checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, text, virtualFile, charset, descriptors);
+    if (ok) {
+      checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
+    }
 
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private static void checkFileLoadedInWrongEncoding(@NotNull PsiFile file,
-                                                     @NotNull InspectionManager manager,
-                                                     boolean isOnTheFly,
-                                                     @NotNull String text,
-                                                     @NotNull VirtualFile virtualFile,
-                                                     @NotNull Charset charset,
-                                                     @NotNull List<ProblemDescriptor> descriptors) {
+  private static boolean checkFileLoadedInWrongEncoding(@NotNull PsiFile file,
+                                                        @NotNull InspectionManager manager,
+                                                        boolean isOnTheFly,
+                                                        @NotNull String text,
+                                                        @NotNull VirtualFile virtualFile,
+                                                        @NotNull Charset charset,
+                                                        @NotNull List<ProblemDescriptor> descriptors) {
     if (FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
         || EncodingUtil.checkCanReload(virtualFile).second != null // can't reload in another encoding, no point trying
       ) {
-      return;
+      return true;
     }
     if (!isGoodCharset(virtualFile, text, charset, file.getProject())) {
       descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
                                                       RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      return false;
     }
+    return true;
   }
 
   // check if file was loaded in correct encoding

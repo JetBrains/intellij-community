@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ReferenceAdjuster {
-  private final boolean myUseFqClassnamesInJavadoc;
+  private final boolean myUseFqClassNamesInJavadoc;
   private final boolean myUseFqClassNames;
 
   public ReferenceAdjuster(boolean useFqInJavadoc, boolean useFqInCode) {
-    myUseFqClassnamesInJavadoc = useFqInJavadoc;
+    myUseFqClassNamesInJavadoc = useFqInJavadoc;
     myUseFqClassNames = useFqInCode;
   }
 
@@ -49,17 +51,19 @@ public class ReferenceAdjuster {
     this(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC, settings.USE_FQ_CLASS_NAMES);
   }
 
-  public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
+  public TreeElement process(TreeElement element, boolean addImports, boolean incompleteCode) {
     IElementType elementType = element.getElementType();
-    if (elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) {
-      final IElementType parentElementType = element.getTreeParent().getElementType();
-      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || parentElementType == JavaElementType.REFERENCE_EXPRESSION || parentElementType == JavaElementType.METHOD_REF_EXPRESSION || uncompleteCode) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
-        final PsiReferenceParameterList parameterList = ref.getParameterList();
+    if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
+      IElementType parentType = element.getTreeParent().getElementType();
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || incompleteCode ||
+          parentType == JavaElementType.REFERENCE_EXPRESSION || parentType == JavaElementType.METHOD_REF_EXPRESSION) {
+        PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();
+
+        PsiReferenceParameterList parameterList = ref.getParameterList();
         if (parameterList != null) {
-          final PsiTypeElement[] typeParameters = parameterList.getTypeParameterElements();
+          PsiTypeElement[] typeParameters = parameterList.getTypeParameterElements();
           for (PsiTypeElement typeParameter : typeParameters) {
-            process((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter), addImports, uncompleteCode);
+            process((TreeElement)typeParameter.getNode(), addImports, incompleteCode);
           }
         }
 
@@ -71,45 +75,50 @@ public class ReferenceAdjuster {
 
         if (rightKind) {
           boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT) != null;
-          boolean isShort = !((SourceJavaCodeReference)element).isQualified();
+          boolean isShort = !ref.isQualified();
           if (!makeFQ(isInsideDocComment)) {
             if (isShort) return element; // short name already, no need to change
           }
+
           PsiElement refElement;
-          if (!uncompleteCode) {
+          if (!incompleteCode) {
             refElement = ref.resolve();
           }
           else {
             PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getManager().getProject()).getResolveHelper();
-            refElement = helper.resolveReferencedClass(((SourceJavaCodeReference)element).getClassNameText(), SourceTreeToPsiMap.treeElementToPsi(element)
-            );
+            refElement = helper.resolveReferencedClass(((SourceJavaCodeReference)element).getClassNameText(), ref);
           }
+
           if (refElement instanceof PsiClass) {
+            PsiClass psiClass = (PsiClass)refElement;
             if (makeFQ(isInsideDocComment)) {
-              String qName = ((PsiClass)refElement).getQualifiedName();
+              String qName = psiClass.getQualifiedName();
               if (qName == null) return element;
-              PsiImportHolder file = (PsiImportHolder) SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-              if (file instanceof PsiJavaFile && ImportHelper.isImplicitlyImported(qName, (PsiJavaFile) file)) {
-                if (isShort) return element;
-                return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
-              }
+
+              PsiFile file = ref.getContainingFile();
               if (file instanceof PsiJavaFile) {
+                if (ImportHelper.isImplicitlyImported(qName, (PsiJavaFile)file)) {
+                  if (isShort) return element;
+                  return (TreeElement)makeShortReference((CompositeElement)element, psiClass, addImports);
+                }
+
                 String thisPackageName = ((PsiJavaFile)file).getPackageName();
                 if (ImportHelper.hasPackage(qName, thisPackageName)) {
                   if (!isShort) {
-                    return (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
+                    return (TreeElement)makeShortReference((CompositeElement)element, psiClass, addImports);
                   }
                 }
               }
-              return (TreeElement)replaceReferenceWithFQ(element, (PsiClass)refElement);
+
+              return (TreeElement)replaceReferenceWithFQ(element, psiClass);
             }
             else {
               int oldLength = element.getTextLength();
-              TreeElement treeElement = (TreeElement)makeShortReference((CompositeElement)element, (PsiClass)refElement, addImports);
-              if (treeElement.getTextLength() == oldLength && ((PsiClass)refElement).getContainingClass() != null) {
+              TreeElement treeElement = (TreeElement)makeShortReference((CompositeElement)element, psiClass, addImports);
+              if (treeElement.getTextLength() == oldLength && psiClass.getContainingClass() != null) {
                 PsiElement qualifier = ref.getQualifier();
                 if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
-                  process((TreeElement)qualifier.getNode(), addImports, uncompleteCode);
+                  process((TreeElement)qualifier.getNode(), addImports, incompleteCode);
                 }
               }
               return treeElement;
@@ -120,61 +129,75 @@ public class ReferenceAdjuster {
     }
 
     for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      child = process(child, addImports, uncompleteCode);
+      //noinspection AssignmentToForLoopParameter
+      child = process(child, addImports, incompleteCode);
     }
 
     return element;
   }
 
+  private static boolean isAnnotated(TreeElement element) {
+    PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();
+
+    PsiElement qualifier = ref.getQualifier();
+    if (qualifier instanceof PsiJavaCodeReferenceElement && PsiTreeUtil.getChildOfType(qualifier, PsiAnnotation.class) != null) {
+      return true;
+    }
+
+    PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(ref);
+    if (modifierList != null) {
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        if (PsiImplUtil.findApplicableTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) != null) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   private boolean makeFQ(boolean isInsideDocComment) {
-    if (isInsideDocComment) {
-      return myUseFqClassnamesInJavadoc;
-    }
-    else {
-      return myUseFqClassNames;
-    }
+    return isInsideDocComment ? myUseFqClassNamesInJavadoc : myUseFqClassNames;
   }
 
   public void processRange(TreeElement element, int startOffset, int endOffset) {
-    ArrayList<ASTNode> array = new ArrayList<ASTNode>();
+    List<ASTNode> array = new ArrayList<ASTNode>();
     addReferencesInRange(array, element, startOffset, endOffset);
     for (ASTNode ref : array) {
-      if (SourceTreeToPsiMap.treeElementToPsi(ref).isValid()) {
+      if (ref.getPsi().isValid()) {
         process((TreeElement)ref, true, true);
       }
     }
   }
 
-  private static void addReferencesInRange(ArrayList<ASTNode> array, TreeElement parent, int startOffset, int endOffset) {
+  private static void addReferencesInRange(List<ASTNode> array, TreeElement parent, int startOffset, int endOffset) {
     if (parent.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || parent.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
       array.add(parent);
       return;
     }
 
-    if (parent.getPsi() instanceof PsiFile && JspPsiUtil.isInJspFile(parent.getPsi())) {
-      final JspFile jspFile = JspPsiUtil.getJspFile(parent.getPsi());
-      JspClass jspClass = (JspClass) jspFile.getJavaClass();
-      addReferencesInRange(array, (TreeElement)jspClass.getNode(), startOffset, endOffset);
-      return;
+    if (parent.getPsi() instanceof PsiFile) {
+      JspFile jspFile = JspPsiUtil.getJspFile(parent.getPsi());
+      if (jspFile != null) {
+        JspClass jspClass = (JspClass)jspFile.getJavaClass();
+        addReferencesInRange(array, (TreeElement)jspClass.getNode(), startOffset, endOffset);
+        return;
+      }
     }
 
     addReferencesInRangeForComposite(array, parent, startOffset, endOffset);
   }
 
-  private static void addReferencesInRangeForComposite(final ArrayList<ASTNode> array,
-                                                       final TreeElement parent,
-                                                       final int startOffset,
-                                                       final int endOffset) {
+  private static void addReferencesInRangeForComposite(List<ASTNode> array, TreeElement parent, int startOffset, int endOffset) {
     int offset = 0;
     for (TreeElement child = parent.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       int length = child.getTextLength();
-
       if (startOffset <= offset + length && offset <= endOffset) {
-        final IElementType type = child.getElementType();
-
+        IElementType type = child.getElementType();
         if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.REFERENCE_EXPRESSION) {
           array.add(child);
-        } else {
+        }
+        else {
           addReferencesInRangeForComposite(array, child, startOffset - offset, endOffset - offset);
         }
       }
@@ -210,7 +233,7 @@ public class ReferenceAdjuster {
       }
     }
 
-    if (addImports && !((PsiImportHolder) reference.getContainingFile()).importClass(refClass)) return null;
+    if (addImports && !((PsiImportHolder)reference.getContainingFile()).importClass(refClass)) return null;
     if (!isSafeToShortenReference(reference, refClass)) return null;
     return reference;
   }
@@ -233,14 +256,14 @@ public class ReferenceAdjuster {
 
   @NotNull
   private static ASTNode replaceReferenceWithShort(PsiQualifiedReference reference) {
-    final ASTNode node = reference.getNode();
+    ASTNode node = reference.getNode();
     assert node != null;
-    dequalifyImpl((CompositeElement)node);
+    deQualifyImpl((CompositeElement)node);
     return node;
   }
 
-  private static void dequalifyImpl(@NotNull CompositeElement reference) {
-    final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+  private static void deQualifyImpl(@NotNull CompositeElement reference) {
+    ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
     if (qualifier != null) {
       ASTNode firstChildNode = qualifier.getFirstChildNode();
       boolean markToReformatBefore = firstChildNode instanceof TreeElement && CodeEditUtil.isMarkedToReformatBefore((TreeElement)firstChildNode);
@@ -255,8 +278,7 @@ public class ReferenceAdjuster {
   }
 
   private static ASTNode replaceReferenceWithFQ(ASTNode reference, PsiClass refClass) {
-      ((SourceJavaCodeReference)reference).fullyQualify(refClass);
+    ((SourceJavaCodeReference)reference).fullyQualify(refClass);
     return reference;
   }
 }
-

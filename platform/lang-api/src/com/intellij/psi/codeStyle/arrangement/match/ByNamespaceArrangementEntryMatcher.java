@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,25 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.NamespaceAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 6:36 PM
+ * @since 3/14/13 1:01 PM
  */
-public class ByNameArrangementEntryMatcher extends AbstractRegexpArrangementMatcher {
+public class ByNamespaceArrangementEntryMatcher extends AbstractRegexpArrangementMatcher {
 
-  public ByNameArrangementEntryMatcher(@NotNull String pattern) {
+  public ByNamespaceArrangementEntryMatcher(@NotNull String pattern) {
     super(pattern);
   }
 
   @Nullable
   @Override
   protected String getTextToMatch(@NotNull ArrangementEntry entry) {
-    if (entry instanceof NameAwareArrangementEntry) {
-      return  ((NameAwareArrangementEntry)entry).getName();
+    if (entry instanceof NamespaceAwareArrangementEntry) {
+      return ((NamespaceAwareArrangementEntry)entry).getNamespace();
     }
     else {
       return null;

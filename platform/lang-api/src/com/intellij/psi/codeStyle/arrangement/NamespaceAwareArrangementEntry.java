@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.xml;
+package com.intellij.psi.codeStyle.arrangement;
 
 import org.jetbrains.annotations.Nullable;
 
-public interface XmlTagChild extends XmlElement{
-  XmlTagChild[] EMPTY_ARRAY = new XmlTagChild[0];
-  XmlTag getParentTag();
-
+/**
+ * @author Denis Zhdanov
+ * @since 3/14/13 1:00 PM
+ */
+public interface NamespaceAwareArrangementEntry {
+  
   @Nullable
-  XmlTagChild getNextSiblingInTag();
-  @Nullable
-  XmlTagChild getPrevSiblingInTag();
+  String getNamespace();
 }
