@@ -200,8 +200,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
-    protected String getArtifactName() {
-      return myArtifact.getName();
+    protected String getArtifactRootName() {
+      return myArtifact.getRootElement().getName();
     }
 
     @Override

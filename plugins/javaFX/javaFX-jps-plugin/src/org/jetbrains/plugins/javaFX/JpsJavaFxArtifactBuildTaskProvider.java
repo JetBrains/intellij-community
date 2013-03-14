@@ -10,6 +10,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
@@ -89,8 +90,8 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
-    protected String getArtifactName() {
-      return myArtifact.getName();
+    protected String getArtifactRootName() {
+      return ((JpsArchivePackagingElement)myArtifact.getRootElement()).getArchiveName();
     }
 
     @Override
